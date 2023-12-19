@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	MongoDbConfig.java
- * Package: com.ospreydcs.dp.api.config.mongodb
+ * Package: com.ospreydcs.dp.api.config.db
  * Type: 	MongoDbConfig
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.config.mongodb;
+package com.ospreydcs.dp.api.config.db;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -33,7 +33,7 @@ import com.ospreydcs.dp.api.config.AEnvOverride;
 
 /**
  * <p>
- * Structure Containing MongoDB Configuration Parameters
+ * Structure Class Containing MongoDB Configuration Parameters
  * </p>
  * <p>
  * Contains parameters for identifying a MongoDB host server and required client
@@ -193,6 +193,10 @@ public final class MongoDbConfig {
     } /* Client */
 
 
+    //
+    // Object Overrides
+    //
+    
     /**
      *
      * @see @see java.lang.Object#toString()
@@ -204,6 +208,38 @@ public final class MongoDbConfig {
         String  str = yml.dump(this);
         
         return str;
+    }
+
+
+    /**
+     *
+     * @see @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        
+        // Cast to comparison object
+        MongoDbConfig   cfg;
+        
+        if (obj instanceof MongoDbConfig)
+            cfg = (MongoDbConfig)obj;
+        else
+            return false;
+        
+        // Check equivalence
+        if (!this.name.equals(cfg.name))
+            return false;
+        
+        if (!this.version.equals(cfg.version))
+            return false;
+        
+        if (!this.host.equals(cfg.host))
+            return false;
+        
+        if (!this.client.equals(cfg.client))
+            return false;
+            
+        return true;
     }
     
     

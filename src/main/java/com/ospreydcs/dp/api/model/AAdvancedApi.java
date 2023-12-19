@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.config;
+package com.ospreydcs.dp.api.model;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

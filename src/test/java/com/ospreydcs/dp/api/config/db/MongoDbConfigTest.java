@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	GrpcChannelConfigTest.java
- * Package: com.ospreydcs.dp.api.config.grpc
- * Type: 	GrpcChannelConfigTest
+ * File:	MongoDbConfigTest.java
+ * Package: com.ospreydcs.dp.api.config.db
+ * Type: 	MongoDbConfigTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -20,16 +20,12 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Dec 18, 2023
+ * @since Dec 19, 2023
  *
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.config.grpc;
-
-import com.ospreydcs.dp.api.config.EnvOverrideUtility;
-import com.ospreydcs.dp.api.config.EnvVariable;
-import com.ospreydcs.dp.api.config.YamlLoader;
+package com.ospreydcs.dp.api.config.db;
 
 import static org.junit.Assert.*;
 
@@ -44,10 +40,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.config.EnvOverrideUtility;
+import com.ospreydcs.dp.api.config.EnvVariable;
+import com.ospreydcs.dp.api.config.YamlLoader;
+
 /**
- * 
  * <p>
- * Test Cases for <code>GrpcChannelConfi</code> structure class.
+ * JUnit test cases for class <code>MongoDbConfig</code>
  * </p>
  * <p>
  * Tests correct loading of YAML files using the YamlLoader utility class.
@@ -55,24 +54,23 @@ import org.junit.Test;
  * </p> 
  *
  * @author Christopher K. Allen
- * @since Dec 18, 2023
+ * @since Dec 19, 2023
  *
  */
-public class GrpcChannelConfigTest {
+public class MongoDbConfigTest {
+
     
     //
     // Class Constants
     //
     
     /** YAML configuration file location */
-    public static final String      STR_CONFIG_FILE_1 = "src/test/resources/test-grpc-channel-1.yml";
+    public static final String      STR_CONFIG_FILE_1 = "src/test/resources/test-mongodb-1.yml";
     
     /** Comparison configuration records */
-    public static GrpcChannelConfig   CFG_1 = createConfig1();
-    public static GrpcChannelConfig   CFG_ENV = createConfigEnv();
-
-    static {
-    }
+    public static MongoDbConfig     CFG_1 = createConfig1();
+    public static MongoDbConfig     CFG_ENV = createConfigEnv();
+    
     
     /**
      * @throws java.lang.Exception
@@ -103,7 +101,7 @@ public class GrpcChannelConfigTest {
     }
 
     
-    //
+    // 
     // Test Cases
     //
     
@@ -115,16 +113,9 @@ public class GrpcChannelConfigTest {
         String      strFile = STR_CONFIG_FILE_1;
         
         try {
-            GrpcChannelConfig   cfgChan = YamlLoader.load(strFile, GrpcChannelConfig.class);
+            MongoDbConfig   cfgMongo = YamlLoader.load(strFile, MongoDbConfig.class);
             
-//            System.out.println("name = " + cfgChan.name);
-//            System.out.println("version = " + cfgChan.version);
-//            System.out.println("description = " + cfgChan.description);
-//            System.out.println("supplement = " + cfgChan.supplement);
-//            
-//            
-//            System.out.println(cfgChan.toString());
-            Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgChan);
+            Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgMongo);
             
             
         } catch (FileNotFoundException | SecurityException e) {
@@ -143,15 +134,9 @@ public class GrpcChannelConfigTest {
         File        fileCfg = new File(strFile);
         
         try {
-            GrpcChannelConfig   cfgChan = YamlLoader.load(fileCfg, GrpcChannelConfig.class);
+            MongoDbConfig   cfgMongo = YamlLoader.load(fileCfg, MongoDbConfig.class);
             
-//            System.out.println("name = " + cfgChan.name);
-//            System.out.println("description = " + cfgChan.description);
-//            System.out.println("supplement = " + cfgChan.supplement);
-//            
-//            
-//            System.out.println(cfgChan.toString());
-            Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgChan);
+            Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgMongo);
             
             
         } catch (FileNotFoundException | SecurityException e) {
@@ -169,15 +154,15 @@ public class GrpcChannelConfigTest {
         String      strFile = STR_CONFIG_FILE_1;
         
         try {
-            GrpcChannelConfig   cfgChan = YamlLoader.load(strFile, GrpcChannelConfig.class);
+            MongoDbConfig   cfgMongo = YamlLoader.load(strFile, MongoDbConfig.class);
 
-            boolean bolResult = EnvOverrideUtility.override(cfgChan);
+            boolean bolResult = EnvOverrideUtility.override(cfgMongo);
             
             if (!bolResult)
                 fail("No parameters were overridden.");
             
 //            System.out.println(cfgChan.toString());
-            Assert.assertEquals("Configuration has at least one incorrect field", CFG_ENV, cfgChan);
+            Assert.assertEquals("Configuration has at least one incorrect field", CFG_ENV, cfgMongo);
             
             
         } catch (FileNotFoundException | SecurityException e) {
@@ -221,25 +206,23 @@ public class GrpcChannelConfigTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.grpc.GrpcChannelConfig#toString()}.
+     * Test method for {@link com.ospreydcs.dp.api.config.db.MongoDbConfig#toString()}.
      */
     @Test
-    public void testToString1() {
+    public void testToString() {
         String      strFile = STR_CONFIG_FILE_1;
         
         try {
-            GrpcChannelConfig   cfgChan = YamlLoader.load(strFile, GrpcChannelConfig.class);
+            MongoDbConfig   cfgMongo = YamlLoader.load(strFile, MongoDbConfig.class);
             
-            System.out.println();
-            System.out.println("GrpcChannelConfig Parameters:");
-            System.out.println("name = " + cfgChan.name);
-            System.out.println("version = " + cfgChan.version);
-            System.out.println("description = " + cfgChan.description);
-            System.out.println("supplement = " + cfgChan.supplement);
+            System.out.println("name = " + cfgMongo.name);
+            System.out.println("version = " + cfgMongo.version);
+            System.out.println("description = " + cfgMongo.description);
+            System.out.println("supplement = " + cfgMongo.supplement);
             
 
-            System.out.println("GrpcChannelConfig#toString() for " + strFile);
-            System.out.println(cfgChan.toString());
+            System.out.println("MongoDbConfig#toString() for " + strFile);
+            System.out.println(cfgMongo.toString());
             
             
         } catch (FileNotFoundException | SecurityException e) {
@@ -249,59 +232,51 @@ public class GrpcChannelConfigTest {
         
     }
 
-    
-    
+
+
     //
     // Support Methods
     //
     
     /**
-     * Creates and populates a <code>GrpcChannelConfig</code> structure equivalent to the
+     * Creates and populates a <code>MongoDbConfig</code> structure equivalent to the
      * first test configuration.
      * 
      * @return new, populated test configuration
      */
-    private static GrpcChannelConfig    createConfig1() {
+    private static MongoDbConfig    createConfig1() {
         
-        GrpcChannelConfig.Channel.Host host = new GrpcChannelConfig.Channel.Host();
+        MongoDbConfig.Host host = new MongoDbConfig.Host();
         host.url = "localhost";
-        host.port = 50051;
+        host.port = 27017;
         
-        GrpcChannelConfig.Channel.Grpc grpc = new GrpcChannelConfig.Channel.Grpc();
-        grpc.messageSize = 4194304L;
-        grpc.timeout = 60;
-        grpc.usePlainText = false;
-        grpc.keepAliveWithoutCalls = true;
-        grpc.gzip = false;
+        MongoDbConfig.Client client = new MongoDbConfig.Client();
+        client.user = "admin";
+        client.password = "admin";
         
-        GrpcChannelConfig.Channel chan = new GrpcChannelConfig.Channel();
-        chan.host = host;
-        chan.grpc = grpc;
-
-        GrpcChannelConfig   cfg = new GrpcChannelConfig();
-        cfg.channel = chan;
-        cfg.name = "test-grpc-channel-1";
+        MongoDbConfig   cfg = new MongoDbConfig();
+        cfg.name = "test-mongodb-1";
         cfg.version = "0.0.0";
-        cfg.description = "Testing parameter set for default channel configuration";
+        cfg.description = "Testing parameter set for default MongoDB configuration";
         cfg.supplement = "No supplemental parameters";
+        
+        cfg.host = host;
+        cfg.client = client;
         
         return cfg;
     }
     
     /**
-     * Creates and populates a <code>GrpcChannelConfig</code> structure that is equivalent
+     * Creates and populates a <code>MongoDbConfig</code> structure that is equivalent
      * to the first test case after being overridden by environment variables.
      * @return
      */
-    private static GrpcChannelConfig    createConfigEnv() {
+    private static MongoDbConfig    createConfigEnv() {
         
-        GrpcChannelConfig   cfg = createConfig1();
+        MongoDbConfig   cfg = createConfig1();
         
-        cfg.channel.grpc.messageSize = 16777216L;
-        cfg.channel.grpc.timeout = 5;
-        cfg.channel.grpc.usePlainText = true;
-        cfg.channel.grpc.keepAliveWithoutCalls = false;
-        cfg.channel.grpc.gzip = true;
+        cfg.client.user = "captain";
+        cfg.client.password = "steve";
         
         return cfg;
     }

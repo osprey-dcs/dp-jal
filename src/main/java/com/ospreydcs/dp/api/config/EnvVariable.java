@@ -1,8 +1,8 @@
 /*
  * Project: datastore-admin
- * File:	AppEnvVariable.java
+ * File:	EnvVariable.java
  * Package: com.ospreydcs.datastore.admin.config
- * Type: 	AppEnvVariable
+ * Type: 	EnvVariable
  *
  * Copyright 2010-2022 the original author or authors.
  *
@@ -30,29 +30,32 @@ package com.ospreydcs.dp.api.config;
 import java.lang.reflect.Field;
 
 /**
- * Record encapsulation of an environment variable supported by the application.  The
- * supported environment variables are typically used to override the application properties
- * managed by class <code>AppProperties</code>.  Thus, the record attributes represent the association
- * between the supported application environment variables and the application properties.
+ * <p>
+ * Record encapsulation of an environment variable supported by the configuration mechanism.
+ * </p>
+ * The supported environment variables are typically used to override the configuration parameters
+ * managed by supporting structure classes.  Thus, the record attributes also contain the association
+ * between the supported environment variables and the supporting structure classes (i.e., with reflection).
+ * </p>
  *
- * @param varName         environment variable varName
- * @param varValue        varValue of the environment variable at application startup
- * @param propertyField   the property field (Java reflection can get enclosing class, varName, etc.)
- * @param propertyObject  the class object containing the field (can be used for reflection)
+ * @param varName      environment variable name
+ * @param varValue     current value of the environment variable 
+ * @param paramField   the property field (Java reflection can get enclosing class, varName, etc.)
+ * @param paramObject  the class object containing the field (can be used for reflection)
  *
  * @author Christopher K. Allen
  * @since Sep 21, 2022
  *
  */
-public record AppEnvVariable(String varName, String varValue, Field propertyField, Object propertyObject) {
+public record EnvVariable(String varName, String varValue, Field paramField, Object paramObject) {
 
     public String printOut() {
         StringBuffer    buf = new StringBuffer();
         
         buf.append("varName=" + varName + ", ");
         buf.append("varValue=" + varValue + ", ");
-        buf.append("field=" + propertyField.getName() + ", ");
-        buf.append("class=" + propertyField.getDeclaringClass().getName());
+        buf.append("field=" + paramField.getName() + ", ");
+        buf.append("class=" + paramField.getDeclaringClass().getName());
         
         return buf.toString();
     }

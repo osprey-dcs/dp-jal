@@ -28,6 +28,10 @@ import org.yaml.snakeyaml.Yaml;
  * <p>
  * Utility Class for Loading YAML Files into Structure Classes
  * </p>
+ * <p>
+ * The <em>SnakeYaml</em> utility is used to parse YAML files and create new 
+ * structure class instances containing the parameters specified in the file.
+ * </p>
  * 
  *
  * @author Christopher K. Allen
@@ -43,12 +47,8 @@ public final class YamlLoader {
     
     /**
      * <p>
-     * Loads (configuration) parameters from the given input file and loads them into
-     * a class structure of the given type.
-     * </p>
-     * <p>
-     * The <em>SnakeYaml</em> utiliy is used to parse and the YAML file and create the new 
-     * structure class containing the parameters specified in the file.
+     * Loads (configuration) parameters from the given input YAML file and loads them into
+     * a structure class supporting the YAML file format.
      * </p>
      * <p>
      * If an error occurs during YAML parsing either an error message is sent to a log file if
@@ -56,15 +56,15 @@ public final class YamlLoader {
      * error messages to <code>sterr</code> then crashes.
      * </p>
      * 
-     * @param   <Struct>    The structure type of the accepting the YAML document
+     * @param   <Struct>    type of the structure class support the YAML document format
      * 
-     * @param   strFileYml  file path to the YAML file containing parameters
+     * @param   strFileYml  file path to the YAML document containing configuration parameters
      * @param   clsStruct    class type of the structure class to be created
      * 
-     * @return  a new <code>Struct</code> object containing the contents of the YAML file 
+     * @return  a new <code>Struct</code> instance containing the contents of the YAML file 
      * 
      * @throws FileNotFoundException the given file could not be found
-     * @throws SecurityException the file could not be read
+     * @throws SecurityException the file could not be read - bad access
      */
     public static <Struct extends Object> Struct load(String strFileYml, Class<Struct> clsStruct) throws FileNotFoundException, SecurityException {
         
@@ -80,12 +80,25 @@ public final class YamlLoader {
     }
     
     /**
-     * @param <Struct>
-     * @param fileYaml
-     * @param clsStruct
-     * @return
-     * @throws FileNotFoundException
-     * @throws SecurityException
+     * <p>
+     * Loads (configuration) parameters from the given input YAML file and loads them into
+     * a structure class supporting the YAML file format.
+     * </p>
+     * <p>
+     * If an error occurs during YAML parsing either an error message is sent to a log file if
+     * the properties file cannot be found, or <em>SnakeYaml</em> sends
+     * error messages to <code>sterr</code> then crashes.
+     * </p>
+     * 
+     * @param   <Struct>    type of the structure class support the YAML document format
+     *
+     * @param   fileYaml    file instance identifying the target YAML document
+     * @param   clsStruct   class type of the structure class to be created
+     * 
+     * @return  a new <code>Struct</code> instance containing the contents of the YAML file
+     *  
+     * @throws FileNotFoundException the given file does not exist
+     * @throws SecurityException the file could not be read - bad access
      */
     public static <Struct extends Object> Struct load(File fileYaml, Class<Struct> clsStruct) throws FileNotFoundException, SecurityException {
 
@@ -95,168 +108,173 @@ public final class YamlLoader {
         return objParams;
     }
     
-    /**
-     * <p>
-     * Overrides the default property values in the <em>application.yml</em> file
-     * with any environment variables that are defined.  It is assumed the argument is
-     * the <code>AppProperties</code> instance which has already been loaded from the
-     * <em>application.yml</em> configuration file.
-     * <h2>NOTE:</h2>
-     * This is a recursive function so the method signature must be of type
-     * <code>Object</code> to function correctly.  However, the argument of initial invocation
-     * is expected to be of type <code>AppProperties</code>. 
-     * </p>
-     * 
-     * @param   <Struct>    The structure type of the accepting the YAML document
-     * 
-     * @param objProps  the <code>AppProperties</code> instance to be overridden
-     * 
-     * @return <code>true</code> if at least one parameter was overridden, <code>false</code> otherwise
-     * 
-     * @throws IllegalArgumentException encountered a null argument during recursion
-     * @throws IllegalAccessException unable to get a structure field object (java.lang.reflect.Field#get)
-     */
-    public static <T extends Object> boolean override(T objProps) throws IllegalArgumentException, IllegalAccessException {
-        boolean bolResult = false;
-        
-        if ( Objects.isNull(objProps) )
-            throw new IllegalArgumentException("Properties object is null");
-        
-        Class<?> clsProps = objProps.getClass();
-        
-        // Is the class marked for override (or recursive included class)?
-//        if (! (  clsProps.isAnnotationPresent(AEnvOverride.class) 
-//              || clsProps.isAnnotationPresent(AEnvOverride.Struct.class)
-//              || clsProps.isAnnotationPresent(AEnvOverride.Field.class) ) 
-//            ) 
-//            return false;
+//    /**
+//     * <p>
+//     * Overrides the default property values in the <em>application.yml</em> file
+//     * with any environment variables that are defined.  It is assumed the argument is
+//     * the <code>AppProperties</code> instance which has already been loaded from the
+//     * <em>application.yml</em> configuration file.
+//     * <h2>NOTE:</h2>
+//     * This is a recursive function so the method signature must be of type
+//     * <code>Object</code> to function correctly.  However, the argument of initial invocation
+//     * is expected to be of type <code>AppProperties</code>. 
+//     * </p>
+//     * 
+//     * @param   <Struct>    The structure type of the accepting the YAML document
+//     * 
+//     * @param objProps  the <code>AppProperties</code> instance to be overridden
+//     * 
+//     * @return <code>true</code> if at least one parameter was overridden, <code>false</code> otherwise
+//     * 
+//     * @throws IllegalArgumentException encountered a null argument during recursion
+//     * @throws IllegalAccessException unable to get a structure field object (java.lang.reflect.Field#get)
+//     */
+//    public static <Struct extends Object> boolean override(Struct objProps) throws IllegalArgumentException, IllegalAccessException {
+//        boolean bolResult = false;
+//        
+//        if ( Objects.isNull(objProps) )
+//            throw new IllegalArgumentException("Properties object is null");
+//        
+//        Class<?> clsProps = objProps.getClass();
+//        
+//        // Is the class marked for override (or recursive included class)?
+////        if (! (  clsProps.isAnnotationPresent(AEnvOverride.class) 
+////              || clsProps.isAnnotationPresent(AEnvOverride.Struct.class)
+////              || clsProps.isAnnotationPresent(AEnvOverride.Field.class) ) 
+////            ) 
+////            return false;
+//
+//        // For every field in the class
+//        for (Field fld : clsProps.getDeclaredFields()) {
+//            
+//            // Is field a structure containing a field to be overridden
+//            if (fld.isAnnotationPresent(AEnvOverride.Struct.class)) {
+//                fld.setAccessible(true);
+//                Object objFld = fld.get(objProps);
+//                
+//                // Recursively override the underlying field 
+//                if (YamlLoader.override(objFld))
+//                    bolResult = true;
+//                
+//            }
+//            
+//            // Can the field be overridden?
+//            if (fld.isAnnotationPresent(AEnvOverride.Field.class)) {
+//                AEnvOverride.Field annFld = fld.getAnnotation(AEnvOverride.Field.class);
+//                if ( !annFld.env().isBlank() ) {
+//                    String strNewVal = System.getenv(annFld.env());
+//                   
+//                    if (strNewVal == null || strNewVal.isBlank() || strNewVal.isEmpty())
+//                        continue;
+//
+//                    fld.setAccessible(true);
+//                    
+//                    // Parse by type
+//                    if (fld.getType().equals(java.lang.String.class)) {
+//                        fld.set(objProps, strNewVal);
+//                    
+//                        bolResult = true;
+//                    }
+//                    if (fld.getType().equals(Boolean.class)) {
+//                        Boolean bolNewVal = Boolean.parseBoolean(strNewVal);
+//                        fld.set(objProps, bolNewVal);
+//                        
+//                        bolResult = true;
+//                    }
+//                    if (fld.getType().equals(Integer.class)) {
+//                        Integer intNewVal = Integer.parseInt(strNewVal);
+//                        fld.set(objProps, intNewVal);
+//                        
+//                        bolResult = true;
+//                    }
+//                    if (fld.getType().equals(Long.class)) {
+//                        Long    lngNewVal = Long.parseLong(strNewVal);
+//                        fld.set(objProps, lngNewVal);
+//                        
+//                        bolResult = true;
+//                    }
+//                    if (fld.getType().equals(Float.class)) {
+//                        Float   fltNewVal = Float.parseFloat(strNewVal);
+//                        fld.set(objProps, fltNewVal);
+//                        
+//                        bolResult = true;
+//                    }
+//                    if (fld.getType().equals(Double.class)) {
+//                        Double  dblNewVal = Double.parseDouble(strNewVal);
+//                        fld.set(objProps, dblNewVal);
+//                        
+//                        bolResult = true;
+//                    }
+//                }
+//            }
+//            
+//        }        
+//        
+//        return bolResult;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Parses the properties in the <code>AppProperties</code> for the 
+//     * <code>AOverrideCapable</code> annotations to determine the supported environment
+//     * variables for the application.  The application then returns a list of these
+//     * variables which it found (along with the current values, the properties object,
+//     * etc. as an <code>EnvVariable</code> records).
+//     * It is assumed the argument is
+//     * the <code>AppProperties</code> instance which has already been loaded from the
+//     * <em>application.yml</em> configuration file.  
+//     * <h2>NOTE:</h2>
+//     * This is a recursive function so the method signature must be of type
+//     * <code>Object</code> to function correctly.  However, the argument of initial invocation
+//     * is expected to be of type <code>AppProperties</code>. 
+//     * </p>
+//     * 
+//     * @param objProps  the <code>AppProperties</code> instance to be overridden
+//     * 
+//     * @return a list of environment variables (records) found when parsing the argument 
+//     * 
+//     * @throws IllegalArgumentException encountered a null argument during recursion
+//     * @throws IllegAccessException unable to get a structure field object (java.lang.reflect.Field#get)
+//     */
+//    public static List<EnvVariable> parse(Object objProps) throws IllegalArgumentException, IllegalAccessException {
+//        
+//        if ( Objects.isNull(objProps) )
+//            throw new IllegalArgumentException("Properties object is null");
+//        
+//        List<EnvVariable> lstVars = new LinkedList<EnvVariable>();
+//
+//        Class<?> clsProps = objProps.getClass();
+//
+//        for (Field fld : clsProps.getDeclaredFields()) {
+//            if (fld.isAnnotationPresent(AEnvOverride.Struct.class)) {
+//                fld.setAccessible(true);
+//                Object objFld = fld.get(objProps);
+//                
+//                lstVars.addAll( YamlLoader.parse(objFld) );
+//            }
+//            
+//            if (fld.isAnnotationPresent(AEnvOverride.Field.class)) {
+//                AEnvOverride.Field annFld = fld.getAnnotation(AEnvOverride.Field.class);
+//                if ( !annFld.env().isBlank() ) {
+//                    String strVarNm  = annFld.env();
+//                    String strVarVal = System.getenv(annFld.env());
+//                    
+//                    EnvVariable var = new EnvVariable(strVarNm, strVarVal, fld, objProps);
+//                   
+//                    lstVars.add(var);
+//                }
+//            }
+//            
+//        }        
+//     
+//        return lstVars;
+//    }
 
-        // For every field in the class
-        for (Field fld : clsProps.getDeclaredFields()) {
-            
-            // Is field a structure containing a field to be overridden
-            if (fld.isAnnotationPresent(AEnvOverride.Struct.class)) {
-                fld.setAccessible(true);
-                Object objFld = fld.get(objProps);
-                
-                // Recursively override the underlying field 
-                if (YamlLoader.override(objFld))
-                    bolResult = true;
-                
-            }
-            
-            // Can the field be overridden?
-            if (fld.isAnnotationPresent(AEnvOverride.Field.class)) {
-                AEnvOverride.Field annFld = fld.getAnnotation(AEnvOverride.Field.class);
-                if ( !annFld.env().isBlank() ) {
-                    String strNewVal = System.getenv(annFld.env());
-                   
-                    if (strNewVal == null || strNewVal.isBlank() || strNewVal.isEmpty())
-                        continue;
-
-                    fld.setAccessible(true);
-                    
-                    // Parse by type
-                    if (fld.getType().equals(java.lang.String.class)) {
-                        fld.set(objProps, strNewVal);
-                    
-                        bolResult = true;
-                    }
-                    if (fld.getType().equals(Boolean.class)) {
-                        Boolean bolNewVal = Boolean.parseBoolean(strNewVal);
-                        fld.set(objProps, bolNewVal);
-                        
-                        bolResult = true;
-                    }
-                    if (fld.getType().equals(Integer.class)) {
-                        Integer intNewVal = Integer.parseInt(strNewVal);
-                        fld.set(objProps, intNewVal);
-                        
-                        bolResult = true;
-                    }
-                    if (fld.getType().equals(Long.class)) {
-                        Long    lngNewVal = Long.parseLong(strNewVal);
-                        fld.set(objProps, lngNewVal);
-                        
-                        bolResult = true;
-                    }
-                    if (fld.getType().equals(Float.class)) {
-                        Float   fltNewVal = Float.parseFloat(strNewVal);
-                        fld.set(objProps, fltNewVal);
-                        
-                        bolResult = true;
-                    }
-                    if (fld.getType().equals(Double.class)) {
-                        Double  dblNewVal = Double.parseDouble(strNewVal);
-                        fld.set(objProps, dblNewVal);
-                        
-                        bolResult = true;
-                    }
-                }
-            }
-            
-        }        
-        
-        return bolResult;
-    }
     
-    /**
-     * <p>
-     * Parses the properties in the <code>AppProperties</code> for the 
-     * <code>AOverrideCapable</code> annotations to determine the supported environment
-     * variables for the application.  The application then returns a list of these
-     * variables which it found (along with the current values, the properties object,
-     * etc. as an <code>AppEnvVariable</code> records).
-     * It is assumed the argument is
-     * the <code>AppProperties</code> instance which has already been loaded from the
-     * <em>application.yml</em> configuration file.  
-     * <h2>NOTE:</h2>
-     * This is a recursive function so the method signature must be of type
-     * <code>Object</code> to function correctly.  However, the argument of initial invocation
-     * is expected to be of type <code>AppProperties</code>. 
-     * </p>
-     * 
-     * @param objProps  the <code>AppProperties</code> instance to be overridden
-     * 
-     * @return a list of environment variables (records) found when parsing the argument 
-     * 
-     * @throws IllegalArgumentException encountered a null argument during recursion
-     * @throws IllegAccessException unable to get a structure field object (java.lang.reflect.Field#get)
-     */
-    public static List<AppEnvVariable> parse(Object objProps) throws IllegalArgumentException, IllegalAccessException {
-        
-        if ( Objects.isNull(objProps) )
-            throw new IllegalArgumentException("Properties object is null");
-        
-        List<AppEnvVariable> lstVars = new LinkedList<AppEnvVariable>();
-
-        Class<?> clsProps = objProps.getClass();
-
-        for (Field fld : clsProps.getDeclaredFields()) {
-            if (fld.isAnnotationPresent(AEnvOverride.Struct.class)) {
-                fld.setAccessible(true);
-                Object objFld = fld.get(objProps);
-                
-                lstVars.addAll( YamlLoader.parse(objFld) );
-            }
-            
-            if (fld.isAnnotationPresent(AEnvOverride.Field.class)) {
-                AEnvOverride.Field annFld = fld.getAnnotation(AEnvOverride.Field.class);
-                if ( !annFld.env().isBlank() ) {
-                    String strVarNm  = annFld.env();
-                    String strVarVal = System.getenv(annFld.env());
-                    
-                    AppEnvVariable var = new AppEnvVariable(strVarNm, strVarVal, fld, objProps);
-                   
-                    lstVars.add(var);
-                }
-            }
-            
-        }        
-     
-        return lstVars;
-    }
-
+    //
+    // Support Methods
+    //
+    
     /**
      * <p>
      * Prevents construction of <code>YamlLoader</code> instances.

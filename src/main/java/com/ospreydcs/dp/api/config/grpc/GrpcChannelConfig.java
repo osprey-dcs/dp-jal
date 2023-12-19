@@ -288,6 +288,9 @@ public final class GrpcChannelConfig {
         if (!this.name.equals(cfg.name))
             return false;
         
+        if (!this.version.equals(cfg.version))
+            return false;
+        
         if (!this.channel.host.equals(cfg.channel.host))
             return false;
         
