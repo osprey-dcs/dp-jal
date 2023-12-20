@@ -35,6 +35,8 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 
 import org.junit.After;
@@ -65,7 +67,8 @@ public class GrpcChannelConfigTest {
     //
     
     /** YAML configuration file location */
-    public static final String      STR_CONFIG_FILE_1 = "src/test/resources/test-grpc-channel-1.yml";
+//    public static final String      STR_CONFIG_FILENAME_1 = "src/test/resources/test-grpc-channel-1.yml";
+    public static final String      STR_CONFIG_FILENAME_1 = "test-grpc-channel-1.yml";
     
     /** Comparison configuration records */
     public static GrpcChannelConfig   CFG_1 = createConfig1();
@@ -112,7 +115,7 @@ public class GrpcChannelConfigTest {
      */
     @Test
     public void testLoadString1() {
-        String      strFile = STR_CONFIG_FILE_1;
+        String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
             GrpcChannelConfig   cfgChan = YamlLoader.load(strFile, GrpcChannelConfig.class);
@@ -139,10 +142,11 @@ public class GrpcChannelConfigTest {
      */
     @Test
     public void testLoadFile1() {
-        String      strFile = STR_CONFIG_FILE_1;
-        File        fileCfg = new File(strFile);
+        String      strFile = STR_CONFIG_FILENAME_1;
+        URL         urlFile = this.getClass().getClassLoader().getResource(strFile);
         
         try {
+            File        fileCfg = new File(urlFile.toURI());
             GrpcChannelConfig   cfgChan = YamlLoader.load(fileCfg, GrpcChannelConfig.class);
             
 //            System.out.println("name = " + cfgChan.name);
@@ -157,6 +161,10 @@ public class GrpcChannelConfigTest {
         } catch (FileNotFoundException | SecurityException e) {
             fail("Exception thrown while loading " + strFile + ": " + e.getMessage());
             e.printStackTrace();
+            
+        } catch (URISyntaxException e) {
+            fail("URL failed to convert to URI - Testing error that should not occur.");
+            e.printStackTrace();
         }
         
     }
@@ -166,7 +174,7 @@ public class GrpcChannelConfigTest {
      */
     @Test
     public void testOverrideConfig1() {
-        String      strFile = STR_CONFIG_FILE_1;
+        String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
             GrpcChannelConfig   cfgChan = YamlLoader.load(strFile, GrpcChannelConfig.class);
@@ -225,7 +233,7 @@ public class GrpcChannelConfigTest {
      */
     @Test
     public void testToString1() {
-        String      strFile = STR_CONFIG_FILE_1;
+        String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
             GrpcChannelConfig   cfgChan = YamlLoader.load(strFile, GrpcChannelConfig.class);

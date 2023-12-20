@@ -16,10 +16,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -51,6 +47,11 @@ public final class YamlLoader {
      * a structure class supporting the YAML file format.
      * </p>
      * <p>
+     * This method accepts the file name as the argument.  It uses the Java class loader to search
+     * standard resources locations for the file so no path element should be used (maintains
+     * portability). 
+     * </p>
+     * <p>
      * If an error occurs during YAML parsing either an error message is sent to a log file if
      * the properties file cannot be found, or <em>SnakeYaml</em> sends
      * error messages to <code>sterr</code> then crashes.
@@ -58,23 +59,24 @@ public final class YamlLoader {
      * 
      * @param   <Struct>    type of the structure class support the YAML document format
      * 
-     * @param   strFileYml  file path to the YAML document containing configuration parameters
-     * @param   clsStruct    class type of the structure class to be created
+     * @param   strFileName file name of YAML document containing configuration parameters
+     * @param   clsStruct   class type of the structure class to be created
      * 
      * @return  a new <code>Struct</code> instance containing the contents of the YAML file 
      * 
      * @throws FileNotFoundException the given file could not be found
      * @throws SecurityException the file could not be read - bad access
      */
-    public static <Struct extends Object> Struct load(String strFileYml, Class<Struct> clsStruct) throws FileNotFoundException, SecurityException {
+    public static <Struct extends Object> Struct load(String strFileName, Class<Struct> clsStruct) throws FileNotFoundException, SecurityException {
         
         // SnakeYaml version 1.x.x
 //        Yaml ymlClient = new Yaml(new Constructor(clsProps));
 //        InputStream insProps = new FileInputStream(strFileYml);
 //        T cfgProps = ymlClient.load(insProps);
-    	
-    	InputStream	isProps = new FileInputStream(strFileYml);
-    	Struct objParams = YML_INSTANCE.loadAs(isProps, clsStruct);
+        
+        InputStream isCfg = YamlLoader.class.getClassLoader().getResourceAsStream(strFileName);
+//    	InputStream	isCfg = new FileInputStream(strFileYml);
+    	Struct objParams = YML_INSTANCE.loadAs(isCfg, clsStruct);
 
         return objParams;
     }

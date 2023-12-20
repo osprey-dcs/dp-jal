@@ -31,6 +31,8 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 
 import org.junit.After;
@@ -65,7 +67,7 @@ public class MongoDbConfigTest {
     //
     
     /** YAML configuration file location */
-    public static final String      STR_CONFIG_FILE_1 = "src/test/resources/test-mongodb-1.yml";
+    public static final String      STR_CONFIG_FILENAME_1 = "test-mongodb-1.yml";
     
     /** Comparison configuration records */
     public static MongoDbConfig     CFG_1 = createConfig1();
@@ -110,7 +112,7 @@ public class MongoDbConfigTest {
      */
     @Test
     public void testLoadString1() {
-        String      strFile = STR_CONFIG_FILE_1;
+        String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
             MongoDbConfig   cfgMongo = YamlLoader.load(strFile, MongoDbConfig.class);
@@ -130,10 +132,12 @@ public class MongoDbConfigTest {
      */
     @Test
     public void testLoadFile1() {
-        String      strFile = STR_CONFIG_FILE_1;
-        File        fileCfg = new File(strFile);
+        String      strFile = STR_CONFIG_FILENAME_1;
+        URL         urlFile = this.getClass().getClassLoader().getResource(strFile);
         
         try {
+            File        fileCfg = new File( urlFile.toURI() );
+            
             MongoDbConfig   cfgMongo = YamlLoader.load(fileCfg, MongoDbConfig.class);
             
             Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgMongo);
@@ -141,6 +145,10 @@ public class MongoDbConfigTest {
             
         } catch (FileNotFoundException | SecurityException e) {
             fail("Exception thrown while loading " + strFile + ": " + e.getMessage());
+            e.printStackTrace();
+            
+        } catch (URISyntaxException e) {
+            fail("The URL failed to convert to an URI - Testing error that should not occur.");
             e.printStackTrace();
         }
         
@@ -151,7 +159,7 @@ public class MongoDbConfigTest {
      */
     @Test
     public void testOverrideConfig1() {
-        String      strFile = STR_CONFIG_FILE_1;
+        String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
             MongoDbConfig   cfgMongo = YamlLoader.load(strFile, MongoDbConfig.class);
@@ -210,7 +218,7 @@ public class MongoDbConfigTest {
      */
     @Test
     public void testToString() {
-        String      strFile = STR_CONFIG_FILE_1;
+        String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
             MongoDbConfig   cfgMongo = YamlLoader.load(strFile, MongoDbConfig.class);
