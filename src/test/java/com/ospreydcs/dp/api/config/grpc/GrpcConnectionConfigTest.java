@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	GrpcChannelConfigTest.java
+ * File:	GrpcConnectionConfigTest.java
  * Package: com.ospreydcs.dp.api.config.grpc
- * Type: 	GrpcChannelConfigTest
+ * Type: 	GrpcConnectionConfigTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -27,9 +27,9 @@
  */
 package com.ospreydcs.dp.api.config.grpc;
 
-import com.ospreydcs.dp.api.config.EnvOverrideUtility;
-import com.ospreydcs.dp.api.config.EnvVariable;
-import com.ospreydcs.dp.api.config.YamlLoader;
+import com.ospreydcs.dp.api.config.model.EnvOverrideUtility;
+import com.ospreydcs.dp.api.config.model.EnvVariable;
+import com.ospreydcs.dp.api.config.model.YamlLoader;
 
 import static org.junit.Assert.*;
 
@@ -38,6 +38,7 @@ import java.io.FileNotFoundException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -60,7 +61,7 @@ import org.junit.Test;
  * @since Dec 18, 2023
  *
  */
-public class GrpcChannelConfigTest {
+public class GrpcConnectionConfigTest {
     
     //
     // Class Constants
@@ -68,11 +69,11 @@ public class GrpcChannelConfigTest {
     
     /** YAML configuration file location */
 //    public static final String      STR_CONFIG_FILENAME_1 = "src/test/resources/test-grpc-channel-1.yml";
-    public static final String      STR_CONFIG_FILENAME_1 = "test-grpc-channel-1.yml";
+    public static final String      STR_CONFIG_FILENAME_1 = "test-grpc-connection-1.yml";
     
     /** Comparison configuration records */
-    public static GrpcChannelConfig   CFG_1 = createConfig1();
-    public static GrpcChannelConfig   CFG_ENV = createConfigEnv();
+    public static GrpcConnectionConfig   CFG_1 = createConfig1();
+    public static GrpcConnectionConfig   CFG_ENV = createConfigEnv();
 
     static {
     }
@@ -111,22 +112,15 @@ public class GrpcChannelConfigTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.YamlLoader#load(String, Class)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.YamlLoader#load(String, Class)}.
      */
     @Test
     public void testLoadString1() {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            GrpcChannelConfig   cfgChan = YamlLoader.load(strFile, GrpcChannelConfig.class);
+            GrpcConnectionConfig   cfgChan = YamlLoader.load(strFile, GrpcConnectionConfig.class);
             
-//            System.out.println("name = " + cfgChan.name);
-//            System.out.println("version = " + cfgChan.version);
-//            System.out.println("description = " + cfgChan.description);
-//            System.out.println("supplement = " + cfgChan.supplement);
-//            
-//            
-//            System.out.println(cfgChan.toString());
             Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgChan);
             
             
@@ -138,7 +132,7 @@ public class GrpcChannelConfigTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.YamlLoader#load(File, Class)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.YamlLoader#load(File, Class)}.
      */
     @Test
     public void testLoadFile1() {
@@ -147,14 +141,8 @@ public class GrpcChannelConfigTest {
         
         try {
             File        fileCfg = new File(urlFile.toURI());
-            GrpcChannelConfig   cfgChan = YamlLoader.load(fileCfg, GrpcChannelConfig.class);
+            GrpcConnectionConfig   cfgChan = YamlLoader.load(fileCfg, GrpcConnectionConfig.class);
             
-//            System.out.println("name = " + cfgChan.name);
-//            System.out.println("description = " + cfgChan.description);
-//            System.out.println("supplement = " + cfgChan.supplement);
-//            
-//            
-//            System.out.println(cfgChan.toString());
             Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgChan);
             
             
@@ -170,14 +158,14 @@ public class GrpcChannelConfigTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.EnvOverrideUtility#override(Object)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.EnvOverrideUtility#override(Object)}.
      */
     @Test
     public void testOverrideConfig1() {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            GrpcChannelConfig   cfgChan = YamlLoader.load(strFile, GrpcChannelConfig.class);
+            GrpcConnectionConfig   cfgChan = YamlLoader.load(strFile, GrpcConnectionConfig.class);
 
             boolean bolResult = EnvOverrideUtility.override(cfgChan);
             
@@ -193,18 +181,18 @@ public class GrpcChannelConfigTest {
             e.printStackTrace();
             
         } catch (IllegalArgumentException e) {
-            fail("There was and attempt to override with invalid argument in GrpcChannelConfig.");
+            fail("There was and attempt to override with invalid argument in GrpcConnectionConfig.");
             e.printStackTrace();
             
         } catch (IllegalAccessException e) {
-            fail("The GrpcChannelConfig instance refused access to its fields.");
+            fail("The GrpcConnectionConfig instance refused access to its fields.");
             e.printStackTrace();
         }
         
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.EnvOverrideUtility#parse(Object)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.EnvOverrideUtility#parse(Object)}.
      */
     @Test
     public void testParseConfig1() {
@@ -229,29 +217,42 @@ public class GrpcChannelConfigTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.grpc.GrpcChannelConfig#toString()}.
+     * Test method for {@link com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig#toString()}.
      */
     @Test
     public void testToString1() {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            GrpcChannelConfig   cfgChan = YamlLoader.load(strFile, GrpcChannelConfig.class);
+            GrpcConnectionConfig   cfgChan = YamlLoader.load(strFile, GrpcConnectionConfig.class);
             
             System.out.println();
-            System.out.println("GrpcChannelConfig Parameters:");
+            System.out.println("GrpcConnectionConfig Parameters:");
             System.out.println("name = " + cfgChan.name);
             System.out.println("version = " + cfgChan.version);
             System.out.println("description = " + cfgChan.description);
             System.out.println("supplement = " + cfgChan.supplement);
             
 
-            System.out.println("GrpcChannelConfig#toString() for " + strFile);
+            System.out.println("GrpcConnectionConfig#toString() for " + strFile);
             System.out.println(cfgChan.toString());
+            System.out.println();
+            
+            EnvOverrideUtility.override(cfgChan);
+            System.out.println("GrpcConnectionConfig#toString() after envionment override:");
+            System.out.println(cfgChan);
             
             
         } catch (FileNotFoundException | SecurityException e) {
             fail("Exception thrown while loading " + strFile + ": " + e.getMessage());
+            e.printStackTrace();
+            
+        } catch (IllegalArgumentException e) {
+            fail("Unable to override configuration: " + e.getMessage());
+            e.printStackTrace();
+            
+        } catch (IllegalAccessException e) {
+            fail("Unable to override configuration: " + e.getMessage());
             e.printStackTrace();
         }
         
@@ -264,29 +265,45 @@ public class GrpcChannelConfigTest {
     //
     
     /**
-     * Creates and populates a <code>GrpcChannelConfig</code> structure equivalent to the
+     * Creates and populates a <code>GrpcConnectionConfig</code> structure equivalent to the
      * first test configuration.
      * 
      * @return new, populated test configuration
      */
-    private static GrpcChannelConfig    createConfig1() {
+    private static GrpcConnectionConfig    createConfig1() {
         
-        GrpcChannelConfig.Channel.Host host = new GrpcChannelConfig.Channel.Host();
+        GrpcConnectionConfig.Timeout timeout = new GrpcConnectionConfig.Timeout();
+        timeout.active = true;
+        timeout.limit = 5L;
+        timeout.unit = TimeUnit.SECONDS;
+        
+        GrpcConnectionConfig.Channel.Host host = new GrpcConnectionConfig.Channel.Host();
         host.url = "localhost";
         host.port = 50051;
         
-        GrpcChannelConfig.Channel.Grpc grpc = new GrpcChannelConfig.Channel.Grpc();
-        grpc.messageSize = 4194304L;
-        grpc.timeout = 60;
+        GrpcConnectionConfig.Channel.TLS tls = new GrpcConnectionConfig.Channel.TLS();
+        tls.active = true;
+        tls.defaultTls = true;
+        tls.filepaths = new GrpcConnectionConfig.Channel.TLS.FilePaths();
+        tls.filepaths.trustedCerts = new String();
+        tls.filepaths.clientCerts = new String();
+        tls.filepaths.clientKey = new String();
+        
+        GrpcConnectionConfig.Channel.Grpc grpc = new GrpcConnectionConfig.Channel.Grpc();
+        grpc.messageSizeMax = 4194304;
+        grpc.timeoutLimit = 5L;
+        grpc.timeoutUnit = TimeUnit.SECONDS;
         grpc.usePlainText = false;
-        grpc.keepAliveWithoutCalls = true;
+        grpc.keepAliveWithoutCalls = false;
         grpc.gzip = false;
         
-        GrpcChannelConfig.Channel chan = new GrpcChannelConfig.Channel();
+        GrpcConnectionConfig.Channel chan = new GrpcConnectionConfig.Channel();
         chan.host = host;
+        chan.tls = tls;
         chan.grpc = grpc;
 
-        GrpcChannelConfig   cfg = new GrpcChannelConfig();
+        GrpcConnectionConfig   cfg = new GrpcConnectionConfig();
+        cfg.timeout = timeout;
         cfg.channel = chan;
         cfg.name = "test-grpc-channel-1";
         cfg.version = "0.0.0";
@@ -297,16 +314,25 @@ public class GrpcChannelConfigTest {
     }
     
     /**
-     * Creates and populates a <code>GrpcChannelConfig</code> structure that is equivalent
+     * Creates and populates a <code>GrpcConnectionConfig</code> structure that is equivalent
      * to the first test case after being overridden by environment variables.
      * @return
      */
-    private static GrpcChannelConfig    createConfigEnv() {
+    private static GrpcConnectionConfig    createConfigEnv() {
         
-        GrpcChannelConfig   cfg = createConfig1();
+        GrpcConnectionConfig   cfg = createConfig1();
         
-        cfg.channel.grpc.messageSize = 16777216L;
-        cfg.channel.grpc.timeout = 5;
+        cfg.timeout.limit = 60L;
+        cfg.timeout.unit = TimeUnit.SECONDS;
+        
+        cfg.channel.tls.defaultTls = false;
+        cfg.channel.tls.filepaths.trustedCerts = "trusted sources file";
+        cfg.channel.tls.filepaths.clientCerts = "client certificates file";
+        cfg.channel.tls.filepaths.clientKey = "private key file";
+        
+        cfg.channel.grpc.messageSizeMax = 16777216;
+        cfg.channel.grpc.timeoutLimit = 100L;
+        cfg.channel.grpc.timeoutUnit = TimeUnit.MILLISECONDS;
         cfg.channel.grpc.usePlainText = true;
         cfg.channel.grpc.keepAliveWithoutCalls = false;
         cfg.channel.grpc.gzip = true;

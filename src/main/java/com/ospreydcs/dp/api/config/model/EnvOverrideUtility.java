@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.config;
+package com.ospreydcs.dp.api.config.model;
 
 import java.lang.reflect.Field;
 import java.util.LinkedList;
@@ -178,6 +178,13 @@ public final class EnvOverrideUtility {
                     fld.setAccessible(true);
                     
                     // Parse by type
+                    if (fld.getType().isEnum()) {
+                        @SuppressWarnings({ "unchecked", "rawtypes" })
+                        Enum<?> enmNewVal = Enum.valueOf((Class<Enum>)fld.getType(), strNewVal);
+                        fld.set(objProps, enmNewVal);
+                        
+                        bolResult = true;
+                    }
                     if (fld.getType().equals(java.lang.String.class)) {
                         fld.set(objProps, strNewVal);
                     
@@ -220,5 +227,10 @@ public final class EnvOverrideUtility {
         
         return bolResult;
     }
+    
+    
+    //
+    // Support Methods
+    //
     
 }

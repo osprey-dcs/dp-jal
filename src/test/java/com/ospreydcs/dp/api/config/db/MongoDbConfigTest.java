@@ -42,9 +42,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.config.EnvOverrideUtility;
-import com.ospreydcs.dp.api.config.EnvVariable;
-import com.ospreydcs.dp.api.config.YamlLoader;
+import com.ospreydcs.dp.api.config.model.EnvOverrideUtility;
+import com.ospreydcs.dp.api.config.model.EnvVariable;
+import com.ospreydcs.dp.api.config.model.YamlLoader;
 
 /**
  * <p>
@@ -108,7 +108,7 @@ public class MongoDbConfigTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.YamlLoader#load(String, Class)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.YamlLoader#load(String, Class)}.
      */
     @Test
     public void testLoadString1() {
@@ -128,7 +128,7 @@ public class MongoDbConfigTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.YamlLoader#load(File, Class)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.YamlLoader#load(File, Class)}.
      */
     @Test
     public void testLoadFile1() {
@@ -155,7 +155,7 @@ public class MongoDbConfigTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.EnvOverrideUtility#override(Object)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.EnvOverrideUtility#override(Object)}.
      */
     @Test
     public void testOverrideConfig1() {
@@ -178,18 +178,18 @@ public class MongoDbConfigTest {
             e.printStackTrace();
             
         } catch (IllegalArgumentException e) {
-            fail("There was and attempt to override with invalid argument in GrpcChannelConfig.");
+            fail("There was and attempt to override with invalid argument in MongoDbConfig.");
             e.printStackTrace();
             
         } catch (IllegalAccessException e) {
-            fail("The GrpcChannelConfig instance refused access to its fields.");
+            fail("The GrpcConnectionConfig instance refused access to its fields.");
             e.printStackTrace();
         }
         
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.EnvOverrideUtility#parse(Object)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.EnvOverrideUtility#parse(Object)}.
      */
     @Test
     public void testParseConfig1() {

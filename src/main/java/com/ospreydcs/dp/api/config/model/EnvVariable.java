@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.config;
+package com.ospreydcs.dp.api.config.model;
 
 import java.lang.reflect.Field;
 

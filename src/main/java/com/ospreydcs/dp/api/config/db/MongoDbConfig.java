@@ -29,7 +29,7 @@ package com.ospreydcs.dp.api.config.db;
 
 import org.yaml.snakeyaml.Yaml;
 
-import com.ospreydcs.dp.api.config.AEnvOverride;
+import com.ospreydcs.dp.api.config.model.AEnvOverride;
 
 /**
  * <p>

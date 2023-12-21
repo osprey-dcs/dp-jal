@@ -10,7 +10,7 @@
  * TODO:
  * - TODO
  */
-package com.ospreydcs.dp.api.config;
+package com.ospreydcs.dp.api.config.model;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
