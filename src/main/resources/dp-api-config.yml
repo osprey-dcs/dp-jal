@@ -1,0 +1,83 @@
+#
+# Project: dp-api-common
+# File:    dp-api-config.yml
+# Type:    YAML
+#
+# Default configuration parameters for the Data Platform API library common resources.
+#
+# This parameter set should be modified according to the Data Platform site installation
+# and the platform where the API libraies are installed.
+#
+# Author: Christopher K. Allen
+# Since: December 21, 2023
+#
+#
+# NOTES:
+#
+# - Many configuration parameters can be overridden using system environment variables.  
+#   See the adjacent parameter comments for environment variable names.
+#
+# - In the current implementation service override environment variables affect ALL SERVICES.
+#
+
+archive:
+   inception: 2023-09-01T00:00:00.0Z # ealiest archive timestamp   : DP_ARCHIVE_INCEPTION 
+ 
+services:
+   ingestion:
+      name: DP Ingestion Service
+      version: 1.0.0
+      description: Data Platform Ingestion Service default connection parameters
+      supplement: No supplemental parameters 
+      timeout:      # General connection timeout properties (e.g., used in service shutdown)
+         active: true                # apply timeout condition   : DP_API_CONNECTION_TIMEOUT_ACTIVE
+         limit: 30                   # timeout limit             : DP_API_CONNECTION_TIMEOUT_LIMIT
+         unit: SECONDS               # java.concurrent.TimeUnit  : DP_API_CONNECTION_TIMEOUT_UNIT
+      channel:      # gRPC Channel configuration         
+         host:             # host server location 
+            url: localhost              # host server URL
+            port: 50051                 # server port address
+         tls:              # HTTP2 Transport Layer Security parameters
+            active: true                # use TLS security          : DP_API_CONNECTION_TLS_ACTIVE
+            defaultTls: true            # use default TLS operation : DP_API_CONNECTION_TLS_DEFAULT
+            filepaths:     # file path locations for TLS certificates and keys (only if defaultTls == false)
+               trustedCerts:            # trusted certs collection  : DP_API_CONNECTION_TLS_FILE_TRUSTED_CERTS
+               clientCerts:             # client certificates chain : DP_API_CONNECTION_TLS_FILE_CLIENT_CERTS
+               clientKey:               # client private key        : DP_API_CONNECTION_TLS_FILE_CLIENT_KEY
+         grpc:             # gRPC parameters
+            timeoutLimit: 20            # channel operation timeout    : DP_API_GRPC_CHANNEL_TIMEOUT_LIMIT
+            timeoutUnit: SECONDS        # timeout units                : DP_API_GRPC_CHANNEL_TIMEOUT_UNIT
+            messageSizeMax: 4194304     # (bytes) max message size     : DP_API_GRPC_MESSAGE_SIZE_MAX
+            usePlainText: false         # plain text transmission      : DP_API_GRPC_XMIT_PLAIN_TEXT   
+            keepAliveWithoutCalls: false # channel never idle          : DP_API_GRPC_CHANNEL_KEEP_ALIVE
+            gzip: false                 # use gzip compression         : DP_API_GRPC_COMPRESS_GZIP
+    
+   query:
+      name: DP Query Service
+      version: 1.0.0
+      description: Data Platform Query Service default connection parameters
+      supplement: No supplemental parameters 
+      timeout:      # General connection timeout properties (e.g., used in service shutdown)
+         active: true                # apply timeout condition   : DP_API_CONNECTION_TIMEOUT_ACTIVE
+         limit: 30                   # timeout limit             : DP_API_CONNECTION_TIMEOUT_LIMIT
+         unit: SECONDS               # java.concurrent.TimeUnit  : DP_API_CONNECTION_TIMEOUT_UNIT
+      channel:      # gRPC Channel configuration         
+         host:             # host server location 
+            url: localhost              # host server URL
+            port: 50052                 # server port address
+         tls:              # HTTP2 Transport Layer Security parameters
+            active: true                # use TLS security          : DP_API_CONNECTION_TLS_ACTIVE
+            defaultTls: true            # use default TLS operation : DP_API_CONNECTION_TLS_DEFAULT
+            filepaths:     # file path locations for TLS certificates and keys (only if defaultTls == false)
+               trustedCerts:            # trusted certs collection  : DP_API_CONNECTION_TLS_FILE_TRUSTED_CERTS
+               clientCerts:             # client certificates chain : DP_API_CONNECTION_TLS_FILE_CLIENT_CERTS
+               clientKey:               # client private key        : DP_API_CONNECTION_TLS_FILE_CLIENT_KEY
+         grpc:             # gRPC parameters
+            timeoutLimit: 20            # channel operation timeout    : DP_API_GRPC_CHANNEL_TIMEOUT_LIMIT
+            timeoutUnit: SECONDS        # timeout units                : DP_API_GRPC_CHANNEL_TIMEOUT_UNIT
+            messageSizeMax: 4194304     # (bytes) max message size     : DP_API_GRPC_MESSAGE_SIZE_MAX
+            usePlainText: false         # plain text transmission      : DP_API_GRPC_XMIT_PLAIN_TEXT   
+            keepAliveWithoutCalls: false # channel never idle          : DP_API_GRPC_CHANNEL_KEEP_ALIVE
+            gzip: false                 # use gzip compression         : DP_API_GRPC_COMPRESS_GZIP
+    
+   
