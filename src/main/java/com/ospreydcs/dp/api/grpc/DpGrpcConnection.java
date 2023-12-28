@@ -31,6 +31,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.grpc.ManagedChannel;
 
 /**
@@ -84,11 +87,22 @@ public class DpGrpcConnection<
 
     /** Method name within <code>Service</code> class for creating new asynchronous, non-blocking communications stubs */
     public static final String STR_MTHD_NEW_STUB = "newStub";
+    
+    
+    //
+    // Class Resources
+    //
+    
+    /** The general event logger */
+    private static final Logger LOGGER = LogManager.getLogger();
 
     
     //
     // Connection Resources
     //
+    
+//    /** The class type of the gRPC service service being supported */
+//    private <Service> final Class<Service>    clsService;
     
     /** The single gRPC data channel supporting all communications stubs */
     private final ManagedChannel    chnGprc;
@@ -136,6 +150,8 @@ public class DpGrpcConnection<
         this.stubSync = this.newSyncStub(chnGprc, clsService);
         this.stubFuture = this.newFutureStub(chnGrpc, clsService);
         this.stubAsync = this.newAsyncStub(chnGrpc, clsService);
+        
+        LOGGER.info("Created new connection {} for gRPC service {}", this.getClass().getName(), clsService.getName());
     }
 
     /**
@@ -161,6 +177,8 @@ public class DpGrpcConnection<
         this.stubSync = stubSync;
         this.stubFuture = stubFuture;
         this.stubAsync = stubAsync;
+        
+        LOGGER.info("Created new connection {} for gRPC unknown service", this.getClass().getName());
     }
     
     
@@ -221,7 +239,8 @@ public class DpGrpcConnection<
 //        
 //        if (!bolShutdown) 
 //            return this.shutdownNow();
-//        
+//     
+        LOGGER.info("Soft shutdown initiated for connection {}", this.getClass().getName());
         return true;
     }
     
@@ -254,6 +273,7 @@ public class DpGrpcConnection<
         
         this.chnGprc.shutdownNow();
         
+        LOGGER.info("Hard shutdown initiated for connection {}", this.getClass().getName());
         return true;
     }
     
