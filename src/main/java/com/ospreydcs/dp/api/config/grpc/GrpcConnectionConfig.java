@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.yaml.snakeyaml.Yaml;
 
-import com.ospreydcs.dp.api.config.model.AEnvOverride;
+import com.ospreydcs.dp.api.config.model.ACfgOverride;
 
 /**
  * <p>
@@ -46,7 +46,7 @@ import com.ospreydcs.dp.api.config.model.AEnvOverride;
  * @since Dec 18, 2023
  *
  */
-@AEnvOverride
+@ACfgOverride
 public final class GrpcConnectionConfig {
     
     /** Optional configuration name */
@@ -62,11 +62,11 @@ public final class GrpcConnectionConfig {
     public String   supplement;
     
     /** Required Channel parameters */
-    @AEnvOverride.Struct
+    @ACfgOverride.Struct
     public Channel  channel;
 
     /** General timeout properties */
-    @AEnvOverride.Struct
+    @ACfgOverride.Struct
     public Timeout  timeout;
     
     
@@ -77,15 +77,15 @@ public final class GrpcConnectionConfig {
     public static final class Timeout {
         
         /** Is timeout active */
-        @AEnvOverride.Field(env="DP_API_CONNECTION_TIMEOUT_ACTIVE")
+        @ACfgOverride.Field(name="DP_API_CONNECTION_TIMEOUT_ACTIVE")
         public Boolean      active;
         
         /** Timeout limit */
-        @AEnvOverride.Field(env="DP_API_CONNECTION_TIMEOUT_LIMIT")
+        @ACfgOverride.Field(name="DP_API_CONNECTION_TIMEOUT_LIMIT")
         public Long         limit;
         
         /** Units for the timeout limit */
-        @AEnvOverride.Field(env="DP_API_CONNECTION_TIMEOUT_UNIT")
+        @ACfgOverride.Field(name="DP_API_CONNECTION_TIMEOUT_UNIT")
         public TimeUnit     unit;
 
         /**
@@ -120,11 +120,11 @@ public final class GrpcConnectionConfig {
         public Host     host;
         
         /** TLS security parameters */
-        @AEnvOverride.Struct
+        @ACfgOverride.Struct
         public TLS      tls;
         
         /** gRPC parameters for channel */
-        @AEnvOverride.Struct
+        @ACfgOverride.Struct
         public Grpc     grpc;
         
         /**
@@ -190,15 +190,15 @@ public final class GrpcConnectionConfig {
         public static final class TLS {
             
             /** Is TLS security used */
-            @AEnvOverride.Field(env="DP_API_CONNECTION_TLS_ACTIVE")
+            @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_ACTIVE")
             public Boolean  active;
             
             /** Use default TLS security */
-            @AEnvOverride.Field(env="DP_API_CONNECTION_TLS_DEFAULT")
+            @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_DEFAULT")
             public Boolean  defaultTls;
             
             /** File path locations for TLS certificates and keys */
-            @AEnvOverride.Struct
+            @ACfgOverride.Struct
             public FilePaths    filepaths;
             
             /**
@@ -208,15 +208,15 @@ public final class GrpcConnectionConfig {
             public static final class FilePaths {
                 
                 /** Collection of all trusted sources */
-                @AEnvOverride.Field(env="DP_API_CONNECTION_TLS_FILE_TRUSTED_CERTS")
+                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_TRUSTED_CERTS")
                 public String   trustedCerts;
                 
                 /** Client certificates chain */
-                @AEnvOverride.Field(env="DP_API_CONNECTION_TLS_FILE_CLIENT_CERTS")
+                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_CLIENT_CERTS")
                 public String   clientCerts;
                 
                 /** Client private key */
-                @AEnvOverride.Field(env="DP_API_CONNECTION_TLS_FILE_CLIENT_KEY")
+                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_CLIENT_KEY")
                 public String   clientKey;
 
                 /**
@@ -268,27 +268,27 @@ public final class GrpcConnectionConfig {
         public static final class Grpc {
 
             /** Timeout limit used for connection establishment */
-            @AEnvOverride.Field(env="DP_API_GRPC_CHANNEL_TIMEOUT_LIMIT")
+            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_TIMEOUT_LIMIT")
             public Long     timeoutLimit;
             
             /** Timeout limit units */
-            @AEnvOverride.Field(env="DP_API_GRPC_CHANNEL_TIMEOUT_UNIT")
+            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_TIMEOUT_UNIT")
             public TimeUnit timeoutUnit;
             
             /** Maximum gRPC (Protobuf) message size - must be multiple of 2 */
-            @AEnvOverride.Field(env="DP_API_GRPC_MESSAGE_SIZE_MAX")
+            @ACfgOverride.Field(name="DP_API_GRPC_MESSAGE_SIZE_MAX")
             public Integer  messageSizeMax;
             
             /** Transmit plain text (rather than binary) */
-            @AEnvOverride.Field(env="DP_API_GRPC_XMIT_PLAIN_TEXT")
+            @ACfgOverride.Field(name="DP_API_GRPC_XMIT_PLAIN_TEXT")
             public Boolean  usePlainText;
             
             /** Keep channel active even when not in use */
-            @AEnvOverride.Field(env="DP_API_GRPC_CHANNEL_KEEP_ALIVE")
+            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_KEEP_ALIVE")
             public Boolean  keepAliveWithoutCalls;
             
             /** Compress transmitted message with GZIP algorithm (not recommended) */
-            @AEnvOverride.Field(env="DP_API_GRPC_COMPRESS_GZIP")
+            @ACfgOverride.Field(name="DP_API_GRPC_COMPRESS_GZIP")
             public Boolean  gzip;
 
 //            /**

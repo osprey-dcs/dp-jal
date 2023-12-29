@@ -25,6 +25,7 @@
  * TODO:
  * - None
  */
+
 /**
  * <p>
  * Package containing configuration resources and utilities common to all Data Platform
@@ -41,11 +42,11 @@
  * structure classes.
  * </li>
  * <li>
- * <code>EnvOverrideUtility</code> - A utility class that overwrites the parameters within a configuration
+ * <code>CfgOverrideUtility</code> - A utility class that overwrites the parameters within a configuration
  * structure class with values obtained from the system environment.
  * </li>
  * <li>
- * <code>AEnvOverride</code> - Annotation class used for marking fields within a configuration structure class
+ * <code>ACfgOverride</code> - Annotation class used for marking fields within a configuration structure class
  * as targets of value overwrite with environment variable values.
  * </li>
  * </ul> 

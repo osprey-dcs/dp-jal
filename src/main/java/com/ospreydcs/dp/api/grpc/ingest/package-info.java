@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    package-info.java
- * Package: com.ospreydcs.dp.api.config.model
- * Type:    package-info
+ * File:	package-info.java
+ * Package: com.ospreydcs.dp.api.grpc.ingest
+ * Type: 	package-info
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -20,7 +20,7 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Dec 19, 2023
+ * @since Dec 28, 2023
  *
  * TODO:
  * - None
@@ -28,11 +28,15 @@
 
 /**
  * <p>
- * Package defining the model for Data Platform API library configuration.
- * </p> 
+ * Package containing gRPC connection and factory for the Data Platform Ingestion Service. 
+ * </p>
+ * <p>
+ * The resources here are fly weights binding the generic parameters of connection model classes
+ * to the Ingestion Service.  These are provided as a convenience and to ensure type safety.
+ * </p>
  *
  * @author Christopher K. Allen
- * @since Dec 19, 2023
+ * @since Dec 28, 2023
  *
  */
-package com.ospreydcs.dp.api.config.model;
+package com.ospreydcs.dp.api.grpc.ingest;

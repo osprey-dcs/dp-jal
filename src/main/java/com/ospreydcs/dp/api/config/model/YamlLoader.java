@@ -140,9 +140,9 @@ public final class YamlLoader {
 //        Class<?> clsProps = objProps.getClass();
 //        
 //        // Is the class marked for override (or recursive included class)?
-////        if (! (  clsProps.isAnnotationPresent(AEnvOverride.class) 
-////              || clsProps.isAnnotationPresent(AEnvOverride.Struct.class)
-////              || clsProps.isAnnotationPresent(AEnvOverride.Field.class) ) 
+////        if (! (  clsProps.isAnnotationPresent(ACfgOverride.class) 
+////              || clsProps.isAnnotationPresent(ACfgOverride.Struct.class)
+////              || clsProps.isAnnotationPresent(ACfgOverride.Field.class) ) 
 ////            ) 
 ////            return false;
 //
@@ -150,7 +150,7 @@ public final class YamlLoader {
 //        for (Field fld : clsProps.getDeclaredFields()) {
 //            
 //            // Is field a structure containing a field to be overridden
-//            if (fld.isAnnotationPresent(AEnvOverride.Struct.class)) {
+//            if (fld.isAnnotationPresent(ACfgOverride.Struct.class)) {
 //                fld.setAccessible(true);
 //                Object objFld = fld.get(objProps);
 //                
@@ -161,8 +161,8 @@ public final class YamlLoader {
 //            }
 //            
 //            // Can the field be overridden?
-//            if (fld.isAnnotationPresent(AEnvOverride.Field.class)) {
-//                AEnvOverride.Field annFld = fld.getAnnotation(AEnvOverride.Field.class);
+//            if (fld.isAnnotationPresent(ACfgOverride.Field.class)) {
+//                ACfgOverride.Field annFld = fld.getAnnotation(ACfgOverride.Field.class);
 //                if ( !annFld.env().isBlank() ) {
 //                    String strNewVal = System.getenv(annFld.env());
 //                   
@@ -221,7 +221,7 @@ public final class YamlLoader {
 //     * <code>AOverrideCapable</code> annotations to determine the supported environment
 //     * variables for the application.  The application then returns a list of these
 //     * variables which it found (along with the current values, the properties object,
-//     * etc. as an <code>EnvVariable</code> records).
+//     * etc. as an <code>CfgParameter</code> records).
 //     * It is assumed the argument is
 //     * the <code>AppProperties</code> instance which has already been loaded from the
 //     * <em>application.yml</em> configuration file.  
@@ -238,30 +238,30 @@ public final class YamlLoader {
 //     * @throws IllegalArgumentException encountered a null argument during recursion
 //     * @throws IllegAccessException unable to get a structure field object (java.lang.reflect.Field#get)
 //     */
-//    public static List<EnvVariable> parse(Object objProps) throws IllegalArgumentException, IllegalAccessException {
+//    public static List<CfgParameter> parse(Object objProps) throws IllegalArgumentException, IllegalAccessException {
 //        
 //        if ( Objects.isNull(objProps) )
 //            throw new IllegalArgumentException("Properties object is null");
 //        
-//        List<EnvVariable> lstVars = new LinkedList<EnvVariable>();
+//        List<CfgParameter> lstVars = new LinkedList<CfgParameter>();
 //
 //        Class<?> clsProps = objProps.getClass();
 //
 //        for (Field fld : clsProps.getDeclaredFields()) {
-//            if (fld.isAnnotationPresent(AEnvOverride.Struct.class)) {
+//            if (fld.isAnnotationPresent(ACfgOverride.Struct.class)) {
 //                fld.setAccessible(true);
 //                Object objFld = fld.get(objProps);
 //                
 //                lstVars.addAll( YamlLoader.parse(objFld) );
 //            }
 //            
-//            if (fld.isAnnotationPresent(AEnvOverride.Field.class)) {
-//                AEnvOverride.Field annFld = fld.getAnnotation(AEnvOverride.Field.class);
+//            if (fld.isAnnotationPresent(ACfgOverride.Field.class)) {
+//                ACfgOverride.Field annFld = fld.getAnnotation(ACfgOverride.Field.class);
 //                if ( !annFld.env().isBlank() ) {
 //                    String strVarNm  = annFld.env();
 //                    String strVarVal = System.getenv(annFld.env());
 //                    
-//                    EnvVariable var = new EnvVariable(strVarNm, strVarVal, fld, objProps);
+//                    CfgParameter var = new CfgParameter(strVarNm, strVarVal, fld, objProps);
 //                   
 //                    lstVars.add(var);
 //                }

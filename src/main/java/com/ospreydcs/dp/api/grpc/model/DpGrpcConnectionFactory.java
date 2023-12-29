@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.grpc;
+package com.ospreydcs.dp.api.grpc.model;
 
 import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
 
@@ -47,27 +47,23 @@ import org.apache.logging.log4j.Logger;
  * Factory class for creating <code>DsGrpcConnection</code> instances.
  * </p>
  * <p>
- * Creates <code>DsGrpcConnection</code> instances supporting the gRPC connection
+ * Creates <code>DsGrpcConnection</code> instances supporting the Protocol Buffers connection
  * stubs specified by the generic parameter types.  Various configuration 
  * combinations are available which mix user-supplied gRPC connection parameters
- * and default application connection parameters
+ * and default connection parameters supplied by the <code>GrpcConnectionConfig<code> instance
+ * at creation.
  * </p>
  * <p>
- * There are two singleton connection factories available to the public.
- * One for <em>Datastore</em> ingestion service connections 
- * <code>{@link #FAC_INGEST}</code>, and one for <em>Datastore</em> query 
- * service connections <code>{@link #FAC_QUERY}</code>.
- * </p>
- * <p>
- * The types of the Java generics parameters specify which <em>Datastore</em>
- * connections that factory instances create, either to the ingestion service
- * or to the query service.  Use the following type assignments to create 
- * factories for the specified connections:
+ * The types of the Java generics parameters determine the Data Platform service for connection.
+ * For example the Ingestion Service or the Query Service may be supported with the following
+ * bindings:
  * <ul>
  * Ingestion Service Connections
  * <li><code>Service</code> = <code>IngestionServiceGrpc</code>
  *     </li>
  * <li><code>SyncStub</code> = <code>IngestionServiceGrpc.IngestionServiceBlockingStub</code>
+ *     </li>
+ * <li><code>FutureStub</code> = <code>IngestionServiceGrpc.IngestionServiceFutureStub</code>
  *     </li>
  * <li><code>AsyncStub</code> = <code>IngestionServiceGrpc.IngestionServiceStub</code>
  *     </li> 
@@ -77,65 +73,55 @@ import org.apache.logging.log4j.Logger;
  *     </li>
  * <li><code>SyncStub</code> = <code>QueryServiceGrpc.QueryServiceBlockingStub</code>
  *     </li>
+ * <li><code>FutureStub</code> = <code>QueryServiceGrpc.QueryServiceFutureStub</code>
+ *     </li>
  * <li><code>AsyncStub</code> = <code>QueryServiceGrpc.QueryServiceStub</code>
  *     </li> 
  * </ul>
- * Thus, for example, the following statement creates a connection factory 
- * instance for the <em>Datastore</em> query service:
+ * Thus, for example, the following statement creates a connection factory <code>facQueryConn</code> 
+ * instance for the Data Platform Query Service:
  * <pre>
  * private static final DpGrpcConnectionFactory&lt;
- *                       QueryServiceGrpc, 
- *                       QueryServiceBlockingStub, 
- *                       QueryServiceStub&gt; FAC_CONN = 
+ *                       DpQueryServiceGrpc, 
+ *                       DpQueryServiceBlockingStub,
+ *                       DpQueryServiceFutureStub, 
+ *                       DpQueryServiceStub&gt; facQueryConnec = 
  *                           DpGrpcConnectionFactory.newFactory(
- *                                QueryService.class, 
- *                                AppProperties.getInstance()
- *                                             .getDatastore()
- *                                             .getClient()
- *                                             .getConnection()
+ *                                DpQueryServiceGrpc.class, 
+ *                                DpApiConfig.getInstance()
+ *                                             .services
+ *                                             .query
  *                                );
  * </pre>
  * Since only one factory class instance is required to create all
- * <em>Datastore</em> query service connections, the instance may be 
+ * Data Platform query service connections, the instance may be 
  * declared <code>static final</code>.
  * </p>
- * 
  * <p>
+ * <h2>Java Generics</h2>
  * Due to the use of Java generic parameters, the connection factories 
  * cannot be static classes, they must be instantiated.  However, the advantage
  * is that only one class factory type needs to be implemented which will
- * create connections to either the <em>Datastore</em> ingestion service or
- * the <em>Datastore</em> query service.  Thus, the use of generic templates
- * consolidates the code for creating <em>Datastore</em> gRPC connections. 
+ * create connections to a Data Platform service.  Thus, the use of generic templates
+ * consolidates the code for creating Data Platform gRPC connections. 
  * </p>
  * <p>
- * The connection factory instances are to be used within the <em>Datastore</em>
- * ingestion service and query service connection factories.  An instance is
- * maintained for creating the connection objects required by the respective 
- * service implementations.
- * </p>
- * <p>
- * The implementation has now changed, it is now a concrete class, and thus the 
- * following requirements are no longer necessary.
- * <br/>
- * Derived classes must implement the following abstract methods:
- * <ul>
- * <li><code>newSyncStub(ManagedChannel)</code> - instantiates a new synchronous communications stub
- *     </li>
- * <li><code>newAsynchStub(ManagedChannel)</code> - instantiates a new asynchronous communications stub
- *     </li>
- * </ul>
+ * <h2>Fly Weight Connection Factories</h2>
+ * Connection factory instances can be used within fly weight connection factory classes
+ * that bind the generic parameters for a specific Data Platform service.
+ * An instance is maintained within the fly weight for creating the connection objects required by the 
+ * targeted services.
  * </p>
  * 
- * @param <Service>     the Protobuf-generated gRPC service, that is, the 
- * @param <SyncStub>    synchronous (blocking) stub for gPRC communications with the <em>Datastore</em>
- * @param <AsyncStub>   asynchronous (non-blocking) stub for gRPC communications with the <em>Datastore</em>
+ * @param <Service>     the specific Data Platform service, that is, the Protobuf-generated gRPC service  
+ * @param <SyncStub>    synchronous (blocking) stub supporting unary gPRC communications 
+ * @param <FutureStub>  non-blocking stub supporting unary gPRC communications 
+ * @param <AsyncStub>   asynchronous (non-blocking) stub for both unary and streaming gRPC communications 
  *
  * @author Christopher K. Allen
  * @since Nov 16, 2022
- * 
- * @see FAC_INGEST
- * @see FAC_QUERY
+ *
+ * @see DpGrpcConnection
  */
 public class DpGrpcConnectionFactory<
     Service,
@@ -224,21 +210,20 @@ public class DpGrpcConnectionFactory<
      * </p>
      * <p>
      * The returned factory is capable of creating <code>DsGrpcConnection</code>
-     * instances for connection with either the <em>Datastore</em> ingestion
-     * service or the query service.  The type of communications service is
-     * dictated by the Java template parameters.  
+     * instances for connection with the Data Platform service targeted by the generic parameters.  
+     * The type of communications object returned is also dictated by the Java template parameters.  
      * </p>
      * <p>
-     * The returned connection factory is fully configured for <em>Datastore</em>
-     * gRPC connection creation with all default parameters loaded.
+     * The returned connection factory is fully configured for Data Platform service connection.
+     * The default gRPC connection parameters are provided in the argument.
      * </p>
      * 
+     * @param <Service>     type of the Protobuf-generated service class
      * @param <SyncStub>    type for synchronous blocking communications stub 
      * @param <FutureStub>  type for non-blocking unary communications stub
      * @param <AsyncStub>   type for asynchronous communications stub (contains streaming RPC operations)
-     * 
-     * @param clsSyncStub   class type of the synchronous gRPC communications stub
-     * @param clsAsyncStub  class type of the asynchronous gRPC communications stub
+     *
+     * @param clsService    the class type of the supported Data Platform service
      * @param cfgConn       connections properties record containing the default parameters
      * 
      * @return a new <code>DpGrpcConnectionFactory</code> instance
@@ -271,7 +256,7 @@ public class DpGrpcConnectionFactory<
      * 
      * @see DpGrpcConnectionConfig
      */
-    public DpGrpcConnection<SyncStub, FutureStub, AsyncStub> connect() throws DpGrpcException {
+    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect() throws DpGrpcException {
         
         return this.connect(this.cfgConn.channel.host.url, this.cfgConn.channel.host.port);
     }
@@ -296,7 +281,7 @@ public class DpGrpcConnectionFactory<
      * 
      * @see DpGrpcConnectionConfig
      */
-    public DpGrpcConnection<SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort) throws DpGrpcException {
+    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort) throws DpGrpcException {
 
         return this.connect(strHost, intPort, this.cfgConn.channel.grpc.timeoutLimit, this.cfgConn.channel.grpc.timeoutUnit);        
     }
@@ -324,7 +309,7 @@ public class DpGrpcConnectionFactory<
      * 
      * @see DpGrpcConnectionConfig
      */
-    public DpGrpcConnection<SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
+    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
 
         if (!this.cfgConn.channel.tls.active)
             return this.connect(strHost, intPort, true, this.cfgConn.channel.grpc.messageSizeMax, this.cfgConn.channel.grpc.keepAliveWithoutCalls, this.cfgConn.channel.grpc.gzip, lngTimeout, tuTimeout);
@@ -372,7 +357,7 @@ public class DpGrpcConnectionFactory<
      * 
      * @see DpGrpcConnectionConfig
      */
-    public DpGrpcConnection<SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
 
         return this.connect(strHost, intPort,
                 fileTrustedCerts,
@@ -417,7 +402,7 @@ public class DpGrpcConnectionFactory<
      *         
      * @throws DpGrpcException error while creating connection object (see message and cause) 
      */
-    public DpGrpcConnection<SyncStub, FutureStub, AsyncStub> connect(
+    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(
             String strHost, 
             int intPort, 
             boolean bolPlainText,
@@ -467,11 +452,11 @@ public class DpGrpcConnectionFactory<
 
         
         // Build a gRPC channel 
-        ManagedChannel chnGrpc = bldrChan.build();
+        ManagedChannel grpcChan = bldrChan.build();
         LOGGER.info("gRPC channel created for host connection {}:{}", strHost, intPort);
         
         // Create gRPC service connection
-        DpGrpcConnection<SyncStub, FutureStub, AsyncStub>   connService = new DpGrpcConnection<SyncStub, FutureStub, AsyncStub>(chnGrpc, this.clsService);
+        DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub>   connService = new DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub>(this.clsService, grpcChan);
         LOGGER.info("gRPC connection established for service {}", this.clsService);
 
         // Return the connection
@@ -506,7 +491,7 @@ public class DpGrpcConnectionFactory<
      *         
      * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
      */
-    public DpGrpcConnection<SyncStub, FutureStub, AsyncStub> connect(
+    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(
             String  strHost, 
             int     intPort, 
             File    fileTrustedCerts,
@@ -568,11 +553,11 @@ public class DpGrpcConnectionFactory<
         }
 
         // Build a gRPC channel 
-        ManagedChannel chnGrpc = bldrChan.build();
+        ManagedChannel grpcChan = bldrChan.build();
         LOGGER.info("gRPC channel created for host connection {}:{}", strHost, intPort);
         
         // Create gRPC service connection
-        DpGrpcConnection<SyncStub, FutureStub, AsyncStub>   connService = new DpGrpcConnection<SyncStub, FutureStub, AsyncStub>(chnGrpc, this.clsService);
+        DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub>   connService = new DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub>(this.clsService, grpcChan);
         LOGGER.info("gRPC connection established for service {}", this.clsService);
 
         // Return the connection

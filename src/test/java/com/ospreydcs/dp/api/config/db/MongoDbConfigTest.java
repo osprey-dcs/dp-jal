@@ -42,8 +42,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.config.model.EnvOverrideUtility;
-import com.ospreydcs.dp.api.config.model.EnvVariable;
+import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
+import com.ospreydcs.dp.api.config.model.CfgParameter;
 import com.ospreydcs.dp.api.config.model.YamlLoader;
 
 /**
@@ -155,7 +155,7 @@ public class MongoDbConfigTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.model.EnvOverrideUtility#override(Object)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgOverrideUtility#envOverride(Object)}.
      */
     @Test
     public void testOverrideConfig1() {
@@ -164,7 +164,7 @@ public class MongoDbConfigTest {
         try {
             MongoDbConfig   cfgMongo = YamlLoader.load(strFile, MongoDbConfig.class);
 
-            boolean bolResult = EnvOverrideUtility.override(cfgMongo);
+            boolean bolResult = CfgOverrideUtility.envOverride(cfgMongo);
             
             if (!bolResult)
                 fail("No parameters were overridden.");
@@ -189,18 +189,18 @@ public class MongoDbConfigTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.model.EnvOverrideUtility#parse(Object)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgOverrideUtility#parse(Object)}.
      */
     @Test
     public void testParseConfig1() {
         try {
-            List<EnvVariable>   lstVars = EnvOverrideUtility.parse(CFG_1);
+            List<CfgParameter>   lstVars = CfgOverrideUtility.parse(CFG_1);
             
             Assert.assertTrue("There were no environment variables", lstVars.size() > 0);
 
             System.out.println();
             System.out.println("Environment Variables:");
-            for (EnvVariable var : lstVars) 
+            for (CfgParameter var : lstVars) 
                 System.out.println(var);
             
         } catch (IllegalArgumentException e) {

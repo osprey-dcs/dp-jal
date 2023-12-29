@@ -34,8 +34,8 @@ import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
 import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
-import com.ospreydcs.dp.api.config.model.AEnvOverride;
-import com.ospreydcs.dp.api.config.model.EnvOverrideUtility;
+import com.ospreydcs.dp.api.config.model.ACfgOverride;
+import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.YamlLoader;
 
 /**
@@ -57,7 +57,7 @@ import com.ospreydcs.dp.api.config.model.YamlLoader;
  * <li>Default configuration values are contained in the YAML file indicated by {@link #STR_CFG_FILE}.
  * </li>
  * <li>Values within the YAML file can be overridden by supported environment variables as marked by
- *     the <code>AEnvOverride</code> annotation.
+ *     the <code>ACfgOverride</code> annotation.
  * </li>
  * </ul> 
  * 
@@ -65,7 +65,7 @@ import com.ospreydcs.dp.api.config.model.YamlLoader;
  * @since Dec 21, 2023
  *
  */
-@AEnvOverride
+@ACfgOverride
 public final class DpApiConfig {
     
     //
@@ -108,7 +108,7 @@ public final class DpApiConfig {
             try {
                 DpApiConfig.cfgInstance = YamlLoader.load(STR_CFG_FILE, DpApiConfig.class);
                 
-                EnvOverrideUtility.override(DpApiConfig.cfgInstance);
+                CfgOverrideUtility.envOverride(DpApiConfig.cfgInstance);
                 
             } catch (FileNotFoundException e) {
                 LOGGER.error("Unable to load properties from file: {}", STR_CFG_FILE);
@@ -136,11 +136,11 @@ public final class DpApiConfig {
     //
     
     /** Data Platform data archive parameters */
-    @AEnvOverride.Struct
+    @ACfgOverride.Struct
     public Archive  archive;
     
     /** Data Platform services connection parameters */
-    @AEnvOverride.Struct
+    @ACfgOverride.Struct
     public Services services;
     
     /**
@@ -150,7 +150,7 @@ public final class DpApiConfig {
     public static final class Archive {
         
         /** Archive inception date (earliest possible timestamp) */
-        @AEnvOverride.Field(env="DP_ARCHIVE_INCEPTION")
+        @ACfgOverride.Field(name="DP_ARCHIVE_INCEPTION")
         public String   inception;
 
         
@@ -185,11 +185,11 @@ public final class DpApiConfig {
     public static final class Services {
         
         /** Data Platform Ingestion Service connection parameters */
-        @AEnvOverride.Struct
+        @ACfgOverride.Struct
         public GrpcConnectionConfig     ingestion;
         
         /** Data Platform Query Service connection parameters */
-        @AEnvOverride.Struct
+        @ACfgOverride.Struct
         public GrpcConnectionConfig     query;
 
         

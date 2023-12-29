@@ -1,6 +1,6 @@
-package com.ospreydcs.dp.api.grpc;
+package com.ospreydcs.dp.api.grpc.ingest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.concurrent.TimeUnit;
 
@@ -12,7 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.grpc.DpIngestionConnectionFactory.DpIngestionConnection;;
+import com.ospreydcs.dp.api.grpc.model.DpGrpcException;;
 
 /**
  * <p>
@@ -43,7 +43,7 @@ public class DpIngestionConnectionFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.grpc.DpIngestionConnectionFactory#connect()}.
+     * Test method for {@link com.com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory#connect()}.
      */
     @Test
     public final void testConnect() {
@@ -59,7 +59,7 @@ public class DpIngestionConnectionFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.grpc.DpIngestionConnectionFactory#connect(String, int)}.
+     * Test method for {@link com.com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory#connect(String, int)}.
      */
     @Test
     public final void testConnectStringInt() {

@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.grpc;
+package com.ospreydcs.dp.api.grpc.model;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -54,6 +54,7 @@ import io.grpc.ManagedChannel;
  * offering various connection configurations for the communications services.
  * </p>
  * 
+ * @param <Service>     Protocol Buffers generated gRPC service class
  * @param <SyncStub>    Protocol Buffer communication stub containing blocking, synchronous RPC operations
  * @param <FutureStub>  Protocol Buffer communication stub containing non-blocking (future) RPC operations
  * @param <AsyncStub>   Protocol Buffer communication stub containing asynchronous streaming RPC operations
@@ -63,17 +64,13 @@ import io.grpc.ManagedChannel;
  *
  */
 public class DpGrpcConnection<
+    Service,
     SyncStub extends io.grpc.stub.AbstractBlockingStub<SyncStub>, 
     FutureStub extends io.grpc.stub.AbstractFutureStub<FutureStub>,
     AsyncStub extends io.grpc.stub.AbstractAsyncStub<AsyncStub> 
     > 
 //    implements IConnection
 {
-    
-    //
-    // Application Resources
-    //
-    
     
     //
     // Class Constants
@@ -101,11 +98,11 @@ public class DpGrpcConnection<
     // Connection Resources
     //
     
-//    /** The class type of the gRPC service service being supported */
-//    private <Service> final Class<Service>    clsService;
+    /** The class type of the gRPC service service being supported */
+    private final Class<Service>    clsService;
     
     /** The single gRPC data channel supporting all communications stubs */
-    private final ManagedChannel    chnGprc;
+    private final ManagedChannel    grpcChan;
     
     /** Blocking, synchronous communications stub (no streaming operations)*/
     private final SyncStub          stubSync;
@@ -140,46 +137,47 @@ public class DpGrpcConnection<
      *
      * @param <Service>     Protocol Buffers generated gRPC service class
      * 
-     * @param chnGrpc       gRPC managed channel backing the synchronous blocking stub
+     * @param grpcChan       gRPC managed channel backing the synchronous blocking stub
      * @param clsService    class object of the <code>Service</code> class
      * 
      * @throws DpGrpcException a Java reflection error occurred during communication stubs creation (see message and cause)
      */
-    public <Service> DpGrpcConnection(ManagedChannel chnGrpc, Class<Service> clsService) throws DpGrpcException {
-        this.chnGprc = chnGrpc;
-        this.stubSync = this.newSyncStub(chnGprc, clsService);
-        this.stubFuture = this.newFutureStub(chnGrpc, clsService);
-        this.stubAsync = this.newAsyncStub(chnGrpc, clsService);
+    public DpGrpcConnection(Class<Service> clsService, ManagedChannel grpcChan) throws DpGrpcException {
+        this.clsService = clsService;
+        this.grpcChan = grpcChan;
+        this.stubSync = this.newSyncStub(grpcChan);
+        this.stubFuture = this.newFutureStub(grpcChan);
+        this.stubAsync = this.newAsyncStub(grpcChan);
         
         LOGGER.info("Created new connection {} for gRPC service {}", this.getClass().getName(), clsService.getName());
     }
 
-    /**
-     * <p>
-     * Creates a new instance of <code>DpGrpcConnection</code> connected to 
-     * the given gRPC channel where all communications stubs are explicitly provided.
-     * </p>
-     * <p>
-     * The <code>ManagedChannel</code> argument should be the gRPC channel
-     * backing all connection stubs.  
-     * </p>
-     *
-     * @param chnGrpc   the single gRPC communications channel used by the service stubs
-     * @param stubSync   synchronous communication stub for desired RPC interface
-     * @param stubAsync  asynchronous communication stub for desired RPC interface
-     */
-    public DpGrpcConnection(ManagedChannel chnGrpc, 
-            SyncStub stubSync, 
-            FutureStub stubFuture,
-            AsyncStub stubAsync)
-    {
-        this.chnGprc = chnGrpc;
-        this.stubSync = stubSync;
-        this.stubFuture = stubFuture;
-        this.stubAsync = stubAsync;
-        
-        LOGGER.info("Created new connection {} for gRPC unknown service", this.getClass().getName());
-    }
+//    /**
+//     * <p>
+//     * Creates a new instance of <code>DpGrpcConnection</code> connected to 
+//     * the given gRPC channel where all communications stubs are explicitly provided.
+//     * </p>
+//     * <p>
+//     * The <code>ManagedChannel</code> argument should be the gRPC channel
+//     * backing all connection stubs.  
+//     * </p>
+//     *
+//     * @param chnGrpc   the single gRPC communications channel used by the service stubs
+//     * @param stubSync   synchronous communication stub for desired RPC interface
+//     * @param stubAsync  asynchronous communication stub for desired RPC interface
+//     */
+//    public DpGrpcConnection(ManagedChannel chnGrpc, 
+//            SyncStub stubSync, 
+//            FutureStub stubFuture,
+//            AsyncStub stubAsync)
+//    {
+//        this.chnGprc = chnGrpc;
+//        this.stubSync = stubSync;
+//        this.stubFuture = stubFuture;
+//        this.stubAsync = stubAsync;
+//        
+//        LOGGER.info("Created new connection {} for gRPC unknown service", this.getClass().getName());
+//    }
     
     
     //
@@ -230,10 +228,10 @@ public class DpGrpcConnection<
 //    @Override
     public boolean shutdownSoft() {
 
-        if (this.chnGprc.isShutdown())
+        if (this.grpcChan.isShutdown())
             return false;
         
-        this.chnGprc.shutdown();
+        this.grpcChan.shutdown();
         
 //        boolean bolShutdown = this.chnGprc.awaitTermination(this.cntTimeout, this.tuTimeout);
 //        
@@ -268,10 +266,10 @@ public class DpGrpcConnection<
 //    @Override
     public boolean shutdownNow() {
         
-        if (this.chnGprc.isShutdown())
+        if (this.grpcChan.isShutdown())
             return false;
         
-        this.chnGprc.shutdownNow();
+        this.grpcChan.shutdownNow();
         
         LOGGER.info("Hard shutdown initiated for connection {}", this.getClass().getName());
         return true;
@@ -301,7 +299,7 @@ public class DpGrpcConnection<
         if (!this.isShutdown())
             return false;
         
-        boolean bolResult = this.chnGprc.awaitTermination(cntTimeout, tuTimeout);
+        boolean bolResult = this.grpcChan.awaitTermination(cntTimeout, tuTimeout);
         
         return bolResult;
     }
@@ -334,7 +332,7 @@ public class DpGrpcConnection<
      */
 //    @Override
     public boolean isShutdown() {
-        return this.chnGprc.isShutdown();
+        return this.grpcChan.isShutdown();
     }
 
     /**
@@ -358,7 +356,7 @@ public class DpGrpcConnection<
      */
 //    @Override
     public boolean isTerminated() {
-        return this.chnGprc.isTerminated();
+        return this.grpcChan.isTerminated();
     }
     
     
@@ -387,8 +385,8 @@ public class DpGrpcConnection<
      * 
      * @return the gRPC managed channel supporting this connection
      */
-    public ManagedChannel getGrpcChannel() {
-        return this.chnGprc;
+    public ManagedChannel getChannel() {
+        return this.grpcChan;
     }
     
     /**
@@ -398,7 +396,7 @@ public class DpGrpcConnection<
      * <p>
      * The returned object is the synchronous gRPC service handle
      * that was passed upon creation.  The object is backed by the gRPC managed
-     * channel returned by the <code>{@link #getGrpcChannel()}</code> method.
+     * channel returned by the <code>{@link #getChannel()}</code> method.
      * It shares the managed channel with the asynchronous non-blocking stub in 
      * this connection.  
      * Thus, care should be used when using this object.
@@ -417,7 +415,7 @@ public class DpGrpcConnection<
      * 
      * @return <code>QueryServiceGrpc</code> blocking stub used by this service
      * 
-     * @see #getGrpcChannel()
+     * @see #getChannel()
      */
     public SyncStub getStubSync() {
         return this.stubSync;
@@ -445,7 +443,7 @@ public class DpGrpcConnection<
      * <p>
      * The returned object is the asynchronous gRPC query service handle
      * that was passed upon creation. The object is backed by the gRPC managed
-     * channel returned by the <code>{@link #getGrpcChannel()}</code> method.
+     * channel returned by the <code>{@link #getChannel()}</code> method.
      * It shares the managed channel with the synchronous blocking stub in 
      * this connection.  
      * Thus, care should be used when using this object.
@@ -464,7 +462,7 @@ public class DpGrpcConnection<
      * 
      * @return non-blocking, asynchronous stub containing all streaming operations
      * 
-     * @see #getGrpcChannel()
+     * @see #getChannel()
      */
     public AsyncStub getStubAsync() {
         return this.stubAsync;
@@ -491,19 +489,16 @@ public class DpGrpcConnection<
      * If any of the Java reflection operations fail, a exception is thrown.
      * </p>
      * 
-     * @param <Service>     Protocol Buffers generated gRPC service class
-     * 
      * @param chnGrpc       gRPC managed channel backing the synchronous blocking stub
-     * @param clsService    class object of the <code>Service</code> class
      * 
      * @return  new synchronous blocking stub attached to the given gRPC channel,
      *          or <code>null</code> if the operation fails
      *          
      * @throws DpGrpcException  a Java reflection operation failed (see message and cause)
      */
-    protected <Service> SyncStub  newSyncStub(ManagedChannel chnGrpc, Class<Service> clsService) throws DpGrpcException {
+    protected SyncStub  newSyncStub(ManagedChannel chnGrpc) throws DpGrpcException {
         try {
-            Method mthNewStub = clsService.getMethod(STR_MTHD_NEW_BLOCKING_STUB, io.grpc.Channel.class);
+            Method mthNewStub = this.clsService.getMethod(STR_MTHD_NEW_BLOCKING_STUB, io.grpc.Channel.class);
             
             @SuppressWarnings("unchecked")
             SyncStub stub = (SyncStub) mthNewStub.invoke(null, chnGrpc);
@@ -532,19 +527,16 @@ public class DpGrpcConnection<
      * If any of the Java reflection operations fail, a exception is thrown.
      * </p>
      * 
-     * @param <Service>     Protocol Buffers generated gRPC service class
-     * 
      * @param chnGrpc       gRPC managed channel backing the synchronous blocking stub
-     * @param clsService    class object of the <code>Service</code> class
      * 
      * @return  new synchronous blocking stub attached to the given gRPC channel,
      *          or <code>null</code> if the operation fails
      *          
      * @throws DpGrpcException  a Java reflection operation failed (see message and cause)
      */
-    protected <Service> FutureStub  newFutureStub(ManagedChannel chnGrpc, Class<Service> clsService) throws DpGrpcException {
+    protected FutureStub  newFutureStub(ManagedChannel chnGrpc) throws DpGrpcException {
         try {
-            Method mthNewStub = clsService.getMethod(STR_MTHD_NEW_FUTURE_STUB, io.grpc.Channel.class);
+            Method mthNewStub = this.clsService.getMethod(STR_MTHD_NEW_FUTURE_STUB, io.grpc.Channel.class);
             
             @SuppressWarnings("unchecked")
             FutureStub stub = (FutureStub) mthNewStub.invoke(null, chnGrpc);
@@ -573,19 +565,16 @@ public class DpGrpcConnection<
      * If any of the Java reflection operations fail, a exception is thrown.
      * </p>
      * 
-     * @param <Service>     Protocol Buffers generated gRPC service class
-     * 
      * @param chnGrpc       gRPC managed channel backing the asynchronous non-blocking stub to create
-     * @param clsService    class object of the <code>Service</code> class
      * 
      * @return  new asynchronous stub attached to the given gRPC channel,
      *          or <code>null</code> if the operation fails
      *          
      * @throws DpGrpcException  a Java reflection operation failed (see message and cause)
      */
-    protected <Service> AsyncStub newAsyncStub(ManagedChannel chnGrpc, Class<Service> clsService) throws DpGrpcException {
+    protected AsyncStub newAsyncStub(ManagedChannel chnGrpc) throws DpGrpcException {
         try {
-            Method mthNewStub = clsService.getMethod(STR_MTHD_NEW_STUB, io.grpc.Channel.class);
+            Method mthNewStub = this.clsService.getMethod(STR_MTHD_NEW_STUB, io.grpc.Channel.class);
             
             @SuppressWarnings("unchecked")
             AsyncStub stub = (AsyncStub) mthNewStub.invoke(null, chnGrpc);

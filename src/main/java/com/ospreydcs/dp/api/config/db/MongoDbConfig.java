@@ -29,7 +29,7 @@ package com.ospreydcs.dp.api.config.db;
 
 import org.yaml.snakeyaml.Yaml;
 
-import com.ospreydcs.dp.api.config.model.AEnvOverride;
+import com.ospreydcs.dp.api.config.model.ACfgOverride;
 
 /**
  * <p>
@@ -44,7 +44,7 @@ import com.ospreydcs.dp.api.config.model.AEnvOverride;
  * @since Dec 18, 2023
  *
  */
-@AEnvOverride
+@ACfgOverride
 public final class MongoDbConfig {
 
     /** Optional configuration name */
@@ -60,11 +60,11 @@ public final class MongoDbConfig {
     public String   supplement;
     
     /** Require MongoDB host parameters */
-    @AEnvOverride.Struct
+    @ACfgOverride.Struct
     public Host     host;
     
     /** Required MongoDB client credentials */
-    @AEnvOverride.Struct
+    @ACfgOverride.Struct
     public Client   client;
     
     /**
@@ -74,11 +74,11 @@ public final class MongoDbConfig {
     public static final class Host {
         
         /** Host network URL */
-        @AEnvOverride.Field(env="DP_API_MONGODB_HOST_URL")
+        @ACfgOverride.Field(name="DP_API_MONGODB_HOST_URL")
         public String   url;
         
         /** Port address of service */
-        @AEnvOverride.Field(env="DP_API_MONGODB_HOST_PORT")
+        @ACfgOverride.Field(name="DP_API_MONGODB_HOST_PORT")
         public Integer  port;
 
         /**
@@ -137,11 +137,11 @@ public final class MongoDbConfig {
     public static final class Client {
         
         /** Client user ID */
-        @AEnvOverride.Field(env="DP_API_MONGODB_CLIENT_USERID")        
+        @ACfgOverride.Field(name="DP_API_MONGODB_CLIENT_USERID")        
         public String   user;
         
         /** Client password */
-        @AEnvOverride.Field(env="DP_API_MONGODB_CLIENT_PASSWORD")
+        @ACfgOverride.Field(name="DP_API_MONGODB_CLIENT_PASSWORD")
         public String   password;
 
         /**

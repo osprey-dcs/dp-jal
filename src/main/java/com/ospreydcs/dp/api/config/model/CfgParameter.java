@@ -1,8 +1,8 @@
 /*
  * Project: datastore-admin
- * File:	EnvVariable.java
+ * File:	CfgParameter.java
  * Package: com.ospreydcs.datastore.admin.config
- * Type: 	EnvVariable
+ * Type: 	CfgParameter
  *
  * Copyright 2010-2022 the original author or authors.
  *
@@ -31,29 +31,35 @@ import java.lang.reflect.Field;
 
 /**
  * <p>
- * Record encapsulation of an environment variable supported by the configuration mechanism.
+ * Record encapsulation of an variable supported by the configuration mechanism and capable of
+ * value override (e.g., by environment variable or command-line argument).
  * </p>
+ * <p>
  * The supported environment variables are typically used to override the configuration parameters
  * managed by supporting structure classes.  Thus, the record attributes also contain the association
  * between the supported environment variables and the supporting structure classes (i.e., with reflection).
  * </p>
+ * <p>
+ * Note that override capable configuration parameters can also be overridden by the Java command line using
+ * the "-D<name=value>" convention.
+ * </p>
  *
- * @param varName      environment variable name
- * @param varValue     current value of the environment variable 
- * @param paramField   the property field (Java reflection can get enclosing class, varName, etc.)
- * @param paramObject  the class object containing the field (can be used for reflection)
+ * @param name      environment variable name
+ * @param value     current value of the environment variable 
+ * @param paramField   the Java field containing the parameter (Java reflection can get enclosing class, name, etc.)
+ * @param paramObject  the Java class object containing the Java field (can be used for reflection)
  *
  * @author Christopher K. Allen
  * @since Sep 21, 2022
  *
  */
-public record EnvVariable(String varName, String varValue, Field paramField, Object paramObject) {
+public record CfgParameter(String name, String value, Field paramField, Object paramObject) {
 
     public String printOut() {
         StringBuffer    buf = new StringBuffer();
         
-        buf.append("varName=" + varName + ", ");
-        buf.append("varValue=" + varValue + ", ");
+        buf.append("name=" + name + ", ");
+        buf.append("value=" + value + ", ");
         buf.append("field=" + paramField.getName() + ", ");
         buf.append("class=" + paramField.getDeclaringClass().getName());
         

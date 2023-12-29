@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.grpc;
+package com.ospreydcs.dp.api.grpc.model;
 
 /**
  * <p>
