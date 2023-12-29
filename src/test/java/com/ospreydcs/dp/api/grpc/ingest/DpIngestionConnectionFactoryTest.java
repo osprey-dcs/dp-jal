@@ -42,8 +42,13 @@ public class DpIngestionConnectionFactoryTest {
     public void tearDown() throws Exception {
     }
 
+    
+    //
+    // Test Cases
+    //
+    
     /**
-     * Test method for {@link com.com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory#connect()}.
+     * Test method for {@link DpIngestionConnectionFactory#connect()}.
      */
     @Test
     public final void testConnect() {
@@ -59,21 +64,51 @@ public class DpIngestionConnectionFactoryTest {
     }
 
     /**
-     * Test method for {@link com.com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory#connect(String, int)}.
+     * Test method for {@link DpIngestionConnectionFactory#connect(String, int)}.
      */
     @Test
     public final void testConnectStringInt() {
         String  strUrl = DpApiConfig.getInstance().services.ingestion.channel.host.url;
         int     intPort = DpApiConfig.getInstance().services.ingestion.channel.host.port;
         
-        long    lngTmout = DpApiConfig.getInstance().services.ingestion.timeout.limit;
-        TimeUnit tuTmout = DpApiConfig.getInstance().services.ingestion.timeout.unit;
+        long    lngConTmout = DpApiConfig.getInstance().services.ingestion.timeout.limit;
+        TimeUnit tuConTmout = DpApiConfig.getInstance().services.ingestion.timeout.unit;
         
         try {
             DpIngestionConnection   conn = DpIngestionConnectionFactory.connect(strUrl, intPort);
 
             conn.shutdownSoft();
-            conn.awaitTermination(lngTmout, tuTmout);
+            conn.awaitTermination(lngConTmout, tuConTmout);
+
+            Assert.assertTrue("Connection failed to terminated in alloted time", conn.isTerminated() );
+            
+        } catch (DpGrpcException e) {
+            fail("Threw connection execption: " + e.getMessage()); 
+            e.printStackTrace();
+            
+        } catch (InterruptedException e) {
+            fail("Threw interrupted exception: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+    }
+
+    /**
+     * Test method for {@link DpIngestionConnectionFactory#connect(String, int, long, TimeUnit)}.
+     */
+    @Test
+    public final void testConnectStringIntLongTimeUnit() {
+        String  strUrl = DpApiConfig.getInstance().services.ingestion.channel.host.url;
+        int     intPort = DpApiConfig.getInstance().services.ingestion.channel.host.port;
+        
+        long    lngTmout = DpApiConfig.getInstance().services.ingestion.channel.grpc.timeoutLimit;
+        TimeUnit tuTmout = DpApiConfig.getInstance().services.ingestion.channel.grpc.timeoutUnit;
+        
+        try {
+            DpIngestionConnection   conn = DpIngestionConnectionFactory.connect(strUrl, intPort, lngTmout, tuTmout);
+
+            conn.shutdownSoft();
+            conn.awaitTermination();
 
             Assert.assertTrue("Connection failed to terminated in alloted time", conn.isTerminated() );
             

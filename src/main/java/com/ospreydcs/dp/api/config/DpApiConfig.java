@@ -36,7 +36,7 @@ import org.yaml.snakeyaml.Yaml;
 import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
-import com.ospreydcs.dp.api.config.model.YamlLoader;
+import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 
 /**
  * <p>
@@ -106,7 +106,7 @@ public final class DpApiConfig {
     public static DpApiConfig getInstance() {
         if (DpApiConfig.cfgInstance == null) {
             try {
-                DpApiConfig.cfgInstance = YamlLoader.load(STR_CFG_FILE, DpApiConfig.class);
+                DpApiConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE, DpApiConfig.class);
                 
                 CfgOverrideUtility.envOverride(DpApiConfig.cfgInstance);
                 

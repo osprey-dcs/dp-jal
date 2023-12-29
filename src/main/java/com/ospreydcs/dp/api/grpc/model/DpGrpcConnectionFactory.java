@@ -237,7 +237,7 @@ public class DpGrpcConnectionFactory<
 
     
     //
-    // Factory Operations
+    // Factory Operations - Default TLS Security
     //
     
     /**
@@ -338,44 +338,6 @@ public class DpGrpcConnectionFactory<
      * to the supported <em>Data Platform</em> service identified by <code>Service</code>.
      * </p>
      * <p>
-     * TLS security is explicitly specified with full authorization given by TLS certificates and
-     * key files.
-     * The URL and port address of the <em>Data Platform</em> service are explicitly specified.
-     * All other configuration parameters are taken from the default connection
-     * properties.
-     * </p>
-     * 
-     * @param strHost       network URL of the desired service
-     * @param intPort       server port used by the at the above service
-     * @param fileTrustedCerts root file of all trusted server certificates
-     * @param fileClientCerts  file of client certificates
-     * @param fileClientKey file containing client private key
-     * 
-     * @return new <code>DpGrpcConnection</code> instance connected to the given address
-     * 
-     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
-     * 
-     * @see DpGrpcConnectionConfig
-     */
-    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
-
-        return this.connect(strHost, intPort,
-                fileTrustedCerts,
-                fileClientCerts,
-                fileClientKey,
-                this.cfgConn.channel.grpc.messageSizeMax,
-                this.cfgConn.channel.grpc.keepAliveWithoutCalls,
-                this.cfgConn.channel.grpc.gzip,
-                this.cfgConn.channel.grpc.timeoutLimit, 
-                this.cfgConn.channel.grpc.timeoutUnit);        
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>DsGrpcConnection</code> instance connected
-     * to the supported <em>Data Platform</em> service identified by <code>Service</code>.
-     * </p>
-     * <p>
      * Transport security can be disabled with the <code>bolPlainText</code> argument set to 
      * <code>false</code>.  Otherwise TLS security is enforced using the default system configuration.
      * </p>
@@ -462,6 +424,83 @@ public class DpGrpcConnectionFactory<
         // Return the connection
         return connService;
     }
+
+    
+    //
+    // Factory Operations - Explicit TLS Security Options
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>DsGrpcConnection</code> instance connected
+     * to the supported <em>Data Platform</em> service identified by <code>Service</code>.
+     * </p>
+     * <p>
+     * TLS security is explicitly specified with full authorization given by TLS certificates and
+     * key files.
+     * The URL and port address of the <em>Data Platform</em> service are taken from the default parameters.
+     * All other configuration parameters are taken from the default connection properties.
+     * </p>
+     * 
+     * @param fileTrustedCerts root file of all trusted server certificates
+     * @param fileClientCerts  file of client certificates
+     * @param fileClientKey file containing client private key
+     * 
+     * @return new <code>DpGrpcConnection</code> instance connected to the default address
+     * 
+     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
+     * 
+     * @see DpGrpcConnectionConfig
+     */
+    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+    
+        return this.connect(this.cfgConn.channel.host.url, 
+                            this.cfgConn.channel.host.port,
+                            fileTrustedCerts,
+                            fileClientCerts,
+                            fileClientKey
+                            );
+    }
+
+    /**
+     * <p>
+     * Creates and returns a new <code>DsGrpcConnection</code> instance connected
+     * to the supported <em>Data Platform</em> service identified by <code>Service</code>.
+     * </p>
+     * <p>
+     * TLS security is explicitly specified with full authorization given by TLS certificates and
+     * key files.
+     * The URL and port address of the <em>Data Platform</em> service are explicitly specified.
+     * All other configuration parameters are taken from the default connection
+     * properties.
+     * </p>
+     * 
+     * @param strHost       network URL of the desired service
+     * @param intPort       server port used by the at the above service
+     * @param fileTrustedCerts root file of all trusted server certificates
+     * @param fileClientCerts  file of client certificates
+     * @param fileClientKey file containing client private key
+     * 
+     * @return new <code>DpGrpcConnection</code> instance connected to the given address
+     * 
+     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
+     * 
+     * @see DpGrpcConnectionConfig
+     */
+    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+    
+        return this.connect(strHost, intPort,
+                fileTrustedCerts,
+                fileClientCerts,
+                fileClientKey,
+                this.cfgConn.channel.grpc.messageSizeMax,
+                this.cfgConn.channel.grpc.keepAliveWithoutCalls,
+                this.cfgConn.channel.grpc.gzip,
+                this.cfgConn.channel.grpc.timeoutLimit, 
+                this.cfgConn.channel.grpc.timeoutUnit
+                );        
+    }
+
 
     /**
      * <p>

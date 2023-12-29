@@ -1,6 +1,6 @@
 /*
  * Project: dp-api-common
- * File:	YamlLoader.java
+ * File:	CfgLoaderYaml.java
  * Package: com.ospreydcs.dp.api.config
  * Type: 	PropertiesLoader
  *
@@ -22,7 +22,7 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * <p>
- * Utility Class for Loading YAML Files into Structure Classes
+ * Utility Class for Loading YAML Configuration Files into Structure Classes
  * </p>
  * <p>
  * The <em>SnakeYaml</em> utility is used to parse YAML files and create new 
@@ -35,7 +35,7 @@ import org.yaml.snakeyaml.Yaml;
  * @version	2.0
  *
  */
-public final class YamlLoader {
+public final class CfgLoaderYaml {
 	
 	/** The singleton instance of the Yaml class */
 	private final static Yaml		YML_INSTANCE = new Yaml();
@@ -74,7 +74,7 @@ public final class YamlLoader {
 //        InputStream insProps = new FileInputStream(strFileYml);
 //        T cfgProps = ymlClient.load(insProps);
         
-        InputStream isCfg = YamlLoader.class.getClassLoader().getResourceAsStream(strFileName);
+        InputStream isCfg = CfgLoaderYaml.class.getClassLoader().getResourceAsStream(strFileName);
 //    	InputStream	isCfg = new FileInputStream(strFileYml);
     	Struct objParams = YML_INSTANCE.loadAs(isCfg, clsStruct);
 
@@ -155,7 +155,7 @@ public final class YamlLoader {
 //                Object objFld = fld.get(objProps);
 //                
 //                // Recursively override the underlying field 
-//                if (YamlLoader.override(objFld))
+//                if (CfgLoaderYaml.override(objFld))
 //                    bolResult = true;
 //                
 //            }
@@ -252,7 +252,7 @@ public final class YamlLoader {
 //                fld.setAccessible(true);
 //                Object objFld = fld.get(objProps);
 //                
-//                lstVars.addAll( YamlLoader.parse(objFld) );
+//                lstVars.addAll( CfgLoaderYaml.parse(objFld) );
 //            }
 //            
 //            if (fld.isAnnotationPresent(ACfgOverride.Field.class)) {
@@ -279,11 +279,11 @@ public final class YamlLoader {
     
     /**
      * <p>
-     * Prevents construction of <code>YamlLoader</code> instances.
+     * Prevents construction of <code>CfgLoaderYaml</code> instances.
      * </p>
      *
      */
-    private YamlLoader() {
+    private CfgLoaderYaml() {
         super();
     }
 

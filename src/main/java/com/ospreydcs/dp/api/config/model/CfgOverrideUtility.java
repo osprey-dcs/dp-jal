@@ -61,7 +61,7 @@ public final class CfgOverrideUtility {
      * <p>
      * It is assumed the argument is
      * a properly annotated structure class instance which has already been loaded (e.g., using
-     * the <code>YamlLoader</code> utility).  from the
+     * the <code>CfgLoaderYaml</code> utility).  from the
      * </p>
      * <h2>NOTE:</h2>
      * This is a recursive function so the method signature must be of type

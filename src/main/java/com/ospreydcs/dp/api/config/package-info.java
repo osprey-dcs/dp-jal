@@ -38,7 +38,7 @@
  * YAML configuration files.  Thus, the configuration mechanism contains the following resources:
  * <ul>
  * <li>
- * <code>YamlLoader</code> - A utility class capable of loading YAML configuration files into appropriate
+ * <code>CfgLoaderYaml</code> - A utility class capable of loading YAML configuration files into appropriate
  * structure classes.
  * </li>
  * <li>

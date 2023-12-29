@@ -31,6 +31,7 @@ import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc;
@@ -57,6 +58,14 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
 public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFactory<DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> */{
 
     
+    //    
+    // Application Resources
+    //
+    
+    /** The API Library default Ingestion Service configuration parameters */
+    private static final GrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().services.ingestion;
+
+    
     //
     // Class Resources
     //
@@ -65,7 +74,7 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
     private static final DpGrpcConnectionFactory<DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> FAC;
     
     static {
-        FAC = DpGrpcConnectionFactory.newFactory(DpIngestionServiceGrpc.class, DpApiConfig.getInstance().services.ingestion);
+        FAC = DpGrpcConnectionFactory.newFactory(DpIngestionServiceGrpc.class, CFG_DEFAULT);
     }
              
     
@@ -158,7 +167,25 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
     //
     // Explicit TLS Security Connections
     //
-    
+
+    /**
+     * <p>
+     * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
+     * </p>
+     * <p>
+     * See {@link DpGrpcConnectionFactory#connect(File, File, File)} for details.
+     * </p>
+     *
+     * @return new <code>DpIngestionConnection</code> instance connected to the default address
+     * 
+     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)
+     * 
+     * @see DpGrpcConnectionFactory#connect(File, File, File)
+     */
+    public static DpIngestionConnection connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+        return DpIngestionConnection.from(FAC.connect(fileTrustedCerts, fileClientCerts, fileClientKey));
+    }
+
     /**
      * <p>
      * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
@@ -226,6 +253,19 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
            ) throws DpGrpcException 
    {
        return DpIngestionConnection.from(FAC.connect(strHost, intPort, fileTrustedCerts, fileClientCertsChain, fileClientKey, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout));
+   }
+   
+   
+   //
+   // Private Support
+   //
+   
+   /**
+    * <p>
+    * Prevents creation of <code>DpIngestionConnectionFactory</code> instances.
+    * </p>
+    */
+   private DpIngestionConnectionFactory() {
    }
 
 }

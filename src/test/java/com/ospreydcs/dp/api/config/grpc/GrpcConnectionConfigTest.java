@@ -29,7 +29,7 @@ package com.ospreydcs.dp.api.config.grpc;
 
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.CfgParameter;
-import com.ospreydcs.dp.api.config.model.YamlLoader;
+import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 
 import static org.junit.Assert.*;
 
@@ -53,7 +53,7 @@ import org.junit.Test;
  * Test Cases for <code>GrpcChannelConfi</code> structure class.
  * </p>
  * <p>
- * Tests correct loading of YAML files using the YamlLoader utility class.
+ * Tests correct loading of YAML files using the CfgLoaderYaml utility class.
  * Also test the environment variable override feature.
  * </p> 
  *
@@ -112,14 +112,14 @@ public class GrpcConnectionConfigTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.model.YamlLoader#load(String, Class)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgLoaderYaml#load(String, Class)}.
      */
     @Test
     public void testLoadString1() {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            GrpcConnectionConfig   cfgChan = YamlLoader.load(strFile, GrpcConnectionConfig.class);
+            GrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(strFile, GrpcConnectionConfig.class);
             
             Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgChan);
             
@@ -132,7 +132,7 @@ public class GrpcConnectionConfigTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.model.YamlLoader#load(File, Class)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgLoaderYaml#load(File, Class)}.
      */
     @Test
     public void testLoadFile1() {
@@ -141,7 +141,7 @@ public class GrpcConnectionConfigTest {
         
         try {
             File        fileCfg = new File(urlFile.toURI());
-            GrpcConnectionConfig   cfgChan = YamlLoader.load(fileCfg, GrpcConnectionConfig.class);
+            GrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(fileCfg, GrpcConnectionConfig.class);
             
             Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgChan);
             
@@ -165,7 +165,7 @@ public class GrpcConnectionConfigTest {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            GrpcConnectionConfig   cfgChan = YamlLoader.load(strFile, GrpcConnectionConfig.class);
+            GrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(strFile, GrpcConnectionConfig.class);
 
             boolean bolResult = CfgOverrideUtility.envOverride(cfgChan);
             
@@ -224,7 +224,7 @@ public class GrpcConnectionConfigTest {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            GrpcConnectionConfig   cfgChan = YamlLoader.load(strFile, GrpcConnectionConfig.class);
+            GrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(strFile, GrpcConnectionConfig.class);
             
             System.out.println();
             System.out.println("GrpcConnectionConfig Parameters:");
@@ -325,7 +325,7 @@ public class GrpcConnectionConfigTest {
         cfg.timeout.limit = 60L;
         cfg.timeout.unit = TimeUnit.SECONDS;
         
-        cfg.channel.tls.defaultTls = false;
+        cfg.channel.tls.defaultTls = true;
         cfg.channel.tls.filepaths.trustedCerts = "trusted sources file";
         cfg.channel.tls.filepaths.clientCerts = "client certificates file";
         cfg.channel.tls.filepaths.clientKey = "private key file";

@@ -44,14 +44,14 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.CfgParameter;
-import com.ospreydcs.dp.api.config.model.YamlLoader;
+import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 
 /**
  * <p>
  * JUnit test cases for class <code>MongoDbConfig</code>
  * </p>
  * <p>
- * Tests correct loading of YAML files using the YamlLoader utility class.
+ * Tests correct loading of YAML files using the CfgLoaderYaml utility class.
  * Also test the environment variable override feature.
  * </p> 
  *
@@ -108,14 +108,14 @@ public class MongoDbConfigTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.model.YamlLoader#load(String, Class)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgLoaderYaml#load(String, Class)}.
      */
     @Test
     public void testLoadString1() {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            MongoDbConfig   cfgMongo = YamlLoader.load(strFile, MongoDbConfig.class);
+            MongoDbConfig   cfgMongo = CfgLoaderYaml.load(strFile, MongoDbConfig.class);
             
             Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgMongo);
             
@@ -128,7 +128,7 @@ public class MongoDbConfigTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.model.YamlLoader#load(File, Class)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgLoaderYaml#load(File, Class)}.
      */
     @Test
     public void testLoadFile1() {
@@ -138,7 +138,7 @@ public class MongoDbConfigTest {
         try {
             File        fileCfg = new File( urlFile.toURI() );
             
-            MongoDbConfig   cfgMongo = YamlLoader.load(fileCfg, MongoDbConfig.class);
+            MongoDbConfig   cfgMongo = CfgLoaderYaml.load(fileCfg, MongoDbConfig.class);
             
             Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgMongo);
             
@@ -162,7 +162,7 @@ public class MongoDbConfigTest {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            MongoDbConfig   cfgMongo = YamlLoader.load(strFile, MongoDbConfig.class);
+            MongoDbConfig   cfgMongo = CfgLoaderYaml.load(strFile, MongoDbConfig.class);
 
             boolean bolResult = CfgOverrideUtility.envOverride(cfgMongo);
             
@@ -221,7 +221,7 @@ public class MongoDbConfigTest {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            MongoDbConfig   cfgMongo = YamlLoader.load(strFile, MongoDbConfig.class);
+            MongoDbConfig   cfgMongo = CfgLoaderYaml.load(strFile, MongoDbConfig.class);
             
             System.out.println("name = " + cfgMongo.name);
             System.out.println("version = " + cfgMongo.version);
