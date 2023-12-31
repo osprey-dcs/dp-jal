@@ -1,7 +1,7 @@
 /*
- * Project: datastore-admin
+ * Project: dp-api-common
  * File:	AAdvancedApi.java
- * Package: com.ospreydcs.datastore.admin.util
+ * Package: com.ospreydcs.dp.api.model
  * Type: 	AAdvancedApi
  *
  * Copyright 2010-2022 the original author or authors.
@@ -38,8 +38,8 @@ import java.lang.annotation.Target;
  * Indicates a public API that can change at any time, and has no guarantee of API stability and
  * backward-compatibility. If users want stabilization or signature change of a specific API that
  * is currently annotated {@code @AdvancedApi}, please comment on its tracking issue on github
- * with rationale, usecase, and so forth, so that the gRPC team may prioritize the process toward
- * stabilization of the API.
+ * with rationale, use cases, and so forth, so that the Data Platform team may prioritize the process 
+ * toward stabilization of the API.
  * </p>
  * <p>
  * Usage guidelines:

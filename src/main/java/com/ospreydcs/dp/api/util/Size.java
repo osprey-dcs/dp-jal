@@ -33,6 +33,8 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.Instant;
 
+import com.ospreydcs.dp.api.model.BufferedImage;
+
 
 /**
  * Utility class for estimating the memory allocation for objects.
@@ -90,7 +92,8 @@ public class Size {
     
     // Miscellaneous objects
     public static final long SZ_Instant   = 24;
-    public static final long SZ_NtDimension = 4*SZ_Integer + 1*SZ_Boolean + SZ_Class_RSRVD;
+//    public static final long SZ_NtDimension = 4*SZ_Integer + 1*SZ_Boolean + SZ_Class_RSRVD;
+    public static final long SZ_ImageDimension = SZ_Integer;
 
 
     /**
@@ -154,8 +157,8 @@ public class Size {
         
         if (o instanceof String s) return stringSizeof(s);
         if (o instanceof Instant) return SZ_Instant;
-//        if (o instanceof NtDimension) return SZ_NtDimension;
-//        if (o instanceof NtImage img) return imageSizeof(img);
+//        if (o instanceof Dimension) return SZ_ImageDimension;
+        if (o instanceof BufferedImage img) return imageSizeof(img);
         
         if (o instanceof Serializable s) return serialSizeof(s);
 
@@ -183,35 +186,35 @@ public class Size {
         return str.length()*SZ_char + SZ_STR_RSRVD;
     }
     
-//    /**
-//     * <p>
-//     * Returns the approximate size of an <code>NtImage</code> instance.
-//     * </p>
-//     * <p>
-//     * The returned value is computed with the following:
-//     * <ul>
-//     * <li>The size of the name string</li>
-//     * <li>The size of the time instant</li>
-//     * <li>The (approx) size of the <code>Format</code> enumeration</li>
-//     * <li>The size of the image data</li>
-//     * </ul>
-//     * The values are summed and returned.
-//     * </p>
-//     * 
-//     * @param img image whose allocation is to be computed
-//     * 
-//     * @return the memory allocation for the given image (in bytes)
-//     */
-//    private static long imageSizeof(NtImage img) {
-//        Long    szName  = stringSizeof( img.getName() );
-//        Long    szTms   = SZ_Instant;
-//        Long    szFmt   = 2 * SZ_Enum_RSRVD;
-//        Integer cntDims = (img.getDimensions()!=null) ? img.getDimensions().size() : 0;
-//        Long    szDims  = SZ_NtDimension * cntDims; 
-//        Integer szData  = img.getData().length;
-//        
-//        return szName + szTms + szFmt + szDims + szData;
-//    }
+    /**
+     * <p>
+     * Returns the approximate size of an <code>BufferedImage</code> instance.
+     * </p>
+     * <p>
+     * The returned value is computed with the following:
+     * <ul>
+     * <li>The size of the name string</li>
+     * <li>The size of the time instant</li>
+     * <li>The (approx) size of the <code>Format</code> enumeration</li>
+     * <li>The size of the image data</li>
+     * </ul>
+     * The values are summed and returned.
+     * </p>
+     * 
+     * @param img image whose allocation is to be computed
+     * 
+     * @return the memory allocation for the given image (in bytes)
+     */
+    private static long imageSizeof(BufferedImage img) {
+        Long    szName  = stringSizeof( img.getName() );
+        Long    szTms   = SZ_Instant;
+        Long    szFmt   = 2 * SZ_Enum_RSRVD;
+        Integer cntDims = (img.getDimensions()!=null) ? img.getDimensions().size() : 0;
+        Long    szDims  = SZ_ImageDimension * cntDims; 
+        Integer szData  = img.getData().length;
+        
+        return szName + szTms + szFmt + szDims + szData;
+    }
     
     /**
      * <p>
