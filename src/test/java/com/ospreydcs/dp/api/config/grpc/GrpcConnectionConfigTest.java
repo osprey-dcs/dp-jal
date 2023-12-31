@@ -29,6 +29,7 @@ package com.ospreydcs.dp.api.config.grpc;
 
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.CfgParameter;
+import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 
 import static org.junit.Assert.*;

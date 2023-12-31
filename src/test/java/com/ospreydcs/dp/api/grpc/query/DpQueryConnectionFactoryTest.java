@@ -59,7 +59,7 @@ public class DpQueryConnectionFactoryTest {
     //
     
     /** The API Library default Query Service configuration parameters */
-    private static final GrpcConnectionConfig.Channel   CFG_DEFAULT = DpApiConfig.getInstance().services.query.channel;
+    private static final GrpcConnectionConfig.Channel   CFG_DEFAULT = DpApiConfig.getInstance().connections.query.channel;
 
     
 

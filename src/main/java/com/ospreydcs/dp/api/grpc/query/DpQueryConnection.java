@@ -61,7 +61,7 @@ public class DpQueryConnection extends DpGrpcConnection<DpQueryServiceGrpc, DpQu
     //
     
     /** The Query Service default connection parameters */
-    public static final GrpcConnectionConfig        CFG_DEFAULT = DpApiConfig.getInstance().services.query;
+    public static final GrpcConnectionConfig        CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
     
     
     //

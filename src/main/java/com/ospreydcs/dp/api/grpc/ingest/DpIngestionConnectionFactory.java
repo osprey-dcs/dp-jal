@@ -63,7 +63,7 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
     //
     
     /** The API Library default Ingestion Service configuration parameters */
-    private static final GrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().services.ingestion;
+    private static final GrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.ingestion;
 
     
     //

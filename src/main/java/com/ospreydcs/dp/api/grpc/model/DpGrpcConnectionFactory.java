@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.grpc.model;
 
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
-
 import io.grpc.ChannelCredentials;
 import io.grpc.Grpc;
 import io.grpc.TlsChannelCredentials;
@@ -41,6 +39,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
 
 /**
  * <p>

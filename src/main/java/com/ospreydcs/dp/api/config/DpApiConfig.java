@@ -33,9 +33,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpConnections;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
+import com.ospreydcs.dp.api.config.query.DpQuery;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 
 /**
@@ -137,23 +138,26 @@ public final class DpApiConfig {
     
     /** Data Platform data archive parameters */
     @ACfgOverride.Struct
-    public Archive  archive;
+    public DpArchive    archive;
+    
+    /** Data Platform default Query Service parameters */
+    @ACfgOverride.Struct
+    public DpQuery      query;
     
     /** Data Platform services connection parameters */
     @ACfgOverride.Struct
-    public Services services;
+    public DpConnections connections;
     
     /**
      * Structure containing Data Platform archive parameters.
      *
      */
-    public static final class Archive {
+    public static final class DpArchive {
         
         /** Archive inception date (earliest possible timestamp) */
         @ACfgOverride.Field(name="DP_ARCHIVE_INCEPTION")
         public String   inception;
 
-        
         // 
         // Object Overrides
         //
@@ -166,9 +170,9 @@ public final class DpApiConfig {
         public boolean equals(Object obj) {
             
             // Cast comparison object
-            Archive arc;
-            if (obj instanceof Archive)
-                arc = (Archive)obj;
+            DpArchive arc;
+            if (obj instanceof DpArchive)
+                arc = (DpArchive)obj;
             else
                 return false;
             
@@ -176,46 +180,8 @@ public final class DpApiConfig {
             return arc.inception.equals(this.inception);
         }
     }
-    
-    /**
-     * Structure containing connection parameters for Data Platform services.
-     *
-     * @see GrpcConnectionConfig
-     */
-    public static final class Services {
-        
-        /** Data Platform Ingestion Service connection parameters */
-        @ACfgOverride.Struct
-        public GrpcConnectionConfig     ingestion;
-        
-        /** Data Platform Query Service connection parameters */
-        @ACfgOverride.Struct
-        public GrpcConnectionConfig     query;
 
-        
-        //
-        // Object Overrides
-        //
-        
-        /**
-         *
-         * @see @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-            
-            // Cast comparison object
-            Services    srvs;
-            if (obj instanceof Services)
-                srvs = (Services)obj;
-            else
-                return false;
-            
-            // Check equivalence
-            return srvs.ingestion.equals(this.ingestion) 
-                    && srvs.query.equals(this.query);
-        }
-    }
+    
     
     
     //
@@ -238,7 +204,8 @@ public final class DpApiConfig {
         
         // Check equivalence
         return cfg.archive.equals(this.archive) &&
-                cfg.services.equals(this.services);
+                cfg.query.equals(this.query) &&
+                cfg.connections.equals(this.connections);
     }
 
     /**

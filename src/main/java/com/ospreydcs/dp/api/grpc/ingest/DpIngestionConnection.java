@@ -64,7 +64,7 @@ public final class DpIngestionConnection extends DpGrpcConnection<DpIngestionSer
     //
     
     /** Default connection parameters for Ingestion Service */
-    public static final GrpcConnectionConfig CFG_DEFAULT = DpApiConfig.getInstance().services.ingestion;
+    public static final GrpcConnectionConfig CFG_DEFAULT = DpApiConfig.getInstance().connections.ingestion;
     
     
     //

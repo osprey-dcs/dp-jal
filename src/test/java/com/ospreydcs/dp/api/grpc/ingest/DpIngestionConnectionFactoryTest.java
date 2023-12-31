@@ -68,11 +68,11 @@ public class DpIngestionConnectionFactoryTest {
      */
     @Test
     public final void testConnectStringInt() {
-        String  strUrl = DpApiConfig.getInstance().services.ingestion.channel.host.url;
-        int     intPort = DpApiConfig.getInstance().services.ingestion.channel.host.port;
+        String  strUrl = DpApiConfig.getInstance().connections.ingestion.channel.host.url;
+        int     intPort = DpApiConfig.getInstance().connections.ingestion.channel.host.port;
         
-        long    lngConTmout = DpApiConfig.getInstance().services.ingestion.timeout.limit;
-        TimeUnit tuConTmout = DpApiConfig.getInstance().services.ingestion.timeout.unit;
+        long    lngConTmout = DpApiConfig.getInstance().connections.ingestion.timeout.limit;
+        TimeUnit tuConTmout = DpApiConfig.getInstance().connections.ingestion.timeout.unit;
         
         try {
             DpIngestionConnection   conn = DpIngestionConnectionFactory.connect(strUrl, intPort);
@@ -98,11 +98,11 @@ public class DpIngestionConnectionFactoryTest {
      */
     @Test
     public final void testConnectStringIntLongTimeUnit() {
-        String  strUrl = DpApiConfig.getInstance().services.ingestion.channel.host.url;
-        int     intPort = DpApiConfig.getInstance().services.ingestion.channel.host.port;
+        String  strUrl = DpApiConfig.getInstance().connections.ingestion.channel.host.url;
+        int     intPort = DpApiConfig.getInstance().connections.ingestion.channel.host.port;
         
-        long    lngTmout = DpApiConfig.getInstance().services.ingestion.channel.grpc.timeoutLimit;
-        TimeUnit tuTmout = DpApiConfig.getInstance().services.ingestion.channel.grpc.timeoutUnit;
+        long    lngTmout = DpApiConfig.getInstance().connections.ingestion.channel.grpc.timeoutLimit;
+        TimeUnit tuTmout = DpApiConfig.getInstance().connections.ingestion.channel.grpc.timeoutUnit;
         
         try {
             DpIngestionConnection   conn = DpIngestionConnectionFactory.connect(strUrl, intPort, lngTmout, tuTmout);

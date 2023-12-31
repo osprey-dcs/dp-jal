@@ -1,10 +1,10 @@
 /*
  * Project: dp-api-common
- * File:	AAdvancedApi.java
+ * File:	AUnavailable.java
  * Package: com.ospreydcs.dp.api.model
- * Type: 	AAdvancedApi
+ * Type: 	AUnavailable
  *
- * Copyright 2010-2022 the original author or authors.
+ * Copyright 2010-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,35 +20,32 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Nov 19, 2022
+ * @since Dec 31, 2023
  *
  * TODO:
  * - None
  */
 package com.ospreydcs.dp.api.model;
 
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.ElementType.TYPE_PARAMETER;
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.CLASS;
+
 import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
  * <p>
- * Indicates a public API that can change at any time, and has no guarantee of API stability and
- * backward-compatibility. If users want stabilization or signature change of a specific API that
- * is currently annotated {@code @AdvancedApi}, please comment on its tracking issue on github
- * with rationale, use cases, and so forth, so that the Data Platform team may prioritize the process 
- * toward stabilization of the API.
+ * Annotation indicating that an API feature, attribute, or method is available but not yet implemented. 
  * </p>
  * <p>
- * Usage guidelines:
- * <ol>
- * <li>This annotation is used only on public API. Internal interfaces should not use it.</li>
- * <li>After gRPC has gained API stability, this annotation can only be added to new API. Adding it
- * to an existing API is considered API-breaking.</li>
- * <li>Removing this annotation from an API gives it stable status.</li>
- * </ol>
+ * Appearance of this annotation indicates that an API feature is intended for future availability but
+ * is not currently operational.  Thus developers may anticipate the feature but <b>do not</b> use it 
+ * until this annotation is removed.
  * </p>
  * <p>
  * <h2>NOTES:</h2>
@@ -63,21 +60,16 @@ import java.lang.annotation.Target;
  *     for code and documentation.
  *     </li>
  * </ul> 
- *
+*
  * @author Christopher K. Allen
- * @since Nov 19, 2022
+ * @since Dec 31, 2023
  *
  */
 @Documented
-@Retention(RetentionPolicy.CLASS)
-@Target({ElementType.ANNOTATION_TYPE,
-         ElementType.CONSTRUCTOR,
-         ElementType.FIELD,
-         ElementType.METHOD,
-         ElementType.PACKAGE,
-         ElementType.TYPE})
-public @interface AAdvancedApi {
-
+@Retention(CLASS)
+@Target({TYPE, FIELD, METHOD, TYPE_PARAMETER, TYPE_USE})
+public @interface AUnavailable {
+    
     /**
      * Enumeration of the status conditions for the feature.
      *
@@ -87,19 +79,24 @@ public @interface AAdvancedApi {
      */
     public static enum STATUS {
         
-        /** The status is unknown or had not be seen */
+        /** Unknown or unset status condition */
         UNKNOWN,
         
-        /** The API component is currently under development - expected unpredictable behavior */
-        DEVELOPMENT,
+        /** Currently under review - the feature may or may not be available */
+        UNDER_REVIEW,
         
-        /** The API component has been alpha tested */
-        TESTED_ALPHA,
+        /** The feature has been accepted and will be developed */
+        ACCEPTED,
         
-        /** The API component has been beta tested */
-        TESTED_BETA
+        /** The feature had been rejected and is scheduled for removal */
+        REJECTED
     }
     
+    /**
+     * Provide the current status of the unavailable feature.
+     * 
+     * @return  feature status
+     */
     public STATUS status() default STATUS.UNKNOWN;
     
     /**
@@ -108,12 +105,5 @@ public @interface AAdvancedApi {
      * @return API developer comment on API feature
      */
     public String note() default "";
-    
-    /**
-     * Provides a reference location (i.e., an URL) for further documentation of the
-     * advanced API feature.
-     * 
-     * @return reference location for further API information
-     */
-    public String reference() default "";
+
 }

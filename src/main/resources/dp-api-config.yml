@@ -21,9 +21,12 @@
 #
 
 archive:
-   inception: 2023-09-01T00:00:00.0Z # ealiest archive timestamp   : DP_ARCHIVE_INCEPTION 
+   inception: 2023-09-01T00:00:00.0Z # ealiest archive timestamp      : DP_ARCHIVE_INCEPTION
+   
+query:
+   pageSize: 100                     # default bucket count per page  : DP_API_QUERY_PAGE_SIZE 
  
-services:
+connections:   # All available Data Platform service connections
    ingestion:
       name: DP Ingestion Service
       version: 1.0.0

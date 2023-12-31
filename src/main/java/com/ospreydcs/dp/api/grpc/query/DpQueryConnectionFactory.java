@@ -63,7 +63,7 @@ public final class DpQueryConnectionFactory {
     //
     
     /** The API Library default Query Service configuration parameters */
-    private static final GrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().services.query;
+    private static final GrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
 
     
     //
