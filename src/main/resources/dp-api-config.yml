@@ -19,6 +19,20 @@
 #
 # - In the current implementation service override environment variables affect ALL SERVICES.
 #
+# - Use of compression slows overall transission significantly
+#
+# - Default gRPC message size is 2^22 = 4194304
+#
+# - Looks like we want to keep gRPC message size <= 2^24 = 16,777,216
+#    2^26 = 67,108,864
+#    2^25 = 33,554,432
+#    2^24 = 16,777,216
+#    2^23 =  8,388,608
+#    2^22 =  4,194,304
+#    2^21 =  2,097,152
+#    2^20 =  1,048,576
+#    2^19 =    524,288
+#
 
 archive:
    inception: 2023-09-01T00:00:00.0Z # ealiest archive timestamp      : DP_ARCHIVE_INCEPTION

@@ -61,14 +61,14 @@ public final class GrpcConnectionConfig {
     /** Optional supplemental parameters */
     public String   supplement;
     
-    /** Required Channel parameters */
-    @ACfgOverride.Struct
-    public Channel  channel;
-
     /** General timeout properties */
     @ACfgOverride.Struct
     public Timeout  timeout;
     
+    /** Required Channel parameters */
+    @ACfgOverride.Struct
+    public Channel  channel;
+
     
     /**
      * Structure containing timeout parameters

@@ -28,7 +28,7 @@
 package com.ospreydcs.dp.api.config.grpc;
 
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
-import com.ospreydcs.dp.api.config.model.CfgParameter;
+import com.ospreydcs.dp.api.config.model.CfgOverrideRec;
 import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 
@@ -193,18 +193,18 @@ public class GrpcConnectionConfigTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgOverrideUtility#parse(Object)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgOverrideUtility#extractOverrides(Object)}.
      */
     @Test
     public void testParseConfig1() {
         try {
-            List<CfgParameter>   lstVars = CfgOverrideUtility.parse(CFG_1);
+            List<CfgOverrideRec>   lstVars = CfgOverrideUtility.extractOverrides(CFG_1);
             
             Assert.assertTrue("There were no environment variables", lstVars.size() > 0);
 
             System.out.println();
             System.out.println("Environment Variables:");
-            for (CfgParameter var : lstVars) 
+            for (CfgOverrideRec var : lstVars) 
                 System.out.println(var);
             
         } catch (IllegalArgumentException e) {

@@ -1,0 +1,28 @@
+#
+# test-cfg-structure-1.yml
+#
+# Test configuration for TestCfgStructure configuration structure class.
+#
+# Author: Christopher K. Allen
+# Since: Jan 2, 2024
+#
+# WARNING:
+#  - DO NOT modify this file.  Used for JUnit testing and parameter values are checked. 
+#
+# NOTES:
+#
+
+name: Test Structure
+version: 1
+data:
+  bol: true
+  integer: 42
+  dbl: 2.718281828459045
+  str: Hello World
+  sub1:
+    bol: true
+    str: substructure 1
+  sub2:
+    bol: false
+    str: substructure 2
+ 

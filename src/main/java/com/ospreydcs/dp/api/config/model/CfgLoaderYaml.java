@@ -17,6 +17,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
 
@@ -37,6 +39,13 @@ import org.yaml.snakeyaml.Yaml;
  */
 public final class CfgLoaderYaml {
 	
+    //
+    // Class Resources
+    //
+    
+    /** The static logging utility */
+    private static final Logger     LOGGER = LogManager.getLogger();
+
 	/** The singleton instance of the Yaml class */
 	private final static Yaml		YML_INSTANCE = new Yaml();
     
@@ -221,7 +230,7 @@ public final class CfgLoaderYaml {
 //     * <code>AOverrideCapable</code> annotations to determine the supported environment
 //     * variables for the application.  The application then returns a list of these
 //     * variables which it found (along with the current values, the properties object,
-//     * etc. as an <code>CfgParameter</code> records).
+//     * etc. as an <code>CfgOverrideRec</code> records).
 //     * It is assumed the argument is
 //     * the <code>AppProperties</code> instance which has already been loaded from the
 //     * <em>application.yml</em> configuration file.  
@@ -238,12 +247,12 @@ public final class CfgLoaderYaml {
 //     * @throws IllegalArgumentException encountered a null argument during recursion
 //     * @throws IllegAccessException unable to get a structure field object (java.lang.reflect.Field#get)
 //     */
-//    public static List<CfgParameter> parse(Object objProps) throws IllegalArgumentException, IllegalAccessException {
+//    public static List<CfgOverrideRec> parse(Object objProps) throws IllegalArgumentException, IllegalAccessException {
 //        
 //        if ( Objects.isNull(objProps) )
 //            throw new IllegalArgumentException("Properties object is null");
 //        
-//        List<CfgParameter> lstVars = new LinkedList<CfgParameter>();
+//        List<CfgOverrideRec> lstVars = new LinkedList<CfgOverrideRec>();
 //
 //        Class<?> clsProps = objProps.getClass();
 //
@@ -261,7 +270,7 @@ public final class CfgLoaderYaml {
 //                    String strVarNm  = annFld.env();
 //                    String strVarVal = System.getenv(annFld.env());
 //                    
-//                    CfgParameter var = new CfgParameter(strVarNm, strVarVal, fld, objProps);
+//                    CfgOverrideRec var = new CfgOverrideRec(strVarNm, strVarVal, fld, objProps);
 //                   
 //                    lstVars.add(var);
 //                }
