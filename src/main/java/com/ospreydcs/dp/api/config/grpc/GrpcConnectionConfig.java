@@ -29,8 +29,6 @@ package com.ospreydcs.dp.api.config.grpc;
 
 import java.util.concurrent.TimeUnit;
 
-import org.yaml.snakeyaml.Yaml;
-
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -106,26 +104,6 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
         @ACfgOverride.Field(name="UNIT")
         public TimeUnit     unit;
 
-//        /**
-//         *
-//         * @see @see java.lang.Object#equals(java.lang.Object)
-//         */
-//        @Override
-//        public boolean equals(Object obj) {
-//            
-//            // Cast comparison object
-//            Timeout tmtCmp;
-//            if (obj instanceof Timeout)
-//                tmtCmp = (Timeout)obj;
-//            else
-//                return false;
-//            
-//            // Check equivalence
-//            return (tmtCmp.active == this.active) &&
-//                    tmtCmp.limit.equals(this.limit) &&
-//                    tmtCmp.unit.equals(this.unit);
-//        }
-        
     }
     
     /**
@@ -172,23 +150,6 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
             @ACfgOverride.Field(name="PORT")
             public Integer  port;
 
-//            /**
-//             *
-//             * @see @see java.lang.Object#equals(java.lang.Object)
-//             */
-//            @Override
-//            public boolean equals(Object obj) {
-//                
-//                // Cast comparison object
-//                Host hstCmp;
-//                if (obj instanceof Host)
-//                    hstCmp = (Host) obj;
-//                else
-//                    return false;
-//                
-//                return hstCmp.url.equals(this.url) && hstCmp.port.equals(this.port);
-//            }
-
         } /* Channel.Host */
         
         
@@ -205,12 +166,10 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
             }
 
             /** Is TLS security used */
-//            @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_ACTIVE")
             @ACfgOverride.Field(name="ACTIVE")
             public Boolean  active;
             
             /** Use default TLS security */
-//            @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_DEFAULT")
             @ACfgOverride.Field(name="DEFAULT")
             public Boolean  defaultTls;
             
@@ -231,60 +190,19 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
                 }
 
                 /** Collection of all trusted sources */
-//                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_TRUSTED_CERTS")
                 @ACfgOverride.Field(name="TRUSTED_CERTS")
                 public String   trustedCerts;
                 
                 /** Client certificates chain */
-//                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_CLIENT_CERTS")
                 @ACfgOverride.Field(name="CLIENT_CERTS")
                 public String   clientCerts;
                 
                 /** Client private key */
-//                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_CLIENT_KEY")
                 @ACfgOverride.Field(name="CLIENT_KEY")
                 public String   clientKey;
 
-//                /**
-//                 *
-//                 * @see @see java.lang.Object#equals(java.lang.Object)
-//                 */
-//                @Override
-//                public boolean equals(Object obj) {
-//                    
-//                    // Cast comparison object
-//                    FilePaths   paths;
-//                    if (obj instanceof FilePaths)
-//                        paths = (FilePaths)obj;
-//                    else
-//                        return false;
-//                    
-//                    // Check equivalence
-//                    return paths.trustedCerts.equals(this.trustedCerts) &&
-//                            paths.clientCerts.equals(this.clientCerts) &&
-//                            paths.clientKey.equals(this.clientKey);
-//                }
             } /* Channel.TLS.FilePaths */
 
-//            /**
-//             *
-//             * @see @see java.lang.Object#equals(java.lang.Object)
-//             */
-//            @Override
-//            public boolean equals(Object obj) {
-//                
-//                // Cast comparison object
-//                TLS tls;
-//                if (obj instanceof TLS)
-//                    tls = (TLS)obj;
-//                else
-//                    return false;
-//                
-//                // Check equivalence
-//                return (tls.active == this.active) &&
-//                        (tls.defaultTls = this.defaultTls) &&
-//                        tls.filepaths.equals(this.filepaths);
-//            }
         } /* Channel.TLS */
         
         /**
@@ -300,107 +218,31 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
             }
 
             /** Timeout limit used for connection establishment */
-//            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_TIMEOUT_LIMIT")
             @ACfgOverride.Field(name="TIMEOUT_LIMIT")
             public Long     timeoutLimit;
             
             /** Timeout limit units */
-//            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_TIMEOUT_UNIT")
             @ACfgOverride.Field(name="TIMEOUT_UNIT")
             public TimeUnit timeoutUnit;
             
             /** Maximum gRPC (Protobuf) message size - must be multiple of 2 */
-//            @ACfgOverride.Field(name="DP_API_GRPC_MESSAGE_SIZE_MAX")
             @ACfgOverride.Field(name="MESSAGE_SIZE_MAX")
             public Integer  messageSizeMax;
             
             /** Transmit plain text (rather than binary) */
-//            @ACfgOverride.Field(name="DP_API_GRPC_XMIT_PLAIN_TEXT")
             @ACfgOverride.Field(name="XMIT_PLAIN_TEXT")
             public Boolean  usePlainText;
             
             /** Keep channel active even when not in use - WARNING: This can sequester significant gRPC resources */
-//            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_KEEP_ALIVE")
             @ACfgOverride.Field(name="KEEP_ALIVE")
             public Boolean  keepAliveWithoutCalls;
             
             /** Compress transmitted message with GZIP algorithm (not recommended) */
-//            @ACfgOverride.Field(name="DP_API_GRPC_COMPRESS_GZIP")
             @ACfgOverride.Field(name="COMPRESS_GZIP")
             public Boolean  gzip;
-
-//            /**
-//             *
-//             * @see @see java.lang.Object#equals(java.lang.Object)
-//             */
-//            @Override
-//            public boolean equals(Object obj) {
-//                
-//                // Cast comparison object
-//                Grpc    grpc;
-//                if (obj instanceof Grpc)
-//                    grpc = (Grpc)obj;
-//                else
-//                    return false;
-//                
-//                // Check equivalence
-//                return  grpc.messageSizeMax.equals(this.messageSizeMax) &&
-////                        grpc.timeoutCount.equals(this.timeoutCount) &&
-////                        grpc.timeoutUnit.equals(this.timeoutUnit) &&
-//                        (grpc.usePlainText == this.usePlainText) &&
-//                        (grpc.keepAliveWithoutCalls == this.keepAliveWithoutCalls) &&
-//                        (grpc.gzip == this.gzip);
-//            }
 
         } /* Channel.Grpc */
         
     } /* Channel */
 
-//    /**
-//     *
-//     * @see @see java.lang.Object#toString()
-//     */
-//    @Override
-//    public String toString() {
-//        
-//        Yaml    yaml = new Yaml();
-//        
-//        String  strCfg = yaml.dump(this);
-//        return strCfg;
-//    }
-
-//    /**
-//     *
-//     * @see @see java.lang.Object#equals(java.lang.Object)
-//     */
-//    @Override
-//    public boolean equals(Object obj) {
-//        
-//        // Cast comparison object
-//        GrpcConnectionConfig   cfg;
-//        
-//        if (obj instanceof GrpcConnectionConfig)
-//            cfg = (GrpcConnectionConfig)obj;
-//        else
-//            return false;
-//        
-//        // Check values
-//        if (!this.name.equals(cfg.name))
-//            return false;
-//        
-//        if (!this.version.equals(cfg.version))
-//            return false;
-//        
-//        if (!this.channel.host.equals(cfg.channel.host))
-//            return false;
-//        
-//        if (!this.timeout.equals(cfg.timeout))
-//            return false;
-//        
-//        if (!this.channel.grpc.equals(cfg.channel.grpc))
-//            return false;
-//            
-//        return true;
-//    }
- 
 } /* GrpcConnectionConfig */

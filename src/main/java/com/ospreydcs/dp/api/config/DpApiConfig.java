@@ -184,55 +184,12 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
         @ACfgOverride.Field(name="INCEPTION")
         public String   inception;
 
-//        // 
-//        // Object Overrides
-//        //
-//        
-//        /**
-//         *
-//         * @see @see java.lang.Object#equals(java.lang.Object)
-//         */
-//        @Override
-//        public boolean equals(Object obj) {
-//            
-//            // Cast comparison object
-//            DpArchiveConfig arc;
-//            if (obj instanceof DpArchiveConfig)
-//                arc = (DpArchiveConfig)obj;
-//            else
-//                return false;
-//            
-//            // Check equivalence
-//            return arc.inception.equals(this.inception);
-//        }
     }
 
-    
-    
     
     //
     // Object Overrides
     //
-
-//    /**
-//     *
-//     * @see @see java.lang.Object#equals(java.lang.Object)
-//     */
-//    @Override
-//    public boolean equals(Object obj) {
-//        
-//        // Cast comparison object
-//        DpApiConfig cfg;
-//        if (obj instanceof DpApiConfig)
-//            cfg = (DpApiConfig)obj;
-//        else
-//            return false;
-//        
-//        // Check equivalence
-//        return cfg.archive.equals(this.archive) &&
-//                cfg.query.equals(this.query) &&
-//                cfg.connections.equals(this.connections);
-//    }
 
     /**
      *
@@ -245,6 +202,7 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
         
         return str;
     }
+
     
     //
     // Private Methods

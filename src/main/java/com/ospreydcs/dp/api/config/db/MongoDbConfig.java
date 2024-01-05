@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.config.db;
 
-import org.yaml.snakeyaml.Yaml;
-
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -98,52 +96,6 @@ public final class MongoDbConfig extends CfgStructure<MongoDbConfig>{
         @ACfgOverride.Field(name="PORT")
         public Integer  port;
 
-//        /**
-//         * @return the current value of property url
-//         */
-//        public String getUrl() {
-//            return url;
-//        }
-//
-//        /**
-//         * @param url sets value of property url
-//         */
-//        public void setUrl(String url) {
-//            this.url = url;
-//        }
-//
-//        /**
-//         * @return the current value of property port
-//         */
-//        public Integer getPort() {
-//            return port;
-//        }
-//
-//        /**
-//         * @param port sets name value of property port 
-//         */
-//        public void setPort(Integer port) {
-//            this.port = port;
-//        }
-//        
-//        /**
-//         *
-//         * @see @see java.lang.Object#equals(java.lang.Object)
-//         */
-//        @Override
-//        public boolean equals(Object obj) {
-//            
-//            // Cast comparison object
-//            Host hstCmp;
-//            if (obj instanceof Host)
-//                hstCmp = (Host) obj;
-//            else
-//                return false;
-//            
-//            // Check equivalence
-//            return hstCmp.url.equals(this.url) && hstCmp.port.equals(this.port);
-//        }
-
     } /* Host */
     
     
@@ -166,52 +118,6 @@ public final class MongoDbConfig extends CfgStructure<MongoDbConfig>{
         /** Client password */
         @ACfgOverride.Field(name="PASSWORD")
         public String   password;
-
-//        /**
-//         * @return the current value of property user
-//         */
-//        public String getUser() {
-//            return user;
-//        }
-//
-//        /**
-//         * @param user sets name value of property user 
-//         */
-//        public void setUser(String user) {
-//            this.user = user;
-//        }
-//
-//        /**
-//         * @return the current value of property password
-//         */
-//        public String getPassword() {
-//            return password;
-//        }
-//
-//        /**
-//         * @param password sets name value of property password 
-//         */
-//        public void setPassword(String password) {
-//            this.password = password;
-//        }
-//
-//        /**
-//         *
-//         * @see @see java.lang.Object#equals(java.lang.Object)
-//         */
-//        @Override
-//        public boolean equals(Object obj) {
-//
-//            // Cast comparison object
-//            Client  cltCmp;
-//            if (obj instanceof Client)
-//                cltCmp = (Client)obj;
-//            else
-//                return false;
-//            
-//            // Check equivalence
-//            return cltCmp.user.equals(this.user) && cltCmp.password.equals(this.password);
-//        }
         
     } /* Client */
 
@@ -220,50 +126,17 @@ public final class MongoDbConfig extends CfgStructure<MongoDbConfig>{
     // Object Overrides
     //
     
-    /**
-     *
-     * @see @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        Yaml    yml = new Yaml();
-        
-        String  str = yml.dump(this);
-        
-        return str;
-    }
-
-
 //    /**
 //     *
-//     * @see @see java.lang.Object#equals(java.lang.Object)
+//     * @see @see java.lang.Object#toString()
 //     */
 //    @Override
-//    public boolean equals(Object obj) {
+//    public String toString() {
+//        Yaml    yml = new Yaml();
 //        
-//        // Cast to comparison object
-//        MongoDbConfig   cfg;
+//        String  str = yml.dump(this);
 //        
-//        if (obj instanceof MongoDbConfig)
-//            cfg = (MongoDbConfig)obj;
-//        else
-//            return false;
-//        
-//        // Check equivalence
-//        if (!this.name.equals(cfg.name))
-//            return false;
-//        
-//        if (!this.version.equals(cfg.version))
-//            return false;
-//        
-//        if (!this.host.equals(cfg.host))
-//            return false;
-//        
-//        if (!this.client.equals(cfg.client))
-//            return false;
-//            
-//        return true;
+//        return str;
 //    }
-    
-    
+
 }

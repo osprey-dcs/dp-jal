@@ -54,27 +54,4 @@ public final class DpConnectionsConfig extends CfgStructure<DpConnectionsConfig>
     @ACfgOverride.Struct(pathelem="QUERY")
     public GrpcConnectionConfig     query;
 
-    
-//    //
-//    // Object Overrides
-//    //
-//    
-//    /**
-//     *
-//     * @see @see java.lang.Object#equals(java.lang.Object)
-//     */
-//    @Override
-//    public boolean equals(Object obj) {
-//        
-//        // Cast comparison object
-//        DpConnectionsConfig    srvs;
-//        if (obj instanceof DpConnectionsConfig)
-//            srvs = (DpConnectionsConfig)obj;
-//        else
-//            return false;
-//        
-//        // Check equivalence
-//        return srvs.ingestion.equals(this.ingestion) 
-//                && srvs.query.equals(this.query);
-//    }
 }
