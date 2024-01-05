@@ -30,6 +30,7 @@ package com.ospreydcs.dp.api.config.db;
 import org.yaml.snakeyaml.Yaml;
 
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
+import com.ospreydcs.dp.api.config.model.CfgStructure;
 
 /**
  * <p>
@@ -44,88 +45,104 @@ import com.ospreydcs.dp.api.config.model.ACfgOverride;
  * @since Dec 18, 2023
  *
  */
-@ACfgOverride
-public final class MongoDbConfig {
+@ACfgOverride.Root(root="DP_API_MONGODB")
+public final class MongoDbConfig extends CfgStructure<MongoDbConfig>{
+
+    /** Default constructor for base class */
+    public MongoDbConfig() {
+        super(MongoDbConfig.class);
+    }
+
 
     /** Optional configuration name */
+    @ACfgOverride.Field(name="NAME")
     public String   name;
     
     /** Optional configuration version */
+    @ACfgOverride.Field(name="VERSION")
     public String   version;
     
     /** Optional description */
+    @ACfgOverride.Field(name="DESCRIPTION")
     public String   description;
     
     /** Optional supplemental parameters */
+    @ACfgOverride.Field(name="SUPPLEMENT")
     public String   supplement;
     
     /** Require MongoDB host parameters */
-    @ACfgOverride.Struct
+    @ACfgOverride.Struct(pathelem="HOST")
     public Host     host;
     
     /** Required MongoDB client credentials */
-    @ACfgOverride.Struct
+    @ACfgOverride.Struct(pathelem="CLIENT")
     public Client   client;
     
     /**
      * Structure for MongoDB Host Server Identification
      *
      */
-    public static final class Host {
+    @ACfgOverride.Root(root="DP_API_MONGODB_HOST")
+    public static final class Host extends CfgStructure<Host> {
         
+        /** Default constructor for base class */
+        public Host() {
+            super(Host.class);
+        }
+
         /** Host network URL */
-        @ACfgOverride.Field(name="DP_API_MONGODB_HOST_URL")
+        @ACfgOverride.Field(name="URL")
         public String   url;
         
         /** Port address of service */
-        @ACfgOverride.Field(name="DP_API_MONGODB_HOST_PORT")
+        @ACfgOverride.Field(name="PORT")
         public Integer  port;
 
-        /**
-         * @return the current value of property url
-         */
-        public String getUrl() {
-            return url;
-        }
-
-        /**
-         * @param url sets value of property url
-         */
-        public void setUrl(String url) {
-            this.url = url;
-        }
-
-        /**
-         * @return the current value of property port
-         */
-        public Integer getPort() {
-            return port;
-        }
-
-        /**
-         * @param port sets name value of property port 
-         */
-        public void setPort(Integer port) {
-            this.port = port;
-        }
-        
-        /**
-         *
-         * @see @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-            
-            // Cast comparison object
-            Host hstCmp;
-            if (obj instanceof Host)
-                hstCmp = (Host) obj;
-            else
-                return false;
-            
-            // Check equivalence
-            return hstCmp.url.equals(this.url) && hstCmp.port.equals(this.port);
-        }
+//        /**
+//         * @return the current value of property url
+//         */
+//        public String getUrl() {
+//            return url;
+//        }
+//
+//        /**
+//         * @param url sets value of property url
+//         */
+//        public void setUrl(String url) {
+//            this.url = url;
+//        }
+//
+//        /**
+//         * @return the current value of property port
+//         */
+//        public Integer getPort() {
+//            return port;
+//        }
+//
+//        /**
+//         * @param port sets name value of property port 
+//         */
+//        public void setPort(Integer port) {
+//            this.port = port;
+//        }
+//        
+//        /**
+//         *
+//         * @see @see java.lang.Object#equals(java.lang.Object)
+//         */
+//        @Override
+//        public boolean equals(Object obj) {
+//            
+//            // Cast comparison object
+//            Host hstCmp;
+//            if (obj instanceof Host)
+//                hstCmp = (Host) obj;
+//            else
+//                return false;
+//            
+//            // Check equivalence
+//            return hstCmp.url.equals(this.url) && hstCmp.port.equals(this.port);
+//        }
 
     } /* Host */
     
@@ -134,61 +151,67 @@ public final class MongoDbConfig {
      * Structure for MongoDB Client Identification (i.e., client credentials).
      *
      */
-    public static final class Client {
+    @ACfgOverride.Root(root="DP_API_MONGODB_CLIENT")
+    public static final class Client extends CfgStructure<Client> {
         
+        /** Default constructor for base class */
+        public Client() {
+            super(Client.class);
+        }
+
         /** Client user ID */
-        @ACfgOverride.Field(name="DP_API_MONGODB_CLIENT_USERID")        
+        @ACfgOverride.Field(name="USERID")        
         public String   user;
         
         /** Client password */
-        @ACfgOverride.Field(name="DP_API_MONGODB_CLIENT_PASSWORD")
+        @ACfgOverride.Field(name="PASSWORD")
         public String   password;
 
-        /**
-         * @return the current value of property user
-         */
-        public String getUser() {
-            return user;
-        }
-
-        /**
-         * @param user sets name value of property user 
-         */
-        public void setUser(String user) {
-            this.user = user;
-        }
-
-        /**
-         * @return the current value of property password
-         */
-        public String getPassword() {
-            return password;
-        }
-
-        /**
-         * @param password sets name value of property password 
-         */
-        public void setPassword(String password) {
-            this.password = password;
-        }
-
-        /**
-         *
-         * @see @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-
-            // Cast comparison object
-            Client  cltCmp;
-            if (obj instanceof Client)
-                cltCmp = (Client)obj;
-            else
-                return false;
-            
-            // Check equivalence
-            return cltCmp.user.equals(this.user) && cltCmp.password.equals(this.password);
-        }
+//        /**
+//         * @return the current value of property user
+//         */
+//        public String getUser() {
+//            return user;
+//        }
+//
+//        /**
+//         * @param user sets name value of property user 
+//         */
+//        public void setUser(String user) {
+//            this.user = user;
+//        }
+//
+//        /**
+//         * @return the current value of property password
+//         */
+//        public String getPassword() {
+//            return password;
+//        }
+//
+//        /**
+//         * @param password sets name value of property password 
+//         */
+//        public void setPassword(String password) {
+//            this.password = password;
+//        }
+//
+//        /**
+//         *
+//         * @see @see java.lang.Object#equals(java.lang.Object)
+//         */
+//        @Override
+//        public boolean equals(Object obj) {
+//
+//            // Cast comparison object
+//            Client  cltCmp;
+//            if (obj instanceof Client)
+//                cltCmp = (Client)obj;
+//            else
+//                return false;
+//            
+//            // Check equivalence
+//            return cltCmp.user.equals(this.user) && cltCmp.password.equals(this.password);
+//        }
         
     } /* Client */
 
@@ -211,36 +234,36 @@ public final class MongoDbConfig {
     }
 
 
-    /**
-     *
-     * @see @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-        
-        // Cast to comparison object
-        MongoDbConfig   cfg;
-        
-        if (obj instanceof MongoDbConfig)
-            cfg = (MongoDbConfig)obj;
-        else
-            return false;
-        
-        // Check equivalence
-        if (!this.name.equals(cfg.name))
-            return false;
-        
-        if (!this.version.equals(cfg.version))
-            return false;
-        
-        if (!this.host.equals(cfg.host))
-            return false;
-        
-        if (!this.client.equals(cfg.client))
-            return false;
-            
-        return true;
-    }
+//    /**
+//     *
+//     * @see @see java.lang.Object#equals(java.lang.Object)
+//     */
+//    @Override
+//    public boolean equals(Object obj) {
+//        
+//        // Cast to comparison object
+//        MongoDbConfig   cfg;
+//        
+//        if (obj instanceof MongoDbConfig)
+//            cfg = (MongoDbConfig)obj;
+//        else
+//            return false;
+//        
+//        // Check equivalence
+//        if (!this.name.equals(cfg.name))
+//            return false;
+//        
+//        if (!this.version.equals(cfg.version))
+//            return false;
+//        
+//        if (!this.host.equals(cfg.host))
+//            return false;
+//        
+//        if (!this.client.equals(cfg.client))
+//            return false;
+//            
+//        return true;
+//    }
     
     
 }

@@ -331,9 +331,6 @@ public final class CfgOverrideUtility {
             for (Field fldSub : clsStruct.getDeclaredFields()) {
                 fldSub.setAccessible(true);
                 
-//                Object      objSub = fldSub.get(struct);
-                
-//                if (CfgOverrideUtility.overrideField(fldSub, objSub, strPathExt, enmSrc))
                 if (CfgOverrideUtility.overrideField(fldSub, struct, strPathExt, enmSrc))
                     bolResult = true; // result is true if at least one field was overridden
             }
@@ -548,9 +545,7 @@ public final class CfgOverrideUtility {
     
         for (Field fld : clsRoot.getDeclaredFields()) {
             
-            Object  objFld = fld.get(root);
-            
-            List<CfgOverrideRec> lstFldParams = CfgOverrideUtility.extractOverrideableFields(fld, objFld, strPathExt, enmSrc);
+            List<CfgOverrideRec> lstFldParams = CfgOverrideUtility.extractOverrideableFields(fld, root, strPathExt, enmSrc);
             
             lstParams.addAll(lstFldParams);
         }        
@@ -558,6 +553,11 @@ public final class CfgOverrideUtility {
         return lstParams;
     }
 
+    
+    //
+    // Support Methods
+    //
+    
     /**
      * <p>
      * Recursive function for extracting the system variable name and value corresponding to an
@@ -567,10 +567,22 @@ public final class CfgOverrideUtility {
      * This method is called by <code>{@link #extractOverrideables(Object, SOURCE)}</code>.
      * </p>
      * <p>
-     * The argument is assumed to be the field of a structure class containing configuration parameters.
-     * If the structure field described by the arguments is override-capable then it is annotated 
-     * with one of the <code>{@link ACfgOverride}</code> enclosed annotations.  If the argument is not 
-     * annotated the field is not override-capable and an empty list is returned.
+     * The <code>Field</code> type argument is assumed to be the field of a structure class containing 
+     * configuration parameters. If the structure field described by the arguments is override-capable 
+     * then it is annotated with one of the <code>{@link ACfgOverride}</code> enclosed annotations.  
+     * If the argument is not annotated the field is not override-capable and an empty list is returned.
+     * </p>
+     * <p>
+     * The <code>Object</code> argument is the structure class instance containing the given
+     * field.  To get the field value, the invocation 
+     * <br/><br/>
+     * &nbsp; &nbsp; <code>{@link Field#get(Object)}</code>
+     * <br/><br/>
+     * is required on this argument.  (The above returns a Java <code>Object</code> containing
+     * the value.)  If the <code>Field</code> type argument is annotated with 
+     * <code>{@link ACfgOverride.Field}</code> a new record is created and the above invocation 
+     * is used to acquire the <code>{@link CfgOverrideRec#cfgValue()}</code> attribute.  
+     * The above reflection method call is the source of any thrown exceptions.
      * </p>
      * <p>
      * The name of the overriding system variable is constructed recursively using the argument 
@@ -585,8 +597,8 @@ public final class CfgOverrideUtility {
      * the substructure (while extracting the corresponding <code>Object</code> for the subfield).
      * </p> 
      * 
-     * @param fld       Java <code>Field</code> descriptor for the given <code>Object</code> argument
-     * @param obj       Java <code>Object</code> containing the structure field value
+     * @param fldStruct Java <code>Field</code> descriptor to be checked for annotation
+     * @param objStruct structure class instance which contains the given field 
      * @param strPath   current environment variable name prefix ("path element")
      * @param enmSrc    enumeration for source of the configuration parameter new value
      * 
@@ -597,21 +609,27 @@ public final class CfgOverrideUtility {
      * @throws IllegalArgumentException the given <code>fld</code> and <code>obj</code> arguments are inconsistent (this should not occur)
      * @throws IllegalAccessException   a field or subfield of the argument is inaccessible (e.g., <code>{@link java.lang.reflect.Field#get(Object)}</code>).
      */
-    private static List<CfgOverrideRec>   extractOverrideableFields(Field fld, Object obj, String strPath, SOURCE enmSrc) throws IllegalArgumentException, IllegalAccessException {
+    private static List<CfgOverrideRec>   extractOverrideableFields(Field fldStruct, Object objStruct, String strPath, SOURCE enmSrc) throws IllegalArgumentException, IllegalAccessException {
         
         List<CfgOverrideRec> lstRecs = new LinkedList<CfgOverrideRec>();
     
         // Check if object is a terminal field - if so process and return
-        if (fld.isAnnotationPresent(ACfgOverride.Field.class)) {
-            ACfgOverride.Field annFld = fld.getAnnotation(ACfgOverride.Field.class);
+        if (fldStruct.isAnnotationPresent(ACfgOverride.Field.class)) {
+            ACfgOverride.Field annFld = fldStruct.getAnnotation(ACfgOverride.Field.class);
             
             if ( !annFld.name().isBlank() ) {
+                
+                // Construct the system variable name and get value
                 String strName   = annFld.name();
                 String strVarNm  = strPath.concat(strName);
                 String strVarVal = enmSrc.getValue(strVarNm);
-                Class<?> cls = fld.getDeclaringClass();
                 
-                CfgOverrideRec rec = new CfgOverrideRec(strVarNm, strVarVal, cls, fld, obj);
+                // Extract structure type and field value
+                Class<?> clsStruct = fldStruct.getDeclaringClass();
+                Object   objFld = fldStruct.get(objStruct);   // this should be safe since its annotated
+                
+                // Build record and add to list - single element list gets returned
+                CfgOverrideRec rec = new CfgOverrideRec(strVarNm, strVarVal, clsStruct, fldStruct, objFld);
                
                 lstRecs.add(rec);
             }
@@ -620,22 +638,21 @@ public final class CfgOverrideUtility {
         }
         
         // Check if object is a structure - if so call this method for all structure fields
-        if (fld.isAnnotationPresent(ACfgOverride.Struct.class)) {
+        if (fldStruct.isAnnotationPresent(ACfgOverride.Struct.class)) {
     
             // Get the Struct annotation and, from it, the environment variable path element extension
-            ACfgOverride.Struct annStruct = fld.getAnnotation(ACfgOverride.Struct.class);
+            ACfgOverride.Struct annStruct = fldStruct.getAnnotation(ACfgOverride.Struct.class);
             String              strPathelem = annStruct.pathelem();
             String              strPathelExt = strPath.concat(strPathelem).concat(STR_PATHEL_SEP);
-    
-            // Then we recursively call this method for each field
-            Class<?>    clsStruct = fld.getType();
+
+            // Get the substructure type and object
+            Class<?>    clsSubStruct = fldStruct.getType();
+            Object      objSubStruct = fldStruct.get(objStruct);
             
-            for (Field fldStruct : clsStruct.getDeclaredFields()) {
+            // Then we recursively call this method for each field
+            for (Field fldSubStruct : clsSubStruct.getDeclaredFields()) {
     
-                // Get the underlying field object
-                Object      objStruct = fldStruct.get(obj);
-                
-                List<CfgOverrideRec> lstFldRecs = CfgOverrideUtility.extractOverrideableFields(fldStruct, objStruct, strPathelExt, enmSrc);
+                List<CfgOverrideRec> lstFldRecs = CfgOverrideUtility.extractOverrideableFields(fldSubStruct, objSubStruct, strPathelExt, enmSrc);
                 
                 lstRecs.addAll(lstFldRecs);
             }
@@ -681,8 +698,7 @@ public final class CfgOverrideUtility {
      */
     private static boolean setFieldValue(Field fld, Object obj, String strNewVal) throws IllegalArgumentException, IllegalAccessException {
         
-//        boolean bolResult = false;
-        
+        // Skip unassigned system variables
         if (strNewVal == null || strNewVal.isBlank() || strNewVal.isEmpty())
             return false;
     
@@ -732,11 +748,6 @@ public final class CfgOverrideUtility {
         
         return false;
     }
-    
-    
-    //
-    // Support Methods
-    //
     
     /**
      * <p>
@@ -831,6 +842,7 @@ public final class CfgOverrideUtility {
         return bolResult;
     }
 
+    
     //
     // Deprecated Methods
     //
@@ -969,50 +981,6 @@ public final class CfgOverrideUtility {
                     fld.setAccessible(true);
                     
                     bolResult = CfgOverrideUtility.setFieldValue(fld, objProps, strNewVal);
-                    
-//                    // Parse by type
-//                    if (fld.getType().isEnum()) {
-//                        @SuppressWarnings({ "unchecked", "rawtypes" })
-//                        Enum<?> enmNewVal = Enum.valueOf((Class<Enum>)fld.getType(), strNewVal);
-//                        fld.set(objProps, enmNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(java.lang.String.class)) {
-//                        fld.set(objProps, strNewVal);
-//                    
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Boolean.class)) {
-//                        Boolean bolNewVal = Boolean.parseBoolean(strNewVal);
-//                        fld.set(objProps, bolNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Integer.class)) {
-//                        Integer intNewVal = Integer.parseInt(strNewVal);
-//                        fld.set(objProps, intNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Long.class)) {
-//                        Long    lngNewVal = Long.parseLong(strNewVal);
-//                        fld.set(objProps, lngNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Float.class)) {
-//                        Float   fltNewVal = Float.parseFloat(strNewVal);
-//                        fld.set(objProps, fltNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Double.class)) {
-//                        Double  dblNewVal = Double.parseDouble(strNewVal);
-//                        fld.set(objProps, dblNewVal);
-//                        
-//                        bolResult = true;
-//                    }
                 }
             }
             
@@ -1088,7 +1056,6 @@ public final class CfgOverrideUtility {
                 ACfgOverride.Field annFld = fld.getAnnotation(ACfgOverride.Field.class);
                 if ( !annFld.name().isBlank() ) {
                     String strNewVal = System.getProperty(annFld.name());
-//                    String strNewVal = System.getenv(annFld.env());
                    
                     if (strNewVal == null || strNewVal.isBlank() || strNewVal.isEmpty())
                         continue;
@@ -1096,49 +1063,6 @@ public final class CfgOverrideUtility {
                     fld.setAccessible(true);
                     
                     bolResult = CfgOverrideUtility.setFieldValue(fld, objProps, strNewVal);
-//                     Parse by type
-//                    if (fld.getType().isEnum()) {
-//                        @SuppressWarnings({ "unchecked", "rawtypes" })
-//                        Enum<?> enmNewVal = Enum.valueOf((Class<Enum>)fld.getType(), strNewVal);
-//                        fld.set(objProps, enmNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(java.lang.String.class)) {
-//                        fld.set(objProps, strNewVal);
-//                    
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Boolean.class)) {
-//                        Boolean bolNewVal = Boolean.parseBoolean(strNewVal);
-//                        fld.set(objProps, bolNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Integer.class)) {
-//                        Integer intNewVal = Integer.parseInt(strNewVal);
-//                        fld.set(objProps, intNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Long.class)) {
-//                        Long    lngNewVal = Long.parseLong(strNewVal);
-//                        fld.set(objProps, lngNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Float.class)) {
-//                        Float   fltNewVal = Float.parseFloat(strNewVal);
-//                        fld.set(objProps, fltNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Double.class)) {
-//                        Double  dblNewVal = Double.parseDouble(strNewVal);
-//                        fld.set(objProps, dblNewVal);
-//                        
-//                        bolResult = true;
-//                    }
                 }
             }
             

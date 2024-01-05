@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    DpConnections.java
+ * File:    DpConnectionsConfig.java
  * Package: com.ospreydcs.dp.api.config.grpc
- * Type:    DpConnections
+ * Type:    DpConnectionsConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -28,43 +28,53 @@
 package com.ospreydcs.dp.api.config.grpc;
 
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
+import com.ospreydcs.dp.api.config.model.CfgStructure;
 
 /**
+ * <p>
  * Structure containing connection parameters for Data Platform services.
+ * </p>
  *
  * @see GrpcConnectionConfig
  */
-public final class DpConnections {
+@ACfgOverride.Root(root="DP_API_CONNECTIION")
+public final class DpConnectionsConfig extends CfgStructure<DpConnectionsConfig> {
     
+    /** Default constructor require for base structure class */
+    public DpConnectionsConfig() {
+        super(DpConnectionsConfig.class);
+    }
+
+
     /** Data Platform Ingestion Service connection parameters */
-    @ACfgOverride.Struct
+    @ACfgOverride.Struct(pathelem="INGESTION")
     public GrpcConnectionConfig     ingestion;
     
     /** Data Platform Query Service connection parameters */
-    @ACfgOverride.Struct
+    @ACfgOverride.Struct(pathelem="QUERY")
     public GrpcConnectionConfig     query;
 
     
-    //
-    // Object Overrides
-    //
-    
-    /**
-     *
-     * @see @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-        
-        // Cast comparison object
-        DpConnections    srvs;
-        if (obj instanceof DpConnections)
-            srvs = (DpConnections)obj;
-        else
-            return false;
-        
-        // Check equivalence
-        return srvs.ingestion.equals(this.ingestion) 
-                && srvs.query.equals(this.query);
-    }
+//    //
+//    // Object Overrides
+//    //
+//    
+//    /**
+//     *
+//     * @see @see java.lang.Object#equals(java.lang.Object)
+//     */
+//    @Override
+//    public boolean equals(Object obj) {
+//        
+//        // Cast comparison object
+//        DpConnectionsConfig    srvs;
+//        if (obj instanceof DpConnectionsConfig)
+//            srvs = (DpConnectionsConfig)obj;
+//        else
+//            return false;
+//        
+//        // Check equivalence
+//        return srvs.ingestion.equals(this.ingestion) 
+//                && srvs.query.equals(this.query);
+//    }
 }

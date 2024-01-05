@@ -39,7 +39,7 @@ import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.util.ProtoMsg;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorOperation;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
 
 
@@ -980,14 +980,16 @@ public final class DpDataRequest {
      * </ul>
      * </p>
      * 
-     * @return  new <code>CursorRequest</code> message configured by history 
+     * @return  new <code>CursorOperation</code> message configured by history 
      */
-    public CursorRequest buildCursorRequest() {
+    public CursorOperation buildCursorRequest() {
         
-        CursorRequest.Builder bldrRqst = CursorRequest.newBuilder();
-        bldrRqst.setNumBuckets(this.szPage);
-//        bldrRqst.setPage(this.indStartPage);  // Unavailable
-        CursorRequest rqst = bldrRqst.build();
+//        CursorOperation.Builder bldrRqst = CursorRequest.newBuilder();
+//        bldrRqst.setNumBuckets(this.szPage);
+////        bldrRqst.setPage(this.indStartPage);  // Unavailable
+//        CursorRequest rqst = bldrRqst.build();
+        
+        CursorOperation rqst = CursorOperation.CURSOR_OP_NEXT;
         
         return rqst;
     }

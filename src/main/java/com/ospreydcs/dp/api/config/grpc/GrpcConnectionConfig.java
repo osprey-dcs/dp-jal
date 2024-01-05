@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import org.yaml.snakeyaml.Yaml;
 
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
+import com.ospreydcs.dp.api.config.model.CfgStructure;
 
 /**
  * <p>
@@ -39,414 +40,367 @@ import com.ospreydcs.dp.api.config.model.ACfgOverride;
  * </p>
  * <p>
  * Contains common parameters used when creating gRPC <code>Channel</code> objects 
- * (i.e. <code>ManagedChannel</code> in Java gRPC). 
+ * (i.e. <code>ManagedChannel</code> in Java gRPC).   Note that these parameters are
+ * all contained in the <code>{@link #channel}</code> field.  Additional, higher-level
+ * field are included for configuration management and for external timeout operations.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Dec 18, 2023
  *
  */
-@ACfgOverride
-public final class GrpcConnectionConfig {
+@ACfgOverride.Root(root="DP_API_CONNECTION")
+public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfig>{
     
+    /** Default constructor required for structure base class */
+    public GrpcConnectionConfig() {
+        super(GrpcConnectionConfig.class);
+    }
+
     /** Optional configuration name */
+    @ACfgOverride.Field(name="NAME")
     public String   name;
     
     /** Optional configuration version */
+    @ACfgOverride.Field(name="VERSION")
     public String   version;
     
     /** Optional description */
+    @ACfgOverride.Field(name="DESCRIPTION")
     public String   description;
     
     /** Optional supplemental parameters */
+    @ACfgOverride.Field(name="SUPPLEMENT")
     public String   supplement;
     
-    /** General timeout properties */
-    @ACfgOverride.Struct
+    /** General timeout properties used external to channel connection (i.e., on channel objects) */
+    @ACfgOverride.Struct(pathelem="TIMEOUT")
     public Timeout  timeout;
     
     /** Required Channel parameters */
-    @ACfgOverride.Struct
+    @ACfgOverride.Struct(pathelem="CHANNEL")
     public Channel  channel;
 
     
     /**
-     * Structure containing timeout parameters
+     * Structure containing external timeout parameters for gRPC channels
      *
      */
-    public static final class Timeout {
+    @ACfgOverride.Root(root="DP_API_CONNECTION_TIMEOUT")
+    public static final class Timeout extends CfgStructure<Timeout> {
         
+        /** Default constructor required for structure base class */
+        public Timeout() {
+            super(Timeout.class);
+        }
+
         /** Is timeout active */
-        @ACfgOverride.Field(name="DP_API_CONNECTION_TIMEOUT_ACTIVE")
+        @ACfgOverride.Field(name="ACTIVE")
         public Boolean      active;
         
         /** Timeout limit */
-        @ACfgOverride.Field(name="DP_API_CONNECTION_TIMEOUT_LIMIT")
+        @ACfgOverride.Field(name="LIMIT")
         public Long         limit;
         
         /** Units for the timeout limit */
-        @ACfgOverride.Field(name="DP_API_CONNECTION_TIMEOUT_UNIT")
+        @ACfgOverride.Field(name="UNIT")
         public TimeUnit     unit;
 
-        /**
-         *
-         * @see @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-            
-            // Cast comparison object
-            Timeout tmtCmp;
-            if (obj instanceof Timeout)
-                tmtCmp = (Timeout)obj;
-            else
-                return false;
-            
-            // Check equivalence
-            return (tmtCmp.active == this.active) &&
-                    tmtCmp.limit.equals(this.limit) &&
-                    tmtCmp.unit.equals(this.unit);
-        }
+//        /**
+//         *
+//         * @see @see java.lang.Object#equals(java.lang.Object)
+//         */
+//        @Override
+//        public boolean equals(Object obj) {
+//            
+//            // Cast comparison object
+//            Timeout tmtCmp;
+//            if (obj instanceof Timeout)
+//                tmtCmp = (Timeout)obj;
+//            else
+//                return false;
+//            
+//            // Check equivalence
+//            return (tmtCmp.active == this.active) &&
+//                    tmtCmp.limit.equals(this.limit) &&
+//                    tmtCmp.unit.equals(this.unit);
+//        }
         
     }
     
     /**
-     * Structure containing gRPC Channel Parameters
+     * Structure containing gRPC Channel configuration parameters
      * 
      */
-    public static final class Channel {
+    @ACfgOverride.Root(root="DP_API_CONNECTION_CHANNEL")
+    public static final class Channel extends CfgStructure<Channel> {
         
-        /** Server host name and port address (URI) */
+        /** Default constructor required for structure base class */
+        public Channel() {
+            super(Channel.class);
+        }
+
+        /** Server host identification - name and port address (URI) */
+        @ACfgOverride.Struct(pathelem="HOST")
         public Host     host;
         
         /** TLS security parameters */
-        @ACfgOverride.Struct
+        @ACfgOverride.Struct(pathelem="TLS")
         public TLS      tls;
         
         /** gRPC parameters for channel */
-        @ACfgOverride.Struct
+        @ACfgOverride.Struct(pathelem="GRPC")
         public Grpc     grpc;
         
         /**
-         * Structure for Host Server Identification
+         * Structure containing server host identification information
          *
          */
-        public static final class Host {
+        @ACfgOverride.Root(root="DP_API_CONNECTION_CHANNEL_HOST")
+        public static final class Host extends CfgStructure<Host> {
+            
+            /** Default constructor required for structure base class */
+            public Host() {
+                super(Host.class);
+            }
             
             /** Host network URL */
+            @ACfgOverride.Field(name="URL")
             public String   url;
             
             /** Port address of service */
+            @ACfgOverride.Field(name="PORT")
             public Integer  port;
 
 //            /**
-//             * @return the current value of property url
+//             *
+//             * @see @see java.lang.Object#equals(java.lang.Object)
 //             */
-//            public String getUrl() {
-//                return url;
+//            @Override
+//            public boolean equals(Object obj) {
+//                
+//                // Cast comparison object
+//                Host hstCmp;
+//                if (obj instanceof Host)
+//                    hstCmp = (Host) obj;
+//                else
+//                    return false;
+//                
+//                return hstCmp.url.equals(this.url) && hstCmp.port.equals(this.port);
 //            }
-//
-//            /**
-//             * @param url sets value of property url
-//             */
-//            public void setUrl(String url) {
-//                this.url = url;
-//            }
-//
-//            /**
-//             * @return the current value of property port
-//             */
-//            public Integer getPort() {
-//                return port;
-//            }
-//
-//            /**
-//             * @param port sets name value of property port 
-//             */
-//            public void setPort(Integer port) {
-//                this.port = port;
-//            }
+
+        } /* Channel.Host */
+        
+        
+        /**
+         * Structure containing Transport Layer Security (TLS) configuration parameters
+         *
+         */
+        @ACfgOverride.Root(root="DP_API_CONNECTION_CHANNEL_TLS")
+        public static final class TLS extends CfgStructure<TLS>{
             
-            /**
-             *
-             * @see @see java.lang.Object#equals(java.lang.Object)
-             */
-            @Override
-            public boolean equals(Object obj) {
-                
-                // Cast comparison object
-                Host hstCmp;
-                if (obj instanceof Host)
-                    hstCmp = (Host) obj;
-                else
-                    return false;
-                
-                return hstCmp.url.equals(this.url) && hstCmp.port.equals(this.port);
+            /** Default constructor required for structure base class */
+            public TLS() {
+                super(TLS.class);
             }
 
-        } /* Host */
-        
-        
-        public static final class TLS {
-            
             /** Is TLS security used */
-            @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_ACTIVE")
+//            @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_ACTIVE")
+            @ACfgOverride.Field(name="ACTIVE")
             public Boolean  active;
             
             /** Use default TLS security */
-            @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_DEFAULT")
+//            @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_DEFAULT")
+            @ACfgOverride.Field(name="DEFAULT")
             public Boolean  defaultTls;
             
             /** File path locations for TLS certificates and keys */
-            @ACfgOverride.Struct
+            @ACfgOverride.Struct(pathelem="FILE")
             public FilePaths    filepaths;
             
             /**
-             * Structure of file path locations for TLS resources.
+             * Structure of file path locations for TLS configurations.
              *
              */
-            public static final class FilePaths {
+            @ACfgOverride.Root(root="DP_API_CONNECTION_CHANNEL_TLS_FILE")
+            public static final class FilePaths extends CfgStructure<FilePaths> {
                 
+                /** Default constructor required for structure base class */
+                public FilePaths() {
+                    super(FilePaths.class);
+                }
+
                 /** Collection of all trusted sources */
-                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_TRUSTED_CERTS")
+//                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_TRUSTED_CERTS")
+                @ACfgOverride.Field(name="TRUSTED_CERTS")
                 public String   trustedCerts;
                 
                 /** Client certificates chain */
-                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_CLIENT_CERTS")
+//                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_CLIENT_CERTS")
+                @ACfgOverride.Field(name="CLIENT_CERTS")
                 public String   clientCerts;
                 
                 /** Client private key */
-                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_CLIENT_KEY")
+//                @ACfgOverride.Field(name="DP_API_CONNECTION_TLS_FILE_CLIENT_KEY")
+                @ACfgOverride.Field(name="CLIENT_KEY")
                 public String   clientKey;
 
-                /**
-                 *
-                 * @see @see java.lang.Object#equals(java.lang.Object)
-                 */
-                @Override
-                public boolean equals(Object obj) {
-                    
-                    // Cast comparison object
-                    FilePaths   paths;
-                    if (obj instanceof FilePaths)
-                        paths = (FilePaths)obj;
-                    else
-                        return false;
-                    
-                    // Check equivalence
-                    return paths.trustedCerts.equals(this.trustedCerts) &&
-                            paths.clientCerts.equals(this.clientCerts) &&
-                            paths.clientKey.equals(this.clientKey);
-                }
-            }
+//                /**
+//                 *
+//                 * @see @see java.lang.Object#equals(java.lang.Object)
+//                 */
+//                @Override
+//                public boolean equals(Object obj) {
+//                    
+//                    // Cast comparison object
+//                    FilePaths   paths;
+//                    if (obj instanceof FilePaths)
+//                        paths = (FilePaths)obj;
+//                    else
+//                        return false;
+//                    
+//                    // Check equivalence
+//                    return paths.trustedCerts.equals(this.trustedCerts) &&
+//                            paths.clientCerts.equals(this.clientCerts) &&
+//                            paths.clientKey.equals(this.clientKey);
+//                }
+            } /* Channel.TLS.FilePaths */
 
-            /**
-             *
-             * @see @see java.lang.Object#equals(java.lang.Object)
-             */
-            @Override
-            public boolean equals(Object obj) {
-                
-                // Cast comparison object
-                TLS tls;
-                if (obj instanceof TLS)
-                    tls = (TLS)obj;
-                else
-                    return false;
-                
-                // Check equivalence
-                return (tls.active == this.active) &&
-                        (tls.defaultTls = this.defaultTls) &&
-                        tls.filepaths.equals(this.filepaths);
-            }
-        }
+//            /**
+//             *
+//             * @see @see java.lang.Object#equals(java.lang.Object)
+//             */
+//            @Override
+//            public boolean equals(Object obj) {
+//                
+//                // Cast comparison object
+//                TLS tls;
+//                if (obj instanceof TLS)
+//                    tls = (TLS)obj;
+//                else
+//                    return false;
+//                
+//                // Check equivalence
+//                return (tls.active == this.active) &&
+//                        (tls.defaultTls = this.defaultTls) &&
+//                        tls.filepaths.equals(this.filepaths);
+//            }
+        } /* Channel.TLS */
         
         /**
-         * Structure Containing Common gRPC Parameters (for Channel) 
+         * Structure containing gRPC parameters specific to a channel configuration  
          *
          */
-        public static final class Grpc {
+        @ACfgOverride.Root(root="DP_API_CONNECTION_CHANNEL_GRPC")
+        public static final class Grpc extends CfgStructure<Grpc> {
+
+            /** Default constructor required for structure base class */
+            public Grpc() {
+                super(Grpc.class);
+            }
 
             /** Timeout limit used for connection establishment */
-            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_TIMEOUT_LIMIT")
+//            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_TIMEOUT_LIMIT")
+            @ACfgOverride.Field(name="TIMEOUT_LIMIT")
             public Long     timeoutLimit;
             
             /** Timeout limit units */
-            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_TIMEOUT_UNIT")
+//            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_TIMEOUT_UNIT")
+            @ACfgOverride.Field(name="TIMEOUT_UNIT")
             public TimeUnit timeoutUnit;
             
             /** Maximum gRPC (Protobuf) message size - must be multiple of 2 */
-            @ACfgOverride.Field(name="DP_API_GRPC_MESSAGE_SIZE_MAX")
+//            @ACfgOverride.Field(name="DP_API_GRPC_MESSAGE_SIZE_MAX")
+            @ACfgOverride.Field(name="MESSAGE_SIZE_MAX")
             public Integer  messageSizeMax;
             
             /** Transmit plain text (rather than binary) */
-            @ACfgOverride.Field(name="DP_API_GRPC_XMIT_PLAIN_TEXT")
+//            @ACfgOverride.Field(name="DP_API_GRPC_XMIT_PLAIN_TEXT")
+            @ACfgOverride.Field(name="XMIT_PLAIN_TEXT")
             public Boolean  usePlainText;
             
-            /** Keep channel active even when not in use */
-            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_KEEP_ALIVE")
+            /** Keep channel active even when not in use - WARNING: This can sequester significant gRPC resources */
+//            @ACfgOverride.Field(name="DP_API_GRPC_CHANNEL_KEEP_ALIVE")
+            @ACfgOverride.Field(name="KEEP_ALIVE")
             public Boolean  keepAliveWithoutCalls;
             
             /** Compress transmitted message with GZIP algorithm (not recommended) */
-            @ACfgOverride.Field(name="DP_API_GRPC_COMPRESS_GZIP")
+//            @ACfgOverride.Field(name="DP_API_GRPC_COMPRESS_GZIP")
+            @ACfgOverride.Field(name="COMPRESS_GZIP")
             public Boolean  gzip;
 
 //            /**
-//             * @return the current value of property messageSize
+//             *
+//             * @see @see java.lang.Object#equals(java.lang.Object)
 //             */
-//            public Long getMessageSizeMax() {
-//                return messageSizeMax;
-//            }
-//
-//            /**
-//             * @param messageSizeMax sets name value of property messageSizeMax 
-//             */
-//            public void setMessageSizeMax(Long messageSizeMax) {
-//                this.messageSizeMax = messageSizeMax;
-//            }
-//
-//            /**
-//             * @return the current value of property timeoutCount
-//             */
-//            public Long getTimeoutCount() {
-//                return timeoutCount;
-//            }
-//
-//            /**
-//             * @param timeoutCount sets name value of property timeoutCount 
-//             */
-//            public void setTimeout(Long timeoutCount) {
-//                this.timeoutCount = timeoutCount;
-//            }
-//
-//            /**
-//             * @return the current value of property timeoutUnit
-//             */
-//            public TimeUnit getTimeoutUnit() {
-//                return timeoutUnit;
-//            }
-//
-//            /**
-//             * @param timeoutUnit sets name value of property timeoutUnit 
-//             */
-//            public void setTimeoutUnit(TimeUnit timeoutUnit) {
-//                this.timeoutUnit = timeoutUnit;
-//            }
-//            
-//            /**
-//             * @return the current value of property usePlainText
-//             */
-//            public Boolean getUsePlainText() {
-//                return usePlainText;
-//            }
-//
-//            /**
-//             * @param usePlainText sets name value of property usePlainText 
-//             */
-//            public void setUsePlainText(Boolean usePlainText) {
-//                this.usePlainText = usePlainText;
-//            }
-//
-//            /**
-//             * @return the current value of property keepAliveWithoutCalls
-//             */
-//            public Boolean getKeepAliveWithoutCalls() {
-//                return keepAliveWithoutCalls;
-//            }
-//
-//            /**
-//             * @param keepAliveWithoutCalls sets name value of property keepAliveWithoutCalls 
-//             */
-//            public void setKeepAliveWithoutCalls(Boolean keepAliveWithoutCalls) {
-//                this.keepAliveWithoutCalls = keepAliveWithoutCalls;
-//            }
-//
-//            /**
-//             * @return the current value of property gzip
-//             */
-//            public Boolean getGzip() {
-//                return gzip;
-//            }
-//
-//            /**
-//             * @param gzip sets name value of property gzip 
-//             */
-//            public void setGzip(Boolean gzip) {
-//                this.gzip = gzip;
+//            @Override
+//            public boolean equals(Object obj) {
+//                
+//                // Cast comparison object
+//                Grpc    grpc;
+//                if (obj instanceof Grpc)
+//                    grpc = (Grpc)obj;
+//                else
+//                    return false;
+//                
+//                // Check equivalence
+//                return  grpc.messageSizeMax.equals(this.messageSizeMax) &&
+////                        grpc.timeoutCount.equals(this.timeoutCount) &&
+////                        grpc.timeoutUnit.equals(this.timeoutUnit) &&
+//                        (grpc.usePlainText == this.usePlainText) &&
+//                        (grpc.keepAliveWithoutCalls == this.keepAliveWithoutCalls) &&
+//                        (grpc.gzip == this.gzip);
 //            }
 
-            /**
-             *
-             * @see @see java.lang.Object#equals(java.lang.Object)
-             */
-            @Override
-            public boolean equals(Object obj) {
-                
-                // Cast comparison object
-                Grpc    grpc;
-                if (obj instanceof Grpc)
-                    grpc = (Grpc)obj;
-                else
-                    return false;
-                
-                // Check equivalence
-                return  grpc.messageSizeMax.equals(this.messageSizeMax) &&
-//                        grpc.timeoutCount.equals(this.timeoutCount) &&
-//                        grpc.timeoutUnit.equals(this.timeoutUnit) &&
-                        (grpc.usePlainText == this.usePlainText) &&
-                        (grpc.keepAliveWithoutCalls == this.keepAliveWithoutCalls) &&
-                        (grpc.gzip == this.gzip);
-            }
-
-        } /* Grpc */
+        } /* Channel.Grpc */
         
     } /* Channel */
 
-    /**
-     *
-     * @see @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        
-        Yaml    yaml = new Yaml();
-        
-        String  strCfg = yaml.dump(this);
-        return strCfg;
-    }
+//    /**
+//     *
+//     * @see @see java.lang.Object#toString()
+//     */
+//    @Override
+//    public String toString() {
+//        
+//        Yaml    yaml = new Yaml();
+//        
+//        String  strCfg = yaml.dump(this);
+//        return strCfg;
+//    }
 
-    /**
-     *
-     * @see @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-        
-        // Cast comparison object
-        GrpcConnectionConfig   cfg;
-        
-        if (obj instanceof GrpcConnectionConfig)
-            cfg = (GrpcConnectionConfig)obj;
-        else
-            return false;
-        
-        // Check values
-        if (!this.name.equals(cfg.name))
-            return false;
-        
-        if (!this.version.equals(cfg.version))
-            return false;
-        
-        if (!this.channel.host.equals(cfg.channel.host))
-            return false;
-        
-        if (!this.timeout.equals(cfg.timeout))
-            return false;
-        
-        if (!this.channel.grpc.equals(cfg.channel.grpc))
-            return false;
-            
-        return true;
-    }
+//    /**
+//     *
+//     * @see @see java.lang.Object#equals(java.lang.Object)
+//     */
+//    @Override
+//    public boolean equals(Object obj) {
+//        
+//        // Cast comparison object
+//        GrpcConnectionConfig   cfg;
+//        
+//        if (obj instanceof GrpcConnectionConfig)
+//            cfg = (GrpcConnectionConfig)obj;
+//        else
+//            return false;
+//        
+//        // Check values
+//        if (!this.name.equals(cfg.name))
+//            return false;
+//        
+//        if (!this.version.equals(cfg.version))
+//            return false;
+//        
+//        if (!this.channel.host.equals(cfg.channel.host))
+//            return false;
+//        
+//        if (!this.timeout.equals(cfg.timeout))
+//            return false;
+//        
+//        if (!this.channel.grpc.equals(cfg.channel.grpc))
+//            return false;
+//            
+//        return true;
+//    }
  
 } /* GrpcConnectionConfig */

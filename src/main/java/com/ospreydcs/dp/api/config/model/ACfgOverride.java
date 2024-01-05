@@ -85,6 +85,8 @@ public @interface ACfgOverride {
      * level of the configuration.  Note that there can be multiple root structure classes within a 
      * configuration but typically only the top-level class is recognized in processing.
      * <p>
+     * 
+     * @param   root    prefix for all environment variables within this structure class.
      *
      * @author Christopher K. Allen
      * @since Jan 2, 2024
@@ -96,8 +98,8 @@ public @interface ACfgOverride {
         
         
         /**
-         * The environment variable or system property root name.
-         * All environment variable names will be prefixed with the returned root string.
+         * The system variable (e.g., system environment or property variable) root name.
+         * All system variable names will be prefixed with the returned root string.
          * 
          * @return name prefix for all environment variables within this structure class.
          */
@@ -111,12 +113,14 @@ public @interface ACfgOverride {
      * </p>
      * <p>
      * The marked nested structure contains a field (or additional substructure)
-     * that can be overridden.  Specifically, this annotation is used for a structure class field 
-     * representing a nested data structure containing a field that is annotated with 
+     * that can be overridden with system variables.  Specifically, this annotation is used for a 
+     * structure class field representing a nested data structure containing fields that are annotated with 
      * <code>ACfgOverride.Field</code>.
      * Or, potentially, the nested data structure may contain fields that are themselves nested data
      * structures that are annotated with <code>ACfgOverride.Struct</code>. 
      * </p>
+     * 
+     * @param pathelem  the system variable path element (i.e., prefix) corresponding to this structure
      *
      * @author Christopher K. Allen
      * @since Sep 22, 2022
@@ -137,8 +141,16 @@ public @interface ACfgOverride {
     
     
     /**
+     * <p>
      * Annotation for final fields of a structure class that can be overridden 
-     * by environment variables.
+     * by system variables.
+     * </p>
+     * <p>
+     * The annotation indicates a terminal, scalar-value field that can be overriden by
+     * a system variable.
+     * </p>
+     * 
+     * @param   name    name suffix for system variable containing new value for field
      * 
      * @author Christopher K. Allen
      * @since Sep 18, 2022
@@ -149,10 +161,10 @@ public @interface ACfgOverride {
     public @interface Field {
         
         /**
-         * Name identifier of the environment variable or system property used to override this configuration 
+         * Name suffix of the system variable used to override this configuration 
          * field value.
          * 
-         * @return  environment variable name containing new value for field
+         * @return  system variable name containing new value for field
          */
         public String name() default "";
     }

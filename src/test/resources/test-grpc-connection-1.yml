@@ -39,19 +39,19 @@ channel:
     port: 50051                 # server port address
     
   tls:
-    active: true                # use TLS security          : DP_API_CONNECTION_TLS_ACTIVE
-    defaultTls: true            # use default TLS operation : DP_API_CONNECTION_TLS_DEFAULT
+    active: true                # use TLS security          : DP_API_CONNECTION_CHANNEL_TLS_ACTIVE
+    defaultTls: true            # use default TLS operation : DP_API_CONNECTION_CHANNEL_TLS_DEFAULT
     
     filepaths:         # file path locations for TLS certificates and keys (only if defaultTls == false)
-      trustedCerts:             # trusted certs collection  : DP_API_CONNECTION_TLS_FILE_TRUSTED_CERTS
-      clientCerts:              # client certificates chain : DP_API_CONNECTION_TLS_FILE_CLIENT_CERTS
-      clientKey:                # client private key        : DP_API_CONNECTION_TLS_FILE_CLIENT_KEY
+      trustedCerts: ""          # trusted certs collection  : DP_API_CONNECTION_CHANNEL_TLS_FILE_TRUSTED_CERTS
+      clientCerts: ""           # client certificates chain : DP_API_CONNECTION_CHANNEL_TLS_FILE_CLIENT_CERTS
+      clientKey: ""             # client private key        : DP_API_CONNECTION_CHANNEL_TLS_FILE_CLIENT_KEY
       
   grpc:                # gRPC channel parameters
-    timeoutLimit: 5             # channel operation timeout    : DP_API_GRPC_CHANNEL_TIMEOUT_LIMIT
-    timeoutUnit: SECONDS        # timeout units                : DP_API_GRPC_CHANNEL_TIMEOUT_UNIT
-    messageSizeMax: 4194304     # (bytes) max message size     : DP_API_GRPC_MESSAGE_SIZE_MAX
-    usePlainText: false         # plain text transmission      : DP_API_GRPC_XMIT_PLAIN_TEXT   
-    keepAliveWithoutCalls: false # channel never idle          : DP_API_GRPC_CHANNEL_KEEP_ALIVE
-    gzip: false                 # use gzip compression         : DP_API_GRPC_COMPRESS_GZIP
+    timeoutLimit: 5             # channel operation timeout    : DP_API_CONNECTION_CHANNEL_GRPC_TIMEOUT_LIMIT
+    timeoutUnit: SECONDS        # timeout units                : DP_API_CONNECTION_CHANNEL_GRPC_TIMEOUT_UNIT
+    messageSizeMax: 4194304     # (bytes) max message size     : DP_API_CONNECTION_CHANNEL_GRPC_MESSAGE_SIZE_MAX
+    usePlainText: false         # plain text transmission      : DP_API_CONNECTION_CHANNEL_GRPC_XMIT_PLAIN_TEXT   
+    keepAliveWithoutCalls: false # channel never idle          : DP_API_CONNECTION_CHANNEL_GRPC_KEEP_ALIVE
+    gzip: false                 # use gzip compression         : DP_API_CONNECTION_CHANNEL_GRPC_COMPRESS_GZIP
     

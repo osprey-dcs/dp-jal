@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.config.model;
 
-import static org.junit.Assert.fail;
-
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
@@ -298,7 +296,7 @@ public class CfgOverrideUtilityTest {
             List<CfgOverrideRec> lstOverrides = CfgOverrideUtility.extractOverrideables(STRUCT1, CfgOverrideUtility.SOURCE.ENVIRONMENT);
             
             for (CfgOverrideRec rec : lstOverrides) {
-                System.out.println(rec.printOut());
+                System.out.println(rec.printLine());
             }
             
         } catch (IllegalArgumentException e) {
@@ -319,7 +317,7 @@ public class CfgOverrideUtilityTest {
             List<CfgOverrideRec> lstOverrides = CfgOverrideUtility.extractOverrideables(STRUCT1, CfgOverrideUtility.SOURCE.PROPERTIES);
             
             for (CfgOverrideRec rec : lstOverrides) {
-                System.out.println(rec.printOut());
+                System.out.println(rec.printLine());
             }
             
         } catch (IllegalArgumentException e) {

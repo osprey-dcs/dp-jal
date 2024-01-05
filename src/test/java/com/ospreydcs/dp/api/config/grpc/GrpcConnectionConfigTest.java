@@ -27,15 +27,11 @@
  */
 package com.ospreydcs.dp.api.config.grpc;
 
-import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
-import com.ospreydcs.dp.api.config.model.CfgOverrideRec;
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
-import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
@@ -48,10 +44,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
+import com.ospreydcs.dp.api.config.model.CfgOverrideRec;
+import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
+
 /**
- * 
  * <p>
- * Test Cases for <code>GrpcChannelConfi</code> structure class.
+ * Test Cases for <code>GrpcConnectionConfig</code> structure class.
  * </p>
  * <p>
  * Tests correct loading of YAML files using the CfgLoaderYaml utility class.
@@ -78,6 +77,101 @@ public class GrpcConnectionConfigTest {
 
     static {
     }
+    
+    
+    //
+    // Class Methods
+    //
+    
+    /**
+     * Creates and populates a <code>GrpcConnectionConfig</code> structure equivalent to the
+     * first test configuration {@value #STR_CONFIG_FILENAME_1}.
+     * 
+     * @return new, populated test configuration
+     */
+    public static GrpcConnectionConfig    createConfig1() {
+        
+        GrpcConnectionConfig.Timeout timeout = new GrpcConnectionConfig.Timeout();
+        timeout.active = true;
+        timeout.limit = 5L;
+        timeout.unit = TimeUnit.SECONDS;
+        
+        GrpcConnectionConfig.Channel.Host host = new GrpcConnectionConfig.Channel.Host();
+        host.url = "localhost";
+        host.port = 50051;
+        
+        GrpcConnectionConfig.Channel.TLS tls = new GrpcConnectionConfig.Channel.TLS();
+        tls.active = true;
+        tls.defaultTls = true;
+        tls.filepaths = new GrpcConnectionConfig.Channel.TLS.FilePaths();
+        tls.filepaths.trustedCerts = new String();
+        tls.filepaths.clientCerts = new String();
+        tls.filepaths.clientKey = new String();
+        
+        GrpcConnectionConfig.Channel.Grpc grpc = new GrpcConnectionConfig.Channel.Grpc();
+        grpc.messageSizeMax = 4194304;
+        grpc.timeoutLimit = 5L;
+        grpc.timeoutUnit = TimeUnit.SECONDS;
+        grpc.usePlainText = false;
+        grpc.keepAliveWithoutCalls = false;
+        grpc.gzip = false;
+        
+        GrpcConnectionConfig.Channel chan = new GrpcConnectionConfig.Channel();
+        chan.host = host;
+        chan.tls = tls;
+        chan.grpc = grpc;
+
+        GrpcConnectionConfig   cfg = new GrpcConnectionConfig();
+        cfg.timeout = timeout;
+        cfg.channel = chan;
+        cfg.name = "test-grpc-channel-1";
+        cfg.version = "0.0.0";
+        cfg.description = "Testing parameter set for default channel configuration";
+        cfg.supplement = "No supplemental parameters";
+        
+        return cfg;
+    }
+    
+    /**
+     * <p>
+     * Creates and populates a <code>GrpcConnectionConfig</code> structure that is equivalent
+     * to the first test case (i.e., {@value #STR_CONFIG_FILENAME_1} after being overridden by 
+     * pre-assigned system variables.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * To make sense the system variables must be set in the JUnit environment, or java command line, or 
+     * system properties, and they must be set to the values assigned in this method.
+     * </p>
+     * 
+     * @return new test configuration which overrides the first configuration with different values
+     */
+    public static GrpcConnectionConfig    createConfigEnv() {
+        
+        GrpcConnectionConfig   cfg = createConfig1();
+        
+        cfg.timeout.limit = 60L;
+        cfg.timeout.unit = TimeUnit.SECONDS;
+        
+        cfg.channel.tls.defaultTls = true;
+        cfg.channel.tls.filepaths.trustedCerts = "trusted sources file";
+        cfg.channel.tls.filepaths.clientCerts = "client certificates file";
+        cfg.channel.tls.filepaths.clientKey = "private key file";
+        
+        cfg.channel.grpc.messageSizeMax = 16777216;
+        cfg.channel.grpc.timeoutLimit = 100L;
+        cfg.channel.grpc.timeoutUnit = TimeUnit.MILLISECONDS;
+        cfg.channel.grpc.usePlainText = true;
+        cfg.channel.grpc.keepAliveWithoutCalls = false;
+        cfg.channel.grpc.gzip = true;
+        
+        return cfg;
+    }
+    
+    
+    //
+    // Test Fixture
+    //
     
     /**
      * @throws java.lang.Exception
@@ -111,6 +205,31 @@ public class GrpcConnectionConfigTest {
     //
     // Test Cases
     //
+    
+    /**
+     * Test the test configurations of the test fixture.
+     */
+    @Test
+    public final void testFixtureConfigurations() {
+        GrpcConnectionConfig cfg1 = GrpcConnectionConfigTest.createConfig1();
+        GrpcConnectionConfig cfg2 = GrpcConnectionConfigTest.createConfigEnv();
+        
+        
+        try {
+            for (Field fld : cfg1.getNullValuedFields()) 
+                System.out.println("Cfg1 null valued field: name=" + fld.getName() + ", type=" + fld.getType().getSimpleName());
+            
+            for (Field fld : cfg2.getNullValuedFields()) 
+                System.out.println("Cfg2 null valued field: name=" + fld.getName() + ", type=" + fld.getType().getSimpleName());
+            
+            Assert.assertTrue("There were null values in test fixuture configuration 1", cfg1.getNullValuedFields().isEmpty());
+            Assert.assertTrue("There were null values in test fixuture configuration 2", cfg2.getNullValuedFields().isEmpty());
+            
+        } catch (IllegalArgumentException | IllegalAccessException e) {
+            Assert.fail("The CfgStructure.getNullValueFields() threw exception: " + e.getMessage());
+            
+        }
+    }
     
     /**
      * Test method for {@link com.ospreydcs.dp.api.config.model.CfgLoaderYaml#load(String, Class)}.
@@ -159,7 +278,7 @@ public class GrpcConnectionConfigTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgOverrideUtility#envOverride(Object)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgOverrideUtility#overrideRoot(Object, com.ospreydcs.dp.api.config.model.CfgOverrideUtility.SOURCE)}.
      */
     @Test
     public void testOverrideConfig1() {
@@ -168,7 +287,7 @@ public class GrpcConnectionConfigTest {
         try {
             GrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(strFile, GrpcConnectionConfig.class);
 
-            boolean bolResult = CfgOverrideUtility.envOverride(cfgChan);
+            boolean bolResult = CfgOverrideUtility.overrideRoot(cfgChan, CfgOverrideUtility.SOURCE.ENVIRONMENT);
             
             if (!bolResult)
                 fail("No parameters were overridden.");
@@ -193,12 +312,12 @@ public class GrpcConnectionConfigTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgOverrideUtility#extractOverrides(Object)}.
+     * Test method for {@link com.ospreydcs.dp.api.config.model.CfgOverrideUtility#extractOverrideables(Object, com.ospreydcs.dp.api.config.model.CfgOverrideUtility.SOURCE)}.
      */
     @Test
-    public void testParseConfig1() {
+    public void testExtractOverrideablesEnv() {
         try {
-            List<CfgOverrideRec>   lstVars = CfgOverrideUtility.extractOverrides(CFG_1);
+            List<CfgOverrideRec>   lstVars = CfgOverrideUtility.extractOverrideables(CFG_1, CfgOverrideUtility.SOURCE.ENVIRONMENT);
             
             Assert.assertTrue("There were no environment variables", lstVars.size() > 0);
 
@@ -221,7 +340,7 @@ public class GrpcConnectionConfigTest {
      * Test method for {@link com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig#toString()}.
      */
     @Test
-    public void testToString1() {
+    public void testGrpcConnnectionConfigToString() {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
@@ -239,7 +358,7 @@ public class GrpcConnectionConfigTest {
             System.out.println(cfgChan.toString());
             System.out.println();
             
-            CfgOverrideUtility.envOverride(cfgChan);
+            CfgOverrideUtility.overrideRoot(cfgChan, CfgOverrideUtility.SOURCE.ENVIRONMENT);
             System.out.println("GrpcConnectionConfig#toString() after envionment override:");
             System.out.println(cfgChan);
             
@@ -261,83 +380,4 @@ public class GrpcConnectionConfigTest {
 
     
     
-    //
-    // Support Methods
-    //
-    
-    /**
-     * Creates and populates a <code>GrpcConnectionConfig</code> structure equivalent to the
-     * first test configuration.
-     * 
-     * @return new, populated test configuration
-     */
-    private static GrpcConnectionConfig    createConfig1() {
-        
-        GrpcConnectionConfig.Timeout timeout = new GrpcConnectionConfig.Timeout();
-        timeout.active = true;
-        timeout.limit = 5L;
-        timeout.unit = TimeUnit.SECONDS;
-        
-        GrpcConnectionConfig.Channel.Host host = new GrpcConnectionConfig.Channel.Host();
-        host.url = "localhost";
-        host.port = 50051;
-        
-        GrpcConnectionConfig.Channel.TLS tls = new GrpcConnectionConfig.Channel.TLS();
-        tls.active = true;
-        tls.defaultTls = true;
-        tls.filepaths = new GrpcConnectionConfig.Channel.TLS.FilePaths();
-        tls.filepaths.trustedCerts = new String();
-        tls.filepaths.clientCerts = new String();
-        tls.filepaths.clientKey = new String();
-        
-        GrpcConnectionConfig.Channel.Grpc grpc = new GrpcConnectionConfig.Channel.Grpc();
-        grpc.messageSizeMax = 4194304;
-        grpc.timeoutLimit = 5L;
-        grpc.timeoutUnit = TimeUnit.SECONDS;
-        grpc.usePlainText = false;
-        grpc.keepAliveWithoutCalls = false;
-        grpc.gzip = false;
-        
-        GrpcConnectionConfig.Channel chan = new GrpcConnectionConfig.Channel();
-        chan.host = host;
-        chan.tls = tls;
-        chan.grpc = grpc;
-
-        GrpcConnectionConfig   cfg = new GrpcConnectionConfig();
-        cfg.timeout = timeout;
-        cfg.channel = chan;
-        cfg.name = "test-grpc-channel-1";
-        cfg.version = "0.0.0";
-        cfg.description = "Testing parameter set for default channel configuration";
-        cfg.supplement = "No supplemental parameters";
-        
-        return cfg;
-    }
-    
-    /**
-     * Creates and populates a <code>GrpcConnectionConfig</code> structure that is equivalent
-     * to the first test case after being overridden by environment variables.
-     * @return
-     */
-    private static GrpcConnectionConfig    createConfigEnv() {
-        
-        GrpcConnectionConfig   cfg = createConfig1();
-        
-        cfg.timeout.limit = 60L;
-        cfg.timeout.unit = TimeUnit.SECONDS;
-        
-        cfg.channel.tls.defaultTls = true;
-        cfg.channel.tls.filepaths.trustedCerts = "trusted sources file";
-        cfg.channel.tls.filepaths.clientCerts = "client certificates file";
-        cfg.channel.tls.filepaths.clientKey = "private key file";
-        
-        cfg.channel.grpc.messageSizeMax = 16777216;
-        cfg.channel.grpc.timeoutLimit = 100L;
-        cfg.channel.grpc.timeoutUnit = TimeUnit.MILLISECONDS;
-        cfg.channel.grpc.usePlainText = true;
-        cfg.channel.grpc.keepAliveWithoutCalls = false;
-        cfg.channel.grpc.gzip = true;
-        
-        return cfg;
-    }
 }

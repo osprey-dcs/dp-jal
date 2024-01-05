@@ -164,7 +164,7 @@ public class MongoDbConfigTest {
         try {
             MongoDbConfig   cfgMongo = CfgLoaderYaml.load(strFile, MongoDbConfig.class);
 
-            boolean bolResult = CfgOverrideUtility.envOverride(cfgMongo);
+            boolean bolResult = CfgOverrideUtility.overrideRoot(cfgMongo, CfgOverrideUtility.SOURCE.ENVIRONMENT);
             
             if (!bolResult)
                 fail("No parameters were overridden.");
@@ -182,7 +182,7 @@ public class MongoDbConfigTest {
             e.printStackTrace();
             
         } catch (IllegalAccessException e) {
-            fail("The GrpcConnectionConfig instance refused access to its fields.");
+            fail("The configuration instance refused access to its fields.");
             e.printStackTrace();
         }
         
@@ -194,7 +194,7 @@ public class MongoDbConfigTest {
     @Test
     public void testParseConfig1() {
         try {
-            List<CfgOverrideRec>   lstVars = CfgOverrideUtility.extractOverrides(CFG_1);
+            List<CfgOverrideRec>   lstVars = CfgOverrideUtility.extractOverrideables(CFG_1, CfgOverrideUtility.SOURCE.ENVIRONMENT);
             
             Assert.assertTrue("There were no environment variables", lstVars.size() > 0);
 

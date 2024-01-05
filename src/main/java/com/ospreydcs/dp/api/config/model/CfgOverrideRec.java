@@ -59,11 +59,14 @@ public record CfgOverrideRec(String varName, String varValue, Class<?> cfgClass,
     /**
      * <p>Write out the contents of the record to a text string</p>
      * 
-     * Alternative format to <code>{@link #toString()}</code>
+     * <p>
+     * Alternative format to <code>{@link #toString()}</code>.
+     * Returns the record contents as a single line string (no newline character). 
+     * </p>
      * 
      * @return string representation of record contents
      */
-    public String printOut() {
+    public String printLine() {
         StringBuffer    buf = new StringBuffer();
         
         buf.append("{");
@@ -71,7 +74,8 @@ public record CfgOverrideRec(String varName, String varValue, Class<?> cfgClass,
         buf.append("varValue=" + varValue + ", ");
         buf.append("cfgClass=" + cfgClass.getSimpleName() + ", ");
         buf.append("cfgField=" + cfgField.getName() + ", ");
-        buf.append("cfgValue=" + cfgValue.toString());
+        if (cfgValue != null)
+            buf.append("cfgValue=" + cfgValue.toString());
         buf.append("}");
         
         return buf.toString();

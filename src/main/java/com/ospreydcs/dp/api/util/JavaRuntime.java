@@ -27,6 +27,8 @@
  */
 package com.ospreydcs.dp.api.util;
 
+import java.util.stream.Stream;
+
 /**
  * <p>
  * Utility class containing miscellaneous Java runtime operations.
@@ -92,7 +94,46 @@ public class JavaRuntime {
         return strQulName;
     }
     
+    /**
+     * <p>
+     * Determines whether or not the object is of a type having a default constructor.
+     * </p>
+     * <p>
+     * Extracts the class type of the argument then calls 
+     * <code>{@link #hasDefaultConstructor(Class)}</code>.
+     * </p>
+     * 
+     * @param clsType   Java object
+     * 
+     * @return <code>true</code> if the class has a default (zero-argument) constructor,
+     *         <code>false</code> otherwise
+     *         
+     * @see #hasDefaultConstructor(Class)
+     */
+    public static boolean    hasDefaultConstructor(Object obj) {
+        Class<?>    clsType = obj.getClass();
+        
+        return JavaRuntime.hasDefaultConstructor(clsType);
+    }
     
+    /**
+     * <p>
+     * Determines whether or not a class type has a default constructor.
+     * </p>
+     * <p>
+     * Parses through (i.e., streams through) all constructors for the given type
+     * check for one having no arguments (i.e., the "zero-argument" constructor).
+     * </p>
+     * 
+     * @param clsType   any anonymous class type
+     * 
+     * @return <code>true</code> if the class has a default (zero-argument) constructor,
+     *         <code>false</code> otherwise
+     */
+    public static boolean    hasDefaultConstructor(Class<?> clsType) {
+        return Stream.of( clsType.getConstructors() ).noneMatch(c -> c.getParameterCount() == 0);
+    }
+
     
     //
     // Private Methods

@@ -33,10 +33,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
-import com.ospreydcs.dp.api.config.grpc.DpConnections;
+import com.ospreydcs.dp.api.config.grpc.DpConnectionsConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
-import com.ospreydcs.dp.api.config.query.DpQuery;
+import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 
 /**
@@ -50,24 +51,42 @@ import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
  * {@link #getInstance()}.
  * </p>
  * <p>
+ * Default configuration parameters are taken from the YAML file identified by class
+ * constant <code>{@link #STR_CFG_FILE}</code> with current value {@value #STR_CFG_FILE}.
+ * The file is parsed and the values are used to populate the fields of the structure class
+ * singleton instance.
+ * <p>
+ * The structure class is based upon the configuration model used in the DP API project.
+ * System variables can override the default parameter values as prescribed in the YAML default
+ * configuration file.  System variables are first taken from the environment, then the
+ * command line (Java System properties).  For more information on the configuration model
+ * see the documentation for annotation <code>{@link ACfgOverride}</code>.
+ * </p> 
+ * <p>
  * <h2>NOTES:</h2>
  * <ul>
- * <li><b>WARNING</b> - all attributes have public accessibility.  Modififying attribute values
+ * <li><b>WARNING</b> - all attributes have public accessibility.  Modifying attribute values
  *     affects all systems using these parameters.
  * </li>
  * <li>Default configuration values are contained in the YAML file indicated by {@link #STR_CFG_FILE}.
  * </li>
- * <li>Values within the YAML file can be overridden by supported environment variables as marked by
- *     the <code>ACfgOverride</code> annotation.
+ * <li>Values within the YAML file can be overridden by supported system variables as marked by
+ *     the <code>{@link ACfgOverride}</code> annotations.
  * </li>
  * </ul> 
  * 
  * @author Christopher K. Allen
  * @since Dec 21, 2023
  *
+ * @see CfgLoaderYaml
+ * @see CfgOverrideUtility
+ * @see CfgStructure
+ * @see ACfgOverride
+ * @see DpConnectionsConfig
  */
-@ACfgOverride
-public final class DpApiConfig {
+@ACfgOverride.Root(root="DP_API")
+public final class DpApiConfig extends CfgStructure<DpApiConfig> {
+    
     
     //
     // Application Resources
@@ -109,7 +128,8 @@ public final class DpApiConfig {
             try {
                 DpApiConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE, DpApiConfig.class);
                 
-                CfgOverrideUtility.envOverride(DpApiConfig.cfgInstance);
+                CfgOverrideUtility.overrideRoot(DpApiConfig.cfgInstance, CfgOverrideUtility.SOURCE.ENVIRONMENT);
+                CfgOverrideUtility.overrideRoot(DpApiConfig.cfgInstance, CfgOverrideUtility.SOURCE.PROPERTIES);
                 
             } catch (FileNotFoundException e) {
                 LOGGER.error("Unable to load properties from file: {}", STR_CFG_FILE);
@@ -137,48 +157,54 @@ public final class DpApiConfig {
     //
     
     /** Data Platform data archive parameters */
-    @ACfgOverride.Struct
-    public DpArchive    archive;
+    @ACfgOverride.Struct(pathelem="ARCHIVE")
+    public DpArchiveConfig    archive;
     
     /** Data Platform default Query Service parameters */
-    @ACfgOverride.Struct
-    public DpQuery      query;
+    @ACfgOverride.Struct(pathelem="QUERY")
+    public DpQueryConfig      query;
     
     /** Data Platform services connection parameters */
-    @ACfgOverride.Struct
-    public DpConnections connections;
+    @ACfgOverride.Struct(pathelem="CONNECTION")
+    public DpConnectionsConfig connections;
     
     /**
-     * Structure containing Data Platform archive parameters.
+     * Structure containing Data Platform archive configuration parameters.
      *
      */
-    public static final class DpArchive {
+    @ACfgOverride.Root(root="DP_API_ARCHIVE")
+    public static final class DpArchiveConfig extends CfgStructure<DpArchiveConfig> {
         
+        /** Default constructor require for base structure class */
+        public DpArchiveConfig() {
+            super(DpArchiveConfig.class);
+        }
+
         /** Archive inception date (earliest possible timestamp) */
-        @ACfgOverride.Field(name="DP_ARCHIVE_INCEPTION")
+        @ACfgOverride.Field(name="INCEPTION")
         public String   inception;
 
-        // 
-        // Object Overrides
-        //
-        
-        /**
-         *
-         * @see @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-            
-            // Cast comparison object
-            DpArchive arc;
-            if (obj instanceof DpArchive)
-                arc = (DpArchive)obj;
-            else
-                return false;
-            
-            // Check equivalence
-            return arc.inception.equals(this.inception);
-        }
+//        // 
+//        // Object Overrides
+//        //
+//        
+//        /**
+//         *
+//         * @see @see java.lang.Object#equals(java.lang.Object)
+//         */
+//        @Override
+//        public boolean equals(Object obj) {
+//            
+//            // Cast comparison object
+//            DpArchiveConfig arc;
+//            if (obj instanceof DpArchiveConfig)
+//                arc = (DpArchiveConfig)obj;
+//            else
+//                return false;
+//            
+//            // Check equivalence
+//            return arc.inception.equals(this.inception);
+//        }
     }
 
     
@@ -188,25 +214,25 @@ public final class DpApiConfig {
     // Object Overrides
     //
 
-    /**
-     *
-     * @see @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-        
-        // Cast comparison object
-        DpApiConfig cfg;
-        if (obj instanceof DpApiConfig)
-            cfg = (DpApiConfig)obj;
-        else
-            return false;
-        
-        // Check equivalence
-        return cfg.archive.equals(this.archive) &&
-                cfg.query.equals(this.query) &&
-                cfg.connections.equals(this.connections);
-    }
+//    /**
+//     *
+//     * @see @see java.lang.Object#equals(java.lang.Object)
+//     */
+//    @Override
+//    public boolean equals(Object obj) {
+//        
+//        // Cast comparison object
+//        DpApiConfig cfg;
+//        if (obj instanceof DpApiConfig)
+//            cfg = (DpApiConfig)obj;
+//        else
+//            return false;
+//        
+//        // Check equivalence
+//        return cfg.archive.equals(this.archive) &&
+//                cfg.query.equals(this.query) &&
+//                cfg.connections.equals(this.connections);
+//    }
 
     /**
      *
@@ -219,4 +245,18 @@ public final class DpApiConfig {
         
         return str;
     }
+    
+    //
+    // Private Methods
+    //
+
+    /**
+     * <p>
+     * Allow only internal construction of <code>DpApiConfig</code> instance.
+     * </p>
+     */
+    public DpApiConfig() {
+        super(DpApiConfig.class);
+    }
+
 }

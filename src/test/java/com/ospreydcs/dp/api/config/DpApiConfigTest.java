@@ -27,15 +27,20 @@
  */
 package com.ospreydcs.dp.api.config;
 
-import static org.junit.Assert.*;
-
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.ospreydcs.dp.api.config.model.CfgOverrideRec;
+import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
+
 
 /**
  * <p>
@@ -47,12 +52,38 @@ import org.junit.Test;
  *
  */
 public class DpApiConfigTest {
+    
+    
+    //
+    // Class Constants
+    //
+    
+    public static final String  DP_API_ARCHIVE_INCEPTION = "2024-01-01T00:00:00.0Z";
+    public static final String  DP_API_QUERY_PAGE_SIZE = "200";
 
+    
+    //
+    // Class Resources
+    //
+    
+    /** Map of system variable (name, value) pairs used for configuration overrides */
+    public static final Map<String, String> MAP_VAR_PAIRS = Map.of(
+            "DP_API_ARCHIVE_INCEPTION", DP_API_ARCHIVE_INCEPTION,
+            "DP_API_QUERY_PAGE_SIZE", DP_API_QUERY_PAGE_SIZE
+            );
+
+    
+    //
+    // Test Fixture
+    //
+    
     /**
      * @throws java.lang.Exception
      */
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        for (Map.Entry<String, String> pair : MAP_VAR_PAIRS.entrySet()) 
+            System.setProperty(pair.getKey(), pair.getValue());
     }
 
     /**
@@ -76,6 +107,11 @@ public class DpApiConfigTest {
     public void tearDown() throws Exception {
     }
 
+    
+    // 
+    // Test Cases
+    //
+    
     /**
      * Test method for {@link com.ospreydcs.dp.api.config.DpApiConfig#getInstance()}.
      */
@@ -96,6 +132,45 @@ public class DpApiConfigTest {
         
         System.out.println("DP API Default Configuration:");
         System.out.println(cfg);
+    }
+    
+    @Test
+    public final void testOverrides() {
+        DpApiConfig cfg = DpApiConfig.getInstance();
+        
+        // Need to force system properties override in case this is part of a test suite
+        try {
+            CfgOverrideUtility.overrideRoot(cfg, CfgOverrideUtility.SOURCE.PROPERTIES);
+            
+        } catch (IllegalArgumentException | IllegalAccessException e) {
+            Assert.fail("Forced override of DpApiConfig instance threw exception: " + e.getMessage());
+            
+        }
+        
+        Integer intPageSize = Integer.parseInt(DP_API_QUERY_PAGE_SIZE);
+        
+        Assert.assertEquals(intPageSize, cfg.query.pageSize); 
+        Assert.assertEquals(DP_API_ARCHIVE_INCEPTION, cfg.archive.inception);
+    }
+    
+    /**
+     * Test method for {@link CfgOverrideUtility#extractOverrideables(Object, com.ospreydcs.dp.api.config.model.CfgOverrideUtility.SOURCE)}
+     * as applied to {@link DpApiConfig}.
+     */
+    @Test
+    public final void testExtractOverrideables() {
+        DpApiConfig cfg = DpApiConfig.getInstance();
+        
+        try {
+            List<CfgOverrideRec> lstRecs = CfgOverrideUtility.extractOverrideables(cfg, CfgOverrideUtility.SOURCE.ENVIRONMENT);
+            
+            for (CfgOverrideRec rec : lstRecs) 
+                System.out.println(rec.printLine());
+            
+        } catch (IllegalArgumentException | IllegalAccessException e) {
+            Assert.fail("Override extract threw exception: " + e.getMessage());
+        }
+        
     }
 
 }

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQuery.java
+ * File:	DpQueryConfig.java
  * Package: com.ospreydcs.dp.api.config.query
- * Type: 	DpQuery
+ * Type: 	DpQueryConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -28,6 +28,7 @@
 package com.ospreydcs.dp.api.config.query;
 
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
+import com.ospreydcs.dp.api.config.model.CfgStructure;
 
 /**
  * <p>
@@ -38,35 +39,41 @@ import com.ospreydcs.dp.api.config.model.ACfgOverride;
  * @since Dec 31, 2023
  *
  */
-@ACfgOverride
-public final class DpQuery {
+@ACfgOverride.Root(root="DP_API_QUERY")
+public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
+
+    /** Default constructor require for base structure class */
+    public DpQueryConfig() {
+        super(DpQueryConfig.class);
+    }
+
 
     /** Default bucket count per page when using cursor requests */
-    @ACfgOverride.Field(name="DP_API_QUERY_PAGE_SIZE")
+    @ACfgOverride.Field(name="PAGE_SIZE")
     public Integer  pageSize;
 
     
-    //
-    // Object Overrides
-    //
-    
-    /**
-     *
-     * @see @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-        
-        // Cast comparison object
-        DpQuery qry;
-        if (obj instanceof DpQuery)
-            qry = (DpQuery)obj;
-        else
-            return false;
-        
-        // Check equivalence
-        return qry.pageSize.equals(this.pageSize);
-    }
-    
+//    //
+//    // Object Overrides
+//    //
+//    
+//    /**
+//     *
+//     * @see @see java.lang.Object#equals(java.lang.Object)
+//     */
+//    @Override
+//    public boolean equals(Object obj) {
+//        
+//        // Cast comparison object
+//        DpQueryConfig qry;
+//        if (obj instanceof DpQueryConfig)
+//            qry = (DpQueryConfig)obj;
+//        else
+//            return false;
+//        
+//        // Check equivalence
+//        return qry.pageSize.equals(this.pageSize);
+//    }
+//    
 
 }
