@@ -70,7 +70,7 @@ public final class DpQueryConnectionFactory {
     // Class Resources
     //
 
-    /** The <code>DpGrpcConnectionFactory</code> bound for the Ingestion Service */
+    /** The <code>DpGrpcConnectionFactory</code> bound for the Query Service */
     private static final DpGrpcConnectionFactory<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> FAC;
     
     static {

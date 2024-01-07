@@ -27,6 +27,8 @@
  */
 package com.ospreydcs.dp.api.grpc.model;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * <p>
  * Interface specifying the requirements of a gRPC channel connection.
@@ -34,8 +36,6 @@ package com.ospreydcs.dp.api.grpc.model;
  *
  * @author Christopher K. Allen
  * @since Nov 17, 2022
- *
- * @deprecated This interface is not really necessary
  */
 public interface IConnection {
 
@@ -63,9 +63,9 @@ public interface IConnection {
      * @return <code>true</code> if connection was successfully shutdown,
      *         <code>false</code> if an error occurred
      * 
-     * @throws InterruptedException process was interrupted while waiting for <em>Datastore</em> to shut down
+     * throws InterruptedException process was interrupted while waiting for channel to shut down
      */
-    public boolean shutdownSoft() throws InterruptedException;
+    public boolean shutdownSoft() /* throws InterruptedException */;
     
     /**
      * <p>
@@ -84,10 +84,51 @@ public interface IConnection {
      * @return <code>true</code> if connection was successfully shutdown,
      *         <code>false</code> if an error occurred
      * 
-     * @throws InterruptedException process was interrupted while waiting for <em>Datastore</em> to shut down
+     * throws InterruptedException process was interrupted while waiting for channel to shut down
      */
-    public boolean shutdownNow() throws InterruptedException;
+    public boolean shutdownNow() /* throws InterruptedException */;
     
+    
+    /**
+     * <p>
+     * Blocks until the connection finishes a shutdown operation and the underlying gRPC
+     * channel fully terminates.
+     * </p>
+     * <p>
+     * It is assumed that either a {@link #shutdownSoft()} or {@link #shutdownNow()} operation
+     * was previously invoked, otherwise the method immediately returns a <code>false</code> value.
+     * After returning a <code>true</code> value all gRPC operations have completed, the underlying 
+     * gRPC channel has terminated, and all gRPC resource have been released.
+     * </p>
+     * 
+     * @param cntTimeout    The timeout limit for channel shutdown and termination operations
+     * @param tuTimeout     The timeout units for channel shutdown and termination operations
+     * 
+     * @return  <code>true</code> if connection shut down and terminated within the alloted limit,
+     *          <code>false</code> either the shutdown operation was never invoked, or the operation failed 
+     * 
+     * @throws InterruptedException process was interrupted while waiting for channel to fully terminate
+     */
+    public boolean awaitTermination(long cntTimeout, TimeUnit tuTimeout) throws InterruptedException;
+    
+    /**
+     * <p>
+     * Blocks until the connection finishes a shutdown operation and the underlying gRPC channel fully terminates.
+     * </p>
+     * <p>
+     * Typically defers to the method {@link #awaitTermination(long, java.util.concurrent.TimeUnit)} 
+     * by supplying parameters from the default configuration for the Query Service connection.
+     * </p> 
+     * 
+     * @return  <code>true</code> if connection shut down and terminated within the alloted limit, 
+     *          <code>false</code> either the shutdown operation was never invoked, or the operation failed
+     *          
+     * @throws InterruptedException process was interrupted while waiting for channel to fully terminate
+     * 
+     * @see #awaitTermination(long, java.util.concurrent.TimeUnit)
+     */
+    public boolean awaitTermination() throws InterruptedException;
+
     
     //
     // Connection State Query

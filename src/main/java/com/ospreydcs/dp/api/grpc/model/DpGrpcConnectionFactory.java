@@ -113,8 +113,8 @@ import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
  * targeted services.
  * </p>
  * 
- * @param <Service>     the specific Data Platform service, that is, the Protobuf-generated gRPC service  
- * @param <SyncStub>    synchronous (blocking) stub supporting unary gPRC communications 
+ * @param <ServiceGrpc> the specific Data Platform service, that is, the Protobuf-generated gRPC service class  
+ * @param <BlockStub>   synchronous (blocking) stub supporting unary gPRC communications 
  * @param <FutureStub>  non-blocking stub supporting unary gPRC communications 
  * @param <AsyncStub>   asynchronous (non-blocking) stub for both unary and streaming gRPC communications 
  *
@@ -124,8 +124,8 @@ import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
  * @see DpGrpcConnection
  */
 public class DpGrpcConnectionFactory<
-    Service,
-    SyncStub extends io.grpc.stub.AbstractBlockingStub<SyncStub>, 
+    ServiceGrpc,
+    BlockStub extends io.grpc.stub.AbstractBlockingStub<BlockStub>, 
     FutureStub extends io.grpc.stub.AbstractFutureStub<FutureStub>,
     AsyncStub extends io.grpc.stub.AbstractAsyncStub<AsyncStub> 
     > 
@@ -193,7 +193,7 @@ public class DpGrpcConnectionFactory<
     //
     
     /** The class type of the gRPC service */
-    private final Class<Service>    clsService;
+    private final Class<ServiceGrpc>    clsService;
     
     /** Record containing default connection parameters */
     private final GrpcConnectionConfig    cfgConn;
@@ -256,7 +256,7 @@ public class DpGrpcConnectionFactory<
      * 
      * @see DpGrpcConnectionConfig
      */
-    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect() throws DpGrpcException {
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect() throws DpGrpcException {
         
         return this.connect(this.cfgConn.channel.host.url, this.cfgConn.channel.host.port);
     }
@@ -281,7 +281,7 @@ public class DpGrpcConnectionFactory<
      * 
      * @see DpGrpcConnectionConfig
      */
-    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort) throws DpGrpcException {
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(String strHost, int intPort) throws DpGrpcException {
 
         return this.connect(strHost, intPort, this.cfgConn.channel.grpc.timeoutLimit, this.cfgConn.channel.grpc.timeoutUnit);        
     }
@@ -309,7 +309,7 @@ public class DpGrpcConnectionFactory<
      * 
      * @see DpGrpcConnectionConfig
      */
-    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(String strHost, int intPort, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
 
         if (!this.cfgConn.channel.tls.active)
             return this.connect(strHost, intPort, true, this.cfgConn.channel.grpc.messageSizeMax, this.cfgConn.channel.grpc.keepAliveWithoutCalls, this.cfgConn.channel.grpc.gzip, lngTimeout, tuTimeout);
@@ -364,7 +364,7 @@ public class DpGrpcConnectionFactory<
      *         
      * @throws DpGrpcException error while creating connection object (see message and cause) 
      */
-    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(
             String strHost, 
             int intPort, 
             boolean bolPlainText,
@@ -418,7 +418,7 @@ public class DpGrpcConnectionFactory<
         LOGGER.info("gRPC channel created for host connection {}:{}", strHost, intPort);
         
         // Create gRPC service connection
-        DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub>   connService = new DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub>(this.clsService, grpcChan);
+        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>   connService = new DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>(this.clsService, grpcChan);
         LOGGER.info("gRPC connection established for service {}", this.clsService);
 
         // Return the connection
@@ -452,7 +452,7 @@ public class DpGrpcConnectionFactory<
      * 
      * @see DpGrpcConnectionConfig
      */
-    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
     
         return this.connect(this.cfgConn.channel.host.url, 
                             this.cfgConn.channel.host.port,
@@ -487,7 +487,7 @@ public class DpGrpcConnectionFactory<
      * 
      * @see DpGrpcConnectionConfig
      */
-    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
     
         return this.connect(strHost, intPort,
                 fileTrustedCerts,
@@ -530,7 +530,7 @@ public class DpGrpcConnectionFactory<
      *         
      * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
      */
-    public DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub> connect(
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(
             String  strHost, 
             int     intPort, 
             File    fileTrustedCerts,
@@ -596,7 +596,7 @@ public class DpGrpcConnectionFactory<
         LOGGER.info("gRPC channel created for host connection {}:{}", strHost, intPort);
         
         // Create gRPC service connection
-        DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub>   connService = new DpGrpcConnection<Service, SyncStub, FutureStub, AsyncStub>(this.clsService, grpcChan);
+        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>   connService = new DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>(this.clsService, grpcChan);
         LOGGER.info("gRPC connection established for service {}", this.clsService);
 
         // Return the connection
@@ -618,7 +618,7 @@ public class DpGrpcConnectionFactory<
      * @param clsService class type of the gRPC communications service
      * @param cfgConn    record of the default configuration parameters
      */
-    protected DpGrpcConnectionFactory(Class<Service> clsService, GrpcConnectionConfig cfgConn) {
+    protected DpGrpcConnectionFactory(Class<ServiceGrpc> clsService, GrpcConnectionConfig cfgConn) {
         this.clsService = clsService;
         this.cfgConn    = cfgConn;
         

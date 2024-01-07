@@ -54,8 +54,8 @@ import io.grpc.ManagedChannel;
  * offering various connection configurations for the communications services.
  * </p>
  * 
- * @param <Service>     Protocol Buffers generated gRPC service class
- * @param <SyncStub>    Protocol Buffer communication stub containing blocking, synchronous RPC operations
+ * @param <ServiceGrpc> Protocol Buffers generated gRPC service class
+ * @param <BlockStub>   Protocol Buffer communication stub containing blocking, synchronous RPC operations
  * @param <FutureStub>  Protocol Buffer communication stub containing non-blocking (future) RPC operations
  * @param <AsyncStub>   Protocol Buffer communication stub containing asynchronous streaming RPC operations
  *
@@ -64,8 +64,8 @@ import io.grpc.ManagedChannel;
  *
  */
 public class DpGrpcConnection<
-    Service,
-    SyncStub extends io.grpc.stub.AbstractBlockingStub<SyncStub>, 
+    ServiceGrpc,
+    BlockStub extends io.grpc.stub.AbstractBlockingStub<BlockStub>, 
     FutureStub extends io.grpc.stub.AbstractFutureStub<FutureStub>,
     AsyncStub extends io.grpc.stub.AbstractAsyncStub<AsyncStub> 
     > 
@@ -99,13 +99,13 @@ public class DpGrpcConnection<
     //
     
     /** The class type of the gRPC service service being supported */
-    private final Class<Service>    clsService;
+    private final Class<ServiceGrpc>    clsService;
     
     /** The single gRPC data channel supporting all communications stubs */
     private final ManagedChannel    grpcChan;
     
     /** Blocking, synchronous communications stub (no streaming operations)*/
-    private final SyncStub          stubSync;
+    private final BlockStub          stubBlock;
     
     /** Non-blocking communications stub (no streaming operations) */
     private final FutureStub        stubFuture;
@@ -142,10 +142,10 @@ public class DpGrpcConnection<
      * 
      * @throws DpGrpcException a Java reflection error occurred during communication stubs creation (see message and cause)
      */
-    public DpGrpcConnection(Class<Service> clsService, ManagedChannel grpcChan) throws DpGrpcException {
+    public DpGrpcConnection(Class<ServiceGrpc> clsService, ManagedChannel grpcChan) throws DpGrpcException {
         this.clsService = clsService;
         this.grpcChan = grpcChan;
-        this.stubSync = this.newSyncStub(grpcChan);
+        this.stubBlock = this.newBlockStub(grpcChan);
         this.stubFuture = this.newFutureStub(grpcChan);
         this.stubAsync = this.newAsyncStub(grpcChan);
         
@@ -163,16 +163,16 @@ public class DpGrpcConnection<
 //     * </p>
 //     *
 //     * @param chnGrpc   the single gRPC communications channel used by the service stubs
-//     * @param stubSync   synchronous communication stub for desired RPC interface
+//     * @param stubBlock   synchronous communication stub for desired RPC interface
 //     * @param stubAsync  asynchronous communication stub for desired RPC interface
 //     */
 //    public DpGrpcConnection(ManagedChannel chnGrpc, 
-//            SyncStub stubSync, 
+//            SyncStub stubBlock, 
 //            FutureStub stubFuture,
 //            AsyncStub stubAsync)
 //    {
 //        this.chnGprc = chnGrpc;
-//        this.stubSync = stubSync;
+//        this.stubSync = stubBlock;
 //        this.stubFuture = stubFuture;
 //        this.stubAsync = stubAsync;
 //        
@@ -417,8 +417,8 @@ public class DpGrpcConnection<
      * 
      * @see #getChannel()
      */
-    public SyncStub getStubSync() {
-        return this.stubSync;
+    public BlockStub getStubBlock() {
+        return this.stubBlock;
     }
     
     /**
@@ -496,12 +496,12 @@ public class DpGrpcConnection<
      *          
      * @throws DpGrpcException  a Java reflection operation failed (see message and cause)
      */
-    protected SyncStub  newSyncStub(ManagedChannel chnGrpc) throws DpGrpcException {
+    protected BlockStub  newBlockStub(ManagedChannel chnGrpc) throws DpGrpcException {
         try {
             Method mthNewStub = this.clsService.getMethod(STR_MTHD_NEW_BLOCKING_STUB, io.grpc.Channel.class);
             
             @SuppressWarnings("unchecked")
-            SyncStub stub = (SyncStub) mthNewStub.invoke(null, chnGrpc);
+            BlockStub stub = (BlockStub) mthNewStub.invoke(null, chnGrpc);
             
             return stub;
             

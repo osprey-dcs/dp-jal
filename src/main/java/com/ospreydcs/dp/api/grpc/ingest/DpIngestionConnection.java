@@ -91,7 +91,7 @@ public final class DpIngestionConnection extends DpGrpcConnection<DpIngestionSer
      * Creates a new <code>DpIngestionConnection</code> instance aliasing the given <code>DpGrpcConnection</code>.
      * </p>
      * 
-     * @param conn  bound <code>DpGrpcConnection</code> object to be aliased
+     * @param grpcConn  bound <code>DpGrpcConnection</code> object to be aliased
      * 
      * @return  new connection to the Data Platform Ingestion Service
      * 
@@ -124,7 +124,7 @@ public final class DpIngestionConnection extends DpGrpcConnection<DpIngestionSer
      * Constructs a new instance of <code>DpIngestionConnection</code> from a bound <code>DpGrpcConnection</code>.
      * </p>
      *
-     * @param conn  the aliased (bound) <code>DpGrpcConnection</code> object 
+     * @param grpcConn  the aliased (bound) <code>DpGrpcConnection</code> object 
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      */
