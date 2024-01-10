@@ -29,6 +29,7 @@ package com.ospreydcs.dp.api.config.grpc;
 
 import java.util.concurrent.TimeUnit;
 
+import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -73,38 +74,12 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
     
     /** General timeout properties used external to channel connection (i.e., on channel objects) */
     @ACfgOverride.Struct(pathelem="TIMEOUT")
-    public Timeout  timeout;
+    public DpTimeoutConfig  timeout;
     
     /** Required Channel parameters */
     @ACfgOverride.Struct(pathelem="CHANNEL")
     public Channel  channel;
 
-    
-    /**
-     * Structure containing external timeout parameters for gRPC channels
-     *
-     */
-    @ACfgOverride.Root(root="DP_API_CONNECTION_TIMEOUT")
-    public static final class Timeout extends CfgStructure<Timeout> {
-        
-        /** Default constructor required for structure base class */
-        public Timeout() {
-            super(Timeout.class);
-        }
-
-        /** Is timeout active */
-        @ACfgOverride.Field(name="ACTIVE")
-        public Boolean      active;
-        
-        /** Timeout limit */
-        @ACfgOverride.Field(name="LIMIT")
-        public Long         limit;
-        
-        /** Units for the timeout limit */
-        @ACfgOverride.Field(name="UNIT")
-        public TimeUnit     unit;
-
-    }
     
     /**
      * Structure containing gRPC Channel configuration parameters

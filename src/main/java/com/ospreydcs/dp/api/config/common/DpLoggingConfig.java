@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryConfig.java
- * Package: com.ospreydcs.dp.api.config.query
- * Type: 	DpQueryConfig
+ * File:	DpLoggingConfig.java
+ * Package: com.ospreydcs.dp.api.config.common
+ * Type: 	DpLoggingConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -20,15 +20,13 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Dec 31, 2023
+ * @since Jan 8, 2024
  *
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.config.query;
+package com.ospreydcs.dp.api.config.common;
 
-import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
-import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 import com.ospreydcs.dp.api.model.AUnavailable;
@@ -36,37 +34,31 @@ import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 
 /**
  * <p>
- * Structure class containing default configuration parameters for Data Platform Query Service operations.
+ * Structure class containing default configuration parameters for Data Platform logging operations.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Dec 31, 2023
+ * @since Jan 8, 2024
  *
  */
-@ACfgOverride.Root(root="DP_API_QUERY")
-public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
+@ACfgOverride.Root(root="DP_API_LOGGING")
+public final class DpLoggingConfig extends CfgStructure<DpLoggingConfig>{
 
     /** Default constructor required for base structure class */
-    public DpQueryConfig() {
-        super(DpQueryConfig.class);
+    public DpLoggingConfig() {
+        super(DpLoggingConfig.class);
     }
-
 
     //
     // Configuration Fields
     //
     
-    /** Default bucket count per page when using cursor requests */
+    /** Is logging active or not */
+    @ACfgOverride.Field(name="ACTIVE")
+    public Boolean  active;
+    
+    /** Logging level */
     @AUnavailable(status=STATUS.UNDER_REVIEW)
-    @ACfgOverride.Field(name="PAGE_SIZE")
-    public Integer  pageSize;
-    
-    /** Default timeout parameters for Query Service operations */
-    @ACfgOverride.Struct(pathelem="TIMEOUT")
-    public DpTimeoutConfig  timeout;
-
-    /** Default logging configuration for Query Service operations */
-    @ACfgOverride.Struct(pathelem="LOGGING")
-    public DpLoggingConfig  logging;
-    
+    @ACfgOverride.Field(name="LEVEL")
+    public String   level;
 }

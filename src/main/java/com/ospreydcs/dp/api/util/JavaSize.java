@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	Size.java
+ * File:	JavaSize.java
  * Package: com.ospreydcs.dp.api.util
- * Type: 	Size
+ * Type: 	JavaSize
  *
  * Copyright 2010-2022 the original author or authors.
  *
@@ -37,13 +37,13 @@ import com.ospreydcs.dp.api.model.BufferedImage;
 
 
 /**
- * Utility class for estimating the memory allocation for objects.
+ * Utility class for estimating the memory allocation for Java objects.
  *
  * @author Christopher K. Allen
  * @since Oct 18, 2022
  *
  */
-public class Size {
+public class JavaSize {
     
     //
     // Class Constants
@@ -81,14 +81,22 @@ public class Size {
     public static final long SZ_STR_RSRVD = SZ_STR_HDR+SZ_STR_HASH+SZ_STR_REF+SZ_STR_LEN;
     
     // Wrapped primitive sizes (in bytes) - includes storage, header, and gap
-    public static final long SZ_Byte      = 16;
+//    public static final long SZ_Byte      = 16;
+//    public static final long SZ_Boolean   = 16;
+//    public static final long SZ_Character = 16;
+//    public static final long SZ_Short     = 16;
+//    public static final long SZ_Integer   = 16;
+//    public static final long SZ_Float     = 16;
+//    public static final long SZ_Long      = 24;
+//    public static final long SZ_Double    = 24;
+    public static final long SZ_Byte      = Byte.BYTES;
     public static final long SZ_Boolean   = 16;
-    public static final long SZ_Character = 16;
-    public static final long SZ_Short     = 16;
-    public static final long SZ_Integer   = 16;
-    public static final long SZ_Float     = 16;
-    public static final long SZ_Long      = 24;
-    public static final long SZ_Double    = 24;
+    public static final long SZ_Character = Character.BYTES;
+    public static final long SZ_Short     = Short.BYTES;
+    public static final long SZ_Integer   = Integer.BYTES;
+    public static final long SZ_Float     = Float.BYTES;
+    public static final long SZ_Long      = Long.BYTES;
+    public static final long SZ_Double    = Double.BYTES;
     
     // Miscellaneous objects
     public static final long SZ_Instant   = 24;
@@ -162,7 +170,7 @@ public class Size {
         
         if (o instanceof Serializable s) return serialSizeof(s);
 
-        throw new IllegalArgumentException("Size.sizeof(Object) - unrecognized type in argument: " + o.toString());
+        throw new IllegalArgumentException("JavaSize.sizeof(Object) - unrecognized type in argument: " + o.toString());
     }
     
     /**
@@ -245,7 +253,7 @@ public class Size {
             return osBytes.size();
 
         } catch (IOException e) {
-            throw new IllegalArgumentException("Size#structSizeof(Serializabl) - unable to stream argument " + objSerial.toString(), e);
+            throw new IllegalArgumentException("JavaSize#structSizeof(Serializabl) - unable to stream argument " + objSerial.toString(), e);
         }
     }
        
@@ -256,11 +264,11 @@ public class Size {
     
     /**
      * <p>
-     * Prevents construction of an instance of <code>Size</code>.
+     * Prevents construction of an instance of <code>JavaSize</code>.
      * </p>
      *
      */
-    private Size() {
+    private JavaSize() {
     }
 
 }

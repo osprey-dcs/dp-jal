@@ -60,7 +60,10 @@ import java.lang.annotation.Target;
  *     for code and documentation.
  *     </li>
  * </ul> 
-*
+ *
+ * @param status    <code>{@link AUnavailable.STATUS}</code> enumeration indicating current status of API feature
+ * @param note      <code>String</code> containing any developer public comments or instructions for users 
+ * 
  * @author Christopher K. Allen
  * @since Dec 31, 2023
  *

@@ -50,7 +50,7 @@ public class DpGrpcException extends Exception {
     /**
      * Creates a new instance of <code>DpGrpcException</code>.
      *
-     * @param message
+     * @param message   exception message
      */
     public DpGrpcException(String message) {
         super(message);
@@ -59,7 +59,7 @@ public class DpGrpcException extends Exception {
     /**
      * Creates a new instance of <code>DpGrpcException</code>.
      *
-     * @param cause
+     * @param cause source of this general exception
      */
     public DpGrpcException(Throwable cause) {
         super(cause);
@@ -69,7 +69,7 @@ public class DpGrpcException extends Exception {
      * Creates a new instance of <code>DpGrpcException</code>.
      *
      * @param message   exception message
-     * @param cause     source of the original exception
+     * @param cause     source of the this general exception
      */
     public DpGrpcException(String message, Throwable cause) {
         super(message, cause);

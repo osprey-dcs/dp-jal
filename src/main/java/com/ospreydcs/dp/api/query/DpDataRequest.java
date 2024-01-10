@@ -33,10 +33,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.model.AUnavailable;
 import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
-import com.ospreydcs.dp.api.util.ProtoMsg;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorOperation;
@@ -368,6 +368,7 @@ public final class DpDataRequest {
      * 
      * @param szPage page size of a data block returned from the <em>Datastore</em> (in rows)
      */
+    @AUnavailable(status=STATUS.UNDER_REVIEW)
     public void pageSize(Integer szPage) {
         this.szPage = szPage;
     }
@@ -982,7 +983,7 @@ public final class DpDataRequest {
      * 
      * @return  new <code>CursorOperation</code> message configured by history 
      */
-    public CursorOperation buildCursorRequest() {
+    private CursorOperation buildCursorRequest() {
         
 //        CursorOperation.Builder bldrRqst = CursorRequest.newBuilder();
 //        bldrRqst.setNumBuckets(this.szPage);

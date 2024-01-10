@@ -25,17 +25,15 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.util;
+package com.ospreydcs.dp.api.grpc.util;
 
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
@@ -51,17 +49,18 @@ import com.ospreydcs.dp.grpc.v1.common.DataTable;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.common.Field;
 import com.ospreydcs.dp.grpc.v1.common.Image;
+import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
 import com.ospreydcs.dp.grpc.v1.common.Structure;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
-import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
 
 /**
  * <p>
- * Utility class for converting Protobuf the following common operations:
+ * Utility class for object extraction, conversion, and creation of Protobuf messages in the Data Platform
+ * gRPC interface.
  * </p>
  * <p>
- * Conversion operations are identified by method or method prefix as follows:
+ * Task operations within class are identified by method or method prefix as follows:
  * <ul>
  * <li><code>from</code> Methods
  *     <br/>
@@ -91,7 +90,7 @@ import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
  *
  * @author Christopher K. Allen
  * @since Sep 27, 2022
- *
+ * @version 2 - Dec, 2023
  */
 public final class ProtoMsg {
     
