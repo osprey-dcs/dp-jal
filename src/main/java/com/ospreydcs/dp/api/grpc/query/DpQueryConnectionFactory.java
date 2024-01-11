@@ -114,33 +114,49 @@ public final class DpQueryConnectionFactory {
     
     /**
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, long, TimeUnit)} for details.
+     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean)} for details.
      * </p>
      * 
      * @return new <code>DpQueryConnection</code> instance with given parameters
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      * 
-     * @see DpGrpcConnectionFactory#connect(String, int, long, TimeUnit)
+     * @see DpGrpcConnectionFactory#connect(String, int, boolean)
      */
-    public static DpQueryConnection connect(String strHost, int intPort, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
-        return DpQueryConnection.from(FAC.connect(strHost, intPort, lngTimeout, tuTimeout));
+    public static DpQueryConnection connect(String strUrl, int intPort, boolean bolPlainText) throws DpGrpcException {
+        return DpQueryConnection.from(FAC.connect(strUrl, intPort, bolPlainText));
     }
     
     /**
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, int, boolean, boolean, long, TimeUnit)} for details.
+     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)} for details.
      * </p>
      * 
      * @return new <code>DpQueryConnection</code> instance with given parameters
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      * 
-     * @see DpGrpcConnectionFactory#connect(String, int, boolean, int, boolean, boolean, long, TimeUnit)
+     * @see DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)
+     */
+    public static DpQueryConnection connect(String strHost, int intPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
+        return DpQueryConnection.from(FAC.connect(strHost, intPort, bolPlainText, lngTimeout, tuTimeout));
+    }
+    
+    /**
+     * <p>
+     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)} for details.
+     * </p>
+     * 
+     * @return new <code>DpQueryConnection</code> instance with given parameters
+     * 
+     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
+     * 
+     * @see DpGrpcConnectionFactory#connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)
      */
     public static DpQueryConnection connect(
             String strHost, 
             int intPort, 
+            boolean bolTlsActive,
             boolean bolPlainText,
             int     intMsgSizeMax,
             boolean bolKeepAlive,
@@ -148,7 +164,7 @@ public final class DpQueryConnectionFactory {
             long    lngTimeout,
             TimeUnit tuTimeout
             ) throws DpGrpcException {
-        return DpQueryConnection.from(FAC.connect(strHost, intPort, bolPlainText, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout));
+        return DpQueryConnection.from(FAC.connect(strHost, intPort, bolTlsActive, bolPlainText, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout));
     }
 
     
@@ -188,14 +204,14 @@ public final class DpQueryConnectionFactory {
     
     /**
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, File, File, File, int, boolean, boolean, long, TimeUnit)} for details.
+     * See {@link DpGrpcConnectionFactory#connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)} for details.
      * </p>
      * 
      * @return new <code>DpQueryConnection</code> instance with given parameters
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      * 
-     * @see DpGrpcConnectionFactory#connect(String, int, File, File, File, int, boolean, boolean, long, TimeUnit)
+     * @see DpGrpcConnectionFactory#connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)
      */
     public static DpQueryConnection connect(
             String  strHost, 
@@ -203,13 +219,24 @@ public final class DpQueryConnectionFactory {
             File    fileTrustedCerts,
             File    fileClientCertsChain,
             File    fileClientKey,
+            boolean bolPlainText,
             int     intMsgSizeMax,
             boolean bolKeepAlive,
             boolean bolGzipCompr,
             long    lngTimeout,
             TimeUnit tuTimeout
             ) throws DpGrpcException {
-        return DpQueryConnection.from(FAC.connect(strHost, intPort, fileTrustedCerts, fileClientCertsChain, fileClientKey, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout));
+        
+        return DpQueryConnection.from(FAC.connect(strHost, intPort, 
+                fileTrustedCerts, 
+                fileClientCertsChain, 
+                fileClientKey, 
+                bolPlainText, 
+                intMsgSizeMax, 
+                bolKeepAlive, 
+                bolGzipCompr, 
+                lngTimeout, 
+                tuTimeout));
     }
     
     

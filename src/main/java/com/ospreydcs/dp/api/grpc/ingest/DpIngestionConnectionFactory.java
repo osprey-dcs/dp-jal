@@ -118,22 +118,13 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
      * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
      * </p>
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, long, TimeUnit)} for details.
+     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean)} for details.
      * </p>
-     * 
-     * @param strHost       network URL of the desired service
-     * @param intPort       server port used by the at the above service
-     * @param lngTimeout    timeout limit used for connection operations (keepalive ping timeout) 
-     * @param tuTimeout     timeout units used for connection operations (keepalive ping timeout)
-     * 
-     * @return new <code>DpIngestionConnection</code> instance connected to the given host
-     * 
-     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
-     * 
-     * @see {@link com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory#connect(String, int, long, TimeUnit)}
+     *
+     * @see com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory#connect(java.lang.String, int, boolean)
      */
-    public static DpIngestionConnection connect(String strHost, int intPort, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
-        return DpIngestionConnection.from(FAC.connect(strHost, intPort, lngTimeout, tuTimeout));
+    public static DpIngestionConnection connect(String strHost, int intPort, boolean bolPlainText) throws DpGrpcException {
+        return DpIngestionConnection.from(FAC.connect(strHost, intPort, bolPlainText));
     }
 
     /**
@@ -141,17 +132,42 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
      * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
      * </p>
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, int, boolean, boolean, long, TimeUnit)} for details.
+     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)} for details.
+     * </p>
+     * 
+     * @param strHost       network URL of the desired service
+     * @param intPort       server port used by the at the above service
+     * @param bolPlainText transmit data using plain ASCII (negates all TLS security)
+     * @param lngTimeout    timeout limit used for connection operations (keepalive ping timeout) 
+     * @param tuTimeout     timeout units used for connection operations (keepalive ping timeout)
+     * 
+     * @return new <code>DpIngestionConnection</code> instance connected to the given host
+     * 
+     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
+     * 
+     * @see {@link com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)}
+     */
+    public static DpIngestionConnection connect(String strHost, int intPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
+        return DpIngestionConnection.from(FAC.connect(strHost, intPort, bolPlainText, lngTimeout, tuTimeout));
+    }
+
+    /**
+     * <p>
+     * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
+     * </p>
+     * <p>
+     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)} for details.
      * </p>
      * <p>
      * No default parameters are used.
      * </p>
      * 
-     * @see DpGrpcConnectionFactory#connect(String, int, boolean, int, boolean, boolean, long, TimeUnit)
+     * @see DpGrpcConnectionFactory#connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)
      */
     public static DpIngestionConnection connect(
             String strHost, 
             int intPort, 
+            boolean bolTlsActive,
             boolean bolPlainText,
             int     intMsgSizeMax,
             boolean bolKeepAlive,
@@ -160,7 +176,7 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
             TimeUnit tuTimeout
             ) throws DpGrpcException 
     {
-        return DpIngestionConnection.from(FAC.connect(strHost, intPort, bolPlainText, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout));
+        return DpIngestionConnection.from(FAC.connect(strHost, intPort, bolTlsActive, bolPlainText, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout));
     }
     
     
@@ -215,7 +231,7 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
      * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
      * </p>
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, File, File, File, int, boolean, boolean, long, TimeUnit)} for details.
+     * See {@link DpGrpcConnectionFactory#connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)} for details.
      * </p>
      * </p>
      * No default parameters are used.
@@ -226,6 +242,7 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
      * @param fileTrustedCerts root file of all trusted server certificates
      * @param fileClientCerts  file of client certificates
      * @param fileClientKey file containing client private key
+     * @param bolPlainText transmit data using plain ASCII (negates all TLS security)
      * @param intMsgSizeMax maximum message size for gRPC transmission (bytes)
      * @param bolKeepAlive force connection to remain active (otherwise idle after timeout)
      * @param bolGzipCompr enable GZIP compression for data transmission
@@ -237,7 +254,7 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
      *         
      * @throws DpGrpcException general gRPC resource creation exception (see message and cause)
      * 
-     * @see DpGrpcConnectionFactory#connect(String, int, File, File, File, int, boolean, boolean, long, TimeUnit)
+     * @see DpGrpcConnectionFactory#connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)
      */
    public static DpIngestionConnection connect(
            String  strHost, 
@@ -245,6 +262,7 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
            File    fileTrustedCerts,
            File    fileClientCertsChain,
            File    fileClientKey,
+           boolean bolPlainText,
            int     intMsgSizeMax,
            boolean bolKeepAlive,
            boolean bolGzipCompr,
@@ -252,7 +270,17 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
            TimeUnit tuTimeout
            ) throws DpGrpcException 
    {
-       return DpIngestionConnection.from(FAC.connect(strHost, intPort, fileTrustedCerts, fileClientCertsChain, fileClientKey, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout));
+       return DpIngestionConnection.from(FAC.connect(strHost, intPort, 
+               fileTrustedCerts, 
+               fileClientCertsChain, 
+               fileClientKey, 
+               bolPlainText,
+               intMsgSizeMax, 
+               bolKeepAlive, 
+               bolGzipCompr, 
+               lngTimeout, 
+               tuTimeout)
+               );
    }
    
    

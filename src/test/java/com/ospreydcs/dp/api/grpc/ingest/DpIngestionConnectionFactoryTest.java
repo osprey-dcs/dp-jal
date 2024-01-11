@@ -94,18 +94,23 @@ public class DpIngestionConnectionFactoryTest {
     }
 
     /**
-     * Test method for {@link DpIngestionConnectionFactory#connect(String, int, long, TimeUnit)}.
+     * Test method for {@link DpIngestionConnectionFactory#connect(String, int, boolean, long, TimeUnit)}.
      */
     @Test
-    public final void testConnectStringIntLongTimeUnit() {
+    public final void testConnectStringIntBooleanLongTimeUnit() {
         String  strUrl = DpApiConfig.getInstance().connections.ingestion.channel.host.url;
         int     intPort = DpApiConfig.getInstance().connections.ingestion.channel.host.port;
+        
+        boolean bolPlainText = DpApiConfig.getInstance().connections.ingestion.channel.grpc.usePlainText;
         
         long    lngTmout = DpApiConfig.getInstance().connections.ingestion.channel.grpc.timeoutLimit;
         TimeUnit tuTmout = DpApiConfig.getInstance().connections.ingestion.channel.grpc.timeoutUnit;
         
         try {
-            DpIngestionConnection   conn = DpIngestionConnectionFactory.connect(strUrl, intPort, lngTmout, tuTmout);
+            DpIngestionConnection   conn = DpIngestionConnectionFactory.connect(strUrl, intPort,
+                    bolPlainText,
+                    lngTmout, 
+                    tuTmout);
 
             conn.shutdownSoft();
             conn.awaitTermination();

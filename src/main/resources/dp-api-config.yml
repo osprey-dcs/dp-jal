@@ -100,7 +100,7 @@ connections:   # All available Data Platform service connections
             url: localhost              # host server URL           : DP_API_CONNECTION_QUERY_CHANNEL_HOST_URL
             port: 50052                 # server port address       : DP_API_CONNECTION_QUERY_CHANNEL_HOST_PORT
          tls:              # HTTP2 Transport Layer Security parameters
-            active: true                # use TLS security          : DP_API_CONNECTION_QUERY_CHANNEL_TLS_ACTIVE
+            active: false               # use TLS security          : DP_API_CONNECTION_QUERY_CHANNEL_TLS_ACTIVE
             defaultTls: true            # use default TLS operation : DP_API_CONNECTION_QUERY_CHANNEL_TLS_DEFAULT
             filepaths:     # file path locations for TLS certificates and keys (only if defaultTls == false)
                trustedCerts:            # trusted certs collection  : DP_API_CONNECTION_QUERY_CHANNEL_TLS_FILE_TRUSTED_CERTS

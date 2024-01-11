@@ -29,6 +29,7 @@ package com.ospreydcs.dp.api.grpc.model;
 
 import io.grpc.ChannelCredentials;
 import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
 import io.grpc.TlsChannelCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -218,8 +219,8 @@ public class DpGrpcConnectionFactory<
      * The default gRPC connection parameters are provided in the argument.
      * </p>
      * 
-     * @param <Service>     type of the Protobuf-generated service class
-     * @param <SyncStub>    type for synchronous blocking communications stub 
+     * @param <ServiceGrpc> type of the Protobuf-generated gRPC service interface 
+     * @param <BlockStub>   type for synchronous blocking communications stub 
      * @param <FutureStub>  type for non-blocking unary communications stub
      * @param <AsyncStub>   type for asynchronous communications stub (contains streaming RPC operations)
      *
@@ -228,16 +229,21 @@ public class DpGrpcConnectionFactory<
      * 
      * @return a new <code>DpGrpcConnectionFactory</code> instance
      */
-    public static <Service, SyncStub extends io.grpc.stub.AbstractBlockingStub<SyncStub>, FutureStub extends io.grpc.stub.AbstractFutureStub<FutureStub>, AsyncStub extends io.grpc.stub.AbstractAsyncStub<AsyncStub>> 
-        DpGrpcConnectionFactory<Service, SyncStub, FutureStub, AsyncStub> 
-        newFactory(Class<Service> clsService, GrpcConnectionConfig cfgConn) 
+    public static <ServiceGrpc, 
+                   BlockStub extends io.grpc.stub.AbstractBlockingStub<BlockStub>, 
+                   FutureStub extends io.grpc.stub.AbstractFutureStub<FutureStub>, 
+                   AsyncStub extends io.grpc.stub.AbstractAsyncStub<AsyncStub>
+                  > 
+    DpGrpcConnectionFactory<ServiceGrpc, BlockStub, FutureStub, AsyncStub>  newFactory(Class<ServiceGrpc> clsService, 
+                                                                                  GrpcConnectionConfig cfgConn
+                                                                                  ) 
     {
-        return new DpGrpcConnectionFactory<Service, SyncStub, FutureStub, AsyncStub>(clsService, cfgConn);        
+        return new DpGrpcConnectionFactory<ServiceGrpc, BlockStub, FutureStub, AsyncStub>(clsService, cfgConn);        
     }
 
     
     //
-    // Factory Operations - Default TLS Security
+    // Factory Operations - Use Security Specified in Default Configuration 
     //
     
     /**
@@ -248,6 +254,7 @@ public class DpGrpcConnectionFactory<
      * <p>
      * All other configuration parameters are taken from the default connection
      * properties, including the service host location.
+     * Defers to method <code>{@link #connect(String, int)}</code>
      * </p>
      * 
      * @return new <code>DpGrpcConnection</code> instance with all default configuration
@@ -255,6 +262,7 @@ public class DpGrpcConnectionFactory<
      * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
      * 
      * @see DpGrpcConnectionConfig
+     * @see #connect(String, int)
      */
     public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect() throws DpGrpcException {
         
@@ -264,32 +272,72 @@ public class DpGrpcConnectionFactory<
     /**
      * <p>
      * Creates and returns a new <code>DsGrpcConnection</code> instance connected
-     * to the supported <em>Data Platform</em> service identified by <code>Service</code>.
+     * to the supported <em>Data Platform</em> service identified by <code>ServiceGrpc</code>.
      * </p>
      * <p>
      * The URL and port address of the <em>Data Platform</em> service are explicitly specified.
-     * All other configuration parameters are taken from the default connection
-     * properties.
+     * All other configuration parameters are taken from the default configuration parameters.
+     * Defers to method <code>{@link #connect(String, int, boolean)}</code>.
      * </p>
      * 
      * @param strHost       network URL of the desired service
      * @param intPort       server port used by the at the above service
+     * @param bolPlainText  transmit data using plain ASCII (negates any TLS security)
      * 
      * @return new <code>DpGrpcConnection</code> instance connected to the given address
      * 
      * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
      * 
      * @see DpGrpcConnectionConfig
+     * @see #connect(String, int, boolean)
      */
-    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(String strHost, int intPort) throws DpGrpcException {
-
-        return this.connect(strHost, intPort, this.cfgConn.channel.grpc.timeoutLimit, this.cfgConn.channel.grpc.timeoutUnit);        
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(
+            String strHost, 
+            int intPort 
+            ) throws DpGrpcException 
+    {
+        return this.connect(strHost, intPort, this.cfgConn.channel.grpc.usePlainText);
     }
     
     /**
      * <p>
      * Creates and returns a new <code>DsGrpcConnection</code> instance connected
-     * to the supported <em>Data Platform</em> service identified by <code>Service</code>.
+     * to the supported <em>Data Platform</em> service identified by <code>ServiceGrpc</code>.
+     * </p>
+     * <p>
+     * The URL and port address of the <em>Data Platform</em> service are explicitly specified,
+     * along with the Plain Text security override flag.
+     * All other configuration parameters are taken from the default configuration parameters.
+     * Defers to method <code>{@link #connect(String, int, boolean, long, TimeUnit)}</code>.
+     * </p>
+     * 
+     * @param strHost       network URL of the desired service
+     * @param intPort       server port used by the at the above service
+     * @param bolPlainText  transmit data using plain ASCII (negates any TLS security)
+     * 
+     * @return new <code>DpGrpcConnection</code> instance connected to the given address
+     * 
+     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
+     * 
+     * @see DpGrpcConnectionConfig
+     * @see #connect(String, int, boolean, long, TimeUnit)
+     */
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(
+            String strHost, 
+            int intPort, 
+            boolean bolPlainText
+            ) throws DpGrpcException 
+    {
+        return this.connect(strHost, intPort,
+                bolPlainText,
+                this.cfgConn.channel.grpc.timeoutLimit, 
+                this.cfgConn.channel.grpc.timeoutUnit);        
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>DsGrpcConnection</code> instance connected
+     * to the supported <em>Data Platform</em> service identified by <code>ServiceGrpc</code>.
      * </p>
      * <p>
      * The URL and port address of the <em>Data Platform</em> service are explicitly specified,
@@ -297,9 +345,42 @@ public class DpGrpcConnectionFactory<
      * All other configuration parameters are taken from the default connection
      * properties.
      * </p>
+     * <p>
+     * <h2>IMPORTANT:</h2>
+     * This method decides upon <em>default</em> TLS security or <em>explicit</em> TLS security.
+     * <br/><br/>
+     * The decision depends upon the default configuration parameter 
+     * <code>GrpcConnectionConfig#channel.tls.defaultTls</code>.
+     * <br/><br/>
+     * It defers to the following methods depending on the value of this parameter:
+     * <ul>
+     * <li> 
+     * <code>true</code> - method <code>{@link #connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)}</code>
+     * </li>
+     * <li>
+     * <code>false</code> - method <code>{@link #connect(String, int, File, File, File, int, boolean, boolean, long, TimeUnit)}</code>
+     * </li>
+     * </ul>
+     * In the latter case when default configured for <em>explicit</em> TLS security (using certificate and key files).
+     * the file names are extracted from the default configuration.
+     * </p> 
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>If the default configuration parameter <code>GrpcConnectionConfig#channel.tls.active</code> 
+     * is set to <code>false</code> then the method 
+     * <code>{@link #connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)}</code>
+     * is always called with parameter <code>bolTlsActive</code> set to <code>false</code>.
+     * </li>
+     * <br/> 
+     * <li>
+     * If the <code>bolPlainText</code> argument is set to <code>true</code> then any TLS security 
+     * is automatically <em>negated</em>.
+     * </li>
+     * </p>
      * 
      * @param strHost       network URL of the desired service
      * @param intPort       server port used by the at the above service
+     * @param bolPlainText  transmit data using plain ASCII (negates any TLS security)
      * @param lngTimeout    timeout limit used for connection operations (keepalive ping timeout) 
      * @param tuTimeout     timeout units used for connection operations (keepalive ping timeout)
      * 
@@ -308,34 +389,67 @@ public class DpGrpcConnectionFactory<
      * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
      * 
      * @see DpGrpcConnectionConfig
+     * @see #connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)
+     * @see #connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)
      */
-    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(String strHost, int intPort, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(
+            String strHost, 
+            int intPort, 
+            boolean bolPlainText, 
+            long lngTimeout, 
+            TimeUnit tuTimeout
+            ) throws DpGrpcException 
+    {
 
+        // If we are default configured for NO TLS security 
+        //  Always call default TLS connect method - then specifies an insecure channel
         if (!this.cfgConn.channel.tls.active)
-            return this.connect(strHost, intPort, true, this.cfgConn.channel.grpc.messageSizeMax, this.cfgConn.channel.grpc.keepAliveWithoutCalls, this.cfgConn.channel.grpc.gzip, lngTimeout, tuTimeout);
+            return this.connect(strHost, intPort, 
+                    this.cfgConn.channel.tls.active,    // Insecure channel
+                    bolPlainText, 
+                    this.cfgConn.channel.grpc.messageSizeMax, 
+                    this.cfgConn.channel.grpc.keepAliveWithoutCalls, 
+                    this.cfgConn.channel.grpc.gzip, 
+                    lngTimeout, tuTimeout);
         
+        // If we are default configured for default TLS security
+        //  Call default TLS connect method - security ON/OFF is determined by configuration parameters
         if (this.cfgConn.channel.tls.defaultTls)
-            return this.connect(strHost, intPort, false, this.cfgConn.channel.grpc.messageSizeMax, this.cfgConn.channel.grpc.keepAliveWithoutCalls, this.cfgConn.channel.grpc.gzip, lngTimeout, tuTimeout);
+            return this.connect(strHost, intPort, 
+                    this.cfgConn.channel.tls.active,    // TLS security ON/OFF
+                    bolPlainText, 
+                    this.cfgConn.channel.grpc.messageSizeMax, 
+                    this.cfgConn.channel.grpc.keepAliveWithoutCalls, 
+                    this.cfgConn.channel.grpc.gzip, 
+                    lngTimeout, tuTimeout);
 
-        // Create the File objects for the TLS resources
+        // Explicit TLS security
+        //  Extract and create the File objects for the TLS resources
         File    fileTrustedCerts = new File(this.cfgConn.channel.tls.filepaths.trustedCerts);
         File    fileClientCerts = new File(this.cfgConn.channel.tls.filepaths.clientCerts);
         File    fileClientKey = new File(this.cfgConn.channel.tls.filepaths.clientKey);
         
+        //  Call the explicit TLS connect method with file objects
         return this.connect(strHost, intPort, 
                 fileTrustedCerts, 
                 fileClientCerts,
                 fileClientKey,
+                bolPlainText,
                 this.cfgConn.channel.grpc.messageSizeMax,
                 this.cfgConn.channel.grpc.keepAliveWithoutCalls,
                 this.cfgConn.channel.grpc.gzip,
                 lngTimeout, tuTimeout);        
     }
+
+    
+    //
+    // Factory Operations - Default TLS Security
+    //
     
     /**
      * <p>
      * Creates and returns a new <code>DsGrpcConnection</code> instance connected
-     * to the supported <em>Data Platform</em> service identified by <code>Service</code>.
+     * to the supported <em>Data Platform</em> service identified by <code>ServiceGrpc</code>.
      * </p>
      * <p>
      * Transport security can be disabled with the <code>bolPlainText</code> argument set to 
@@ -343,16 +457,11 @@ public class DpGrpcConnectionFactory<
      * </p>
      * No default parameters are used.
      * </p>
-     * <p>
-     * Creates and returns a new <code>DsQueryConnection</code> instance connected
-     * to the <em>Datastore</em> with the given host URL and using the given
-     * port.  The query service is configured with the given <code>boolean</code>
-     * argument parameters.
-     * </p>
      * 
      * @param strHost       network URL of the desired service
      * @param intPort       server port used by the at the above service
-     * @param bolPlainText  transmit data using plain ASCII (w/out TLS security)
+     * @param bolTlsActive  use default TLS security (false = insecure channel)
+     * @param bolPlainText  transmit data using plain ASCII (negates any TLS security)
      * @param intMsgSizeMax maximum message size for gRPC transmission (bytes)
      * @param bolKeepAlive  keep connection without call activity (no idle mode)
      * @param bolGzipCompr  enable GZIP compress for data transmission
@@ -367,6 +476,7 @@ public class DpGrpcConnectionFactory<
     public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(
             String strHost, 
             int intPort, 
+            boolean bolTlsActive,
             boolean bolPlainText,
             int     intMsgSizeMax,
             boolean bolKeepAlive,
@@ -377,17 +487,30 @@ public class DpGrpcConnectionFactory<
     {
         
         // Configure the gRPC channel 
-        ManagedChannelBuilder<?> bldrChan = ManagedChannelBuilder.forAddress(strHost, intPort);
+//        ManagedChannelBuilder<?> bldrChan = ManagedChannelBuilder.forAddress(strHost, intPort);
+        ManagedChannelBuilder<?> bldrChan; // = ManagedChannelBuilder.forAddress(strHost, intPort);
 
         // Configure - TLS security (default operation)
+        if (bolTlsActive) {
+            bldrChan = ManagedChannelBuilder.forAddress(strHost, intPort);
+            bldrChan.useTransportSecurity();
+            LOGGER.info("Enforcing default TLS transport security.");
+            
+        } else {
+            ChannelCredentials  credsInsecure = InsecureChannelCredentials.create();
+            
+            bldrChan = Grpc.newChannelBuilderForAddress(strHost, intPort, credsInsecure);
+            LOGGER.info("Not enforcing security - insecure channel credentials.");
+        }
+        
         // NOTE: Plain text negates TLS security
         if (bolPlainText) {
             bldrChan.usePlaintext();
-            LOGGER.warn("Transmitting plain text - security disabled.");
+            LOGGER.warn("Transmitting plain text - any default TLS security is disabled.");
             
-        } else {
-            bldrChan.useTransportSecurity();
-            LOGGER.info("Enforcing transport security.");
+//        } else {
+//            bldrChan.useTransportSecurity();
+//            LOGGER.info("Enforcing default TLS transport security.");
         }
         
         // Configure - Maximum message size 
@@ -415,11 +538,11 @@ public class DpGrpcConnectionFactory<
         
         // Build a gRPC channel 
         ManagedChannel grpcChan = bldrChan.build();
-        LOGGER.info("gRPC channel created for host connection {}:{}", strHost, intPort);
+        LOGGER.info("Created gRPC channel for host connection {}:{}", strHost, intPort);
         
         // Create gRPC service connection
         DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>   connService = new DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>(this.clsService, grpcChan);
-        LOGGER.info("gRPC connection established for service {}", this.clsService);
+        LOGGER.info("Service {} established for channel {}", this.clsService.getSimpleName(), grpcChan);
 
         // Return the connection
         return connService;
@@ -433,13 +556,18 @@ public class DpGrpcConnectionFactory<
     /**
      * <p>
      * Creates and returns a new <code>DsGrpcConnection</code> instance connected
-     * to the supported <em>Data Platform</em> service identified by <code>Service</code>.
+     * to the supported <em>Data Platform</em> service identified by <code>ServiceGrpc</code>.
      * </p>
      * <p>
      * TLS security is explicitly specified with full authorization given by TLS certificates and
      * key files.
      * The URL and port address of the <em>Data Platform</em> service are taken from the default parameters.
      * All other configuration parameters are taken from the default connection properties.
+     * Defers to method <code>{@link #connect(String, int, File, File, File)}</code>
+     * </p>
+     * <h2>NOTES:</h2>
+     * If the <code>GrpcConnectionConfig.channel.grpc.usePlainText</code> default parameter is
+     * set to <code>true</code> all TLS security is <b>negated</b>.
      * </p>
      * 
      * @param fileTrustedCerts root file of all trusted server certificates
@@ -451,6 +579,7 @@ public class DpGrpcConnectionFactory<
      * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
      * 
      * @see DpGrpcConnectionConfig
+     * @see #connect(String, int, File, File, File)
      */
     public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
     
@@ -465,7 +594,7 @@ public class DpGrpcConnectionFactory<
     /**
      * <p>
      * Creates and returns a new <code>DsGrpcConnection</code> instance connected
-     * to the supported <em>Data Platform</em> service identified by <code>Service</code>.
+     * to the supported <em>Data Platform</em> service identified by <code>ServiceGrpc</code>.
      * </p>
      * <p>
      * TLS security is explicitly specified with full authorization given by TLS certificates and
@@ -473,6 +602,12 @@ public class DpGrpcConnectionFactory<
      * The URL and port address of the <em>Data Platform</em> service are explicitly specified.
      * All other configuration parameters are taken from the default connection
      * properties.
+     * Defers to method <code>{@link #connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * If the <code>GrpcConnectionConfig.channel.grpc.usePlainText</code> default parameter is
+     * set to <code>true</code> all TLS security is <b>negated</b>.
      * </p>
      * 
      * @param strHost       network URL of the desired service
@@ -486,13 +621,21 @@ public class DpGrpcConnectionFactory<
      * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
      * 
      * @see DpGrpcConnectionConfig
+     * @see #connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)
      */
-    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+    public DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> connect(
+            String strHost, 
+            int intPort, 
+            File fileTrustedCerts, 
+            File fileClientCerts, 
+            File fileClientKey
+            ) throws DpGrpcException {
     
         return this.connect(strHost, intPort,
                 fileTrustedCerts,
                 fileClientCerts,
                 fileClientKey,
+                this.cfgConn.channel.grpc.usePlainText,
                 this.cfgConn.channel.grpc.messageSizeMax,
                 this.cfgConn.channel.grpc.keepAliveWithoutCalls,
                 this.cfgConn.channel.grpc.gzip,
@@ -505,7 +648,7 @@ public class DpGrpcConnectionFactory<
     /**
      * <p>
      * Creates and returns a new <code>DsGrpcConnection</code> instance connected
-     * to the supported <em>Data Platform</em> service identified by <code>Service</code>.
+     * to the supported <em>Data Platform</em> service identified by <code>ServiceGrpc</code>.
      * </p>
      * <p>
      * Transport Layer Security (TLS) is assumed here and parameters required for full authorization
@@ -513,12 +656,18 @@ public class DpGrpcConnectionFactory<
      * </p>
      * No default parameters are used.
      * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * If the <code>bolPlainText</code> argument is
+     * set to <code>true</code> all TLS security is <b>negated</b>.
+     * </p>
      * 
      * @param strHost       network URL of the desired service
      * @param intPort       network port used by the at the above service
      * @param fileTrustedCerts root file of all trusted server certificates
      * @param fileClientCerts  file of client certificates
      * @param fileClientKey file containing client private key
+     * @param bolPlainText  transmit data using plain ASCII (negates all TLS security)
      * @param intMsgSizeMax maximum message size for gRPC transmission (bytes)
      * @param bolKeepAlive force connection to remain active (otherwise idle after timeout)
      * @param bolGzipCompr enable GZIP compression for data transmission
@@ -536,8 +685,8 @@ public class DpGrpcConnectionFactory<
             File    fileTrustedCerts,
             File    fileClientCertsChain,
             File    fileClientKey,
+            boolean bolPlainText,
             int     intMsgSizeMax,
-//            boolean bolPlainText,
             boolean bolKeepAlive,
             boolean bolGzipCompr,
             long    lngTimeout,
@@ -562,7 +711,13 @@ public class DpGrpcConnectionFactory<
         // Configure the gRPC channel 
         ManagedChannelBuilder<?> bldrChan = Grpc.newChannelBuilderForAddress(strHost, intPort, grpcCreds);
         LOGGER.info("Building gRPC channel for host {} and port {}", strHost, intPort);
-        
+
+        // NOTE: this negates TLS security
+        if (bolPlainText) {
+            bldrChan.usePlaintext();
+            LOGGER.warn("Transmitting plain text - security disabled.");
+        }
+
         // Configure - Maximum message size 
         if (INT_MSG_SIZE_MAX_DEFAULT != intMsgSizeMax) {
             bldrChan.maxInboundMessageSize(intMsgSizeMax);
@@ -578,12 +733,6 @@ public class DpGrpcConnectionFactory<
             bldrChan.keepAliveTimeout(lngTimeout, tuTimeout);
             LOGGER.info("Timeout after Keepalive ping set to {} {}", lngTimeout, tuTimeout);
         }
-        
-//        // NOTE: Remove since this negates TLS security
-//        if (bolPlainText) {
-//            bldrChan.usePlaintext();
-//            LOGGER.warn("Transmitting plain text - security disabled.");
-//        }
         
         // Configure - Set the data compression flag enable
         if (bolGzipCompr) {

@@ -175,16 +175,17 @@ public class DpQueryServiceFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#connect(java.lang.String, int, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#connect(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
-    public final void testConnectStringIntLongTimeUnit() {
+    public final void testConnectStringIntBooleanLongTimeUnit() {
         boolean bolResult = false;
         
         try {
             DpQueryService qs = DpQueryServiceFactory.INSTANCE.connect(
                     CFG_DEFAULT.channel.host.url, 
-                    CFG_DEFAULT.channel.host.port, 
+                    CFG_DEFAULT.channel.host.port,
+                    CFG_DEFAULT.channel.grpc.usePlainText,
                     CFG_DEFAULT.channel.grpc.timeoutLimit, 
                     CFG_DEFAULT.channel.grpc.timeoutUnit
                     );
@@ -207,16 +208,17 @@ public class DpQueryServiceFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#connect(java.lang.String, int, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#connect(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
-    public final void testConnectStringIntBooleanIntBooleanBooleanLongTimeUnit() {
+    public final void testConnectStringIntBooleanBooleanIntBooleanBooleanLongTimeUnit() {
         boolean bolResult = false;
         
         try {
             DpQueryService qs = DpQueryServiceFactory.INSTANCE.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
+                    CFG_DEFAULT.channel.tls.active,
                     CFG_DEFAULT.channel.grpc.usePlainText,
                     CFG_DEFAULT.channel.grpc.messageSizeMax,
                     CFG_DEFAULT.channel.grpc.keepAliveWithoutCalls,

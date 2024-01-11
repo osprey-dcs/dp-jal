@@ -86,8 +86,8 @@ public class JavaRuntime {
     public static String getQualifiedCallerName() {
         Throwable           throwable = new Throwable();
         StackTraceElement[] arrStackTrace = throwable.getStackTrace();
-        String              strClsName = arrStackTrace[2].getClassName();
-        String              strMthName = arrStackTrace[2].getMethodName();
+        String              strClsName = arrStackTrace[1].getClassName();
+        String              strMthName = arrStackTrace[1].getMethodName();
         
         String              strQulName = strClsName + "#" + strMthName;
         

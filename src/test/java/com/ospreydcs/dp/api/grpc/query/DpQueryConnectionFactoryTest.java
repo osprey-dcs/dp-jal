@@ -140,18 +140,23 @@ public class DpQueryConnectionFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory#connect(java.lang.String, int, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory#connect(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
-    public final void testConnectStringIntLongTimeUnit() {
+    public final void testConnectStringIntBooleanLongTimeUnit() {
         String  strUrl = CFG_DEFAULT.host.url;
         int     intPort = CFG_DEFAULT.host.port;
+        
+        boolean bolPlainText = CFG_DEFAULT.grpc.usePlainText;
         
         long    lngTmout = CFG_DEFAULT.grpc.timeoutLimit;
         TimeUnit tuTmout = CFG_DEFAULT.grpc.timeoutUnit;
         
         try {
-            DpQueryConnection   conn = DpQueryConnectionFactory.connect(strUrl, intPort, lngTmout, tuTmout);
+            DpQueryConnection   conn = DpQueryConnectionFactory.connect(strUrl, intPort,
+                    bolPlainText,
+                    lngTmout, 
+                    tuTmout);
 
             conn.shutdownSoft();
             conn.awaitTermination();
@@ -170,13 +175,14 @@ public class DpQueryConnectionFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory#connect(java.lang.String, int, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory#connect(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
-    public final void testConnectStringIntBooleanIntBooleanBooleanLongTimeUnit() {
+    public final void testConnectStringIntBooleanBooleanIntBooleanBooleanLongTimeUnit() {
         String  strUrl = CFG_DEFAULT.host.url;
         int     intPort = CFG_DEFAULT.host.port;
         
+        boolean bolTlsActive = CFG_DEFAULT.tls.active;
         boolean bolPlainText = CFG_DEFAULT.grpc.usePlainText;
         int     intMaxSz = CFG_DEFAULT.grpc.messageSizeMax;
         boolean bolKeepAlive = CFG_DEFAULT.grpc.keepAliveWithoutCalls;
@@ -186,7 +192,14 @@ public class DpQueryConnectionFactoryTest {
         TimeUnit tuTmout = CFG_DEFAULT.grpc.timeoutUnit;
         
         try {
-            DpQueryConnection   conn = DpQueryConnectionFactory.connect(strUrl, intPort, bolPlainText, intMaxSz, bolKeepAlive, bolGzipCmp, lngTmout, tuTmout);
+            DpQueryConnection   conn = DpQueryConnectionFactory.connect(strUrl, intPort,
+                    bolTlsActive,
+                    bolPlainText, 
+                    intMaxSz, 
+                    bolKeepAlive, 
+                    bolGzipCmp, 
+                    lngTmout, 
+                    tuTmout);
 
             conn.shutdownSoft();
             conn.awaitTermination();

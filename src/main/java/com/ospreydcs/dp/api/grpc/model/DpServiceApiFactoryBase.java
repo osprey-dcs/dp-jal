@@ -204,17 +204,20 @@ public abstract class DpServiceApiFactoryBase<
     
     /**
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, long, TimeUnit)} for details.
+     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean)} for details.
      * </p>
      * 
      * @return new <code>{@link ServiceApi}</code> instance with given parameters
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      * 
-     * @see DpGrpcConnectionFactory#connect(String, int, long, TimeUnit)
+     * @see DpGrpcConnectionFactory#connect(String, int, boolean)
      */
-    public ServiceApi connect(String strHost, int intPort, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(strHost, intPort, lngTimeout, tuTimeout);
+    public ServiceApi connect(String strUrl, int intPort, boolean bolPlainText) throws DpGrpcException {
+        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+                strUrl, intPort,
+                bolPlainText);
+        
         ServiceApi api = this.createFrom(conn);
         
         return api;
@@ -222,18 +225,42 @@ public abstract class DpServiceApiFactoryBase<
     
     /**
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, int, boolean, boolean, long, TimeUnit)} for details.
+     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)} for details.
      * </p>
      * 
      * @return new <code>{@link ServiceApi}</code> instance with given parameters
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      * 
-     * @see DpGrpcConnectionFactory#connect(String, int, boolean, int, boolean, boolean, long, TimeUnit)
+     * @see DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)
+     */
+    public ServiceApi connect(String strHost, int intPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
+        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+                strHost, intPort,
+                bolPlainText,
+                lngTimeout, 
+                tuTimeout);
+        
+        ServiceApi api = this.createFrom(conn);
+        
+        return api;
+    }
+    
+    /**
+     * <p>
+     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)} for details.
+     * </p>
+     * 
+     * @return new <code>{@link ServiceApi}</code> instance with given parameters
+     * 
+     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
+     * 
+     * @see DpGrpcConnectionFactory#connect(String, int, boolean, int, boolean, boolean, boolean, long, TimeUnit)
      */
     public ServiceApi connect(
             String strHost, 
             int intPort, 
+            boolean bolTlsActive,
             boolean bolPlainText,
             int     intMsgSizeMax,
             boolean bolKeepAlive,
@@ -241,7 +268,16 @@ public abstract class DpServiceApiFactoryBase<
             long    lngTimeout,
             TimeUnit tuTimeout
             ) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(strHost, intPort, bolPlainText, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout);
+        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+                strHost, intPort,
+                bolTlsActive,
+                bolPlainText, 
+                intMsgSizeMax, 
+                bolKeepAlive, 
+                bolGzipCompr, 
+                lngTimeout, 
+                tuTimeout);
+        
         ServiceApi api = this.createFrom(conn);
         
         return api;
@@ -282,7 +318,12 @@ public abstract class DpServiceApiFactoryBase<
      * @see DpGrpcConnectionFactory#connect(String, int, File, File, File)
      */
     public ServiceApi connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = fac.connect(strHost, intPort, fileTrustedCerts, fileClientCerts, fileClientKey);
+        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = fac.connect(
+                strHost, intPort, 
+                fileTrustedCerts, 
+                fileClientCerts, 
+                fileClientKey);
+        
         ServiceApi api = this.createFrom(conn);
         
         return api;
@@ -290,14 +331,14 @@ public abstract class DpServiceApiFactoryBase<
     
     /**
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, File, File, File, int, boolean, boolean, long, TimeUnit)} for details.
+     * See {@link DpGrpcConnectionFactory#connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)} for details.
      * </p>
      * 
      * @return new <code>{@link ServiceApi}</code> instance with given connection parameters
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      * 
-     * @see DpGrpcConnectionFactory#connect(String, int, File, File, File, int, boolean, boolean, long, TimeUnit)
+     * @see DpGrpcConnectionFactory#connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)
      */
     public ServiceApi connect(
             String  strHost, 
@@ -305,13 +346,24 @@ public abstract class DpServiceApiFactoryBase<
             File    fileTrustedCerts,
             File    fileClientCertsChain,
             File    fileClientKey,
+            boolean bolPlainText,
             int     intMsgSizeMax,
             boolean bolKeepAlive,
             boolean bolGzipCompr,
             long    lngTimeout,
             TimeUnit tuTimeout
             ) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(strHost, intPort, fileTrustedCerts, fileClientCertsChain, fileClientKey, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout);
+        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+                strHost, intPort, 
+                fileTrustedCerts, 
+                fileClientCertsChain, 
+                fileClientKey,
+                bolPlainText,
+                intMsgSizeMax, 
+                bolKeepAlive, 
+                bolGzipCompr, 
+                lngTimeout, 
+                tuTimeout);
         
         ServiceApi api = this.createFrom(conn);
         

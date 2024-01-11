@@ -166,8 +166,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * size limit, the result is truncated.
      * </p> 
      * 
-     * 
-     * @param rqst          an initialized <code>{@link DpDataRequest]</code> request builder instance
+     * @param rqst  an initialized <code>{@link DpDataRequest]</code> request builder instance
      * 
      * @return      fully populated (static) data table.
      */

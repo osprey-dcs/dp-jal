@@ -244,7 +244,10 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     private Integer cntPages = null;
     
     /** Size (in bytes) of the first data message - initialized by {@link #onNext(PaginatedResponse)} */
-    private Long    szRequest = null;
+    private Long    szPage = null;
+    
+    /** Any error message from the Query Service - from {@link #onError(Throwable)} exception message */
+    private String  strErrMsg = null;
 
     
     //
@@ -802,26 +805,48 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     
     /**
      * <p>
-     * Returns the streaming error flag.  This flag is <code>true</code> only
-     * if a stream error has been sent by the <em>Datastore</em> after streaming
-     * has been initiated (i.e., after the call to <code>{@link #start(Request)}</code>).
+     * Returns the streaming error flag.  
+     * <p>
+     * <p>
+     * This flag is <code>true</code> only
+     * if a stream error has been sent by the <em>Query Service</em> (or gRPC directly)
+     * after streaming has been initiated (i.e., after the call to 
+     * <code>{@link #startUniStream(QueryRequest)}</code> or <code>{@link #startBidiStream(QueryRequest)}</code>).
      * Thus, a returned value of <code>true</code> indicates that an error 
-     * condition has occurred and the stream has been interrupted.
-     * 
+     * condition has occurred and the stream has been terminated.
+     * </p>
+     * <p>
      * <h2>NOTE:</h2>
-     * Although the data stream was interrupted if a stream error occurred
+     * Although the data stream was terminated if a stream error occurred
      * there may exist available data acquired before the interruption.
-     * Call method <code>{@link #getAvailablePageIndices()}</code> to determine
+     * Call method <code>{@link #getBufferSize()}</code> to determine
      * if such data is available.
      * </p>
      *  
-     * @return <code>true</code> if an error interrupt was received from the <em>Datastore</em>
+     * @return <code>true</code> if an error interrupt was received from the <em>Query Service</em>
      *         <code>false</code> otherwise
      * 
      * @see #getAvailablePageIndices()
      */
     public boolean isStreamError() {
         return this.bolStreamError;
+    }
+    
+    /**
+     * <p>
+     * Returns the stream error message if present.
+     * </p>
+     * <p>
+     * If a streaming error occurred the error message is recovered from the <em>Query Service</em>
+     * (or gRPC).  To determine if an error occurred use method <code>{@link #isStreamError()}</code>.
+     * </p>
+     * 
+     * @return  stream error message, or <code>null</code> if no streaming errors occurred
+     * 
+     * @see #isStreamError()
+     */
+    public String getStreamError() {
+        return this.strErrMsg;
     }
 
     
@@ -988,7 +1013,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
             throw new TimeoutException("Timeout occurred while waiting the data streaming to start.");
     
         // If the streaming has started the total page count is available
-        return this.szRequest;
+        return this.szPage;
     }
 
 
@@ -1241,7 +1266,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
 //            this.indFirstPage = 0;
 //            this.indNextPage = 0;
             this.cntPages = 0;
-            this.szRequest = Integer.toUnsignedLong( msgRsp.getSerializedSize() );
+            this.szPage = Integer.toUnsignedLong( msgRsp.getSerializedSize() );
 
             // Set up the request queue and create the page monitors 
 //            for (int i=this.indFirstPage; i<=this.indLastPage; i++) {
@@ -1323,7 +1348,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
      * </ul>
      * </p>
      * 
-     * @param   e   the error occurred on the stream
+     * @param   e   the error thrown by gRPC stream or Data Platform Query Service
      * 
      * @see #isStreamError()
      * @see StreamObserver#onError(Throwable)
@@ -1331,13 +1356,17 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     @Override
     public void onError(Throwable e) {
 
-        String strErrMsg = JavaRuntime.getQualifiedCallerName() + " called by the Query Service.";
+        String strErrMsg = JavaRuntime.getQualifiedCallerName() + " called by gRPC or Query Service, exception message = " + e.getMessage();
 
+        // TODO - remove
+        System.err.println(strErrMsg);
+        
         // Log event
         if (isLogging())
-            LOGGER.error(strErrMsg + " with exception message " + e.getMessage());
+            LOGGER.error(strErrMsg);
         
         this.bolStreamError = true;
+        this.strErrMsg = e.getMessage();
         this.monStrmStart.countDown();
         this.monStrmEnd.countDown();
         
@@ -1365,7 +1394,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
 
         // Log event
         if (isLogging())
-            LOGGER.info("{}: Stream completed with {} data pages received.", JavaRuntime.getCallerName(), this.getPageCount());
+            LOGGER.info("{}: Stream completed with {} data page(s) received.", JavaRuntime.getCallerName(), this.getPageCount());
 
         // Update state variables and conditions
         this.bolStreamCompleted = true;
@@ -1620,18 +1649,20 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
      */
     @Override
     public String toString() {
-        StringBuffer    buf = new StringBuffer(JavaRuntime.getCallerClass());
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getCallerClass() + "\n");
         
-        // TODO - remove
-        buf.append("  List of page requests: " + this.lstPgsRequested);
-        buf.append("  List of page responses: " + this.lstPgsAcquired);
-        buf.append("  Next Page index: " + this.indNextPage);
-        buf.append("  Page count: " + this.cntPages);
-        buf.append("  BIDI stream flag: " + this.bolStreamBidi);
-        buf.append("  Request Rejected flag: " + this.bolRequestRejected);
-        buf.append("  Stream Requested flag: " + this.bolStreamRequested);
-        buf.append("  Stream Completed flag: " + this.bolStreamCompleted);
-        buf.append("  Stream Error flag: " + this.bolStreamError);
+        // Write out contents
+        buf.append("  List of page requests: " + this.lstPgsRequested + "\n");
+        buf.append("  List of page responses: " + this.lstPgsAcquired + "\n");
+        buf.append("  Next Page index: " + this.indNextPage + "\n");
+        buf.append("  Page count: " + this.cntPages + "\n");
+        buf.append("  Page size (bytes): " + this.szPage + "\n");
+        buf.append("  BIDI stream flag: " + this.bolStreamBidi + "\n");
+        buf.append("  Request Rejected flag: " + this.bolRequestRejected + "\n");
+        buf.append("  Stream Requested flag: " + this.bolStreamRequested + "\n");
+        buf.append("  Stream Completed flag: " + this.bolStreamCompleted + "\n");
+        buf.append("  Stream Error flag: " + this.bolStreamError + "\n");
+        buf.append("  Query Service error message: " + this.strErrMsg + "\n");
         
         return buf.toString();
     }
