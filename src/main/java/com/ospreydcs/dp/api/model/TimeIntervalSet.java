@@ -86,7 +86,7 @@ public class TimeIntervalSet extends TreeSet<TimeInterval> {
         List<TimeInterval> lstTvlsIsct = new LinkedList<TimeInterval>();
         
         for (TimeInterval tvlMbr : this) 
-            if (tvlMbr.hasIntersection(tvlToAdd)) {
+            if (tvlMbr.hasIntersectionOpen(tvlToAdd)) {
                 this.remove(tvlMbr);
                 lstTvlsIsct.add(tvlMbr);
             }

@@ -139,7 +139,7 @@ public record TimeInterval(Instant begin, Instant end) {
      * @throws IllegalArgumentException the arguments contains no intersection 
      */
     public static TimeInterval unionCommon(TimeInterval tvl1, TimeInterval tvl2) throws IllegalArgumentException {
-        if (!tvl1.hasIntersection(tvl2))
+        if (!tvl1.hasIntersectionOpen(tvl2))
             throw new IllegalArgumentException("TimeInterval:unionCommon - intervals must have a finite intersection to use this method");
         
         Instant left = min(tvl1.begin, tvl2.begin);
@@ -305,7 +305,11 @@ public record TimeInterval(Instant begin, Instant end) {
 
     
     //
-    // Query Methods
+    // Getter Methods
+    //
+    
+    //
+    // Operations
     //
     
     /**
@@ -334,12 +338,30 @@ public record TimeInterval(Instant begin, Instant end) {
     
     
     //
-    // Set Functions
+    // Set-Theoretic Functions
     //
     
     /**
+     * Returns the left end-point of this interval 
+     * 
+     * @return starting time instant of this time interval
+     */
+    public Instant getLeftEndPoint() {
+        return this.begin;
+    }
+    
+    /**
+     * Returns the right end-point of this interval 
+     * 
+     * @return stop time instant of this time interval
+     */
+    public Instant getRightEndPoint() {
+        return this.end;
+    }
+    
+    /**
      * Get the measure of the time interval, that is, the duration of time
-     * between the start and the end.
+     * between the start and end times.
      * 
      * @return  measure of time between interval start to finish
      * 
@@ -353,14 +375,43 @@ public record TimeInterval(Instant begin, Instant end) {
     }
     
     /**
-     * Checks whether or not the given time interval has a setwise intersect
-     * with this time interval.
+     * <p>
+     * Checks if the given time instant is a member of this time interval when it is closed.
+     * </p>
+     * 
+     * @param t     time instant to be checked for interval membership
+     * 
+     * @return      <code>true</code> if <code>t</code> &isin; (<code>begin</code>, <code>end</code>),
+     *              <code>false</code> otherwise
+     */
+    public boolean hasMembershipOpen(Instant t) {
+        return greaterThan(t, this.begin) && lessThan(t, this.end);
+    }
+    
+    
+    /**
+     * <p>
+     * Checks if the given time instant is a member of this time interval when it is closed.
+     * </p>
+     * 
+     * @param t     time instant to be checked for interval membership
+     * 
+     * @return      <code>true</code> if <code>t</code> &isin; [<code>begin</code>, <code>end</code>],
+     *              <code>false</code> otherwise
+     */
+    public boolean hasMembershipClosed(Instant t) {
+        return greaterThanEqualTo(t, this.begin) && lessThanEqualTo(t, this.end);
+    }
+    
+    /**
+     * Checks whether or not the given time interval has a set-wise intersection
+     * with this time interval (as open intervals).
      * 
      * @param tvlArg    time interval to be checked
      * 
      * @return      true of both intervals share a common subinterval, false otherwise
      */
-    public boolean hasIntersection(TimeInterval tvlArg) {
+    public boolean hasIntersectionOpen(TimeInterval tvlArg) {
         if (this.equals(EMPTY) || tvlArg.equals(EMPTY))
             return false;
         
@@ -368,6 +419,24 @@ public record TimeInterval(Instant begin, Instant end) {
         Instant right = min(this.end, tvlArg.end);
 
         return left.isBefore(right);
+    }
+
+    /**
+     * Checks whether or not the given time interval has a setwise intersection
+     * with this time interval (as closed intervals).
+     * 
+     * @param tvlArg    time interval to be checked
+     * 
+     * @return      true of both intervals share a common subinterval, false otherwise
+     */
+    public boolean hasIntersectionClosed(TimeInterval tvlArg) {
+        if (this.equals(EMPTY) || tvlArg.equals(EMPTY))
+            return false;
+        
+        Instant left = max(this.begin, tvlArg.begin);
+        Instant right = min(this.end, tvlArg.end);
+
+        return left.equals(right) || left.isBefore(right);
     }
 
     
@@ -404,4 +473,93 @@ public record TimeInterval(Instant begin, Instant end) {
         else
             return i2;
     }
+    
+    /**
+     * <p>
+     * Returns the result of conditional inequality
+     * <pre>
+     *   <code>i1</code> &lt; <code>i2</code>
+     * </pre>
+     * where <code>i1</code> and <code>i2</code> are the respective arguments.
+     * </p>
+     *  
+     * @param i1    first time instance
+     * @param i2    second time instance
+     * 
+     * @return  <code>true</code> if <code>i1</code> &lt; <code>i2</code>,
+     *          <code>false</code> otherwise
+     */
+    @SuppressWarnings("unused")
+    private static boolean lessThan(Instant i1, Instant i2) {
+        int iCmp = i1.compareTo(i2);
+        
+        return iCmp < 0;
+    }
+    
+    /**
+     * <p>
+     * Returns the result of conditional inequality
+     * <pre>
+     *   <code>i1</code> &lt;= <code>i2</code>
+     * </pre>
+     * where <code>i1</code> and <code>i2</code> are the respective arguments.
+     * </p>
+     *  
+     * @param i1    first time instance
+     * @param i2    second time instance
+     * 
+     * @return  <code>true</code> if <code>i1</code> &lt;= <code>i2</code>,
+     *          <code>false</code> otherwise
+     */
+    @SuppressWarnings("unused")
+    private static boolean lessThanEqualTo(Instant i1, Instant i2) {
+        int iCmp = i1.compareTo(i2);
+        
+        return iCmp <= 0;
+    }
+    
+    /**
+     * <p>
+     * Returns the result of conditional inequality
+     * <pre>
+     *   <code>i1</code> &gt; <code>i2</code>
+     * </pre>
+     * where <code>i1</code> and <code>i2</code> are the respective arguments.
+     * </p>
+     *  
+     * @param i1    first time instance
+     * @param i2    second time instance
+     * 
+     * @return  <code>true</code> if <code>i1</code> &gt; <code>i2</code>,
+     *          <code>false</code> otherwise
+     */
+    @SuppressWarnings("unused")
+    private static boolean greaterThan(Instant i1, Instant i2) {
+        int iCmp = i1.compareTo(i2);
+        
+        return iCmp > 0;
+    }
+    
+    /**
+     * <p>
+     * Returns the result of conditional inequality
+     * <pre>
+     *   <code>i1</code> &gt;= <code>i2</code>
+     * </pre>
+     * where <code>i1</code> and <code>i2</code> are the respective arguments.
+     * </p>
+     *  
+     * @param i1    first time instance
+     * @param i2    second time instance
+     * 
+     * @return  <code>true</code> if <code>i1</code> &gt;= <code>i2</code>,
+     *          <code>false</code> otherwise
+     */
+    @SuppressWarnings("unused")
+    private static boolean greaterThanEqualTo(Instant i1, Instant i2) {
+        int iCmp = i1.compareTo(i2);
+        
+        return iCmp >= 0;
+    }
+    
 }
