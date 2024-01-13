@@ -29,14 +29,20 @@ package com.ospreydcs.dp.api.query.model.proto;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
@@ -107,10 +113,10 @@ public class QueryResponseCollector {
     //
     
     /** Synchronization lock for thread safety */
-    private final Object    objLock = new Object();
+    private final Object            objLock = new Object();
     
-//    /** Manages thread pools of many, short-lived execution tasks */
-//    private final ExecutorService   exeThreadPool = Executors.newCachedThreadPool();
+    /** Manages thread pools of many, short-lived execution tasks */
+    private final ExecutorService   exeThreadPool = Executors.newCachedThreadPool();
     
     
     
@@ -129,7 +135,7 @@ public class QueryResponseCollector {
     
     
     //
-    // Attribute Getters
+    // Access and Control
     //
     
     /**
@@ -139,6 +145,47 @@ public class QueryResponseCollector {
      */
     public final SortedSet<SamplingIntervalRef>   getTargetRefs() {
         return this.setTargetRefs;
+    }
+    
+    public int sizeTargetSet() {
+        return this.setTargetRefs.size();
+    }
+    
+    /**
+     * <p>
+     * Extracts and returns a set of unique data source names for all data within target set.
+     * </p>
+     * <p>
+     * Collects all data source names within the target set of sampling interval references and
+     * adds them to the returned set of unique names.
+     * </p>
+     * 
+     * @return  set of all data source names within the Query Service response collection 
+     */
+    public Set<String>   extractDataSourceNames() {
+        Set<String> setNames = this.setTargetRefs
+                .stream()
+                .collect(
+                        TreeSet::new, 
+                        (set, r) -> set.addAll(r.extractDataSourceNames()), 
+                        TreeSet::addAll
+                        );
+        return setNames;
+    }
+    
+    /**
+     * <p>
+     * Clears out the target set of all sampling interval references.
+     * </p>
+     * <p>
+     * <code>QueryResponseCollector</code> objects can be reused.  After calling this method the 
+     * collector is returned to its initial state and is ready to process another Query Service
+     * response stream.
+     * </p>
+     * 
+     */
+    public void clear() {
+        this.setTargetRefs.clear();
     }
     
     
@@ -176,11 +223,11 @@ public class QueryResponseCollector {
             if (this.setTargetRefs.size() < SZ_TARGET_PIVOT)
                 bolSuccess = this.setTargetRefs
                     .stream()
-                    .anyMatch( i -> i.addBucketData(msgBucket) );
+                    .anyMatch( i -> i.insertBucketData(msgBucket) );
             else
                 bolSuccess = this.setTargetRefs
                 .parallelStream()
-                .anyMatch( i -> i.addBucketData(msgBucket) );
+                .anyMatch( i -> i.insertBucketData(msgBucket) );
 
             // If the message data was not added we must create a new reference and add it to the current target set
             if (!bolSuccess) {
@@ -252,31 +299,6 @@ public class QueryResponseCollector {
     
     /**
      * <p>
-     * Creates a collection of data bucket insertion tasks for the given argument and current target set of 
-     * references.
-     * </p>
-     * <p>
-     * This operation is currently unused.
-     * </p>
-     * 
-     * @param msgData   Query Service response data message
-     * 
-     * @return  collection of data insertion tasks for current target set, one for each data bucket of the argument
-     */
-    @SuppressWarnings("unused")
-    private Collection<BucketDataInsertTask> createInsertionTasks(QueryResponse.QueryReport.QueryData msgData) {
-        
-        List<BucketDataInsertTask> lstTasks = msgData
-                .getDataBucketsList()
-                .stream()
-                .map(buc -> BucketDataInsertTask.newTask(buc, this.getTargetRefs()))
-                .toList();
-                
-        return lstTasks;
-    }
-    
-    /**
-     * <p>
      * Inserts all data columns within the <code>QueryData</code> message into the target set of 
      * interval references, creating new target references if necessary.
      * </p>
@@ -314,7 +336,7 @@ public class QueryResponseCollector {
             // Attempt to add the message data into the current set of sampling interval references
             boolean bolSuccess = this.setTargetRefs
                     .stream()
-                    .anyMatch( i -> i.addBucketData(msgBucket) );
+                    .anyMatch( i -> i.insertBucketData(msgBucket) );
 
             // If the message data was not added we must create a new reference and add it to the current target set
             if (!bolSuccess) 
@@ -357,15 +379,13 @@ public class QueryResponseCollector {
      */
     private Collection<QueryResponse.QueryReport.QueryData.DataBucket>  attemptDataInsertConcurrent(QueryResponse.QueryReport.QueryData msgData) {
         
-//        // Create the thread pool executor for the data insertion tasks
-//        ExecutorService exeThreadPool = Executors.newCachedThreadPool();
-        
         // Create the data insertion tasks
-        List<BucketDataInsertTask> lstTasks = msgData
-                .getDataBucketsList()
-                .stream()
-                .map( buc -> BucketDataInsertTask.newTask(buc, this.getTargetRefs()) )
-                .toList();
+        Collection<BucketDataInsertTask> lstTasks = this.createInsertionTasks(msgData);
+//        List<BucketDataInsertTask> lstTasks = msgData
+//                .getDataBucketsList()
+//                .stream()
+//                .map( buc -> BucketDataInsertTask.newTask(buc, this.getTargetRefs()) )
+//                .toList();
                 
         // Execute all tasks simultaneously then wait for join
         lstTasks
@@ -373,17 +393,99 @@ public class QueryResponseCollector {
             .forEach(t -> t.run());
         
         // Collect all data buckets messages that were not processed
-        ArrayList<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = lstTasks
-                .stream()
-                .collect(
-                        ArrayList::new, 
-                        (c, t) -> { if (!t.isSuccess()) c.add(t.getSubject()); }, 
-                        ArrayList::addAll
-                        );
+        Collection<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
+//        ArrayList<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = lstTasks
+//                .stream()
+//                .collect(
+//                        ArrayList::new, 
+//                        (c, t) -> { if (!t.isSuccess()) c.add(t.getSubject()); }, 
+//                        ArrayList::addAll
+//                        );
         
         return lstBuckets;
     }
     
+    /**
+     * <p>
+     * Attempts to insert all the data columns within the <code>QueryData</code> message into 
+     * the target set of interval references.
+     * </p>
+     * <p>
+     * The method creates a collection of data insertion tasks <code>BucketDataInsertTask</code>
+     * (one task for each <code>DataBucket</code> message within the argument)
+     * then executes them concurrently using the instance thread pool executor.  
+     * If a task fails its <code>DataBucket</code> subject is 
+     * identified and returned in the set of <code>BucketData</code> messages that were not 
+     * successfully inserted into the target reference set. 
+     * </p>
+     * <p>
+     * <h2>WARNINGS:</h2>
+     * <ul>
+     * <li>
+     * This method does NOT modify the target set.  However, it requires a consistent target set
+     * during its operation.  Thus, external synchronization is advised.
+     * </li>
+     * <br/>
+     * <li>
+     * This method should be efficient for large target sets.  For an example in the contrary, 
+     * if the target set is empty then all <code>DataBucket</code> messages with the argument are returned 
+     * (after considerable computation).  
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param msgData   Query Service response data to be inserted into the target set of references
+     * 
+     * @return  the collection of <code>DataBucket</code> messages that failed insertion 
+     */
+    @SuppressWarnings("unused")
+    private Collection<QueryResponse.QueryReport.QueryData.DataBucket>  attemptDataInsertThreadPool(QueryResponse.QueryReport.QueryData msgData) 
+            throws DpQueryException 
+    {
+        
+//      // Create the thread pool executor for the data insertion tasks
+//      ExecutorService exeThreadPool = Executors.newCachedThreadPool();
+      
+        // Create the data insertion tasks
+        Collection<BucketDataInsertTask> lstTasks = this.createInsertionTasks(msgData);
+//        List<BucketDataInsertTask> lstTasks = msgData
+//                .getDataBucketsList()
+//                .stream()
+//                .map( buc -> BucketDataInsertTask.newTask(buc, this.getTargetRefs()) )
+//                .toList();
+
+        // Execute all tasks simultaneously then wait for completion or timeout
+        try {
+            this.exeThreadPool.invokeAll(lstTasks, LNG_TIMEOUT, TU_TIMEOUT);
+
+        } catch (InterruptedException e) {
+            String strMsg = JavaRuntime.getQualifiedCallerName() + ": thread pool execution interrupted with exception - " + e.getMessage();
+            
+            LOGGER.error(strMsg);
+            
+            throw new DpQueryException(strMsg);
+            
+        } catch (RejectedExecutionException e) {
+            String strMsg = JavaRuntime.getQualifiedCallerName() + ": thread pool execution interrupted with exception - " + e.getMessage();
+            
+            LOGGER.error(strMsg);
+            
+            throw new DpQueryException(strMsg);
+        }
+
+        // Collect all data buckets messages that were not processed
+        Collection<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
+//        ArrayList<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = lstTasks
+//                .stream()
+//                .collect(
+//                        ArrayList::new, 
+//                        (c, t) -> { if (!t.isSuccess()) c.add(t.getSubject()); }, 
+//                        ArrayList::addAll
+//                        );
+
+        return lstBuckets;
+    }
+
     /**
      * <p>
      * Builds a set of target references for the collection of <code>DataBucket</code> messages.
@@ -418,7 +520,7 @@ public class QueryResponseCollector {
         for (QueryResponse.QueryReport.QueryData.DataBucket msgBucket : setBuckets) {
 
             // Attempt to insert bucket data into existing targets
-            boolean bolSuccess = setRefs.stream().anyMatch(r -> r.addBucketData(msgBucket));
+            boolean bolSuccess = setRefs.stream().anyMatch(r -> r.insertBucketData(msgBucket));
             
             // If insertion failed then create a new sampling interval reference for targets
             if (!bolSuccess) 
@@ -428,6 +530,61 @@ public class QueryResponseCollector {
         return setRefs;
     }
     
+    /**
+     * <p>
+     * Creates a collection of data bucket insertion tasks for the given argument and current target set of 
+     * references.
+     * </p>
+     * <p>
+     * This operation is currently serial.  If the bucket count of the argument is large parallelization may
+     * be appropriate.
+     * </p>
+     * 
+     * @param msgData   Query Service response data message
+     * 
+     * @return  collection of data insertion tasks for current target set, one for each data bucket of the argument
+     */
+    private Collection<BucketDataInsertTask> createInsertionTasks(QueryResponse.QueryReport.QueryData msgData) {
+        
+        List<BucketDataInsertTask> lstTasks = msgData
+                .getDataBucketsList()
+                .stream()
+                .map(buc -> BucketDataInsertTask.newTask(buc, this.getTargetRefs()))
+                .toList();
+                
+        return lstTasks;
+    }
+    
+    /**
+     * <p>
+     * Parses the collection of executed bucket-data insertion tasks for failed tasks collecting the
+     * <code>DataBucket</code> subjects.
+     * </p>
+     * <p>
+     * This operation is currently serial.  For large task collections parallelization may be appropriate.
+     * </p>
+     * 
+     * @param setTasks  collection of executed data-bucket insertion tasks
+     * 
+     * @return  collection of task subjects where task execution failed
+     */
+    private Collection<QueryResponse.QueryReport.QueryData.DataBucket>  extractFailedTaskBuckets(Collection<BucketDataInsertTask> setTasks) {
+        
+        ArrayList<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = setTasks
+                .stream()
+                .collect(
+                        ArrayList::new, 
+                        (c, t) -> { if (!t.isSuccess()) c.add(t.getSubject()); }, 
+                        ArrayList::addAll
+                        );
+
+        return lstBuckets;
+    }
+    
+
+    //
+    // Class Support
+    //
     
     /**
      * Returns whether or not class logging is active.

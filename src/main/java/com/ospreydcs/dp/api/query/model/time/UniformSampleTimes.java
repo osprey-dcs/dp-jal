@@ -40,7 +40,7 @@ import com.ospreydcs.dp.api.model.TimeInterval;
  * @since Jan 7, 2024
  *
  */
-public class UniformSampleTimes {
+public class UniformSampleTimes implements Comparable<Instant>{ 
 
     //
     // Defining Attributes
@@ -81,6 +81,20 @@ public class UniformSampleTimes {
         
         Instant tmStop = this.tmStart.plusNanos(lngPeriod);
         this.ivlDomain = TimeInterval.from(insStart, tmStop);
+    }
+
+
+    //
+    // Comparable Interface
+    //
+
+    /**
+     *
+     * @see @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    @Override
+    public int compareTo(Instant o) {
+        return this.tmStart.compareTo(o);
     }
 
 }

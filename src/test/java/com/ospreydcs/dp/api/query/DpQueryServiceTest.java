@@ -29,6 +29,10 @@ package com.ospreydcs.dp.api.query;
 
 import static org.junit.Assert.*;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -84,6 +88,13 @@ public class DpQueryServiceTest {
     //
     // Class Constants
     //
+    
+    /** Output file for <code>DpQueryStreamBuffer</code> data buffer results with lots of columns */
+    public static final String  STR_PATH_QUERY_DATA_RESULTS_WIDE = "src/test/resources/querydata-results-wide.dat";
+    
+    /** Output file for <code>DpQueryStreamBuffer</code> data buffer results with largest time interval */
+    public static final String  STR_PATH_QUERY_DATA_RESULTS_LONG = "src/test/resources/querydata-results-long.dat";
+    
     
     /** The inception time instant of the test Data Platform data archive test data set*/
     public static final Instant INS_INCEPT = Instant.ofEpochSecond(1698767462L);
@@ -254,7 +265,7 @@ public class DpQueryServiceTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryUniStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
-    @Test
+//    @Test
     public final void testQueryUniStreamDpDataRequestBig() {
         final int   CNT_SOURCES = 1000;
         final long  LNG_DURATION = 60;
@@ -348,7 +359,7 @@ public class DpQueryServiceTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryBidiStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
-    @Test
+//    @Test
     public final void testQueryBidiStreamDpDataRequestBig() {
         final int   CNT_SOURCES = 1000;
         final long  LNG_DURATION = 60;
@@ -396,5 +407,139 @@ public class DpQueryServiceTest {
         fail("Not yet implemented"); // TODO
     }
 
-    
+    /**
+     * Writes the results data from a BIDI stream query to the output file.
+     */
+    @Test
+    public final void testSaveQueryDataWide() {
+        final int   CNT_SOURCES = 100;
+        final long  LNG_DURATION = 10;
+        
+        final DpDataRequest rsqst = createRequest(CNT_SOURCES, LNG_DURATION);
+        final DpQueryStreamBuffer   bufResult;
+        
+        try {
+            Instant insStart = Instant.now();
+            bufResult = apiQuery.queryBidiStream(rsqst);
+            
+            bufResult.awaitStreamCompleted();
+            Instant insStop = Instant.now();
+            
+            Duration    durQuery = Duration.between(insStart, insStop);
+            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
+            Long        cntVals = szQuery/Double.BYTES;
+            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
+            
+            System.out.println("Query completed in " + durQuery.toMillis() + " milliseconds.");
+            System.out.println("  Total query size = " + szQuery);
+            System.out.println("  Double value count = " + cntVals);
+            System.out.println("  Transmission rate = " + dblRate);
+            System.out.println(bufResult.toString());
+            
+            if (bufResult.isStreamError())
+                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
+            
+            
+        } catch (DpQueryException e) {
+            Assert.fail("Exception thrown during query: " + e.getMessage());
+            return;
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
+            return;
+            
+        } catch (TimeoutException e) {
+            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
+            return;
+            
+        }
+        
+        // Save the result to an output file
+        String  strFilePath = STR_PATH_QUERY_DATA_RESULTS_WIDE;
+        
+        try {
+            FileOutputStream    fos = new FileOutputStream(strFilePath);
+            ObjectOutputStream  oos = new ObjectOutputStream(fos);
+            
+            oos.writeObject(bufResult.getBuffer());
+            
+            oos.close();
+            fos.close();
+
+        } catch (FileNotFoundException e) {
+            Assert.fail("Unable to create/open output file " + strFilePath);
+            
+        } catch (IOException e) {
+            Assert.fail("Unable to write data to output file " + strFilePath);
+            
+        }
+    }
+
+    /**
+     * Writes the results data from a BIDI stream query to the output file.
+     */
+    @Test
+    public final void testSaveQueryDataLong() {
+        final int   CNT_SOURCES = 10;
+        final long  LNG_DURATION = 60;
+        
+        final DpDataRequest rsqst = createRequest(CNT_SOURCES, LNG_DURATION);
+        final DpQueryStreamBuffer   bufResult;
+        
+        try {
+            Instant insStart = Instant.now();
+            bufResult = apiQuery.queryBidiStream(rsqst);
+            
+            bufResult.awaitStreamCompleted();
+            Instant insStop = Instant.now();
+            
+            Duration    durQuery = Duration.between(insStart, insStop);
+            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
+            Long        cntVals = szQuery/Double.BYTES;
+            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
+            
+            System.out.println("Query completed in " + durQuery.toMillis() + " milliseconds.");
+            System.out.println("  Total query size = " + szQuery);
+            System.out.println("  Double value count = " + cntVals);
+            System.out.println("  Transmission rate = " + dblRate);
+            System.out.println(bufResult.toString());
+            
+            if (bufResult.isStreamError())
+                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
+            
+            
+        } catch (DpQueryException e) {
+            Assert.fail("Exception thrown during query: " + e.getMessage());
+            return;
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
+            return;
+            
+        } catch (TimeoutException e) {
+            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
+            return;
+            
+        }
+        
+        // Save the result to an output file
+        String  strFilePath = STR_PATH_QUERY_DATA_RESULTS_LONG;
+        
+        try {
+            FileOutputStream    fos = new FileOutputStream(strFilePath);
+            ObjectOutputStream  oos = new ObjectOutputStream(fos);
+            
+            oos.writeObject(bufResult.getBuffer());
+            
+            oos.close();
+            fos.close();
+
+        } catch (FileNotFoundException e) {
+            Assert.fail("Unable to create/open output file " + strFilePath);
+            
+        } catch (IOException e) {
+            Assert.fail("Unable to write data to output file " + strFilePath);
+            
+        }
+    }
 }

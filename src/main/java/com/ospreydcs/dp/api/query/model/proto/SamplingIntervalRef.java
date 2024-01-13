@@ -31,6 +31,8 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
@@ -172,7 +174,7 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
      */
     public SamplingIntervalRef(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
         Timestamp   msgTmsStart = msgBucket.getSamplingInterval().getStartTime();
-        DataColumn  msgDataCol = msgBucket.getDataColumn();
+        DataColumn  msgDataCol = msgBucket.getDataColumn(); 
         
         this.insStart = ProtoMsg.toInstant(msgTmsStart);
         this.msgSmpIvl = msgBucket.getSamplingInterval();
@@ -212,6 +214,26 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
     public final List<DataColumn> getAllDataMessages() {
         return this.lstMsgCols;
     }
+    
+    /**
+     * <p>
+     * Extracts and returns all unique data source names from the referenced <code>DataColumn</code> 
+     * Protobuf messages.
+     * </p>
+     * 
+     * @return set of all data source names within the referenced data
+     */
+    public final Set<String>    extractDataSourceNames() {
+        Set<String> setNames = this.lstMsgCols
+                .stream()
+                .collect( 
+                        TreeSet::new, 
+                        (set, msg) -> set.add(msg.getName()), 
+                        TreeSet::addAll
+                        );
+        
+        return setNames;
+    }
 
     
     //
@@ -235,7 +257,7 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
      * @return      <code>true</code> only if argument data was successfully added to this reference,
      *              <code>false</code> otherwise (nothing done)
      */
-    public boolean addBucketData(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
+    public boolean insertBucketData(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
         
         // Check if list addition is possible - must have same sampling interval
         if (ProtoTime.equals(this.msgSmpIvl, msgBucket.getSamplingInterval())) {

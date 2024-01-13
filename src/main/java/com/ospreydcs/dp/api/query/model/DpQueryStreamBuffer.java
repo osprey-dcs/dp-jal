@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.query.model;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -122,15 +123,23 @@ import io.grpc.stub.StreamObserver;
  * @since Sep 29, 2022
  * @version Jan 10, 2024
  */
-public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
+public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Serializable */ {
 
     //
     // Application Resources
     //
-    
+
     /** The default Query Service configuration parameters */
     private static final DpQueryConfig  CFG_DEFAULT = DpApiConfig.getInstance().query;
+
     
+    //
+    // Class Constants
+    //
+    
+//    /** Java Serialization identifier */
+//    private static final long serialVersionUID = 3279632014097816865L;
+
     
     //
     // Class Resources
@@ -1034,6 +1043,21 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
      */
     public int  getBufferSize() {
         return this.lstDataBuffer.size();
+    }
+    
+    /**
+     * <p>
+     * Returns the data page buffer in its current state.
+     * </p>
+     * <p>
+     * Note that the returned object should not be modified if the current stream is still active.
+     * Results are unpredictable.
+     * </p>
+     * 
+     * @return  the entire data page buffer in its current state   
+     */
+    public final List<QueryResponse.QueryReport.QueryData>  getBuffer() {
+        return this.lstDataBuffer;
     }
     
     //    /**

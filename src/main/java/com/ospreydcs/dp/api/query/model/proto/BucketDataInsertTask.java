@@ -130,7 +130,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
         // Run the task and get result
         this.bolSuccess = this.setTarget
                 .stream()
-                .map(tar -> tar.addBucketData(this.msgSubject))
+                .map(tar -> tar.insertBucketData(this.msgSubject))
                 .anyMatch( r -> r );
         
         this.bolExecuted = true;
@@ -159,7 +159,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
     @Override
     public void run() {
         
-        this.bolSuccess = this.setTarget.stream().map(tar -> tar.addBucketData(this.msgSubject)).anyMatch( r -> r );
+        this.bolSuccess = this.setTarget.stream().map(tar -> tar.insertBucketData(this.msgSubject)).anyMatch( r -> r );
         this.bolExecuted = true;
     }
 
