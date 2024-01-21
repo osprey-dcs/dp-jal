@@ -28,6 +28,7 @@
 package com.ospreydcs.dp.api.query;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -426,6 +427,29 @@ public final class DpDataRequest {
     public void rangeBetween(Instant insBeg, Instant insEnd) {
         this.rangeAfter(insBeg);
         this.rangeBefore(insEnd);
+    }
+    
+    /**
+     * <p>
+     * Restricts the data request to timestamps within the interval specified
+     * by the start time and an duration.
+     * </p>
+     * <p>
+     * The data request will specify timestamps within the interval 
+     * <br/><br/>
+     * &nbsp; &nbsp; [insBeg, insBeg + lngDuration]
+     * <br/><br/>
+     * where the time units of the duration are given in the final argument.
+     * </p>
+     * 
+     * @param insBeg        start time instant of the time range interval
+     * @param lngDuration   duration of the time range interval
+     * @param cuUnit        time units of the duration
+     */
+    public void rangeDuration(Instant insBeg, Long lngDuration, ChronoUnit cuUnit) {
+        Instant insStop = insBeg.plus(lngDuration, cuUnit);
+        
+        this.rangeBetween(insBeg, insStop);
     }
     
     /**

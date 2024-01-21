@@ -40,7 +40,7 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.model.AUnavailable;
 import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamQueueBuffer;
 import com.ospreydcs.dp.api.query.model.data.DataTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
@@ -200,9 +200,9 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * 
      * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
      * 
-     * @see DpQueryStreamBuffer
+     * @see DpQueryStreamQueueBuffer
      */
-    public DpQueryStreamBuffer   queryUniStream(DpDataRequest rqst) throws DpQueryException {
+    public DpQueryStreamQueueBuffer   queryUniStream(DpDataRequest rqst) throws DpQueryException {
         return this.queryUniStream(rqst, CFG_DEFAULT.timeout.limit, CFG_DEFAULT.timeout.unit);
     }
     
@@ -227,12 +227,12 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * 
      * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
      * 
-     * @see DpQueryStreamBuffer
+     * @see DpQueryStreamQueueBuffer
      */
-    public DpQueryStreamBuffer  queryUniStream(DpDataRequest rqst, long cntTimeout, TimeUnit tuTimeout) throws DpQueryException {
+    public DpQueryStreamQueueBuffer  queryUniStream(DpDataRequest rqst, long cntTimeout, TimeUnit tuTimeout) throws DpQueryException {
         
         // Create the query stream buffer
-        DpQueryStreamBuffer bufStr = DpQueryStreamBuffer.from(super.grpcConn.getStubAsync(), cntTimeout, tuTimeout);
+        DpQueryStreamQueueBuffer bufStr = DpQueryStreamQueueBuffer.from(super.grpcConn.getStubAsync(), cntTimeout, tuTimeout);
                 
         // Get the query request message
         QueryRequest    msgRqst = rqst.buildQueryRequest();
@@ -280,9 +280,9 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * 
      * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
      * 
-     * @see DpQueryStreamBuffer
+     * @see DpQueryStreamQueueBuffer
      */
-    public DpQueryStreamBuffer   queryBidiStream(DpDataRequest rqst) throws DpQueryException {
+    public DpQueryStreamQueueBuffer   queryBidiStream(DpDataRequest rqst) throws DpQueryException {
         return this.queryBidiStream(rqst, CFG_DEFAULT.timeout.limit, CFG_DEFAULT.timeout.unit);
     }
     
@@ -307,12 +307,12 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * 
      * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
      * 
-     * @see DpQueryStreamBuffer
+     * @see DpQueryStreamQueueBuffer
      */
-    public DpQueryStreamBuffer  queryBidiStream(DpDataRequest rqst, long cntTimeout, TimeUnit tuTimeout) throws DpQueryException {
+    public DpQueryStreamQueueBuffer  queryBidiStream(DpDataRequest rqst, long cntTimeout, TimeUnit tuTimeout) throws DpQueryException {
         
         // Create the query stream buffer
-        DpQueryStreamBuffer bufStr = DpQueryStreamBuffer.from(super.grpcConn.getStubAsync(), cntTimeout, tuTimeout);
+        DpQueryStreamQueueBuffer bufStr = DpQueryStreamQueueBuffer.from(super.grpcConn.getStubAsync(), cntTimeout, tuTimeout);
                 
         // Get the query request message
         QueryRequest    msgRqst = rqst.buildQueryRequest();

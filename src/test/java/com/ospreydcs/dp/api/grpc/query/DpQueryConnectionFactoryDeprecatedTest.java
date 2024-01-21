@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryConnectionFactoryTest.java
+ * File:	DpQueryConnectionFactoryDeprecatedTest.java
  * Package: com.ospreydcs.dp.api.grpc.query
- * Type: 	DpQueryConnectionFactoryTest
+ * Type: 	DpQueryConnectionFactoryDeprecatedTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -20,14 +20,14 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jan 14, 2024
+ * @since Dec 29, 2023
  *
  * TODO:
  * - None
  */
 package com.ospreydcs.dp.api.grpc.query;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.concurrent.TimeUnit;
 
@@ -40,36 +40,32 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
-import com.ospreydcs.dp.api.config.test.DpApiTestingConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 
 /**
  * <p>
- * JUnit test cases for class <code>{@link DpQueryConnectionFactory}</code>.
+ * JUnit test cases for <code>DpQueryConnectionFactoryDeprecated</code> class.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Jan 14, 2024
+ * @since Dec 29, 2023
  *
  */
-public class DpQueryConnectionFactoryTest {
+public class DpQueryConnectionFactoryDeprecatedTest {
 
     
     //
     // Application Resources
     //
     
-    /** The DP API Library Query Service default configuration parameters */
+    /** The API Library default Query Service configuration parameters */
     private static final GrpcConnectionConfig.Channel   CFG_DEFAULT = DpApiConfig.getInstance().connections.query.channel;
 
-    /** The DP API Library Query Service testing configuration parameters */
-    private static final GrpcConnectionConfig           CFG_TESTING = DpApiTestingConfig.getInstance().testQuery.connection;
 
-    
     //
     // Test Fixture
     //
-    
+
     /**
      * @throws java.lang.Exception
      */
@@ -104,48 +100,23 @@ public class DpQueryConnectionFactoryTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory#getFactory()}.
-     */
-    @Test
-    public final void testGetFactory() {
-        DpQueryConnectionFactory    factory = DpQueryConnectionFactory.getFactory();
-        
-        Assert.assertEquals(DpQueryConnectionFactory.FACTORY, factory);
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory#newFactory(com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig)}.
-     */
-    @Test
-    public final void testNewFactory() {
-        DpQueryConnectionFactory    factory = DpQueryConnectionFactory.newFactory(CFG_TESTING);
-
-        Assert.assertNotEquals(DpQueryConnectionFactory.FACTORY, factory);
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase#connect()}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryDeprecated#connect()}.
      */
     @Test
     public final void testConnect() {
         try {
-            DpQueryConnection   conn = DpQueryConnectionFactory.FACTORY.connect();
+            DpQueryConnection   conn = DpQueryConnectionFactoryDeprecated.connect();
             
             conn.shutdownSoft();
-            conn.awaitTermination();
-            
-            Assert.assertTrue("Connection failed to terminated in alloted time", conn.isTerminated() );
             
         } catch (DpGrpcException e) {
-            fail("Threw DpGrpcExcecption: " + e.getMessage()); 
-            
-        } catch (InterruptedException e) {
-            fail("Process exception while waiting for termination: " + e.getMessage()); 
+            fail("Threw execption: " + e.getMessage()); 
+            e.printStackTrace();
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase#connect(java.lang.String, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryDeprecated#connect(java.lang.String, int)}.
      */
     @Test
     public final void testConnectStringInt() {
@@ -153,7 +124,7 @@ public class DpQueryConnectionFactoryTest {
         int     intPort = CFG_DEFAULT.host.port;
         
         try {
-            DpQueryConnection   conn = DpQueryConnectionFactory.FACTORY.connect(strUrl, intPort);
+            DpQueryConnection   conn = DpQueryConnectionFactoryDeprecated.connect(strUrl, intPort);
 
             conn.shutdownSoft();
             conn.awaitTermination();
@@ -168,38 +139,11 @@ public class DpQueryConnectionFactoryTest {
             fail("Threw interrupted exception: " + e.getMessage());
             e.printStackTrace();
         }
+        
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase#connect(java.lang.String, int, boolean)}.
-     */
-    @Test
-    public final void testConnectStringIntBoolean() {
-        String  strUrl = CFG_DEFAULT.host.url;
-        int     intPort = CFG_DEFAULT.host.port;
-        
-        boolean bolPlainText = CFG_DEFAULT.grpc.usePlainText;
-        
-        try {
-            DpQueryConnection   conn = DpQueryConnectionFactory.FACTORY.connect(strUrl, intPort, bolPlainText);
-
-            conn.shutdownSoft();
-            conn.awaitTermination();
-
-            Assert.assertTrue("Connection failed to terminated in alloted time", conn.isTerminated() );
-            
-        } catch (DpGrpcException e) {
-            fail("Threw connection execption: " + e.getMessage()); 
-            e.printStackTrace();
-            
-        } catch (InterruptedException e) {
-            fail("Threw interrupted exception: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase#connect(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryDeprecated#connect(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
     public final void testConnectStringIntBooleanLongTimeUnit() {
@@ -212,7 +156,7 @@ public class DpQueryConnectionFactoryTest {
         TimeUnit tuTmout = CFG_DEFAULT.grpc.timeoutUnit;
         
         try {
-            DpQueryConnection   conn = DpQueryConnectionFactory.FACTORY.connect(strUrl, intPort,
+            DpQueryConnection   conn = DpQueryConnectionFactoryDeprecated.connect(strUrl, intPort,
                     bolPlainText,
                     lngTmout, 
                     tuTmout);
@@ -230,6 +174,50 @@ public class DpQueryConnectionFactoryTest {
             fail("Threw interrupted exception: " + e.getMessage());
             e.printStackTrace();
         }
+        
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryDeprecated#connect(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
+     */
+    @Test
+    public final void testConnectStringIntBooleanBooleanIntBooleanBooleanLongTimeUnit() {
+        String  strUrl = CFG_DEFAULT.host.url;
+        int     intPort = CFG_DEFAULT.host.port;
+        
+        boolean bolTlsActive = CFG_DEFAULT.tls.active;
+        boolean bolPlainText = CFG_DEFAULT.grpc.usePlainText;
+        int     intMaxSz = CFG_DEFAULT.grpc.messageSizeMax;
+        boolean bolKeepAlive = CFG_DEFAULT.grpc.keepAliveWithoutCalls;
+        boolean bolGzipCmp = CFG_DEFAULT.grpc.gzip;
+        
+        long    lngTmout = CFG_DEFAULT.grpc.timeoutLimit;
+        TimeUnit tuTmout = CFG_DEFAULT.grpc.timeoutUnit;
+        
+        try {
+            DpQueryConnection   conn = DpQueryConnectionFactoryDeprecated.connect(strUrl, intPort,
+                    bolTlsActive,
+                    bolPlainText, 
+                    intMaxSz, 
+                    bolKeepAlive, 
+                    bolGzipCmp, 
+                    lngTmout, 
+                    tuTmout);
+
+            conn.shutdownSoft();
+            conn.awaitTermination();
+
+            Assert.assertTrue("Connection failed to terminated in alloted time", conn.isTerminated() );
+            
+        } catch (DpGrpcException e) {
+            fail("Threw connection execption: " + e.getMessage()); 
+            e.printStackTrace();
+            
+        } catch (InterruptedException e) {
+            fail("Threw interrupted exception: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
     }
 
 }

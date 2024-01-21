@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IQueryStreamObserver.java
+ * File:	IQueryStreamQueueBufferObserver.java
  * Package: com.ospreydcs.dp.api.query.model
- * Type: 	IQueryStreamObserver
+ * Type: 	IQueryStreamQueueBufferObserver
  *
  * Copyright 2010-2022 the original author or authors.
  *
@@ -33,7 +33,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 /**
  * <p>
  * Interface implemented by types wishing to receive notifications and data from
- * a <em>Query Service</em> data stream (e.g., the class <code>DpQueryStreamBuffer</code>).
+ * a <em>Query Service</em> data stream (e.g., the class <code>DpQueryStreamQueueBuffer</code>).
  * </p>
  * <p>
  * The data stream can send messages to the implementer of this class about streaming
@@ -53,7 +53,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * @since Oct 1, 2022
  *
  */
-public interface IQueryStreamObserver {
+public interface IQueryStreamQueueBufferObserver {
 
     /**
      * <p>
@@ -66,7 +66,7 @@ public interface IQueryStreamObserver {
      * 
      * @param bufStrm stream buffer that has started and will contain buffered data
      */
-    public void notifyStreamingStarted(DpQueryStreamBuffer bufStrm);
+    public void notifyStreamingStarted(DpQueryStreamQueueBuffer bufStrm);
     
     /**
      * <p>
@@ -109,7 +109,7 @@ public interface IQueryStreamObserver {
      * 
      * @param bufStrm stream buffer that has completed and contains all requested data
      */
-    public void notifyStreamingCompleted(DpQueryStreamBuffer bufStrm);
+    public void notifyStreamingCompleted(DpQueryStreamQueueBuffer bufStrm);
     
     /**
      * <p>

@@ -62,7 +62,7 @@
  * {@link DpGrpcConnection} - generic class defining the connection to a Data Platform service.
  * </li>
  * <li>
- * {@link DpGrpcConnectionFactory} - generic utility class for creating connections in variable configurations.
+ * {@link DpGrpcConnectionFactoryBase} - generic utility class for creating connections in variable configurations.
  * </li>
  * <li>
  * {@link DpGrpcException} - Exception class thrown for general gRPC connection errors (see message and cause).

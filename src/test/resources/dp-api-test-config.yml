@@ -1,0 +1,62 @@
+#
+# Project: dp-api-common
+# File:    dp-api-test-config.yml
+# Type:    YAML
+#
+# Configuration parameters for the Data Platform API library common tests.
+#
+# This parameter set can be modified according to the Data Platform testing requirements.
+#
+# Author: Christopher K. Allen
+# Since: Jan 13, 2024
+#
+#
+# NOTES:
+#
+
+testArchive:
+   inception: 1698767462      # epoch seconds since inception       : DP_API_TEST_ARCHIVE_INCEPTION     
+   duration: 60               # (seconds) duration of archive data  : DP_API_TEST_ARCHIVE_DURATION
+   pvCount: 4000              # number of data sources (PV names)   : DP_API_TEST_ARCHIVE_PV_COUNT
+   pvPrefix: "pv_"            # the prefix ofdata source names      : DP_API_TEST_ARCHIVE_PV_PREFIX
+   
+testQuery:
+   timeoutShort:
+      active: true            # apply timeout condition   : DP_API_TEST_QUERY_TIMEOUT_ACTIVE
+      limit: 5                # timeout limit             : DP_API_TEST_QUERY_TIMEOUT_LIMIT
+      unit: SECONDS           # java.concurrent.TimeUnit  : DP_API_TEST_QUERY_TIMEOUT_UNIT
+   
+   timeoutLong:
+      active: true            # apply timeout condition   : DP_API_TEST_QUERY_TIMEOUT_ACTIVE
+      limit: 60               # timeout limit             : DP_API_TEST_QUERY_TIMEOUT_LIMIT
+      unit: SECONDS           # java.concurrent.TimeUnit  : DP_API_TEST_QUERY_TIMEOUT_UNIT
+   
+   connection:
+      name: Query Service Test Archive # (opt) name of connection  : DP_API_TEST_QUERY_CONNECTION_NAME
+      version: 1.0.0                 # (opt) parameters version  : DP_API_TEST_QUERY_CONNECTION_VERSION
+      description: Query Service test archive connection parameters # : DP_API_TEST_QUERY_CONNECTION_DESCRIPTION
+      supplement: None               # (opt) anonymous parameter : DP_API_TEST_QUERY_CONNECTION_SUPPLEMENT
+      timeout:      # General connection timeout properties (e.g., used in service shutdown)
+         active: true                # apply timeout condition   : DP_API_TEST_QUERY_CONNECTION_TIMEOUT_ACTIVE
+         limit: 30                   # timeout limit             : DP_API_TEST_QUERY_CONNECTION_TIMEOUT_LIMIT
+         unit: SECONDS               # java.concurrent.TimeUnit  : DP_API_TEST_QUERY_CONNECTION_TIMEOUT_UNIT
+      channel:      # gRPC Channel configuration         
+         host:             # host server location 
+            url: localhost              # host server URL           : DP_API_TEST_QUERY_CONNECTION_CHANNEL_HOST_URL
+            port: 50052                 # server port address       : DP_API_TEST_QUERY_CONNECTION_CHANNEL_HOST_PORT
+         tls:              # HTTP2 Transport Layer Security parameters
+            active: false               # use TLS security          : DP_API_TEST_QUERY_CONNECTION_CHANNEL_TLS_ACTIVE
+            defaultTls: true            # use default TLS operation : DP_API_TEST_QUERY_CONNECTION_CHANNEL_TLS_DEFAULT
+            filepaths:     # file path locations for TLS certificates and keys (only if defaultTls == false)
+               trustedCerts:            # trusted certs collection  : DP_API_TEST_QUERY_CONNECTION_CHANNEL_TLS_FILE_TRUSTED_CERTS
+               clientCerts:             # client certificates chain : DP_API_TEST_QUERY_CONNECTION_CHANNEL_TLS_FILE_CLIENT_CERTS
+               clientKey:               # client private key        : DP_API_TEST_QUERY_CONNECTION_CHANNEL_TLS_FILE_CLIENT_KEY
+         grpc:             # gRPC parameters
+            timeoutLimit: 20            # channel operation timeout : DP_API_TEST_QUERY_CONNECTION_CHANNEL_GRPC_TIMEOUT_LIMIT
+            timeoutUnit: SECONDS        # timeout units             : DP_API_TEST_QUERY_CONNECTION_CHANNEL_GRPC_TIMEOUT_UNIT
+            messageSizeMax: 4194304     # (bytes) max message size  : DP_API_TEST_QUERY_CONNECTION_CHANNEL_GRPC_MESSAGE_SIZE_MAX
+            usePlainText: false         # plain text transmission   : DP_API_TEST_QUERY_CONNECTION_CHANNEL_GRPC_XMIT_PLAIN_TEXT   
+            keepAliveWithoutCalls: false # channel never idle       : DP_API_TEST_QUERY_CONNECTION_CHANNEL_GRPC_KEEP_ALIVE
+            gzip: false                 # use gzip compression      : DP_API_TEST_QUERY_CONNECTION_CHANNEL_GRPC_COMPRESS_GZIP
+    
+   

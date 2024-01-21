@@ -31,8 +31,14 @@
  * Package containing gRPC connection and factory for the Data Platform Ingestion Service. 
  * </p>
  * <p>
- * The resources here are fly weights binding the generic parameters of connection model classes
- * to the Ingestion Service.  These are provided as a convenience and to ensure type safety.
+ * The resources bind the generic parameters of connection model classes in 
+ * <code>{@link com.ospreydcs.dp.grpc.model}</code> to the Ingestion Service.  
+ * These are provided as a convenience and to ensure type safety.
+ * </p>
+ * <p>
+ * Connection factory implementations are also available to create <code>DpIngestionConnection</code>
+ * instance with various configurations.  These are generally not needed by clients but
+ * may be useful within the API Library implementation.
  * </p>
  *
  * @author Christopher K. Allen

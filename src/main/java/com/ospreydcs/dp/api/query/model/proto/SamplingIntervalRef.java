@@ -65,7 +65,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport;
  * </p> 
  * <p>
  * <h2>WARNING</h2>
- * It is assumed that the Data Archive is consistent!  If correlated data was archived simultaneously with 
+ * It is assumed that the Data TestArchive is consistent!  If correlated data was archived simultaneously with 
  * different sample clocks unpredictable behavior in reconstruction is possible.
  * </p> 
  * 

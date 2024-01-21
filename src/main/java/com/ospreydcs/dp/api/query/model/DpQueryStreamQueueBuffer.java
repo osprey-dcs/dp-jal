@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryStreamBuffer.java
+ * File:	DpQueryStreamQueueBuffer.java
  * Package: com.ospreydcs.dp.api.grpc.query.model
- * Type: 	DpQueryStreamBuffer
+ * Type: 	DpQueryStreamQueueBuffer
  *
  * Copyright 2010-2022 the original author or authors.
  *
@@ -70,12 +70,12 @@ import io.grpc.stub.StreamObserver;
  * <code>{@link #startUniStream(QueryRequest)}</code> method to initiate a unidirectional stream or 
  * <code>{@link #startBidiStream(QueryRequest)}</code> method to initiate a bidirectional stream.
  * The argument of each method contains the the desired gRPC data request message.
- * The <code>DpQueryStreamBuffer</code> instance itself receives the responses through the implemented methods of the 
+ * The <code>DpQueryStreamQueueBuffer</code> instance itself receives the responses through the implemented methods of the 
  * <code>StreamObserver<PaginatedResponse> interface (that is, the instance acts as the backward stream from
  * the Query Service).
  * </p>  
  * <p>
- * The <code>DpQueryStreamBuffer</code> class may be used as either a <em>stream buffer</em> collecting data pages 
+ * The <code>DpQueryStreamQueueBuffer</code> class may be used as either a <em>stream buffer</em> collecting data pages 
  * as they become available, or a <em>blocking queue</em> allowing clients to consume data pages as they become 
  * available.  Alternatively, <code>{@link IDataStreamObserver}</code> instances can be registered and then
  * will be called back to receive notifications and data pages as they become available.
@@ -95,7 +95,7 @@ import io.grpc.stub.StreamObserver;
  * <p>
  * <h2>Observers</h2>
  * Alternative to either stream buffer or stream queue usage, 
- * one can register a callback using <code>{@link #addStreamObserver(IQueryStreamObserver)}</code>
+ * one can register a callback using <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>
  * method which will be invoked whenever a new data page becomes available.
  * The index of that page along with the gRPC message response containing
  * the data is provided to the callback methods.  The <code>{@link IDataStreamObserver}</code> interface
@@ -123,7 +123,7 @@ import io.grpc.stub.StreamObserver;
  * @since Sep 29, 2022
  * @version Jan 10, 2024
  */
-public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Serializable */ {
+public class DpQueryStreamQueueBuffer implements StreamObserver<QueryResponse> /* Serializable */ {
 
     //
     // Application Resources
@@ -168,7 +168,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
     //
     
     /** List of data consumers to be notified about streaming data and conditions */
-    private List<IQueryStreamObserver>   lstStreamObservers = new LinkedList<>();
+    private List<IQueryStreamQueueBufferObserver>   lstStreamObservers = new LinkedList<>();
     
     
     //
@@ -265,7 +265,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
     
     /**
      * <p>
-     * Creates a new initialized, instance of <code>DpQueryStreamBuffer</code> with default timeout parameters.
+     * Creates a new initialized, instance of <code>DpQueryStreamQueueBuffer</code> with default timeout parameters.
      * </p>
      * <p>
      * Note, the data stream is initiated by calling either <code>{@link #startUniStream(QueryRequest)}</code> 
@@ -274,15 +274,15 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
      * 
      * @param stubAsync the Protobuf communications stub containing streaming Query Service gRPC interface
      *  
-     * @return  new <code>DpQueryStreamBuffer</code> instance ready for Query Service stream initiation
+     * @return  new <code>DpQueryStreamQueueBuffer</code> instance ready for Query Service stream initiation
      */
-    public static DpQueryStreamBuffer   from(DpQueryServiceGrpc.DpQueryServiceStub stubAsync) {
-        return DpQueryStreamBuffer.from(stubAsync, CFG_DEFAULT.timeout.limit, CFG_DEFAULT.timeout.unit);
+    public static DpQueryStreamQueueBuffer   from(DpQueryServiceGrpc.DpQueryServiceStub stubAsync) {
+        return DpQueryStreamQueueBuffer.from(stubAsync, CFG_DEFAULT.timeout.limit, CFG_DEFAULT.timeout.unit);
     }
     
     /**
      * <p>
-     * Creates a new initialized, instance of <code>DpQueryStreamBuffer</code> with specified timeout parameters.
+     * Creates a new initialized, instance of <code>DpQueryStreamQueueBuffer</code> with specified timeout parameters.
      * </p>
      * <p>
      * Note, the data stream is initiated by calling either <code>{@link #startUniStream(QueryRequest)}</code> 
@@ -293,10 +293,10 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
      * @param cntTimeout timeout limit to use while waiting for <em>Query Service</em> responses or operations
      * @param tuTimeout  timeout units to use while waiting for <em>Query Service</em> responses or operations
      * 
-     * @return  new <code>DpQueryStreamBuffer</code> instance ready for Query Service stream initiation
+     * @return  new <code>DpQueryStreamQueueBuffer</code> instance ready for Query Service stream initiation
      */
-    public static DpQueryStreamBuffer   from(DpQueryServiceGrpc.DpQueryServiceStub stubAsync, long cntTimeout, TimeUnit tuTimeout) {
-        return new DpQueryStreamBuffer(stubAsync, cntTimeout, tuTimeout);
+    public static DpQueryStreamQueueBuffer   from(DpQueryServiceGrpc.DpQueryServiceStub stubAsync, long cntTimeout, TimeUnit tuTimeout) {
+        return new DpQueryStreamQueueBuffer(stubAsync, cntTimeout, tuTimeout);
     }
     
     //
@@ -305,7 +305,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
     
     /**
      * <p>
-     * Creates a new initialized, instance of <code>DpQueryStreamBuffer</code>.
+     * Creates a new initialized, instance of <code>DpQueryStreamQueueBuffer</code>.
      * </p>
      * <p>
      * Note, the data stream is initiated by calling either <code>{@link #startUniStream(QueryRequest)}</code> 
@@ -315,7 +315,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
      * A handle to the <em>Query Service</em> stream ({@link #hndSvrStrm}) is 
      * created from the given gRPC non-blocking service stub.  This is the
      * handle by which we send the <em>Query Service</em> data requests.
-     * The <code>DpQueryStreamBuffer</code> instance itself received the
+     * The <code>DpQueryStreamQueueBuffer</code> instance itself received the
      * responses through the implemented methods of the 
      * <code>StreamObserver<PaginatedResponse> interface.  
      * </p> 
@@ -324,7 +324,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
      * @param cntTimeout timeout limit to use while waiting for <em>Query Service</em> responses or operations
      * @param tuTimeout  timeout units to use while waiting for <em>Query Service</em> responses or operations
      */
-    public DpQueryStreamBuffer(DpQueryServiceGrpc.DpQueryServiceStub stubAsync, long cntTimeout, TimeUnit tuTimeout) {
+    public DpQueryStreamQueueBuffer(DpQueryServiceGrpc.DpQueryServiceStub stubAsync, long cntTimeout, TimeUnit tuTimeout) {
         this.stubAsync = stubAsync;
         this.cntTimeout = cntTimeout;
         this.tuTimeout  = tuTimeout;
@@ -332,13 +332,13 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
     
     
     /**
-     * Adds the given <code>IQueryStreamObserver</code> interface to the
+     * Adds the given <code>IQueryStreamQueueBufferObserver</code> interface to the
      * list of stream observers requesting notifications about streaming
      * conditions and stream data.
      * 
      * @param ifcStreamObserver subject to be notified about streaming events
      */
-    public void addStreamObserver(IQueryStreamObserver ifcStreamObserver) {
+    public void addStreamObserver(IQueryStreamQueueBufferObserver ifcStreamObserver) {
         this.lstStreamObservers.add(ifcStreamObserver);
     }
 
@@ -370,7 +370,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
      * </p>
      * <p>
      * Notifications about stream activities is sent to any registered data stream observers
-     * (see <code>{@link #addStreamObserver(IQueryStreamObserver)}</code>).  Stream observers may
+     * (see <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>).  Stream observers may
      * then spawn thread to process available data.
      * </p>
      * <p>
@@ -445,7 +445,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
      * </p>
      * <p>
      * Notifications about stream activities is sent to any registered data stream observers
-     * (see <code>{@link #addStreamObserver(IQueryStreamObserver)}</code>).  Stream observers may
+     * (see <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>).  Stream observers may
      * then spawn thread to process available data.
      * </p>
      * <p>
@@ -533,7 +533,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
         boolean bolReleased = this.monStrmStart.await(this.cntTimeout, this.tuTimeout);
         
         if ( !bolReleased ) {
-            String strMsg = "DpQueryStreamBuffer#awaitStreamStart() - Timeout out waiting on first response from the Datastore";
+            String strMsg = "DpQueryStreamQueueBuffer#awaitStreamStart() - Timeout out waiting on first response from the Datastore";
     
             // Log event
             if (isLogging())
@@ -575,7 +575,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
         boolean bolReleased = this.monStrmEnd.await(this.cntTimeout, this.tuTimeout);
         
         if ( !bolReleased ) {
-            String strMsg = "DpQueryStreamBuffer#awaitStreamCompleted() - Timeout out waiting onCompleted() response from the Datastore";
+            String strMsg = "DpQueryStreamQueueBuffer#awaitStreamCompleted() - Timeout out waiting onCompleted() response from the Datastore";
 
             // Log event
             if (isLogging())
@@ -776,7 +776,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
      * call a <code>start</code> method.  
      * (Thus the flag is always <code>false</code> before that call).
      * This condition requires that the data stream has send an 
-     * <code>onComplete()</code> to this <code>DpQueryStreamBuffer</code> instance and
+     * <code>onComplete()</code> to this <code>DpQueryStreamQueueBuffer</code> instance and
      * that no streaming errors have occurred.
      * </p>
      * 
@@ -1074,7 +1074,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
 //     * </li><br/>
 //     * <li>
 //     * The index set of acquired data pages is dynamic.  The value returned will
-//     * change with time as the <code>DpQueryStreamBuffer</code> continues to
+//     * change with time as the <code>DpQueryStreamQueueBuffer</code> continues to
 //     * acquire data.
 //     * </li><br/> 
 //     * <li>
@@ -1119,7 +1119,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
      * <br/> 
      * <li>
      * Another option is to register a <code>{@link IDataStreamObserver}</code>
-     * callback using the method <code>{@link #addStreamObserver(IQueryStreamObserver)}</code>.
+     * callback using the method <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>.
      * Any callback registered here will be notified whenever a data page
      * becomes available.
      * </li>
@@ -1410,7 +1410,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
      * monitor.
      * </p>
      * 
-     * @see DpQueryStreamBuffer#awaitStreamCompleted()
+     * @see DpQueryStreamQueueBuffer#awaitStreamCompleted()
      * @see StreamObserver#onCompleted()
      */
     @Override
@@ -1555,7 +1555,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> /* Ser
         this.lstPgsRequested.add(this.indNextPage);
 
         // Create the next page cursor request and send it
-        QueryRequest msgPgRqst = DpQueryStreamBuffer.createPageRequest();
+        QueryRequest msgPgRqst = DpQueryStreamQueueBuffer.createPageRequest();
 
         this.hndSvrStrm.onNext(msgPgRqst);
 }

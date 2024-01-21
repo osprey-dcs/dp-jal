@@ -109,18 +109,18 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
     
     /**
      * <p>
-     * Returns the singleton instance of the <code>AppProperties</code> class.  
+     * Returns the singleton instance of the <code>DpApiConfig</code> class.  
      * </p>
      * <p>
      * If this is the first call to this method the instance is created using the
-     * <code>PropertiesLoader</code> utility class.  The properties loader reads
+     * <code>CfgLoaderYaml</code> utility class.  The properties loader reads
      * the properties file, creates the instance, and populates it.
      * Any properties that are annotated as override capable (using the 
-     * <code>AOverrideCapable</code> annotation class) are then overridden
+     * <code>ACfgOverride</code> annotation class) are then overridden
      * with any environment variables that have been set.
      * </p>
      * 
-     * @return singleton instance of AppProperties containing initialization parameters
+     * @return singleton instance of DpApiCnofig containing initialization parameters
      *          for application
      */
     public static DpApiConfig getInstance() {
@@ -180,7 +180,7 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
             super(DpArchiveConfig.class);
         }
 
-        /** Archive inception date (earliest possible timestamp) */
+        /** TestArchive inception date (earliest possible timestamp) */
         @ACfgOverride.Field(name="INCEPTION")
         public String   inception;
 

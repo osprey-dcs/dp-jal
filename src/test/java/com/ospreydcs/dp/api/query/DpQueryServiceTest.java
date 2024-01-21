@@ -27,7 +27,7 @@
  */
 package com.ospreydcs.dp.api.query;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -35,10 +35,8 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.IntStream;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -50,7 +48,8 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamQueueBuffer;
+import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 
 /**
  * <p>
@@ -89,25 +88,25 @@ public class DpQueryServiceTest {
     // Class Constants
     //
     
-    /** Output file for <code>DpQueryStreamBuffer</code> data buffer results with lots of columns */
-    public static final String  STR_PATH_QUERY_DATA_RESULTS_WIDE = "src/test/resources/querydata-results-wide.dat";
+    /** Output file for <code>DpQueryStreamQueueBuffer</code> data buffer results with lots of columns */
+    public static final String  STR_PATH_QUERY_DATA_RESULTS_WIDE = "src/test/resources/data/querydata-results-wide.dat";
     
-    /** Output file for <code>DpQueryStreamBuffer</code> data buffer results with largest time interval */
-    public static final String  STR_PATH_QUERY_DATA_RESULTS_LONG = "src/test/resources/querydata-results-long.dat";
+    /** Output file for <code>DpQueryStreamQueueBuffer</code> data buffer results with largest time interval */
+    public static final String  STR_PATH_QUERY_DATA_RESULTS_LONG = "src/test/resources/data/querydata-results-long.dat";
     
     
-    /** The inception time instant of the test Data Platform data archive test data set*/
-    public static final Instant INS_INCEPT = Instant.ofEpochSecond(1698767462L);
-    
-    /** The final time instant of all Data Platform data archive test data set */
-    public static final Instant INS_FINAL = INS_INCEPT.plusSeconds(60L);
-    
-    /** The total number of unique data source names within the Data Platform data archive test data set */
-    public static final int     CNT_PV_NAMES = 4000;
-    
-    /** List of all data source names within the Data Platform data archive test data set */
-    public static final List<String> LST_PV_NAMES = IntStream.rangeClosed(1, CNT_PV_NAMES).mapToObj( i -> "pv_" + Integer.toString(i)).toList();   
-    
+//    /** The inception time instant of the test Data Platform data archive test data set*/
+//    public static final Instant INS_INCEPT = Instant.ofEpochSecond(1698767462L);
+//    
+//    /** The final time instant of all Data Platform data archive test data set */
+//    public static final Instant INS_FINAL = INS_INCEPT.plusSeconds(60L);
+//    
+//    /** The total number of unique data source names within the Data Platform data archive test data set */
+//    public static final int     CNT_PV_NAMES = 4000;
+//    
+//    /** List of all data source names within the Data Platform data archive test data set */
+//    public static final List<String> LST_PV_NAMES = IntStream.rangeClosed(1, CNT_PV_NAMES).mapToObj( i -> "pv_" + Integer.toString(i)).toList();   
+//    
     
     /** Timeout limit */
     public static final Long        LNG_TMOUT = 5L;
@@ -124,52 +123,52 @@ public class DpQueryServiceTest {
     private static DpQueryService   apiQuery;
     
     
-    //
-    // Class Methods
-    //
-    
-    /**
-     * <p>
-     * Creates a new <code>DpDataRequest</code> instance configured by the given arguments.
-     * </p>
-     * 
-     * @param cntSources    number of data sources in the query
-     * 
-     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and time range [INS_INCEPT, INS_FINAL]
-     */
-    public static DpDataRequest createRequest(int cntSources) {
-        DpDataRequest   rqst = DpDataRequest.newRequest();
-        
-        List<String>    lstNames = LST_PV_NAMES.subList(0, cntSources);
-        
-        rqst.rangeBetween(INS_INCEPT, INS_FINAL);
-        rqst.selectSources(lstNames);
-        
-        return rqst;
-    }
-    
-    /**
-     * <p>
-     * Creates a new <code>DpDataRequest</code> instance configured by the given arguments.
-     * </p>
-     * 
-     * @param cntSources    number of data sources in the query
-     * @param lngDuration   time duration of query in seconds, range = [INS_INCEPT, INS_INCEPT + lngDuration]
-     * 
-     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and the specified time range
-     */
-    public static DpDataRequest createRequest(int cntSources, long lngDuration) {
-        DpDataRequest   rqst = DpDataRequest.newRequest();
-        
-        List<String>    lstNames = LST_PV_NAMES.subList(0, cntSources);
-        Instant         insFinal = INS_INCEPT.plusSeconds(lngDuration);
-        
-        rqst.rangeBetween(INS_INCEPT, insFinal);
-        rqst.selectSources(lstNames);
-        
-        return rqst;
-    }
-    
+//    //
+//    // Class Methods
+//    //
+//    
+//    /**
+//     * <p>
+//     * Creates a new <code>DpDataRequest</code> instance configured by the given arguments.
+//     * </p>
+//     * 
+//     * @param cntSources    number of data sources in the query
+//     * 
+//     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and time range [INS_INCEPT, INS_FINAL]
+//     */
+//    public static DpDataRequest createRequest(int cntSources) {
+//        DpDataRequest   rqst = DpDataRequest.newRequest();
+//        
+//        List<String>    lstNames = LST_PV_NAMES.subList(0, cntSources);
+//        
+//        rqst.rangeBetween(INS_INCEPT, INS_FINAL);
+//        rqst.selectSources(lstNames);
+//        
+//        return rqst;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Creates a new <code>DpDataRequest</code> instance configured by the given arguments.
+//     * </p>
+//     * 
+//     * @param cntSources    number of data sources in the query
+//     * @param lngDuration   time duration of query in seconds, range = [INS_INCEPT, INS_INCEPT + lngDuration]
+//     * 
+//     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and the specified time range
+//     */
+//    public static DpDataRequest createRequest(int cntSources, long lngDuration) {
+//        DpDataRequest   rqst = DpDataRequest.newRequest();
+//        
+//        List<String>    lstNames = LST_PV_NAMES.subList(0, cntSources);
+//        Instant         insFinal = INS_INCEPT.plusSeconds(lngDuration);
+//        
+//        rqst.rangeBetween(INS_INCEPT, insFinal);
+//        rqst.selectSources(lstNames);
+//        
+//        return rqst;
+//    }
+//    
     
     //
     // Test Fixture
@@ -227,11 +226,11 @@ public class DpQueryServiceTest {
         final int   CNT_SOURCES = 100;
         final long  LNG_DURATION = 10;
         
-        final DpDataRequest rsqst = createRequest(CNT_SOURCES, LNG_DURATION);
+        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
         
         try {
             Instant insStart = Instant.now();
-            DpQueryStreamBuffer bufResult = apiQuery.queryUniStream(rsqst);
+            DpQueryStreamQueueBuffer bufResult = apiQuery.queryUniStream(rsqst);
             
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
@@ -270,11 +269,11 @@ public class DpQueryServiceTest {
         final int   CNT_SOURCES = 1000;
         final long  LNG_DURATION = 60;
         
-        final DpDataRequest rsqst = createRequest(CNT_SOURCES, LNG_DURATION);
+        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
         
         try {
             Instant insStart = Instant.now();
-            DpQueryStreamBuffer bufResult = apiQuery.queryUniStream(rsqst);
+            DpQueryStreamQueueBuffer bufResult = apiQuery.queryUniStream(rsqst);
             
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
@@ -321,11 +320,11 @@ public class DpQueryServiceTest {
         final int   CNT_SOURCES = 100;
         final long  LNG_DURATION = 10;
         
-        final DpDataRequest rsqst = createRequest(CNT_SOURCES, LNG_DURATION);
+        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
         
         try {
             Instant insStart = Instant.now();
-            DpQueryStreamBuffer bufResult = apiQuery.queryBidiStream(rsqst);
+            DpQueryStreamQueueBuffer bufResult = apiQuery.queryBidiStream(rsqst);
             
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
@@ -364,11 +363,11 @@ public class DpQueryServiceTest {
         final int   CNT_SOURCES = 1000;
         final long  LNG_DURATION = 60;
         
-        final DpDataRequest rsqst = createRequest(CNT_SOURCES, LNG_DURATION);
+        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
         
         try {
             Instant insStart = Instant.now();
-            DpQueryStreamBuffer bufResult = apiQuery.queryBidiStream(rsqst);
+            DpQueryStreamQueueBuffer bufResult = apiQuery.queryBidiStream(rsqst);
             
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
@@ -410,13 +409,13 @@ public class DpQueryServiceTest {
     /**
      * Writes the results data from a BIDI stream query to the output file.
      */
-    @Test
+//    @Test
     public final void testSaveQueryDataWide() {
         final int   CNT_SOURCES = 100;
         final long  LNG_DURATION = 10;
         
-        final DpDataRequest rsqst = createRequest(CNT_SOURCES, LNG_DURATION);
-        final DpQueryStreamBuffer   bufResult;
+        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        final DpQueryStreamQueueBuffer   bufResult;
         
         try {
             Instant insStart = Instant.now();
@@ -478,13 +477,13 @@ public class DpQueryServiceTest {
     /**
      * Writes the results data from a BIDI stream query to the output file.
      */
-    @Test
+//    @Test
     public final void testSaveQueryDataLong() {
         final int   CNT_SOURCES = 10;
         final long  LNG_DURATION = 60;
         
-        final DpDataRequest rsqst = createRequest(CNT_SOURCES, LNG_DURATION);
-        final DpQueryStreamBuffer   bufResult;
+        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        final DpQueryStreamQueueBuffer   bufResult;
         
         try {
             Instant insStart = Instant.now();

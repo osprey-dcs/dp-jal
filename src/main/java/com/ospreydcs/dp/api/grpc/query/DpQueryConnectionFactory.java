@@ -20,44 +20,59 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Dec 29, 2023
+ * @since Jan 14, 2024
  *
  * TODO:
  * - None
  */
 package com.ospreydcs.dp.api.grpc.query;
 
-import java.io.File;
-import java.util.concurrent.TimeUnit;
-
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
-import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory;
+import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
+import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceFutureStub;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 
+
 /**
  * <p>
- * Utility class for creating client connections to the Data Platform Query Service.
+ * Singleton class for creating client connection <code>DpQueryConnection</code> instances
+ * to the Data Platform Query Service.
  * </p>
  * <p>
- * This is a fly weight class that maintains a static instance of <code>DpGrpcConnectionFactory</code> bound
- * to the Data Platform Query Service.  All connection operations are delegated to the static instance.
- * See the {@link DpGrpcConnectionFactory} documentation for more details.
+ * This class maintains a static singleton instance of <code>DpQueryConnectionFactory</code> bound
+ * to the Data Platform Query Service with DP API default connection parameters.
+ * The static connection factory instance <code>{@link #FACTORY}</code> may be accessed directly
+ * or through the static method <code>{@link #getFactory()}</code>.
+ * </p>
+ * <p>  
+ * All connection operations are performed with the <code>connect(...)</code> methods implemented
+ * in the base class.
+ * See the {@link DpGrpcConnectionFactoryBase} documentation for further details.
  * </p> 
+ * <p>
+ * <h2>NOTES:</h2>
+ * It is possible to create Query Service connection factory instances that use alternate default
+ * parameters for connection configurations.  The static creator method 
+ * <code>{@link #newFactory(GrpcConnectionConfig)}</code> is available for this purpose.
+ * (It also creates the static instance <code>{@link #FACTORY}</code> using the DP API library
+ * configuration.
+ * </p>
  *
  * @author Christopher K. Allen
- * @since Dec 29, 2023
- *
- *
- * @see DpGrpcConnectionFactory
+ * @since Jan 14, 2024
+ * 
+ * @see DpGrpcConnectionFactoryBase
  */
-public final class DpQueryConnectionFactory {
-    
-    
+public final class DpQueryConnectionFactory extends 
+    DpGrpcConnectionFactoryBase<DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub>
+
+{
+
     //
     // Application Resources
     //
@@ -70,185 +85,75 @@ public final class DpQueryConnectionFactory {
     // Class Resources
     //
 
-    /** The <code>DpGrpcConnectionFactory</code> bound for the Query Service */
-    private static final DpGrpcConnectionFactory<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> FAC;
-    
-    static {
-        FAC = DpGrpcConnectionFactory.newFactory(DpQueryServiceGrpc.class, CFG_DEFAULT);
-    }
-             
-    
-    //
-    // Default TLS Security
-    //
-    
-    /**
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect()} for details.
-     * </p>
-     * 
-     * @return new <code>DpQueryConnection</code> instance with given parameters
-     * 
-     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
-     * 
-     * @see DpGrpcConnectionFactory#connect()
-     */
-    public static DpQueryConnection connect() throws DpGrpcException {
-        return DpQueryConnection.from(FAC.connect());
-    }
-    
-    /**
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int)} for details.
-     * </p>
-     * 
-     * @return new <code>DpQueryConnection</code> instance with given parameters
-     * 
-     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
-     * 
-     * @see DpGrpcConnectionFactory#connect(String, int)
-     */
-    public static DpQueryConnection connect(String strUrl, int intPort) throws DpGrpcException {
-        return DpQueryConnection.from(FAC.connect(strUrl, intPort));
-    }
-    
-    /**
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean)} for details.
-     * </p>
-     * 
-     * @return new <code>DpQueryConnection</code> instance with given parameters
-     * 
-     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
-     * 
-     * @see DpGrpcConnectionFactory#connect(String, int, boolean)
-     */
-    public static DpQueryConnection connect(String strUrl, int intPort, boolean bolPlainText) throws DpGrpcException {
-        return DpQueryConnection.from(FAC.connect(strUrl, intPort, bolPlainText));
-    }
-    
-    /**
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)} for details.
-     * </p>
-     * 
-     * @return new <code>DpQueryConnection</code> instance with given parameters
-     * 
-     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
-     * 
-     * @see DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)
-     */
-    public static DpQueryConnection connect(String strHost, int intPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
-        return DpQueryConnection.from(FAC.connect(strHost, intPort, bolPlainText, lngTimeout, tuTimeout));
-    }
-    
-    /**
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)} for details.
-     * </p>
-     * 
-     * @return new <code>DpQueryConnection</code> instance with given parameters
-     * 
-     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
-     * 
-     * @see DpGrpcConnectionFactory#connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)
-     */
-    public static DpQueryConnection connect(
-            String strHost, 
-            int intPort, 
-            boolean bolTlsActive,
-            boolean bolPlainText,
-            int     intMsgSizeMax,
-            boolean bolKeepAlive,
-            boolean bolGzipCompr,
-            long    lngTimeout,
-            TimeUnit tuTimeout
-            ) throws DpGrpcException {
-        return DpQueryConnection.from(FAC.connect(strHost, intPort, bolTlsActive, bolPlainText, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout));
-    }
+    /** The singleton factory instance using the DP API default parameters for the Query Service */
+    public static final DpQueryConnectionFactory   FACTORY = newFactory(CFG_DEFAULT);
 
     
     //
-    // Explicit TLS Security Parameters
+    // Class Methods
     //
     
     /**
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(File, File, File)} for details.
+     * Returns the singleton Query Service connection factory using the Data Platform default
+     * configuration parameters.
      * </p>
      * 
-     * @return new <code>DpQueryConnection</code> instance with given parameters
-     * 
-     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
-     * 
-     * @see DpGrpcConnectionFactory#connect(File, File, File)
+     * @return  the singleton Query Service connection factory
      */
-    public static DpQueryConnection connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
-        return DpQueryConnection.from(FAC.connect(fileTrustedCerts, fileClientCerts, fileClientKey));
+    public static DpQueryConnectionFactory  getFactory() {
+        return FACTORY;
     }
+   
+    
+    //
+    // Creator - For Alternate Default Configurations
+    //
     
     /**
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, File, File, File)} for details.
+     * Creates a new <code>DpQueryConnectionFactory</code> instance with the given default parameters.
+     * </p>
+     * <p>
+     * This creator can be used to create additional connection factors with different default 
+     * parameters for the factory connection instances.  For example, if a separate Data Platform
+     * Query Service is used for testing the default parameters can point to that deployment.
      * </p>
      * 
-     * @return new <code>DpQueryConnection</code> instance with given parameters
+     * @param cfgDefault    the default gRPC connection parameters used for factory connections
      * 
-     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
-     * 
-     * @see DpGrpcConnectionFactory#connect(String, int, File, File, File)
+     * @return  a new Query Service connection factory use the given default parameters
      */
-    public static DpQueryConnection connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
-        return DpQueryConnection.from(FAC.connect(strHost, intPort, fileTrustedCerts, fileClientCerts, fileClientKey));
+    public static DpQueryConnectionFactory  newFactory(GrpcConnectionConfig cfgDefault) {
+        return new DpQueryConnectionFactory(cfgDefault);
     }
+    
+    
+    // 
+    // DpGrpcConnectionFactoryBase Requirements
+    //
     
     /**
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)} for details.
+     * Constructs a new instance of <code>DpQueryConnectionFactory</code>.
      * </p>
-     * 
-     * @return new <code>DpQueryConnection</code> instance with given parameters
-     * 
-     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
-     * 
-     * @see DpGrpcConnectionFactory#connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)
      */
-    public static DpQueryConnection connect(
-            String  strHost, 
-            int     intPort, 
-            File    fileTrustedCerts,
-            File    fileClientCertsChain,
-            File    fileClientKey,
-            boolean bolPlainText,
-            int     intMsgSizeMax,
-            boolean bolKeepAlive,
-            boolean bolGzipCompr,
-            long    lngTimeout,
-            TimeUnit tuTimeout
-            ) throws DpGrpcException {
+    protected DpQueryConnectionFactory(GrpcConnectionConfig cfgDefault) {
+        super(DpQueryServiceGrpc.class, cfgDefault);
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase#createFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
+     */
+    @Override
+    protected DpQueryConnection createFrom(
+            DpGrpcConnection<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> conn)
+            throws DpGrpcException {
         
-        return DpQueryConnection.from(FAC.connect(strHost, intPort, 
-                fileTrustedCerts, 
-                fileClientCertsChain, 
-                fileClientKey, 
-                bolPlainText, 
-                intMsgSizeMax, 
-                bolKeepAlive, 
-                bolGzipCompr, 
-                lngTimeout, 
-                tuTimeout));
-    }
-    
-    
-    // Private Support
-    //
-    
-    /**
-     * <p>
-     * Prevents creation of <code>DpQueryConnectionFactory</code> instances.
-     * </p>
-     */
-    private DpQueryConnectionFactory() {
+        DpQueryConnection   connBnd = DpQueryConnection.from(conn);
+        
+        return connBnd;
     }
 
 }

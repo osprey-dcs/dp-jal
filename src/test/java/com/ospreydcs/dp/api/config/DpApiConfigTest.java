@@ -119,7 +119,7 @@ public class DpApiConfigTest {
     public final void testGetInstance() {
         
         String  strIncpt = DpApiConfig.getInstance().archive.inception;
-        System.out.println("Data Platform Archive Inception: " + strIncpt);
+        System.out.println("Data Platform TestArchive Inception: " + strIncpt);
         Instant insIncpt = Instant.parse(strIncpt);
     }
 

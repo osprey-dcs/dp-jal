@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.api.grpc.query
+ * Package: com.ospreydcs.dp.api.query.test
  * Type: 	package-info
  *
  * Copyright 2010-2023 the original author or authors.
@@ -20,28 +20,18 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Dec 28, 2023
+ * @since Jan 13, 2024
  *
  * TODO:
  * - None
  */
 /**
  * <p>
- * Package containing gRPC connection and factory for the Data Platform Query Service. 
- * </p>
- * <p>
- * The resources bind the generic parameters of connection model classes in 
- * <code>{@link com.ospreydcs.dp.grpc.model}</code> to the Query Service.  
- * These are provided as a convenience and to ensure type safety.
- * </p>
- * <p>
- * Connection factory implementations are also available to create <code>DpQueryConnection</code>
- * instance with various configurations.  These are generally not needed by clients but
- * may be useful within the API Library implementation.
- * </p>
+ * Contains Data Platform Query Service classes and resources for unit testing.
+ * </p> 
  *
  * @author Christopher K. Allen
- * @since Dec 28, 2023
+ * @since Jan 13, 2024
  *
  */
-package com.ospreydcs.dp.api.grpc.query;
+package com.ospreydcs.dp.api.query.test;

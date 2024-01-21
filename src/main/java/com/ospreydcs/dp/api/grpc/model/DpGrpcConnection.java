@@ -149,15 +149,42 @@ public class DpGrpcConnection<
         this.stubFuture = this.newFutureStub(grpcChan);
         this.stubAsync = this.newAsyncStub(grpcChan);
         
-        LOGGER.info("Created new connection {} for gRPC service {}", this.getClass().getName(), clsService.getName());
+        LOGGER.debug("Created new connection {} for gRPC service {}", this.getClass().getSimpleName(), clsService.getSimpleName());
     }
 
+    /**
+     * <p>
+     * Clones an instance of <code>DpGrpcConnection</code>.
+     * </p>
+     * <p>
+     * This method is provided for subclasses to create instances of themselves from
+     * instances of this class (as a base class).  This is essentially an aliasing
+     * operation or might be called "a move constructor" in C++.
+     * </p>
+     *
+     * @param chnGrpc   the single gRPC communications channel used by the service stubs
+     * @param stubBlock   synchronous communication stub for desired RPC interface
+     * @param stubAsync  asynchronous communication stub for desired RPC interface
+     */
+    protected DpGrpcConnection(DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>  conn) {
+        this.clsService = conn.clsService;
+        this.grpcChan = conn.grpcChan;
+        this.stubBlock = conn.stubBlock;
+        this.stubFuture = conn.stubFuture;
+        this.stubAsync = conn.stubAsync;
+        
+        LOGGER.debug("Cloned new connection {} for gRPC service {}", this.getClass().getSimpleName(), this.clsService.getSimpleName());
+    }
+    
 //    /**
 //     * <p>
 //     * Creates a new instance of <code>DpGrpcConnection</code> connected to 
 //     * the given gRPC channel where all communications stubs are explicitly provided.
 //     * </p>
 //     * <p>
+//     * This method is provided for subclasses to create instances of themselves from
+//     * instances of this class (as a base class).  The would be called "a move constructor"
+//     * in C++.
 //     * The <code>ManagedChannel</code> argument should be the gRPC channel
 //     * backing all connection stubs.  
 //     * </p>
@@ -166,19 +193,20 @@ public class DpGrpcConnection<
 //     * @param stubBlock   synchronous communication stub for desired RPC interface
 //     * @param stubAsync  asynchronous communication stub for desired RPC interface
 //     */
-//    public DpGrpcConnection(ManagedChannel chnGrpc, 
-//            SyncStub stubBlock, 
+//    protected DpGrpcConnection(
+//            ManagedChannel chnGrpc, 
+//            BlockStub stubBlock, 
 //            FutureStub stubFuture,
 //            AsyncStub stubAsync)
 //    {
-//        this.chnGprc = chnGrpc;
-//        this.stubSync = stubBlock;
+//        this.grpcChan = chnGrpc;
+//        this.stubBlock = stubBlock;
 //        this.stubFuture = stubFuture;
 //        this.stubAsync = stubAsync;
 //        
-//        LOGGER.info("Created new connection {} for gRPC unknown service", this.getClass().getName());
+//        LOGGER.debug("Created new connection {} for gRPC unknown service", this.getClass().getName());
 //    }
-    
+//    
     
     //
     // IConnection Interface

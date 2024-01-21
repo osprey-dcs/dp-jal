@@ -124,12 +124,12 @@ public final class DpIngestionConnection extends DpGrpcConnection<DpIngestionSer
      * Constructs a new instance of <code>DpIngestionConnection</code> from a bound <code>DpGrpcConnection</code>.
      * </p>
      *
-     * @param grpcConn  the aliased (bound) <code>DpGrpcConnection</code> object 
+     * @param conn the (bound) <code>DpGrpcConnection</code> object to be aliased 
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      */
     public DpIngestionConnection(DpGrpcConnection<DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> conn) throws DpGrpcException {
-        super(DpIngestionServiceGrpc.class, conn.getChannel());
+        super(conn);
     }
     
     

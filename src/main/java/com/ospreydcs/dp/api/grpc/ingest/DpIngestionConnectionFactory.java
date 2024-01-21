@@ -20,49 +20,68 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Dec 28, 2023
+ * @since Jan 15, 2024
  *
  * TODO:
  * - None
  */
 package com.ospreydcs.dp.api.grpc.ingest;
 
-import java.io.File;
-import java.util.concurrent.TimeUnit;
-
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
-import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory;
+import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
+import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceFutureStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
 
-
 /**
  * <p>
- * Utility class for creating client connections to the Data Platform Ingestion Service.
+ * Singleton class for creating client connection <code>DpIngestionConnection</code> instances
+ * to the Data Platform Ingestion Service.
  * </p>
  * <p>
- * This is a fly weight class that maintains a static instance of <code>DpGrpcConnectionFactory</code> bound
- * to the Data Platform Ingestion Service.  All connection operations are delegated to the static instance.
- * See the {@link DpGrpcConnectionFactory} documentation for more details.
+ * This class maintains a static singleton instance of <code>DpIngestionConnectionFactory</code> bound
+ * to the Data Platform Ingestion Service with DP API default connection parameters.
+ * The static connection factory instance <code>{@link #FACTORY}</code> may be accessed directly
+ * or through the static method <code>{@link #getFactory()}</code>.
+ * </p>
+ * <p>  
+ * All connection operations are performed with the <code>connect(...)</code> methods implemented
+ * in the base class.
+ * See the {@link DpGrpcConnectionFactoryBase} documentation for further details.
  * </p> 
+ * <p>
+ * <h2>NOTES:</h2>
+ * It is possible to create Ingestion Service connection factory instances that use alternate default
+ * parameters for connection configurations.  The static creator method 
+ * <code>{@link #newFactory(GrpcConnectionConfig)}</code> is available for this purpose.
+ * (It also creates the static instance <code>{@link #FACTORY}</code> using the DP API library
+ * configuration.
+ * </p>
  *
  * @author Christopher K. Allen
- * @since Dec 28, 2023
+ * @since Jan 15, 2024
  *
- * @see DpGrpcConnectionFactory
+ * @see DpGrpcConnectionFactoryBase
  */
-public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFactory<DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> */{
-
+public class DpIngestionConnectionFactory extends 
+    DpGrpcConnectionFactoryBase<
+        DpIngestionConnection, 
+        DpIngestionServiceGrpc, 
+        DpIngestionServiceGrpc.DpIngestionServiceBlockingStub, 
+        DpIngestionServiceGrpc.DpIngestionServiceFutureStub, 
+        DpIngestionServiceGrpc.DpIngestionServiceStub>
+{
     
-    //    
+    //
     // Application Resources
     //
     
-    /** The API Library default Ingestion Service configuration parameters */
+    /** The API Library default Query Service configuration parameters */
     private static final GrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.ingestion;
 
     
@@ -70,230 +89,76 @@ public final class DpIngestionConnectionFactory /* extends DpGrpcConnectionFacto
     // Class Resources
     //
 
-    /** The <code>DpGrpcConnectionFactory</code> bound for the Ingestion Service */
-    private static final DpGrpcConnectionFactory<DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> FAC;
-    
-    static {
-        FAC = DpGrpcConnectionFactory.newFactory(DpIngestionServiceGrpc.class, CFG_DEFAULT);
-    }
-             
+    /** The singleton factory instance using the DP API default parameters for the Query Service */
+    public static final DpIngestionConnectionFactory   FACTORY = newFactory(CFG_DEFAULT);
+
     
     //
-    // Default TLS Connections
+    // Class Methods
     //
     
     /**
      * <p>
-     * Creates a new <code>DpIngestionConnection</code> instance using default parameters.
+     * Returns the singleton Ingestion Service connection factory using the Data Platform default
+     * configuration parameters.
+     * </p>
+     * 
+     * @return  the singleton Ingestion Service connection factory
+     */
+    public static DpIngestionConnectionFactory  getFactory() {
+        return FACTORY;
+    }
+   
+    
+    //
+    // Creator - For Alternate Default Configurations
+    //
+    
+    /**
+     * <p>
+     * Creates a new <code>DpIngestionConnectionFactory</code> instance with the given default parameters.
      * </p>
      * <p>
-     * See {@link DpGrpcConnectionFactory#connect()} for details.
+     * This creator can be used to create additional connection factors with different default 
+     * parameters for the factory connection instances.  For example, if a separate Data Platform
+     * Query Service is used for testing the default parameters can point to that deployment.
+     * </p>
+     * 
+     * @param cfgDefault    the default gRPC connection parameters used for factory connections
+     * 
+     * @return  a new Ingestion Service connection factory use the given default parameters
+     */
+    public static DpIngestionConnectionFactory  newFactory(GrpcConnectionConfig cfgDefault) {
+        return new DpIngestionConnectionFactory(cfgDefault);
+    }
+    
+    
+    //
+    // DpGrpcConnectionFactoryBase Requirements
+    //
+
+    /**
+     * <p>
+     * Constructs a new <code>DpIngestionConnectionFactory</code> instance that uses the 
+     * given set of connection parameters for defaults.
      * </p>
      *
-     * @see com.ospreydcs.dp.api.grpc.DpGrpcConnectionFactory#connect()
+     * @param cfgConn   configuration structure supplying connection default parameters 
      */
-    public static DpIngestionConnection connect() throws DpGrpcException {
+    protected DpIngestionConnectionFactory(GrpcConnectionConfig cfgConn) {
+        super(DpIngestionServiceGrpc.class, cfgConn);
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase#createFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
+     */
+    @Override
+    protected DpIngestionConnection createFrom(
+            DpGrpcConnection<DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> conn)
+            throws DpGrpcException {
         
-        DpIngestionConnection conn = DpIngestionConnection.from(FAC.connect());
-        
-        return conn;
+        return DpIngestionConnection.from(conn);
     }
-
-    /**
-     * <p>
-     * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
-     * </p>
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int)} for details.
-     * </p>
-     *
-     * @see com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory#connect(java.lang.String, int)
-     */
-    public static DpIngestionConnection connect(String strHost, int intPort) throws DpGrpcException {
-        return DpIngestionConnection.from(FAC.connect(strHost, intPort));
-    }
-
-    /**
-     * <p>
-     * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
-     * </p>
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean)} for details.
-     * </p>
-     *
-     * @see com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory#connect(java.lang.String, int, boolean)
-     */
-    public static DpIngestionConnection connect(String strHost, int intPort, boolean bolPlainText) throws DpGrpcException {
-        return DpIngestionConnection.from(FAC.connect(strHost, intPort, bolPlainText));
-    }
-
-    /**
-     * <p>
-     * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
-     * </p>
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)} for details.
-     * </p>
-     * 
-     * @param strHost       network URL of the desired service
-     * @param intPort       server port used by the at the above service
-     * @param bolPlainText transmit data using plain ASCII (negates all TLS security)
-     * @param lngTimeout    timeout limit used for connection operations (keepalive ping timeout) 
-     * @param tuTimeout     timeout units used for connection operations (keepalive ping timeout)
-     * 
-     * @return new <code>DpIngestionConnection</code> instance connected to the given host
-     * 
-     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
-     * 
-     * @see {@link com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)}
-     */
-    public static DpIngestionConnection connect(String strHost, int intPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
-        return DpIngestionConnection.from(FAC.connect(strHost, intPort, bolPlainText, lngTimeout, tuTimeout));
-    }
-
-    /**
-     * <p>
-     * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
-     * </p>
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)} for details.
-     * </p>
-     * <p>
-     * No default parameters are used.
-     * </p>
-     * 
-     * @see DpGrpcConnectionFactory#connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)
-     */
-    public static DpIngestionConnection connect(
-            String strHost, 
-            int intPort, 
-            boolean bolTlsActive,
-            boolean bolPlainText,
-            int     intMsgSizeMax,
-            boolean bolKeepAlive,
-            boolean bolGzipCompr,
-            long    lngTimeout,
-            TimeUnit tuTimeout
-            ) throws DpGrpcException 
-    {
-        return DpIngestionConnection.from(FAC.connect(strHost, intPort, bolTlsActive, bolPlainText, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout));
-    }
-    
-    
-    //
-    // Explicit TLS Security Connections
-    //
-
-    /**
-     * <p>
-     * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
-     * </p>
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(File, File, File)} for details.
-     * </p>
-     *
-     * @return new <code>DpIngestionConnection</code> instance connected to the default address
-     * 
-     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)
-     * 
-     * @see DpGrpcConnectionFactory#connect(File, File, File)
-     */
-    public static DpIngestionConnection connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
-        return DpIngestionConnection.from(FAC.connect(fileTrustedCerts, fileClientCerts, fileClientKey));
-    }
-
-    /**
-     * <p>
-     * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
-     * </p>
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, File, File, File)} for details.
-     * </p>
-     * 
-     * @param strHost       network URL of the desired service
-     * @param intPort       server port used by the at the above service
-     * @param fileTrustedCerts root file of all trusted server certificates
-     * @param fileClientCerts  file of client certificates
-     * @param fileClientKey file containing client private key
-     * 
-     * @return new <code>DpIngestionConnection</code> instance connected to the given address
-     * 
-     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
-     * 
-     * @see DpGrpcConnectionFactory#connect(String, int, File, File, File)
-     */
-    public static DpIngestionConnection connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
-        return DpIngestionConnection.from(FAC.connect(strHost, intPort, fileTrustedCerts, fileClientCerts, fileClientKey));
-    }
-
-    /**
-     * <p>
-     * Creates a new <code>DpIngestionConnection</code> instance for the given parameters.
-     * </p>
-     * <p>
-     * See {@link DpGrpcConnectionFactory#connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)} for details.
-     * </p>
-     * </p>
-     * No default parameters are used.
-     * </p>
-     * 
-     * @param strHost       network URL of the desired service
-     * @param intPort       network port used by the at the above service
-     * @param fileTrustedCerts root file of all trusted server certificates
-     * @param fileClientCerts  file of client certificates
-     * @param fileClientKey file containing client private key
-     * @param bolPlainText transmit data using plain ASCII (negates all TLS security)
-     * @param intMsgSizeMax maximum message size for gRPC transmission (bytes)
-     * @param bolKeepAlive force connection to remain active (otherwise idle after timeout)
-     * @param bolGzipCompr enable GZIP compression for data transmission
-     * @param lngTimeout   timeout limit used for channel operations (keepalive ping)
-     * @param tuTimeout    timeout units used for channel operations (Keepalive ping)
-     * 
-     * @return new <code>DsGrpcConnection</code> instance connected to the given address
-     *         and using the given configuration parameters
-     *         
-     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)
-     * 
-     * @see DpGrpcConnectionFactory#connect(String, int, File, File, File, boolean, int, boolean, boolean, long, TimeUnit)
-     */
-   public static DpIngestionConnection connect(
-           String  strHost, 
-           int     intPort, 
-           File    fileTrustedCerts,
-           File    fileClientCertsChain,
-           File    fileClientKey,
-           boolean bolPlainText,
-           int     intMsgSizeMax,
-           boolean bolKeepAlive,
-           boolean bolGzipCompr,
-           long    lngTimeout,
-           TimeUnit tuTimeout
-           ) throws DpGrpcException 
-   {
-       return DpIngestionConnection.from(FAC.connect(strHost, intPort, 
-               fileTrustedCerts, 
-               fileClientCertsChain, 
-               fileClientKey, 
-               bolPlainText,
-               intMsgSizeMax, 
-               bolKeepAlive, 
-               bolGzipCompr, 
-               lngTimeout, 
-               tuTimeout)
-               );
-   }
-   
-   
-   //
-   // Private Support
-   //
-   
-   /**
-    * <p>
-    * Prevents creation of <code>DpIngestionConnectionFactory</code> instances.
-    * </p>
-    */
-   private DpIngestionConnectionFactory() {
-   }
 
 }

@@ -41,7 +41,7 @@ import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
  * desirable.  It also centralizes factory operations and reduces a lot of repeated code.  
  * This class defers gRPC connection creation to the an internal <code>{@link DpGrpcConnectionFactory}</code> 
  * instance.  The creation of the corresponding service API <code>{@link ServiceApi}</code> must be 
- * implemented in the subclass with abstract method <code>{@link #createFrom(DpGrpcConnection)}</code>.  
+ * implemented in the subclass with abstract method <code>{@link #apiFrom(DpGrpcConnection)}</code>.  
  * Implemented this method is the major effort of the derived class, along with getting all the generic
  * type parameters correct.
  * </p>
@@ -102,10 +102,25 @@ public abstract class DpServiceApiFactoryBase<
      * Shorthand for class factory type of the internal class factory instance.
      * </p> 
      */
-    private class ConnectionFactory extends DpGrpcConnectionFactory<ServiceGrpc, BlockStub, FutureStub, AsyncStub> {
+//    private class ConnectionFactory extends DpGrpcConnectionFactory<ServiceGrpc, BlockStub, FutureStub, AsyncStub> {
+//
+//        protected ConnectionFactory(Class<ServiceGrpc> clsService, GrpcConnectionConfig cfgConn) {
+//            super(clsService, cfgConn);
+//        }
+//        
+//    }
+    private class ConnectionFactory extends DpGrpcConnectionFactoryBase<Connection, ServiceGrpc, BlockStub, FutureStub, AsyncStub> {
 
         protected ConnectionFactory(Class<ServiceGrpc> clsService, GrpcConnectionConfig cfgConn) {
             super(clsService, cfgConn);
+        }
+
+        @Override
+        protected Connection createFrom(DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn)
+                throws DpGrpcException {
+            Connection connBound = DpServiceApiFactoryBase.this.connectionFrom(conn);
+            
+            return connBound;
         }
         
     }
@@ -121,6 +136,8 @@ public abstract class DpServiceApiFactoryBase<
     // 
     // Abstract Methods
     //
+    
+    protected abstract Connection connectionFrom(DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn) throws DpGrpcException;
     
     /**
      * <p>
@@ -138,7 +155,8 @@ public abstract class DpServiceApiFactoryBase<
      * 
      * @throws DpGrpcException  general gRPC resource creation error (see message and cause) 
      */
-    protected abstract ServiceApi createFrom(DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn) throws DpGrpcException;
+//    protected abstract ServiceApi apiFrom(DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn) throws DpGrpcException;
+    protected abstract ServiceApi apiFrom(Connection conn) throws DpGrpcException;
 
     
     //
@@ -178,8 +196,9 @@ public abstract class DpServiceApiFactoryBase<
      * @see DpGrpcConnectionFactory#connect()
      */
     public ServiceApi connect() throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect();
-        ServiceApi api = this.createFrom(conn);
+//        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect();
+        Connection conn = this.fac.connect();
+        ServiceApi api = this.apiFrom(conn);
         
         return api;
     }
@@ -196,8 +215,9 @@ public abstract class DpServiceApiFactoryBase<
      * @see DpGrpcConnectionFactory#connect(String, int)
      */
     public ServiceApi connect(String strUrl, int intPort) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(strUrl, intPort);
-        ServiceApi api = this.createFrom(conn);
+//        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(strUrl, intPort);
+        Connection conn = this.fac.connect(strUrl, intPort);
+        ServiceApi api = this.apiFrom(conn);
         
         return api;
     }
@@ -214,11 +234,11 @@ public abstract class DpServiceApiFactoryBase<
      * @see DpGrpcConnectionFactory#connect(String, int, boolean)
      */
     public ServiceApi connect(String strUrl, int intPort, boolean bolPlainText) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
-                strUrl, intPort,
-                bolPlainText);
-        
-        ServiceApi api = this.createFrom(conn);
+//        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+//                strUrl, intPort,
+//                bolPlainText);
+        Connection conn = this.fac.connect(strUrl, intPort, bolPlainText);
+        ServiceApi api = this.apiFrom(conn);
         
         return api;
     }
@@ -235,13 +255,17 @@ public abstract class DpServiceApiFactoryBase<
      * @see DpGrpcConnectionFactory#connect(String, int, boolean, long, TimeUnit)
      */
     public ServiceApi connect(String strHost, int intPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+//        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+//                strHost, intPort,
+//                bolPlainText,
+//                lngTimeout, 
+//                tuTimeout);
+        Connection conn = this.fac.connect(
                 strHost, intPort,
                 bolPlainText,
                 lngTimeout, 
                 tuTimeout);
-        
-        ServiceApi api = this.createFrom(conn);
+        ServiceApi api = this.apiFrom(conn);
         
         return api;
     }
@@ -268,7 +292,16 @@ public abstract class DpServiceApiFactoryBase<
             long    lngTimeout,
             TimeUnit tuTimeout
             ) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+//        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+//                strHost, intPort,
+//                bolTlsActive,
+//                bolPlainText, 
+//                intMsgSizeMax, 
+//                bolKeepAlive, 
+//                bolGzipCompr, 
+//                lngTimeout, 
+//                tuTimeout);
+        Connection conn = this.fac.connect(
                 strHost, intPort,
                 bolTlsActive,
                 bolPlainText, 
@@ -278,7 +311,7 @@ public abstract class DpServiceApiFactoryBase<
                 lngTimeout, 
                 tuTimeout);
         
-        ServiceApi api = this.createFrom(conn);
+        ServiceApi api = this.apiFrom(conn);
         
         return api;
     }
@@ -300,8 +333,9 @@ public abstract class DpServiceApiFactoryBase<
      * @see DpGrpcConnectionFactory#connect(File, File, File)
      */
     public ServiceApi connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(fileTrustedCerts, fileClientCerts, fileClientKey);
-        ServiceApi api = this.createFrom(conn);
+//        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(fileTrustedCerts, fileClientCerts, fileClientKey);
+        Connection conn = this.fac.connect(fileTrustedCerts, fileClientCerts, fileClientKey);
+        ServiceApi api = this.apiFrom(conn);
         
         return api;
     }
@@ -318,13 +352,18 @@ public abstract class DpServiceApiFactoryBase<
      * @see DpGrpcConnectionFactory#connect(String, int, File, File, File)
      */
     public ServiceApi connect(String strHost, int intPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = fac.connect(
+//        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = fac.connect(
+//                strHost, intPort, 
+//                fileTrustedCerts, 
+//                fileClientCerts, 
+//                fileClientKey);
+        Connection conn = fac.connect(
                 strHost, intPort, 
                 fileTrustedCerts, 
                 fileClientCerts, 
                 fileClientKey);
         
-        ServiceApi api = this.createFrom(conn);
+        ServiceApi api = this.apiFrom(conn);
         
         return api;
     }
@@ -353,7 +392,18 @@ public abstract class DpServiceApiFactoryBase<
             long    lngTimeout,
             TimeUnit tuTimeout
             ) throws DpGrpcException {
-        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+//        DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub> conn = this.fac.connect(
+//                strHost, intPort, 
+//                fileTrustedCerts, 
+//                fileClientCertsChain, 
+//                fileClientKey,
+//                bolPlainText,
+//                intMsgSizeMax, 
+//                bolKeepAlive, 
+//                bolGzipCompr, 
+//                lngTimeout, 
+//                tuTimeout);
+        Connection conn = this.fac.connect(
                 strHost, intPort, 
                 fileTrustedCerts, 
                 fileClientCertsChain, 
@@ -365,7 +415,7 @@ public abstract class DpServiceApiFactoryBase<
                 lngTimeout, 
                 tuTimeout);
         
-        ServiceApi api = this.createFrom(conn);
+        ServiceApi api = this.apiFrom(conn);
         
         return api;
     }

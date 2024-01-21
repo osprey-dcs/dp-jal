@@ -133,7 +133,7 @@ public class DpQueryConnection extends DpGrpcConnection<DpQueryServiceGrpc, DpQu
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      */
     public DpQueryConnection(DpGrpcConnection<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> conn) throws DpGrpcException {
-        this(conn.getChannel());
+        super(conn);
     }
     
     

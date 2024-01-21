@@ -55,11 +55,14 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * factory utility which has <code>connect(...)</code> methods analogous to those here.
  * </p>
  * <p>
- * This class uses the static instance <code>{@link #INSTANCE}</code> as the singleton connection factory for
- * all <code>DpQueryService</code> creation.  Factory instances cannot be created independently.
+ * This class uses the static instance <code>{@link #INSTANCE}</code> as the singleton connection factory 
+ * for <code>DpQueryService</code> creation using the DP API library default configuration.  
  * Users can use the <code>{@link #INSTANCE}</code> instance directory or obtain it indirectly through the 
  * <code>{@link #getInstance()}</code> static method.
  * </p>
+ * <p>
+ * Factory instances can also be created independently using the .
+ *
  * 
  * @author Christopher K. Allen
  * @since Jan 7, 2024
@@ -86,7 +89,30 @@ public final class DpQueryServiceFactory
     //
     
     /** The singleton instance of the connection factory */
-    public static final DpQueryServiceFactory   INSTANCE = new DpQueryServiceFactory();
+    public static final DpQueryServiceFactory   INSTANCE = newFactory(CFG_CONN_DEFAULT);
+    
+    
+    //
+    // Creator
+    //
+    
+    /**
+     * <p>
+     * Creates a new, initialized instance of the <code>DpQueryServiceFactory</code> 
+     * Query Service API connection factory.
+     * </p>
+     * <p>
+     * The caller must supply the new factory's default connection parameters used for the 
+     * Data Platform Query Service.
+     * </p>
+     * 
+     * @param   cfgDefault  the default connection parameters for the query service used by new factory
+     * 
+     * @return  a new Query Service API factory ready for <code>DpQueryService</code> creation and connection
+     */
+    public static final DpQueryServiceFactory   newFactory(GrpcConnectionConfig cfgDefault) {
+        return new DpQueryServiceFactory(cfgDefault);
+    }
     
     
     //
@@ -113,11 +139,13 @@ public final class DpQueryServiceFactory
      * </p>
      * <p>
      * Super class requirement for instance construction.   Supplies the Protobuf-generated service interface
-     * class type and the application's default connection parameters for the Data Platform Query Service.
+     * class type and the new factory's default connection parameters for the Data Platform Query Service.
      * </p>
+     * 
+     * @param   cfgDefault  the default connection parameters for the query service used by new factory
      */
-    private DpQueryServiceFactory() {
-        super(DpQueryServiceGrpc.class, CFG_CONN_DEFAULT);
+    private DpQueryServiceFactory(GrpcConnectionConfig cfgDefault) {
+        super(DpQueryServiceGrpc.class, cfgDefault);
     }
 
 
@@ -125,14 +153,29 @@ public final class DpQueryServiceFactory
      *
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      * 
-     * @see com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#createFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
+     * @see com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#apiFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
      */
     @Override
-    protected DpQueryService createFrom(DpGrpcConnection<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> conn) throws DpGrpcException {
-        DpQueryConnection   connSub = DpQueryConnection.from(conn);
-        DpQueryService      qsApi = DpQueryService.from(connSub);
+//    protected DpQueryService apiFrom(DpGrpcConnection<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> conn) throws DpGrpcException {
+    protected DpQueryService apiFrom(DpQueryConnection conn) throws DpGrpcException {
+//        DpQueryConnection   connSub = DpQueryConnection.from(conn);
+//        DpQueryService      qsApi = DpQueryService.from(connSub);
+        DpQueryService      qsApi = DpQueryService.from(conn);
         
         return qsApi;
+    }
+
+    /**
+     *
+     * @throws DpGrpcException general gRPC resource creation error (see message and cause)
+     * 
+     * @see com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#connectionFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
+     */
+    @Override
+    protected DpQueryConnection connectionFrom(
+            DpGrpcConnection<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> conn)
+            throws DpGrpcException {
+        return DpQueryConnection.from(conn);
     }
 
 }
