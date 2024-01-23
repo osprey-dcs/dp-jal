@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	TestQueryResults.java
+ * File:	TestQueryRecord.java
  * Package: com.ospreydcs.dp.api.query.test
- * Type: 	TestQueryResults
+ * Type: 	TestQueryRecord
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -60,7 +60,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * and persistence.
  * </p>
  * <p>
- * Thus, the act of creating a <code>TestQueryResults</code> record both defines a specific
+ * Thus, the act of creating a <code>TestQueryRecord</code> record both defines a specific
  * QueryService query (against the test archive) and provides access to the query's 
  * results set. Additionally, the <code>{@link #storeQueryResults()}</code> method
  * can store the recovered results set to a data file for persistence.
@@ -79,16 +79,18 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * @param   cntSources      number of data sources (PVs) within query result set
  * @param   indSourceFirst  index of the first data source within the list of source names
  * @param   lngDuration     the query time range duration (in seconds)
+ * @param   lngStartTime    start time of the time range (in seconds)
  * 
  * @see TestDpDataRequestGenerator#createRequest(int, int, long)
  * @see TestQueryService#queryResponseStream(QueryRequest)
  */
-public final record TestQueryResults (
+public final record TestQueryRecord (
         List<QueryResponse> lstResults,
         String              strFileName, 
         int                 cntSources, 
         int                 indSourceFirst,
-        long                lngDuration
+        long                lngDuration,
+        long                lngStartTime
         ) 
 {
     
@@ -124,7 +126,7 @@ public final record TestQueryResults (
     
     /**
      * <p>
-     * Canonical <code>TestQueryResults</code> constructor.
+     * Canonical <code>TestQueryRecord</code> constructor.
      * </p>
      *
      * @param   lstResults      ordered list of query results (as if streamed)
@@ -132,31 +134,32 @@ public final record TestQueryResults (
      * @param   cntSources      number of data sources (PVs) within query result set
      * @param   indSourceFirst  index of the first data source within the list of source names
      * @param   lngDuration     the query time range duration (in seconds)
+     * @param   lngStartTime    start time of the time range (in seconds)
      * 
      * @see TestDpDataRequestGenerator#createRequest(int, int, long)
      */
-    public TestQueryResults {
+    public TestQueryRecord {
     }
     
     /**
      * <p>
-     * Non-canonical <code>TestQueryResults</code> constructor.
+     * Non-canonical <code>TestQueryRecord</code> constructor.
      * </p>
      * <p>
      * Creates a the <code>{@link #lstResults}</code> field as an empty 
      * <code>{@link LinkedList}</code> instance.
      * </p> 
      *
-     * @param   lstResults      ordered list of query results (as if streamed)
      * @param   strFileName     name of the file where persistent query result data is stored
      * @param   cntSources      number of data sources (PVs) within query result set
      * @param   indSourceFirst  index of the first data source within the list of source names
      * @param   lngDuration     the query time range duration (in seconds)
+     * @param   lngStartTime    start time of the time range (in seconds)
      * 
      * @see TestDpDataRequestGenerator#createRequest(int, int, long)
      */
-    public TestQueryResults(String strFileName, int cntSources, int indSourceFirst, long lngDuration) {
-        this(new LinkedList<>(), strFileName, cntSources, indSourceFirst, lngDuration);
+    public TestQueryRecord(String strFileName, int cntSources, int indSourceFirst, long lngDuration, long lngStartTime) {
+        this(new LinkedList<>(), strFileName, cntSources, indSourceFirst, lngDuration, lngStartTime);
     }
     
     
@@ -179,8 +182,8 @@ public final record TestQueryResults (
      * 
      */
     public static boolean shutdownQueryServiceApi() {
-        if (TestQueryResults.qsTestArchive != null) {
-            TestQueryResults.qsTestArchive.shutdown();
+        if (TestQueryRecord.qsTestArchive != null) {
+            TestQueryRecord.qsTestArchive.shutdown();
             
             return true;
         }
@@ -195,7 +198,41 @@ public final record TestQueryResults (
     
     /**
      * <p>
-     * Recovers and/or returns the result set associated with this <code>TestQueryResults</code> record.
+     * Returns whether or not the results set field <code>{@link #lstResults}</code> has been populated.
+     * </p>
+     * 
+     * @return <code>true</code> if <code>{@link #lstResults}</code> is non-empty,
+     *         <code>false</code> otherwise
+     */
+    public boolean hasQueryResults() {
+        return !this.lstResults.isEmpty();
+    }
+    
+    /**
+     * <p>
+     * Returns the results set field <code>{@link #lstResults}</code> this record if available.
+     * </p>
+     * <p>
+     * Note that the method <code>{@link #recoverQueryResults()}</code> will load the results
+     * set from persistent storage or query the Query Service to create results set if it
+     * is not already available.
+     * </p>
+     * 
+     * @return  the value of <code>{@link #lstResults}</code> if non-empty,
+     *          otherwise <code>null</code> is returned
+     *          
+     * @see #recoverQueryResults()
+     */
+    public List<QueryResponse>  getQueryResults() {
+        if (this.hasQueryResults())
+            return this.lstResults;
+        
+        return null;
+    }
+    
+    /**
+     * <p>
+     * Recovers and/or returns the results set associated with this <code>TestQueryRecord</code> record.
      * </p>
      * <p>
      * This method can be used in general to acquire the results set.
@@ -210,17 +247,19 @@ public final record TestQueryResults (
      * <li>Attempts to load the result set from persistent data file with name given in the record.</li>
      * <li>Queries the Test Archive with query described by parameters within the record.</li>
      * </ol>
-     * If the above operations all fail, a <code>null</code> value is returned, or an exception
-     * is thrown during operations.
+     * If the above operations all fail, a <code>null</code> value is returned or an exception
+     * is thrown.  A <code>null</code> value indicates that the persistent data file was missing
+     * AND the query operation failed.  
      * </p>
      * 
-     * @return      the result set of the query operation described by record
+     * @return      the result set of the query operation described by record,
+     *              or <code>null</code> if the data file is missing and query operation failed
      * 
-     * @throws ClassNotFoundException   the data file does not contain a List<QueryResponse> object
      * @throws IOException              the data file is corrupt
+     * @throws ClassNotFoundException   the data file does not contain a List<QueryResponse> object
      * @throws DpGrpcException          unable to establish <code>TestQueryService</code> connection
      */
-    public List<QueryResponse> recoverQueryResults() throws ClassNotFoundException, IOException, DpGrpcException {
+    public List<QueryResponse> recoverQueryResults() throws IOException, ClassNotFoundException, DpGrpcException {
         
         // If the query results data is already available return it
         if (!this.lstResults.isEmpty())
@@ -257,7 +296,7 @@ public final record TestQueryResults (
      * @return  an ordered list of extracted <code>QueryData</code> messages from results set,
      *          or <code>null</code> if result set is  not available 
      */
-    public List<QueryResponse.QueryReport.QueryData> extractQueryResults() {
+    public List<QueryResponse.QueryReport.QueryData> extractQueryData() {
         
         // Check that result set is available
         if (this.lstResults.isEmpty())
@@ -300,13 +339,13 @@ public final record TestQueryResults (
      * If any errors occur during the operation an exception is thrown.
      * </p>
      * 
-     * @return  <code>true</code> if query results were available and written to output file,
-     *          <code>false</code> if no output file was written
+     * @return  <code>true</code> if query results set was available and successfully written to output file,
+     *          <code>false</code> query results set was not available
      * 
      * @throws FileNotFoundException    Unable to create/open output file
      * @throws IOException              Unable to write data (or object stream header) to output file
      */
-    public boolean storeQueryResults() throws FileNotFoundException, IOException {
+    boolean storeQueryResults() throws FileNotFoundException, IOException {
 
         // Check that result set is available
         if (this.lstResults.isEmpty())
@@ -343,10 +382,10 @@ public final record TestQueryResults (
      * @throws ClassNotFoundException   the data file does not contain a <code>List&lt;QueryResponse&gt;</code> object
      */
     @SuppressWarnings("unchecked")
-    private boolean loadQueryResults() throws IOException, ClassNotFoundException {
+    boolean loadQueryResults() throws IOException, ClassNotFoundException {
         
         // Use class loader to find data file
-        InputStream         isFile = TestQueryResults.class.getClassLoader().getResourceAsStream(this.strFileName);
+        InputStream         isFile = TestQueryRecord.class.getClassLoader().getResourceAsStream(this.strFileName);
     
         // Check that the data file exists
         if (isFile == null)
@@ -383,7 +422,7 @@ public final record TestQueryResults (
      * 
      * @see TestQueryService 
      */
-    private boolean performQuery() throws DpGrpcException {
+    boolean performQuery() throws DpGrpcException {
 
         // Create the test Query Service API if necessary
         if (qsTestArchive == null)
