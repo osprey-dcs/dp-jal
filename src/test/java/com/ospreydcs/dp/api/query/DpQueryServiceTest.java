@@ -224,7 +224,7 @@ public class DpQueryServiceTest {
     @Test
     public final void testQueryUniStreamDpDataRequest() {
         final int   CNT_SOURCES = 100;
-        final long  LNG_DURATION = 10;
+        final long  LNG_DURATION = 10L;
         
         final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
         

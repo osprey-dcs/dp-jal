@@ -140,7 +140,7 @@ public final class DpIngestionConnectionFactoryDeprecated{
      * 
      * @param strHost       network URL of the desired service
      * @param intPort       server port used by the at the above service
-     * @param bolPlainText transmit data using plain ASCII (negates all TLS security)
+     * @param bolPlainText  transmit data using plain ASCII (negates all TLS security)
      * @param lngTimeout    timeout limit used for connection operations (keepalive ping timeout) 
      * @param tuTimeout     timeout units used for connection operations (keepalive ping timeout)
      * 

@@ -29,8 +29,6 @@ package com.ospreydcs.dp.api.query.model.proto;
 
 import static org.junit.Assert.fail;
 
-import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -42,6 +40,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
+import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
@@ -61,11 +60,11 @@ public class QueryResponseCollectorTest {
     // Class Constants
     //
     
-    /** Existing file (in resources) containing serialized results from example data query */
-    public static final String  STR_FILENAME_QUERY_RESULTS_WIDE = "querydata-results-wide.dat";
-    
-    /** Existing file (in resources) containing serialized results from example data query */
-    public static final String  STR_FILENAME_QUERY_RESULTS_LONG = "querydata-results-wide.dat";
+//    /** Existing file (in resources) containing serialized results from example data query */
+//    public static final String  STR_FILENAME_QUERY_RESULTS_WIDE = "querydata-results-wide.dat";
+//    
+//    /** Existing file (in resources) containing serialized results from example data query */
+//    public static final String  STR_FILENAME_QUERY_RESULTS_LONG = "querydata-results-wide.dat";
     
     
     //
@@ -87,7 +86,6 @@ public class QueryResponseCollectorTest {
      * @throws java.lang.Exception
      */
     @BeforeClass
-    @SuppressWarnings("unchecked")
     public static void setUpBeforeClass() throws Exception {
         
 //        // Get the wide data set
@@ -108,9 +106,11 @@ public class QueryResponseCollectorTest {
 //        isQueryData.close();
 //        isFile.close();
         
-        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(TestQueryResponses.SingleQueryType.WIDE);
+        List<QueryResponse> lstRspsWide = TestQueryResponses.queryResults(SingleQueryType.WIDE);
+        LST_QUERY_DATA_WIDE = lstRspsWide.stream().map(m -> m.getQueryReport().getQueryData()).toList();
         
-        LST_QUERY_DATA_WIDE = lstRsps.stream().map(m -> m.getQueryReport().getQueryData()).toList();   
+        List<QueryResponse> lstRspsLong = TestQueryResponses.queryResults(SingleQueryType.LONG);
+        LST_QUERY_DATA_LONG = lstRspsLong.stream().map(m -> m.getQueryReport().getQueryData()).toList();
     }
 
     /**
@@ -140,10 +140,10 @@ public class QueryResponseCollectorTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCollector#getTargetRefs()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCollector#getTargetSet()}.
      */
     @Test
-    public final void testGetTargetRefs() {
+    public final void testGetTargetSet() {
         fail("Not yet implemented"); // TODO
     }
 

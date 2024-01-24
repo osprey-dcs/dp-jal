@@ -31,7 +31,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import com.ospreydcs.dp.api.config.test.DpApiTestingConfig;
+import com.ospreydcs.dp.api.config.DpApiTestingConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 
 /**
@@ -223,16 +223,41 @@ public class TestDpDataRequestGenerator {
      * Creates a new <code>DpDataRequest</code> instance configured by the given arguments.
      * </p>
      * <p>
-     * Queries for the entire set of data sources within the test archive.  
+     * Queries for the first <code>cntSources</code> of data sources within the test archive.  
      * (The index for the first data source defaults to 0.)
+     * Queries for the given duration (start time default to 0L).
      * </p>
      * <p>
-     * Note that the start time is given so that multiple queries can
-     * be created to target a larger time range (i.e., "vertical" decomposition).
+     * Note that the no starting index or start time is given so the request always starts
+     * at the origin of the query domain.  Not intended for composite queries. 
      * </p>
      * 
      * @param cntSources        number of data sources in the query
      * @param lngDuration       time duration of query (in seconds), range = [INS_INCEPT, INS_INCEPT + lngDuration]
+     * 
+     * @return  new <code>DpDataRequest</code> for the all data source in LST_PV_NAMES and the specified time range
+     * 
+     * @throws IllegalArgumentException  the arguments create a query request outside the test archive
+     */
+    public static DpDataRequest createRequest(int cntSources, long lngDuration) throws IllegalArgumentException {
+        return createRequest(cntSources, 0, lngDuration, 0L);
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>DpDataRequest</code> instance configured by the given arguments.
+     * </p>
+     * <p>
+     * Queries for the entire set of data sources within the test archive.  
+     * (The index for the first data source defaults to 0.)
+     * </p>
+     * <p>
+     * Note that the start time is given so that composite queries can
+     * be created to target a larger time range (i.e., "vertical" decomposition).
+     * </p>
+     * 
+     * @param lngDuration       time duration of query (in seconds), range = [INS_INCEPT, INS_INCEPT + lngDuration]
+     * @param lngStartTime      start time of the query (in seconds) - actually an offset from <code>{@link #INS_INCEPT}</code>
      * 
      * @return  new <code>DpDataRequest</code> for the all data source in LST_PV_NAMES and the specified time range
      * 
@@ -251,13 +276,14 @@ public class TestDpDataRequestGenerator {
      * (The index for the first data source defaults to 0.)
      * </p>
      * <p>
-     * Note that the start time is given so that multiple queries can
+     * Note that the start time is given so that composite queries can
      * be created to target a larger time range (i.e., "vertical" decomposition).
      * The number of data sources is given to reduce the size of the overall query.
      * </p>
      * 
      * @param cntSources        number of data sources in the query
      * @param lngDuration       time duration of query (in seconds), range = [INS_INCEPT, INS_INCEPT + lngDuration]
+     * @param lngStartTime      start time of the query (in seconds) - actually an offset from <code>{@link #INS_INCEPT}</code>
      * 
      * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and the specified time range
      * 
@@ -276,7 +302,7 @@ public class TestDpDataRequestGenerator {
      * (the start time defaults to 0).
      * </p>
      * <p>
-     * Note that the index of the first data source is given so that multiple queries can
+     * Note that the index of the first data source is given so that composite queries can
      * be created for a larger target set of sources (i.e., "horizontal" decomposition).
      * </p>
      * 
@@ -300,7 +326,7 @@ public class TestDpDataRequestGenerator {
      * The start time of the returned query defaults to 0.
      * </p>
      * <p>
-     * Note that the index of the first data source is given so that multiple queries can
+     * Note that the index of the first data source is given so that composite queries can
      * be created for a larger target set of sources (i.e., "horizontal" decomposition).
      * The duration is given to reduce the size of the overall query.
      * </p>
@@ -331,13 +357,18 @@ public class TestDpDataRequestGenerator {
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The index of the first data source is given so that multiple queries can
+     * The index of the first data source is given so that composite queries can
      * be created that target a larger set of sources (which can then be concurrently streamed).
      * </li>
      * <br/>
      * <li>
-     * The start time is given so that multiple queries can be created that target a larger
+     * The start time is given so that composite queries can be created that target a larger
      * time range (which can then be concurrently streamed).
+     * </li>
+     * <br/>
+     * <li>
+     * Since both query domains can be decomposed this method is appropriate for creating
+     * "grid" composite queries.
      * </li>
      * <br/>
      * <li>

@@ -35,16 +35,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.ospreydcs.dp.api.config.test.DpApiTestingConfig;
+import com.ospreydcs.dp.api.config.DpApiTestingConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
@@ -400,15 +397,8 @@ public final record TestQueryRecord (
      */
     @SuppressWarnings("unchecked")
     boolean loadQueryResults() throws SecurityException, IOException, ClassNotFoundException {
-        
-//        // Use class loader to find data file
-//        InputStream         isFile = TestQueryRecord.class.getClassLoader().getResourceAsStream(this.strFileName);
-    
-        // Check that the data file exists
-//      if (isFile == null)
-//          return false;
-      
-        //            String  strFilePath = STR_PATH_DIR_DATA + this.strFileName;
+
+        // Assemble the path to the persistent storage file
         Path    pathData = Paths.get(STR_PATH_DIR_DATA, this.strFileName);
 
         // Check that the data file exists

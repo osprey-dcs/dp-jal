@@ -88,7 +88,7 @@ public class QueryResponseCollector {
     public static final TimeUnit   TU_TIMEOUT = TimeUnit.MILLISECONDS;
     
     
-    /** Parallelism tuning parameter - pivot to QueryData message processing when target set size hits this limit */
+    /** Parallelism tuning parameter - pivot to parallel processing when target set size hits this limit */
     public static final int        SZ_TARGET_PIVOT = 10;
     
     
@@ -143,10 +143,15 @@ public class QueryResponseCollector {
      * 
      * @return  the target set of the query data collection and organization operations
      */
-    public final SortedSet<SamplingIntervalRef>   getTargetRefs() {
+    public final SortedSet<SamplingIntervalRef>   getTargetSet() {
         return this.setTargetRefs;
     }
     
+    /**
+     * Returns the current size of the target set of <code>SamplingIntervalRef</code> instances.
+     * 
+     * @return  current size of the target set
+     */
     public int sizeTargetSet() {
         return this.setTargetRefs.size();
     }
@@ -207,6 +212,11 @@ public class QueryResponseCollector {
      * <p>
      * This is an atomic operation potentially modifying the target set. 
      * It synchronizing on the <code>{@link #objLock}</code> lock.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method pivots from serial processing to parallel processing when the target set size
+     * is greater than {@link #SZ_TARGET_PIVOT} = {@value #SZ_TARGET_PIVOT}.
      * </p>
      * 
      * @param msgBucket Query Service Protobuf message containing a query result data unit
@@ -492,7 +502,7 @@ public class QueryResponseCollector {
      * </p>
      * <p>
      * The assumption is that the argument collection is not associated with the current managed set of 
-     * target references returned by <code>{@link #getTargetRefs()}</code>.  More specifically, the arguments
+     * target references returned by <code>{@link #getTargetSet()}</code>.  More specifically, the arguments
      * have already been checked against the current target set and we know that new sampling interval references 
      * must be created.
      * </p>
@@ -549,7 +559,7 @@ public class QueryResponseCollector {
         List<BucketDataInsertTask> lstTasks = msgData
                 .getDataBucketsList()
                 .stream()
-                .map(buc -> BucketDataInsertTask.newTask(buc, this.getTargetRefs()))
+                .map(buc -> BucketDataInsertTask.newTask(buc, this.getTargetSet()))
                 .toList();
                 
         return lstTasks;

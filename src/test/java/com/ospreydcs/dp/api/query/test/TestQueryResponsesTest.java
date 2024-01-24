@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.query.test;
 
-import static org.junit.Assert.*;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -42,6 +40,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.config.DpApiTestingConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.CompositeQueryType;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;

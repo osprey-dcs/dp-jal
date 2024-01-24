@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.config.test;
+package com.ospreydcs.dp.api.config;
 
 import java.io.FileNotFoundException;
 
@@ -38,6 +38,7 @@ import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.api.config.test.TestQueryDataConfig;
 
 /**
  * <p>
@@ -64,12 +65,16 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
     // Class Resources
     //
     
-    /** Singular instance of this class */
-    private static DpApiTestingConfig   cfgInstance = null;
-    
     /** The class logger */
     private static final Logger         LOGGER = LogManager.getLogger();
+
     
+    //
+    // Class Attributes
+    //
+    
+    /** Singleton instance of this class */
+    private static DpApiTestingConfig   cfgInstance = null;
     
     /**
      * <p>
@@ -128,8 +133,6 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
     public TestQuery        testQuery;
     
     
-    
-    
     /**
      * Defines test archive parameters
      *
@@ -169,7 +172,7 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
         }
         
         @ACfgOverride.Struct(pathelem="DATA")
-        public Data                 data;
+        public TestQueryDataConfig  data;
      
         @ACfgOverride.Struct(pathelem="TIMEOUT_SHORT")
         public DpTimeoutConfig      timeoutShort;
@@ -179,21 +182,6 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
         
         @ACfgOverride.Struct(pathelem="CONNECTION")
         public GrpcConnectionConfig connection;
-        
-        
-        /**
-         * Defines test query data parameters
-         */
-        public static class Data extends CfgStructure<Data> {
-
-            /** Default constructor required for base class */
-            public Data() {
-                super(Data.class);
-            }
-         
-            @ACfgOverride.Field(name="PERSISTENCE")
-            public  String  persistence;
-        }
     }
     
     
