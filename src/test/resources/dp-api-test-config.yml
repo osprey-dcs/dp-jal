@@ -21,6 +21,9 @@ testArchive:
    pvPrefix: "pv_"            # the prefix ofdata source names      : DP_API_TEST_ARCHIVE_PV_PREFIX
    
 testQuery:
+   data:
+      persistence: src/test/data/persistence # persistent data location : DP_API_TEST_QUERY_DATA_PERSISTENCE
+      
    timeoutShort:
       active: true            # apply timeout condition   : DP_API_TEST_QUERY_TIMEOUT_ACTIVE
       limit: 5                # timeout limit             : DP_API_TEST_QUERY_TIMEOUT_LIMIT

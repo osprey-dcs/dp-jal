@@ -28,17 +28,23 @@
 package com.ospreydcs.dp.api.query.test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.ospreydcs.dp.api.config.test.DpApiTestingConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
@@ -94,6 +100,14 @@ public final record TestQueryRecord (
         ) 
 {
     
+    // 
+    // Application Resources
+    //
+    
+    /** Data Platform Testing configuration parameters */
+    private static final    DpApiTestingConfig CFG_TESTING = DpApiTestingConfig.getInstance();
+    
+    
     //
     // Record Constants
     //
@@ -104,7 +118,8 @@ public final record TestQueryRecord (
      *  - used only for storage operation
      *  - recovery of persistent data is done through class loader resource locator  
      */
-    public static final String  STR_PATH_DIR_DATA = "src/test/resources/data";
+//    public static final String  STR_PATH_DIR_DATA = "src/test/resources/data";
+    public static final String  STR_PATH_DIR_DATA = CFG_TESTING.testQuery.data.persistence;
     
     
     //
@@ -184,7 +199,8 @@ public final record TestQueryRecord (
     public static boolean shutdownQueryServiceApi() {
         if (TestQueryRecord.qsTestArchive != null) {
             TestQueryRecord.qsTestArchive.shutdown();
-            
+            TestQueryRecord.qsTestArchive = null;
+
             return true;
         }
         
@@ -317,7 +333,7 @@ public final record TestQueryRecord (
      * @return  Data Platform Query Service <code>QueryRequest</code> message
      */
     public QueryRequest createRequest() {
-        DpDataRequest   dpRqst = TestDpDataRequestGenerator.createRequest(this.cntSources, this.indSourceFirst, this.lngDuration);
+        DpDataRequest   dpRqst = TestDpDataRequestGenerator.createRequest(this.cntSources, this.indSourceFirst, this.lngDuration, this.lngStartTime);
         QueryRequest    msgRqst = dpRqst.buildQueryRequest();
         
         return msgRqst;
@@ -369,7 +385,7 @@ public final record TestQueryRecord (
 
     
     //
-    // Support Methods
+    // Support Methods - Package Accessible
     //
     
     /**
@@ -378,19 +394,31 @@ public final record TestQueryRecord (
      * @return  <code>true</code> if the data was successfully loaded into the given record,
      *          <code>false</code> if the data file is missing
      * 
+     * @throws SecurityException        access to persistent data directory denied
      * @throws IOException              the data file is corrupt
      * @throws ClassNotFoundException   the data file does not contain a <code>List&lt;QueryResponse&gt;</code> object
      */
     @SuppressWarnings("unchecked")
-    boolean loadQueryResults() throws IOException, ClassNotFoundException {
+    boolean loadQueryResults() throws SecurityException, IOException, ClassNotFoundException {
         
-        // Use class loader to find data file
-        InputStream         isFile = TestQueryRecord.class.getClassLoader().getResourceAsStream(this.strFileName);
+//        // Use class loader to find data file
+//        InputStream         isFile = TestQueryRecord.class.getClassLoader().getResourceAsStream(this.strFileName);
     
         // Check that the data file exists
-        if (isFile == null)
+//      if (isFile == null)
+//          return false;
+      
+        //            String  strFilePath = STR_PATH_DIR_DATA + this.strFileName;
+        Path    pathData = Paths.get(STR_PATH_DIR_DATA, this.strFileName);
+
+        // Check that the data file exists
+        if (!Files.exists(pathData))
             return false;
         
+        // Open input stream to data file
+        File        fileData = pathData.toFile();
+        InputStream isFile = new FileInputStream(fileData);
+
         // Read the data file as a serialized List<QueryResponse> object
         ObjectInputStream isObject = new ObjectInputStream(isFile);
     
@@ -437,6 +465,37 @@ public final record TestQueryRecord (
         this.lstResults.addAll(lstResults);
         
         return true;
+    }
+    
+    /**
+     * <p>
+     * Deletes the file containing the persistent storage of the query results set.
+     * </p>
+     * <p>
+     * This operation is essentially the complement of <code>{@link #storeQueryResults()}</code>.
+     * It erases the persistent storage associated with the results set of the query request.
+     * If the file does not exist the method does nothing, returned a value <code>false</code>.
+     * </p>
+     * 
+     * @return  <code>true</code> if the persistent storage file existed and was deleted,
+     *          <code>false</code> if the file did not exist, or existed and the deletion failed
+     *          
+     * @throws IOException          general I/O error deleting file
+     * @throws SecurityException    file access denied by security manager
+     */
+    boolean deletePersistence() throws IOException, SecurityException {
+        
+        // Create path to data file
+        Path    pathFile = Paths.get(STR_PATH_DIR_DATA, this.strFileName);
+
+        // Check that the data file exists
+        if (!Files.exists(pathFile))
+            return false;
+
+        // Attempt to delete the file
+        boolean bolDeleted = Files.deleteIfExists(pathFile);
+
+        return bolDeleted;
     }
 };
 

@@ -284,7 +284,7 @@ public class TestQueryCompositeRecords {
 
         case HORIZONTAL -> createRecordsHorizontal();
         case VERTICAL -> createRecordsVertical();
-        case GRID -> createRecordsGridded();
+        case GRID -> createRecordsGrid();
         };
     }
     
@@ -333,10 +333,10 @@ public class TestQueryCompositeRecords {
     }
     
     /**
-     * Divides the target query domain both horizontally and vertically, that is, 
-     * by data sources and time. 
+     * Divides the target query domain in both horizontally and vertically, that is, 
+     * by data sources and time. Creates a "grid" query domain.
      */
-    private void    createRecordsGridded() {
+    private void    createRecordsGrid() {
         
         int cntQueriesBySource = this.cntQueries / 2;
         int cntQueriesByTime = this.cntQueries / 2;

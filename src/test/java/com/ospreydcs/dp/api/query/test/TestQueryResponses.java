@@ -29,10 +29,10 @@ package com.ospreydcs.dp.api.query.test;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,7 +48,8 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * <p>
  * The utility can provide result sets that mimic that of an actual Query Service data request.
  * The utility maintains persistent lists of <code>QueryResponse</code> instances within file storage.
- * These lists can be recovered to mimic query response streams used for unit testing.
+ * These lists can be recovered to mimic query response streams used for unit testing
+ * when the Query Service is off line.
  * </p>
  * <p>
  * The utility is used to manage persistent Query Service responses which would result from 
@@ -181,21 +182,21 @@ public class TestQueryResponses {
     private static final Logger LOGGER = LogManager.getLogger();
     
     
-    //
-    // Concurrent Results Sets common parameters
-    //
-    
-    /** concurrent results set - number of threads */
-    public static final int     CONC_CNT_THRDS = 5;
-    
-    /** concurrent results set - number of data sources per thread */
-    public static final int     CONC_CNT_SRCS_PER_THRD = 10;
-    
-    /** concurrent results set - time range duration of query (in seconds) */
-    public static final long    CONC_LNG_DURATION = 5L;
-    
-    /** concurrent results set - persistent storage file name */
-    public static final String  CONC_STR_FILENAME_PREFIX = "query-results-concurrent";
+//    //
+//    // Concurrent Results Sets common parameters
+//    //
+//    
+//    /** concurrent results set - number of threads */
+//    public static final int     CONC_CNT_THRDS = 5;
+//    
+//    /** concurrent results set - number of data sources per thread */
+//    public static final int     CONC_CNT_SRCS_PER_THRD = 10;
+//    
+//    /** concurrent results set - time range duration of query (in seconds) */
+//    public static final long    CONC_LNG_DURATION = 5L;
+//    
+//    /** concurrent results set - persistent storage file name */
+//    public static final String  CONC_STR_FILENAME_PREFIX = "query-results-concurrent";
     
     
     //
@@ -278,22 +279,22 @@ public class TestQueryResponses {
      * 5 second(s) total duration - 1 second per sub-query 
      */
     public static final TestQueryCompositeRecords   CQRECS_GRID = new TestQueryCompositeRecords(
-                                                        TestQueryCompositeRecords.CompositeStrategy.VERTICAL,
+                                                        TestQueryCompositeRecords.CompositeStrategy.GRID,
                                                         10,
                                                         50,
                                                         5L,
-                                                        "queryresults-composite-gridded");
+                                                        "queryresults-composite-grid");
     
     
-    /** 
-     * Vector of data and persistent storage locations for "concurrent" results sets 
-     * - initialized in static block 
-     * <p>
-     * {@value #CONC_CNT_THRDS} results sets (i.e., number of concurrent query threads) <br/>
-     * {@value #CONC_CNT_SRCS_PER_THRD} separate data sources per results set<br/>
-     * {@value #CONC_LNG_DURATION} second(s) duration each results set (same time range)
-     */
-    public static final Vector<TestQueryRecord> VEC_QRECS_CONC = new Vector<>(CONC_CNT_THRDS * CONC_CNT_SRCS_PER_THRD);
+//    /** 
+//     * Vector of data and persistent storage locations for "concurrent" results sets 
+//     * - initialized in static block 
+//     * <p>
+//     * {@value #CONC_CNT_THRDS} results sets (i.e., number of concurrent query threads) <br/>
+//     * {@value #CONC_CNT_SRCS_PER_THRD} separate data sources per results set<br/>
+//     * {@value #CONC_LNG_DURATION} second(s) duration each results set (same time range)
+//     */
+//    public static final Vector<TestQueryRecord> VEC_QRECS_CONC = new Vector<>(CONC_CNT_THRDS * CONC_CNT_SRCS_PER_THRD);
 
     
     /** collection of all query results in class - used for persistent storage */
@@ -321,21 +322,21 @@ public class TestQueryResponses {
      */
     static {
         
-        // Create the parallel results sets
-        for (int n=0; n<CONC_CNT_THRDS; n++) {
-            String  strFileName = CONC_STR_FILENAME_PREFIX + "-" + Integer.toString(n) + ".dat";
-            int     indSourceFirst = n * CONC_CNT_SRCS_PER_THRD;
-            
-            TestQueryRecord rec = new TestQueryRecord(
-                    strFileName,
-                    CONC_CNT_SRCS_PER_THRD,
-                    indSourceFirst,
-                    CONC_LNG_DURATION,
-                    0L
-                    );
-            
-            VEC_QRECS_CONC.add(rec);
-        }
+//        // Create the parallel results sets
+//        for (int n=0; n<CONC_CNT_THRDS; n++) {
+//            String  strFileName = CONC_STR_FILENAME_PREFIX + "-" + Integer.toString(n) + ".dat";
+//            int     indSourceFirst = n * CONC_CNT_SRCS_PER_THRD;
+//            
+//            TestQueryRecord rec = new TestQueryRecord(
+//                    strFileName,
+//                    CONC_CNT_SRCS_PER_THRD,
+//                    indSourceFirst,
+//                    CONC_LNG_DURATION,
+//                    0L
+//                    );
+//            
+//            VEC_QRECS_CONC.add(rec);
+//        }
         
         // Create collects of all results sets and add them all
         SET_QRECS_ALL = new LinkedList<>();
@@ -436,6 +437,29 @@ public class TestQueryResponses {
     
     /**
      * <p>
+     * Returns the number of sub-queries within the composite query.
+     * </p>
+     * <p>
+     * This method is used to obtain the number of (sub)queries within a composite query
+     * to avoid exceptions in <code>{@link #queryResults(CompositeQueryType, int)}</code>.
+     * </p>
+     * 
+     * @param enmType   enumeration constant specifying the desired composite query type
+     * 
+     * @return  the number of sub-queries within the given, managed composite query
+     * 
+     * @see TestQueryCompositeRecords#getQueryCount()
+     */
+    public static int   getSubQueryCount(CompositeQueryType enmType) {
+       
+        // Get the number of composite sub-queries
+        int cntSubQueries = enmType.getQueryCount();
+        
+        return cntSubQueries;
+    }
+    
+    /**
+     * <p>
      * Shuts down any <code>{@link TestQueryService}</code> instance that may have been created.
      * </p>
      * <p>
@@ -454,7 +478,7 @@ public class TestQueryResponses {
     
     /**
      * <p>
-     * Stores results sets to persistent data files for all managed query response data.
+     * Stores all managed query results sets to persistent data files.
      * </p>
      * <p>
      * The results sets for each maintained query response are queried then stored into the
@@ -519,6 +543,43 @@ public class TestQueryResponses {
 
         if (bolSuccess)
             TestQueryResponses.shutdown();
+        
+        return bolSuccess;
+    }
+    
+    /**
+     * <p>
+     * Deletes persistent data files for all managed query results sets.
+     * </p>
+     * <p>
+     * This method is essentially the complement of the method <code>{@link #storePersistentData()}</code>. 
+     * It is used to clear all persistent data created by that method.
+     * </p>
+     * <p>
+     * A returned value of <code>true</code> indicates that the repository of persistent data was
+     * fully populated before invocation, and is now completely empty upon return.  If the value 
+     * <code>false</code> is returned it indicates that either the persistence repository was not
+     * fully populated, or not all data files could be deleted.  However, a value <code>false</code>
+     * does not necessary mean that the repository still contains data - it should be checked
+     * manually.
+     * </p>
+     * 
+     * @return  <code>true</code> if the persistence repository was fully populated and is now empty,
+     *          <code>false</code> not all data files were deleted (some may not have existed)
+     * 
+     * @throws SecurityException    class loader resource locator provided an invalid URL for the file
+     * @throws URISyntaxException   general I/O error deleting file
+     * @throws IOException          file access denied by security manager
+     */
+    public static boolean deletePersistentData() throws SecurityException, URISyntaxException, IOException {
+        
+        boolean bolSuccess = true;
+        
+        for (TestQueryRecord rec : TestQueryResponses.SET_QRECS_ALL) {
+            
+            if (!rec.deletePersistence())
+                bolSuccess = false;
+        }
         
         return bolSuccess;
     }

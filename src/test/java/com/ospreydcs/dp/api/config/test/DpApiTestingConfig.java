@@ -167,6 +167,9 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
         public TestQuery() {
             super(TestQuery.class);
         }
+        
+        @ACfgOverride.Struct(pathelem="DATA")
+        public Data                 data;
      
         @ACfgOverride.Struct(pathelem="TIMEOUT_SHORT")
         public DpTimeoutConfig      timeoutShort;
@@ -176,6 +179,21 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
         
         @ACfgOverride.Struct(pathelem="CONNECTION")
         public GrpcConnectionConfig connection;
+        
+        
+        /**
+         * Defines test query data parameters
+         */
+        public static class Data extends CfgStructure<Data> {
+
+            /** Default constructor required for base class */
+            public Data() {
+                super(Data.class);
+            }
+         
+            @ACfgOverride.Field(name="PERSISTENCE")
+            public  String  persistence;
+        }
     }
     
     

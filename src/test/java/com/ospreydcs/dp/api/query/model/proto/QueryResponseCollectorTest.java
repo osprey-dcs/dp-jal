@@ -41,6 +41,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
@@ -89,23 +90,27 @@ public class QueryResponseCollectorTest {
     @SuppressWarnings("unchecked")
     public static void setUpBeforeClass() throws Exception {
         
-        // Get the wide data set
-        InputStream         isFile = QueryResponseCollectorTest.class.getClassLoader().getResourceAsStream(STR_FILENAME_QUERY_RESULTS_WIDE);
-        ObjectInputStream   isQueryData = new ObjectInputStream(isFile);
+//        // Get the wide data set
+//        InputStream         isFile = QueryResponseCollectorTest.class.getClassLoader().getResourceAsStream(STR_FILENAME_QUERY_RESULTS_WIDE);
+//        ObjectInputStream   isQueryData = new ObjectInputStream(isFile);
+//        
+//        LST_QUERY_DATA_WIDE = (List<QueryResponse.QueryReport.QueryData>)isQueryData.readObject();
+//        
+//        isQueryData.close();
+//        isFile.close();
+//        
+//        // Get the long data set
+//        isFile = QueryResponseCollectorTest.class.getClassLoader().getResourceAsStream(STR_FILENAME_QUERY_RESULTS_LONG);
+//        isQueryData = new ObjectInputStream(isFile);
+//        
+//        LST_QUERY_DATA_LONG = (List<QueryResponse.QueryReport.QueryData>)isQueryData.readObject();
+//        
+//        isQueryData.close();
+//        isFile.close();
         
-        LST_QUERY_DATA_WIDE = (List<QueryResponse.QueryReport.QueryData>)isQueryData.readObject();
+        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(TestQueryResponses.SingleQueryType.WIDE);
         
-        isQueryData.close();
-        isFile.close();
-        
-        // Get the long data set
-        isFile = QueryResponseCollectorTest.class.getClassLoader().getResourceAsStream(STR_FILENAME_QUERY_RESULTS_LONG);
-        isQueryData = new ObjectInputStream(isFile);
-        
-        LST_QUERY_DATA_LONG = (List<QueryResponse.QueryReport.QueryData>)isQueryData.readObject();
-        
-        isQueryData.close();
-        isFile.close();
+        LST_QUERY_DATA_WIDE = lstRsps.stream().map(m -> m.getQueryReport().getQueryData()).toList();   
     }
 
     /**
