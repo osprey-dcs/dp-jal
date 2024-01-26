@@ -48,7 +48,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamQueueBuffer;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamQueueBufferDeprecated;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 
 /**
@@ -88,10 +88,10 @@ public class DpQueryServiceTest {
     // Class Constants
     //
     
-    /** Output file for <code>DpQueryStreamQueueBuffer</code> data buffer results with lots of columns */
+    /** Output file for <code>DpQueryStreamQueueBufferDeprecated</code> data buffer results with lots of columns */
     public static final String  STR_PATH_QUERY_DATA_RESULTS_WIDE = "src/test/resources/data/querydata-results-wide.dat";
     
-    /** Output file for <code>DpQueryStreamQueueBuffer</code> data buffer results with largest time interval */
+    /** Output file for <code>DpQueryStreamQueueBufferDeprecated</code> data buffer results with largest time interval */
     public static final String  STR_PATH_QUERY_DATA_RESULTS_LONG = "src/test/resources/data/querydata-results-long.dat";
     
     
@@ -230,7 +230,7 @@ public class DpQueryServiceTest {
         
         try {
             Instant insStart = Instant.now();
-            DpQueryStreamQueueBuffer bufResult = apiQuery.queryUniStream(rsqst);
+            DpQueryStreamQueueBufferDeprecated bufResult = apiQuery.queryUniStream(rsqst);
             
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
@@ -273,7 +273,7 @@ public class DpQueryServiceTest {
         
         try {
             Instant insStart = Instant.now();
-            DpQueryStreamQueueBuffer bufResult = apiQuery.queryUniStream(rsqst);
+            DpQueryStreamQueueBufferDeprecated bufResult = apiQuery.queryUniStream(rsqst);
             
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
@@ -324,7 +324,7 @@ public class DpQueryServiceTest {
         
         try {
             Instant insStart = Instant.now();
-            DpQueryStreamQueueBuffer bufResult = apiQuery.queryBidiStream(rsqst);
+            DpQueryStreamQueueBufferDeprecated bufResult = apiQuery.queryBidiStream(rsqst);
             
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
@@ -367,7 +367,7 @@ public class DpQueryServiceTest {
         
         try {
             Instant insStart = Instant.now();
-            DpQueryStreamQueueBuffer bufResult = apiQuery.queryBidiStream(rsqst);
+            DpQueryStreamQueueBufferDeprecated bufResult = apiQuery.queryBidiStream(rsqst);
             
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
@@ -415,7 +415,7 @@ public class DpQueryServiceTest {
         final long  LNG_DURATION = 10;
         
         final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        final DpQueryStreamQueueBuffer   bufResult;
+        final DpQueryStreamQueueBufferDeprecated   bufResult;
         
         try {
             Instant insStart = Instant.now();
@@ -483,7 +483,7 @@ public class DpQueryServiceTest {
         final long  LNG_DURATION = 60;
         
         final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        final DpQueryStreamQueueBuffer   bufResult;
+        final DpQueryStreamQueueBufferDeprecated   bufResult;
         
         try {
             Instant insStart = Instant.now();

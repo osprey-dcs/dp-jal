@@ -1,10 +1,10 @@
 /*
  * Project: dp-api-common
- * File:	IQueryStreamQueueBufferObserver.java
+ * File:	IDpQueryStreamObserver.java
  * Package: com.ospreydcs.dp.api.query.model
- * Type: 	IQueryStreamQueueBufferObserver
+ * Type: 	IDpQueryStreamObserver
  *
- * Copyright 2010-2022 the original author or authors.
+ * Copyright 2010-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Oct 1, 2022
+ * @since Jan 14, 2024
  *
  * TODO:
  * - None
@@ -33,7 +33,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 /**
  * <p>
  * Interface implemented by types wishing to receive notifications and data from
- * a <em>Query Service</em> data stream (e.g., the class <code>DpQueryStreamQueueBufferDeprecated</code>).
+ * a <em>Query Service</em> data stream.
  * </p>
  * <p>
  * The data stream can send messages to the implementer of this class about streaming
@@ -47,13 +47,11 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * significant CPU resources a separate processing thread should be spawned and
  * the method returned.
  * </p>
- * 
  *
  * @author Christopher K. Allen
- * @since Oct 1, 2022
- *
+ * @since Jan 14, 2024
  */
-public interface IQueryStreamQueueBufferObserver {
+public interface IDpQueryStreamObserver {
 
     /**
      * <p>
@@ -61,12 +59,12 @@ public interface IQueryStreamQueueBufferObserver {
      * </p>
      * <p>
      * The argument for the method is the data streaming buffer, which provides the
-     * recipient with a handle for retrieving the acquire data pages.
+     * recipient with a handle for retrieving the buffered streaming responses.
      * </p>
      * 
-     * @param bufStrm stream buffer that has started and will contain buffered data
+     * @param bufStrm stream buffer that has contains response data
      */
-    public void notifyStreamingStarted(DpQueryStreamQueueBufferDeprecated bufStrm);
+    public void notifyStreamingStarted(/* DpQueryStreamBuffer bufStrm */);
     
     /**
      * <p>
@@ -85,17 +83,22 @@ public interface IQueryStreamQueueBufferObserver {
     
     /**
      * <p>
-     * Called to notify that the given data set is ready.
+     * Called to notify that the given Query Service response was recovered.
      * </p>
      * <p>
-     * The arguments for the method are the data page index within the stream buffer and the data page 
-     * itself, respectively.  
+     * The given data page of the results set has been streamed and is ready for
+     * processing.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * Any data processing of the argument should be performed on a separate thread!
+     * Clients should accept the data and return as soon as possible.  The streaming
+     * service may be interrupted if the notification does not return promptly.
      * </p>
      * 
-     * @param indPage       index of the data page in the stream
-     * @param msgRspData    gRPC message containing page of requested data
+     * @param msgRsp    Query Service gRPC response message containing page of requested data
      */
-    public void notifyDataPageReady(Integer indPage, QueryResponse.QueryReport.QueryData msgRspData);
+    public void notifyResponseReady(QueryResponse msgRsp);
     
     /**
      * <p>
@@ -109,7 +112,7 @@ public interface IQueryStreamQueueBufferObserver {
      * 
      * @param bufStrm stream buffer that has completed and contains all requested data
      */
-    public void notifyStreamingCompleted(DpQueryStreamQueueBufferDeprecated bufStrm);
+    public void notifyStreamingCompleted(/* DpQueryStreamBuffer bufStrm */);
     
     /**
      * <p>
