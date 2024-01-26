@@ -125,6 +125,7 @@ import io.grpc.stub.StreamObserver;
  */
 public class DpQueryStreamQueueBuffer implements StreamObserver<QueryResponse> /* Serializable */ {
 
+    
     //
     // Application Resources
     //
