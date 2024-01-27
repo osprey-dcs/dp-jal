@@ -29,6 +29,7 @@ package com.ospreydcs.dp.api.query.model;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -40,19 +41,22 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.RejectDetails;
 import com.ospreydcs.dp.grpc.v1.common.RejectDetails.RejectReason;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
+import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorOperation;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
+import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 import io.grpc.stub.CallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
 /**
  * <p>
- * A stream buffer for Query Service gRPC data streams used to accumulate query request result sets.
- * </p> 
+ * A stream buffer and blocking queue for Query Service gRPC data streams, also provides notification services.
+ * </p>
+ * <p>
+ * Class instances are used to accumulate query request result sets.  The can be used as either a data buffer, a
+ * blocking queue, and/or a callback notification server. 
  * <p>
  * This class performs the actual data query from the <em>Query Service</em>.  
  * It receives the data request during construction.  The request is sent to the Query service when invoking 
@@ -61,6 +65,7 @@ import io.grpc.stub.StreamObserver;
  * processing by the client.  
  * </p>
  * <p>
+ * <h2>gRPC Streaming</h2>
  * The type of gRPC data stream employed is determined by the value of <code>{@link #enmStreamType}</code> set
  * during construction (see <code>{@link StreamType}</code>).
  * The <code>{@link StreamType#UNIDIRECTIONAL}</code> value creates a unidirectional stream while the 
@@ -68,41 +73,51 @@ import io.grpc.stub.StreamObserver;
  * The <code>DpQueryStreamBuffer</code> instance itself receives the responses through the implemented methods of the 
  * <code>StreamObserver</code> interface (that is, the instance itself acts as the backward stream from the 
  * Query Service).
- * </p>  
- * <p>
- * The <code>DpQueryStreamBuffer</code> class can be used as a <em>stream buffer</em> collecting data pages 
- * as they become available, Alternatively, it can be used as a callback server to notify 
- * <code>{@link IDataStreamObserver}</code> instances of incoming data and events produced by the data stream.  
- * Use the <code>{@link #addStreamObserver(IDpQueryStreamObserver)} method for callback registration before
- * invoking <code>{@link #start()}</code>.
- * </p>
- * <h2>Stream Buffer</h2>  
- * Use the <code>{@link #getBufferSize()}</code> method to determine the current buffer size.
- * Use the <code>{@link #getBufferPage(Integer)}</code> method to retrieve data
- * pages of a particular index.  
  * </p>
  * <p>
- * <p>
- * <h2>Callback Observers</h2>
- * Alternative to stream buffer usage, 
- * one can register a callback using <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>
- * method which will be invoked whenever a new data page becomes available.
- * The the gRPC message response containing the data is provided to the callback methods.  The 
- * <code>{@link IDataStreamObserver}</code> interface also contains notifications for streaming events, 
- * for example start, completed, rejected, and error notifications.
- * </p> 
- * <p>
- * <h2>gRPC Streaming</h2>
+ * <h4>Unidirectional Streaming</h4>  
  * For unidirectional streaming the <em>Query Service</em> simply transmits data pages at its
  * maximum rate.
- * <br/> <br/>  
+ * <h4>Bidirectional Streaming</h4>  
  * For bidirectional streaming a handle to the <em>Query Service</em> forward stream ({@link #hndSvrStrm}) is 
  * created from the given gRPC non-blocking service stub.  This is the handle by which we send the data page 
  * requests.  That is, in bidirectional stream each data page is requested explicitly.  This may be slower
  * but it is more reliable.
  * </p> 
  * <p>
- * Note that this class is not explicitly a separate Java thread process,
+ * <h2>Usage</h2>
+ * A <code>DpQueryStreamBuffer</code> object can be used as a <em>stream buffer</em> collecting data pages 
+ * as they become available, or a <em>blocking queue</em> allowing clients to consume data pages as they become 
+ * available.  Alternatively, it can be used as a <em>callback server</em> to notify 
+ * <code>{@link IDataStreamObserver}</code> instances of incoming data and events produced by the data stream.  
+ * Use the <code>{@link #addStreamObserver(IDpQueryStreamObserver)}</code> method for callback registration 
+ * before invoking <code>{@link #start()}</code>.
+ * </p>
+ * <h4>Stream Buffer</h4>  
+ * Use the <code>{@link #getBufferSize()}</code> method to determine the current buffer size.
+ * Use the <code>{@link #getBufferPage(Integer)}</code> method to retrieve data
+ * pages of a particular index.  
+ * </p>
+ * <p>
+ * <h4>Blocking Queue</h4>
+ * Use the <code>{@link #getQueueSize()}</code> method to determine the current size of the queue buffer.
+ * Use the <code>{@link #removeQueuePage()}</code> method to retrieve data pages from the queue as they become 
+ * available.  The latter methods will block until a data page becomes available or return immediate if one is 
+ * already available.
+ * </p>
+ * <p>
+ * <h4>Callback Server</h4>
+ * Alternative to stream buffer or queue usage, 
+ * one can register for callback notifications using 
+ * <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>
+ * method which will be invoked whenever a new data page becomes available.
+ * The the gRPC message response containing the data is provided to the callback methods.  The 
+ * <code>{@link IDataStreamObserver}</code> interface also contains notifications for streaming events, 
+ * for example start, completed, rejected, and error notifications.
+ * </p> 
+ * <p>
+ * <h2>NOTES:</h2>
+ * Active class objects are not explicitly a separate Java thread process,
  * although it behaves much like one.  The actual thread is realized as the 
  * <em>Query Service</em> backward data stream. The class serves as a receiver (backward stream) of
  * <em>Query Service</em> data messages and, thus, responds to them as they
@@ -194,7 +209,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
 
 
     //
-    // Streaming State Variables - Event Monitor Latches
+    // Streaming State Variables - Event Monitors and Semaphores
     //
     
     /** First response monitor from <em>Query Service</em> - also used as a state variable, needed for request rejection */
@@ -202,6 +217,9 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     
     /** The stream end monitor - released when the <code>onCompleted</code> signal is received */
     private final CountDownLatch monStrmComplete = new CountDownLatch(1);
+    
+    /** Data page available semaphore  */
+    private final Semaphore     semPageRdy = new Semaphore(0, true);
     
     
     //
@@ -242,6 +260,50 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     private String  strErrMsg = null;
 
     
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>DpQueryStreamBuffer</code> ready for use.
+     * </p>
+     * <p>
+     * All internal logging for the returned instance is turned off.
+     * </p>
+     * 
+     * @param enmStreamType the gRPC data stream type this response buffer is managing 
+     * @param stubAsync     the streaming communications stub of the Query Service gRPC interface 
+     * @param msgRequest    the Query Service data request message 
+     * 
+     * @return new <code>DpQueryStreamBuffer</code> initialized with the given arguments.
+     * 
+     * @see #DpQueryStreamBuffer(StreamType, DpQueryServiceStub, QueryRequest, boolean)
+     * @see DpQueryStreamBuffer
+     */
+    public static DpQueryStreamBuffer newBuffer(StreamType enmType, DpQueryServiceStub stubAsync, QueryRequest msgRequest) {
+        return DpQueryStreamBuffer.newBuffer(enmType, stubAsync, msgRequest, false);
+    }
+    
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>DpQueryStreamBuffer</code> ready for use.
+     * </p>
+     * 
+     * @param enmStreamType the gRPC data stream type this response buffer is managing 
+     * @param stubAsync     the streaming communications stub of the Query Service gRPC interface 
+     * @param msgRequest    the Query Service data request message 
+     * @param bolLogging    set <code>true</code> to include event logging (for debugging)
+     * 
+     * @return new <code>DpQueryStreamBuffer</code> initialized with the given arguments.
+     * 
+     * @see #DpQueryStreamBuffer(StreamType, DpQueryServiceStub, QueryRequest, boolean)
+     * @see DpQueryStreamBuffer
+     */
+    public static DpQueryStreamBuffer newBuffer(StreamType enmType, DpQueryServiceStub stubAsync, QueryRequest msgRequest, boolean bolLogging) {
+        return new DpQueryStreamBuffer(enmType, stubAsync, msgRequest, bolLogging);
+    }
+    
     
     //
     // Construction and Initialization
@@ -275,23 +337,15 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
      * @param enmStreamType the gRPC data stream type this response buffer is managing 
      * @param stubAsync     the streaming communications stub of the Query Service gRPC interface 
      * @param msgRequest    the Query Service data request message 
-     * @param lngTimeout    maximum timeout limit to wait for the responses from the Query Service 
-     * @param tuTimeout     maximum timeout limit units for response from the Query Service
      * @param bolLogging    set <code>true</code> to include event logging (for debugging)
+     * 
+     * @see DpQueryStreamBuffer
      */
-    public DpQueryStreamBuffer(
-            StreamType enmStreamType, 
-            DpQueryServiceStub stubAsync, 
-            QueryRequest msgRequest, 
-            long lngTimeout, 
-            TimeUnit tuTimeout, 
-            boolean bolLogging) 
+    public DpQueryStreamBuffer(StreamType enmStreamType, DpQueryServiceStub stubAsync, QueryRequest msgRequest, boolean bolLogging) 
     {
         this.enmStreamType = enmStreamType;
         this.stubAsync = stubAsync;
         this.msgRequest = msgRequest;
-//        this.lngTimeout = lngTimeout;
-//        this.tuTimeout = tuTimeout;
         this.bolLogging = bolLogging;
     }
 
@@ -926,6 +980,97 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     }
     
     
+    // 
+    // Blocking Queue Operations
+    //
+    
+    /**
+     * <p>
+     * Returns the number of available data pages when using this stream buffer as a blocking queue.
+     * </p>
+     * 
+     * @return number of data pages ready for processing within the queue buffer 
+     */
+    public int getQueueSize() {
+        return this.semPageRdy.availablePermits();
+    }
+
+    /**
+     * <p>
+     * Removes and returns the data page at the queue head, blocking indefinitely until one becomes available.
+     * </p>
+     * <p>
+     * When using this buffer as a blocking queue:
+     * <ul>
+     * <li>The method blocks indefinitely until a data page is ready for consumption.</li>
+     * <li>Competing threads will receive data pages in order of invocation.</li>
+     * <li>If the stream completes or terminates unexpectedly the method continues to block.</li>
+     * <li>It is the responsibility of the caller to handle exceptions in the stream.</li>
+     * </ul>
+     * </p>
+     * 
+     * @return the data page at the head of the queue buffer
+     * 
+     * @throws NoSuchElementException   if the stream has completed and the queue is empty
+     * @throws InterruptedException     if the current thread is interrupted while waiting
+     */
+    public QueryResponse removeQueuePage() throws NoSuchElementException, InterruptedException {
+        
+        // Block (indefinitely) until a data page becomes available
+        this.semPageRdy.acquire();
+        
+        // Remove and return the data page at the queue head
+        return this.lstBufferRsps.remove();
+    }
+    
+    /**
+     * <p>
+     * Removes and returns the data page at the queue head, 
+     * blocking until a page becomes available or timeout occurs.
+     * </p>
+     * <p>
+     * When using this buffer as a blocking queue:
+     * <ul>
+     * <li>The method blocks until a data page is ready for consumption, or a timeout occurs.</li>
+     * <li>Competing threads will receive data pages in order of invocation.</li>
+     * <li>If the stream completes or terminates unexpectedly the method continues to block until timeout occurs.</li>
+     * <li>It is the responsibility of the caller to handle exceptions in the stream.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * </p>
+     * 
+     * @param lngTimeout    timeout duration
+     * @param tuTimeout     timeout time units 
+     * 
+     * @return the data page at the head of the queue buffer
+     * 
+     * @throws TimeoutException     no data page available within the timeout limit
+     * @throws InterruptedException if the current thread is interrupted
+     */
+    public QueryResponse removeQueuePage(long lngTimeout, TimeUnit tuTimeout) throws TimeoutException, InterruptedException {
+        
+        // Block (with timeout) until a data page becomes available
+        boolean bolResult = this.semPageRdy.tryAcquire(lngTimeout, tuTimeout);
+        
+        // Check if timeout occurred 
+        if (!bolResult) {
+            String strMsg = JavaRuntime.getQualifiedCallerName() + ": timeout occured after " + lngTimeout + " " + tuTimeout.name();
+            
+            // Log event
+            if (this.bolLogging)
+                LOGGER.error(strMsg);
+            
+            throw new TimeoutException(strMsg);
+        }
+        
+        // Remove and return the data page at the queue head
+        return this.lstBufferRsps.remove();
+    }
+    
+    
+
     //
     // Object Overrides (debugging)
     //
@@ -1334,8 +1479,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
         if (this.enmStreamType != StreamType.BIDIRECTIONAL)
             return;
 
-        // Increment next page then add to request list  
-        this.indNextPage = this.indNextPage + 1;
+        // Add next page index to request list  
         this.lstIndPageRequested.add(this.indNextPage);
 
         // Create the next page cursor request and send it
@@ -1352,16 +1496,28 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
      * Adds the given Query Service data response to the buffer of stored data pages.
      * </p>
      * <p>
+     * The following operations are performed in order:
+     * <ul>
+     * <li>The given response message is added to the buffer tail.</li>
+     * <li>Current value 'next page index' is added to the list of acquired pages.</li>
+     * <li>The 'next page index' is incremented.</li>
+     * <li>Query stream observers are notified of the new data.</li>
+     * <li>The blocking queue buffer semaphore is given an addition permit.</li>
+     * </ul>
      * 
      * @param msgRsp    gRPC response message containing data (the data page)
      */
     protected void addPage(QueryResponse msgRsp) {
 
         this.lstBufferRsps.add(msgRsp);
-        
+
         this.lstIndPageAcquired.add(this.indNextPage);
+        
+        this.indNextPage = this.indNextPage + 1;
+        
         this.notifyResponse(msgRsp);
+        
+        this.semPageRdy.release();
     }
-    
     
 }

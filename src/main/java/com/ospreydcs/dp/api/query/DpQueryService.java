@@ -40,7 +40,9 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.model.AUnavailable;
 import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamQueueBufferDeprecated;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer.StreamType;
 import com.ospreydcs.dp.api.query.model.data.DataTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
@@ -185,106 +187,91 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * </p>
      * <p>
      * This operation creates a unidirectional (backward) stream from the Query Service to the returned stream
-     * buffer instance.  Unidirectional streams are typically faster but potentially less stable.  
+     * buffer instance.  Unidirectional streams are potentially faster but less stable.  
      * Results of the query are accessible via the stream buffer as they are available.
      * </p>
      * <p>
-     * Default timeout limits are given for Query Service responses and operations.
+     * The data stream is initiated with the <code>{@link DpQueryStreamBuffer#start()</code> method.
+     * Query stream observers implementing the <code>{@link IDpQueryStreamObserver}</code> interface
+     * can register with the returned object to receive callback notifications for data and stream events
+     * using the <code>{@link DpQueryStreamBuffer#addStreamObserver(com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver)</code>
+     * method.
      * </p>
      * 
-     * @param rqst          an initialized <code>{@link DpDataRequest]</code> request builder instance
-     * @param cntTimeout    time limit for Query Service timeout limit
-     * @param tuTimeout     time units for Query Service timeout limit
+     * @param rqst  an initialized <code>{@link DpDataRequest]</code> request builder instance
      * 
-     * @return  an active query stream buffer currently accumulating the result set
+     * @return      an active query stream buffer ready to accumulate the results set
      * 
-     * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
-     * 
-     * @see DpQueryStreamQueueBufferDeprecated
+     * @see DpQueryStreamBuffer
+     * @see DpQueryStreamBuffer#start()
      */
-    public DpQueryStreamQueueBufferDeprecated   queryUniStream(DpDataRequest rqst) throws DpQueryException {
-        return this.queryUniStream(rqst, CFG_DEFAULT.timeout.limit, CFG_DEFAULT.timeout.unit);
+    public DpQueryStreamBuffer   queryStreamUni(DpDataRequest rqst) {
+        
+        // Extract the Protobuf request message
+        QueryRequest    msgRequest = rqst.buildQueryRequest();
+        
+        // Create the query stream buffer and return it
+        DpQueryStreamBuffer buf = DpQueryStreamBuffer.newBuffer(
+                StreamType.UNIDIRECTIONAL, 
+                this.getConnection().getStubAsync(),
+                msgRequest,
+                CFG_DEFAULT.logging.active);
+        
+        return buf;
     }
     
-    /**
-     * <p>
-     * Perform a Query Service data query that returns a dynamic stream buffer accumulating the result set.
-     * </p>
-     * <p>
-     * This operation creates a unidirectional (backward) stream from the Query Service to the returned stream
-     * buffer instance.  Unidirectional streams are typically faster but potentially less stable.   
-     * Results of the query are accessible via the stream buffer as they are available.
-     * </p>
-     * <p>
-     * Explicit timeout limits are given for Query Service responses and operations.
-     * </p>
-     * 
-     * @param rqst          an initialized <code>{@link DpDataRequest]</code> request builder instance
-     * @param cntTimeout    time limit for Query Service timeout limit
-     * @param tuTimeout     time units for Query Service timeout limit
-     * 
-     * @return  an active query stream buffer currently accumulating the result set
-     * 
-     * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
-     * 
-     * @see DpQueryStreamQueueBufferDeprecated
-     */
-    public DpQueryStreamQueueBufferDeprecated  queryUniStream(DpDataRequest rqst, long cntTimeout, TimeUnit tuTimeout) throws DpQueryException {
-        
-        // Create the query stream buffer
-        DpQueryStreamQueueBufferDeprecated bufStr = DpQueryStreamQueueBufferDeprecated.from(super.grpcConn.getStubAsync(), cntTimeout, tuTimeout);
-                
-        // Get the query request message
-        QueryRequest    msgRqst = rqst.buildQueryRequest();
-                
-        // Initiate stream and return it
-        try {
-            bufStr.startUniStream(msgRqst);
-            
-        } catch (IllegalStateException e) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalStateException thrown (this should not occur) - " + e.getMessage();
-            
-            LOGGER.error(strMsg);
-            
-            throw new DpQueryException(strMsg, e);
-            
-        } catch (IllegalArgumentException e) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalArgumentException (malformed QueryRequest) - " + e.getMessage();
-            
-            LOGGER.error(strMsg);
-            
-            throw new DpQueryException(strMsg, e);
-        }
-        
-        return bufStr;
-    }
-    
-    /**
-     * <p>
-     * Perform a Query Service data query that returns a dynamic stream buffer accumulating the result set.
-     * </p>
-     * <p>
-     * This operation creates a bidirectional stream from the Query Service to the returned stream
-     * buffer instance.  Bidirectional streams are more stable but potentially slower.  
-     * Results of the query are accessible via the stream buffer as they are available.
-     * </p>
-     * <p>
-     * Default timeout limits are given for Query Service responses and operations.
-     * </p>
-     * 
-     * @param rqst          an initialized <code>{@link DpDataRequest]</code> request builder instance
-     * @param cntTimeout    time limit for Query Service timeout limit
-     * @param tuTimeout     time units for Query Service timeout limit
-     * 
-     * @return  an active query stream buffer currently accumulating the result set
-     * 
-     * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
-     * 
-     * @see DpQueryStreamQueueBufferDeprecated
-     */
-    public DpQueryStreamQueueBufferDeprecated   queryBidiStream(DpDataRequest rqst) throws DpQueryException {
-        return this.queryBidiStream(rqst, CFG_DEFAULT.timeout.limit, CFG_DEFAULT.timeout.unit);
-    }
+//    /**
+//     * <p>
+//     * Perform a Query Service data query that returns a dynamic stream buffer accumulating the result set.
+//     * </p>
+//     * <p>
+//     * This operation creates a unidirectional (backward) stream from the Query Service to the returned stream
+//     * buffer instance.  Unidirectional streams are typically faster but potentially less stable.   
+//     * Results of the query are accessible via the stream buffer as they are available.
+//     * </p>
+//     * <p>
+//     * Explicit timeout limits are given for Query Service responses and operations.
+//     * </p>
+//     * 
+//     * @param rqst          an initialized <code>{@link DpDataRequest]</code> request builder instance
+//     * @param cntTimeout    time limit for Query Service timeout limit
+//     * @param tuTimeout     time units for Query Service timeout limit
+//     * 
+//     * @return  an active query stream buffer currently accumulating the result set
+//     * 
+//     * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
+//     * 
+//     * @see DpQueryStreamQueueBufferDeprecated
+//     */
+//    public DpQueryStreamQueueBufferDeprecated  queryUniStream(DpDataRequest rqst, long cntTimeout, TimeUnit tuTimeout) throws DpQueryException {
+//        
+//        // Create the query stream buffer
+//        DpQueryStreamQueueBufferDeprecated bufStr = DpQueryStreamQueueBufferDeprecated.from(super.grpcConn.getStubAsync(), cntTimeout, tuTimeout);
+//                
+//        // Get the query request message
+//        QueryRequest    msgRqst = rqst.buildQueryRequest();
+//                
+//        // Initiate stream and return it
+//        try {
+//            bufStr.startUniStream(msgRqst);
+//            
+//        } catch (IllegalStateException e) {
+//            String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalStateException thrown (this should not occur) - " + e.getMessage();
+//            
+//            LOGGER.error(strMsg);
+//            
+//            throw new DpQueryException(strMsg, e);
+//            
+//        } catch (IllegalArgumentException e) {
+//            String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalArgumentException (malformed QueryRequest) - " + e.getMessage();
+//            
+//            LOGGER.error(strMsg);
+//            
+//            throw new DpQueryException(strMsg, e);
+//        }
+//        
+//        return bufStr;
+//    }
     
     /**
      * <p>
@@ -292,52 +279,93 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * </p>
      * <p>
      * This operation creates a bidirectional stream from the Query Service to the returned stream
-     * buffer instance.  Bidirectional streams are more stable but potentially slower.  
+     * buffer instance.  Bidirectional streams are typically more stable but potentially slower.  
      * Results of the query are accessible via the stream buffer as they are available.
      * </p>
      * <p>
-     * Explicit timeout limits are given for Query Service responses and operations.
+     * The data stream is initiated with the <code>{@link DpQueryStreamBuffer#start()</code> method.
+     * Query stream observers implementing the <code>{@link IDpQueryStreamObserver}</code> interface
+     * can register with the returned object to receive callback notifications for data and stream events
+     * using the <code>{@link DpQueryStreamBuffer#addStreamObserver(com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver)</code>
+     * method.
      * </p>
      * 
      * @param rqst          an initialized <code>{@link DpDataRequest]</code> request builder instance
-     * @param cntTimeout    time limit for Query Service timeout limit
-     * @param tuTimeout     time units for Query Service timeout limit
      * 
-     * @return  an active query stream buffer currently accumulating the result set
+     * @return  an active query stream buffer ready to accumulate the result set
      * 
      * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
      * 
-     * @see DpQueryStreamQueueBufferDeprecated
+     * @see DpQueryStreamBuffer
+     * @see DpQueryStreamBuffer#start()
      */
-    public DpQueryStreamQueueBufferDeprecated  queryBidiStream(DpDataRequest rqst, long cntTimeout, TimeUnit tuTimeout) throws DpQueryException {
+    public DpQueryStreamBuffer queryStreamBidi(DpDataRequest rqst) {
         
-        // Create the query stream buffer
-        DpQueryStreamQueueBufferDeprecated bufStr = DpQueryStreamQueueBufferDeprecated.from(super.grpcConn.getStubAsync(), cntTimeout, tuTimeout);
-                
-        // Get the query request message
-        QueryRequest    msgRqst = rqst.buildQueryRequest();
-                
-        // Initiate stream and return it
-        try {
-            bufStr.startBidiStream(msgRqst);
-            
-        } catch (IllegalStateException e) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalStateException thrown (this should not occur) - " + e.getMessage();
-            
-            LOGGER.error(strMsg);
-            
-            throw new DpQueryException(strMsg, e);
-            
-        } catch (IllegalArgumentException e) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalArgumentException (malformed QueryRequest) - " + e.getMessage();
-            
-            LOGGER.error(strMsg);
-            
-            throw new DpQueryException(strMsg, e);
-        }
+        // Extract the Protobuf request message
+        QueryRequest    msgRequest = rqst.buildQueryRequest();
         
-        return bufStr;
+        // Create the query stream buffer and return it
+        DpQueryStreamBuffer buf = DpQueryStreamBuffer.newBuffer(
+                StreamType.BIDIRECTIONAL, 
+                this.getConnection().getStubAsync(),
+                msgRequest,
+                CFG_DEFAULT.logging.active);
+        
+        return buf;
     }
+    
+//    /**
+//     * <p>
+//     * Perform a Query Service data query that returns a dynamic stream buffer accumulating the result set.
+//     * </p>
+//     * <p>
+//     * This operation creates a bidirectional stream from the Query Service to the returned stream
+//     * buffer instance.  Bidirectional streams are more stable but potentially slower.  
+//     * Results of the query are accessible via the stream buffer as they are available.
+//     * </p>
+//     * <p>
+//     * Explicit timeout limits are given for Query Service responses and operations.
+//     * </p>
+//     * 
+//     * @param rqst          an initialized <code>{@link DpDataRequest]</code> request builder instance
+//     * @param cntTimeout    time limit for Query Service timeout limit
+//     * @param tuTimeout     time units for Query Service timeout limit
+//     * 
+//     * @return  an active query stream buffer currently accumulating the result set
+//     * 
+//     * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
+//     * 
+//     * @see DpQueryStreamQueueBufferDeprecated
+//     */
+//    public DpQueryStreamQueueBufferDeprecated  queryBidiStream(DpDataRequest rqst, long cntTimeout, TimeUnit tuTimeout) throws DpQueryException {
+//        
+//        // Create the query stream buffer
+//        DpQueryStreamQueueBufferDeprecated bufStr = DpQueryStreamQueueBufferDeprecated.from(super.grpcConn.getStubAsync(), cntTimeout, tuTimeout);
+//                
+//        // Get the query request message
+//        QueryRequest    msgRqst = rqst.buildQueryRequest();
+//                
+//        // Initiate stream and return it
+//        try {
+//            bufStr.startBidiStream(msgRqst);
+//            
+//        } catch (IllegalStateException e) {
+//            String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalStateException thrown (this should not occur) - " + e.getMessage();
+//            
+//            LOGGER.error(strMsg);
+//            
+//            throw new DpQueryException(strMsg, e);
+//            
+//        } catch (IllegalArgumentException e) {
+//            String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalArgumentException (malformed QueryRequest) - " + e.getMessage();
+//            
+//            LOGGER.error(strMsg);
+//            
+//            throw new DpQueryException(strMsg, e);
+//        }
+//        
+//        return bufStr;
+//    }
     
     
     //

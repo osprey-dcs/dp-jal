@@ -47,8 +47,7 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
-import com.ospreydcs.dp.api.query.model.DpQueryException;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamQueueBufferDeprecated;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 
 /**
@@ -123,52 +122,10 @@ public class DpQueryServiceTest {
     private static DpQueryService   apiQuery;
     
     
-//    //
-//    // Class Methods
-//    //
-//    
-//    /**
-//     * <p>
-//     * Creates a new <code>DpDataRequest</code> instance configured by the given arguments.
-//     * </p>
-//     * 
-//     * @param cntSources    number of data sources in the query
-//     * 
-//     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and time range [INS_INCEPT, INS_FINAL]
-//     */
-//    public static DpDataRequest createRequest(int cntSources) {
-//        DpDataRequest   rqst = DpDataRequest.newRequest();
-//        
-//        List<String>    lstNames = LST_PV_NAMES.subList(0, cntSources);
-//        
-//        rqst.rangeBetween(INS_INCEPT, INS_FINAL);
-//        rqst.selectSources(lstNames);
-//        
-//        return rqst;
-//    }
-//    
-//    /**
-//     * <p>
-//     * Creates a new <code>DpDataRequest</code> instance configured by the given arguments.
-//     * </p>
-//     * 
-//     * @param cntSources    number of data sources in the query
-//     * @param lngDuration   time duration of query in seconds, range = [INS_INCEPT, INS_INCEPT + lngDuration]
-//     * 
-//     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and the specified time range
-//     */
-//    public static DpDataRequest createRequest(int cntSources, long lngDuration) {
-//        DpDataRequest   rqst = DpDataRequest.newRequest();
-//        
-//        List<String>    lstNames = LST_PV_NAMES.subList(0, cntSources);
-//        Instant         insFinal = INS_INCEPT.plusSeconds(lngDuration);
-//        
-//        rqst.rangeBetween(INS_INCEPT, insFinal);
-//        rqst.selectSources(lstNames);
-//        
-//        return rqst;
-//    }
-//    
+    //
+    // Class Methods
+    //
+    
     
     //
     // Test Fixture
@@ -219,19 +176,20 @@ public class DpQueryServiceTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryUniStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
-    public final void testQueryUniStreamDpDataRequest() {
+    public final void testQueryStreamUniDpDataRequest() {
         final int   CNT_SOURCES = 100;
         final long  LNG_DURATION = 10L;
         
         final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
         
         try {
-            Instant insStart = Instant.now();
-            DpQueryStreamQueueBufferDeprecated bufResult = apiQuery.queryUniStream(rsqst);
+            DpQueryStreamBuffer bufResult = apiQuery.queryStreamUni(rsqst);
             
+            Instant insStart = Instant.now();
+            bufResult.start();
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
             
@@ -249,8 +207,8 @@ public class DpQueryServiceTest {
             if (bufResult.isStreamError())
                 Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
             
-        } catch (DpQueryException e) {
-            Assert.fail("Exception thrown during query: " + e.getMessage());
+//        } catch (DpQueryException e) {
+//            Assert.fail("Exception thrown during query: " + e.getMessage());
             
         } catch (InterruptedException e) {
             Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
@@ -262,19 +220,20 @@ public class DpQueryServiceTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryUniStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
-//    @Test
-    public final void testQueryUniStreamDpDataRequestBig() {
+    @Test
+    public final void testQueryStreamUniDpDataRequestBig() {
         final int   CNT_SOURCES = 1000;
         final long  LNG_DURATION = 60;
         
         final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
         
         try {
-            Instant insStart = Instant.now();
-            DpQueryStreamQueueBufferDeprecated bufResult = apiQuery.queryUniStream(rsqst);
+            DpQueryStreamBuffer bufResult = apiQuery.queryStreamUni(rsqst);
             
+            Instant insStart = Instant.now();
+            bufResult.start();
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
             
@@ -292,8 +251,8 @@ public class DpQueryServiceTest {
             if (bufResult.isStreamError())
                 Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
             
-        } catch (DpQueryException e) {
-            Assert.fail("Exception thrown during query: " + e.getMessage());
+//        } catch (DpQueryException e) {
+//            Assert.fail("Exception thrown during query: " + e.getMessage());
             
         } catch (InterruptedException e) {
             Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
@@ -305,27 +264,20 @@ public class DpQueryServiceTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryUniStream(com.ospreydcs.dp.api.query.DpDataRequest, long, java.util.concurrent.TimeUnit)}.
-     */
-//    @Test
-    public final void testQueryUniStreamDpDataRequestLongTimeUnit() {
-        fail("Not yet implemented"); // TODO
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryBidiStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryStreamBidi(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
-    public final void testQueryBidiStreamDpDataRequest() {
+    public final void testQueryStreamBidiDpDataRequest() {
         final int   CNT_SOURCES = 100;
         final long  LNG_DURATION = 10;
         
         final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
         
         try {
-            Instant insStart = Instant.now();
-            DpQueryStreamQueueBufferDeprecated bufResult = apiQuery.queryBidiStream(rsqst);
+            DpQueryStreamBuffer bufResult = apiQuery.queryStreamBidi(rsqst);
             
+            Instant insStart = Instant.now();
+            bufResult.start();
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
             
@@ -343,8 +295,8 @@ public class DpQueryServiceTest {
             if (bufResult.isStreamError())
                 Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
             
-        } catch (DpQueryException e) {
-            Assert.fail("Exception thrown during query: " + e.getMessage());
+//        } catch (DpQueryException e) {
+//            Assert.fail("Exception thrown during query: " + e.getMessage());
             
         } catch (InterruptedException e) {
             Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
@@ -356,19 +308,20 @@ public class DpQueryServiceTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryBidiStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryStreamBidi(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
-//    @Test
-    public final void testQueryBidiStreamDpDataRequestBig() {
+    @Test
+    public final void testQueryStreamBidiDpDataRequestBig() {
         final int   CNT_SOURCES = 1000;
         final long  LNG_DURATION = 60;
         
         final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
         
         try {
-            Instant insStart = Instant.now();
-            DpQueryStreamQueueBufferDeprecated bufResult = apiQuery.queryBidiStream(rsqst);
+            DpQueryStreamBuffer bufResult = apiQuery.queryStreamBidi(rsqst);
             
+            Instant insStart = Instant.now();
+            bufResult.start();
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
             
@@ -386,8 +339,8 @@ public class DpQueryServiceTest {
             if (bufResult.isStreamError())
                 Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
             
-        } catch (DpQueryException e) {
-            Assert.fail("Exception thrown during query: " + e.getMessage());
+//        } catch (DpQueryException e) {
+//            Assert.fail("Exception thrown during query: " + e.getMessage());
             
         } catch (InterruptedException e) {
             Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
@@ -396,14 +349,6 @@ public class DpQueryServiceTest {
             Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
             
         }
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryBidiStream(com.ospreydcs.dp.api.query.DpDataRequest, long, java.util.concurrent.TimeUnit)}.
-     */
-//    @Test
-    public final void testQueryBidiStreamDpDataRequestLongTimeUnit() {
-        fail("Not yet implemented"); // TODO
     }
 
     /**
@@ -415,12 +360,13 @@ public class DpQueryServiceTest {
         final long  LNG_DURATION = 10;
         
         final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        final DpQueryStreamQueueBufferDeprecated   bufResult;
+        final DpQueryStreamBuffer   bufResult;
         
         try {
-            Instant insStart = Instant.now();
-            bufResult = apiQuery.queryBidiStream(rsqst);
+            bufResult = apiQuery.queryStreamBidi(rsqst);
             
+            Instant insStart = Instant.now();
+            bufResult.start();
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
             
@@ -439,9 +385,9 @@ public class DpQueryServiceTest {
                 Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
             
             
-        } catch (DpQueryException e) {
-            Assert.fail("Exception thrown during query: " + e.getMessage());
-            return;
+//        } catch (DpQueryException e) {
+//            Assert.fail("Exception thrown during query: " + e.getMessage());
+//            return;
             
         } catch (InterruptedException e) {
             Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
@@ -483,12 +429,13 @@ public class DpQueryServiceTest {
         final long  LNG_DURATION = 60;
         
         final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        final DpQueryStreamQueueBufferDeprecated   bufResult;
+        final DpQueryStreamBuffer   bufResult;
         
         try {
-            Instant insStart = Instant.now();
-            bufResult = apiQuery.queryBidiStream(rsqst);
+            bufResult = apiQuery.queryStreamBidi(rsqst);
             
+            Instant insStart = Instant.now();
+            bufResult.start();
             bufResult.awaitStreamCompleted();
             Instant insStop = Instant.now();
             
@@ -507,9 +454,9 @@ public class DpQueryServiceTest {
                 Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
             
             
-        } catch (DpQueryException e) {
-            Assert.fail("Exception thrown during query: " + e.getMessage());
-            return;
+//        } catch (DpQueryException e) {
+//            Assert.fail("Exception thrown during query: " + e.getMessage());
+//            return;
             
         } catch (InterruptedException e) {
             Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
