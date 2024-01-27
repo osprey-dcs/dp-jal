@@ -109,7 +109,7 @@ import io.grpc.stub.StreamObserver;
  * <h4>Callback Server</h4>
  * Alternative to stream buffer or queue usage, 
  * one can register for callback notifications using 
- * <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>
+ * <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserverDeprecated)}</code>
  * method which will be invoked whenever a new data page becomes available.
  * The the gRPC message response containing the data is provided to the callback methods.  The 
  * <code>{@link IDataStreamObserver}</code> interface also contains notifications for streaming events, 
@@ -226,13 +226,6 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     // BIDI Streaming Process Resources 
     //
 
-    /** List of page indices requested - BIDI streaming */
-    private final List<Integer>                 lstIndPageRequested = new LinkedList<Integer>();
-    
-    /** List of data page indices acquired so far */
-    private final LinkedList<Integer>           lstIndPageAcquired = new LinkedList<Integer>();
-    
-
     /** Service stream handle for forward stream (to server) used to send cursor requests - BIDI streaming */
     private CallStreamObserver<QueryRequest>    hndSvrStrm = null;
     
@@ -242,6 +235,13 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     /** Size (in bytes) of the first data message - initialized by {@link #onNext(PaginatedResponse)} */
     private Long                                szPageBytes = null;
 
+
+    /** List of page indices requested - BIDI streaming (debugging) */
+    private final List<Integer>                 lstIndPageRequested = new LinkedList<Integer>();
+    
+    /** List of data page indices acquired so far (debugging) */
+    private final LinkedList<Integer>           lstIndPageAcquired = new LinkedList<Integer>();
+    
 
     //
     // Streaming Condition Variables 
@@ -409,7 +409,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
      * </p>
      * <p>
      * Notifications about stream activities is sent to any registered query stream observers
-     * (see <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>).  Query stream observers 
+     * (see <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserverDeprecated)}</code>).  Query stream observers 
      * should spawn independent threads to process incoming data.
      * </p>
      * <p>

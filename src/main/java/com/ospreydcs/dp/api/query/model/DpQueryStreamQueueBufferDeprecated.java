@@ -95,7 +95,7 @@ import io.grpc.stub.StreamObserver;
  * <p>
  * <h2>Observers</h2>
  * Alternative to either stream buffer or stream queue usage, 
- * one can register a callback using <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>
+ * one can register a callback using <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserverDeprecated)}</code>
  * method which will be invoked whenever a new data page becomes available.
  * The index of that page along with the gRPC message response containing
  * the data is provided to the callback methods.  The <code>{@link IDataStreamObserver}</code> interface
@@ -172,7 +172,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
     //
     
     /** List of data consumers to be notified about streaming data and conditions */
-    private List<IQueryStreamQueueBufferObserver>   lstStreamObservers = new LinkedList<>();
+    private List<IQueryStreamQueueBufferObserverDeprecated>   lstStreamObservers = new LinkedList<>();
     
     
     //
@@ -336,13 +336,13 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
     
     
     /**
-     * Adds the given <code>IQueryStreamQueueBufferObserver</code> interface to the
+     * Adds the given <code>IQueryStreamQueueBufferObserverDeprecated</code> interface to the
      * list of stream observers requesting notifications about streaming
      * conditions and stream data.
      * 
      * @param ifcStreamObserver subject to be notified about streaming events
      */
-    public void addStreamObserver(IQueryStreamQueueBufferObserver ifcStreamObserver) {
+    public void addStreamObserver(IQueryStreamQueueBufferObserverDeprecated ifcStreamObserver) {
         this.lstStreamObservers.add(ifcStreamObserver);
     }
 
@@ -374,7 +374,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * </p>
      * <p>
      * Notifications about stream activities is sent to any registered data stream observers
-     * (see <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>).  Stream observers may
+     * (see <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserverDeprecated)}</code>).  Stream observers may
      * then spawn thread to process available data.
      * </p>
      * <p>
@@ -449,7 +449,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * </p>
      * <p>
      * Notifications about stream activities is sent to any registered data stream observers
-     * (see <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>).  Stream observers may
+     * (see <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserverDeprecated)}</code>).  Stream observers may
      * then spawn thread to process available data.
      * </p>
      * <p>
@@ -1123,7 +1123,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * <br/> 
      * <li>
      * Another option is to register a <code>{@link IDataStreamObserver}</code>
-     * callback using the method <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserver)}</code>.
+     * callback using the method <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserverDeprecated)}</code>.
      * Any callback registered here will be notified whenever a data page
      * becomes available.
      * </li>

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IQueryStreamQueueBufferObserver.java
+ * File:	IQueryStreamQueueBufferObserverDeprecated.java
  * Package: com.ospreydcs.dp.api.query.model
- * Type: 	IQueryStreamQueueBufferObserver
+ * Type: 	IQueryStreamQueueBufferObserverDeprecated
  *
  * Copyright 2010-2022 the original author or authors.
  *
@@ -52,8 +52,10 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * @author Christopher K. Allen
  * @since Oct 1, 2022
  *
+ * @deprecated  Replaced by IDpQueryStreamObserver
  */
-public interface IQueryStreamQueueBufferObserver {
+@Deprecated(since="Jan 27, 2024", forRemoval=true)
+public interface IQueryStreamQueueBufferObserverDeprecated {
 
     /**
      * <p>

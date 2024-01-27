@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.query;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
@@ -46,28 +47,26 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
 
 /**
  * <p>
- * Utility class for constructing snapshot data requests for the <em>Datastore</em>
- * query service.
+ * Utility class for constructing data requests for the Data Platform <em>Query Service</em>.
  * </p>
  * <p>
- * This class is used to create snapshot data requests without direct knowledge
+ * This class is used to create Query Service data requests without direct knowledge
  * of the underlying query mechanism.  The class exposes a set of methods that 
  * can be called to create a specific snapshot data request.  In this fashion the
  * query service interface can be narrowed while still providing a wide range
  * of possible queries.  
  * It also simplifies the use of the query service in that
- * the user is not subject to the breadth of the <em>Datastore</em> query 
- * language.
- * Additionally, modifications to the query service will be seen in this 
- * concrete class, rather than the query interfaces.
+ * the user is not subject to details of the underlying Query Service gRPC interface. 
+ * Additionally, modifications to the Query Service gRPC API will be hidden by this
+ * concrete class, which presents a consistent interface to clients.
  * </p>
  * <p>
- * There are four classes of methods used to create the snapshot data query:
+ * There are four classes of methods used to create the data query requests:
  * <ul>
  * <li>Selection methods - prefixed with <code>select</code>: used to select the
- *     returned data columns within the query results.
+ *     data sources (returned data columns) within the query results.
  *     </li>
- * <li>Ranges methods - prefixed with <code>range</code>: used to restrict the range
+ * <li>Ranges methods - prefixed with <code>range</code>: used to restrict the time range
  *     of timestamps within the query results.
  *     </li>
  * <li>Filter methods - prefixed with <code>filter</code>: used to filter the query
@@ -88,35 +87,37 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
  * It is important to note that an unconfigured data request, that is, the request 
  * specified immediately upon instance creation, always represents the "open
  * query."  Specifically, a newly created <code>DpDataRequest</code> instance always
- * selects for all the snapshot data within the <em>Datastore</em>.  By calling
+ * selects for all the time-series data within the <em>Data Platform </em>.  By calling
  * the methods listed above, the resulting query request is "restricted", either
- * by selecting the specific EPICS process variables (PVs) to be included, reducing
- * the range of allowable timestamps, or filtering on the PV values or other
+ * by selecting the specific data sources to be included (e.g., EPICS process variables (PVs)), reducing
+ * the range of allowable timestamps, or filtering on the data values or other
  * attributes of the query.
  * </p>    
  * <p> 
- * Once a class instance is configured using the available restrictor 
- * method calls, a properly formatted <em>Datastore</em> Query Language</code> (DQL)
- * query string is created from the configuration.  The DQL statement can be
- * packaged into the appropriate gRPC message type using a <code>build</code>
- * method (used by the query service).
+ * Once a class instance is configured by the client using the available restrictor 
+ * method calls, a <em>Query Service </em> Protobuf message containing the request
+ * can be created using the public <code>{@link #buildQueryRequest()}</code> method.
+ * The method packages the client-configuration into the appropriate gRPC message type 
+ * <code>{@link QueryRequest}</code> used by the Query Service gRPC interface.
+ * The method is not typically required of general clients but is left as public access
+ * for those desiring detailed interaction with the Query Service.
  * </p>
  * <p>
  * <h2>NOTES:</h2>
  * <ul>
  * <li> 
- * Call the {@link #newRequest()} method to return a <em>Datastore</em> data 
+ * Call the {@link #newRequest()} method to return a <em>Query Service</em> data 
  * request initialized to the "open request" query.
  * </li>
  * <li> 
  * A new <code>DpDataRequest</code> instance will create the open query, that is, it creates
- * the query which returns all snapshot data in the <em>Datastore</em>.
+ * the query which returns all time-serice data in the <em>Data Platform</em> archive.
  * </li>
  * <li> 
- * Calling a <code>select</code> method restricts the query to given PV names or
+ * The first call to a <code>select</code> method restricts the query to given data source names or
  * special columns.
  * However, further calls to <code>select</code> methods opens the query to additional
- * PV names.
+ * data source names.
  * </li>
  * <li> 
  * Calling a <code>range</code> method always further restricts the time range
@@ -128,17 +129,24 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
  * to the filter specification.  A filter method invocation always further 
  * restricts query results to those that match the additional filter condition.
  * </li> 
+ * <li>
+ * This API component is still under development and is subject to change where indicated.
+ * Note the method and type annotations by <code>{@link AAdvancedApi}</code> and 
+ * <code>{@link AUnavailable}</code>.
+ * </li>
+ * 
+ * <h3>The following are not currently applicable:</h3>
  * <li> 
  * Call the <code>{@link #pageSize(Integer)}</code> method to set the size
- * (i.e., number of data rows) of the data pages returned from the <em>Datastore</em>
+ * (i.e., number of data rows) of the data pages returned from the <em>Query Service</em>
  * during asynchronous data streaming.  <em>This is a performance parameter</em>.  
  * This value defaults to that in the <code>AppProperties</code> configuration.
  * </li>
  * <li>
  * Call the <code>{@link #pageStartIndex(Integer)}</code> to set the index of
- * the first data page returned by the <em>Datastore</em>.  
+ * the first data page returned by the <em>Query Service</em>.  
  * <em>Page indices are 1-based</em>, (i.e., start with index 1).
- * Setting this value to 0 instructs the <em>Datastore</em> to
+ * Setting this value to 0 instructs the <em>Query Service</em> to
  * stream all data pages for the given query request (this is the default value).
  * <b>Use at your own risk</b> as setting this value
  * will produce a resultant query request that returns only the tail of
@@ -148,8 +156,10 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
  *
  * @author Christopher K. Allen
  * @since Sep 23, 2022
+ * @version Jan 27, 2024
  *
  * @see AAdvancedApi
+ * @see AUnavailable
  */
 @AAdvancedApi(status=AAdvancedApi.STATUS.DEVELOPMENT, note="DP Query Service gRPC API is still under development")
 public final class DpDataRequest {
@@ -161,6 +171,45 @@ public final class DpDataRequest {
     /** The default API library configuration */
     private static final DpApiConfig CFG_DEFAULT = DpApiConfig.getInstance();
     
+    
+    //
+    // Class Types
+    //
+    
+    /**
+     * <p>
+     * Enumeration of possible concurrent query decomposition strategies.
+     * </p>
+     */
+    public static enum CompositeType {
+        
+        /**
+         * Query domain is decomposed horizontally (by data sources).
+         * <p>
+         * The data sources are divided equally amongst the concurrent queries. <br/>
+         * That is, each separate query is for a different set of data sources. <br/>
+         * All queries have the same time range. 
+         */
+        HORIZONTAL,
+
+        /**
+         * Query domain is decomposed vertically (in time).
+         * <p>
+         * The time range is divided equally amongst the concurrent queries. <br/>
+         * That is, each separate query is for a different time range. <br/>
+         * All queries have the same data sources.
+         */
+        VERTICAL,
+        
+        /**
+         * Query domain is decomposed into a grid (i.e., of blocks in source and time).
+         * <p>
+         * Both the data sources and time range is divided equally amongst the concurrent queries.<br/>
+         * That is, each separate query contains a subset of data sources and subset of time ranges.<br/> 
+         */
+        GRID;
+    };
+
     
     //
     // Class Constants
@@ -181,8 +230,8 @@ public final class DpDataRequest {
     //
     
     
-    /** Flag indicating a paging cursor request */
-    private boolean bolCursor = false;
+//    /** Flag indicating a paging cursor request */
+//    private boolean bolCursor = false;
     
     /** The size of a data page, that is, the number of data rows per page */
     private int szPage = SZ_PAGES;
@@ -216,28 +265,29 @@ public final class DpDataRequest {
     
     /**
      * <p>
-     * Creates a new <code>DpDataRequest</code> instance for creating snapshot
-     * data requests from the <em>Datastore</em>.
+     * Creates a new <code>DpDataRequest</code> instance for creating time-series
+     * data requests from the <em>Query Service</em>.
      * </p>
      * <p>
      * Note that the returned data request will create the 
-     * "open query", which requests all snapshot currently within the 
-     * <em>Datastore</em> since its inception.
+     * "open query", which requests all time-series data currently within the 
+     * <em>Data Platform</em> data archive since its inception.
      * Use the "selection" and "restrictor" methods to narrow the data request
      * results based upon specific PV names, timestamps ranges, and other 
      * data filters.
      * </p>
+     * <h3>The following are not currently applicable:</h3>
      * <p>
      * Use the <code>{@link #pageSize(Integer)}</code> to performance tweak
-     * the size of the data pages in the <em>Datastore</em> data stream when
+     * the size of the data pages in the <em>Query Service</em> data stream when
      * using paged data tables (in particular, for asynchronous data requests).
      * The default page size is given in the <i>application.yml</i> file.
      * </p>
      * <p>
      * Use the <code>{@link #pageStartIndex(Integer)}</code> tell the 
-     * <em>Datastore</em> to send the specific page index for the given
-     * query.  For asynchronously streamed data (<code>PaginatedRequest</code>) 
-     * this instructs the <em>Datastore</em> to send data pages from the given 
+     * <em>Query Service</em> to send the specific page index for the given
+     * query.  For asynchronously streamed data (<code>QueryRequest</code>) 
+     * this instructs the <em>Query Service</em> to send data pages from the given 
      * index on to the last page index.
      * <br/> <br/>
      * &nbsp; &nbsp; <i>setting this value </i>> 1<i> sends only the tail of the data request.</i> 
@@ -269,13 +319,13 @@ public final class DpDataRequest {
     
     /**
      * <p>
-     * Creates a <em>Datastore</em> gRPC <code>PaginatedRequest</code> object 
+     * Creates a <em>Query Service</em> gRPC <code>PaginatedRequest</code> object 
      * based upon the history of calls to the restrictor methods.
      * </p>
      * <p>
      * Note tha <code>PaginatedRequest</code> gRPC messages are specific to dynamic
      * data requests, that is, rather than wait for the full request to return
-     * from the <em>Datastore</em> a data stream is initiated.  The stream continues
+     * from the <em>Query Service</em> a data stream is initiated.  The stream continues
      * as a separate thread and requested snapshot data is acquired in <i>pages</i>. 
      * </p>
      * <p>
@@ -290,31 +340,38 @@ public final class DpDataRequest {
      * defaults to the inception time defined in the applications properties.
      * </li>
      * <li> If no <code>select</code> methods were called then the returned 
-     * query defaults to all PV names in the <em>Datastore</em>.
+     * query defaults to all PV names in the <em>Query Service</em>.
      * </li>
      * </ul>
      * </p>
      * 
-     * @return  properly formatted <em>Datastore</em> DQL gRPC request message
+     * @return  properly formatted <em>Query Service</em> DQL gRPC request message
      * 
      * @see DpDataRequest#buildRequest()
      * @see DpDataRequest#buildDqlQueryString()
      */
     public QueryRequest buildQueryRequest() {
         
+        // Create the query specification (the request object)
+        QuerySpec.Builder bldrQry = QuerySpec.newBuilder();
+        bldrQry.setStartTime( ProtoMsg.from(this.insStart) );
+        bldrQry.setEndTime( ProtoMsg.from( this.insStop) );
+        bldrQry.addAllColumnNames(this.lstSelCmps);
+        QuerySpec msgQry = bldrQry.build();
         
-        // Create a query request from the given request
+        // Create a query request from the query specification
         QueryRequest.Builder bldrRqst = QueryRequest.newBuilder();
-        
-        // Select appropriate request type
-        if (this.bolCursor) 
-            bldrRqst.setCursorOp(this.buildCursorRequest());
-        else
-            bldrRqst.setQuerySpec(this.buildQuerySpec());
-        
+        bldrRqst.setQuerySpec(msgQry);
         QueryRequest msgRqst = bldrRqst.build();
         
         return msgRqst;
+    }
+    
+    public List<DpDataRequest>  createCompositeRequests(CompositeType enmType, int cntQueries) {
+
+        List<DpDataRequest>     lstRequests = new LinkedList<>();
+        
+        return null;
     }
     
     /**
@@ -329,7 +386,7 @@ public final class DpDataRequest {
      * </ul>
      */
     public void reset() {
-        this.bolCursor = false;
+//        this.bolCursor = false;
         this.indStartPage = 0;
         this.szPage = SZ_PAGES;
 
@@ -347,7 +404,7 @@ public final class DpDataRequest {
     
     /**
      * <p>
-     * Sets the size of the data pages to return from the <em>Datastore</em>
+     * Sets the size of the data pages to return from the <em>Query Service</em>
      * when using paginated requests.
      * </p>
      * <p>
@@ -367,7 +424,7 @@ public final class DpDataRequest {
      * row could, potentially, require significant resource allocation.
      * </p>
      * 
-     * @param szPage page size of a data block returned from the <em>Datastore</em> (in rows)
+     * @param szPage page size of a data block returned from the <em>Query Service</em> (in rows)
      */
     @AUnavailable(status=STATUS.UNDER_REVIEW)
     public void pageSize(Integer szPage) {
@@ -378,14 +435,14 @@ public final class DpDataRequest {
      * <p>
      * Sets the page index of the data request.
      * We assume that a previous request has already been sent to the
-     * <em>Datastore</em> to initiate a data stream.
+     * <em>Query Service</em> to initiate a data stream.
      * Thus, the resultant query built by the <code>DpDataRequest</code>
      * contains only a request for this page under the assumption that
      * it applies to a previous snapshot data request.
      * </p>
      * <p> 
      * Defaults to index 0 which indicates that the 
-     * <em>Datastore</em> should send all pages of the resultant query
+     * <em>Query Service</em> should send all pages of the resultant query
      * (i.e., initiate a data stream).
      * </p>
      * <p>
@@ -459,7 +516,7 @@ public final class DpDataRequest {
      * </p>
      * <p>
      * Restricts the range of viable timestamps to the time interval starting
-     * from the <em>Datastore</em> inception up to and including the given 
+     * from the <em>Query Service</em> inception up to and including the given 
      * time instant.
      * </p>
      * 
@@ -589,7 +646,7 @@ public final class DpDataRequest {
     
     /**
      * <p>
-     * Requests PV attribute values for the given list of EPICS PVs.
+     * Requests data source attribute values for the given list of data sources.
      * </p>
      * <p>
      * A column of attribute values for the given attribute name is to be
@@ -831,7 +888,7 @@ public final class DpDataRequest {
      * data provider with the given unique identifier.
      * </p>
      * <p>
-     * The snapshot data provider UID is obtained from the <em>Datastore</em>
+     * The snapshot data provider UID is obtained from the <em>Query Service</em>
      * ingestion service when either 1) registering a provider when using the
      * synchronous ingestion service (see <code>{@link IIngestionService}</code>)
      * 2) opening an asynchronous ingestion stream 
@@ -859,7 +916,7 @@ public final class DpDataRequest {
      * with the given unique identifier.
      * </p>
      * <p>
-     * Snapshot UIDs are obtained from the <em>Datastore</em>
+     * Snapshot UIDs are obtained from the <em>Query Service</em>
      * ingestion service when either 1) adding a data frame using the
      * synchronous ingestion service (see <code>{@link IIngestionService}</code>)
      * 2) closing an asynchronous ingestion stream 
@@ -988,75 +1045,70 @@ public final class DpDataRequest {
     // Private Methods
     //
     
-    /**
-     * <p>
-     * Creates a Data Platform <code>CursorRequest</code> object based upon the history 
-     * of calls page methods.
-     * </p>
-     * <p>  
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li> If no <code>range</code> methods were called then the returned query
-     * defaults to the inception time defined in the applications properties.
-     * </li>
-     * <li> If no <code>select</code> methods were called then the returned 
-     * query defaults to all PV names in the <em>Datastore</em>.
-     * </li>
-     * </ul>
-     * </p>
-     * 
-     * @return  new <code>CursorOperation</code> message configured by history 
-     */
-    private CursorOperation buildCursorRequest() {
-        
-//        CursorOperation.Builder bldrRqst = CursorRequest.newBuilder();
-//        bldrRqst.setNumBuckets(this.szPage);
-////        bldrRqst.setPage(this.indStartPage);  // Unavailable
-//        CursorRequest rqst = bldrRqst.build();
-        
-        CursorOperation rqst = CursorOperation.CURSOR_OP_NEXT;
-        
-        return rqst;
-    }
+//    /**
+//     * <p>
+//     * Creates a Data Platform <code>CursorRequest</code> object based upon the history 
+//     * of calls page methods.
+//     * </p>
+//     * <p>  
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li> If no <code>range</code> methods were called then the returned query
+//     * defaults to the inception time defined in the applications properties.
+//     * </li>
+//     * <li> If no <code>select</code> methods were called then the returned 
+//     * query defaults to all PV names in the <em>Query Service</em>.
+//     * </li>
+//     * </ul>
+//     * </p>
+//     * 
+//     * @return  new <code>CursorOperation</code> message configured by history 
+//     */
+//    private CursorOperation buildCursorRequest() {
+//        
+//        CursorOperation rqst = CursorOperation.CURSOR_OP_NEXT;
+//        
+//        return rqst;
+//    }
     
-    /**
-     * <p>
-     * Creates a <em>Datastore</em> gRPC <code>Request</code> object based upon the history 
-     * of calls to the restrictor methods.  This is essentially a convenience method
-     * which calls <code>{@link #buildQueryString()}</code> and packages the results into 
-     * a gRPC <code>Request</code> object.
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li> All references to paginated data is ignored.  Specifically calls
-     * to <code>{@link #pageSize(Integer)}</code> and <code>{@link #pageStartIndex(Integer)}</code>
-     * have no relevance to the returned result.
-     * </li>
-     * <li> If no <code>range</code> methods were called then the returned query
-     * defaults to the inception time defined in the applications properties.
-     * </li>
-     * <li> If no <code>select</code> methods were called then the returned 
-     * query defaults to all PV names in the <em>Datastore</em>.
-     * </li>
-     * </ul>
-     * </p>
-     * 
-     * @return  properly formatted <em>Datastore</em> DQL request
-     * 
-     * @see DpDataRequest#buildQueryString()
-     */
-    private QuerySpec buildQuerySpec() {
-        QuerySpec.Builder bldrQry = QuerySpec.newBuilder();
-        bldrQry.setStartTime( ProtoMsg.from(this.insStart) );
-        bldrQry.setEndTime( ProtoMsg.from( this.insStop) );
-        bldrQry.addAllColumnNames(this.lstSelCmps);
-        QuerySpec qry = bldrQry.build();
-        
-        return qry;
-    }
+//    /**
+//     * <p>
+//     * Creates a <em>Query Service</em> gRPC <code>Request</code> object based upon the history 
+//     * of calls to the restrictor methods.  This is essentially a convenience method
+//     * which calls <code>{@link #buildQueryString()}</code> and packages the results into 
+//     * a gRPC <code>Request</code> object.
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li> All references to paginated data is ignored.  Specifically calls
+//     * to <code>{@link #pageSize(Integer)}</code> and <code>{@link #pageStartIndex(Integer)}</code>
+//     * have no relevance to the returned result.
+//     * </li>
+//     * <li> If no <code>range</code> methods were called then the returned query
+//     * defaults to the inception time defined in the applications properties.
+//     * </li>
+//     * <li> If no <code>select</code> methods were called then the returned 
+//     * query defaults to all PV names in the <em>Query Service</em>.
+//     * </li>
+//     * </ul>
+//     * </p>
+//     * 
+//     * @return  properly formatted <em>Query Service</em> DQL request
+//     * 
+//     * @see DpDataRequest#buildQueryString()
+//     */
+//    private QuerySpec buildQuerySpec() {
+//        QuerySpec.Builder bldrQry = QuerySpec.newBuilder();
+//        bldrQry.setStartTime( ProtoMsg.from(this.insStart) );
+//        bldrQry.setEndTime( ProtoMsg.from( this.insStop) );
+//        bldrQry.addAllColumnNames(this.lstSelCmps);
+//        QuerySpec qry = bldrQry.build();
+//        
+//        return qry;
+//    }
     
     /**
      * Creates and returns a SELECT query component which selects for 
-     * all PV names in the <em>Datastore</em>.
+     * all PV names in the <em>Query Service</em>.
      * 
      * @return a single SELECT component that selects for all PV names
      */
@@ -1070,13 +1122,13 @@ public final class DpDataRequest {
      * <p>
      * Used whenever a "range" restrictor method is not called on the builder
      * instance.  This method builds a range query component based upon the 
-     * inception date/time of the <em>Datastore</em> specified in the application
+     * inception date/time of the <em>Query Service</em> specified in the application
      * properties.
      * </p>
      * <p>
      * <h2>UPDATE:</h2>
      * The method now uses the start of the current time epoch as the inception
-     * data of the <em>Datastore</em>.  No exceptions are thrown.
+     * data of the <em>Query Service</em>.  No exceptions are thrown.
      * </p>
      * 
      * @return  default range query component
@@ -1084,7 +1136,7 @@ public final class DpDataRequest {
     private String createWhereCmpDsInception() {
 //        String strRange = CFG_DEFAULT.getInception();
 //        if ( strRange==null )
-//            throw new DsGrpcException("No inception time defined in Datastore properties");
+//            throw new DsGrpcException("No inception time defined in Query Service properties");
 
 //        try { 
 //            // Make sure time is properly formatted
@@ -1102,7 +1154,7 @@ public final class DpDataRequest {
     /**
      * Creates and returns a single WHERE query component that restricts the
      * time ranges to everything before now.  That is, essentially everything
-     * currently in the Datastore.
+     * currently in the Query Service.
      * 
      * @return WHERE query component specifying time range "everything up to now"
      */
@@ -1117,7 +1169,7 @@ public final class DpDataRequest {
     
 //    /**
 //     * <p>
-//     * Creates the <em>Datastore</em> query language (DQL) string based upon 
+//     * Creates the <em>Query Service</em> query language (DQL) string based upon 
 //     * the history of calls to the range, selection, and filter methods.
 //     * </p>
 //     * <p>  
@@ -1133,7 +1185,7 @@ public final class DpDataRequest {
 //     * </li>
 //     * <li> 
 //     * If no <code>select</code> methods were called then the returned 
-//     * query defaults to all PV names in the <em>Datastore</em>.
+//     * query defaults to all PV names in the <em>Query Service</em>.
 //     * </li>
 //     * <li>
 //     * If the <code>{@link #pageSize(Integer)}</code> method was not called
@@ -1143,12 +1195,12 @@ public final class DpDataRequest {
 //     * <li>
 //     * If the <code>{@link #pageStartIndex(Integer)}</code> method was not called
 //     * then the returned query defaults to the zero index indicating that
-//     * the <em>Datastore</em> send all data indicated in the query request.
+//     * the <em>Query Service</em> send all data indicated in the query request.
 //     * </li>
 //     * </ul>
 //     * </p>
 //     * 
-//     * @return  properly formatted <em>Datastore</em> DQL snapshot data request query
+//     * @return  properly formatted <em>Query Service</em> DQL snapshot data request query
 //     */
 //    public String buildDqlQueryString() {
 //        StringBuffer bufQuery  = new StringBuffer();
@@ -1182,5 +1234,126 @@ public final class DpDataRequest {
 //        
 //        return bufQuery.toString();
 //    }
+    
+    private List<DpDataRequest> createCompositeHorizontal(int cntQueries) {
+        
+        List<DpDataRequest> lstRequests = new LinkedList<>();
+        
+        // Compute the maximum number of sources per query
+        int cntSources = this.lstSelCmps.size() / cntQueries;
+        int intRemainder = this.lstSelCmps.size() % cntQueries;
+        
+        if (intRemainder > 0) 
+            cntSources++;
+        
+        // Create composite data requests by bucketing data source names
+        int indRqstStart = 0;
+        
+        for (int n=0; n<cntQueries; n++) {
+            int indRqstStop = indRqstStart + cntSources;
+            
+            // If this is the last time through we need to reduce stop index
+            if (indRqstStop > this.lstSelCmps.size())
+                indRqstStop = this.lstSelCmps.size();
+            
+            List<String>    lstRqstSrcs = this.lstSelCmps.subList(indRqstStart, indRqstStop);
+            
+            DpDataRequest rqst = newRequest();
+            rqst.insStart = this.insStart;
+            rqst.insStop = this.insStart;
+            rqst.lstSelCmps.addAll(lstRqstSrcs);
+            
+            lstRequests.add(rqst);
+            
+            indRqstStart = indRqstStop;
+        }
+        
+        return lstRequests;
+    }
+    
+    private List<DpDataRequest> createCompositeVertical(int cntQueries) {
+        
+        List<DpDataRequest> lstRequests = new LinkedList<>();
+        
+        // Compute the time duration for each request
+        Duration    durTotal = Duration.between(this.insStart, this.insStop);
+        Duration    durRequest = durTotal.dividedBy(cntQueries);
+        
+        // Create composite queries by divide time range interval
+        Instant insRqstStart = this.insStart;
+        
+        for (int n=0; n<cntQueries; n++) {
+            Instant insRqstStop = insRqstStart.plus(durRequest);
+            
+            DpDataRequest   rqst = newRequest();
+            rqst.insStart = insRqstStart;
+            rqst.insStop = insRqstStop;
+            rqst.lstSelCmps.addAll(this.lstSelCmps);
+            
+            lstRequests.add(rqst);
+            
+            insRqstStart = insRqstStop;
+        }
+        
+        return lstRequests;
+    }
+    
+    private List<DpDataRequest> createCompositeGrid(int cntQueries) {
+        
+        List<DpDataRequest> lstRequests = new LinkedList<>();
+        
+        // Compute the number of queries in each axes
+        int cntQueriesPerAxis = cntQueries / 2;
+        int cntQueriesHor = cntQueriesPerAxis;
+        int cntQueriesVer = cntQueriesPerAxis;
+        
+        // Compute the sizes for each component query
+        //  Horizontal axis
+        int cntSources = this.lstSelCmps.size() / cntQueriesHor;
+        
+        if (this.lstSelCmps.size() % cntQueries > 0)
+            cntSources++;
+        
+        //  Vertical axis
+        Duration    durTotal = Duration.between(this.insStart, this.insStop);
+        Duration    durRequest = durTotal.dividedBy(cntQueriesVer);
+        
+        // Add any remainder to the vertical (time) axis
+        if (cntQueries % 2 > 0) 
+            cntQueriesVer = cntQueriesPerAxis + 1;
+
+        // Create component requests for grid
+        int     indRqstSrcStart = 0;
+        Instant insRqstTmStart = this.insStart;
+        
+        // Horizontal (source) axis
+        for (int m=0; m<cntQueriesHor; m++) {
+            
+            // Get the last source index for sublist
+            int indRqstSrcStop = indRqstSrcStart + cntSources;
+            if (indRqstSrcStop > this.lstSelCmps.size())
+                indRqstSrcStop = this.lstSelCmps.size();
+            
+            List<String>    lstRqstSrcs = this.lstSelCmps.subList(indRqstSrcStart, indRqstSrcStop);
+            
+            // Vertical (time) axis
+            for (int n=0; n<cntQueriesVer; n++) {
+                Instant insRqstTmStop = insRqstTmStart.plus(durRequest);
+                
+                DpDataRequest   rqst = newRequest();
+                rqst.insStart = insRqstTmStart;
+                rqst.insStop = insRqstTmStart;
+                rqst.lstSelCmps.addAll(lstRqstSrcs);
+                
+                lstRequests.add(rqst);
+                
+                insRqstTmStart = insRqstTmStop;
+            }
+            
+            indRqstSrcStart = indRqstSrcStop;
+        }
+        
+        return lstRequests;
+    }
     
 }
