@@ -305,6 +305,42 @@ public final class DpDataRequest {
     }
     
     /**
+     * <p>
+     * Decomposes the given data request into component sub-query requests.
+     * </p>
+     * <p>
+     * Subdivides the query domain of the given source data request to create a set of sub-queries which,
+     * in total, are equivalent to the original request.  That is, the returned set of 
+     * <code>DpDataRequest</code> instances are a composite of the source data request.
+     * </p>
+     * <p>
+     * Composite queries are useful for large data requests, to increase query performance.  
+     * By subdividing a large request into multiple smaller requests each sub-request can be managed on 
+     * separate concurrent execution threads.  Specifically, multiple gRPC data streams can be
+     * created where each is managed on a separate thread.  Threads concurrently process the 
+     * sub-queries then assemble the results set as it arrives.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The source <code>DpDataRequest</code> instance is left unchanged.</li>
+     * <li>All returned <code>DpDataRequest</code> are new, independent request objects.</li>
+     * </ul>
+     * </p> 
+     * 
+     * @param rqst          source data request
+     * @param enmType       the strategy used in query domain decomposition
+     * @param cntQueries    the number of sub-queries in the returned composite query
+     * 
+     * @return  a collection of sub-queries which, in total, are equivalent to the current data request
+     * 
+     * @see #buildCompositeRequest(CompositeType, int)
+     */
+    public static List<DpDataRequest>   buildCompositeRequest(DpDataRequest rqst, CompositeType enmType, int cntQueries) {
+        return rqst.buildCompositeRequest(enmType, cntQueries);
+    }
+    
+    /**
      * Creates a new, open request instance of <code>DpDataRequest</code>.
      *
      */
@@ -319,19 +355,54 @@ public final class DpDataRequest {
     
     /**
      * <p>
-     * Creates a <em>Query Service</em> gRPC <code>PaginatedRequest</code> object 
+     * Decomposes the current data request into component sub-query requests.
+     * </p>
+     * <p>
+     * Subdivides the query domain of the current data request to create a set of sub-queries which,
+     * in total, are equivalent to the current data request.  That is, the returned set of 
+     * <code>DpDataRequest</code> instances are a composite of the current data request.
+     * </p>
+     * <p>
+     * Composite queries are useful for large data requests, to increase query performance.  
+     * By subdividing a large request into multiple smaller requests each sub-request can be managed on 
+     * separate concurrent execution threads.  Specifically, multiple gRPC data streams can be
+     * created where each is managed on a separate thread.  Threads concurrently process the 
+     * sub-queries then assemble the results set as it arrives.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The current <code>DpDataRequest</code> instance is left unchanged.</li>
+     * <li>All returned <code>DpDataRequest</code> are new, independent request objects.</li>
+     * </ul>
+     * </p> 
+     * 
+     * @param enmType       the strategy used in query domain decomposition
+     * @param cntQueries    the number of sub-queries in the returned composite query
+     * 
+     * @return  a collection of sub-queries which, in total, are equivalent to the current data request
+     */
+    public List<DpDataRequest>  buildCompositeRequest(CompositeType enmType, int cntQueries) {
+
+        return switch (enmType) {
+        
+        case HORIZONTAL -> this.buildCompositeHorizontal(cntQueries);
+        case VERTICAL -> this.buildCompositeVertical(cntQueries);
+        case GRID -> this.buildCompositeGrid(cntQueries);
+        };
+    }
+    
+    /**
+     * <p>
+     * Creates a <em>Query Service</em> <code>QueryRequest</code> Protobuf message
      * based upon the history of calls to the restrictor methods.
      * </p>
      * <p>
-     * Note tha <code>PaginatedRequest</code> gRPC messages are specific to dynamic
-     * data requests, that is, rather than wait for the full request to return
-     * from the <em>Query Service</em> a data stream is initiated.  The stream continues
-     * as a separate thread and requested snapshot data is acquired in <i>pages</i>. 
-     * </p>
-     * <p>
-     * This is essentially a convenience method
-     * which calls <code>{@link #buildRequest()}</code> and packages the results 
-     * into a gRPC <code>PaginatedRequest</code> object.
+     * Note that the returned <code>QueryRequest</code> Protobuf message can be used to initiate a
+     * gRPC data stream.  Specifically, the returned object contains the <code>QuerySpec</code>
+     * Protobuf message containing the full data request.
+     * Typically, when a gRPC data stream is initiate with the <em>Query Service</em> 
+     * a separate thread is spawned and requested data is acquired in <i>pages</i>. 
      * </p>
      * <p>  
      * <h2>NOTES:</h2>
@@ -365,13 +436,6 @@ public final class DpDataRequest {
         QueryRequest msgRqst = bldrRqst.build();
         
         return msgRqst;
-    }
-    
-    public List<DpDataRequest>  createCompositeRequests(CompositeType enmType, int cntQueries) {
-
-        List<DpDataRequest>     lstRequests = new LinkedList<>();
-        
-        return null;
     }
     
     /**
@@ -1235,7 +1299,7 @@ public final class DpDataRequest {
 //        return bufQuery.toString();
 //    }
     
-    private List<DpDataRequest> createCompositeHorizontal(int cntQueries) {
+    private List<DpDataRequest> buildCompositeHorizontal(int cntQueries) {
         
         List<DpDataRequest> lstRequests = new LinkedList<>();
         
@@ -1271,7 +1335,7 @@ public final class DpDataRequest {
         return lstRequests;
     }
     
-    private List<DpDataRequest> createCompositeVertical(int cntQueries) {
+    private List<DpDataRequest> buildCompositeVertical(int cntQueries) {
         
         List<DpDataRequest> lstRequests = new LinkedList<>();
         
@@ -1298,7 +1362,7 @@ public final class DpDataRequest {
         return lstRequests;
     }
     
-    private List<DpDataRequest> createCompositeGrid(int cntQueries) {
+    private List<DpDataRequest> buildCompositeGrid(int cntQueries) {
         
         List<DpDataRequest> lstRequests = new LinkedList<>();
         
