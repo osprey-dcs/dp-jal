@@ -39,9 +39,9 @@ import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.model.AUnavailable;
 import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorOperation;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
 
 
@@ -85,16 +85,17 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
  * </p>
  * <p>
  * It is important to note that an unconfigured data request, that is, the request 
- * specified immediately upon instance creation, always represents the "open
- * query."  Specifically, a newly created <code>DpDataRequest</code> instance always
- * selects for all the time-series data within the <em>Data Platform </em>.  By calling
- * the methods listed above, the resulting query request is "restricted", either
- * by selecting the specific data sources to be included (e.g., EPICS process variables (PVs)), reducing
- * the range of allowable timestamps, or filtering on the data values or other
- * attributes of the query.
+ * specified immediately upon instance creation, always represents the "empty query."  
+ * Specifically, a newly created <code>DpDataRequest</code> instance always
+ * selects for no time-series data within the <em>Data Platform </em>.  By calling
+ * the methods listed above, the resulting query request is "opened", either
+ * by selecting the specific data sources to be included (e.g., EPICS process variables (PVs)), 
+ * and by setting the range of allowable timestamps.
+ * A query can be reduced in scope using the "restrictor" methods, such as filtering operations 
+ * on the data values, or other attributes of the query.
  * </p>    
  * <p> 
- * Once a class instance is configured by the client using the available restrictor 
+ * Once a class instance is configured by the client using the available selector, range, and filter
  * method calls, a <em>Query Service </em> Protobuf message containing the request
  * can be created using the public <code>{@link #buildQueryRequest()}</code> method.
  * The method packages the client-configuration into the appropriate gRPC message type 
@@ -107,14 +108,14 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
  * <ul>
  * <li> 
  * Call the {@link #newRequest()} method to return a <em>Query Service</em> data 
- * request initialized to the "open request" query.
+ * request initialized to the "empty request" query.
  * </li>
  * <li> 
- * A new <code>DpDataRequest</code> instance will create the open query, that is, it creates
- * the query which returns all time-serice data in the <em>Data Platform</em> archive.
+ * A new <code>DpDataRequest</code> instance will create the empty query, that is, it creates
+ * the query which returns the empty results set.
  * </li>
  * <li> 
- * The first call to a <code>select</code> method restricts the query to given data source names or
+ * The first call to a <code>select</code> method sets the query to given data source names or
  * special columns.
  * However, further calls to <code>select</code> methods opens the query to additional
  * data source names.
@@ -444,7 +445,7 @@ public final class DpDataRequest {
      * </p>
      * <p>
      * <ul>
-     * <li>Clears all previous calls to restrictors.</li>
+     * <li>Clears all previous calls to selectors, range, and restrictors.</li>
      * <li>Sets the page size to the application default (in properties).</li>
      * <li>Sets the start page index to 0 (send all data pages).</li>
      * </ul>
@@ -455,7 +456,8 @@ public final class DpDataRequest {
         this.szPage = SZ_PAGES;
 
         this.insStart = INS_INCEPT;
-        this.insStop = Instant.now();
+        this.insStop = INS_INCEPT;
+//        this.insStop = Instant.now();
         this.lstSelCmps.clear();
         
         this.lstWhrCmps.clear();
@@ -564,11 +566,12 @@ public final class DpDataRequest {
      * </p>
      * 
      * @param insBeg        start time instant of the time range interval
-     * @param lngDuration   duration of the time range interval
-     * @param cuUnit        time units of the duration
+     * @param lngDuration   duration value of the time range interval
+     * @param tuDuration    duration time units 
      */
-    public void rangeDuration(Instant insBeg, Long lngDuration, ChronoUnit cuUnit) {
-        Instant insStop = insBeg.plus(lngDuration, cuUnit);
+    public void rangeDuration(Instant insBeg, Long lngDuration, TimeUnit tuDuration) {
+        ChronoUnit  cuDuration = tuDuration.toChronoUnit();
+        Instant     insStop = insBeg.plus(lngDuration, cuDuration);
         
         this.rangeBetween(insBeg, insStop);
     }
@@ -607,8 +610,8 @@ public final class DpDataRequest {
     
     /**
      * <p>
-     * Restrict the request to data with timestamps occurring at or after the 
-     * given time offset.
+     * Set the request time range to timestamps occurring at or after the 
+     * given time offset until now.
      * </p>
      * <p>
      * Restricts the timestamp range of the query to the given time offset 
@@ -629,16 +632,17 @@ public final class DpDataRequest {
      * 
      * @throws IllegalArgumentException  the time offset was not a negative value
      */
-    public void rangeOffset(int lngTimeOffset, TimeUnit tuUnit) throws IllegalArgumentException {
+    public void rangeOffset(long lngTimeOffset, TimeUnit tuUnit) throws IllegalArgumentException {
         if (lngTimeOffset > 0)
             throw new IllegalArgumentException("Relative times must be negative");
         
         // Convert offset to a positive nanosecond duration 
         //  Subtract from now instant to yield new start time instant
-        long    lngDur = -lngTimeOffset;
-        long    lngNsecs = TimeUnit.NANOSECONDS.convert(lngDur, tuUnit);
+        long        lngDur = -lngTimeOffset;
+        ChronoUnit  cuUnit = tuUnit.toChronoUnit();
         
-        this.insStart = Instant.now().minusNanos(lngNsecs);
+        this.insStop = Instant.now();
+        this.insStart = this.insStop.minus(lngDur, cuUnit);
     }
     
     
@@ -1418,6 +1422,46 @@ public final class DpDataRequest {
         }
         
         return lstRequests;
+    }
+
+    
+    //
+    // Object Overrides (debugging)
+    //
+    
+    /**
+     * Compares the class type and {<code>{@link #lstSelCmps}, {@link #insStart}, {@link #insStop}</code>} 
+     * attributes for equivalence. 
+     *
+     * @see @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof DpDataRequest rqst) {
+            return this.lstSelCmps.equals(rqst.lstSelCmps) &&
+                    this.insStart.equals(rqst.insStart)  &&
+                    this.insStop.equals(rqst.insStop);
+        }
+        
+        return false;
+    }
+
+    /**
+     * Writes out the class type and {<code>{@link #lstSelCmps}, {@link #insStart}, {@link #insStop}</code>} 
+     * attributes values. 
+     *
+     * @see @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getCallerClass());
+        
+        buf.append(" contents:\n");
+        buf.append("  source name = " + this.lstSelCmps + "\n");
+        buf.append("  start time = " + this.insStart + "\n");
+        buf.append("  stop time = " + this.insStop + "\n");
+
+        return buf.toString();
     }
     
 }
