@@ -1328,7 +1328,7 @@ public final class DpDataRequest {
             
             DpDataRequest rqst = newRequest();
             rqst.insStart = this.insStart;
-            rqst.insStop = this.insStart;
+            rqst.insStop = this.insStop;
             rqst.lstSelCmps.addAll(lstRqstSrcs);
             
             lstRequests.add(rqst);
@@ -1346,12 +1346,16 @@ public final class DpDataRequest {
         // Compute the time duration for each request
         Duration    durTotal = Duration.between(this.insStart, this.insStop);
         Duration    durRequest = durTotal.dividedBy(cntQueries);
+        Duration    durRemain = durTotal.minus(durRequest.multipliedBy(cntQueries));
         
         // Create composite queries by divide time range interval
         Instant insRqstStart = this.insStart;
         
         for (int n=0; n<cntQueries; n++) {
             Instant insRqstStop = insRqstStart.plus(durRequest);
+            
+            if (n == (cntQueries - 1))
+                insRqstStop = insRqstStop.plus(durRemain);
             
             DpDataRequest   rqst = newRequest();
             rqst.insStart = insRqstStart;
@@ -1375,26 +1379,28 @@ public final class DpDataRequest {
         int cntQueriesHor = cntQueriesPerAxis;
         int cntQueriesVer = cntQueriesPerAxis;
         
+        // Add any remainder to the vertical (time) axis
+        if (cntQueries % 2 > 0) 
+            cntQueriesVer = cntQueriesPerAxis + 1;
+
         // Compute the sizes for each component query
-        //  Horizontal axis
+        //  Horizontal axis - number of sources/query
         int cntSources = this.lstSelCmps.size() / cntQueriesHor;
         
         if (this.lstSelCmps.size() % cntQueries > 0)
             cntSources++;
         
-        //  Vertical axis
+        //  Vertical axis - duration of sub-queries
         Duration    durTotal = Duration.between(this.insStart, this.insStop);
         Duration    durRequest = durTotal.dividedBy(cntQueriesVer);
+        Duration    durRemain = durTotal.minus(durRequest.multipliedBy(cntQueriesVer));
         
-        // Add any remainder to the vertical (time) axis
-        if (cntQueries % 2 > 0) 
-            cntQueriesVer = cntQueriesPerAxis + 1;
-
         // Create component requests for grid
+        //  Initialize loops
         int     indRqstSrcStart = 0;
         Instant insRqstTmStart = this.insStart;
         
-        // Horizontal (source) axis
+        //      Horizontal (source) axis
         for (int m=0; m<cntQueriesHor; m++) {
             
             // Get the last source index for sublist
@@ -1404,13 +1410,16 @@ public final class DpDataRequest {
             
             List<String>    lstRqstSrcs = this.lstSelCmps.subList(indRqstSrcStart, indRqstSrcStop);
             
-            // Vertical (time) axis
+            //  Vertical (time) axis
             for (int n=0; n<cntQueriesVer; n++) {
                 Instant insRqstTmStop = insRqstTmStart.plus(durRequest);
                 
+                if (n == (cntQueriesVer - 1))
+                    insRqstTmStop = insRqstTmStop.plus(durRemain);
+                
                 DpDataRequest   rqst = newRequest();
                 rqst.insStart = insRqstTmStart;
-                rqst.insStop = insRqstTmStart;
+                rqst.insStop = insRqstTmStop;
                 rqst.lstSelCmps.addAll(lstRqstSrcs);
                 
                 lstRequests.add(rqst);
@@ -1418,6 +1427,8 @@ public final class DpDataRequest {
                 insRqstTmStart = insRqstTmStop;
             }
             
+            // (Re)set loop variables
+            insRqstTmStart = this.insStart;
             indRqstSrcStart = indRqstSrcStop;
         }
         

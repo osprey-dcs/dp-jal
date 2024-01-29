@@ -40,19 +40,48 @@ import java.util.stream.Stream;
  */
 public class JavaRuntime {
 
+    //
+    // Class Constants
+    //
     
+    /** Call stack depth to fetch caller details */
+    public static final int     INT_STACK_DEPTH = 2;
+    
+    
+
+    //
+    // Operations
+    //
     
     /**
-     * Returns the class name of the method calling this method.
+     * Returns the fully qualified class name of the method calling this method.
      * 
-     * @return the fully qualified class name in call stack at depth 2
+     * @return the fully qualified class name in call stack at depth {@value #INT_STACK_DEPTH}
      */
     public static String getCallerClass() {
-        Throwable           throwable = new Throwable();
-        StackTraceElement[] arrStackTrace = throwable.getStackTrace();
-        String              strCallerClass = arrStackTrace[2].getClassName();
+        StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
+//        Throwable           throwable = new Throwable();
+//        StackTraceElement[] arrStackTrace = throwable.getStackTrace();
+        String              strCallerClass = arrStackTrace[INT_STACK_DEPTH].getClassName();
         
         return strCallerClass;
+    }
+
+    /**
+     * Returns the simple class name of the method calling this method.
+     * 
+     * @return the fully qualified class name in call stack at depth {@value #INT_STACK_DEPTH}
+     */
+    public static String getCallerClassSimple() {
+        StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
+//        Throwable           throwable = new Throwable();
+//        StackTraceElement[] arrStackTrace = throwable.getStackTrace();
+        String              strCallerClass = arrStackTrace[INT_STACK_DEPTH].getClassName();
+        
+        int                 indNameSimple = strCallerClass.lastIndexOf('.');
+        String              strNameSimple = strCallerClass.substring(indNameSimple + 1);
+        
+        return strNameSimple;
     }
 
     /**
@@ -61,16 +90,17 @@ public class JavaRuntime {
      * @return 2nd method name in call stack
      */
     public static String getCallerName() {
-        Throwable           throwable = new Throwable();
-        StackTraceElement[] arrStackTrace = throwable.getStackTrace();
-        String              strCallerName = arrStackTrace[2].getMethodName();
+        StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
+//        Throwable           throwable = new Throwable();
+//        StackTraceElement[] arrStackTrace = throwable.getStackTrace();
+        String              strCallerName = arrStackTrace[INT_STACK_DEPTH].getMethodName();
         
         return strCallerName;
     }
     
     /**
      * <p>
-     * Returns the class qualified name of the method calling this method.
+     * Returns the fully qualified name of the method calling this method (including class name).
      * </p>
      * <p>
      * The returned value has the following form
@@ -84,12 +114,43 @@ public class JavaRuntime {
      * @return fully qualified method name of the caller
      */
     public static String getQualifiedCallerName() {
-        Throwable           throwable = new Throwable();
-        StackTraceElement[] arrStackTrace = throwable.getStackTrace();
-        String              strClsName = arrStackTrace[1].getClassName();
-        String              strMthName = arrStackTrace[1].getMethodName();
+        StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
+//        Throwable           throwable = new Throwable();
+//        StackTraceElement[] arrStackTrace = throwable.getStackTrace();
+        String              strClsName = arrStackTrace[INT_STACK_DEPTH].getClassName();
+        String              strMthName = arrStackTrace[INT_STACK_DEPTH].getMethodName();
         
         String              strQulName = strClsName + "#" + strMthName;
+        
+        return strQulName;
+    }
+    
+    /**
+     * <p>
+     * Returns the simple qualified name of the method calling this method (including class name).
+     * </p>
+     * <p>
+     * The returned value has the following form
+     * <br/> <br/>
+     * &nbsp; &nbsp; [ClassName]#[MethodName]
+     * <br/> <br/>
+     * where [ClassName] is the result of <code>{@link #getCallerClassSimple()}</code> and 
+     * [MethodName] is the result of <code>{@link #getCallerName()}</code>.
+     * </p>
+     * 
+     * @return simple qualified method name of the caller
+     */
+    public static String getQualifiedCallerNameSimple() {
+        StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
+//        Throwable           throwable = new Throwable();
+//        StackTraceElement[] arrStackTrace = throwable.getStackTrace();
+        String              strClsName = arrStackTrace[INT_STACK_DEPTH].getClassName();
+        String              strMthName = arrStackTrace[INT_STACK_DEPTH].getMethodName();
+        
+        int                 indClsNameSimple = strClsName.lastIndexOf('.');
+        String              strClsNameSimple = strClsName.substring(indClsNameSimple + 1);
+        
+        String              strQulName = strClsNameSimple + "#" + strMthName;
         
         return strQulName;
     }

@@ -31,6 +31,7 @@ import static org.junit.Assert.fail;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
@@ -45,6 +46,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
+import com.ospreydcs.dp.api.query.DpDataRequest.CompositeType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
@@ -183,7 +185,7 @@ public class DpDataRequestTest {
         Assert.assertEquals(INS_ARC_START, insStart);
         Assert.assertTrue("Empty initial query contains data sources.", lstSrcNames.isEmpty());
         
-        System.out.println(JavaRuntime.getQualifiedCallerName() + " empty query contents:");
+        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " empty query contents:");
         System.out.println("  Data source names = " + lstSrcNames);
         System.out.println("  Archive Inception = " + STR_ARC_INCEPTION);
         System.out.println("  Start time instant = " + insStart);
@@ -195,15 +197,175 @@ public class DpDataRequestTest {
      */
     @Test
     public final void testBuildCompositeRequestDpDataRequestCompositeTypeInt() {
-        fail("Not yet implemented"); // TODO
+        CompositeType   ENM_TYPE = CompositeType.GRID;
+        final int       CNT_QUERIES = 5;
+        
+        List<DpDataRequest> lstSubRqsts1 = DpDataRequest.buildCompositeRequest(this.rqstTest, ENM_TYPE, CNT_QUERIES);
+        List<DpDataRequest> lstSubRqsts2 = this.rqstTest.buildCompositeRequest(ENM_TYPE, CNT_QUERIES);
+        
+        Assert.assertEquals(lstSubRqsts2, lstSubRqsts1);
     }
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.CompositeType, int)}.
      */
     @Test
-    public final void testBuildCompositeRequestCompositeTypeInt() {
-        fail("Not yet implemented"); // TODO
+    public final void testBuildCompositeRequestCompositeTypeIntHorizontal() {
+        CompositeType   ENM_TYPE = CompositeType.HORIZONTAL;
+        final int       CNT_QUERIES = 6;
+        
+        List<DpDataRequest> lstSubRqsts = this.rqstTest.buildCompositeRequest(ENM_TYPE, CNT_QUERIES);
+        
+        System.out.println("Composite Requests - HORIZONTAL:");
+        System.out.println("  " + lstSubRqsts);
+        
+        // Check composite query
+        QueryRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
+        List<String>    lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getColumnNamesList();
+        Timestamp       tmsStartOrg = msgRqstOrg.getQuerySpec().getStartTime();
+        Timestamp       tmsStopOrg = msgRqstOrg.getQuerySpec().getEndTime();
+        
+        List<String>    lstSrcNmsCmp = new LinkedList<>();
+        
+        for (DpDataRequest rqst : lstSubRqsts) {
+            QueryRequest    msgSubRqst = rqst.buildQueryRequest();
+            
+            List<String>    lstSrcNmsSub = msgSubRqst.getQuerySpec().getColumnNamesList();
+            Timestamp       tmsStartSub = msgSubRqst.getQuerySpec().getStartTime();
+            Timestamp       tmsStopSub = msgSubRqst.getQuerySpec().getEndTime();
+            
+            boolean bolStart = ProtoTime.equals(tmsStartOrg, tmsStartSub);
+            boolean bolStop = ProtoTime.equals(tmsStopOrg, tmsStopSub);
+            Assert.assertTrue("Sub-query has incorrect start timestamp.", bolStart);
+            Assert.assertTrue("Sub-query has incorrect end timestamp.", bolStop);
+            
+            Assert.assertTrue("Sub-query data source name list too large.", lstSrcNmsOrg.size() > lstSrcNmsSub.size());
+            Assert.assertTrue("Sub-query data source name list outside original.", lstSrcNmsOrg.containsAll(lstSrcNmsSub));
+            
+            lstSrcNmsCmp.addAll(lstSrcNmsSub);
+        }
+        
+        Assert.assertEquals(lstSrcNmsOrg, lstSrcNmsCmp);
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.CompositeType, int)}.
+     */
+    @Test
+    public final void testBuildCompositeRequestCompositeTypeIntVertical() {
+        CompositeType   ENM_TYPE = CompositeType.VERTICAL;
+        final int       CNT_QUERIES = 4;
+        
+        List<DpDataRequest> lstSubRqsts = this.rqstTest.buildCompositeRequest(ENM_TYPE, CNT_QUERIES);
+        
+        System.out.println("Composite Requests - VERTICAL:");
+        System.out.println("  " + lstSubRqsts);
+        
+        // Check composite query
+        QueryRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
+        List<String>    lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getColumnNamesList();
+        Timestamp       tmsStartOrg = msgRqstOrg.getQuerySpec().getStartTime();
+        Timestamp       tmsStopOrg = msgRqstOrg.getQuerySpec().getEndTime();
+        
+        Duration        durComposite = Duration.ZERO;
+        Instant         insStartCmp = null;
+        Instant         insStopCmp = null;
+        
+        for (DpDataRequest rqst : lstSubRqsts) {
+            QueryRequest    msgSubRqst = rqst.buildQueryRequest();
+            
+            List<String>    lstSrcNmsSub = msgSubRqst.getQuerySpec().getColumnNamesList();
+            Timestamp       tmsStartSub = msgSubRqst.getQuerySpec().getStartTime();
+            Timestamp       tmsStopSub = msgSubRqst.getQuerySpec().getEndTime();
+         
+            // Check data sources
+            Assert.assertEquals(lstSrcNmsOrg, lstSrcNmsSub);
+
+            // Advance the composite time interval endpoints and duration
+            Instant         insStartSub = ProtoMsg.toInstant(tmsStartSub);
+            Instant         insStopSub = ProtoMsg.toInstant(tmsStopSub);
+            Duration        durSubRqst = Duration.between(insStartSub, insStopSub);
+            
+            if (insStartCmp == null) {
+                insStartCmp = insStartSub;
+                insStopCmp = insStartSub;
+            }
+            
+            insStopCmp = insStopCmp.plus(durSubRqst); 
+            durComposite = durComposite.plus(durSubRqst);
+        }        
+        
+        // Check the composite time interval
+        Instant     insStartOrg = ProtoMsg.toInstant(tmsStartOrg);
+        Instant     insStopOrg = ProtoMsg.toInstant(tmsStopOrg);
+        Duration    durRqstOrg = Duration.between(insStartOrg, insStopOrg);
+        
+        Assert.assertEquals(durRqstOrg, durComposite);
+        Assert.assertEquals(insStartOrg, insStartCmp);
+        Assert.assertEquals(insStopOrg, insStopCmp);
+        
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.CompositeType, int)}.
+     */
+    @Test
+    public final void testBuildCompositeRequestCompositeTypeIntGrid() {
+        CompositeType   ENM_TYPE = CompositeType.GRID;
+        final int       CNT_QUERIES = 5;
+        
+        List<DpDataRequest> lstSubRqsts = this.rqstTest.buildCompositeRequest(ENM_TYPE, CNT_QUERIES);
+        
+        System.out.println("Composite Requests - GRID:");
+        System.out.println("  " + lstSubRqsts);
+        
+        // Too convoluted for a precise check - just check some necessary conditions
+        QueryRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
+        List<String>    lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getColumnNamesList();
+        Timestamp       tmsStartOrg = msgRqstOrg.getQuerySpec().getStartTime();
+        Timestamp       tmsStopOrg = msgRqstOrg.getQuerySpec().getEndTime();
+        
+        Instant         insStartOrg = ProtoMsg.toInstant(tmsStartOrg);
+        Instant         insStopOrg = ProtoMsg.toInstant(tmsStopOrg);
+        Duration        durRqstOrg = Duration.between(insStartOrg, insStopOrg);
+
+        List<String>    lstSrcNmsCmp = new LinkedList<>();
+        
+        Instant         insStartCmp = null;
+        Instant         insStopCmp = null;
+
+        for (DpDataRequest rqst : lstSubRqsts) {
+            QueryRequest    msgSubRqst = rqst.buildQueryRequest();
+            
+            List<String>    lstSrcNmsSub = msgSubRqst.getQuerySpec().getColumnNamesList();
+            Timestamp       tmsStartSub = msgSubRqst.getQuerySpec().getStartTime();
+            Timestamp       tmsStopSub = msgSubRqst.getQuerySpec().getEndTime();
+         
+            // Check sub-query data sources
+            Assert.assertTrue("Sub-query data sources not in original set", lstSrcNmsOrg.containsAll(lstSrcNmsCmp));
+
+            if (!lstSrcNmsCmp.containsAll(lstSrcNmsSub))
+                lstSrcNmsCmp.addAll(lstSrcNmsSub);
+
+            // Check the sub-query time domain
+            Instant         insStartSub = ProtoMsg.toInstant(tmsStartSub);
+            Instant         insStopSub = ProtoMsg.toInstant(tmsStopSub);
+            Duration        durSubRqst = Duration.between(insStartSub, insStopSub);
+            
+            Assert.assertTrue("Sub-query duration greater than original query.", durSubRqst.minus(durRqstOrg).isNegative());
+
+            if (insStartCmp == null) {
+                insStartCmp = insStartSub;
+                insStopCmp = insStartSub;
+            }
+            if (insStartSub.isBefore(insStartCmp))
+                insStartCmp = insStartSub;
+            if (insStopSub.isAfter(insStopCmp))
+                insStopCmp = insStopSub;
+        }
+        
+        Assert.assertEquals(insStartOrg, insStartCmp);
+        Assert.assertEquals(insStopOrg, insStopCmp);
     }
 
     /**
@@ -389,7 +551,4 @@ public class DpDataRequestTest {
     // Support Methods
     //
     
-    private boolean equivalance() {
-        return false;
-    }
 }
