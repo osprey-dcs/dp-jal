@@ -49,6 +49,10 @@ archive:    # Data Platform data archive properties
    
 query:      # Data Platform Query Service operations
    pageSize: 100      # UNUSED       # default bucket count per page  : DP_API_QUERY_PAGE_SIZE
+   concurrency:  # General concurrency (multi-threading) properties
+      active: true                   # use concurrency           : DP_API_QUERY_CONCURRENCY_ACTIVE
+      pivotSize: 10                  # size inducing concurrency : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
+      threadCount: 5                 # worker thread count       : DP_API_QUERY_CONCURRENCY_THREAD_COUNT
    timeout:      # General connection timeout properties (e.g., used in API interface shutdown)
       active: true                   # apply timeout condition   : DP_API_QUERY_TIMEOUT_ACTIVE
       limit: 30                      # timeout limit             : DP_API_QUERY_TIMEOUT_LIMIT

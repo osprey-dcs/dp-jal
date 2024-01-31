@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.config.query;
 
+import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
 import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
 import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
@@ -63,10 +64,14 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
     
     /** Default timeout parameters for Query Service operations */
     @ACfgOverride.Struct(pathelem="TIMEOUT")
-    public DpTimeoutConfig  timeout;
+    public DpTimeoutConfig      timeout;
 
     /** Default logging configuration for Query Service operations */
     @ACfgOverride.Struct(pathelem="LOGGING")
-    public DpLoggingConfig  logging;
+    public DpLoggingConfig      logging;
+    
+    /** Default concurrency parameters for Query Service operations */
+    @ACfgOverride.Struct(pathelem="CONCURRENCY")
+    public DpConcurrencyConfig  concurrency;
     
 }

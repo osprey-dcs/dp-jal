@@ -41,6 +41,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
@@ -70,6 +72,9 @@ public class QueryResponseCorrelator {
     // Application Resources
     //
     
+    /** The Data Platform API default configuration parameter set */
+    private static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    
     
     
     //
@@ -77,18 +82,18 @@ public class QueryResponseCorrelator {
     //
     
     /** Is logging active */
-    public static final boolean    BOL_LOGGING = true;
+    public static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
     
     
     /** Parallelism timeout limit  - for parallel thread pool tasks */
-    public static final long       LNG_TIMEOUT = 100;
+    public static final long       LNG_TIMEOUT = CFG_QUERY.timeout.limit;
     
     /** Parallelism timeout units - for parallel thread pool tasks */
-    public static final TimeUnit   TU_TIMEOUT = TimeUnit.MILLISECONDS;
+    public static final TimeUnit   TU_TIMEOUT = CFG_QUERY.timeout.unit;
     
     
     /** Parallelism tuning parameter - pivot to parallel processing when target set size hits this limit */
-    public static final int        SZ_TARGET_PIVOT = 10;
+    public static final int        SZ_TARGET_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
     
     //
