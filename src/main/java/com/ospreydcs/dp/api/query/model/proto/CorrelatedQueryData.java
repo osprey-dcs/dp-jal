@@ -36,6 +36,7 @@ import java.util.TreeSet;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
+import com.ospreydcs.dp.api.model.ResultRecord;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
@@ -132,13 +133,16 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     // Attributes and Resources
     //
     
-    /** The initial sampling time instant */
+    /** The initial sampling time instant - taken from <code>msgSmpIval</code> */
     private final Instant                       insStart;
     
-    /** The uniform sampling interval Protobuf message */
+    /** Set of all unique data source names active within sampling interval - taken from data messages */
+    private final Set<String>                   setSrcNms = new TreeSet<>();
+    
+    /** The uniform sampling interval Protobuf message - the correlation subject */
     private final FixedIntervalTimestampSpec    msgSmpIvl; 
     
-    /** List of all data column Protobuf messages correlated within sampling interval */
+    /** List of all data column Protobuf messages correlated within sampling interval - correlated objects */
     private final List<DataColumn>              lstMsgCols = new LinkedList<>();
     
     
@@ -177,6 +181,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         
         this.insStart = ProtoMsg.toInstant(msgTmsStart);
         this.msgSmpIvl = msgBucket.getSamplingInterval();
+        this.setSrcNms.add(msgDataCol.getName());
         this.lstMsgCols.add(msgDataCol);
     }
     
@@ -194,7 +199,16 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         return this.insStart;
     }
 
-
+    /**
+     * Returns the set of unique names for all the data sources that are active within the
+     * subject sampling interval.
+     *  
+     * @return
+     */
+    public final Set<String>    getDataSourceNames() {
+        return this.setSrcNms;
+    }
+    
     /**
      * Returns the Protobuf message describing the sampling interval
      * 
@@ -260,12 +274,55 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         
         // Check if list addition is possible - must have same sampling interval
         if (ProtoTime.equals(this.msgSmpIvl, msgBucket.getSamplingInterval())) {
-            this.lstMsgCols.add(msgBucket.getDataColumn());
+            this.lstMsgCols.add( msgBucket.getDataColumn() );
+            this.setSrcNms.add( msgBucket.getDataColumn().getName() );
             
             return true;
         }
         
         return false;
+    }
+    
+    /**
+     * <p>
+     * Verifies that the given set of correlated data for the sampling interval is consistent.
+     * </p>
+     * <p>
+     * Note that the data source name for each inserted <code>BucketData</code> message is 
+     * recorded during insertion.  This method verifies that the current set of data inserted
+     * into this instance is consistent and ready for further processing.
+     * </p>
+     * <p>
+     * The following conditions are checked:
+     * <ul>
+     * <li>Each registered data source has only one contribution to the correlated data set.</li>
+     * <li>Each registered data source has at least one contribution to the correlated data set.</li>
+     * </ul>
+     * If the current correlated data set fails the verification check, the cause of the failure
+     * is included in the result.  Otherwise no cause message is provided.
+     * </p> 
+     * 
+     * @return  result of the verification check, containing the cause if failed
+     */
+    public ResultRecord verifySourceUniqueness() {
+        
+        // Create list of all (potentially repeating) data source names within column collection
+        List<String>    lstSrcNms = this.lstMsgCols.stream().map(DataColumn::getName).toList();
+        
+        // Remove from the above list each unique data source name recorded so far
+        boolean bolMissingSource = this.setSrcNms
+                            .stream()
+                            .allMatch(strNm -> lstSrcNms.remove(strNm));
+
+        // Check for registered data sources that are missing from the data columns list
+        if (!bolMissingSource)
+            return ResultRecord.newFailure("Serious Error: data column list was missing at least one data source");
+        
+        // Check for repeated data source entries within the data columns list
+        if (!lstSrcNms.isEmpty())
+            return ResultRecord.newFailure("Data column list contains multiple entries for following data sources: " + lstSrcNms);
+        
+        return ResultRecord.newSuccess();
     }
     
     

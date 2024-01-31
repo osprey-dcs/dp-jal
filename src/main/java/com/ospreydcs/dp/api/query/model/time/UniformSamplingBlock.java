@@ -33,7 +33,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
+import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.model.ResultRecord;
 import com.ospreydcs.dp.api.query.model.data.SampledTimeSeries;
 import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
 
@@ -44,6 +49,35 @@ import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
  *
  */
 public class UniformSamplingBlock {
+
+    
+    //
+    // Application Resources
+    //
+    
+    /** The Data Platform API default configuration parameter set */
+    private static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    
+    
+    
+    //
+    // Class Constants
+    //
+    
+    /** Is logging active */
+    public static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
+    
+    
+    /** Parallelism timeout limit  - for parallel thread pool tasks */
+    public static final long       LNG_TIMEOUT = CFG_QUERY.timeout.limit;
+    
+    /** Parallelism timeout units - for parallel thread pool tasks */
+    public static final TimeUnit   TU_TIMEOUT = CFG_QUERY.timeout.unit;
+    
+    
+    /** Parallelism tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
+    public static final int        SZ_MSGCOLS_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    
     
     //
     // Defining Attributes
@@ -79,7 +113,11 @@ public class UniformSamplingBlock {
      * </p>
      *
      */
-    public UniformSamplingBlock(CorrelatedQueryData refSampleBlock) {
+    public UniformSamplingBlock(CorrelatedQueryData refSampleBlock) throws IllegalArgumentException {
+        ResultRecord    result = refSampleBlock.verifySourceUniqueness();
+        if (result.failed())
+            throw new IllegalArgumentException("Correlated data block is corrupt: " + result.getCause());
+        
         this.msgClockParams = refSampleBlock.getSamplingMessage();
         this.lstMsgDataCols = refSampleBlock.getAllDataMessages();
         
@@ -94,6 +132,15 @@ public class UniformSamplingBlock {
     
     private void createTimeSeries() {
         
+        // Create processing stream based upon number of data columns
+        Stream<com.ospreydcs.dp.grpc.v1.common.DataColumn>  strmMsgDataCols;
+        
+        if (this.lstMsgDataCols.size() > SZ_MSGCOLS_PIVOT)
+            strmMsgDataCols = this.lstMsgDataCols.parallelStream();
+        else
+            strmMsgDataCols = this.lstMsgDataCols.stream();
+        
+        // Create the time series - one for each uni
     }
     
     /**
