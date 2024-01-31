@@ -55,9 +55,9 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * factory utility which has <code>connect(...)</code> methods analogous to those here.
  * </p>
  * <p>
- * This class uses the static instance <code>{@link #INSTANCE}</code> as the singleton connection factory 
+ * This class uses the static instance <code>{@link #FACTORY}</code> as the singleton connection factory 
  * for <code>DpQueryService</code> creation using the DP API library default configuration.  
- * Users can use the <code>{@link #INSTANCE}</code> instance directory or obtain it indirectly through the 
+ * Users can use the <code>{@link #FACTORY}</code> instance directory or obtain it indirectly through the 
  * <code>{@link #getInstance()}</code> static method.
  * </p>
  * <p>
@@ -89,7 +89,7 @@ public final class DpQueryServiceFactory
     //
     
     /** The singleton instance of the connection factory */
-    public static final DpQueryServiceFactory   INSTANCE = newFactory(CFG_CONN_DEFAULT);
+    public static final DpQueryServiceFactory   FACTORY = newFactory(CFG_CONN_DEFAULT);
     
     
     //
@@ -122,10 +122,10 @@ public final class DpQueryServiceFactory
     /**
      * Returns the singleton instance of this connection factory.
      * 
-     * @return  the static instance <code>{@link #INSTANCE}</code>
+     * @return  the static instance <code>{@link #FACTORY}</code>
      */
     public static DpQueryServiceFactory getInstance() {
-        return INSTANCE;
+        return FACTORY;
     }
     
     

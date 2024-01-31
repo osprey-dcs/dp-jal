@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryResponseCollector.java
+ * File:	QueryResponseCorrelator.java
  * Package: com.ospreydcs.dp.api.query.model.proto
- * Type: 	QueryResponseCollector
+ * Type: 	QueryResponseCorrelator
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -29,7 +29,6 @@ package com.ospreydcs.dp.api.query.model.proto;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -53,19 +52,19 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * <p>
  * The intent is to organize the results of a Data Platform Query Service query according to the sampling
  * intervals.  That is, the collector parses the result sets for equivalent sampling intervals then associates
- * each data column of the result set to a <code>{@link SamplingIntervalRef</code> instance.  Once the query
- * result is fully processed there should be one <code>SamplingIntervalRef</code> instance for every unique
+ * each data column of the result set to a <code>{@link CorrelatedQueryData</code> instance.  Once the query
+ * result is fully processed there should be one <code>CorrelatedQueryData</code> instance for every unique
  * sampling interval within the result set.  Every data column within the result set will be associated with
- * one <code>SamplingIntervalRef</code> instance.
+ * one <code>CorrelatedQueryData</code> instance.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Jan 11, 2024
  *
- * @see SamplingIntervalRef
+ * @see CorrelatedQueryData
  * @see BucketDataInsertTask
  */
-public class QueryResponseCollector {
+public class QueryResponseCorrelator {
 
     //
     // Application Resources
@@ -105,7 +104,7 @@ public class QueryResponseCollector {
     //
     
     /** Target Set - Ordered set of sampling interval references */
-    private final SortedSet<SamplingIntervalRef> setTargetRefs = new TreeSet<>(SamplingIntervalRef.StartTimeComparator.newInstance());
+    private final SortedSet<CorrelatedQueryData> setTargetRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
 
     
     //
@@ -126,11 +125,11 @@ public class QueryResponseCollector {
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseCollector</code>.
+     * Constructs a new instance of <code>QueryResponseCorrelator</code>.
      * </p>
      *
      */
-    public QueryResponseCollector() {
+    public QueryResponseCorrelator() {
     }
     
     
@@ -139,16 +138,16 @@ public class QueryResponseCollector {
     //
     
     /**
-     * Returns the target set of <code>SamplingIntervalRef</code> instances in its current state.
+     * Returns the target set of <code>CorrelatedQueryData</code> instances in its current state.
      * 
      * @return  the target set of the query data collection and organization operations
      */
-    public final SortedSet<SamplingIntervalRef>   getTargetSet() {
+    public final SortedSet<CorrelatedQueryData>   getTargetSet() {
         return this.setTargetRefs;
     }
     
     /**
-     * Returns the current size of the target set of <code>SamplingIntervalRef</code> instances.
+     * Returns the current size of the target set of <code>CorrelatedQueryData</code> instances.
      * 
      * @return  current size of the target set
      */
@@ -183,7 +182,7 @@ public class QueryResponseCollector {
      * Clears out the target set of all sampling interval references.
      * </p>
      * <p>
-     * <code>QueryResponseCollector</code> objects can be reused.  After calling this method the 
+     * <code>QueryResponseCorrelator</code> objects can be reused.  After calling this method the 
      * collector is returned to its initial state and is ready to process another Query Service
      * response stream.
      * </p>
@@ -241,7 +240,7 @@ public class QueryResponseCollector {
 
             // If the message data was not added we must create a new reference and add it to the current target set
             if (!bolSuccess) {
-                SamplingIntervalRef refNew = SamplingIntervalRef.from(msgBucket);
+                CorrelatedQueryData refNew = CorrelatedQueryData.from(msgBucket);
 
                 this.setTargetRefs.add(refNew);
             }
@@ -296,7 +295,7 @@ public class QueryResponseCollector {
 
             // If the target set is large - pivot to concurrent processing of message data
             Collection<QueryResponse.QueryReport.QueryData.DataBucket>  setFreeBuckets = this.attemptDataInsertConcurrent(msgData);
-            SortedSet<SamplingIntervalRef>  setNewTargets = this.buildTargetRefs(setFreeBuckets);
+            SortedSet<CorrelatedQueryData>  setNewTargets = this.buildTargetRefs(setFreeBuckets);
             this.setTargetRefs.addAll(setNewTargets);
 
         }
@@ -350,7 +349,7 @@ public class QueryResponseCollector {
 
             // If the message data was not added we must create a new reference and add it to the current target set
             if (!bolSuccess) 
-                this.setTargetRefs.add( SamplingIntervalRef.from(msgBucket) );
+                this.setTargetRefs.add( CorrelatedQueryData.from(msgBucket) );
             
         }
     }
@@ -521,10 +520,10 @@ public class QueryResponseCollector {
      * 
      * @return  set of new target references associated with the given argument data
      */
-    private SortedSet<SamplingIntervalRef>  buildTargetRefs(Collection<QueryResponse.QueryReport.QueryData.DataBucket> setBuckets) {
+    private SortedSet<CorrelatedQueryData>  buildTargetRefs(Collection<QueryResponse.QueryReport.QueryData.DataBucket> setBuckets) {
         
         // The returned sampling interval reference - that is, the targets
-        SortedSet<SamplingIntervalRef>  setRefs = new TreeSet<>(SamplingIntervalRef.StartTimeComparator.newInstance());
+        SortedSet<CorrelatedQueryData>  setRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
         
         // Treat each data bucket individually - high probability of modifying target set 
         for (QueryResponse.QueryReport.QueryData.DataBucket msgBucket : setBuckets) {
@@ -534,7 +533,7 @@ public class QueryResponseCollector {
             
             // If insertion failed then create a new sampling interval reference for targets
             if (!bolSuccess) 
-                setRefs.add(SamplingIntervalRef.from(msgBucket));
+                setRefs.add(CorrelatedQueryData.from(msgBucket));
         }
         
         return setRefs;

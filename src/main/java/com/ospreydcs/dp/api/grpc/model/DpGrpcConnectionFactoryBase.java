@@ -130,7 +130,7 @@ import io.grpc.TlsChannelCredentials;
  * Data Platform query service connections, the instance may be 
  * declared
  * <br/> <br/>
- * &nbsp; &nbsp;  <code>public static final ExampleQueryConnectionFactory INSTANCE;</code>
+ * &nbsp; &nbsp;  <code>public static final ExampleQueryConnectionFactory FACTORY;</code>
  * <br/> <br/>
  * within the class.
  * </p>

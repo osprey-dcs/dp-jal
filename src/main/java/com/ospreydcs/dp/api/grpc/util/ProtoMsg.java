@@ -42,11 +42,13 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.model.BufferedImage;
 import com.ospreydcs.dp.api.model.BufferedImage.Format;
+import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.DataTable;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
+import com.ospreydcs.dp.grpc.v1.common.DataValue.ValueOneofCase;
 import com.ospreydcs.dp.grpc.v1.common.Field;
 import com.ospreydcs.dp.grpc.v1.common.Image;
 import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
@@ -565,6 +567,61 @@ public final class ProtoMsg {
     
     /**
      * <p>
+     * Extracts the data type of the column values AND checks for uniformity.
+     * </p>
+     * <p>
+     * The data type of the first column data value is extracted.  The data types of all column data
+     * is then checked for uniformity against the first type.  If the column values are not all
+     * of the same type an exception is thrown.  Otherwise, the data type of the first value is
+     * returned, which is confirmed for all data values.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * If a data value is within the argument is empty, it is skipped during the uniformity check.
+     * </p>
+     * 
+     * @param msgDataCal   Data Platform <code>DataColumn</code> message containing data
+     * 
+     * @return  The uniform data type of all data contained within the argument
+     * 
+     * @throws IllegalArgumentException         the argument was empty (contained no data)
+     * @throws IllegalStateException            the column data was of non-uniform type
+     * @throws UnsupportedOperationException    an unsupported data type was encountered
+     */
+    public static DpSupportedType extractType(DataColumn msgDataCol) throws IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
+        List<DataValue> lstVals = msgDataCol.getDataValuesList();
+        
+        // Check the argument
+        if (lstVals.isEmpty())
+            throw new IllegalArgumentException("The data column was empty.");
+        
+        // Get type of first data value
+        DataValue   msgValFirst = lstVals.get(0);
+        DpSupportedType enmType = ProtoMsg.extractType(msgValFirst);
+        
+        // Check all column value types
+        boolean bolSameType = true;
+        
+        for (DataValue val : lstVals)
+            try {
+                DpSupportedType enmTypeVal = ProtoMsg.extractType(val);
+                
+                if (enmTypeVal != enmType)
+                    bolSameType = false;
+                
+            } catch (IllegalArgumentException e) {
+                // Do nothing
+            }
+        
+        if (!bolSameType)
+            throw new IllegalStateException("The data column values were not all of the same type.");
+        
+        // Return the type of the first value if all value type are equal
+        return enmType;
+    }
+    
+    /**
+     * <p>
      * Extracts the values from the given <code>DataColumn</code> message and returns them
      * as an ordered list of Java <code>Objects</code>.
      * </p>
@@ -573,8 +630,9 @@ public final class ProtoMsg {
      * given Data Platform <code>DataColumn</code> message.  The list of 
      * Protobuf <code>DataValue</code> messages are extracted and converted to <code>Object</code>
      * instances using the <code>{@link #extractValue(DataValue)}</code> method.
+     * </p>
      *  
-     * @param msgData   Data Platform <code>DataColumn</code> message containing data
+     * @param msgDataCol   Data Platform <code>DataColumn</code> message containing data
      * 
      * @return  a Java ordered <code>List</code> containing the data of the given argument
      * 
@@ -582,11 +640,44 @@ public final class ProtoMsg {
      * 
      * @see #extractValue(DataValue)
      */
-    public static List<Object> extractValues(DataColumn msgData) throws UnsupportedOperationException {
-        List<DataValue> lstVals = msgData.getDataValuesList();
-        List<Object>    vecVals = lstVals.stream().map( ProtoMsg::extractValue ).toList();
+    public static List<Object> extractValues(DataColumn msgDataCol) throws UnsupportedOperationException {
+        List<DataValue> lstMsgVals = msgDataCol.getDataValuesList();
+        List<Object>    lstObjVals = lstMsgVals.stream().map( ProtoMsg::extractValue ).toList();
         
-        return vecVals;
+        return lstObjVals;
+    }
+    
+    /**
+     * <p>
+     * Extracts the values from the given <code>DataColumn</code> message and returns them
+     * as an ordered list of Java <code>Objects</code> with type <code>T</code>.
+     * </p>
+     * <p>
+     * Creates a Java ordered <code>List</code> of <code>T</code> instances from the
+     * given Data Platform <code>DataColumn</code> message.  The list of 
+     * Protobuf <code>DataValue</code> messages are extracted and converted to <code>T</code>
+     * instances using the <code>{@link #extractValueAs(Class, DataValue)}</code> method.
+     * </p>
+     * 
+     * @param <T>       type of the heterogeneous column values and the returned values
+     * 
+     * @param clsVal        class type of the returned value
+     * @param msgDataCol    Data Platform <code>DataColumn</code> message containing data
+     * 
+     * @return  ordered list of data values within argument converted to type <code>T</code>
+     * 
+     * @throws UnsupportedOperationException an unsupported type was encountered
+     * @throws ClassCastException            the message data value could not be cast to the given type
+     * 
+     * @see #extractValueAs(Class, DataValue)
+     */
+    @AAdvancedApi(status=AAdvancedApi.STATUS.TESTED_ALPHA, note="Calls extractValuesAs(Class<T>, DataValue).")
+    public static <T extends Object> List<T> extractValuesAs(Class<T> clsType, DataColumn msgDataCol) 
+        throws UnsupportedOperationException, ClassCastException {
+        List<DataValue> lstMsgVals = msgDataCol.getDataValuesList();
+        List<T>         lstVals = lstMsgVals.stream().map(msgVal -> ProtoMsg.extractValueAs(clsType, msgVal)).toList();
+        
+        return lstVals;
     }
     
     /**
@@ -670,13 +761,43 @@ public final class ProtoMsg {
     
     /**
      * <p>
+     * Extracts the data type of the value field from the <code>DataValue</code> argument and returns it
+     * as a <code>DpSupportedType</code> enumeration constant.
+     * </p>
+     *  
+     * @param msgDataValue <code>DataValue</code> message whose value type is to be extracted
+     *  
+     * @return  <code>DpSupportedType</code> representation of the message value data type
+     * 
+     * @throws IllegalArgumentException      the data value field was not set (empty)
+     * @throws UnsupportedOperationException an unsupported type was encountered
+     */
+    public static DpSupportedType   extractType(DataValue msgDataValue) throws IllegalArgumentException, UnsupportedOperationException {
+        
+        return switch (msgDataValue.getValueOneofCase()) {
+        case STRINGVALUE -> DpSupportedType.STRING;
+        case BOOLEANVALUE -> DpSupportedType.BOOLEAN;
+        case INTVALUE -> DpSupportedType.LONG;
+        case FLOATVALUE -> DpSupportedType.DOUBLE;
+        case BYTEARRAYVALUE -> DpSupportedType.BYTE_ARRAY;
+        case ARRAYVALUE -> DpSupportedType.ARRAY;
+        case STRUCTUREVALUE -> DpSupportedType.STRUCTURE;
+        case IMAGE -> DpSupportedType.IMAGE;
+        case VALUEONEOF_NOT_SET -> throw new IllegalArgumentException("The data value was not set.");
+        default -> throw new UnsupportedOperationException("The data value type was not recognized.");
+        };
+    }
+    
+    /**
+     * <p>
      * Extracts the value field from a <code>DataValue</code> instance and return as Java <code>Object</code>.
      * </p>
      * <p>
      * The returned object is cast to an appropriate Java language or library type according to
      * the underlying type of the heterogeneous data value.  Thus, the object is one of the following:
      * <ul>
-     * <li><code>null</code> value - the value union was not set</li>
+     * <li><code>null</code> value - the value union was not set.
+     * <li><s>Throws <code>IllegalArgumentException</code> - the value union was not set.</s></li>
      * <li>a wrapped Java primitive - the value union contains a scalar</li>
      * <li>a populated Java container - the value union contains an array or structure</li>
      * <li>an <code>BufferedImage</code> object - the value union contains an image</li>
@@ -687,9 +808,10 @@ public final class ProtoMsg {
      *  
      * @return  Java object representation of the message value
      * 
+     * throws IllegalArgumentException      the data value field was not set (empty)
      * @throws UnsupportedOperationException an unsupported type was encountered
      */
-    public static Object extractValue(DataValue msgDataValue) throws UnsupportedOperationException {
+    public static Object extractValue(DataValue msgDataValue) throws /* IllegalArgumentException, */ UnsupportedOperationException {
         
         return switch (msgDataValue.getValueOneofCase()) {
             case STRINGVALUE -> msgDataValue.getStringValue();
@@ -700,9 +822,11 @@ public final class ProtoMsg {
             case ARRAYVALUE -> ProtoMsg.extractValues(msgDataValue.getArrayValue());
             case STRUCTUREVALUE -> ProtoMsg.extractValues(msgDataValue.getStructureValue());
             case IMAGE -> ProtoMsg.toBufferedImage( msgDataValue.getImage() );
-            case VALUEONEOF_NOT_SET -> null;
+            case VALUEONEOF_NOT_SET ->
+                null;
+//                throw new IllegalArgumentException("The data value was not set.");
             default ->
-                throw new UnsupportedOperationException("The value was not set or unrecognized - value " + msgDataValue.getDescriptorForType());
+                throw new UnsupportedOperationException("The data value was not unrecognized - value " + msgDataValue.getDescriptorForType());
         };
     }
 
@@ -732,7 +856,9 @@ public final class ProtoMsg {
      * <h2>WARNINGS:</h2>
      * This method is experimental and should be used with caution.  
      * <ul>
-     * <li>If the incorrect type is specified the returned value will be empty (<code>null</code>).</li>
+     * <li><s>If the incorrect type is specified the returned value will be empty (<code>null</code>)</s>.</li>
+     * <li><s>If the message data field is empty (not set) an exception is thrown. </s></li>
+     * <li>If the message data field is empty a <code>null</code> value is returned. </li>
      * <li>If the type supplied is not supported an exception is thrown.</li>
      * <li>If the heterogeneous value cannot be cast to the given type an exception is thrown.</li>
      * <li>Heterogeneous values can loose numerical accuracy if cast to smaller types.</li>
@@ -745,14 +871,17 @@ public final class ProtoMsg {
      * 
      * @return          extracted data value of the given message cast to the given type
      * 
+     * throws IllegalArgumentException      the data value field was not set (empty)
      * @throws UnsupportedOperationException an unsupported type was encountered
      * @throws ClassCastException            the message data value could not be cast to the given type
-     * 
-     * @see SuppressWarnings
      */
-    @SuppressWarnings("unchecked")
-    @AAdvancedApi
+    @AAdvancedApi(status=AAdvancedApi.STATUS.TESTED_ALPHA, note="Passes through if-then cases")
     public static <T extends Object> T extractValueAs(Class<T> clsVal, DataValue msgVal) throws UnsupportedOperationException, ClassCastException {
+        
+        if (msgVal.getValueOneofCase() == ValueOneofCase.VALUEONEOF_NOT_SET)
+//            throw new IllegalArgumentException("The data value was not set.");
+            return null;
+        
         Object obj;
         if (clsVal.equals(String.class))        
             obj = msgVal.getStringValue();
@@ -777,7 +906,7 @@ public final class ProtoMsg {
         else
             throw new UnsupportedOperationException("Unsupported class type " + clsVal.getName());
         
-        return (T)obj;
+        return clsVal.cast(obj);
     }
     
     

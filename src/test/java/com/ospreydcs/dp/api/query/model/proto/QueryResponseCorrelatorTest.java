@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryResponseCollectorTest.java
+ * File:	QueryResponseCorrelatorTest.java
  * Package: com.ospreydcs.dp.api.query.model.proto
- * Type: 	QueryResponseCollectorTest
+ * Type: 	QueryResponseCorrelatorTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -45,15 +45,15 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
  * <p>
- * JUnit test cases for the <code>QueryResponseCollector</code> class.
+ * JUnit test cases for the <code>QueryResponseCorrelator</code> class.
  * </p>
  * 
  * @author Christopher K. Allen
  * @since Jan 13, 2024
  *
- * @see QueryResponseCollector
+ * @see QueryResponseCorrelator
  */
-public class QueryResponseCollectorTest {
+public class QueryResponseCorrelatorTest {
 
     
     //
@@ -89,7 +89,7 @@ public class QueryResponseCollectorTest {
     public static void setUpBeforeClass() throws Exception {
         
 //        // Get the wide data set
-//        InputStream         isFile = QueryResponseCollectorTest.class.getClassLoader().getResourceAsStream(STR_FILENAME_QUERY_RESULTS_WIDE);
+//        InputStream         isFile = QueryResponseCorrelatorTest.class.getClassLoader().getResourceAsStream(STR_FILENAME_QUERY_RESULTS_WIDE);
 //        ObjectInputStream   isQueryData = new ObjectInputStream(isFile);
 //        
 //        LST_QUERY_DATA_WIDE = (List<QueryResponse.QueryReport.QueryData>)isQueryData.readObject();
@@ -98,7 +98,7 @@ public class QueryResponseCollectorTest {
 //        isFile.close();
 //        
 //        // Get the long data set
-//        isFile = QueryResponseCollectorTest.class.getClassLoader().getResourceAsStream(STR_FILENAME_QUERY_RESULTS_LONG);
+//        isFile = QueryResponseCorrelatorTest.class.getClassLoader().getResourceAsStream(STR_FILENAME_QUERY_RESULTS_LONG);
 //        isQueryData = new ObjectInputStream(isFile);
 //        
 //        LST_QUERY_DATA_LONG = (List<QueryResponse.QueryReport.QueryData>)isQueryData.readObject();
@@ -140,7 +140,7 @@ public class QueryResponseCollectorTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCollector#getTargetSet()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCorrelator#getTargetSet()}.
      */
     @Test
     public final void testGetTargetSet() {
@@ -148,7 +148,7 @@ public class QueryResponseCollectorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCollector#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCorrelator#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData.DataBucket)}.
      */
     @Test
     public final void testInsertBucketData() {
@@ -156,17 +156,17 @@ public class QueryResponseCollectorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCollector#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData)}.
      */
     @Test
     public final void testInsertQueryData() {
-        QueryResponseCollector  col = new QueryResponseCollector();
+        QueryResponseCorrelator  col = new QueryResponseCorrelator();
         
         for (QueryResponse.QueryReport.QueryData msgData : LST_QUERY_DATA_WIDE) {
             col.insertQueryData(msgData);
         }
         
-        Assert.assertTrue("QueryResponseCollector has no data.", col.sizeTargetSet() > 0);
+        Assert.assertTrue("QueryResponseCorrelator has no data.", col.sizeTargetSet() > 0);
         
         Set<String> setDataSrcs = col.extractDataSourceNames();
         

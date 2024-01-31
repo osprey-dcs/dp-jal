@@ -30,8 +30,6 @@ package com.ospreydcs.dp.api.model;
 import java.util.Map;
 import java.util.Vector;
 
-import com.google.protobuf.ByteString;
-
 /**
  * <p>
  * Enumeration of data types supported as heterogeneous <em>data values</em> within the Data Platform.
@@ -43,16 +41,28 @@ import com.google.protobuf.ByteString;
  */
 public enum DpSupportedType {
 
-    BOOLEAN(Boolean.class),
-    INTEGER(Integer.class),
-    LONG(Long.class),
-    FLOAT(Float.class),
-    DOUBLE(Double.class),
+    BOOLEAN(boolean.class),
+    INTEGER(int.class),
+    LONG(long.class),
+    FLOAT(float.class),
+    DOUBLE(double.class),
     STRING(String.class),
-    RAW(ByteString.class),
+    BYTE_ARRAY(byte[].class),
     IMAGE(BufferedImage.class),
     ARRAY(Vector.class),
-    STRUCTURE(Map.class)
+    STRUCTURE(Map.class),
+    UNSUPPORTED_TYPE(null)
+//    BOOLEAN(Boolean.class),
+//    INTEGER(Integer.class),
+//    LONG(Long.class),
+//    FLOAT(Float.class),
+//    DOUBLE(Double.class),
+//    STRING(String.class),
+//    BYTE_ARRAY(ByteString.class),
+//    IMAGE(BufferedImage.class),
+//    ARRAY(Vector.class),
+//    STRUCTURE(Map.class)
+//    UNSUPPORTED_TYPE(null)
     ;
 
     //
@@ -75,6 +85,31 @@ public enum DpSupportedType {
     
     
     //
+    // Enumeration Class Methods
+    //
+    
+    /**
+     * Returns the enumeration constant representing a type compatible with the argument.
+     * <p>
+     * Returns the constant whose supported type can be assigned value from the given type.
+     * 
+     * @param <T>       the type under compatibility test
+     * 
+     * @param clsTarget the <code>Class</code> object representing type <code>T</code>
+     * 
+     * @return  enumeration constant whose type is compatible with the argument,
+     *          or <code>{@link #UNSUPPORTED_TYPE}</code> if <code>T</code> is unsupported
+     */
+    public static <T extends Object> DpSupportedType   getAssignable(Class<T> clsTarget) {
+        for (DpSupportedType enmType : DpSupportedType.values()) {
+            if (enmType.isAssignableFrom(clsTarget))
+                return enmType;
+        }
+        
+        return DpSupportedType.UNSUPPORTED_TYPE;
+    }
+    
+    //
     // Public Methods
     //
     
@@ -85,5 +120,50 @@ public enum DpSupportedType {
      */
     public Class<? extends Object>  getType() {
         return this.clsType;
+    }
+    
+    /**
+     * Returns whether or not this type is consider a (numeric) scalar value.
+     * 
+     * @return <code>true</code> if <code>INTEGER || LONG || FLOAT || DOUBLE</code>
+     */
+    public boolean  isScalar() {
+        if (this == INTEGER || this == LONG || this == FLOAT || this == DOUBLE)
+            return true;
+        
+        return false;
+    }
+    
+    /**
+     * Returns whether or not this type is compatible with the given type.
+     * <p>
+     * Specifically, returns <code>true</code> only if objects of this type can be assigned
+     * values with objects of type <code>T</code>.
+     *  
+     * @param <T>       The type under compatibility test
+     * 
+     * @param clsCmp    the <code>Class</code> object representing type <code>T</code>
+     * 
+     * @return  <code>true</code> if objects of this supported type can be assigned values from type <code>T</code>,
+     *          <code>false</code> otherwise
+     */
+    public <T extends Object>   boolean isAssignableFrom(Class<T> clsCmp) {
+        return this.clsType.isAssignableFrom(clsCmp);
+    }
+    
+    /**
+     * Returns whether or not objects of this supported type can be assigned by the given argument.
+     * <p>
+     * Returns <code>true</code> if the argument can be used to assign a value to this supported
+     * type.  More exactly, whether type <code>T</code> is compatible with this supported type.
+     *  
+     * @param <T>       The type under compatibility test
+     * 
+     * @param val       sample value of type <code>T</code>
+     * 
+     * @return  <code>true</code> if this supported type can be assigned by the given argument
+     */
+    public <T extends Object>   boolean isAssignableFrom(T val) {
+        return this.isAssignableFrom( val.getClass() );
     }
 }

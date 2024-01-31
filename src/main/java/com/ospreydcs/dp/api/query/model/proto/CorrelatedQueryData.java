@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    SamplingIntervalRef.java
+ * File:    CorrelatedQueryData.java
  * Package: com.ospreydcs.dp.api.query.model.proto
- * Type:    SamplingIntervalRef
+ * Type:    CorrelatedQueryData
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -40,12 +40,11 @@ import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport;
 
 /**
  * <p>
  * Maintains a reference between a uniform sampling interval Protobuf message and all associated 
- * data column messages.
+ * data column messages within query data.
  * </p>
  * <p>
  * Instances of this class can be used to build rows of data columns from a single query result set.  That is,
@@ -54,7 +53,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport;
  * </p>
  * <p>
  * The class provides a <code>{@link Comparable}</code> interface to order instance by initial timestamp.
- * That is, within collections of <code>SamplingIntervalRef</code> objects, instances are ordered according to
+ * That is, within collections of <code>CorrelatedQueryData</code> objects, instances are ordered according to
  * the sampling start time.  This is not an equivalence operation; it is possible that sampling intervals
  * can overlap and this condition should be checked.
  * </p>
@@ -65,7 +64,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport;
  * </p> 
  * <p>
  * <h2>WARNING</h2>
- * It is assumed that the Data TestArchive is consistent!  If correlated data was archived simultaneously with 
+ * It is assumed that the Data Platform is consistent!  If correlated data was archived simultaneously with 
  * different sample clocks unpredictable behavior in reconstruction is possible.
  * </p> 
  * 
@@ -75,7 +74,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport;
  *
  * @see Comparable
  */
-public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
+public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     
     
     //
@@ -84,12 +83,12 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
     
     /**
      * <p>
-     * <code>{@link Comparator}</code> class for ordered comparison of two <code>SamplingIntervalRef</code> instances.
+     * <code>{@link Comparator}</code> class for ordered comparison of two <code>CorrelatedQueryData</code> instances.
      * </p>
      * <p>
      * The comparison here is performed with the start times of the sampling intervals represented by 
-     * <code>{@link SamplingIntervalRef}</code> instances returned from the 
-     * <code>{@link SamplingIntervalRef#getStartInstant()</code> method.
+     * <code>{@link CorrelatedQueryData}</code> instances returned from the 
+     * <code>{@link CorrelatedQueryData#getStartInstant()</code> method.
      * Instances are intended for use in Java container construction.
      * </p>
      *
@@ -97,7 +96,7 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
      * @since Jan 12, 2024
      *
      */
-    public static class StartTimeComparator implements Comparator<SamplingIntervalRef> {
+    public static class StartTimeComparator implements Comparator<CorrelatedQueryData> {
 
         //
         // Creators
@@ -121,7 +120,7 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
          * @see @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
          */
         @Override
-        public int compare(SamplingIntervalRef o1, SamplingIntervalRef o2) {
+        public int compare(CorrelatedQueryData o1, CorrelatedQueryData o2) {
             Instant t1 = o1.getStartInstant();
             Instant t2 = o2.getStartInstant();
             
@@ -139,7 +138,7 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
     /** The uniform sampling interval Protobuf message */
     private final FixedIntervalTimestampSpec    msgSmpIvl; 
     
-    /** List of all applicable data column Protobuf messages */
+    /** List of all data column Protobuf messages correlated within sampling interval */
     private final List<DataColumn>              lstMsgCols = new LinkedList<>();
     
     
@@ -149,15 +148,15 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
     
     /**
      * <p>
-     * Creates a new, initialized instance of <code>SamplingIntervalRef</code>.
+     * Creates a new, initialized instance of <code>CorrelatedQueryData</code>.
      * </p>
      * 
      * @param msgBucket source of initialization data
      * 
-     * @return  new <code>SamplingIntervalRef</code> instance initialized with data from the argument
+     * @return  new <code>CorrelatedQueryData</code> instance initialized with data from the argument
      */
-    public static SamplingIntervalRef   from(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
-        return new SamplingIntervalRef(msgBucket);
+    public static CorrelatedQueryData   from(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
+        return new CorrelatedQueryData(msgBucket);
     }
     
     
@@ -167,12 +166,12 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
     
     /**
      * <p>
-     * Constructs a new, initialized instance of <code>SamplingIntervalRef</code>.
+     * Constructs a new, initialized instance of <code>CorrelatedQueryData</code>.
      * </p>
      *
      * @param msgBucket source of initializing data
      */
-    public SamplingIntervalRef(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
+    public CorrelatedQueryData(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
         Timestamp   msgTmsStart = msgBucket.getSamplingInterval().getStartTime();
         DataColumn  msgDataCol = msgBucket.getDataColumn(); 
         
@@ -271,7 +270,7 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
     
     
     //
-    // Comparable<SamplingIntervalRef> Interface
+    // Comparable<CorrelatedQueryData> Interface
     //
     
     /**
@@ -279,7 +278,7 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
      * Compares the initial timestamp attribute <code>{@link #insStart}</code>.
      * </p>
      * <p>
-     * Used for ordering sets and maps of <code>SamplingIntervalRef</code> objects.
+     * Used for ordering sets and maps of <code>CorrelatedQueryData</code> objects.
      * 
      * <h2>NOTE:</h2>
      * This does not compare for equivalence.  The compared instance may have overlapping
@@ -289,7 +288,7 @@ public class SamplingIntervalRef implements Comparable<SamplingIntervalRef> {
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     @Override
-    public int compareTo(SamplingIntervalRef o) {
+    public int compareTo(CorrelatedQueryData o) {
         return this.insStart.compareTo(o.insStart);
     }
 

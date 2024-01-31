@@ -33,6 +33,40 @@ import java.util.concurrent.Callable;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
+ * <p>
+ * Performs the task of <code>DataBucket</code> insertion into a collection of 
+ * <code>CorrelatedQueryData</code> instances.
+ * </p> 
+ * <p>
+ * Attempts to insert all <code>DataColumn</code> messages of the subject 
+ * <code>DataBucket</code> Protobuf message into a target collection of 
+ * <code>CorrelatedQueryData</code> instances.
+ * The task subject and target are provided at construction.
+ * </p>
+ * <p>
+ * The class implements both the <code>{@link Callable}</code> and <code>{@link Runnable}</code>
+ * interfaces for thread execution.  The former simply returns the class instance itself for
+ * inspection and does not throw exceptions.  Both implementation perform the same function.
+ * Insertion attempts of the subject are all done serially on the target collection.
+ * That is, this task DOES NOT spawn any sub-threads. 
+ * <p>
+ * <h2>Usage:</h2>
+ * <ul>
+ * <li>
+ * This task is assumed to be executed on a separate thread.
+ * </li>
+ * <br/>  
+ * <li>
+ * It is further assumed that multiple threads are executed for different subjects and
+ * the same target.
+ * </li>
+ * <br/>
+ * <li>
+ * Use of this class is most appropriate for large target collections where multiple 
+ * subjects can be processed concurrently.
+ * </li>
+ * </ul>
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Jan 12, 2024
@@ -49,7 +83,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
     private final QueryResponse.QueryReport.QueryData.DataBucket    msgSubject;
     
     /** The target collection of existing sampling intervals */
-    private final Collection<SamplingIntervalRef>                   setTarget;
+    private final Collection<CorrelatedQueryData>                   setTarget;
     
     //
     // State Variables
@@ -66,7 +100,13 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
     // Creator
     //
     
-    public static BucketDataInsertTask newTask(QueryResponse.QueryReport.QueryData.DataBucket msgSubject, final Collection<SamplingIntervalRef> setTarget) {
+    /**
+     * @param msgSubject    the task subject - a QueryService data bucket message
+     * @param setTarget     the data insertion target - an collection of <code>CorrelatedQueryData</code> instances
+     * 
+     * @return  new, initialized thread task ready for execution
+     */
+    public static BucketDataInsertTask newTask(QueryResponse.QueryReport.QueryData.DataBucket msgSubject, final Collection<CorrelatedQueryData> setTarget) {
         return new BucketDataInsertTask(msgSubject, setTarget);
     }
 
@@ -81,9 +121,9 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * </p>
      *
      * @param msgSubject    the task subject - a QueryService data bucket message
-     * @param setTarget     the data insertion target - an collection of <code>SamplingIntervalRef</code> instances
+     * @param setTarget     the data insertion target - an collection of <code>CorrelatedQueryData</code> instances
      */
-    public BucketDataInsertTask(QueryResponse.QueryReport.QueryData.DataBucket msgSubject, final Collection<SamplingIntervalRef> setTarget) {
+    public BucketDataInsertTask(QueryResponse.QueryReport.QueryData.DataBucket msgSubject, final Collection<CorrelatedQueryData> setTarget) {
         this.msgSubject = msgSubject;
         this.setTarget = setTarget;
     }
@@ -92,16 +132,49 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
     // State Query
     //
     
+    /**
+     * Checks whether or not the task has been executed.
+     * 
+     * @return <code>true</code> if the thread task has been executed,
+     *         <code>false</code> otherwise
+     */
     public boolean  isExecuted() {
         return this.bolExecuted;
     }
     
+    /**
+     * Checks whether or not the task execution was successful.
+     * <p>
+     * Returns <code>true</code> if and only if
+     * <ul>
+     * <li>The task has been executed.</li>
+     * <li>All data columns of the data bucket were successfully inserted into the collection of
+     *     <code>CorrelatedQueryData</code> instances.</li>
+     * </ul>
+     * 
+     * @return  <code>true</code> if the task was successfully executed,
+     *          <code>false</code> otherwise
+     */
     public boolean  isSuccess() {
         return this.bolSuccess;
     }
     
+    /**
+     * Returns the subject of this execution task.
+     * 
+     * @return  the <code>DataBucket</code> Protobuf message subject of task
+     */
     public final QueryResponse.QueryReport.QueryData.DataBucket    getSubject() {
         return this.msgSubject;
+    }
+    
+    /**
+     * Returns the target of this execution task.
+     * 
+     * @return  the collection of <code>CorrelatedQueryData</code> instances 
+     */
+    public final Collection<CorrelatedQueryData>    getTarget() {
+        return this.setTarget;
     }
 
     
@@ -116,7 +189,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * <p>
      * Attempts to add the data column of the subject data bucket message to the target set of 
      * sampling interval references.  If the task is successful the subject data bucket is considered
-     * processed.  If not successful a new <code>SamplingIntervalRef</code> instance must be constructed
+     * processed.  If not successful a new <code>CorrelatedQueryData</code> instance must be constructed
      * for the sampling interval referenced in the bucket.
      * </p>
      * 
@@ -150,7 +223,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * <p>
      * Attempts to add the data column of the subject data bucket message to the target set of 
      * sampling interval references.  If the task is successful the subject data bucket is considered
-     * processed.  If not successful a new <code>SamplingIntervalRef</code> instance must be constructed
+     * processed.  If not successful a new <code>CorrelatedQueryData</code> instance must be constructed
      * for the sampling interval referenced in the bucket.
      * </p>
      * 
@@ -159,7 +232,11 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
     @Override
     public void run() {
         
-        this.bolSuccess = this.setTarget.stream().map(tar -> tar.insertBucketData(this.msgSubject)).anyMatch( r -> r );
+        this.bolSuccess = this.setTarget
+                .stream()
+                .map(tar -> tar.insertBucketData(this.msgSubject))
+                .anyMatch( r -> r );
+        
         this.bolExecuted = true;
     }
 

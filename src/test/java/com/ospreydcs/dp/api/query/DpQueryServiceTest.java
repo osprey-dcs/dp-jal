@@ -136,7 +136,7 @@ public class DpQueryServiceTest {
      */
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        apiQuery = DpQueryServiceFactory.INSTANCE.connect();
+        apiQuery = DpQueryServiceFactory.FACTORY.connect();
     }
 
     /**

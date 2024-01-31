@@ -48,7 +48,7 @@ archive:    # Data Platform data archive properties
    inception: 2023-09-01T00:00:00.0Z # ealiest archive timestamp      : DP_API_ARCHIVE_INCEPTION
    
 query:      # Data Platform Query Service operations
-   pageSize: 100                     # default bucket count per page  : DP_API_QUERY_PAGE_SIZE
+   pageSize: 100      # UNUSED       # default bucket count per page  : DP_API_QUERY_PAGE_SIZE
    timeout:      # General connection timeout properties (e.g., used in API interface shutdown)
       active: true                   # apply timeout condition   : DP_API_QUERY_TIMEOUT_ACTIVE
       limit: 30                      # timeout limit             : DP_API_QUERY_TIMEOUT_LIMIT

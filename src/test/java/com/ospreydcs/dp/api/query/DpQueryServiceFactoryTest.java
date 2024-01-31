@@ -126,7 +126,7 @@ public class DpQueryServiceFactoryTest {
         boolean bolResult = false;
         
         try {
-            DpQueryService qs = DpQueryServiceFactory.INSTANCE.connect();
+            DpQueryService qs = DpQueryServiceFactory.FACTORY.connect();
             
             bolResult = qs.shutdownSoft();
             
@@ -153,7 +153,7 @@ public class DpQueryServiceFactoryTest {
         boolean bolResult = false;
         
         try {
-            DpQueryService qs = DpQueryServiceFactory.INSTANCE.connect(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
+            DpQueryService qs = DpQueryServiceFactory.FACTORY.connect(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
             
             bolResult = qs.shutdownSoft();
             
@@ -180,7 +180,7 @@ public class DpQueryServiceFactoryTest {
         boolean bolResult = false;
         
         try {
-            DpQueryService qs = DpQueryServiceFactory.INSTANCE.connect(
+            DpQueryService qs = DpQueryServiceFactory.FACTORY.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.grpc.usePlainText,
@@ -213,7 +213,7 @@ public class DpQueryServiceFactoryTest {
         boolean bolResult = false;
         
         try {
-            DpQueryService qs = DpQueryServiceFactory.INSTANCE.connect(
+            DpQueryService qs = DpQueryServiceFactory.FACTORY.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.tls.active,

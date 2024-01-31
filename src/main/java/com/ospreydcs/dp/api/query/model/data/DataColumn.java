@@ -27,8 +27,10 @@
  */
 package com.ospreydcs.dp.api.query.model.data;
 
+import java.util.List;
 import java.util.Vector;
 
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 
 /**
@@ -44,7 +46,7 @@ import com.ospreydcs.dp.api.model.DpSupportedType;
  * @since Jan 8, 2024
  *
  */
-public final class DataColumn {
+public abstract class DataColumn<T extends Object> {
     
     
     //
@@ -52,10 +54,10 @@ public final class DataColumn {
     //
     
     /** The name of the data column, typically the unique name of the data source producing the column data */
-    private String                      strName;
+    private final String              strName;
     
     /** The data type of the column data */ 
-    private DpSupportedType             enmType;
+    private final DpSupportedType     enmType;
 
     
     //
@@ -63,7 +65,7 @@ public final class DataColumn {
     //
     
     /** The column data itself, anonymously typed as Java <code>Object</code> */
-    private Vector<? extends Object>    vecValues;
+    private final Vector<T>           vecValues;
 
     
     //
@@ -76,8 +78,10 @@ public final class DataColumn {
      * </p>
      *
      */
-    public DataColumn() {
-        // TODO Auto-generated constructor stub
+    public DataColumn(String strName, DpSupportedType enmType, Vector<T> vecValues) {
+        this.strName = strName;
+        this.enmType = enmType;
+        this.vecValues = vecValues;
     }
 
 
@@ -104,4 +108,12 @@ public final class DataColumn {
     //
     // Value Access Methods
     //
+    
+    public T getValue(int index) throws IndexOutOfBoundsException {
+        return this.vecValues.elementAt(index);
+    }
+    
+//    public <T extends Object> getValueTyped(int index) throws IndexOutOfBoundsException {
+//        return this.enmType.getType().cast(this.vecValues.elementAt(index));
+//    }
 }
