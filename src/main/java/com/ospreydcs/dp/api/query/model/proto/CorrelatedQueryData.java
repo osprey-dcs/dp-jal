@@ -65,10 +65,10 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * </p> 
  * <p>
  * <h2>WARNING</h2>
- * It is assumed that the Data Platform is consistent!  If correlated data was archived simultaneously with 
- * different sample clocks unpredictable behavior in reconstruction is possible.
+ * It is assumed that the Data Platform archive is consistent!  If correlated 
+ * data was archived simultaneously with different sample clocks unpredictable 
+ * behavior in reconstruction is possible.
  * </p> 
- * 
  *
  * @author Christopher K. Allen
  * @since Jan 11, 2024
@@ -128,6 +128,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
             return t1.compareTo(t2);
         }
     }
+
     
     // 
     // Attributes and Resources
@@ -236,7 +237,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * 
      * @return set of all data source names within the referenced data
      */
-    public final Set<String>    extractDataSourceNames() {
+    private final Set<String>    extractDataSourceNames() {
         Set<String> setNames = this.lstMsgCols
                 .stream()
                 .collect( 

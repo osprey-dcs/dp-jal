@@ -176,7 +176,8 @@ public class QueryResponseCorrelator {
                 .stream()
                 .collect(
                         TreeSet::new, 
-                        (set, r) -> set.addAll(r.extractDataSourceNames()), 
+//                        (set, r) -> set.addAll(r.extractDataSourceNames()), 
+                        (set, r) -> set.addAll(r.getDataSourceNames()), 
                         TreeSet::addAll
                         );
         return setNames;

@@ -131,6 +131,15 @@ public class UniformClockDuration implements Comparable<Instant> {
     //
     
     /**
+     * Returns the starting time instant of the sampling interval
+     * 
+     * @return sampling interval start instant
+     */
+    public Instant getStartInstant() {
+        return this.insStart;
+    }
+    
+    /**
      * <p>
      * Compares the sampling domain of the given sampling set with this one.
      * </p>
