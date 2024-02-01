@@ -23,7 +23,7 @@
  * @since Jan 30, 2024
  *
  * TODO:
- * - None
+ * - See documentation
  */
 package com.ospreydcs.dp.api.query.model.data;
 
@@ -44,7 +44,14 @@ import com.ospreydcs.dp.api.model.DpSupportedType;
  * <li>The values are ordered (assumed with increasing time).</li>  
  * <li>The sample times for the process are determined externally.</li>
  * <li>All samples must be of the same type (specified at construction).</li>
+ * </ul>
  * </p>
+ * <p>
+ * <h2>TODO</h2>
+ * <ul>
+ * <li>Depending upon final usage, the container type for values might be changed to <code>Vector</code>.</li>
+ * <li>Add an interface implementation such as <code>IDataColumn</code>.</li>
+ * </ul>
  *
  * @author Christopher K. Allen
  * @since Jan 30, 2024

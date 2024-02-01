@@ -441,6 +441,43 @@ public record TimeInterval(Instant begin, Instant end) {
 
     
     //
+    // Record Overrides
+    //
+    
+    /**
+     *
+     * @see @see java.lang.Record#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TimeInterval ivl) 
+            return this.begin.equals(ivl.begin) && this.end.equals(ivl.end);
+        
+        return false;
+    }
+
+    /**
+     *
+     * @see @see java.lang.Record#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuffer    buf = new StringBuffer();
+        
+        buf.append("[");
+        buf.append( Long.toString(this.begin.getEpochSecond()) );
+        buf.append(":");
+        buf.append( Long.toString(this.begin.getNano()) );
+        buf.append(", ");
+        buf.append( Long.toString(this.end.getEpochSecond()) );
+        buf.append(":");
+        buf.append( Long.toString(this.end.getNano()) );
+        buf.append("]");
+        
+        return buf.toString();
+    }
+
+    //
     // Private Methods
     //
     

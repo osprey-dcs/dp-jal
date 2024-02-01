@@ -38,12 +38,21 @@ import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
 
 /**
  * <p>
- * Contains parameters defining the timestamps for a finite interval of uniform samples.
+ * Represents a sampling clock with uniform sampling and active for a finite duration.
  * </p> 
+ * <p>
+ * Contains parameters defining a uniform sampling clock active for a finite duration.
+ * The clock can be used to generate the timestamps for a finite interval of uniform samples.
+ * </p>
+ * <p>
+ * Note that <code>UniformClockDuration</code> instances can be created from the Protobuf
+ * message representing a sampling interval using creator 
+ * <code>{@link #from(FixedIntervalTimestampSpec)}</code>.
  *
  * @author Christopher K. Allen
  * @since Jan 7, 2024
  *
+ * @see #from(FixedIntervalTimestampSpec)
  */
 public class UniformClockDuration implements Comparable<Instant> { 
 
@@ -82,7 +91,7 @@ public class UniformClockDuration implements Comparable<Instant> {
     /**
      * <p>
      * Create a new, initialized instance of <code>UniformClockDuration</code> from the given
-     * Protobuf message.
+     * Protobuf message representing a sampling interval.
      * </p>
      * 
      * @param msgTms    Protobuf message representing a uniform sampling interval
@@ -140,6 +149,69 @@ public class UniformClockDuration implements Comparable<Instant> {
     }
     
     /**
+     * Returns the number of samples recorded by this clock.
+     * 
+     * @return  the total sample count where clock is active
+     */
+    public int getSampleCount() {
+        return this.intCount;
+    }
+    
+    /**
+     * <p>
+     * Returns the sample period.
+     * </p>
+     * <p>
+     * Use the method <code>{@link #getSamplePeriodUnits()}</code> to recover the
+     * sample period time units.
+     * </p>
+     * 
+     * @return  return the sample period for the clock
+     * 
+     * @see #getSamplePeriodUnits()
+     */
+    public long getSamplePeriod() {
+        return this.lngPeriod;
+    }
+    
+    /**
+     * Returns the time units of the sample period.
+     * 
+     * @return  unit of time for the sample period
+     * 
+     * @see #getSamplePeriod()
+     */
+    public ChronoUnit   getSamplePeriodUnits() {
+        return this.cuPeriod;
+    }
+    
+    /**
+     * <p>
+     * Returns the time domain over which this clock is active.
+     * </p>
+     * <p>
+     * The returned interval is given by 
+     * <pre>
+     *      [<i>t</i><sub>0</sub>, <i>t</i><sub><i>N</i>-1</sub>]
+     * </pre>
+     * where <i>t</i><sub>0</sub> is the first timestamp of the clock duration 
+     * (given by <code>{@link #getStartInstant()}</code>) and <i>t</i><sub><i>N</i>-1</sub>
+     * is the last timestamp of the clock duration.  Note that <i>N</i> is the number
+     * of timestamps returned by <code>{@link #getSampleCount()}</code>.
+     * <p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The returned interval DOES NOT include the sampling period duration
+     * after the final timestamp.
+     * </p>
+     *  
+     * @return  the time domain which the clock is active, minus the final period duration
+     */
+    public TimeInterval getTimeDomain() {
+        return this.ivlDomain;
+    }
+    
+    /**
      * <p>
      * Compares the sampling domain of the given sampling set with this one.
      * </p>
@@ -154,7 +226,7 @@ public class UniformClockDuration implements Comparable<Instant> {
      * @return <code>true</code> if the given sampling set collides with this one,
      *         <code>false</code> otherwise
      */
-    public boolean  hasIntersection(UniformClockDuration domCmp) {
+    public boolean  hasDomainIntersection(UniformClockDuration domCmp) {
         return this.ivlDomain.hasIntersectionClosed(domCmp.ivlDomain);
     }
 

@@ -35,15 +35,38 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.ResultRecord;
+import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.api.query.model.data.SampledTimeSeries;
 import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
 
 /**
+ * <p>
+ * Represents a block of finite-duration, correlated, sampled time-series data.
+ * </p>
+ * <p>
+ * Class instances maintain an collection of <code>{@link SampledTimeSeries}</code> objects 
+ * containing the time-series data for the sampling block.
+ * The class also contains a uniform sampling clock <code>{@link UniformClockDuration}</code>
+ * of finite duration producing the timestamps for all time-series data sets within the block. 
+ * Instances are intended to be created from <code>{@link CorrelatedQueryData}</code> objects
+ * during Data Platform Query Service results set reconstruction.
+ * </p>
+ * <p>
+ * Instances of <code>UniformSamplingBlock</code> can be ordered according to the start time
+ * of the sampling interval (i.e., the first timestamp) through implementation of the
+ * <code>{@link Comparable}</code> interface.  The class also contains an implementation of
+ * <code>{@link Comparator}</code> interface for explicit comparison of <code>UniformSamplingBlock</code>
+ * instances.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Jan 30, 2024
@@ -126,17 +149,22 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     /** Is logging active */
     public static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
     
-    
-//    /** Parallelism timeout limit  - for parallel thread pool tasks */
-//    public static final long       LNG_TIMEOUT = CFG_QUERY.timeout.limit;
-//    
-//    /** Parallelism timeout units - for parallel thread pool tasks */
-//    public static final TimeUnit   TU_TIMEOUT = CFG_QUERY.timeout.unit;
-    
-    
     /** Parallelism tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
     public static final int        SZ_MSGCOLS_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
+//  /** Parallelism timeout limit  - for parallel thread pool tasks */
+//  public static final long       LNG_TIMEOUT = CFG_QUERY.timeout.limit;
+//  
+//  /** Parallelism timeout units - for parallel thread pool tasks */
+//  public static final TimeUnit   TU_TIMEOUT = CFG_QUERY.timeout.unit;
+  
+
+    //
+    // Class Resources
+    //
+    
+    /** Event logger for class */
+    private static final Logger LOGGER = LogManager.getLogger();
     
     //
     // Defining Attributes
@@ -154,6 +182,9 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     
     /** The uniform clock duration for this sample block */
     private final   UniformClockDuration    clkParams;
+    
+    /** The vector of ordered timestamps correspond to this sample block */
+    private final   Vector<Instant>         vecTimestamps;
     
     /** Set of data source names for sample block */
     private final   Set<String>             setSourceNames;
@@ -216,15 +247,22 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
         
         // Check the argument for corruption - i.e., data source name uniqueness
         ResultRecord    result = cqdSampleBlock.verifySourceUniqueness();
-        if (result.failed())
+        if (result.failed()) {
+            if (BOL_LOGGING)
+                LOGGER.error("{} correlated data block is corrupt: }{}", JavaRuntime.getCallerName(), result.getCause());
+
             throw new IllegalArgumentException("Correlated data block is corrupt: " + result.getCause());
+        }
         
         // Extract the relevant Protobuf message from the argument
         FixedIntervalTimestampSpec  msgClockParams = cqdSampleBlock.getSamplingMessage();
         List<DataColumn>            lstMsgDataCols = cqdSampleBlock.getAllDataMessages();
         
-        // Compute and set the sampling block attributes
+        // Create the sampling clock and the timestamps for this block
         this.clkParams = UniformClockDuration.from(msgClockParams);
+        this.vecTimestamps = this.clkParams.createTimestamps();
+        
+        // Get the set of data source names and create all the time-series data for this block
         this.setSourceNames = cqdSampleBlock.getDataSourceNames();
         this.mapSrcToSmpls = this.createTimeSeries(lstMsgDataCols);
     }
@@ -251,30 +289,55 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     
     /**
      * <p>
-     * Compares the sampling domain of the given sampling set with this one for collision.
+     * Returns the time domain over which this clock is active.
      * </p>
      * <p>
-     * Returns <code>true</code> if the given sampling time domain of the argument has a 
-     * non-empty set intersection with this one.  Time domains are treated as closed intervals, 
-     * so even if domain intervals share only a common end point a value <code>true</code> 
-     * is returned.
+     * This is a convenience method where the returned value is taken from the 
+     * uniform clock parameters.
+     * <p>
+     * <p>
+     * The returned interval is given by 
+     * <pre>
+     *      [<i>t</i><sub>0</sub>, <i>t</i><sub><i>N</i>-1</sub>]
+     * </pre>
+     * where <i>t</i><sub>0</sub> is the first timestamp of the clock duration 
+     * (given by <code>{@link #getStartInstant()}</code>) and <i>t</i><sub><i>N</i>-1</sub>
+     * is the last timestamp of the clock duration.  Note that <i>N</i> is the number
+     * of timestamps returned by <code>{@link #getSampleCount()}</code>.
+     * <p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The returned interval DOES NOT include the sampling period duration
+     * after the final timestamp.
      * </p>
-     * <p>
-     * This is a convenience method where the returned value is determined from the 
-     * uniform clock parameters of this block and the argument.
-     * <p>
+     *  
+     * @return  the time domain which the clock is active, minus the final period duration
      * 
-     * @param usbCmp uniform sampling set under domain comparison 
-     * 
-     * @return <code>true</code> if the given sampling time domain collides with this one,
-     *         <code>false</code> otherwise
-     *         
-     * @see UniformClockDuration#hasIntersection(UniformClockDuration)
+     * @see UniformClockDuration#getTimeDomain()
      */
-    public boolean  hasIntersection(UniformSamplingBlock usbCmp) {
-        return this.clkParams.hasIntersection(usbCmp.clkParams);
+    public final TimeInterval   getTimeDomain() {
+        return this.clkParams.getTimeDomain();
     }
-
+    
+    /**
+     * <p>
+     * Returns the order vector of timestamp instants corresponding to this sampling block.
+     * </p>
+     * <p>
+     * The returned vector is ordered from earliest timestamp to latest timestamp.  All
+     * timestamps are separated by the clock period.  
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Do not modify the returned vector, it is owned by this sampling block.
+     * </p>
+     * 
+     * @return  ordered vector of timestamps for this sampling block, earliest to latest
+     */
+    public final Vector<Instant>    getTimestamps() {
+        return this.vecTimestamps;
+    }
+    
     /**
      * <p>
      * Returns the uniform sampling clock parameters for this sampling block.
@@ -300,6 +363,10 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * time series data set for each data source.  Time series data may be recovered by
      * name.
      * </p>
+     * <p>
+     * <h2>NOTES:<h2>
+     * Do not modify the returned set, it is owned by this sampling block.
+     * </p>
      *  
      * @return  set of all data sources (by name) contributing time-series data to this block
      */
@@ -314,6 +381,10 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * <p>
      * Returns all the time-series data for the given data source.  If the data source 
      * is not represented within this sampled data block a <code>null</code> value is returned.
+     * </p>
+     * <p>
+     * <h2>NOTES:<h2>
+     * Do not modify the returned object, it is owned by this sampling block.
      * </p>
      * 
      * @param strSourceName data source unique name
@@ -338,6 +409,10 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * of a collection of {(data source name, time-series data)} pairs where each data
      * source name key is unique.
      * </p>
+     * <p>
+     * <h2>NOTES:<h2>
+     * Do not modify the returned collection, it is owned by this sampling block.
+     * </p>
      * 
      * @return  collection of all time-series data for all data sources within this block
      */
@@ -352,6 +427,32 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     
     /**
      * <p>
+     * Compares the sampling domain of the given sampling set with this one for collision.
+     * </p>
+     * <p>
+     * Returns <code>true</code> if the given sampling time domain of the argument has a 
+     * non-empty set intersection with this one.  Time domains are treated as closed intervals, 
+     * so even if domain intervals share only a common end point a value <code>true</code> 
+     * is returned.
+     * </p>
+     * <p>
+     * This is a convenience method where the returned value is determined from the 
+     * uniform clock parameters of this block and the argument.
+     * <p>
+     * 
+     * @param usbCmp uniform sampling set under time domain comparison 
+     * 
+     * @return <code>true</code> if the given sampling time domain collides with this one,
+     *         <code>false</code> otherwise
+     *         
+     * @see UniformClockDuration#hasDomainIntersection(UniformClockDuration)
+     */
+    public boolean  hasDomainIntersection(UniformSamplingBlock usbCmp) {
+        return this.clkParams.hasDomainIntersection(usbCmp.clkParams);
+    }
+
+    /**
+     * <p>
      * Creates and returns a vector of timestamp instants for the sampling block.
      * </p>
      * <p>
@@ -361,6 +462,10 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * <p>
      * This is a convenience method which defers to the sampling clock within the block
      * to create the return timestamp vector.
+     * </p>
+     * <p>
+     * <h2>NOTES:<h2>
+     * The returned vector has no ownership and can be modified.
      * </p>
      * 
      * @return  ordered vector of timestamp instants corresponding to all data within this block

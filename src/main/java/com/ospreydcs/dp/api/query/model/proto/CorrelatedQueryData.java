@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.query.model.proto;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -37,6 +38,7 @@ import java.util.TreeSet;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.model.ResultRecord;
+import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
@@ -131,20 +133,28 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
 
     
     // 
-    // Attributes and Resources
+    // Attributes 
+    //
+    
+    /** The uniform sampling interval Protobuf message - the correlation subject */
+    private final FixedIntervalTimestampSpec    msgSmplClk; 
+    
+    /** List of all data column Protobuf messages correlated within sampling interval - correlated objects */
+    private final List<DataColumn>              lstMsgCols = new LinkedList<>();
+    
+    
+    //
+    // Resources
     //
     
     /** The initial sampling time instant - taken from <code>msgSmpIval</code> */
     private final Instant                       insStart;
     
+    /** The time domain of contained query data - computed from <code>msgSmpIval</code> */
+    private final TimeInterval                  ivlTimeDomain;
+    
     /** Set of all unique data source names active within sampling interval - taken from data messages */
     private final Set<String>                   setSrcNms = new TreeSet<>();
-    
-    /** The uniform sampling interval Protobuf message - the correlation subject */
-    private final FixedIntervalTimestampSpec    msgSmpIvl; 
-    
-    /** List of all data column Protobuf messages correlated within sampling interval - correlated objects */
-    private final List<DataColumn>              lstMsgCols = new LinkedList<>();
     
     
     //
@@ -179,11 +189,20 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     public CorrelatedQueryData(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
         Timestamp   msgTmsStart = msgBucket.getSamplingInterval().getStartTime();
         DataColumn  msgDataCol = msgBucket.getDataColumn(); 
-        
+    
         this.insStart = ProtoMsg.toInstant(msgTmsStart);
-        this.msgSmpIvl = msgBucket.getSamplingInterval();
+        this.msgSmplClk = msgBucket.getSamplingInterval();
         this.setSrcNms.add(msgDataCol.getName());
         this.lstMsgCols.add(msgDataCol);
+        
+        // Compute time domain
+        int     cntSamples = this.msgSmplClk.getNumSamples();
+        long    lngPeriodNs = this.msgSmplClk.getSampleIntervalNanos();
+        Duration    durPeriod = Duration.ofNanos(lngPeriodNs);
+        Duration    durDomain = durPeriod.multipliedBy(cntSamples - 1);
+        Instant     insStop = this.insStart.plus(durDomain);
+        
+        this.ivlTimeDomain = TimeInterval.from(this.insStart, insStop);
     }
     
     
@@ -198,6 +217,23 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      */
     public final Instant getStartInstant() {
         return this.insStart;
+    }
+    
+    /**
+     * <p>
+     * Returns the time domain of the sampling interval.
+     * </p>
+     * <p>
+     * The returned interval left end point is the start time of the sampling interval 
+     * returned by <code>{@link #getStartInstant()}</code>.  The right end point is the
+     * last timestamp of the sampled data within the query data.  Specifically, it 
+     * DOES NOT include the sample period duration following the last timestamp.
+     * </p>
+     * 
+     * @return  the time domain of contained query data [first timestamp, last timestamp]
+     */
+    public final TimeInterval getTimeDomain() {
+        return this.ivlTimeDomain;
     }
 
     /**
@@ -216,7 +252,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * @return sampling interval Protobuf message
      */
     public final FixedIntervalTimestampSpec getSamplingMessage() {
-        return this.msgSmpIvl;
+        return this.msgSmplClk;
     }
 
 
@@ -236,7 +272,10 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * </p>
      * 
      * @return set of all data source names within the referenced data
+     * 
+     * @deprecated replaced by <code>{@link #getDataSourceNames()}</code>
      */
+    @Deprecated(since="Jan 31, 2024", forRemoval=true)
     private final Set<String>    extractDataSourceNames() {
         Set<String> setNames = this.lstMsgCols
                 .stream()
@@ -274,7 +313,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     public boolean insertBucketData(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
         
         // Check if list addition is possible - must have same sampling interval
-        if (ProtoTime.equals(this.msgSmpIvl, msgBucket.getSamplingInterval())) {
+        if (ProtoTime.equals(this.msgSmplClk, msgBucket.getSamplingInterval())) {
             this.lstMsgCols.add( msgBucket.getDataColumn() );
             this.setSrcNms.add( msgBucket.getDataColumn().getName() );
             
