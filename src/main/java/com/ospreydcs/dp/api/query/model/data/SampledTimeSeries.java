@@ -30,6 +30,7 @@ package com.ospreydcs.dp.api.query.model.data;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.MissingResourceException;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.DpSupportedType;
@@ -116,11 +117,12 @@ public class SampledTimeSeries {
      * 
      * @return  new <code>SampledTimeSeries</code> instance populated with argument data
      * 
-     * @throws IllegalArgumentException      the argument contained no data (empty message)
+     * @throws MissingResourceException      the argument contained no data (empty message)
+     * @throws IllegalStateException         the argument contained non-uniform data types
      * @throws UnsupportedOperationException the argument contained an unsupported data type
      */
     public static SampledTimeSeries  from(com.ospreydcs.dp.grpc.v1.common.DataColumn msgDataCol) 
-            throws IllegalArgumentException, UnsupportedOperationException {
+            throws MissingResourceException, IllegalStateException, UnsupportedOperationException {
         
         // Extract message data
         String          strName = msgDataCol.getName();

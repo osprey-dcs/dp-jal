@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.SortedMap;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -584,16 +585,16 @@ public final class ProtoMsg {
      * 
      * @return  The uniform data type of all data contained within the argument
      * 
-     * @throws IllegalArgumentException         the argument was empty (contained no data)
+     * @throws MissingResourceException         the argument was empty (contained no data)
      * @throws IllegalStateException            the column data was of non-uniform type
      * @throws UnsupportedOperationException    an unsupported data type was encountered
      */
-    public static DpSupportedType extractType(DataColumn msgDataCol) throws IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
+    public static DpSupportedType extractType(DataColumn msgDataCol) throws MissingResourceException, IllegalStateException, UnsupportedOperationException {
         List<DataValue> lstVals = msgDataCol.getDataValuesList();
         
         // Check the argument
         if (lstVals.isEmpty())
-            throw new IllegalArgumentException("The data column was empty.");
+            throw new MissingResourceException("The data column was empty.", msgDataCol.getName(), "getDataValueList()");
         
         // Get type of first data value
         DataValue   msgValFirst = lstVals.get(0);

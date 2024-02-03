@@ -211,6 +211,23 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     //
     
     /**
+     * <p>
+     * Returns the number of samples for each data column as specified in the sampling interval message.
+     * </p>
+     * <p>
+     * Obtains the returned value from the Protobuf message describing the sampling interval.
+     * Specifically, returns the field value containing the number of samples.
+     * All correlated data columns <em>should</em> have the same number of data values,
+     * the returned value, if the Data Platform archive is consistent. 
+     * </p>
+     * 
+     * @return  the size of each correlated data column
+     */
+    public final int    getSampleCount() {
+        return this.msgSmplClk.getNumSamples();
+    }
+    
+    /**
      * Returns the starting time instant of the sampling interval
      * 
      * @return sampling interval start instant
@@ -242,7 +259,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      *  
      * @return
      */
-    public final Set<String>    getDataSourceNames() {
+    public final Set<String>    getSourceNames() {
         return this.setSrcNms;
     }
     
@@ -273,7 +290,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * 
      * @return set of all data source names within the referenced data
      * 
-     * @deprecated replaced by <code>{@link #getDataSourceNames()}</code>
+     * @deprecated replaced by <code>{@link #getSourceNames()}</code>
      */
     @Deprecated(since="Jan 31, 2024", forRemoval=true)
     private final Set<String>    extractDataSourceNames() {
@@ -288,44 +305,14 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         return setNames;
     }
 
-    
+
     //
-    // Operations
+    // Data Verifications
     //
     
     /**
      * <p>
-     * Adds the <code>DataColumn</code> within the argument to the list of referenced data ONLY IF 
-     * sampling intervals are equivalent.
-     * </p>
-     * <p>
-     * Checks for an equivalent sampling interval within the argument and, if so, adds the data column
-     * within the argument bucket to the list of associated data.  
-     * If the sampling intervals are NOT equivalent then nothing is done and a value 
-     * <code>false</code> is returned.
-     * </p>
-     * 
-     * @param msgBucket Protobuf message containing sampling interval and column data
-     * 
-     * @return      <code>true</code> only if argument data was successfully added to this reference,
-     *              <code>false</code> otherwise (nothing done)
-     */
-    public boolean insertBucketData(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
-        
-        // Check if list addition is possible - must have same sampling interval
-        if (ProtoTime.equals(this.msgSmplClk, msgBucket.getSamplingInterval())) {
-            this.lstMsgCols.add( msgBucket.getDataColumn() );
-            this.setSrcNms.add( msgBucket.getDataColumn().getName() );
-            
-            return true;
-        }
-        
-        return false;
-    }
-    
-    /**
-     * <p>
-     * Verifies that the given set of correlated data for the sampling interval is consistent.
+     * Verifies that the given set of correlated data has unique data source names.
      * </p>
      * <p>
      * Note that the data source name for each inserted <code>BucketData</code> message is 
@@ -362,7 +349,87 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         if (!lstSrcNms.isEmpty())
             return ResultRecord.newFailure("Data column list contains multiple entries for following data sources: " + lstSrcNms);
         
-        return ResultRecord.newSuccess();
+        return ResultRecord.SUCCESS;
+    }
+    
+    /**
+     * <p>
+     * Verifies that the given set of correlated data has source data sets all of same size.
+     * </p>
+     * <p>
+     * Note that the data sources should all have data sets of the same size.  Further, the
+     * size should equal the number of samples specified in the sampling interval message.  
+     * This method verifies that the current set of data inserted
+     * into this instance is consistent with the above and ready for further processing.
+     * </p>
+     * <p>
+     * The following conditions are checked:
+     * <ul>
+     * <li>Each data source has size equal to the number data samples in sampling message.</li>
+     * </ul>
+     * If the current correlated data set fails the verification check, the cause of the failure
+     * is included in the result.  Otherwise no cause message is provided.
+     * </p> 
+     * 
+     * @return  result of the verification check, containing the cause if failed
+     */
+    public ResultRecord verifySourceSizes() {
+        
+        // Each source should provide the same number of data samples
+        int cntSamples = this.msgSmplClk.getNumSamples();
+        
+        // Get list of all data columns with different size
+        List<DataColumn> lstBadCols = this.lstMsgCols
+                .stream()
+                .filter(msg -> msg.getDataValuesCount() != cntSamples)
+                .toList();
+        
+        // If the list is empty we passed the test
+        if (lstBadCols.isEmpty())
+            return ResultRecord.SUCCESS;
+        
+        // Test failed - return failure with list of source names and count
+        List<String> lstFailedSrcs = lstBadCols
+                .stream()
+                .map(msg -> msg.getName() + ": " + Integer.toString(msg.getDataValuesCount()))
+                .toList();
+        
+        return ResultRecord.newFailure("Data column(s) had value count != " + Integer.toString(cntSamples) + ": " + lstFailedSrcs);
+    }
+    
+    
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Adds the <code>DataColumn</code> within the argument to the list of referenced data ONLY IF 
+     * sampling intervals are equivalent.
+     * </p>
+     * <p>
+     * Checks for an equivalent sampling interval within the argument and, if so, adds the data column
+     * within the argument bucket to the list of associated data.  
+     * If the sampling intervals are NOT equivalent then nothing is done and a value 
+     * <code>false</code> is returned.
+     * </p>
+     * 
+     * @param msgBucket Protobuf message containing sampling interval and column data
+     * 
+     * @return      <code>true</code> only if argument data was successfully added to this reference,
+     *              <code>false</code> otherwise (nothing done)
+     */
+    public boolean insertBucketData(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
+        
+        // Check if list addition is possible - must have same sampling interval
+        if (ProtoTime.equals(this.msgSmplClk, msgBucket.getSamplingInterval())) {
+            this.lstMsgCols.add( msgBucket.getDataColumn() );
+            this.setSrcNms.add( msgBucket.getDataColumn().getName() );
+            
+            return true;
+        }
+        
+        return false;
     }
     
     

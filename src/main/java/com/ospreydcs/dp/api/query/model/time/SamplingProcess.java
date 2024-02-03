@@ -28,11 +28,18 @@
 package com.ospreydcs.dp.api.query.model.time;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.concurrent.CompletionException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,6 +47,8 @@ import org.w3c.dom.ranges.RangeException;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.model.DpSupportedType;
+import com.ospreydcs.dp.api.model.ResultRecord;
 import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -64,6 +73,12 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * in the reconstruction process of Data Platform Query Service data requests.
  * </p>  
  * <p>
+ * <h2>NOTES:</h2>
+ * It is quite possible that not every data source is represented in each component sampling
+ * block.  If the time series of a data source is missing within a given sampling block we
+ * represent its sample values there as <code>null</code> values.
+ * </p>
+ * <p>
  * <h2>TODO</h2>
  * <ul>
  * <li>Implement a possible interface <code>IDataTable</code> for table-like data retrieval.</li>
@@ -79,15 +94,15 @@ public class SamplingProcess {
     // Class Types
     //
     
-    public static class TimestampBlock extends Vector<Instant> {
-
-        private static final long serialVersionUID = 656239993644617465L;
-        
-        
-        public TimestampBlock(Vector<Instant> vecTms) {
-            super(vecTms);
-        }
-    }
+//    public static class TimestampBlock extends Vector<Instant> {
+//
+//        private static final long serialVersionUID = 656239993644617465L;
+//        
+//        
+//        public TimestampBlock(Vector<Instant> vecTms) {
+//            super(vecTms);
+//        }
+//    }
     
 //    public static record   SamplingPair(UniformClockDuration setTms, List<DataColumn> lstDataCols) {
 //        
@@ -136,11 +151,20 @@ public class SamplingProcess {
     // Attributes
     //
 
+    /** The number of samples within each time-series */
+    private final int                   cntSamples;
+    
     /** The time domain of the sampling process */
     private final TimeInterval          ivlDomain;
     
-    /** Set of unique data source names */
-    private final Set<String>           setSourceNames;
+//    /** The vector of timestamps for this sampling process */
+//    private final Vector<Instant>       vecTimestamps;
+    
+    /** The set of all unique data sources names - taken from initializing correlated query data */
+    private final Set<String>                   setSourceNames;
+    
+    /** Map of data source names to their data type - taken from processed sampling blocks */
+    private final Map<String, DpSupportedType>  mapSrcNmToType;
     
 //    /** Ordered list of <code>SamplingPair</code> instances for process build */
 //    private final List<SamplingPair>    lstSmplPairs;
@@ -153,17 +177,15 @@ public class SamplingProcess {
     // Creator
     //
     
-    //
-    // Constructor
-    //
-    
     /**
      * <p>
-     * Constructs a new instance of <code>SamplingProcess</code> fully populated from argument data.
+     * Creates a new instance of <code>SamplingProcess</code> fully populated from argument data.
      * </p>
      * <p>
-     * After construction the new instance is fully populated with sampled time-series data from
-     * all data sources contained in the argument.  The argument data must be consistent for proper
+     * After creation the new instance is fully populated with sampled time-series data from
+     * all data sources contained in the argument.  The new instance is also configured according
+     * to the order and the correlations within the argument.
+     * The argument data must be consistent for proper
      * time-series data construction or an exception is thrown.
      * </p>
      * <p>
@@ -175,19 +197,223 @@ public class SamplingProcess {
      * <li>Exception type determines the nature of any Data inconsistency. </li>
      * </ul>  
      *
-     * @param setSubjectRefs sorted set of <code>CorrelatedQueryData</code> used to build this process
+     * @param setTargetData sorted set of <code>CorrelatedQueryData</code> used to build this process
+     * 
+     * @return a new instance of <code>SamplingProcess</code> fully populated and configured with argument data
      *  
-     * @throws IllegalArgumentException the argument data is corrupt: missing data column, empty data column, or duplicate data source names (see message)
-     * @throws IllegalStateException    the argument data contains duplicate data source names
-     * @throws RangeException           the argument data contains time domain collisions
-     * @throws UnsupportedOperationException an unsupported data type was detected within the argument data
+     * @throws MissingResourceException the argument is has empty data column(s)
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
+     * @throws IllegalStateException    the argument contains duplicate data source names
+     * @throws RangeException           the argument contains time domain collisions
+     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     * @throws CompletionException      the sampling process was corrupt after creation (see message)
      */
-    public SamplingProcess(SortedSet<CorrelatedQueryData> setSubjectRefs) 
-            throws IllegalArgumentException, IllegalStateException, RangeException, UnsupportedOperationException {
+    public static SamplingProcess from(SortedSet<CorrelatedQueryData> setTargetData) 
+            throws  MissingResourceException, 
+                    IllegalArgumentException, 
+                    IllegalStateException, 
+                    RangeException, 
+                    UnsupportedOperationException, 
+                    CompletionException 
+    {
+        return new SamplingProcess(setTargetData);
+    }
+    
+    
+    //
+    // Constructor
+    //
+    
+    /**
+     * <p>
+     * Constructs a new instance of <code>SamplingProcess</code> fully populated from argument data.
+     * </p>
+     * <p>
+     * After construction the new instance is fully populated with sampled time-series data from
+     * all data sources contained in the argument.  The new instance is also configured according
+     * to the order and the correlations within the argument.
+     * The argument data must be consistent for proper
+     * time-series data construction or an exception is thrown.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The argument collection is assumed to be sorted in the order of clock starting instants</li>
+     * <li>Extensive data consistency check is performed during construction.</li>
+     * <li>Any detected data inconsistencies result in an exception. </li>
+     * <li>Exception type determines the nature of any Data inconsistency. </li>
+     * </ul>  
+     *
+     * @param setTargetData sorted set of <code>CorrelatedQueryData</code> used to build this process
+     *  
+     * @throws RangeException           the argument has bad ordering or contains time domain collisions (see message)
+     * @throws MissingResourceException the argument is has empty data column(s)
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
+     * @throws IllegalStateException    the argument contains duplicate data source names
+     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     * @throws CompletionException      the sampling process was corrupt after creation (see message)
+     */
+    public SamplingProcess(SortedSet<CorrelatedQueryData> setTargetData) 
+            throws  RangeException, 
+                    MissingResourceException, 
+                    IllegalArgumentException, 
+                    IllegalStateException, 
+                    UnsupportedOperationException, 
+                    CompletionException 
+    {
         
-        this.setSourceNames = this.buildSourceNameSet(setSubjectRefs);
-        this.vecSmplBlock = this.buildSamplingBlocks(setSubjectRefs);
+        // First verify consistency of source data
+        ResultRecord    result;
+        
+        //  Check start time ordering
+        result = this.verifyStartTimes(setTargetData);
+        if (result.failed())
+            throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, result.getMessage());
+        
+        //  Check for time domain intersections - works if start time ordering is correct 
+        result = this.verifyTimeDomains(setTargetData);
+        if (result.failed())
+            throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, result.getMessage());
+        
+        // Build sampling blocks and get source names from target data set
+        this.vecSmplBlock = this.buildSamplingBlocks(setTargetData);
+        this.setSourceNames = this.buildSourceNameSet(setTargetData);
+        
+        // Create the auxiliary resources from the new sampling blocks
+        this.mapSrcNmToType = this.buildSourceNameToTypeMap(this.vecSmplBlock);
         this.ivlDomain = this.computeTimeDomain(this.vecSmplBlock);
+        this.cntSamples = this.computeSampleCount(this.vecSmplBlock);
+        
+        // Verify the consistency of the sampling blocks
+        result = this.verifyStartTimes(this.vecSmplBlock);
+        if (result.failed())
+            throw new CompletionException(result.getMessage(), result.getCause());
+        
+        result = this.verifyTimeDomains(this.vecSmplBlock);
+        if (result.failed())
+            throw new CompletionException(result.getMessage(), result.getCause());
+        
+        result = this.verifySourceTypes(vecSmplBlock);
+        if (result.failed())
+            throw new CompletionException(result.getMessage(), result.getCause());
+    }
+
+    
+    //
+    // Attribute/Property Query
+    //
+    
+    /**
+     * <p>
+     * Returns the number samples within each time series of the sampling process.
+     * </p>
+     * <p>
+     * Note that each time series within the sampling process must have the same size.  
+     * This condition is enforced by assigning <code>null</code> values to data sources
+     * missing from any sampling block.
+     * </p>
+     * 
+     * @return  the size of each time series within the sampling process
+     */
+    public final int getSampleCount() {
+        return this.cntSamples;
+    }
+    
+    /**
+     * <p>
+     * Returns the time domain over which samples were taken.
+     * </p>
+     * <p>
+     * Returns the smallest connected interval [<i>t</i><sub>0</sub>, <i>t</i><sub><i>N</i>-1</sub>]
+     * that contains all sample timestamps.
+     * </p>
+     * <p>
+     * The returned interval is given by 
+     * <pre>
+     *      [<i>t</i><sub>0</sub>, <i>t</i><sub><i>N</i>-1</sub>]
+     * </pre>
+     * where <i>t</i><sub>0</sub> is the timestamp of the first samples within the process 
+     * and <i>t</i><sub><i>N</i>-1</sub> is the timestamp the last sample.  
+     * Note that <i>N</i> is the number of samples (equivalently, timestamps) returned by 
+     * <code>{@link #getSampleCount()}</code>.
+     * <p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The returned interval DOES NOT include the sampling period duration
+     * after the final timestamp.
+     * </p>
+     *  
+     * @return  the smallest connected time interval containing all the sample timestamps
+     */
+    public final TimeInterval   getTimeDomain() {
+        return this.ivlDomain;
+    }
+
+    /**
+     * <p>
+     * Returns the number of unique data sources within the sampling process.
+     * </p>
+     * <p>
+     * The sampling process must containing one and only one time series from each data source
+     * represented.  This condition was checked during construction.
+     * To obtain the collection of unique data source names use
+     * <code>{@link #getDataSourceNames()}</code>.
+     * </p>
+     * 
+     * @return  the number of data sources contributing to this sampling process
+     */
+    public final int getDataSourceCount() {
+        return this.setSourceNames.size();
+    }
+    
+    /**
+     * <p>
+     * Returns the set of all data source names for data sources contributing to the sampling process.
+     * </p>
+     * <p>
+     * Each data source name should be unique.  After construction there should be only one
+     * time series data set for each data source.  Time series data may be recovered by
+     * name.
+     * </p>
+     * <p>
+     * <h2>NOTES:<h2>
+     * Do not modify the returned set, it is owned by this instance.
+     * </p>
+     *  
+     * @return  set of all data sources (by name) contributing time-series data to this process
+     */
+    public final Set<String>  getDataSourceNames() {
+        return this.setSourceNames;
+    }
+    
+    /**
+     * <p>
+     * Returns the data type of the time series with the given data source name.
+     * </p>
+     * <p>
+     * Data sources must be unique, and they must produce samples all of the same data type.
+     * The sample process maintains a map of data source name to data source type which was
+     * created during construction.
+     * Data source uniqueness and type consistency should have been checked during 
+     * construction.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>If the given data source is not contained within the process a <code>null</code> is returned.</li>
+     * <li>Use <code>{@link #getDataSourceNames()}</code> to obtain all data sources names in process.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param strSourceName data source unique name
+     * 
+     * @return  the data type of the given data source time series, or <code>null</code> if source not present 
+     *
+     * @see #getDataSourceNames()
+     * @see DpSupportedType
+     */
+    public final DpSupportedType    getSourceType(String strSourceName) throws NullPointerException {
+        return this.mapSrcNmToType.get(strSourceName);
     }
 
     
@@ -197,65 +423,254 @@ public class SamplingProcess {
     
     /**
      * <p>
-     * Extracts and returns a set of unique data source names for all data within the argument.
+     * Verifies the correct ordering of the sampling start times within the argument set.
      * </p>
      * <p>
-     * Collects all data source names within the set of correlated data and creates a set
-     * of unique names which is then returned.
+     * Extracts all starting times of the sampling clock in order to create the set
+     * { <i>t</i><sub>0</sub>, <i>t</i><sub>1</sub>, ..., <i>t</i><sub><i>N</i>-1</sub> } where
+     * <i>t<sub>n</sub></i> is the start time for <code>CorrelatedQueryData</code> instance <i>n</i>
+     * and <i>N</i> is the size of the argument.   
+     * The ordered collection of start times is compared sequentially to check the following 
+     * conditions:
+     * <pre>
+     *   <i>t</i><sub>0</sub> < <i>t</i><sub>1</sub> < ... <  <i>t</i><sub><i>N</i>-1</sub>
+     * </pre>
+     * That is, we verify that the set 
+     * { <i>t</i><sub>0</sub>, <i>t</i><sub>1</sub>, ..., <i>t</i><sub><i>N</i>-1</sub> }
+     * forms a proper net.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This test MUST be run before <code>{@link #verifyTimeDomains(SortedSet)}</code>.</li>
+     * <li>Failure messages are written to the class logger if logging is enabled.</li>
+     * <li>The <code>ResultRecord</code> contains a message describing any failure.</li>
+     * </ul>
      * </p>
      * 
-     * @return  set of all data source names within the Query Service correlted data collection 
-     */
-    private Set<String>        buildSourceNameSet(SortedSet<CorrelatedQueryData> setRefs) {
-        Set<String> setNames = setRefs
-                .stream()
-                .collect(
-                        TreeSet::new, 
-//                        (set, r) -> set.addAll(r.extractDataSourceNames()), 
-                        (set, r) -> set.addAll(r.getDataSourceNames()), 
-                        TreeSet::addAll
-                        );
-        return setNames;
-    }
-    
-    /**
-     * @param setQueryData  set of <code>CorrelatedQueryData</code> objects ordered by start time
+     * @param setQueryData  the target set of <code>CorrelatedQueryData</code> objects 
      * 
-     * @return  vector of <code>UniformSamplingBlock</code> objects ordered according to argument
-     * 
-     * @throws IllegalArgumentException the argument is corrupt: missing data column, empty data column, or duplicate data source names (see message)
-     * @throws IllegalStateException    the argument contains duplicate data source names
-     * @throws RangeException           the argument contains time domain collisions
-     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     * @return  <code>ResultRecord</code> containing result of test, with message if failure
      */
-    private Vector<UniformSamplingBlock>    buildSamplingBlocks(SortedSet<CorrelatedQueryData> setQueryData) 
-            throws IllegalArgumentException, IllegalStateException, RangeException, UnsupportedOperationException {
+    private ResultRecord verifyStartTimes(SortedSet<CorrelatedQueryData> setQueryData) {
         
-        // First check all query data for time domain collisions
+        // Get the start times for each correlated query data block in order, remove the first
+        List<Instant> lstStartTimes = setQueryData.stream().sequential().map(cqd -> cqd.getStartInstant()).toList();
+        Instant insPrev = lstStartTimes.remove(0);
+        
+        // Check that all remaining start times are in order
+        int     indBlk = 0;
+        for (Instant insCurr : lstStartTimes) {
+            
+            // Compare the two instants
+            if (insPrev.compareTo(insCurr) >= 0) {
+                if (BOL_LOGGING)
+                    LOGGER.error("{}: Bad start time ordering at query data block {} with start time = {}", JavaRuntime.getCallerName(), Integer.toString(indBlk), insCurr);
+                
+                return ResultRecord.newFailure("Bad start time ordering for query data block " + Integer.toString(indBlk) + " with start time = " + insCurr);
+            }
+            
+            // Update state to next instant
+            indBlk++;
+            insPrev = insCurr;
+        }
+        
+        return ResultRecord.SUCCESS;
+    }
+
+    /**
+     * <p>
+     * Verifies that sampling domains within the argument are disjoint.
+     * </p>
+     * <p>
+     * Extracts the set of all sampling time domain intervals
+     * { <i>I</i><sub>0</sub>, <i>I</i><sub>0</sub>, ..., <i>I</i><sub><i>N</i>-1</sub> } where
+     * <i>I<sub>n</sub></i> is the sampling time domain for <code>CorrelatedQueryData</code> 
+     * instance <i>n</i> and <i>N</i> is the size of the argument.  
+     * We assume closed intervals of the form 
+     * <i>I</i><sub><i>n</i></sub> = [<i>t</i><sub><i>n</i>,start</sub>, <i>t</i><sub><i>n</i>,end</sub>]
+     * where <i>t</i><sub><i>n</i>,start</sub> is the start time for <code>CorrelatedQueryData</code> instance <i>n</i>
+     * and <i>t</i><sub><i>n</i>,end</sub> is the stop time.
+     * </p>
+     * <p>  
+     * The ordered collection of time domain intervals is compared sequentially to check the 
+     * following conditions:
+     * <pre>
+     *   <i>I</i><sub>0</sub> &cap; <i>I</i><sub>1</sub> = &empty;
+     *   <i>I</i><sub>1</sub> &cap; <i>I</i><sub>2</sub> = &empty;
+     *   ...
+     *   <i>I</i><sub><i>N</i>-2</sub> &cap; <i>I</i><sub><i>N</i>-1</sub> = &empty;
+     *   
+     * </pre>
+     * That is, every <em>adjacent</em> sampling time domain is disjoint.
+     * This algorithm is accurate <em>only if</em> the argument set is correctly ordered
+     * by sampling start times. 
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The argument MUST have correct start time order for this algorithm to work.</li>
+     * <li>Failure messages are written to the class logger if logging is enabled.</li>
+     * <li>The <code>ResultRecord</code> contains a message describing any failure.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param setQueryData  the target set of <code>CorrelatedQueryData</code> objects, corrected ordered 
+     * 
+     * @return  <code>ResultRecord</code> containing result of test, with message if failure
+     */
+    private ResultRecord verifyTimeDomains(SortedSet<CorrelatedQueryData> setQueryData) {
+        
+        // Get the time domains for each query data block, remove the first
+        List<TimeInterval>  lstTimeDomains = setQueryData.stream().sequential().map(cqd -> cqd.getTimeDomain()).toList();
+        TimeInterval        domPrev = lstTimeDomains.remove(0);
+        
+        // Check that remaining time domains are disjoint - this works if the argument is ordered correctly
+        int     indBlk = 0;
+        for (TimeInterval domCurr : lstTimeDomains) {
+            if (domPrev.hasIntersectionClosed(domCurr)) {
+                if (BOL_LOGGING)
+                    LOGGER.error("{}: Collision between time domains at query data block {}, {} with {}.", JavaRuntime.getCallerName(), Integer.toString(indBlk), domCurr, domPrev);
+                
+                return ResultRecord.newFailure("Time domain collision at query data block " + Integer.toString(indBlk) + ": " + domCurr + " with " + domPrev);
+            }
+            
+            indBlk++;
+            domPrev = domCurr;
+        }
+        
+        return ResultRecord.SUCCESS;
+    }
+
+    /**
+     * @param setQueryData
+     * @return
+     * 
+     * @deprecated replaced by {@link #verifyStartTimes(SortedSet)} and {@link #verifyTimeDomains(SortedSet)}
+     */
+    @Deprecated(since="Feb 2, 2024", forRemoval=true)
+    private ResultRecord verifyTimeRanges(SortedSet<CorrelatedQueryData> setQueryData) {
+        
+        // Check all query data for correct ordering and time domain collisions
         CorrelatedQueryData cqdFirst = setQueryData.first();
         
         setQueryData.remove(cqdFirst);
         CorrelatedQueryData cqdPrev = cqdFirst;
         for (CorrelatedQueryData cqdCurr : setQueryData) {
-
+            
+            // Check sampling start time order
+            Instant insPrev = cqdPrev.getStartInstant();
+            Instant insCurr = cqdCurr.getStartInstant();
+            
+            if (insPrev.compareTo(insCurr) >= 0) {
+                setQueryData.add(cqdFirst);
+    
+                if (BOL_LOGGING)
+                    LOGGER.error("{}: Bad ordering in start times, {} ordred after {}.", JavaRuntime.getCallerName(), insPrev, insCurr);
+                
+                return ResultRecord.newFailure("Bad ordering in start times " + insPrev + " ordered after " + insCurr);
+            }
+    
             // Since collection is ordered, only need to check proximal domains
             TimeInterval    domPrev = cqdPrev.getTimeDomain();
             TimeInterval    domCurr = cqdCurr.getTimeDomain();
             
             if (domPrev.hasIntersectionClosed(domCurr)) {
+                setQueryData.add(cqdFirst);
+    
                 if (BOL_LOGGING)
                     LOGGER.error("{}: Collision between sampling domains {} and {}.", JavaRuntime.getCallerName(), domPrev, domCurr);
                 
-                throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, "Collision between sampling domains " + domPrev + " and " + domCurr);
+                return ResultRecord.newFailure("Collision between sampling domains " + domPrev + " and " + domCurr);
             }
                 
         }
         setQueryData.add(cqdFirst);
+    
+        return ResultRecord.SUCCESS;
+    }
+
+    /**
+     * <p>
+     * Creates all the sampling blocks for this sampling process, according to the argument data.
+     * </p>
+     * <p>
+     * One <code>UniformSamplingBlock</code> instance is created for each <code>CorrelatedQueryData</code>
+     * object in the argument collection.  The <code>UniformSamplingBlock</code> instances are created
+     * in the same order as the argument, which is assumed to be by sampling start time.  The order
+     * should have been enforced during query response correlation.
+     * Note that not all data sources need contribute to each <code>CorrelatedQueryData</code> 
+     * instance in the argument.  The time-series data values (i.e., <code>null</code> values)
+     * for missing data sources should be addressed later. 
+     * </p>
+     * <p>
+     * <h2>Concurrency</h2>
+     * This method utilizes streaming parallelism if the argument size is greater than the
+     * pivot number <code>{@link #SZ_COLLECTION_PIVOT}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li><s>The argument is must be ordered by starting time instant, or exception is thrown.</s></li>
+     * <li><s>Arguments must not contain intersecting time domain, or exception is thrown.</s></li>
+     * <li>All exceptions are thrown by the internal invocation of <code>{@link UniformSamplingBlock#from}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param setQueryData  set of <code>CorrelatedQueryData</code> objects ordered by start time
+     * 
+     * @return  vector of <code>UniformSamplingBlock</code> objects ordered according to argument
+     * 
+     * @throws MissingResourceException the argument is has empty data column(s)
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
+     * @throws IllegalStateException    the argument contains duplicate data source names
+     * throws RangeException           the argument has bad ordering or contains time domain collisions
+     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     */
+    private Vector<UniformSamplingBlock>    buildSamplingBlocks(SortedSet<CorrelatedQueryData> setQueryData) 
+            throws MissingResourceException, IllegalArgumentException, IllegalStateException, /* RangeException,*/ UnsupportedOperationException {
+        
+//        // First check all query data for correct ordering and time domain collisions
+//        CorrelatedQueryData cqdFirst = setQueryData.first();
+//        
+//        setQueryData.remove(cqdFirst);
+//        CorrelatedQueryData cqdPrev = cqdFirst;
+//        for (CorrelatedQueryData cqdCurr : setQueryData) {
+//            
+//            // Check time order
+//            Instant insPrev = cqdPrev.getStartInstant();
+//            Instant insCurr = cqdCurr.getStartInstant();
+//            
+//            if (insPrev.compareTo(insCurr) >= 0) {
+//                setQueryData.add(cqdFirst);
+//
+//                if (BOL_LOGGING)
+//                    LOGGER.error("{}: Bad ordering in start times, {} ordred after {}.", JavaRuntime.getCallerName(), insPrev, insCurr);
+//                
+//                throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, "Bad ordering in start times " + insPrev + " ordered after " + insCurr);
+//            }
+//
+//            // Since collection is ordered, only need to check proximal domains
+//            TimeInterval    domPrev = cqdPrev.getTimeDomain();
+//            TimeInterval    domCurr = cqdCurr.getTimeDomain();
+//            
+//            if (domPrev.hasIntersectionClosed(domCurr)) {
+//                setQueryData.add(cqdFirst);
+//
+//                if (BOL_LOGGING)
+//                    LOGGER.error("{}: Collision between sampling domains {} and {}.", JavaRuntime.getCallerName(), domPrev, domCurr);
+//                
+//                throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, "Collision between sampling domains " + domPrev + " and " + domCurr);
+//            }
+//                
+//        }
+//        setQueryData.add(cqdFirst);
         
         // Create the sample blocks, pivoting to concurrency by container size
         Vector<UniformSamplingBlock>    vecSmplBlocks = new Vector<>(setQueryData.size());
         
         if (setQueryData.size() > SZ_COLLECTION_PIVOT) {
+            // invoke concurrency
             Vector<CorrelatedQueryData> vecQueryData = new Vector<>(setQueryData);
             
             IntStream.range(0, setQueryData.size())
@@ -265,13 +680,119 @@ public class SamplingProcess {
                         );
             
         } else {
+            // serial processing
             setQueryData.stream()
+                .sequential()
                 .forEachOrdered(
                         cqd -> vecSmplBlocks.add(UniformSamplingBlock.from(cqd))
                         );
         }
         
         return vecSmplBlocks;
+    }
+    
+    /**
+     * <p>
+     * Extracts and returns the collection of unique data source names for all data within the argument.
+     * </p>
+     * <p>
+     * Collects all data source names within the set of correlated data and creates a set
+     * of unique sources names.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Since the returned set of data source names is obtained directly from the initializing
+     * data, it can be used in verification against the process sampling blocks created from
+     * the same data.
+     * </p>
+     * 
+     * @param setQueryData  set of <code>CorrelatedQueryData</code> objects used to initialize process
+     * 
+     * @return  set of all data source names within the Query Service correlated data collection 
+     */
+    private Set<String>    buildSourceNameSet(SortedSet<CorrelatedQueryData> setQueryData) {
+        Set<String> setNames = setQueryData
+                .stream()
+                .collect(
+                        TreeSet::new, 
+                        (set, r) -> set.addAll(r.getSourceNames()), 
+                        TreeSet::addAll
+                        );
+        return setNames;
+    }
+    
+    /**
+     * <p>
+     * Builds and returns a map of data source names to data source type for all sources in 
+     * the argument.
+     * </p>
+     * <p>
+     * Collects all data source names within the collection of sampling blocks and creates a 
+     * map of (unique) sources names keyed to their data type.
+     * </p>
+     * <p>
+     * The returned map contains entries for all data sources represented in the argument.
+     * Not that the key set of the returned map should be equal to the set of data source
+     * name obtained from the initializing collection of <code>CorrelatedQueryData</code>
+     * objects.  Thus, the returned map can be used both to verify the set of data sources
+     * within the process, and to verify that all sources have uniform data type. 
+     * <p>
+     * <h2>Concurrency</h2>
+     * This method utilizes streaming parallelism if the argument size is greater than the
+     * pivot number <code>{@link #SZ_COLLECTION_PIVOT}</code>.
+     * </p>
+     *  
+     * @param vecBlocks the entire collection of sampling blocks within this process
+     * 
+     * @return  map of {(source name, source type)} entries for all data sources within argument
+     */
+    private Map<String, DpSupportedType>    buildSourceNameToTypeMap(Vector<UniformSamplingBlock> vecBlocks) {
+        
+        // Local type used for intermediate results
+        record Pair(String name, DpSupportedType type) {};
+        
+        // Note that <Pair>flatMap operation is implementing the following function
+        @SuppressWarnings("unused")
+        Function<UniformSamplingBlock, Stream<Pair>> f = (usb) -> {
+            return usb.
+                    getSourceNames()
+                    .stream()
+                    .<Pair>map(name -> new Pair(name, usb.getSourceType(name)));
+        };
+        
+        // Create the {(source name, source type)} map, pivoting to concurrency on container size  
+        Map<String, DpSupportedType>    mapSrcToType; // = new HashMap<>();
+        
+        if (vecBlocks.size() < SZ_COLLECTION_PIVOT) {
+            // process serially
+            mapSrcToType = vecBlocks
+                    .stream()
+                    .<Pair>flatMap(usb -> usb
+                            .getSourceNames()
+                            .stream()
+                            .<Pair>map(name -> new Pair(name, usb.getSourceType(name)))
+                            )
+                    .collect(
+                            Collectors.toMap(pair -> pair.name, pair->pair.type)
+                            );
+
+        } else {
+            // invoke concurrency in UniformSamplingBlock instance processing
+            mapSrcToType = vecBlocks
+                    .parallelStream()
+                    .<Pair>flatMap(usb -> usb
+                            .getSourceNames()
+                            .stream()
+                            .map(name -> new Pair(name, usb.getSourceType(name)))
+                            )
+                    .collect(
+                            Collectors.toConcurrentMap(pair -> pair.name, pair -> pair.type)
+                            );
+            
+        }
+        
+        // Return the populated map
+        return mapSrcToType;
     }
     
     /**
@@ -285,19 +806,255 @@ public class SamplingProcess {
      * end point of the time interval).
      * </p>
      * 
-     * @param vecSmplBlocks the entire (ordered) collection of sampling blocks withing this process
+     * @param vecBlocks the entire (ordered) collection of sampling blocks within this process
      * 
      * @return  the time domain over which this sample process has values
      */
-    private TimeInterval    computeTimeDomain(Vector<UniformSamplingBlock> vecSmplBlocks) {
-        UniformSamplingBlock    blkFirst = vecSmplBlocks.firstElement();
-        UniformSamplingBlock    blkLast = vecSmplBlocks.lastElement();
+    private TimeInterval    computeTimeDomain(Vector<UniformSamplingBlock> vecBlocks) {
+        UniformSamplingBlock    blkFirst = vecBlocks.firstElement();
+        UniformSamplingBlock    blkLast = vecBlocks.lastElement();
         
         Instant insStart = blkFirst.getStartInstant();
         Instant insStop = blkLast.getTimeDomain().end();
         
         return TimeInterval.from(insStart, insStop);
     }
+    
+    /**
+     * <p>
+     * Computes the total size of each time series.
+     * </p>
+     * <p>
+     * The total size of each time series within the sample process is assumed to be the same.
+     * The returned value is computed by summing the number of clock samples within each sampling
+     * block.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * It is quite possible that not every data source is represented in each component sampling
+     * block.  If the time series of a data source is missing within a given sampling block we
+     * represent its sample values there as <code>null</code> values.
+     * </p>
+     * 
+     * @param vecBlocks the collection of sampling blocks composing this sample process
+     * 
+     * @return  total size of each time series within the sample process
+     */
+    private int computeSampleCount(Vector<UniformSamplingBlock> vecBlocks) {
+        int cntSamples = vecBlocks
+                .stream()
+                .map(cqd -> cqd.getSampleCount())
+                .reduce(0, Integer::sum);
+        
+        return cntSamples;
+    }
+    
+    /**
+     * <p>
+     * Verifies the correct ordering of the sampling start times within the argument set.
+     * </p>
+     * <p>
+     * Extracts all starting times of the sampling clock in order to create the set
+     * { <i>t</i><sub>0</sub>, <i>t</i><sub>1</sub>, ..., <i>t</i><sub><i>N</i>-1</sub> } where
+     * <i>t<sub>n</sub></i> is the start time for <code>UniformSamplingBlock</code> instance 
+     * <i>n</i> and <i>N</i> is the size of the argument.   
+     * The ordered collection of start times is compared sequentially to check the following 
+     * conditions:
+     * <pre>
+     *   <i>t</i><sub>0</sub> < <i>t</i><sub>1</sub> < ... <  <i>t</i><sub><i>N</i>-1</sub>
+     * </pre>
+     * That is, we verify that the set 
+     * { <i>t</i><sub>0</sub>, <i>t</i><sub>1</sub>, ..., <i>t</i><sub><i>N</i>-1</sub> }
+     * forms a proper net.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This test MUST be run before <code>{@link #verifyTimeDomains(Vector)}</code>.</li>
+     * <li>Failure messages are written to the class logger if logging is enabled.</li>
+     * <li>The <code>ResultRecord</code> contains a message describing any failure.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param vecBlocks the constructed vector of <code>UniformSamplingBlock</code> objects for this process 
+     * 
+     * @return  <code>ResultRecord</code> containing result of test, with message if failure
+     */
+    private ResultRecord verifyStartTimes(Vector<UniformSamplingBlock> vecBlocks) {
+        
+        // Get the start times for each block in order, remove the first
+        List<Instant> lstStartTimes = vecBlocks.stream().sequential().map(usb -> usb.getStartInstant()).toList();
+        Instant insPrev = lstStartTimes.remove(0);
+        
+        // Check that all remaining start times are in order
+        int     indBlk = 0;
+        for (Instant insCurr : lstStartTimes) {
+            
+            // Compare the two instants
+            if (insPrev.compareTo(insCurr) >= 0) {
+                if (BOL_LOGGING)
+                    LOGGER.error("{}: Bad start time ordering at sample block {} with start time = {}", JavaRuntime.getCallerName(), Integer.toString(indBlk), insCurr);
+                
+                return ResultRecord.newFailure("Bad start time ordering for sample block " + Integer.toString(indBlk) + " with start time = " + insCurr);
+            }
+            
+            // Update state to next instant
+            indBlk++;
+            insPrev = insCurr;
+        }
+        
+        return ResultRecord.SUCCESS;
+    }
+    
+    /**
+     * <p>
+     * Verifies that sampling domains within the argument are disjoint.
+     * </p>
+     * <p>
+     * Extracts the set of all sampling time domain intervals
+     * { <i>I</i><sub>0</sub>, <i>I</i><sub>0</sub>, ..., <i>I</i><sub><i>N</i>-1</sub> } where
+     * <i>I<sub>n</sub></i> is the sampling time domain for <code>UniformSamplingBlock</code> 
+     * instance <i>n</i> and <i>N</i> is the size of the argument.  
+     * We assume closed intervals of the form 
+     * <i>I</i><sub><i>n</i></sub> = [<i>t</i><sub><i>n</i>,start</sub>, <i>t</i><sub><i>n</i>,end</sub>]
+     * where <i>t</i><sub><i>n</i>,start</sub> is the start time for <code>UniformSamplingBlock</code> instance <i>n</i>
+     * and <i>t</i><sub><i>n</i>,end</sub> is the stop time.
+     * </p>
+     * <p>  
+     * The ordered collection of time domain intervals is compared sequentially to check the 
+     * following conditions:
+     * <pre>
+     *   <i>I</i><sub>0</sub> &cap; <i>I</i><sub>1</sub> = &empty;
+     *   <i>I</i><sub>1</sub> &cap; <i>I</i><sub>2</sub> = &empty;
+     *   ...
+     *   <i>I</i><sub><i>N</i>-2</sub> &cap; <i>I</i><sub><i>N</i>-1</sub> = &empty;
+     *   
+     * </pre>
+     * That is, every <em>adjacent</em> sampling time domain is disjoint.
+     * This algorithm is accurate <em>only if</em> the argument set is correctly ordered
+     * by sampling start times. 
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The argument MUST have correct start time order for this algorithm to work.</li>
+     * <li>Failure messages are written to the class logger if logging is enabled.</li>
+     * <li>The <code>ResultRecord</code> contains a message describing any failure.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param vecBlocks the constructed vector of <code>UniformSamplingBlock</code> objects for this process 
+     * 
+     * @return  <code>ResultRecord</code> containing result of test, with message if failure
+     */
+    private ResultRecord verifyTimeDomains(Vector<UniformSamplingBlock> vecBlocks) {
+        
+        // Get the time domains for each block, remove the first
+        List<TimeInterval>  lstTimeDomains = vecBlocks.stream().sequential().map(usb -> usb.getTimeDomain()).toList();
+        TimeInterval        domPrev = lstTimeDomains.remove(0);
+        
+        // Check that remaining time domains are disjoint - this works if the argument is ordered correctly
+        int     indBlk = 0;
+        for (TimeInterval domCurr : lstTimeDomains) {
+            if (domPrev.hasIntersectionClosed(domCurr)) {
+                if (BOL_LOGGING)
+                    LOGGER.error("{}: Collision between time domains at sampling block {}, {} with {}.", JavaRuntime.getCallerName(), Integer.toString(indBlk), domCurr, domPrev);
+                
+                return ResultRecord.newFailure("Time domain collision at sample block " + Integer.toString(indBlk) + ": " + domCurr + " with " + domPrev);
+            }
+            
+            indBlk++;
+            domPrev = domCurr;
+        }
+        
+        return ResultRecord.SUCCESS;
+    }
+    
+    /**
+     * <p>
+     * Verifies that all data sources within the argument set produce data of the same type.
+     * </p>
+     * <p>
+     * Extracts pairs all pairs {(source name, source type)} from each instance of 
+     * <code>UniformSamplingBlock</code> within the argument collection.
+     * Each pair is then checked against the data types within (previously constructed) map 
+     * <code>{@link #mapSrcNmToType}</code>.  Any data sources that have a different
+     * type are recorded and contained within the returned <code>ResultRecord</code> object.
+     * </p>
+     * <h2>Concurrency</h2>
+     * <ul>
+     * <li>
+     * This method utilizes streaming parallelism for each <code>UniformSamplingBlock</code>
+     * if the argument size is greater than the pivot number <code>{@link #SZ_COLLECTION_PIVOT}</code>.
+     * </li>
+     * <br/>
+     * <li>
+     * This method ALWAYS applies concurrency while processing each data source within each
+     * <code>UniformSamplingBlock</code> instance.
+     * </li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The internal resource <code>{@link #mapSrcNmToType}</code> MUST be constructed before use.</li>
+     * <li>Set ordering here is not relevant, but does affect any failure message produced.</li>
+     * <li>Failure messages are written to the class logger if logging is enabled.</li>
+     * <li>The <code>ResultRecord</code> contains a message describing any failure.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param vecBlocks the constructed vector of <code>UniformSamplingBlock</code> objects for this process 
+     * 
+     * @return  <code>ResultRecord</code> containing result of test, with message if failure
+     */
+    private  ResultRecord verifySourceTypes(Vector<UniformSamplingBlock> vecBlocks) {
+        
+        // Local type used for intermediate results
+        record Pair(String name, DpSupportedType type) {};
+        
+        // Get list of sources with incorrect data types
+        List<Pair> lstBadSrcs;
+        
+        // Pivot concurrency on the size of container (always use concurrency within sampling blocks)
+        if (vecBlocks.size() > SamplingProcess.SZ_COLLECTION_PIVOT) {
+            
+            // Process vector serially, blocks concurrently 
+            lstBadSrcs = vecBlocks
+                    .stream()
+                    .<Pair>flatMap(usb -> usb
+                            .getSourceNames()
+                            .parallelStream()
+                            .<Pair>map(name -> new Pair(name, usb.getSourceType(name)) )
+                            )
+                    .filter(pair -> this.getSourceType(pair.name) != pair.type)
+                    .toList();
+            
+        } else {
+
+            // Process vector concurrently, blocks concurrently 
+            lstBadSrcs = vecBlocks
+                    .parallelStream()
+                    .<Pair>flatMap(usb -> usb
+                            .getSourceNames()
+                            .parallelStream()
+                            .<Pair>map(name -> new Pair(name, usb.getSourceType(name)) )
+                            )
+                    .filter(pair -> this.getSourceType(pair.name) != pair.type)
+                    .toList();
+            
+        }
+
+        // If the list is non-empty, there are inconsistent data types
+        if (!lstBadSrcs.isEmpty())
+            return ResultRecord.newFailure("Sampling blocks contained mixed-type data sources: " + lstBadSrcs);
+        
+        return ResultRecord.SUCCESS;
+    }
+    
+//    private Vector<Instant> computeTimestamps(Vector<UniformSamplingBlock> vecSmplBlocks) {
+//        int cntTms = vecSmplBlocks.stream().map(usb -> usb.getSampleCount()).reduce(0, Integer::sum);
+//    }
     
 //    private List<SamplingPair>  buildSamplingPairs(SortedSet<CorrelatedQueryData> setRefs) throws IllegalStateException {
 //        List<SamplingPair>  lstPairs = new ArrayList<>(setRefs.size());

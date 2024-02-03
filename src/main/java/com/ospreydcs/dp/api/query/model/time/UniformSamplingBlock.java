@@ -31,6 +31,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.ResultRecord;
 import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.api.query.model.data.SampledTimeSeries;
@@ -211,12 +213,13 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * 
      * @return  new <code>UniformSamplingBlock</code> instance populated with data from the argument
      * 
-     * @throws IllegalArgumentException the argument is corrupt: missing data column, empty data column, or duplicate data source names (see message)
+     * @throws MissingResourceException the argument is has empty data column(s)
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
      * @throws UnsupportedOperationException an unsupported data type was detected within the argument
      */
     public static UniformSamplingBlock  from(CorrelatedQueryData cqdSampleBlock) 
-            throws IllegalArgumentException, IllegalStateException, UnsupportedOperationException 
+            throws MissingResourceException, IllegalArgumentException, IllegalStateException, UnsupportedOperationException 
     {
         return new UniformSamplingBlock(cqdSampleBlock);
     }
@@ -238,20 +241,30 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      *
      * @param cqdSampleBlock    source data for the new instance
      * 
-     * @throws IllegalArgumentException the argument is corrupt: missing data column, empty data column, or duplicate data source names (see message)
+     * @throws MissingResourceException the argument is has empty data column(s)
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
      * @throws UnsupportedOperationException an unsupported data type was detected within the argument
      */
     public UniformSamplingBlock(CorrelatedQueryData cqdSampleBlock) 
-            throws IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
+            throws MissingResourceException, IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
         
-        // Check the argument for corruption - i.e., data source name uniqueness
-        ResultRecord    result = cqdSampleBlock.verifySourceUniqueness();
-        if (result.failed()) {
+        // Check the argument for data source name uniqueness
+        ResultRecord    rsltUnique = cqdSampleBlock.verifySourceUniqueness();
+        if (rsltUnique.failed()) {
             if (BOL_LOGGING)
-                LOGGER.error("{} correlated data block is corrupt: }{}", JavaRuntime.getCallerName(), result.getCause());
+                LOGGER.error("{} correlated data block has non-unique sources: {}", JavaRuntime.getCallerName(), rsltUnique.getMessage());
 
-            throw new IllegalArgumentException("Correlated data block is corrupt: " + result.getCause());
+            throw new IllegalArgumentException("Correlated data block has non-unique sources: " + rsltUnique.getMessage());
+        }
+        
+        // Check the argument for data source size consistency
+        ResultRecord    rsltSizes = cqdSampleBlock.verifySourceSizes();
+        if (rsltSizes.failed()) {
+            if (BOL_LOGGING)
+                LOGGER.error("{} correlated data block has columns with bad sizes: {}", JavaRuntime.getCallerName(), rsltSizes.getMessage());
+            
+            throw new IllegalArgumentException("Correlated data block has columns with bad sizes: " + rsltSizes.getMessage());
         }
         
         // Extract the relevant Protobuf message from the argument
@@ -263,7 +276,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
         this.vecTimestamps = this.clkParams.createTimestamps();
         
         // Get the set of data source names and create all the time-series data for this block
-        this.setSourceNames = cqdSampleBlock.getDataSourceNames();
+        this.setSourceNames = cqdSampleBlock.getSourceNames();
         this.mapSrcToSmpls = this.createTimeSeries(lstMsgDataCols);
     }
 
@@ -272,6 +285,39 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     // Attribute and Property Query
     //
     
+    
+    /**
+     * <p>
+     * Returns the number samples within each time series of the sampling block.
+     * </p>
+     * <p>
+     * Note that each time series within the sampling block must have the same size.  
+     * This condition was checked during construction.
+     * </p>
+     * 
+     * @return  the size of each time series within the sampling block
+     */
+    public final int getSampleCount() {
+        return this.vecTimestamps.size();
+    }
+    
+    /**
+     * <p>
+     * Returns the number of unique data sources within the sampling block.
+     * </p>
+     * <p>
+     * The sampling block must containing one and only one time series from each data source
+     * represented.  This condition was checked during construction.
+     * To obtain the collection of unique data source names use
+     * <code>{@link #getSourceNames()}</code>.
+     * </p>
+     * 
+     * @return  the number of data sources contributing to this sampling block
+     */
+    public final int getDataSourceCount() {
+        return this.setSourceNames.size();
+    }
+    
     /**
      * <p>
      * Returns the starting time instant of the sampling interval for this sampling block
@@ -279,6 +325,8 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * <p>
      * This is a convenience method where the returned value is taken from the 
      * uniform clock parameters.
+     * To obtain the full time domain of the sampling block use method
+     * <code>{@link #getTimeDomain()}</code>.
      * <p>
      * 
      * @return sampling interval start instant 
@@ -289,7 +337,11 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     
     /**
      * <p>
-     * Returns the time domain over which this clock is active.
+     * Returns the time domain over which samples were taken.
+     * </p>
+     * <p>
+     * Returns the smallest connected interval [<i>t</i><sub>0</sub>, <i>t</i><sub><i>N</i>-1</sub>]
+     * that contains all sample timestamps.
      * </p>
      * <p>
      * This is a convenience method where the returned value is taken from the 
@@ -370,10 +422,43 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      *  
      * @return  set of all data sources (by name) contributing time-series data to this block
      */
-    public final Set<String>  getDataSourceNames() {
+    public final Set<String>  getSourceNames() {
         return this.setSourceNames;
     }
     
+    /**
+     * <p>
+     * Returns the data type of the time series with the given name.
+     * </p>
+     * <p>
+     * This is a convenience method that first invokes <code>{@link #getTimeSeries(String)}</code>
+     * to obtain the time series then invokes <code>{@link SampledTimeSeries#getType()}</code> to
+     * obtain the data type of the time series.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>If the given data source is not represented within the current collection of time series
+     *    an exception is thrown.</li>
+     * <li>Use <code>{@link #getSourceNames()}</code> to obtain all data sources names in block.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param strSourceName data source unique name
+     * 
+     * @return  the data type of the given data source time series 
+     * 
+     * @throws NullPointerException the given data source was not contained in the current collection
+     * 
+     * @see #getTimeSeries(String)
+     * @see SampledTimeSeries#getType()
+     * @see DpSupportedType
+     */
+    public final DpSupportedType    getSourceType(String strSourceName) throws NullPointerException {
+        return this.mapSrcToSmpls.get(strSourceName).getType();
+    }
+
+
     /**
      * <p>
      * Returns the time-series data for the given data source (by name).
@@ -384,7 +469,10 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * </p>
      * <p>
      * <h2>NOTES:<h2>
-     * Do not modify the returned object, it is owned by this sampling block.
+     * <ul>
+     * <li>Do not modify the returned object, it is owned by this sampling block.</li>
+     * <li>Use <code>{@link #getSourceNames()}</code> to obtain all data sources names in block.</li>
+     * </ul>
      * </p>
      * 
      * @param strSourceName data source unique name
@@ -475,10 +563,46 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     public Vector<Instant>  createTimestamps() {
         return this.clkParams.createTimestamps();
     }
+
+    /**
+     * <p>
+     * Inserts an empty time series of given name and type into the sampling block.
+     * </p>
+     * <p> 
+     * An time series consisting of all <code>null</code> values is inserted into the current
+     * collection of time series.  This action may be required for "filling in" missing data
+     * sources when this <code>UniformSamplingBlock</code> is a component within a larger
+     * aggregation containing data sources not represented during construction.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * If the current collection of time series already has a entry for the given data source
+     * name, nothing is done and the method returns <code>false</code>.
+     * </p>
+     * 
+     * @param strSourceName name of the "phantom" data source to be added to time series collection
+     * @param enmType       data type of the "phantom" data source to be added
+     * 
+     * @return  <code>true</code> if the time series collection was modified,
+     *          <code>false</code> if the time series collection already has a data source with given name
+     */
+    public boolean  insertEmptyTimeSeries(String strSourceName, DpSupportedType enmType) {
+        
+        // Check if data source name is already present
+        if (this.setSourceNames.contains(strSourceName))
+            return false;
+        
+        SampledTimeSeries   stsEmpty = SampledTimeSeries.nullSeries(strSourceName, enmType, this.getSampleCount());
+        this.mapSrcToSmpls.put(strSourceName, stsEmpty);
+        this.setSourceNames.add(strSourceName);
+        
+        return true;
+    }
     
     
     //
     // Comparable<UniformSamplingBlock> Interface
+    //
     
     /**
      * <p>
@@ -540,12 +664,12 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * 
      * @return  map containing a time series for each data column in the argument, keyed by source name
      * 
-     * @throws IllegalArgumentException      a data column message contained no data
-     * @throws IllegalStateException         the list contained duplicate data source names
+     * @throws MissingResourceException      a data column message contained no data
+     * @throws IllegalStateException         the list contained duplicate data source names, or non-uniform data types
      * @throws UnsupportedOperationException an unsupported data type was detected within the argument
      */
     private Map<String, SampledTimeSeries> createTimeSeries(List<DataColumn> lstMsgDataCols) 
-            throws IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
+            throws MissingResourceException, IllegalStateException, UnsupportedOperationException {
 
         // Time series are created, one for each unique data source name
         Map<String, SampledTimeSeries>  mapSrcToCols;
@@ -556,7 +680,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
                     .collect(
                             Collectors.toConcurrentMap(     // throws IllegalStateException for duplicate keys
                                     DataColumn::getName, 
-                                    SampledTimeSeries::from // throws IllegalArgumentExcepiont, UnsupportedOperationException
+                                    SampledTimeSeries::from // throws MissingResourceException, IllegalStateExcepiont, UnsupportedOperationException
                                     )
                             );
             
@@ -565,7 +689,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
                     .collect(
                             Collectors.toMap(               // throws IllegalStateException for duplicate keys
                                     DataColumn::getName, 
-                                    SampledTimeSeries::from // throws IllegalArgumentExcepiont, UnsupportedOperationException
+                                    SampledTimeSeries::from // throws MissingResourceExcepiont, UnsupportedOperationException
                                     )
                             );
         }

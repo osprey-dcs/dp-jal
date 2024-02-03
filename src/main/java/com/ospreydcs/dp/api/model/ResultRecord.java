@@ -71,13 +71,31 @@ package com.ospreydcs.dp.api.model;
  * </p>
  * 
  * @param success       whether or not condition/verification check succeeded
- * @param strCause      string message containing cause of success/failure
+ * @param message      string message containing cause of success/failure
  * 
  * @author Christopher K. Allen
  * @since Jan 31, 2024
  *
  */
-public record ResultRecord(boolean success, String strCause) {
+public record ResultRecord(boolean success, String message, Throwable cause) {
+    
+    //
+    // Private Resources
+    //
+    
+    /** The empty message */
+    private static final String STR_EMPTY = "";
+    
+    /** The empty cause */
+    private static final Throwable THR_EMPTY = new Throwable();
+    
+    
+    //
+    // Public Resources
+    //
+    
+    /** The universal "Success" record - there need only be one. */
+    public static final ResultRecord SUCCESS = new ResultRecord(true);
     
     
     //
@@ -88,8 +106,15 @@ public record ResultRecord(boolean success, String strCause) {
      * <p>
      * Creates a new <em>success</em> <code>ResultRecord</code> instance (cause string is empty).
      * </p>
+     * <p>
+     * <h2>NOTE:</h2>
+     * Use of this method should be limited, in most cases the static instance 
+     * <code>{@link #SUCCESS}</code> can be used.
+     * </p>
      * 
      * @return  new <code>ResultRecord(true)</code> instance
+     * 
+     * @see #SUCCESS
      */
     public static ResultRecord newSuccess() {
         return new ResultRecord(true);
@@ -97,16 +122,31 @@ public record ResultRecord(boolean success, String strCause) {
     
     /**
      * <p>
-     * Creates a new <em>failed</em> <code>ResultRecord</code> instance with the given cause.
+     * Creates a new <em>failed</em> <code>ResultRecord</code> instance with the given message.
      * </p>
      * 
-     * @param strCause  cause of the failure
+     * @param strMsg description of the failure
      * 
-     * @return  new <code>ResultRecord(false, strCause)</code> instance
+     * @return  new <code>ResultRecord(false, strMsg)</code> instance
      */
-    public static ResultRecord  newFailure(String strCause) {
-        return new ResultRecord(false, strCause);
+    public static ResultRecord  newFailure(String strMsg) {
+        return new ResultRecord(false, strMsg, THR_EMPTY);
     }
+    
+    /**
+     * <p>
+     * Creates a new <em>failed</em> <code>ResultRecord</code> instance with the given message and cause.
+     * </p>
+     * 
+     * @param strMsg    description of the failure
+     * @param thrCause  the exception originating the failure
+     *  
+     * @return  new <code>ResultRecord(false, strMsg, thrCause)</code> instance
+     */
+    public static ResultRecord  newFailure(String strMsg, Throwable thrCause) {
+        return new ResultRecord(false, strMsg, thrCause);
+    }
+    
     
     // 
     // Constructors
@@ -117,13 +157,28 @@ public record ResultRecord(boolean success, String strCause) {
      * Non-canonical constructor for <code>ResultRecord</code>.
      * </p>
      * <p>
-     * Typically used for successful result, no cause is provided.
+     * Typically used for successful result, no message or cause is provided.
      * </p>
      *
-     * @param Success   result of condition/verification check
+     * @param bolSuccess   result of condition/verification check
      */
-    public ResultRecord(boolean Success) {
-        this(Success, "");
+    public ResultRecord(boolean bolSuccess) {
+        this(bolSuccess, STR_EMPTY, THR_EMPTY);
+    }
+    
+    /**
+     * <p>
+     * Constructs a new instance of <code>ResultRecord</code>.
+     * </p>
+     * <p>
+     * Typically used for failure result, includes message (no cause).
+     * </p>
+     *
+     * @param bolSuccess    result of condition/verification check
+     * @param strMsg        description of success/failure
+     */
+    public ResultRecord(boolean bolSuccess, String strMsg) {
+        this(bolSuccess, strMsg, THR_EMPTY);
     }
 
     //
@@ -149,15 +204,31 @@ public record ResultRecord(boolean success, String strCause) {
     }
 
     /**
-     * Returns the cause message for the condition/verification check.
      * <p>
-     * Intended availability for failure situations.
+     * Returns the description message for the condition/verification check.
+     * </p>
+     * <p>
+     * Intended for failure situations.
+     * </p>
      * 
-     * @return the cause of the success or failure
+     * @return message associated with success or failure
      */
-    public final String getCause() {
-        return this.strCause;
+    public final String getMessage() {
+        return this.message;
     }
 
+    /**
+     * <p>
+     * Returns the originating exception (i.e., for a failure).
+     * </p>
+     * <p>
+     * Intended for failure situations.
+     * </p>
+     * 
+     * @return  the exception causing the failure
+     */
+    public final Throwable getCause() {
+        return this.cause;
+    }
     
 }
