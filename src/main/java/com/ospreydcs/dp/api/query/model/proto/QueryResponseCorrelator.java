@@ -92,8 +92,11 @@ public class QueryResponseCorrelator {
     public static final TimeUnit   TU_TIMEOUT = CFG_QUERY.timeout.unit;
     
     
+    /** Concurrency active flag */
+    public static final boolean    BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
+    
     /** Parallelism tuning parameter - pivot to parallel processing when target set size hits this limit */
-    public static final int        SZ_TARGET_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
     
     //
@@ -219,9 +222,10 @@ public class QueryResponseCorrelator {
      * It synchronizing on the <code>{@link #objLock}</code> lock.
      * </p>
      * <p>
-     * <h2>NOTES:</h2>
-     * This method pivots from serial processing to parallel processing when the target set size
-     * is greater than {@link #SZ_TARGET_PIVOT} = {@value #SZ_TARGET_PIVOT}.
+     * <h2>Concurrency</h2>
+     * If concurrency is active (i.e., <code>{@link #BOL_CONCONCURRENCY}</code> = <code>true</code>),
+     * this method pivots from serial processing to parallel processing when the target set size
+     * is greater than {@link #SZ_CONCURRENCY_PIVOT} = {@value #SZ_CONCURRENCY_PIVOT}.
      * </p>
      * 
      * @param msgBucket Query Service Protobuf message containing a query result data unit
@@ -235,14 +239,17 @@ public class QueryResponseCorrelator {
             
             // Attempt to add the message data into the current set of sampling interval references
             
-            if (this.setTargetRefs.size() < SZ_TARGET_PIVOT)
+            if (BOL_CONCURRENCY && (this.setTargetRefs.size() > SZ_CONCURRENCY_PIVOT)) {
                 bolSuccess = this.setTargetRefs
-                    .stream()
-                    .anyMatch( i -> i.insertBucketData(msgBucket) );
-            else
+                        .parallelStream()
+                        .anyMatch( i -> i.insertBucketData(msgBucket) );
+                
+            } else {
                 bolSuccess = this.setTargetRefs
-                .parallelStream()
-                .anyMatch( i -> i.insertBucketData(msgBucket) );
+                        .stream()
+                        .anyMatch( i -> i.insertBucketData(msgBucket) );
+
+            }
 
             // If the message data was not added we must create a new reference and add it to the current target set
             if (!bolSuccess) {
@@ -264,7 +271,7 @@ public class QueryResponseCorrelator {
      * </p>
      * <p>
      * The data processing technique pivots upon the size of the current target set.
-     * For target set size less than <code>{@link #SZ_TARGET_PIVOT}</code> data buckets are processed
+     * For target set size less than <code>{@link #SZ_CONCURRENCY_PIVOT}</code> data buckets are processed
      * serially, as frequent additions to the target reference set are expected.  
      * For larger target sets the processing technique pivots to a parallel method.  An attempt is made to 
      * insert each data bucket within the argument concurrently into the target set.  
@@ -292,8 +299,8 @@ public class QueryResponseCorrelator {
         // This operation must be atomic - synchronized for thread safety
         synchronized (this.objLock) {
             
-            // If the target set is small - insert all data at once
-            if (this.setTargetRefs.size() < SZ_TARGET_PIVOT) {
+            // If the target set is small or concurrency is inactive - insert all data at once
+            if (!BOL_CONCURRENCY || (this.setTargetRefs.size() < SZ_CONCURRENCY_PIVOT)) {
                 this.insertDataSerial(msgData);
 
                 return;
@@ -433,6 +440,10 @@ public class QueryResponseCorrelator {
      * identified and returned in the set of <code>BucketData</code> messages that were not 
      * successfully inserted into the target reference set. 
      * </p>
+     * <p>
+     * <h2>Concurrency</h2>
+     * This method always invokes concurrency.  It manages a thread pool of independent tasks
+     * as described above.
      * <p>
      * <h2>WARNINGS:</h2>
      * <ul>

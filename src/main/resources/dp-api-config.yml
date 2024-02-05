@@ -3,16 +3,28 @@
 # File:    dp-api-config.yml
 # Type:    YAML
 #
+# Author: Christopher K. Allen
+# Since: December 21, 2023
+#
 # Default configuration parameters for the Data Platform API library common resources.
 #
 # This parameter set should be modified according to the Data Platform site installation
 # and the platform where the API libraies are installed.
 #
-# Author: Christopher K. Allen
-# Since: December 21, 2023
 #
+# General NOTES:
 #
-# NOTES:
+# - Most parameters can be left to their default values which are optimal for most platforms
+#   and installation.
+#
+# - The 'connections:' section for all supported services WILL require modification for site 
+#   installation.
+#   Specifically, the 'channel: host:' parameters for each supported service connection must be
+#   directed to the service address (URL) and port number of the server.
+#        channel:
+#           host:
+#             url: Enter URL of the server provided desired service (e.g., Query, Ingestion, etc.)
+#             port: Enter port number of server where service is located
 #
 # - All configuration parameters can be overridden using system variables.  
 #   See the adjacent parameter comments for system variable names.
@@ -25,9 +37,10 @@
 #   1. System environment variables override this configuration first.
 #   2. System properties variables then override.
 #
-# - In the current implementation service override environment variables affect ALL SERVICES.
 #
-# - Use of compression slows overall transission significantly
+# gRPC NOTES:
+#
+# - Use of gRPC data compression typically slows overall transission significantly
 #
 # - gRPC maximum message size must be power of 2
 #    2^26 = 67,108,864
@@ -43,12 +56,21 @@
 #
 # - Looks like we want to keep gRPC maximum message size <= 2^24 = 16,777,216
 #
+#
 
 archive:    # Data Platform data archive properties
    inception: 2023-09-01T00:00:00.0Z # ealiest archive timestamp      : DP_API_ARCHIVE_INCEPTION
    
 query:      # Data Platform Query Service operations
    pageSize: 100      # UNUSED       # default bucket count per page  : DP_API_QUERY_PAGE_SIZE
+   
+   dataRequest:   # Parameters for time-series data requests
+      composite:        # data request query decomposition (for multi-threading)
+         active: true                # use query decomposition  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_ACTIVE
+         maxSources: 1000            # max data source count    : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_SOURCES
+         maxDuration: 1000           # max time range duration  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
+         unitDuration: MILLISECONDS  # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_UNIT_DURATION
+        
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency           : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE

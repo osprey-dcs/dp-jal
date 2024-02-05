@@ -74,4 +74,7 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
     @ACfgOverride.Struct(pathelem="CONCURRENCY")
     public DpConcurrencyConfig  concurrency;
     
+    /** Default parameters for Query Service data request queries */
+    @ACfgOverride.Struct(pathelem="DATA_REQUEST")
+    public DpDataRequestConfig  dataRequest;
 }

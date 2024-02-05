@@ -148,11 +148,15 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     // Class Constants
     //
     
-    /** Is logging active */
-    public static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Logging active flag */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
     
-    /** Parallelism tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
-    public static final int        SZ_MSGCOLS_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    
+    /** Concurrency active flag */
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
+    
+    /** Concurrency tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
+    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
 //  /** Parallelism timeout limit  - for parallel thread pool tasks */
 //  public static final long       LNG_TIMEOUT = CFG_QUERY.timeout.limit;
@@ -655,6 +659,12 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * sources within the argument are all unique, otherwise an exception is thrown.
      * </p>
      * <p>
+     * <h2>Concurrency</h2>
+     * If concurrency is enabled (i.e., <code>{@link #BOL_CONCURRENCY}</code> = <code>true</code>),
+     * this method utilizes streaming parallelism if the argument size is greater than the
+     * pivot number <code>{@link #SZ_CONCURRENCY_PIVOT}</code>.
+     * </p>
+     * <p>
      * <h2>NOTES:</h2>
      * The argument should have already been checked for duplicate data source names using
      * <code>{@link CorrelatedQueryData#verifySourceUniqueness()}</code>.
@@ -675,8 +685,9 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
         Map<String, SampledTimeSeries>  mapSrcToCols;
 
         // Create processing stream based upon number of data columns
-        if (lstMsgDataCols.size() > SZ_MSGCOLS_PIVOT) {
-            mapSrcToCols = lstMsgDataCols.parallelStream()
+        if (BOL_CONCURRENCY && (lstMsgDataCols.size() > SZ_CONCURRENCY_PIVOT)) {
+            mapSrcToCols = lstMsgDataCols
+                    .parallelStream()
                     .collect(
                             Collectors.toConcurrentMap(     // throws IllegalStateException for duplicate keys
                                     DataColumn::getName, 
@@ -685,7 +696,8 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
                             );
             
         } else {
-            mapSrcToCols = lstMsgDataCols.stream()
+            mapSrcToCols = lstMsgDataCols
+                    .stream()
                     .collect(
                             Collectors.toMap(               // throws IllegalStateException for duplicate keys
                                     DataColumn::getName, 

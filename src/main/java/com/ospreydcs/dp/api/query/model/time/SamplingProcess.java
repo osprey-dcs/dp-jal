@@ -124,11 +124,15 @@ public class SamplingProcess {
     // Class Constants
     //
     
-    /** Is logging active */
+    /** Logging active flag */
     public static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
     
+    
+    /** Concurrency active flag */
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
+    
     /** Parallelism tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
-    public static final int        SZ_COLLECTION_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
 
     //
@@ -605,8 +609,9 @@ public class SamplingProcess {
      * </p>
      * <p>
      * <h2>Concurrency</h2>
-     * This method utilizes streaming parallelism if the argument size is greater than the
-     * pivot number <code>{@link #SZ_COLLECTION_PIVOT}</code>.
+     * If concurrency is enabled (i.e., <code>{@link #BOL_CONCURRENCY}</code> = <code>true</code>),
+     * this method utilizes streaming parallelism if the argument size is greater than the
+     * pivot number <code>{@link #SZ_CONCURRENCY_PIVOT}</code>.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
@@ -669,7 +674,7 @@ public class SamplingProcess {
         // Create the sample blocks, pivoting to concurrency by container size
         Vector<UniformSamplingBlock>    vecSmplBlocks = new Vector<>(setQueryData.size());
         
-        if (setQueryData.size() > SZ_COLLECTION_PIVOT) {
+        if (BOL_CONCURRENCY && (setQueryData.size() > SZ_CONCURRENCY_PIVOT) ) {
             // invoke concurrency
             Vector<CorrelatedQueryData> vecQueryData = new Vector<>(setQueryData);
             
@@ -738,8 +743,9 @@ public class SamplingProcess {
      * within the process, and to verify that all sources have uniform data type. 
      * <p>
      * <h2>Concurrency</h2>
-     * This method utilizes streaming parallelism if the argument size is greater than the
-     * pivot number <code>{@link #SZ_COLLECTION_PIVOT}</code>.
+     * If concurrency is enabled (i.e., <code>{@link #BOL_CONCURRENCY}</code> = <code>true</code>),
+     * this method utilizes streaming parallelism if the argument size is greater than the
+     * pivot number <code>{@link #SZ_CONCURRENCY_PIVOT}</code>.
      * </p>
      *  
      * @param vecBlocks the entire collection of sampling blocks within this process
@@ -763,32 +769,32 @@ public class SamplingProcess {
         // Create the {(source name, source type)} map, pivoting to concurrency on container size  
         Map<String, DpSupportedType>    mapSrcToType; // = new HashMap<>();
         
-        if (vecBlocks.size() < SZ_COLLECTION_PIVOT) {
-            // process serially
-            mapSrcToType = vecBlocks
-                    .stream()
-                    .<Pair>flatMap(usb -> usb
-                            .getSourceNames()
-                            .stream()
-                            .<Pair>map(name -> new Pair(name, usb.getSourceType(name)))
-                            )
-                    .collect(
-                            Collectors.toMap(pair -> pair.name, pair->pair.type)
-                            );
-
-        } else {
+        if (BOL_CONCURRENCY && (vecBlocks.size() > SZ_CONCURRENCY_PIVOT) ) {
             // invoke concurrency in UniformSamplingBlock instance processing
             mapSrcToType = vecBlocks
                     .parallelStream()
                     .<Pair>flatMap(usb -> usb
-                            .getSourceNames()
-                            .stream()
-                            .map(name -> new Pair(name, usb.getSourceType(name)))
-                            )
+                                            .getSourceNames()
+                                            .stream()
+                                            .map( name -> new Pair(name, usb.getSourceType(name)) )
+                                )
                     .collect(
                             Collectors.toConcurrentMap(pair -> pair.name, pair -> pair.type)
                             );
             
+        } else {
+            // process serially
+            mapSrcToType = vecBlocks
+                    .stream()
+                    .<Pair>flatMap(usb -> usb
+                                            .getSourceNames()
+                                            .stream()
+                                            .<Pair>map(name -> new Pair(name, usb.getSourceType(name)))
+                                )
+                    .collect(
+                            Collectors.toMap(pair -> pair.name, pair->pair.type)
+                            );
+
         }
         
         // Return the populated map
@@ -984,13 +990,21 @@ public class SamplingProcess {
      * <h2>Concurrency</h2>
      * <ul>
      * <li>
-     * This method utilizes streaming parallelism for each <code>UniformSamplingBlock</code>
-     * if the argument size is greater than the pivot number <code>{@link #SZ_COLLECTION_PIVOT}</code>.
+     * If concurrency is enabled (i.e., <code>{@link #BOL_CONCURRENCY}</code> = <code>true</code>),
+     * this method utilizes forked streaming parallelism for each 
+     * <code>UniformSamplingBlock</code> if the argument size is greater 
+     * than the pivot number <code>{@link #SZ_CONCURRENCY_PIVOT}</code>.
      * </li>
      * <br/>
      * <li>
-     * This method ALWAYS applies concurrency while processing each data source within each
+     * If concurrency is enabled (i.e., <code>{@link #BOL_CONCURRENCY}</code> = <code>true</code>),
+     * this method ALWAYS applies concurrency while processing each data source within each
      * <code>UniformSamplingBlock</code> instance.
+     * </li>
+     * <br/>
+     * <li>
+     * If concurrency is disabled (i.e., <code>{@link #BOL_CONCURRENCY}</code> = <code>false</code>)
+     * all processing is done serially (using Java streams).
      * </li>
      * </ul>
      * </p>
@@ -1017,8 +1031,21 @@ public class SamplingProcess {
         List<Pair> lstBadSrcs;
         
         // Pivot concurrency on the size of container (always use concurrency within sampling blocks)
-        if (vecBlocks.size() > SamplingProcess.SZ_COLLECTION_PIVOT) {
+        if (BOL_CONCURRENCY && (vecBlocks.size() > SamplingProcess.SZ_CONCURRENCY_PIVOT) ) {
             
+            // Process vector concurrently, blocks concurrently 
+            lstBadSrcs = vecBlocks
+                    .parallelStream()
+                    .<Pair>flatMap(usb -> usb
+                            .getSourceNames()
+                            .parallelStream()
+                            .<Pair>map(name -> new Pair(name, usb.getSourceType(name)) )
+                            )
+                    .filter(pair -> this.getSourceType(pair.name) != pair.type)
+                    .toList();
+            
+        } else if (BOL_CONCURRENCY) {
+
             // Process vector serially, blocks concurrently 
             lstBadSrcs = vecBlocks
                     .stream()
@@ -1030,14 +1057,15 @@ public class SamplingProcess {
                     .filter(pair -> this.getSourceType(pair.name) != pair.type)
                     .toList();
             
+            
         } else {
-
-            // Process vector concurrently, blocks concurrently 
+            
+            // Process everything serially
             lstBadSrcs = vecBlocks
-                    .parallelStream()
+                    .stream()
                     .<Pair>flatMap(usb -> usb
                             .getSourceNames()
-                            .parallelStream()
+                            .stream()
                             .<Pair>map(name -> new Pair(name, usb.getSourceType(name)) )
                             )
                     .filter(pair -> this.getSourceType(pair.name) != pair.type)
