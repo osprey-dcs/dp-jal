@@ -30,6 +30,7 @@ package com.ospreydcs.dp.api.query.model.proto;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -38,6 +39,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import javax.naming.CannotProceedException;
+import javax.naming.OperationNotSupportedException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,6 +49,8 @@ import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.common.RejectDetails;
+import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
@@ -262,14 +268,20 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
+     * Inserts a Query Service <code>QueryData</code> message obtained from a 
+     * <code>QueryResponse</code> message, without error checking.
+     * </p>
+     * <p>
      * Inserts all data columns within the <code>QueryData</code> message into the current target set of 
-     * sampling interval references, creating new references if needed.
+     * correlated data references, creating new references if needed.  No error checking is
+     * enforced.
      * </p>
      * <p>
      * Once this method returns all <code>DataBucket</code> messages within the argument are processed
      * and its data column is associated with some sampling interval reference within the target set.
      * </p>
      * <p>
+     * <h2>Concurrency</h2>
      * The data processing technique pivots upon the size of the current target set.
      * For target set size less than <code>{@link #SZ_CONCURRENCY_PIVOT}</code> data buckets are processed
      * serially, as frequent additions to the target reference set are expected.  
@@ -278,10 +290,16 @@ public class QueryResponseCorrelator {
      * (The probability of insertion is higher since the target set is large.) 
      * Then a new reference set is created for the collection of data buckets that failed insertion.
      * The new reference set is inserted into the target set.
-     * <p>
+     * </p>
      * <p>
      * This is an atomic operation potentially modifying the target set. 
-     * It synchronizes on the <code>{@link #objLock}</code> lock.
+     * It synchronizes on the <code>{@link #objLock}</code> lock to maintain thread
+     * safety.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This is the preferred method of data processing.  It processes all data within a 
+     * <code>QueryResponse.QueryReport.QueryData</code> message without error checking.
      * </p>
      *  
      * @param msgData   Query Service response data message
@@ -312,6 +330,85 @@ public class QueryResponseCorrelator {
             this.setTargetRefs.addAll(setNewTargets);
 
         }
+    }
+    
+    /**
+     * <p>
+     * Inserts the data from the given <code>QueryReport</code> message into the correlated data set,
+     * performing response error checking.
+     * </p>
+     * <p>
+     * The method extracts the <code>QueryData</code> message from the argument then defers 
+     * processing to 
+     * <code>{@link #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData)}</code>.
+     * The argument is first checked for a rejected request by the Query Service and throws an
+     * exception if so.  The argument data is then extracted and passed to the 
+     * <code>insertQueryData()</code> method for data processing.
+     * </p>
+     * 
+     * @param msgReport the <code>QueryReport</code> message within a <code>QueryResponse</code>
+     * 
+     * @throws CannotProceedException   the argument contained a query response error
+     * 
+     * @see #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData)
+     */
+    public void insertQueryReport(QueryResponse.QueryReport msgReport) throws CannotProceedException {
+        
+        // Check for response errors
+        if (msgReport.hasQueryStatus()) {
+            QueryResponse.QueryReport.QueryStatus msgStatus = msgReport.getQueryStatus();
+            String strStatusMsg = msgStatus.getStatusMessage();
+            QueryResponse.QueryReport.QueryStatus.QueryStatusType enmStatus = msgStatus.getQueryStatusType();
+            
+            if (isLogging()) 
+                LOGGER.error("{}: Query Service response reported error with status={}, message={}", JavaRuntime.getCallerName(), enmStatus, strStatusMsg);
+            
+            throw new CannotProceedException("Query Service response reported error with status=" + enmStatus + " and message=" + strStatusMsg);
+        }
+        
+        // Insert the query response data
+        QueryResponse.QueryReport.QueryData msgData = msgReport.getQueryData();
+        
+        this.insertQueryData(msgData);
+    }
+    /**
+     * <p>
+     * Inserts all data from the given <code>QueryResponse</code> into the correlated data set,
+     * performing all error checking.
+     * </p>
+     * <p>
+     * The method extracts the <code>QueryData</code> message from the argument then defers 
+     * further processing to 
+     * <code>{@link #insertQueryReport(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport)}</code>.
+     * The argument is first checked for a rejected request by the Query Service and throws an
+     * exception if so.  It then extracts the <code>QueryResport</code> message and passes it
+     * to the <code>insertQueryReport</code> method. 
+     * </p>
+     * 
+     * @param msgRsp    the Query Service query response raw response message
+     * 
+     * @throws OperationNotSupportedException   the query request was rejected by the Query Service
+     * @throws CannotProceedException           the argument contained a query response error
+     * 
+     * @see #insertQueryReport(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport)
+     */
+    public void insertQueryResponse(QueryResponse msgRsp) throws OperationNotSupportedException, CannotProceedException {
+     
+        // Check for rejected request
+        if (msgRsp.hasQueryReject()) {
+            RejectDetails msgReject = msgRsp.getQueryReject();
+            String strRejectMsg = msgReject.getMessage();
+            
+            if (isLogging()) 
+                LOGGER.error("{}: Query Service reported request rejection with message {}", JavaRuntime.getCallerName(), strRejectMsg);
+
+            throw new OperationNotSupportedException("Query Service reported request rejection: " + strRejectMsg);
+        }
+        
+        // Get the query report pass it for further processing
+        QueryResponse.QueryReport   msgReport = msgRsp.getQueryReport();
+
+        this.insertQueryReport(msgReport);
     }
 
     

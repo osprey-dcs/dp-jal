@@ -12,7 +12,7 @@
 # and the platform where the API libraies are installed.
 #
 #
-# General NOTES:
+# GENERAL NOTES:
 #
 # - Most parameters can be left to their default values which are optimal for most platforms
 #   and installation.
@@ -26,16 +26,30 @@
 #             url: Enter URL of the server provided desired service (e.g., Query, Ingestion, etc.)
 #             port: Enter port number of server where service is located
 #
+# - Some API components have explicit event logging available.  
+#      - Event logging can be activated by setting the 'active:' property to "true".
+#
+#      - Event logging configuration is specified in the companion resource file 'log4j2.xml'
+#        and follows the Apache Log4J format for XML.
+#        (see https://logging.apache.org/log4j/2.x/manual/configuration.html)
+#
+#      - Note that event logging can create a performance overhead and, thus, should typically
+#        only be used for diagnostics.
+#
 # - All configuration parameters can be overridden using system variables.  
 #   See the adjacent parameter comments for system variable names.
 #
-# - System property variables are taken from the 'java' command-line arguments line using
-#   the '-D[VARIABLE_NAME]' option where VARIABLE_NAME is the system variable name.
-#     java -jar -D[VARIABLE] DP-SERVICE_NAME_JAR
+#    - In the current DP API configuration mechanism, overrides by system variables are as follows:
+#      1. System environment variables overrides the configuration first.
+#      2. System properties variables then overrides the configuration parameters.
 #
-# - In the current DP API configuration mechanism overrides by system variables are as follows:
-#   1. System environment variables override this configuration first.
-#   2. System properties variables then override.
+#    - System environment variables are set using  standard commands of the host platform.
+#      For examle, the 'export VARIABLE_NAME=value' command for Unix, or using the 'export'
+#      command within the '.zprofile' file when using the Z shell.
+#
+#    - System property variables are taken from the 'java' command-line arguments line using
+#      the '-D[VARIABLE_NAME]' option where VARIABLE_NAME is the system variable name.
+#        java -jar -D[VARIABLE] DP-SERVICE_NAME_JAR
 #
 #
 # gRPC NOTES:
@@ -70,7 +84,6 @@ query:      # Data Platform Query Service operations
          maxSources: 1000            # max data source count    : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_SOURCES
          maxDuration: 1000           # max time range duration  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
          unitDuration: MILLISECONDS  # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_UNIT_DURATION
-        
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency           : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
