@@ -48,9 +48,7 @@ import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
 
     /** Default constructor required for base structure class */
-    public DpQueryConfig() {
-        super(DpQueryConfig.class);
-    }
+    public DpQueryConfig() { super(DpQueryConfig.class); }
 
 
     //
@@ -60,7 +58,15 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
     /** Default bucket count per page when using cursor requests */
     @AUnavailable(status=STATUS.UNDER_REVIEW)
     @ACfgOverride.Field(name="PAGE_SIZE")
-    public Integer  pageSize;
+    public Integer              pageSize;
+    
+    /** Default parameters for Query Service time-series data requests and responses */
+    @ACfgOverride.Struct(pathelem="DATA")
+    public TimeSeriesDataConfig data;
+    
+    /** Default concurrency parameters for Query Service operations */
+    @ACfgOverride.Struct(pathelem="CONCURRENCY")
+    public DpConcurrencyConfig  concurrency;
     
     /** Default timeout parameters for Query Service operations */
     @ACfgOverride.Struct(pathelem="TIMEOUT")
@@ -70,11 +76,27 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
     @ACfgOverride.Struct(pathelem="LOGGING")
     public DpLoggingConfig      logging;
     
-    /** Default concurrency parameters for Query Service operations */
-    @ACfgOverride.Struct(pathelem="CONCURRENCY")
-    public DpConcurrencyConfig  concurrency;
     
-    /** Default parameters for Query Service data request queries */
-    @ACfgOverride.Struct(pathelem="DATA_REQUEST")
-    public DpDataRequestConfig  dataRequest;
+    /**
+     * Structure class defining default configuration parameters for time-series data requests and responses
+     */
+    @ACfgOverride.Root(root="DP_API_QUERY_DATA")
+    public static class TimeSeriesDataConfig extends CfgStructure<TimeSeriesDataConfig> {
+        
+        /** Default constructor required for base structure class */
+        public TimeSeriesDataConfig() { super(TimeSeriesDataConfig.class); };
+        
+        
+        //
+        // Configuration Fields
+        //
+        
+        /** Default parameters for Query Service data request queries */
+        @ACfgOverride.Struct(pathelem="REQUEST")
+        public DpDataRequestConfig      request;
+        
+        /** Default parameters for Query Service data request responses */
+        @ACfgOverride.Struct(pathelem="RESPONSE")
+        public DpDataResponseConfig     response;
+    }
 }

@@ -34,20 +34,18 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
 
 /**
  * <p>
- * Structure class containing default parameters for Data Platform Query Service data requests.
+ * Structure class containing default parameters for Data Platform Query Service time-series data requests.
  * </p>
  * 
  * @author Christopher K. Allen
  * @since Feb 5, 2024
  *
  */
-@ACfgOverride.Root(root="DP_API_QUERY_DATA")
+@ACfgOverride.Root(root="DP_API_QUERY_DATA_REQUEST")
 public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
 
     /** Default constructor required for base structure class */
-    public DpDataRequestConfig() {
-        super(DpDataRequestConfig.class);
-    }
+    public DpDataRequestConfig() { super(DpDataRequestConfig.class); }
 
     
     //
@@ -56,16 +54,16 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
     
     /** Composite data query parameters */
     @ACfgOverride.Struct(pathelem="COMPOSITE")
-    public CompositeQuery       composite;
+    public CompositeQueryConfig       composite;
     
 
     /**
-     *  Default configuration parameters for composite queries. 
+     *  Structure class defining default configuration parameters for composite queries. 
      */
-    public static class CompositeQuery extends CfgStructure<CompositeQuery> {
+    public static class CompositeQueryConfig extends CfgStructure<CompositeQueryConfig> {
         
         /** Default constructor required for base structure class */
-        public CompositeQuery() { super(CompositeQuery.class);  }
+        public CompositeQueryConfig() { super(CompositeQueryConfig.class);  }
 
         
         //

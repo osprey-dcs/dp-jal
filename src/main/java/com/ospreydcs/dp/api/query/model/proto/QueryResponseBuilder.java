@@ -27,8 +27,10 @@
  */
 package com.ospreydcs.dp.api.query.model.proto;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
@@ -37,8 +39,10 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.api.query.model.time.SamplingProcess;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
+import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
  *
@@ -70,11 +74,24 @@ public class QueryResponseBuilder {
     public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
     
     
-    /** Is concurrency active? */
+    /** Is response processing concurrency active? */
     public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
     
-    /** Number of thread workers for composite queries */
-    public static final int         CNT_WORKERS = CFG_QUERY.concurrency.threadCount;
+    /** Number of gRPC data streams to use for single query */
+    public static final int         CNT_CONCURRENCY_THREADS = CFG_QUERY.concurrency.threadCount;
+    
+    
+    /** Is response multi-streaming active? */
+    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.response.multistream.active;
+    
+    /** Maximum number of open data streams to Query Service */
+    public static final int         CNT_MULTISTREAM = CFG_QUERY.data.response.multistream.maxStreams;
+    
+    /** Query domain size triggering multiple streaming (if active) */
+    public static final long        LNG_MULTISTREAM_PIVOT = CFG_QUERY.data.response.multistream.pivotSize;
+    
+    /** Query domain time units used in multi-streaming pivot size */
+    public static final TimeUnit    TU_MULTISTREAM_PIVOT = CFG_QUERY.data.response.multistream.pivotUnits;
     
     
     /** Is timeout limit active ? */
@@ -99,19 +116,22 @@ public class QueryResponseBuilder {
     // Initializing Attributes
     //
     
-    /** The data request to be processed */
-    private final DpDataRequest     rqstTarget;
+//    /** The data request to be processed */
+//    private final DpDataRequest         rqstTarget;
     
     /** The Query Service asynchronous communications stub */
-    private final DpQueryServiceStub stubAsync;
+    private final DpQueryServiceStub    stubAsync;
     
     
     //
     // Instance Resources
     //
     
+    /** The queue buffering all response messages for data correlation processing */
+    private final BlockingQueue<QueryResponse>  queResponses = new LinkedBlockingQueue<>();
+    
     /** The thread pool service for processing composite requests */
-    private final ExecutorService           exeThreadPool = Executors.newFixedThreadPool(CNT_WORKERS);
+    private final ExecutorService           exeThreadPool = Executors.newFixedThreadPool(CNT_MULTISTREAM);
     
     /** The Query Service response data correlator */
     private final QueryResponseCorrelator   qrcDataCorrelator = new QueryResponseCorrelator();  
@@ -123,11 +143,28 @@ public class QueryResponseBuilder {
      * </p>
      *
      */
-    public QueryResponseBuilder(DpQueryServiceStub stubAsync, DpDataRequest rqstTarget) {
+    public QueryResponseBuilder(DpQueryServiceStub stubAsync) {
         this.stubAsync = stubAsync;
-        this.rqstTarget = rqstTarget;
+//        this.rqstTarget = rqstTarget;
     }
 
     
+    //
+    // Operations
+    //
     
+    public SamplingProcess  processRequest(DpDataRequest dpRqst) {
+        
+        return null;
+    }
+    
+    
+    //
+    // Support Methods
+    //
+    
+    private SamplingProcess processSingleStream() {
+        
+        return null;
+    }
 }

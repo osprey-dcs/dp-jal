@@ -208,8 +208,31 @@ public final class DpDataRequest {
          * Both the data sources and time range is divided equally amongst the concurrent queries.<br/>
          * That is, each separate query contains a subset of data sources and subset of time ranges.<br/> 
          */
-        GRID;
+        GRID,
+        
+        /**
+         * Query domain is not decomposed.
+         * <p>
+         * Query domain decomposition is NOT applicable.  The query domain remains in 
+         * its original form.
+         */
+        NONE;
     };
+    
+    /**
+     * <p> 
+     * Record containing the parameters for composite query domain decomposition.
+     * </p>
+     * 
+     * @param type          the type of composite query 
+     * @param horizontal    number of sub-division for the data sources axis
+     * @param vertical      number of sub-divisions for the time range axis.
+     */
+    public static record CompositeSubDomains(CompositeType type, int horizontal, int vertical) {
+        
+        /** Return the total number of subdomains */
+        public int total() { return horizontal * vertical; };
+    }
 
     
     //
@@ -228,10 +251,10 @@ public final class DpDataRequest {
     
     
     /** Use composite queries feature */
-    private static final boolean                BOL_COMPOSITE = CFG_DEFAULT.query.dataRequest.composite.active;
+    private static final boolean                BOL_COMPOSITE = CFG_DEFAULT.query.data.request.composite.active;
     
     /** Maximum number of data sources for a composite query */
-    private static final int                    CNT_COMPOSITE_MAX_SOURCES = CFG_DEFAULT.query.dataRequest.composite.maxSources;
+    private static final int                    CNT_COMPOSITE_MAX_SOURCES = CFG_DEFAULT.query.data.request.composite.maxSources;
     
 //    /** Maximum time range duration for a composite query */
 //    private static final long                   LNG_COMPOSITE_MAX_DURATION = CFG_DEFAULT.query.dataRequest.composite.maxDuration;
@@ -241,8 +264,8 @@ public final class DpDataRequest {
     
     /** Maximum time range duration for a composite query */
     private static final Duration               DUR_COMPOSITE_MAX = Duration.of(
-                                                    CFG_DEFAULT.query.dataRequest.composite.maxDuration,
-                                                    CFG_DEFAULT.query.dataRequest.composite.unitDuration.toChronoUnit()
+                                                    CFG_DEFAULT.query.data.request.composite.maxDuration,
+                                                    CFG_DEFAULT.query.data.request.composite.unitDuration.toChronoUnit()
                                                     );
     
     
@@ -376,6 +399,60 @@ public final class DpDataRequest {
     
     /**
      * <p>
+     * Builds and returns a composite data request based upon the default domain decomposition 
+     * parameters.
+     * <p>
+     * <p>
+     * Computes the default query domain decomposition using <code>{@link #decomposeDomainDefault()}</code>
+     * then passes the result to <code>{@link #buildCompositeRequest(CompositeSubDomains)}</code>.
+     * The current data query request instance is left unchanged.
+     * </p>
+     * 
+     * @return  an equivalent composite query request where query domain is decomposed with default parameters 
+     * 
+     * @see #buildCompositeRequest(CompositeSubDomains)
+     * @see DpQueryConfig
+     * @see DpApiConfig
+     */
+    public List<DpDataRequest> buildCompositeRequest() {
+        
+        // Get the default domain decomposition 
+        CompositeSubDomains recDomains = this.decomposeDomainDefault();
+
+        return this.buildCompositeRequest(recDomains);
+    }
+    
+    /**
+     * <p>
+     * Builds and returns a composite data request based upon the query domain decomposition 
+     * specified in the argument.
+     * </p>
+     * <p>
+     * Defers to the available <code>buildCompositeRequest(...)</code> methods based upon the
+     * contains of the argument.
+     * </p>
+     * 
+     * @param recDomains    the query domain decomposition parameters    
+     * 
+     * @return              an equivalent composite query request where query domain is 
+     *                      decomposed by argument parameters
+     *                      
+     * @see #buildCompositeRequest(CompositeType, int)
+     * @see #buildCompositeRequestGrid(int, int)                      
+     */
+    public List<DpDataRequest> buildCompositeRequest(CompositeSubDomains recDomains) {
+        
+        return switch (recDomains.type) {
+        case NONE -> List.of(this);
+        case HORIZONTAL -> this.buildCompositeRequest(recDomains.type, recDomains.horizontal);
+        case VERTICAL -> this.buildCompositeRequest(recDomains.type, recDomains.vertical);
+        case GRID -> this.buildCompositeRequestGrid(recDomains.horizontal, recDomains.vertical);
+        default -> throw new IllegalArgumentException("Unexpected value: " + recDomains.type);
+        };
+    }
+    
+    /**
+     * <p>
      * Decomposes the current data request into component sub-query requests.
      * </p>
      * <p>
@@ -411,6 +488,8 @@ public final class DpDataRequest {
         case HORIZONTAL -> this.decomposeDomainHorizontally(cntQueries);
         case VERTICAL -> this.decomposeDomainVertically(cntQueries);
         case GRID -> this.decomposeDomainGridded(cntQueries);
+        case NONE -> List.of(this);
+        default -> throw new IllegalArgumentException("Unexpected value: " + enmType);
         };
     }
     
@@ -518,8 +597,7 @@ public final class DpDataRequest {
      * @return  a list of <code>QueryRequest</code> objects using default query domain decomposition
      * 
      * @see #buildQueryRequest()
-     * @see #buildCompositeRequest(CompositeType, int)
-     * @see #buildCompositeRequestGrid(int, int)
+     * @see #buildCompositeRequest()
      * @see DpQueryConfig
      * @see DpApiConfig
      */
@@ -529,49 +607,9 @@ public final class DpDataRequest {
         if (!BOL_COMPOSITE) {
             return List.of( this.buildQueryRequest() );
         }
-        
-        // Determine composite query sizes
-        int     cntQueriesHor = this.getSourceCount() / CNT_COMPOSITE_MAX_SOURCES;
-        long    cntQueriesVer = this.getRangeDuration().dividedBy(DUR_COMPOSITE_MAX);
 
-        
-        // Build composite data request list based upon domain sizes
-        List<DpDataRequest>     lstRequests;
-        
-        // Grid composite request
-        if ((cntQueriesHor > 0) && (cntQueriesVer > 0)) {
-            
-            // If integer division, must increment count
-            if (this.getSourceCount() % CNT_COMPOSITE_MAX_SOURCES > 0)
-                cntQueriesHor++;
-            if (!this.getRangeDuration().minus(DUR_COMPOSITE_MAX.multipliedBy(cntQueriesVer)).isZero())
-                cntQueriesVer++;
-            
-            lstRequests = this.decomposeDomainGridded(cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
-        
-        // Horizontal composite request
-        } else if ((cntQueriesHor > 0) && (cntQueriesVer == 0)) {
-
-            // If integer division, must increment count
-            if (this.getSourceCount() % CNT_COMPOSITE_MAX_SOURCES > 0)
-                cntQueriesHor++;
-
-            lstRequests = this.decomposeDomainHorizontally(cntQueriesHor);
-        
-        // Vertical composite request
-        } else if ((cntQueriesHor == 0) && (cntQueriesVer > 0)) {
-
-            // If integer division, must increment count
-            if (!this.getRangeDuration().minus(DUR_COMPOSITE_MAX.multipliedBy(cntQueriesVer)).isZero())
-                cntQueriesVer++;
-            
-            lstRequests = this.decomposeDomainVertically(Long.valueOf(cntQueriesVer).intValue());
-            
-        // The overall request is not large enough to invoke decomposition
-        } else {
-            lstRequests = List.of(this);
-            
-        }
+        // Compute the default composite data request
+        List<DpDataRequest> lstRequests = this.buildCompositeRequest(); 
         
         // Convert to Query Service request messages and return
         return lstRequests.stream()
@@ -638,6 +676,35 @@ public final class DpDataRequest {
         Duration    durQuery = Duration.between(this.insStart, this.insStop);
         
         return durQuery;
+    }
+    
+    /**
+     * <p>
+     * Computes and returns an approximation for the current query domain size.
+     * </p>
+     * <p>
+     * Computes the current "area" of the query domain represented by this request.
+     * The returned value is in the units of "(data source count)-TimeUnit."  The value
+     * provides a rough estimate of the size of the results set for the data request.
+     * </p>  
+     * <p>
+     * For example, if all request data sources produce double-valued scalar time-series data 
+     * which is sampled at 1 kHz, then when using 
+     * <code>tuDomain</code> = <code>{@link TimeUnit#MILLISECONDS}</code> 
+     * the returned value actually represents the number of values within the results set.
+     * </p>
+     * 
+     * @param   tuTimeRange time units to use for time range
+     * 
+     * @return  the current query domain size in (data source count)-(<code>tuTimeRange</code> seconds)
+     */
+    public long getDomainSize(TimeUnit tuTimeRange) {
+        Duration    durRange = this.getRangeDuration();
+        long        lngRangeSize = tuTimeRange.convert(durRange);
+        long        lngCntSources = this.getSourceCount();
+        long        lngDomainSize = lngRangeSize * lngCntSources;
+        
+        return lngDomainSize;
     }
     
     
@@ -1479,6 +1546,85 @@ public final class DpDataRequest {
 //        
 //        return bufQuery.toString();
 //    }
+    
+    /**
+     * <p>
+     * Computes the query sub-domain parameters for a default composite query.
+     * </p>
+     * <p>
+     * The method uses the class constants <code>{@link #CNT_COMPOSITE_MAX_SOURCES}</code>
+     * and <code>{@link #DUR_COMPOSITE_MAX}</code> to compute the number of query domain
+     * sub-divisions using default decomposition.  Specifically, we compute
+     * <code>
+     * <pre>
+     *   cntQueriesHor = {@link #getSourceCount()} / {@link #CNT_COMPOSITE_MAX_SOURCES}
+     *   cntQueriesVer = {@link #getRangeDuration()}.divideBy({@link #DUR_COMPOSITE_MAX})
+     * </pre>
+     * </code>
+     * Note further that if there exists a non-zero remainder for the above integer divisions
+     * the domain subdivision count must be incremented to accommodate the excess domain.
+     * We perform the following modifications
+     * <code>
+     * <pre>
+     *   cntQueriesHor += ({@link #getSourceCount()} % {@link #CNT_COMPOSITE_MAX_SOURCES} == 0) ? 0 : 1
+     *   cntQueriesVer += {{@link #getRangeDuration()}.minus({@link #DUR_COMPOSITE_MAX}.multiedBy(cntQueryiesVer).isZero) ? 0 : 1
+     * </pre>
+     * </code>
+     * </p>
+     * <p>
+     * The composite query type is also determined by the value of the above quantities
+     * according to the following:
+     * <code>
+     * <pre>
+     *   {@link CompositeType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) 
+     *   {@link CompositeType#HORIZONTAL} <- (cntQueriesHor > 1) && (cntQueriesVer == 1) 
+     *   {@link CompositeType#VERTICAL}   <- (cntQueriesHor == 1) && (cntQueriesVer > 1) 
+     *   {@link CompositeType#GRID}       <- (cntQueriesHor > 1) && (cntQueriesVer > 1) 
+     * </pre>
+     * </code>
+     * </p>
+     * @return  record containing sub-domain parameters when using default decomposition
+     */
+    private CompositeSubDomains decomposeDomainDefault() {
+        
+        // The composite query type
+        CompositeType   enmType;
+        
+        // Determine composite query domain sizes
+        int     cntQueriesHor = this.getSourceCount() / CNT_COMPOSITE_MAX_SOURCES;
+        long    cntQueriesVer = this.getRangeDuration().dividedBy(DUR_COMPOSITE_MAX);
+
+        
+        // Note integer division, must increment count if non-zero remainder
+        if (this.getSourceCount() % CNT_COMPOSITE_MAX_SOURCES > 0)
+            cntQueriesHor++;
+        if (!this.getRangeDuration().minus(DUR_COMPOSITE_MAX.multipliedBy(cntQueriesVer)).isZero())
+            cntQueriesVer++;
+        
+        // The overall request is not large enough to invoke decomposition
+        if ((cntQueriesHor == 1) && (cntQueriesVer == 1)) {
+            
+            enmType = CompositeType.NONE;
+            
+        // Horizontal composite request
+        } else if ((cntQueriesHor > 1) && (cntQueriesVer == 1)) {
+
+            enmType = CompositeType.HORIZONTAL;
+            
+        // Vertical composite request
+        } else if ((cntQueriesHor == 1) && (cntQueriesVer > 1)) {
+            
+            enmType = CompositeType.VERTICAL;
+
+        // Grid composite request
+        } else {
+            
+            enmType = CompositeType.GRID;
+            
+        }
+
+        return new CompositeSubDomains(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
+    }
     
     /**
      * <p>

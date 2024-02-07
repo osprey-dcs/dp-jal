@@ -78,12 +78,20 @@ archive:    # Data Platform data archive properties
 query:      # Data Platform Query Service operations
    pageSize: 100      # UNUSED       # default bucket count per page  : DP_API_QUERY_PAGE_SIZE
    
-   dataRequest:   # Parameters for time-series data requests
-      composite:        # data request query decomposition (for multi-threading)
-         active: true                # use query decomposition  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_ACTIVE
-         maxSources: 1000            # max data source count    : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_SOURCES
-         maxDuration: 1000           # max time range duration  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
-         unitDuration: MILLISECONDS  # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_UNIT_DURATION
+   data:         # Parameters for time-series data queries
+      request:        # Default parameters used in data requests
+         composite:        # data request query decomposition (for multi-threading)
+            active: true                # use query decomposition  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_ACTIVE
+            maxSources: 1000            # max data source count    : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_SOURCES
+            maxDuration: 1000           # max time range duration  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
+            unitDuration: MILLISECONDS  # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_UNIT_DURATION
+      response:       # Default parameters used for data responses 
+         multistream:      # Multiple gRPC data stream parameters
+            active: true             # use multistreamed responses : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_ACTIVE
+            pivotSize: 4000          # query domain size (srcs-time): DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
+            pivotUnits: SECONDS      # java.concurrent.TimeUnit    : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_UNITS 
+            maxStreams: 8            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
+            preference: UNIDIRECTIONAL  # {UNIDIRECTIONAL, BIDRECTIONAL} : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PREFERENCE
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency           : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
@@ -111,7 +119,7 @@ connections:   # All available Data Platform service connections
             url: localhost              # host server URL           : DP_API_CONNECTION_INGESTION_CHANNEL_HOST_URL
             port: 50051                 # server port address       : DP_API_CONNECTION_INGESTION_CHANNEL_HOST_PORT
          tls:              # HTTP2 Transport Layer Security parameters
-            active: true                # use TLS security          : DP_API_CONNECTION_INGESTION_CHANNEL_TLS_ACTIVE
+            active: false               # use TLS security          : DP_API_CONNECTION_INGESTION_CHANNEL_TLS_ACTIVE
             defaultTls: true            # use default TLS operation : DP_API_CONNECTION_INGESTION_CHANNEL_TLS_DEFAULT
             filepaths:     # file path locations for TLS certificates and keys (only if defaultTls == false)
                trustedCerts:            # trusted certs collection  : DP_API_CONNECTION_INGESTION_CHANNEL_TLS_FILE_TRUSTED_CERTS
