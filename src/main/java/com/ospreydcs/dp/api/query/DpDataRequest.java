@@ -21,6 +21,7 @@
  * @author Christopher K. Allen
  * @org    OspreyDCS
  * @since Sep 23, 2022
+ * @version Jan 14, 2024
  *
  * TODO:
  * - None
@@ -39,6 +40,7 @@ import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.model.AUnavailable;
 import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
@@ -61,8 +63,12 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
  * concrete class, which presents a consistent interface to clients.
  * </p>
  * <p>
- * There are four classes of methods used to create the data query requests:
- * <ul>
+ * There are 4 classes of methods used to create the data query requests:
+ * <ol>
+ * <li>Set methods - prefixed with <code>set</code>: typically used to set data request
+ *     metadata.  This is data this is not part of the actual query but does affect
+ *     the query process.  Typically, they are performance parameters.
+ *     </li>
  * <li>Selection methods - prefixed with <code>select</code>: used to select the
  *     data sources (returned data columns) within the query results.
  *     </li>
@@ -70,12 +76,9 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
  *     of timestamps within the query results.
  *     </li>
  * <li>Filter methods - prefixed with <code>filter</code>: used to filter the query
- *     results based upon filter conditions.
+ *     results based upon filter conditions.  These methods are currently unavailable.
  *     </li>
- * <li>Page methods - prefixed with <code>page</code>: used to specify parameters of 
- *     returned data pages for asynchronous queries.
- *     </li>
- * </ul>
+ * </ol>
  * Further details on the use of these methods are given in the <b>NOTES</b> 
  * subsection below.  Also see the method documentation for more particulars on
  * their use.  Note that the page methods are only for asynchronous requests
@@ -136,15 +139,15 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
  * <code>{@link AUnavailable}</code>.
  * </li>
  * 
- * <h3>The following are not currently applicable:</h3>
+ * <h2>The following are not currently applicable:</h2>
  * <li> 
- * Call the <code>{@link #pageSize(Integer)}</code> method to set the size
+ * Call the <code>{@link #setPageSize(Integer)}</code> method to set the size
  * (i.e., number of data rows) of the data pages returned from the <em>Query Service</em>
  * during asynchronous data streaming.  <em>This is a performance parameter</em>.  
  * This value defaults to that in the <code>AppProperties</code> configuration.
  * </li>
  * <li>
- * Call the <code>{@link #pageStartIndex(Integer)}</code> to set the index of
+ * Call the <code>{@link #setPageStartIndex(Integer)}</code> to set the index of
  * the first data page returned by the <em>Query Service</em>.  
  * <em>Page indices are 1-based</em>, (i.e., start with index 1).
  * Setting this value to 0 instructs the <em>Query Service</em> to
@@ -154,6 +157,19 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
  * the full query (from given index to the last data page).
  * </ul>
  * </p>
+ * <p>
+ * <h2>TODO</h2>
+ * <ul>
+ * <li>
+ * Decide on the state of the initial query.  That is, the "open query", the "empty query", etc.
+ * </li>
+ * <li>
+ * Figure out where the filter options go.
+ * </li>
+ * <li>
+ * Clean this thing up!
+ * </li>
+ * </ul>
  *
  * @author Christopher K. Allen
  * @since Sep 23, 2022
@@ -179,8 +195,14 @@ public final class DpDataRequest {
     
     /**
      * <p>
-     * Enumeration of possible concurrent query decomposition strategies.
+     * Enumeration of possible query domain decomposition strategies.
      * </p>
+     * <p>
+     * Query domain decompositions are used for <em>composite query</em> construction.
+     * </p>
+     * 
+     * @see DomainDecomposition
+     * @see DpDataRequest#buildCompositeRequest(CompositeType, int)
      */
     public static enum CompositeType {
         
@@ -221,17 +243,22 @@ public final class DpDataRequest {
     
     /**
      * <p> 
-     * Record containing the parameters for composite query domain decomposition.
+     * Record containing the parameters for supported query domain decompositions.
+     * </p>
+     * <p>
+     * Query domain decompositions are used for <em>composite query</em> construction.
      * </p>
      * 
      * @param type          the type of composite query 
-     * @param horizontal    number of sub-division for the data sources axis
-     * @param vertical      number of sub-divisions for the time range axis.
+     * @param cntHor    number of sub-division for the data sources axis
+     * @param cntVer      number of sub-divisions for the time range axis.
+     * 
+     * @see DpDataRequest#buildCompositeRequest(DomainDecomposition)
      */
-    public static record CompositeSubDomains(CompositeType type, int horizontal, int vertical) {
+    public static record DomainDecomposition(CompositeType type, int cntHor, int cntVer) {
         
-        /** Return the total number of subdomains */
-        public int total() { return horizontal * vertical; };
+        /** Return the total number of domain covering sets */
+        public int totalCovers() { return cntHor * cntVer; };
     }
 
     
@@ -239,15 +266,20 @@ public final class DpDataRequest {
     // Class Constants
     //
     
+    /** The default page size to use when creating gRPC paginated queries */
+    @Deprecated
+    private static final Integer                SZ_PAGES = CFG_DEFAULT.query.pageSize;
+    
+    
+    /** gRPC stream type default preference */
+    private static final DpQueryStreamType             ENM_STREAM_PREF = CFG_DEFAULT.query.data.request.stream.preference;
+    
+    
     /** The start of this time epoch (Jan 1, 1970) */
     private static final Instant                INS_EPOCH = Instant.EPOCH;
     
     /** Inception instant of the Data Platform archive */
     private static final Instant                INS_INCEPT = Instant.parse( CFG_DEFAULT.archive.inception );
-    
-    
-    /** The default page size to use when creating gRPC paginated queries */
-    private static final Integer                SZ_PAGES = CFG_DEFAULT.query.pageSize;
     
     
     /** Use composite queries feature */
@@ -274,16 +306,18 @@ public final class DpDataRequest {
     //
     
     
-//    /** Flag indicating a paging cursor request */
-//    private boolean bolCursor = false;
-    
     /** The size of a data page, that is, the number of data rows per page */
+    @Deprecated
+    @SuppressWarnings("unused")
     private int szPage = SZ_PAGES;
     
     /** The initial index of first page to return, that is, the starting page number */
+    @Deprecated
     @SuppressWarnings("unused")
     private int indStartPage = 0;
 
+    /** optional gRPC stream type */
+    private DpQueryStreamType  enmStrmType = ENM_STREAM_PREF;
     
     /** The time range start instant */
     private Instant insStart = INS_INCEPT;
@@ -322,13 +356,13 @@ public final class DpDataRequest {
      * </p>
      * <h3>The following are not currently applicable:</h3>
      * <p>
-     * Use the <code>{@link #pageSize(Integer)}</code> to performance tweak
+     * Use the <code>{@link #setPageSize(Integer)}</code> to performance tweak
      * the size of the data pages in the <em>Query Service</em> data stream when
      * using paged data tables (in particular, for asynchronous data requests).
      * The default page size is given in the <i>application.yml</i> file.
      * </p>
      * <p>
-     * Use the <code>{@link #pageStartIndex(Integer)}</code> tell the 
+     * Use the <code>{@link #setPageStartIndex(Integer)}</code> tell the 
      * <em>Query Service</em> to send the specific page index for the given
      * query.  For asynchronously streamed data (<code>QueryRequest</code>) 
      * this instructs the <em>Query Service</em> to send data pages from the given 
@@ -384,17 +418,9 @@ public final class DpDataRequest {
         return rqst.buildCompositeRequest(enmType, cntQueries);
     }
     
-    /**
-     * Creates a new, open request instance of <code>DpDataRequest</code>.
-     *
-     */
-    private DpDataRequest() {
-        this.reset();
-    }
-    
     
     //
-    // Operations
+    // Composite Requests
     //
     
     /**
@@ -404,20 +430,20 @@ public final class DpDataRequest {
      * <p>
      * <p>
      * Computes the default query domain decomposition using <code>{@link #decomposeDomainDefault()}</code>
-     * then passes the result to <code>{@link #buildCompositeRequest(CompositeSubDomains)}</code>.
+     * then passes the result to <code>{@link #buildCompositeRequest(DomainDecomposition)}</code>.
      * The current data query request instance is left unchanged.
      * </p>
      * 
      * @return  an equivalent composite query request where query domain is decomposed with default parameters 
      * 
-     * @see #buildCompositeRequest(CompositeSubDomains)
+     * @see #buildCompositeRequest(DomainDecomposition)
      * @see DpQueryConfig
      * @see DpApiConfig
      */
     public List<DpDataRequest> buildCompositeRequest() {
         
         // Get the default domain decomposition 
-        CompositeSubDomains recDomains = this.decomposeDomainDefault();
+        DomainDecomposition recDomains = this.decomposeDomainDefault();
 
         return this.buildCompositeRequest(recDomains);
     }
@@ -440,13 +466,13 @@ public final class DpDataRequest {
      * @see #buildCompositeRequest(CompositeType, int)
      * @see #buildCompositeRequestGrid(int, int)                      
      */
-    public List<DpDataRequest> buildCompositeRequest(CompositeSubDomains recDomains) {
+    public List<DpDataRequest> buildCompositeRequest(DomainDecomposition recDomains) {
         
         return switch (recDomains.type) {
         case NONE -> List.of(this);
-        case HORIZONTAL -> this.buildCompositeRequest(recDomains.type, recDomains.horizontal);
-        case VERTICAL -> this.buildCompositeRequest(recDomains.type, recDomains.vertical);
-        case GRID -> this.buildCompositeRequestGrid(recDomains.horizontal, recDomains.vertical);
+        case HORIZONTAL -> this.buildCompositeRequest(recDomains.type, recDomains.cntHor);
+        case VERTICAL -> this.buildCompositeRequest(recDomains.type, recDomains.cntVer);
+        case GRID -> this.buildCompositeRequestGrid(recDomains.cntHor, recDomains.cntVer);
         default -> throw new IllegalArgumentException("Unexpected value: " + recDomains.type);
         };
     }
@@ -470,7 +496,7 @@ public final class DpDataRequest {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
-     * <li>If the argument is odd for a grid domain, the remainder is allocated to the vertical axis.</li>
+     * <li>If the argument is odd for a grid domain, the remainder is allocated to the cntVer axis.</li>
      * <li>The current <code>DpDataRequest</code> instance is left unchanged.</li>
      * <li>All returned <code>DpDataRequest</code> are new, independent request objects.</li>
      * </ul>
@@ -515,12 +541,44 @@ public final class DpDataRequest {
      * </p> 
      * 
      * 
-     * @param cntQueriesHor number of query domain horizontal axis (data source) decompositions 
-     * @param cntQueriesVer number of query domain vertical axis (time range) decompositions
+     * @param cntQueriesHor number of query domain cntHor axis (data source) decompositions 
+     * @param cntQueriesVer number of query domain cntVer axis (time range) decompositions
      * @return
      */
     public List<DpDataRequest>  buildCompositeRequestGrid(int cntQueriesHor, int cntQueriesVer) {
         return this.decomposeDomainGridded(cntQueriesHor, cntQueriesVer);
+    }
+    
+    
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Returns the query builder to its initial state.  
+     * </p>
+     * <p>
+     * <ul>
+     * <li>Sets preferred gRPC stream type back to default preference.</li>
+     * <li>Sets the start time to {@link #INS_INCEPT}
+     * <li>Clears all previous calls to selectors, range, and restrictors.</li>
+     * <li>Sets the page size to the application default (in properties).</li>
+     * <li>Sets the start page index to 0 (send all data pages).</li>
+     * </ul>
+     */
+    public void reset() {
+//        this.bolCursor = false;
+        this.indStartPage = 0;
+        this.szPage = SZ_PAGES;
+
+        this.enmStrmType = ENM_STREAM_PREF;
+        this.insStart = INS_INCEPT;
+        this.insStop = INS_INCEPT;
+//        this.insStop = Instant.now();
+        this.lstSelCmps.clear();
+        
+        this.lstWhrCmps.clear();
     }
     
     /**
@@ -617,42 +675,33 @@ public final class DpDataRequest {
                 .toList();
     }
     
+    
+    //
+    // Query Properties and Metadata
+    //
+    
     /**
      * <p>
-     * Returns the query builder to its initial state.  
+     * Returns the preferred gRPC stream type used to perform the request.
      * </p>
      * <p>
-     * <ul>
-     * <li>Clears all previous calls to selectors, range, and restrictors.</li>
-     * <li>Sets the page size to the application default (in properties).</li>
-     * <li>Sets the start page index to 0 (send all data pages).</li>
-     * </ul>
+     * Note that this value is only applicable if a streaming RPC operation is 
+     * used to recover the query results set.  Even then, the choice of preferred
+     * gRPC data stream type is not guaranteed.
+     * </p>
+     * 
+     * @return  the preferred gRPC data stream type for the request operation
      */
-    public void reset() {
-//        this.bolCursor = false;
-        this.indStartPage = 0;
-        this.szPage = SZ_PAGES;
-
-        this.insStart = INS_INCEPT;
-        this.insStop = INS_INCEPT;
-//        this.insStop = Instant.now();
-        this.lstSelCmps.clear();
-        
-        this.lstWhrCmps.clear();
+    public DpQueryStreamType   getStreamType() {
+        return this.enmStrmType;
     }
-    
-    
-    //
-    // Query Properties
-    //
-    
     /**
      * <p>
      * Returns the total number of data sources identified in this data request.
      * </p>
      * <p>
      * Returns the number of data source names selected within the query.  That is, the
-     * size of the "horizontal" query domain.
+     * size of the "cntHor" query domain.
      * </p>
      * 
      * @return  number of data source names within the current query configuration
@@ -667,7 +716,7 @@ public final class DpDataRequest {
      * </p>
      * <p>
      * Computes and returns the total time duration for the range of the current data 
-     * request.  That is, the size of the "vertical" query domain.
+     * request.  That is, the size of the "cntVer" query domain.
      * </p>
      *  
      * @return  duration of the time range within the current query configuration
@@ -707,10 +756,57 @@ public final class DpDataRequest {
         return lngDomainSize;
     }
     
+    /**
+     * <p>
+     * Computes and returns the query domain decomposition parameters for a default decomposition. 
+     * </p>
+     * <p>
+     * Query domain decomposition parameters are used to build composite queries.
+     * This method computes and returns the parameters used for a query domain decomposition 
+     * when using the default decomposition parameters specified in the application default 
+     * parameters (i.e., rather than decomposition parameters given by users).
+     * </p>
+     *  
+     * @return  record of default query domain decomposition parameters for a composite query.
+     * 
+     * @see DpApiConfig
+     * @see DpQueryConfig
+     */
+    public DomainDecomposition  getDecompositionDefault() {
+        return this.decomposeDomainDefault();
+    }
+    
     
     // 
-    // Composite Query Configuration
+    // Query Metadata
     //
+    
+    /**
+     * <p>
+     * Sets the gRPC data stream type to use when recovering query results set.
+     * </p>
+     * <p> 
+     * Note that this value is only applicable if a streaming RPC operation is 
+     * used to recover the query results set.  Even then, the choice of preferred
+     * gRPC data stream type is not guaranteed.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This is a metadata property to be set for advanced operations.  Typically,
+     * the default value is chosen for performance considerations.
+     * The default value is current given by
+     * <code>
+     * <pre>
+     *   {@link #ENM_STREAM_PREF} = {@value #ENM_STREAM_PREF}
+     * </pre>
+     * </code> 
+     * </p>
+     * 
+     * @param enmStreamType preferred gRPC data stream type for query operation
+     */
+    public void setStreamType(DpQueryStreamType enmStreamType) {
+        this.enmStrmType = enmStreamType;
+    }
     
     /**
      * <p>
@@ -737,7 +833,7 @@ public final class DpDataRequest {
      * @param szPage page size of a data block returned from the <em>Query Service</em> (in rows)
      */
     @AUnavailable(status=STATUS.UNDER_REVIEW)
-    public void pageSize(Integer szPage) {
+    public void setPageSize(Integer szPage) {
         this.szPage = szPage;
     }
     
@@ -763,7 +859,7 @@ public final class DpDataRequest {
      * @param indStartPage start page index of the streamed data
      */
     @AUnavailable(status=STATUS.UNDER_REVIEW)
-    public void pageStartIndex(Integer indStartPage) {
+    public void setPageStartIndex(Integer indStartPage) {
         this.indStartPage = indStartPage;
     }
     
@@ -1357,6 +1453,49 @@ public final class DpDataRequest {
     // Private Methods
     //
     
+    /**
+     * <p>
+     * Creates a new, empty instance of <code>DpDataRequest</code>.
+     * </p>
+     * <p>
+     * Creates the request instant then calls <code>{@link #reset()}</code> method
+     * to set all parameters to initializing "empty" state. 
+     * </p>
+     */
+    private DpDataRequest() {
+        this.reset();
+    }
+    
+    /**
+     * <p>
+     * Constructs a new, initialized instance of <code>DpDataRequest</code>.
+     * </p>
+     * <p>
+     * The arguments are used to initialize the relevance parameters of the new request.
+     * This method is intended for use in the creation of <em>composite queries</em>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * All other request instance attributes are left unchanged from the default values
+     * identified in their declaration.
+     * </p>
+     *
+     * @param enmType       the preferred gRPC data stream type
+     * @param insStart      starting instant of time range
+     * @param insStop       final instant of time range
+     * @param lstSources    list of all data source names for the new request
+     */
+    private DpDataRequest(DpQueryStreamType enmType, Instant insStart, Instant insStop, List<String> lstSources) {
+        this.indStartPage = 0;
+        this.szPage = SZ_PAGES;
+
+        this.enmStrmType = enmType;
+        this.insStart = insStart;
+        this.insStop = insStop;
+        
+        this.lstSelCmps.addAll(lstSources);
+    }
+    
 //    /**
 //     * <p>
 //     * Creates a Data Platform <code>CursorRequest</code> object based upon the history 
@@ -1585,7 +1724,7 @@ public final class DpDataRequest {
      * </p>
      * @return  record containing sub-domain parameters when using default decomposition
      */
-    private CompositeSubDomains decomposeDomainDefault() {
+    private DomainDecomposition decomposeDomainDefault() {
         
         // The composite query type
         CompositeType   enmType;
@@ -1623,7 +1762,7 @@ public final class DpDataRequest {
             
         }
 
-        return new CompositeSubDomains(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
+        return new DomainDecomposition(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
     }
     
     /**
@@ -1631,9 +1770,9 @@ public final class DpDataRequest {
      * Creates a composite data query by decomposing the data source domain axes.
      * </p>
      * <p>
-     * The query domain horizontal axes is decomposed into the given number of 
+     * The query domain cntHor axes is decomposed into the given number of 
      * sub-domains, where a new <code>DpDataRequest</code> instance is created
-     * for each sub-domain.  The vertical (time) axis of each new query object
+     * for each sub-domain.  The cntVer (time) axis of each new query object
      * remains the same as the original request.    
      * </p> 
      * <p>
@@ -1644,7 +1783,7 @@ public final class DpDataRequest {
      * </pre>
      * </p>
      * 
-     * @param cntQueries    number of horizontal axis (data source) decompositions
+     * @param cntQueries    number of cntHor axis (data source) decompositions
      * 
      * @return  a new list of <code>DpDataRequest</code> instances composing the composite request
      */
@@ -1671,10 +1810,11 @@ public final class DpDataRequest {
             
             List<String>    lstRqstSrcs = this.lstSelCmps.subList(indRqstStart, indRqstStop);
             
-            DpDataRequest rqst = newRequest();
-            rqst.insStart = this.insStart;
-            rqst.insStop = this.insStop;
-            rqst.lstSelCmps.addAll(lstRqstSrcs);
+            DpDataRequest rqst = new DpDataRequest(this.enmStrmType, this.insStart, this.insStop, lstRqstSrcs);
+//            DpDataRequest rqst = newRequest();
+//            rqst.insStart = this.insStart;
+//            rqst.insStop = this.insStop;
+//            rqst.lstSelCmps.addAll(lstRqstSrcs);
             
             lstRequests.add(rqst);
             
@@ -1689,9 +1829,9 @@ public final class DpDataRequest {
      * Creates a composite data query request by decomposing the time domain axis.
      * </p>
      * <p>
-     * The query domain vertical axes is decomposed into the given number of 
+     * The query domain cntVer axes is decomposed into the given number of 
      * sub-domains, where a new <code>DpDataRequest</code> instance is created
-     * for each sub-domain.  The horizontal (data source) axis of each new query object
+     * for each sub-domain.  The cntHor (data source) axis of each new query object
      * remains the same as the original request.    
      * </p> 
      * <p>
@@ -1703,7 +1843,7 @@ public final class DpDataRequest {
      * Note that due to integer arithmetic the largest remainder can be only 1 nanosecond.
      * </p>
      * 
-     * @param cntQueries    number of vertical axis (time range) decompositions
+     * @param cntQueries    number of cntVer axis (time range) decompositions
      * 
      * @return  a new list of <code>DpDataRequest</code> instances composing the composite request
      */
@@ -1717,22 +1857,23 @@ public final class DpDataRequest {
         Duration    durRemain = durTotal.minus(durRequest.multipliedBy(cntQueries));
         
         // Create composite queries by divide time range interval
-        Instant insRqstStart = this.insStart;
+        Instant insRqstTmStart = this.insStart;
         
         for (int n=0; n<cntQueries; n++) {
-            Instant insRqstStop = insRqstStart.plus(durRequest);
+            Instant insRqstTmStop = insRqstTmStart.plus(durRequest);
             
             if (n == (cntQueries - 1))
-                insRqstStop = insRqstStop.plus(durRemain);
+                insRqstTmStop = insRqstTmStop.plus(durRemain);
             
-            DpDataRequest   rqst = newRequest();
-            rqst.insStart = insRqstStart;
-            rqst.insStop = insRqstStop;
-            rqst.lstSelCmps.addAll(this.lstSelCmps);
+            DpDataRequest   rqst = new DpDataRequest(this.enmStrmType, insRqstTmStart, insRqstTmStop, this.lstSelCmps);
+//            DpDataRequest   rqst = newRequest();
+//            rqst.insStart = insRqstStart;
+//            rqst.insStop = insRqstStop;
+//            rqst.lstSelCmps.addAll(this.lstSelCmps);
             
             lstRequests.add(rqst);
             
-            insRqstStart = insRqstStop;
+            insRqstTmStart = insRqstTmStop;
         }
         
         return lstRequests;
@@ -1743,8 +1884,8 @@ public final class DpDataRequest {
      * Creates a composite data query request by decomposing both the data source and time domain axes.
      * </p>
      * <p>
-     * The query domain horizontal axes is decomposed into <code>cntQueriesHor</code> 
-     * sub-domains and the query domain vertical axes is decomposed into 
+     * The query domain cntHor axes is decomposed into <code>cntQueriesHor</code> 
+     * sub-domains and the query domain cntVer axes is decomposed into 
      * <code>cntQueriesVer</code> sub-domains.  Thus, the total query domain is divided
      * into a grid, where the total number of domains is given by the product. 
      * </p> 
@@ -1758,8 +1899,8 @@ public final class DpDataRequest {
      * Note that due to integer arithmetic the largest remainder can be only 1 nanosecond.
      * </p>
      * 
-     * @param cntQueriesHor number of horizontal axis (data source) decompositions
-     * @param cntQueriesVer number of vertical axis (time range) decompositions
+     * @param cntQueriesHor number of cntHor axis (data source) decompositions
+     * @param cntQueriesVer number of cntVer axis (time range) decompositions
      * 
      * @return  a new list of <code>DpDataRequest</code> instances composing the composite request
      */
@@ -1802,10 +1943,11 @@ public final class DpDataRequest {
                 if (n == (cntQueriesVer - 1))
                     insRqstTmStop = insRqstTmStop.plus(durRemain);
                 
-                DpDataRequest   rqst = newRequest();
-                rqst.insStart = insRqstTmStart;
-                rqst.insStop = insRqstTmStop;
-                rqst.lstSelCmps.addAll(lstRqstSrcs);
+                DpDataRequest   rqst = new DpDataRequest(this.enmStrmType, insRqstTmStart, insRqstTmStop, lstRqstSrcs);
+//                DpDataRequest   rqst = newRequest();
+//                rqst.insStart = insRqstTmStart;
+//                rqst.insStop = insRqstTmStop;
+//                rqst.lstSelCmps.addAll(lstRqstSrcs);
                 
                 lstRequests.add(rqst);
                 
@@ -1850,7 +1992,7 @@ public final class DpDataRequest {
         int cntQueriesHor = cntQueriesPerAxis;
         int cntQueriesVer = cntQueriesPerAxis;
         
-        // Add any remainder to the vertical (time) axis
+        // Add any remainder to the cntVer (time) axis
         if (cntQueries % 2 > 0) 
             cntQueriesVer = cntQueriesPerAxis + 1;
 
@@ -1910,7 +2052,7 @@ public final class DpDataRequest {
 
     
     //
-    // Object Overrides (debugging)
+    // Object Overrides (Debugging)
     //
     
     /**
@@ -1923,6 +2065,7 @@ public final class DpDataRequest {
     public boolean equals(Object obj) {
         if (obj instanceof DpDataRequest rqst) {
             return this.lstSelCmps.equals(rqst.lstSelCmps) &&
+                    (this.enmStrmType == rqst.enmStrmType) &&
                     this.insStart.equals(rqst.insStart)  &&
                     this.insStop.equals(rqst.insStop);
         }
@@ -1941,9 +2084,10 @@ public final class DpDataRequest {
         StringBuffer    buf = new StringBuffer(JavaRuntime.getCallerClass());
         
         buf.append(" contents:\n");
-        buf.append("  source name = " + this.lstSelCmps + "\n");
+        buf.append("  source name(s) = " + this.lstSelCmps + "\n");
         buf.append("  start time = " + this.insStart + "\n");
         buf.append("  stop time = " + this.insStop + "\n");
+        buf.append("  preferred stream = " + this.enmStrmType + "\n");
 
         return buf.toString();
     }

@@ -67,9 +67,9 @@ import io.grpc.stub.StreamObserver;
  * <p>
  * <h2>gRPC Streaming</h2>
  * The type of gRPC data stream employed is determined by the value of <code>{@link #enmStreamType}</code> set
- * during construction (see <code>{@link StreamType}</code>).
- * The <code>{@link StreamType#UNIDIRECTIONAL}</code> value creates a unidirectional stream while the 
- * <code>{@link StreamType#BIDIRECTIONAL}</code> value creates a bidirectional stream.
+ * during construction (see <code>{@link DpQueryStreamType}</code>).
+ * The <code>{@link DpQueryStreamType#UNIDIRECTIONAL}</code> value creates a unidirectional stream while the 
+ * <code>{@link DpQueryStreamType#BIDIRECTIONAL}</code> value creates a bidirectional stream.
  * The <code>DpQueryStreamBuffer</code> instance itself receives the responses through the implemented methods of the 
  * <code>StreamObserver</code> interface (that is, the instance itself acts as the backward stream from the 
  * Query Service).
@@ -135,29 +135,29 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     // Class Types
     //
     
-    /**
-     * Enumeration of gRPC data streaming services currently supported by the Query Service.
-     */
-    public static enum StreamType {
-        
-        /**
-         * Unidirectional gRPC Stream.
-         * <p>
-         * Indicates a unidirectional (backward) stream from the Query Service to this client.
-         */
-        UNIDIRECTIONAL,
-        
-        
-        /**
-         * Bidirectional gRPC Stream.
-         * <p>
-         * Indicates a fully bidirectional stream between the Client and the Query Service.
-         * Client explicitly requests each data page (within QueryResponse message) from the
-         * Query Service. 
-         */
-        BIDIRECTIONAL;
-    }
-    
+//    /**
+//     * Enumeration of gRPC data streaming services currently supported by the Query Service.
+//     */
+//    public static enum StreamType {
+//        
+//        /**
+//         * Unidirectional gRPC Stream.
+//         * <p>
+//         * Indicates a unidirectional (backward) stream from the Query Service to this client.
+//         */
+//        UNIDIRECTIONAL,
+//        
+//        
+//        /**
+//         * Bidirectional gRPC Stream.
+//         * <p>
+//         * Indicates a fully bidirectional stream between the Client and the Query Service.
+//         * Client explicitly requests each data page (within QueryResponse message) from the
+//         * Query Service. 
+//         */
+//        BIDIRECTIONAL;
+//    }
+//    
     
     //
     // Class Resources
@@ -172,7 +172,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     //
     
     /** The gRPC data stream type this response buffer is managing */
-    private final StreamType            enmStreamType;
+    private final DpQueryStreamType     enmStreamType;
     
     /** The (asynchronous) streaming communications stub of the Query Service gRPC interface */
     private final DpQueryServiceStub    stubAsync;
@@ -278,10 +278,10 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
      * 
      * @return new <code>DpQueryStreamBuffer</code> initialized with the given arguments.
      * 
-     * @see #DpQueryStreamBuffer(StreamType, DpQueryServiceStub, QueryRequest, boolean)
+     * @see #DpQueryStreamBuffer(DpQueryStreamType, DpQueryServiceStub, QueryRequest, boolean)
      * @see DpQueryStreamBuffer
      */
-    public static DpQueryStreamBuffer newBuffer(StreamType enmType, DpQueryServiceStub stubAsync, QueryRequest msgRequest) {
+    public static DpQueryStreamBuffer newBuffer(DpQueryStreamType enmType, DpQueryServiceStub stubAsync, QueryRequest msgRequest) {
         return DpQueryStreamBuffer.newBuffer(enmType, stubAsync, msgRequest, false);
     }
     
@@ -297,10 +297,10 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
      * 
      * @return new <code>DpQueryStreamBuffer</code> initialized with the given arguments.
      * 
-     * @see #DpQueryStreamBuffer(StreamType, DpQueryServiceStub, QueryRequest, boolean)
+     * @see #DpQueryStreamBuffer(DpQueryStreamType, DpQueryServiceStub, QueryRequest, boolean)
      * @see DpQueryStreamBuffer
      */
-    public static DpQueryStreamBuffer newBuffer(StreamType enmType, DpQueryServiceStub stubAsync, QueryRequest msgRequest, boolean bolLogging) {
+    public static DpQueryStreamBuffer newBuffer(DpQueryStreamType enmType, DpQueryServiceStub stubAsync, QueryRequest msgRequest, boolean bolLogging) {
         return new DpQueryStreamBuffer(enmType, stubAsync, msgRequest, bolLogging);
     }
     
@@ -341,7 +341,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
      * 
      * @see DpQueryStreamBuffer
      */
-    public DpQueryStreamBuffer(StreamType enmStreamType, DpQueryServiceStub stubAsync, QueryRequest msgRequest, boolean bolLogging) 
+    public DpQueryStreamBuffer(DpQueryStreamType enmStreamType, DpQueryServiceStub stubAsync, QueryRequest msgRequest, boolean bolLogging) 
     {
         this.enmStreamType = enmStreamType;
         this.stubAsync = stubAsync;
@@ -399,7 +399,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
      * The Query Service unidirectional streaming request initiates the gRPC data stream after which
      * the Query Service streams requested data at arbitrary rate.  It is up to the client to process
      * data in a timely fashion.  Bidirectional streaming provides a more synchronized data path for
-     * clients with excessive processing requirements (see <code>{@link StreamType#BIDIRECTIONAL}</code>).
+     * clients with excessive processing requirements (see <code>{@link DpQueryStreamType#BIDIRECTIONAL}</code>).
      * <p>
      * After this method returns the streaming process becomes
      * independent and thread-like.  The requested data becomes available
@@ -1436,7 +1436,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
         
         // Shut down the stream
         //  - If this is a bidirectional stream send the completed notification
-        if(this.enmStreamType == StreamType.BIDIRECTIONAL) 
+        if(this.enmStreamType == DpQueryStreamType.BIDIRECTIONAL) 
             this.hndSvrStrm.onCompleted();
            
         //  - State associated state condition and variables
@@ -1476,7 +1476,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryResponse> {
     protected void requestNextPageBidi() {
 
         // If this is not a bidirectional stream there is nothing to do
-        if (this.enmStreamType != StreamType.BIDIRECTIONAL)
+        if (this.enmStreamType != DpQueryStreamType.BIDIRECTIONAL)
             return;
 
         // Add next page index to request list  

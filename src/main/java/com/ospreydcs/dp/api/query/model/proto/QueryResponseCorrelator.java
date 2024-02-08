@@ -23,14 +23,13 @@
  * @since Jan 11, 2024
  *
  * TODO:
- * - None
+ * - See documentation
  */
 package com.ospreydcs.dp.api.query.model.proto;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -50,7 +49,6 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.RejectDetails;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
@@ -60,11 +58,42 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * <p>
  * The intent is to organize the results of a Data Platform Query Service query according to the sampling
  * intervals.  That is, the collector parses the result sets for equivalent sampling intervals then associates
- * each data column of the result set to a <code>{@link CorrelatedQueryData</code> instance.  Once the query
+ * each data column of the result set to a <code>{@link CorrelatedQueryData}</code> instance.  Once the query
  * result is fully processed there should be one <code>CorrelatedQueryData</code> instance for every unique
  * sampling interval within the result set.  Every data column within the result set will be associated with
  * one <code>CorrelatedQueryData</code> instance.
  * </p>
+ * <p>
+ * <h2>NOTES:</h2>
+ * <ul>
+ * <li>
+ * The correlation operations performed within <code>QueryResponseCorrelator</code>
+ * allow a high-level of multi-threaded, concurrent, data processing.  Using concurrency
+ * can significantly reduce processing time for a results set.
+ * </li>
+ * <br/>
+ * <li>
+ * The <code>QueryResponseCorrelator</code> is currently designed to exploit all available 
+ * CPU cores.  Thus, for some situations it may be desirable to stop concurrent processing
+ * so it does not interfere with other real-time operations (e.g., such as gRPC streaming).
+ * </li>
+ * <br/>
+ * <li>
+ * Due to thread safety synchronization concurrency cannot be toggled until a correlation
+ * operation (i.e., <code>insert...</code> method) has completed.
+ * </li>
+ * </ul>
+ * </p>
+ * <p>
+ * <h2>TODO</h2>
+ * <ul>
+ * <li>
+ * It may be beneficial to introduce a limit on the number of concurrent processing threads
+ * so that concurrent processing does not interfere with real-time operations requiring
+ * dedicated processor cores.
+ * </li>
+ * </ul>
+ * </p> 
  *
  * @author Christopher K. Allen
  * @since Jan 11, 2024
@@ -114,14 +143,6 @@ public class QueryResponseCorrelator {
     
     
     //
-    // Instance Attributes
-    //
-    
-    /** Target Set - Ordered set of sampling interval references */
-    private final SortedSet<CorrelatedQueryData> setTargetRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
-
-    
-    //
     // Instance Resources
     //
     
@@ -131,7 +152,18 @@ public class QueryResponseCorrelator {
     /** Manages thread pools of many, short-lived execution tasks */
     private final ExecutorService   exeThreadPool = Executors.newCachedThreadPool();
     
+    /** Target Set - Ordered set of sampling interval references */
+    private final SortedSet<CorrelatedQueryData> setTargetRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
+
     
+    //
+    // State Variables
+    //
+    
+    /** Toggle the use of concurrency in data processing */
+    private boolean     bolConcurrency = BOL_CONCURRENCY;
+    
+
     
     //
     // Constructors
@@ -148,7 +180,78 @@ public class QueryResponseCorrelator {
     
     
     //
-    // Access and Control
+    // State Control
+    //
+    
+    /**
+     * <p>
+     * Reset this correlator instance to its original (default) state.
+     * </p>
+     * <p>
+     * This is a thread-safe operation.  Performs the following operations:
+     * <ul>
+     * <li>Clears out the target set of all <code>CorrelatedQueryData</code> references.</li>
+     * <li>Returns the concurrency flag to its default state <code>{@link #BOL_CONCURRENCY}</code>.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <code>QueryResponseCorrelator</code> objects can be reused.  After calling this method the 
+     * collector is returned to its initial state and is ready to process another Query Service
+     * response results set.
+     * </p>
+     * 
+     */
+    public void reset() {
+        
+        synchronized (this.objLock) {
+            this.setTargetRefs.clear();
+            this.bolConcurrency = BOL_CONCURRENCY;
+        }
+    }
+    
+    /**
+     * <p>
+     * Toggles ON/OFF the use of concurrency in data processing. 
+     * </p>
+     * <p>
+     * This is a thread-safe operation and will not interrupt any ongoing processing.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The correlation operations performed within <code>QueryResponseCorrelator</code>
+     * allow a high-level of multi-threaded, concurrent, data processing.  Using concurrency
+     * can significantly reduce processing time for a results set.
+     * </li>
+     * <br/>
+     * <li>
+     * The <code>QueryResponseCorrelator</code> is currently designed to exploit all available 
+     * CPU cores.  Thus, for some situations it may be desirable to stop concurrent processing
+     * so it does not interfere with other real-time operations (e.g., such as gRPC streaming).
+     * </li>
+     * <br/>
+     * <li>
+     * Due to thread safety synchronization concurrency cannot be toggled until a correlation
+     * operation (i.e., <code>insert...</code> method) has completed.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param bolUseConcurrency     set <code>true</code> to utilize concurrent processing, 
+     *                              set <code>false</code> to turn off
+     */
+    public void setConcurrency(boolean bolUseConcurrency) {
+        
+        synchronized (this.objLock) {
+            this.bolConcurrency = bolUseConcurrency;
+        }
+    }
+
+    
+    //
+    // Attribute Query
     //
     
     /**
@@ -192,24 +295,9 @@ public class QueryResponseCorrelator {
         return setNames;
     }
     
-    /**
-     * <p>
-     * Clears out the target set of all sampling interval references.
-     * </p>
-     * <p>
-     * <code>QueryResponseCorrelator</code> objects can be reused.  After calling this method the 
-     * collector is returned to its initial state and is ready to process another Query Service
-     * response stream.
-     * </p>
-     * 
-     */
-    public void clear() {
-        this.setTargetRefs.clear();
-    }
-    
     
     // 
-    // Operations
+    // Correlation Operations
     //
     
     /**
@@ -245,7 +333,7 @@ public class QueryResponseCorrelator {
             
             // Attempt to add the message data into the current set of sampling interval references
             
-            if (BOL_CONCURRENCY && (this.setTargetRefs.size() > SZ_CONCURRENCY_PIVOT)) {
+            if (this.bolConcurrency && (this.setTargetRefs.size() > SZ_CONCURRENCY_PIVOT)) {
                 bolSuccess = this.setTargetRefs
                         .parallelStream()
                         .anyMatch( i -> i.insertBucketData(msgBucket) );
@@ -318,7 +406,7 @@ public class QueryResponseCorrelator {
         synchronized (this.objLock) {
             
             // If the target set is small or concurrency is inactive - insert all data at once
-            if (!BOL_CONCURRENCY || (this.setTargetRefs.size() < SZ_CONCURRENCY_PIVOT)) {
+            if (!this.bolConcurrency || (this.setTargetRefs.size() < SZ_CONCURRENCY_PIVOT)) {
                 this.insertDataSerial(msgData);
 
                 return;

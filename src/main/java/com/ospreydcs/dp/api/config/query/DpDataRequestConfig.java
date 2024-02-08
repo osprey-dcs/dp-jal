@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 
 /**
  * <p>
@@ -52,11 +53,39 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
     // Configuration Fields
     //
     
+    /** gRPC streaming parameters for query responses */
+    @ACfgOverride.Struct(pathelem="STREAM")
+    public Stream                   stream;
+    
     /** Composite data query parameters */
     @ACfgOverride.Struct(pathelem="COMPOSITE")
-    public CompositeQueryConfig       composite;
+    public CompositeQueryConfig     composite;
     
 
+    /**
+     * Structure class defining default configuration parameters for streaming data responses. 
+     */
+    @ACfgOverride.Root(root="DP_API_QUERY_DATA_REQUEST_STREAM")
+    public static class Stream extends CfgStructure<Stream> {
+        
+//        /** Enumeration of data stream type preferences */
+//        public static enum DpQueryStreamType {
+//            /** Unidirectional stream - backward stream from Query Service to client */
+//            UNIDIRECTIONAL,
+//
+//            /** Bidirectional data stream */ 
+//            BIDIRECTIONAL;
+//        }
+        
+        /** Default constructor required for base structure class */
+        public Stream() { super(Stream.class); };
+        
+        
+        /** Preference for gRPC data stream type */
+        @ACfgOverride.Field(name="PREFERENCE")
+        public DpQueryStreamType   preference;
+    }
+    
     /**
      *  Structure class defining default configuration parameters for composite queries. 
      */

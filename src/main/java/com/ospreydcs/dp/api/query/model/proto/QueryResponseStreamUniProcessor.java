@@ -58,7 +58,10 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData;
  * @since Feb 5, 2024
  *
  * @see QueryResponseStreamProcessor
+ * 
+ * @deprecated Moved into base class source file
  */
+@Deprecated(since="Feb 9, 2024", forRemoval=true)
 public final class QueryResponseStreamUniProcessor extends QueryResponseStreamProcessor {
 
     

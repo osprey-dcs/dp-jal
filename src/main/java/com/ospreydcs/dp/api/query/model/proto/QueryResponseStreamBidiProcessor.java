@@ -44,9 +44,10 @@ import io.grpc.stub.CallStreamObserver;
  * </p>
  * <p>
  * This implementation assumes a <em>bidirectional</em> gRPC data stream to/from the
- * Query Service to this object.  Objects of <code>QueryResponseStreamUniProcessor</code>
- * represent the backward stream handle (data sink for the Query Service) while
- * the forward stream handle is maintained as an attribute.
+ * Query Service to this object.  Note that all subclasses of 
+ * <code>QueryResponseStreamProcessor</code> represent the backward stream handle 
+ * (data sink for the Query Service).  The forward stream handle is maintained as an attribute
+ * within this subclass.
  * </p>
  * <p>
  * All data processing is done in the base class 
@@ -71,7 +72,10 @@ import io.grpc.stub.CallStreamObserver;
  * @since Feb 6, 2024
  *
  * @see QueryResponseStreamProcessor
+ * 
+ * @deprecated Moved into base class source file
  */
+@Deprecated(since="Feb 9, 2024", forRemoval=true)
 public class QueryResponseStreamBidiProcessor extends QueryResponseStreamProcessor {
 
     

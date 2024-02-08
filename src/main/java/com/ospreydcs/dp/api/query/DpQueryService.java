@@ -42,7 +42,7 @@ import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamQueueBufferDeprecated;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer.StreamType;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.model.data.DataTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
@@ -212,7 +212,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
         
         // Create the query stream buffer and return it
         DpQueryStreamBuffer buf = DpQueryStreamBuffer.newBuffer(
-                StreamType.UNIDIRECTIONAL, 
+                DpQueryStreamType.UNIDIRECTIONAL, 
                 this.getConnection().getStubAsync(),
                 msgRequest,
                 CFG_DEFAULT.logging.active);
@@ -306,7 +306,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
         
         // Create the query stream buffer and return it
         DpQueryStreamBuffer buf = DpQueryStreamBuffer.newBuffer(
-                StreamType.BIDIRECTIONAL, 
+                DpQueryStreamType.BIDIRECTIONAL, 
                 this.getConnection().getStubAsync(),
                 msgRequest,
                 CFG_DEFAULT.logging.active);

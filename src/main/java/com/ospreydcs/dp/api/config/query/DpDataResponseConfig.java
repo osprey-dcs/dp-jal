@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.api.query.DpDataRequest;
 
 /**
  * <p>
@@ -59,18 +60,9 @@ public class DpDataResponseConfig extends CfgStructure<DpDataResponseConfig> {
     /**
      *  Structure class defining default configuration parameters for multi-streaming data responses.
      */
-    @ACfgOverride.Root(root="DP_API_QUERY_")
+    @ACfgOverride.Root(root="DP_API_QUERY_DATA_RESPONSE_MULTISTREAM")
     public static class Multistream extends CfgStructure<Multistream> {
 
-        /** Enumeration of data stream type preferences */
-        public static enum StreamType {
-            /** Unidirectional stream - backward stream from Query Service to client */
-            UNIDIRECTIONAL,
-
-            /** Bidirectional data stream */ 
-            BIDIRECTIONAL;
-        }
-        
         /** Default constructor required for base structure class */
         public Multistream() { super(Multistream.class); }
         
@@ -94,10 +86,6 @@ public class DpDataResponseConfig extends CfgStructure<DpDataResponseConfig> {
         /** Maximum number of gRPC data stream to use for request recover */
         @ACfgOverride.Field(name="MAX_STREAMS")
         public Integer      maxStreams;
-        
-        /** Preference for gRPC data stream type */
-        @ACfgOverride.Field(name="PREFERENCE")
-        public StreamType   preference;
     }
     
 }
