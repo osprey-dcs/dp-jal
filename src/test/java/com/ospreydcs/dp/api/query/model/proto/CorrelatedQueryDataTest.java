@@ -60,10 +60,10 @@ public class CorrelatedQueryDataTest {
     public static final List<DataBucket>    LST_BUCKET = TestQueryResponses.queryBuckets(SingleQueryType.BUCKET);
     
     /** Test data - single data source bucket list */
-    public static final List<DataBucket>    Lst_BUCKETS_ONE = TestQueryResponses.queryBuckets(SingleQueryType.ONE_SOURCE);
+    public static final List<DataBucket>    LST_BUCKETS_ONE = TestQueryResponses.queryBuckets(SingleQueryType.ONE_SOURCE);
     
     /** Test data - single data source bucket list */
-    public static final List<DataBucket>    Lst_BUCKETS_TWO = TestQueryResponses.queryBuckets(SingleQueryType.TWO_SOURCE);
+    public static final List<DataBucket>    LST_BUCKETS_TWO = TestQueryResponses.queryBuckets(SingleQueryType.TWO_SOURCE);
 
     
     //

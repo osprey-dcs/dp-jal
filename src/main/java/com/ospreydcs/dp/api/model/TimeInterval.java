@@ -445,8 +445,24 @@ public record TimeInterval(Instant begin, Instant end) {
     //
     
     /**
+     * <p>
+     * Determines equality of intervals.
+     * </p>
+     * <p>
+     * Performs the following checks:
+     * <ol>
+     * <li>Checks to see that the argument is a <code>TimeInterval</code> type.</li>
+     * <li>Checks equality of left endpoint with <code>{@link Instant#equals(Object)}</code>.</li>  
+     * <li>Checks equality of right endpoint with <code>{@link Instant#equals(Object)}</code>.</li>
+     * </ol>
+     * If all the above answer <code>true</code> the result is <code>true</code>.  Otherwise
+     * the result is false.
+     *   
+     * @param   obj     equality comparison object
+     * 
+     * @return  <code>true</code> if the argument is a <code>TimeInterval</code> with equal endpoints
      *
-     * @see @see java.lang.Record#equals(java.lang.Object)
+     * @see java.lang.Record#equals(java.lang.Object)
      */
     @Override
     public boolean equals(Object obj) {
@@ -457,7 +473,22 @@ public record TimeInterval(Instant begin, Instant end) {
     }
 
     /**
-     *
+     * <p>
+     * Customized <code>toString()</code> method for <code>TimeInterval</code> class.
+     * </p>
+     * <p>
+     * Writes the time interval to a string with the given format
+     * <code>
+     * <pre>
+     *   [epochSecond:nanoSecond, epochSecond:nanoSecond] 
+     * </pre>
+     * </code>
+     * where "<code>epochSeconde</code>" and "<code>nanoSecond</code>" refer to the respective
+     * <code>{@link Instant}</code> components of the interval endpoints.
+     * </p>
+     * 
+     * @return  string representation of the this time interval  
+     * 
      * @see @see java.lang.Record#toString()
      */
     @Override

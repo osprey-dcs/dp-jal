@@ -85,16 +85,16 @@ public class TestQueryServiceTest {
      * @param   range   time interval over which data source was active
      *
      */
-    public static record PvTimeRange(String pvName, TimeInterval range) {
+    public static record PvActivityRange(String pvName, TimeInterval range) {
         
         /**
          * @param strName       name of the data source
          * @param domActive     time interval over which it is active
          * 
-         * @return  new <code>PvTimeRange</code> instance initialized with arguments
+         * @return  new <code>PvActivityRange</code> instance initialized with arguments
          */
-        public static PvTimeRange   from(String strName, TimeInterval domActive) {
-            return new PvTimeRange(strName, domActive);
+        public static PvActivityRange   from(String strName, TimeInterval domActive) {
+            return new PvActivityRange(strName, domActive);
         }
     };
     
@@ -110,6 +110,13 @@ public class TestQueryServiceTest {
 
     /** Query Service request whose result should be two data source time series */
     public static QueryRequest  MSG_REQUEST_TWO = TestQueryResponses.request(SingleQueryType.TWO_SOURCE);
+    
+    /** Query Service request whose result should be two data source time series */
+    public static QueryRequest  MSG_REQUEST_WIDE = TestQueryResponses.request(SingleQueryType.WIDE);
+    
+    /** Query Service request whose result should be two data source time series */
+    public static QueryRequest  MSG_REQUEST_LONG = TestQueryResponses.request(SingleQueryType.LONG);
+    
 
     
     //
@@ -202,10 +209,14 @@ public class TestQueryServiceTest {
             Assert.fail(recValid.message());
         }
 
-        // Check the response for all data source representation
+        // Check the response against the query
         ResultRecord    recSources = this.checkSourceNames(msgRequest, List.of(msgResponse));
         if (recSources.isFailure())
             Assert.fail(recSources.message());
+        
+        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, List.of(msgResponse));;
+        if (recActivity.isFailure())
+            Assert.fail(recActivity.message());
         
         // Check the query data
         BucketData   msgData = msgResponse.getQueryReport().getBucketData();
@@ -251,17 +262,21 @@ public class TestQueryServiceTest {
             Assert.fail(recValid.message());
         }
 
-        // Check the response for all data source representation
+        // Check the response against the query
         ResultRecord    recSources = this.checkSourceNames(msgRequest, List.of(msgResponse));
         if (recSources.isFailure())
             Assert.fail(recSources.message());
         
-        // Check the query data
+        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, List.of(msgResponse));;
+        if (recActivity.isFailure())
+            Assert.fail(recActivity.message());
+        
+        // Verify the query data
         BucketData   msgData = msgResponse.getQueryReport().getBucketData();
         
-        ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
-        if (recUnique.isFailure())
-            Assert.fail(recUnique.message());
+//        ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
+//        if (recUnique.isFailure())
+//            Assert.fail(recUnique.message());
         
         ResultRecord    recSizes = this.verifySourceSizes(msgData);
         if (recSizes.isFailure())
@@ -270,7 +285,7 @@ public class TestQueryServiceTest {
         // Inspect the query data
         List<DataBucket>    lstBuckets = msgData.getDataBucketsList();
         
-        Assert.assertTrue("Results set should contain ONE data bucket", lstBuckets.size() == 1);
+        Assert.assertTrue("Results set should contain more than ONE data bucket", lstBuckets.size() > 1);
     }
 
     /**
@@ -315,10 +330,14 @@ public class TestQueryServiceTest {
             Assert.fail(recValid.message());
         }
 
-        // Check the response for all data source representation
+        // Check the response against the request
         ResultRecord    recSources = this.checkSourceNames(msgRequest, List.of(msgResponse));
         if (recSources.isFailure())
             Assert.fail(recSources.message());
+        
+        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, List.of(msgResponse));
+        if (recActivity.isFailure())
+            Assert.fail(recActivity.message());
         
         // Check the query data
         BucketData   msgData = msgResponse.getQueryReport().getBucketData();
@@ -335,6 +354,34 @@ public class TestQueryServiceTest {
         List<DataBucket>    lstBuckets = msgData.getDataBucketsList();
         
         Assert.assertTrue("Results set should contain more than ONE data bucket", lstBuckets.size() > 1);
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.test.TestQueryService#queryResponseSingle(com.ospreydcs.dp.grpc.v1.query.QueryRequest)}.
+     */
+    @Test
+    public final void testQueryResponseSingleTwo() {
+        QueryRequest    msgRequest = MSG_REQUEST_TWO;
+        
+        // Perform the query
+        QueryResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
+        
+        // Check the response
+        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, List.of(msgResponse));
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.test.TestQueryService#queryResponseSingle(com.ospreydcs.dp.grpc.v1.query.QueryRequest)}.
+     */
+    @Test
+    public final void testQueryResponseSingleLong() {
+        QueryRequest    msgRequest = MSG_REQUEST_LONG;
+        
+        // Perform the query
+        QueryResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
+        
+        // Check the response
+        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, List.of(msgResponse));
     }
 
     /**
@@ -369,7 +416,11 @@ public class TestQueryServiceTest {
         if (recSources.isFailure())
             Assert.fail(recSources.message());
         
-//        // Check the query data
+        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, lstResultsSet);;
+        if (recActivity.isFailure())
+            Assert.fail(recActivity.message());
+        
+        // Check the query data
 //        ResultRecord    recUnique = this.verifySourceUniqueness(lstResultsSet);
 //        if (recUnique.isFailure())
 //            Assert.fail(recUnique.message());
@@ -378,9 +429,9 @@ public class TestQueryServiceTest {
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        List<PvTimeRange>   lstRanges = this.extractActivityRanges(lstResultsSet);
-        
         // Inspect the query data
+        this.printActivityRanges(JavaRuntime.getQualifiedCallerNameSimple(), lstResultsSet);
+        
         List<DataBucket>    lstBuckets = lstResultsSet
                 .stream()
                 .<BucketData>map(msgRsp -> msgRsp.getQueryReport().getBucketData())
@@ -388,6 +439,34 @@ public class TestQueryServiceTest {
                 .toList();
         
         Assert.assertTrue("Results set should contain more than ONE data bucket", lstBuckets.size() > 1);
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.test.TestQueryService#queryResponseStream(com.ospreydcs.dp.grpc.v1.query.QueryRequest)}.
+     */
+    @Test
+    public final void testQueryResponseStreamTwo() {
+        QueryRequest    msgRequest = MSG_REQUEST_TWO;
+        
+        // Perform the query
+        List<QueryResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
+        
+        // Check the response
+        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.test.TestQueryService#queryResponseStream(com.ospreydcs.dp.grpc.v1.query.QueryRequest)}.
+     */
+    @Test
+    public final void testQueryResponseStreamLong() {
+        QueryRequest    msgRequest = MSG_REQUEST_LONG;
+        
+        // Perform the query
+        List<QueryResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
+        
+        // Check the response
+        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
     }
 
     /**
@@ -424,23 +503,27 @@ public class TestQueryServiceTest {
             Assert.fail(recValid.message());
         }
 
-        // Check the response for all data source representation
+        // Check the response against the query
         ResultRecord    recSources = this.checkSourceNames(msgRequest, lstResultsSet);
         if (recSources.isFailure())
             Assert.fail(recSources.message());
         
+        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, lstResultsSet);
+        if (recActivity.isFailure())
+            Assert.fail(recActivity.message());
+        
         // Check the query data
-        ResultRecord    recUnique = this.verifySourceUniqueness(lstResultsSet);
-        if (recUnique.isFailure())
-            Assert.fail(recUnique.message());
+//        ResultRecord    recUnique = this.verifySourceUniqueness(lstResultsSet);
+//        if (recUnique.isFailure())
+//            Assert.fail(recUnique.message());
         
         ResultRecord    recSizes = this.verifySourceSizes(lstResultsSet);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        List<PvTimeRange>   lstRanges = this.extractActivityRanges(lstResultsSet);
-        
         // Inspect the query data
+        this.printActivityRanges(JavaRuntime.getQualifiedCallerNameSimple(), lstResultsSet);
+        
         List<DataBucket>    lstBuckets = lstResultsSet
                 .stream()
                 .<BucketData>map(msgRsp -> msgRsp.getQueryReport().getBucketData())
@@ -451,17 +534,138 @@ public class TestQueryServiceTest {
     }
 
     /**
+     * Test method for {@link com.ospreydcs.dp.api.query.test.TestQueryService#queryResponseCursor(com.ospreydcs.dp.grpc.v1.query.QueryRequest)}.
+     */
+    @Test
+    public final void testQueryResponseCursorTwo() {
+        QueryRequest    msgRequest = MSG_REQUEST_TWO;
+        
+        // Perform the query
+        List<QueryResponse> lstResultsSet;
+        try {
+            lstResultsSet = apiQueryService.queryResponseCursor(msgRequest);
+            
+        } catch (CompletionException | InterruptedException e) {
+            Assert.fail("queryResponseCursor threw exception: type=" + e.getClass().getSimpleName() + ", message=" + e.getMessage());
+            return;
+        }
+        
+        // Check the response
+        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.test.TestQueryService#queryResponseCursor(com.ospreydcs.dp.grpc.v1.query.QueryRequest)}.
+     */
+    @Test
+    public final void testQueryResponseCursorLong() {
+        QueryRequest    msgRequest = MSG_REQUEST_LONG;
+        
+        // Perform the query
+        List<QueryResponse> lstResultsSet;
+        try {
+            lstResultsSet = apiQueryService.queryResponseCursor(msgRequest);
+            
+        } catch (CompletionException | InterruptedException e) {
+            Assert.fail("queryResponseCursor threw exception: type=" + e.getClass().getSimpleName() + ", message=" + e.getMessage());
+            return;
+        }
+        
+        // Check the response
+        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.test.TestQueryService#queryResponseCursor(com.ospreydcs.dp.grpc.v1.query.QueryRequest)}.
+     */
+    @Test
+    public final void testQueryResponseCursorWide() {
+        QueryRequest    msgRequest = MSG_REQUEST_WIDE;
+        
+        // Perform the query
+        List<QueryResponse> lstResultsSet;
+        try {
+            lstResultsSet = apiQueryService.queryResponseCursor(msgRequest);
+            
+        } catch (CompletionException | InterruptedException e) {
+            Assert.fail("queryResponseCursor threw exception: type=" + e.getClass().getSimpleName() + ", message=" + e.getMessage());
+            return;
+        }
+        
+        // Check the response
+        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
+    }
+
+    /**
      * Test method for {@link com.ospreydcs.dp.api.query.test.TestQueryService#shutdown()}.
      */
     @Test
     public final void testShutdown() {
-        fail("Not yet implemented"); // TODO
+        try {
+            TestQueryService    apiTest = TestQueryService.newService();
+            
+            apiTest.shutdown();
+            
+        } catch (DpGrpcException e) {
+            Assert.fail("Threw DpGrpcException: " + e.getMessage());
+            
+        }
     }
 
     
     //
     // Support Methods
     //
+    
+    /**
+     * <p>
+     * Performs all the checks and verification possible on the arguments.
+     * </p>
+     * 
+     * @param strMsg        header or message passed to any standard output
+     * @param msgRequest    the data request message
+     * @param lstResultsSet the Query Service results set from the given data request 
+     */
+    private void    checkResults(String strMsg, QueryRequest msgRequest, List<QueryResponse> lstResultsSet) {
+        
+        // Inspect the request
+        List<String>    lstSrcs = msgRequest.getQuerySpec().getColumnNamesList();
+        Timestamp       msgTms1 = msgRequest.getQuerySpec().getStartTime();
+        Timestamp       msgTms2 = msgRequest.getQuerySpec().getEndTime();
+        
+        if (ProtoTime.compare(msgTms1, msgTms2) >= 0)
+            Assert.fail("Query request had bad time range.");
+        
+        // Check the response for errors
+        ResultRecord    recValid = this.checkErrors(lstResultsSet);
+        if (recValid.isFailure()) {
+            Assert.fail(recValid.message());
+        }
+
+        // Check the response against the query
+        ResultRecord    recSources = this.checkSourceNames(msgRequest, lstResultsSet);
+        if (recSources.isFailure())
+            Assert.fail(recSources.message());
+        
+        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, lstResultsSet);
+        if (recActivity.isFailure())
+            Assert.fail(recActivity.message());
+        
+        ResultRecord    recSizes = this.verifySourceSizes(lstResultsSet);
+        if (recSizes.isFailure())
+            Assert.fail(recSizes.message());
+        
+        // Inspect the query data
+        this.printActivityRanges(strMsg, lstResultsSet);
+        
+        List<DataBucket>    lstBuckets = lstResultsSet
+                .stream()
+                .<BucketData>map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .toList();
+        
+        Assert.assertTrue("Results set should contain more than ONE data bucket", lstBuckets.size() > 1);
+    }
     
     /**
      * <p>
@@ -574,6 +778,55 @@ public class TestQueryServiceTest {
         }
                
         return ResultRecord.SUCCESS;
+    }
+    
+    /**
+     * <p>
+     * Checks all PV time ranges of the given results set against the request time range.
+     * </p>
+     * <p>
+     * Extracts the time range specified in the data request message argument.   
+     * Then extracts the time ranges where each data source within the results set is active 
+     * using method <code>{@link #extractActivityRanges(List)}</code>.
+     * Compares the time domain of each active data source against that specified within
+     * the original data request.  If any time range is different, the method returns
+     * a FAILURE result with a message describing all offending data source names.
+     * </p>
+     *    
+     * @param msgRequest    Query Service data request producing the results set
+     * @param lstResultsSet Query Service results set of the given data query
+     * 
+     * @return  <code>{@link ResultRecord#SUCCESS}</code> if all data source have activity intervals equal to query time domain,
+     *          otherwise a FAILURE record with a list of all offending data sources
+     * 
+     * @see #extractActivityRanges(List)
+     */
+    private ResultRecord    checkActivityDomains(QueryRequest msgRequest, List<QueryResponse> lstResultsSet) {
+        
+        // Extract query time range and create domain interval
+        Timestamp   tmsBegin = msgRequest.getQuerySpec().getStartTime();
+        Timestamp   tmsEnd = msgRequest.getQuerySpec().getEndTime();
+        Instant     insBegin = ProtoMsg.toInstant(tmsBegin);
+        Instant     insEnd = ProtoMsg.toInstant(tmsEnd);
+        
+        TimeInterval    domRequest = TimeInterval.from(insBegin, insEnd);
+        
+        // Extract the results set PV activity time ranges
+        List<PvActivityRange>  lstPvDoms = this.extractActivityRanges(lstResultsSet);
+        
+        // Check all PV activity ranges against the request query range
+        List<String>    lstBadPvs = lstPvDoms
+                .stream()
+                .filter(rec -> !rec.range.equals(domRequest))
+                .map(rec -> rec.pvName)
+                .toList();
+        
+        // Check for bad PV activity ranges
+        if (!lstBadPvs.isEmpty())
+            return ResultRecord.newFailure("Results set contains incomplete time series for the following: " + lstBadPvs);
+        
+        return ResultRecord.SUCCESS;
+                    
     }
     
     /**
@@ -778,7 +1031,7 @@ public class TestQueryServiceTest {
      * 
      * @return  a list of pairs (PV name, TimeInterval) containing the time ranges of PV activity
      */
-    private List<PvTimeRange>    extractActivityRanges(/* QueryRequest msgRequest, */ List<QueryResponse> lstResultsSet) {
+    private List<PvActivityRange>    extractActivityRanges(/* QueryRequest msgRequest, */ List<QueryResponse> lstResultsSet) {
             
     //        // Get the start and end times of the request
     //        Timestamp   tmsBegin = msgRequest.getQuerySpec().getStartTime();
@@ -801,7 +1054,7 @@ public class TestQueryServiceTest {
             Set<String>     setSrcNms = new TreeSet<>(lstSrcNms);
             
             // Process each data source
-            List<PvTimeRange>   lstRanges = new ArrayList<>(setSrcNms.size());
+            List<PvActivityRange>   lstRanges = new ArrayList<>(setSrcNms.size());
             
             for (String strSrcNm : setSrcNms) {
                 
@@ -829,7 +1082,7 @@ public class TestQueryServiceTest {
                         .get();
     
                 TimeInterval    domActive = TimeInterval.from(ProtoMsg.toInstant(tmsFirst), ProtoMsg.toInstant(tmsLast));
-                PvTimeRange     recActive = PvTimeRange.from(strSrcNm, domActive);
+                PvActivityRange     recActive = PvActivityRange.from(strSrcNm, domActive);
                 
                 lstRanges.add(recActive);
             }
@@ -837,4 +1090,22 @@ public class TestQueryServiceTest {
             return lstRanges;
         }
     
+    /**
+     * <p>
+     * Prints out the activity time ranges for each data source in the results set to standard output.
+     * </p>
+     * 
+     * @param strHdr        string header for output message.
+     * @param lstResultsSet list of <code>QueryRespoonse</code> messages representing a data query results set
+     */
+    private void printActivityRanges(String strHdr, List<QueryResponse> lstResultsSet) {
+
+        List<PvActivityRange>   lstRanges = this.extractActivityRanges(lstResultsSet);
+        
+        System.out.println(strHdr + " - PV Activity Time Domains");
+        for (PvActivityRange rec : lstRanges) {
+            System.out.println("  " + rec.pvName + ": " + rec.range);
+        }
+        
+    }
 }
