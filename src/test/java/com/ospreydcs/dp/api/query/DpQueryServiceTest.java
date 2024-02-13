@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -47,8 +48,11 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
+import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
  * <p>
@@ -175,6 +179,48 @@ public class DpQueryServiceTest {
         fail("Not yet implemented"); // TODO
     }
 
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     */
+    @Test
+    public final void testQueryStreamUniDpDataRequestOne() {
+        
+        // Request parameters
+        final String  strSrcNm = "dpTest_1";
+        final Instant insBegin = Instant.ofEpochSecond(1698767462);
+        final Instant insEnd = Instant.ofEpochSecond(1698767472);
+        final DpQueryStreamType enmType = DpQueryStreamType.UNIDIRECTIONAL;
+        
+        // Create request and configure
+        DpDataRequest   rqst = DpDataRequest.newRequest();
+        
+        rqst.selectSource(strSrcNm);
+        rqst.rangeAfter(insBegin);
+        rqst.rangeBefore(insEnd);
+        rqst.setStreamType(enmType);
+        
+        try {
+            DpQueryStreamBuffer bufResult = apiQuery.queryStreamUni(rqst);
+        
+            bufResult.startAndAwaitCompletion();
+            
+            List<QueryResponse> lstResultSet = bufResult.getBuffer();
+            List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = lstResultSet
+                    .stream()
+                    .map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                    .flatMap(msgData -> msgData.getDataBucketsList().stream())
+                    .toList();
+            
+            System.out.println("Query for " + strSrcNm + " in " + TimeInterval.from(insBegin, insEnd));
+            System.out.println("  results set size: " + lstResultSet.size());
+            System.out.println("  bucket count: " + lstBuckets.size());
+            
+        } catch (Exception e) {
+            Assert.fail("Process exception while waiting for stream completion: type=" + e.getClass().getSimpleName() + ", message=" + e.getMessage());
+            
+        }
+    }
+    
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */

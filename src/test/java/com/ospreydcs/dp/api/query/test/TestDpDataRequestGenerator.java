@@ -131,6 +131,13 @@ public class TestDpDataRequestGenerator {
      */
     public static final int         CNT_PV_NAMES;
     
+    /**
+     * The prefix for each data source name within the Data Platform test archive.
+     * <p>
+     * The value is taken from test default parameter [<code>testArchive.pvPrefix</code>].
+     */
+    public static final String      STR_PV_PREFIX;
+    
     /** 
      * List of all data source names within the Data Platform data archive test data set 
      * <p>
@@ -175,9 +182,11 @@ public class TestDpDataRequestGenerator {
         INS_FINAL = INS_INCEPT.plusSeconds(CFG_ARCHIVE.duration);
 
         CNT_PV_NAMES = CFG_ARCHIVE.pvCount;
+        STR_PV_PREFIX = CFG_ARCHIVE.pvPrefix;
+        
         LST_PV_NAMES = IntStream
                 .rangeClosed(1, CNT_PV_NAMES)
-                .mapToObj( i -> "pv_" + Integer.toString(i))
+                .mapToObj( i -> STR_PV_PREFIX + Integer.toString(i))
                 .toList();   
     }
     

@@ -255,20 +255,20 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
         
         // Check the argument for data source name uniqueness
         ResultRecord    rsltUnique = cqdSampleBlock.verifySourceUniqueness();
-        if (rsltUnique.failed()) {
+        if (rsltUnique.isFailure()) {
             if (BOL_LOGGING)
-                LOGGER.error("{} correlated data block has non-unique sources: {}", JavaRuntime.getCallerName(), rsltUnique.getMessage());
+                LOGGER.error("{} correlated data block has non-unique sources: {}", JavaRuntime.getCallerName(), rsltUnique.message());
 
-            throw new IllegalArgumentException("Correlated data block has non-unique sources: " + rsltUnique.getMessage());
+            throw new IllegalArgumentException("Correlated data block has non-unique sources: " + rsltUnique.message());
         }
         
         // Check the argument for data source size consistency
         ResultRecord    rsltSizes = cqdSampleBlock.verifySourceSizes();
-        if (rsltSizes.failed()) {
+        if (rsltSizes.isFailure()) {
             if (BOL_LOGGING)
-                LOGGER.error("{} correlated data block has columns with bad sizes: {}", JavaRuntime.getCallerName(), rsltSizes.getMessage());
+                LOGGER.error("{} correlated data block has columns with bad sizes: {}", JavaRuntime.getCallerName(), rsltSizes.message());
             
-            throw new IllegalArgumentException("Correlated data block has columns with bad sizes: " + rsltSizes.getMessage());
+            throw new IllegalArgumentException("Correlated data block has columns with bad sizes: " + rsltSizes.message());
         }
         
         // Extract the relevant Protobuf message from the argument

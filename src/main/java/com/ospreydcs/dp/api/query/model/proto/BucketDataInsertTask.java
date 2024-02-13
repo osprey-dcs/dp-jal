@@ -80,7 +80,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
     //
     
     /** The subject of this data insertion task */
-    private final QueryResponse.QueryReport.QueryData.DataBucket    msgSubject;
+    private final QueryResponse.QueryReport.BucketData.DataBucket    msgSubject;
     
     /** The target collection of existing sampling intervals */
     private final Collection<CorrelatedQueryData>                   setTarget;
@@ -106,7 +106,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * 
      * @return  new, initialized thread task ready for execution
      */
-    public static BucketDataInsertTask newTask(QueryResponse.QueryReport.QueryData.DataBucket msgSubject, final Collection<CorrelatedQueryData> setTarget) {
+    public static BucketDataInsertTask newTask(QueryResponse.QueryReport.BucketData.DataBucket msgSubject, final Collection<CorrelatedQueryData> setTarget) {
         return new BucketDataInsertTask(msgSubject, setTarget);
     }
 
@@ -123,7 +123,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * @param msgSubject    the task subject - a QueryService data bucket message
      * @param setTarget     the data insertion target - an collection of <code>CorrelatedQueryData</code> instances
      */
-    public BucketDataInsertTask(QueryResponse.QueryReport.QueryData.DataBucket msgSubject, final Collection<CorrelatedQueryData> setTarget) {
+    public BucketDataInsertTask(QueryResponse.QueryReport.BucketData.DataBucket msgSubject, final Collection<CorrelatedQueryData> setTarget) {
         this.msgSubject = msgSubject;
         this.setTarget = setTarget;
     }
@@ -164,7 +164,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * 
      * @return  the <code>DataBucket</code> Protobuf message subject of task
      */
-    public final QueryResponse.QueryReport.QueryData.DataBucket    getSubject() {
+    public final QueryResponse.QueryReport.BucketData.DataBucket    getSubject() {
         return this.msgSubject;
     }
     

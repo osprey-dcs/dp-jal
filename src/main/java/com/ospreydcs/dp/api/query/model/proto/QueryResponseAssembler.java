@@ -27,11 +27,15 @@
  */
 package com.ospreydcs.dp.api.query.model.proto;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
@@ -41,13 +45,15 @@ import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.ResultRecord;
 import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.api.query.DpDataRequest.CompositeType;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.model.time.SamplingProcess;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
 
 /**
  *
@@ -67,16 +73,16 @@ public class QueryResponseAssembler {
      * stream to <code>{@link QueryResponseAssembler}</code> data buffer.
      * </p>
      * <p>
-     * The <code>{@link #accept(QueryData)}</code> method of this class transfers the given
+     * The <code>{@link #accept(BucketData)}</code> method of this class transfers the given
      * message to the data queue buffer <code>{@link QueryResponseAssembler#queRspData}</code>
-     * of the enclosing class instance.  The current number of <code>QueryData</code> messages
+     * of the enclosing class instance.  The current number of <code>BucketData</code> messages
      * transferred is available through the <code>{@link #getMessageCount()}</code> method. 
      * </p>
      * <p>
      * Instances are intended to be passed to newly created <code>{@link QuerResponseStreamProcessor}</code>
      * instances via the creator 
      * <code>{@link QueryResponseStreamProcessor#newTask(DpDataRequest, DpQueryServiceStub, Consumer)}</code>.
-     * Thus, they simply take the extracted <code>QueryData</code> messages from the stream processor
+     * Thus, they simply take the extracted <code>BucketData</code> messages from the stream processor
      * and add them to the queue buffer of the enclosing class instance.
      * </p>
      *  
@@ -84,7 +90,7 @@ public class QueryResponseAssembler {
      * @since Feb 8, 2024
      *
      */
-    private final class QueryDataConsumer implements Consumer<QueryResponse.QueryReport.QueryData> {
+    private final class QueryDataConsumer implements Consumer<QueryResponse.QueryReport.BucketData> {
 
         
         // 
@@ -92,14 +98,14 @@ public class QueryResponseAssembler {
         //
         
         /**
-         * Creates a new instance of <code>QueryDataConsumer</code> for the given enclosing class instance.
+         * Creates a new instance of <code>BucketDataConsumer</code> for the given enclosing class instance.
          * 
-         * @param instance  <code>QueryResponseAssemble</code> instance target of consumer
+         * @param parent  <code>QueryResponseAssemble</code> instance target of consumer
          * 
-         * @return  new <code>QueryDataConsumer</code> for the given instance
+         * @return  new <code>BucketDataConsumer</code> for the given instance
          */
-        public static QueryDataConsumer newConsumer(QueryResponseAssembler instance) {
-            return instance.new QueryDataConsumer();
+        public static QueryDataConsumer newInstance(QueryResponseAssembler parent) {
+            return parent.new QueryDataConsumer();
         }
         
         //
@@ -112,7 +118,7 @@ public class QueryResponseAssembler {
         
         /**
          * <p>
-         * Returns the number of <code>QueryData</code> messages transferred to the queue buffer.
+         * Returns the number of <code>BucketData</code> messages transferred to the queue buffer.
          * </p>
          * 
          * @return  current number of data messages passed from the stream processor to the queue buffer
@@ -122,7 +128,7 @@ public class QueryResponseAssembler {
         }
         
         //
-        // Consumer<QueryData> Interface
+        // Consumer<BucketData> Interface
         //
         
         /**
@@ -133,7 +139,7 @@ public class QueryResponseAssembler {
          * @see java.util.function.Consumer#accept(java.lang.Object)
          */
         @Override
-        public void accept(QueryData msgData) {
+        public void accept(BucketData msgData) {
             QueryResponseAssembler.this.queRspData.add(msgData);
             
             this.cntMsgs++;
@@ -152,7 +158,7 @@ public class QueryResponseAssembler {
      * do want to began processing the data as soon as possible.
      * </p>
      * <p>
-     * Performs the transfer of <code>QueryData</code> messages from the queue buffer to
+     * Performs the transfer of <code>BucketData</code> messages from the queue buffer to
      * the response correlator <code>{@link QueryResponseAssembler#qrcDataCorrelator}</code>.
      * Note that the queue buffer <code>@link {@link QueryResponseAssembler#queRspData}</code>
      * is populated by the <code>Consumer<DataQuery></code> implementation passed to any 
@@ -173,12 +179,12 @@ public class QueryResponseAssembler {
         /**
          * Creates a new instance of <code>QueryDataProcessor</code> for the given enclosing class instance.
          * 
-         * @param instance  <code>QueryResponseAssemble</code> instance target of processor
+         * @param parent  <code>QueryResponseAssemble</code> instance target of processor
          * 
          * @return  new <code>QueryDataProcessor</code> for the given instance
          */
-        public static QueryDataProcessor newProcessor(QueryResponseAssembler instance) {
-            return instance.new QueryDataProcessor();
+        public static QueryDataProcessor newThread(QueryResponseAssembler parent) {
+            return parent.new QueryDataProcessor();
         }
 
         //
@@ -189,22 +195,69 @@ public class QueryResponseAssembler {
         private Integer         cntMsgsMax = null;
         
         /** Number of data messages polled so far */
-        private int             cntMsgsPolled = 0;
+        private int             cntMsgsProcessed = 0;
         
         /** The result of the thread task */
         private ResultRecord    recResult = null;
         
         
         //
-        // Configuration
+        // Operations
         //
         
+        /**
+         * <p>
+         * Sets the maximum number of <code>BucketData</code> messages to process.
+         * </p>
+         * <p>
+         * Note that this value is typically unknown until the stream processor completes.
+         * Thus we assume this value is set after the <code>QueryDataProcessor</code> thread
+         * has already started.
+         * </p>
+         * <p>
+         * The <code>{@link #cntMsgsMax}</code> attribute is set to the argument value then
+         * the <code>{@link #cntMsgsProcessed}</code> attribute is checked against the argument value.
+         * If the maximum number of messages has already been processed, the processing loop
+         * is interrupted and the result is considered SUCCESS.
+         * </p>
+         * 
+         * @param cntMsgsMax    maximum number of <code>BucketData</code> messages to process
+         */
         public void setMaxMessages(int cntMsgsMax) {
             this.cntMsgsMax = cntMsgsMax;
+            
+            if (this.cntMsgsProcessed >= this.cntMsgsMax) {
+                Thread.currentThread().interrupt();
+                
+                this.recResult = ResultRecord.SUCCESS;
+            }
+        }
+
+        /**
+         * <p>
+         * Terminates the data processing immediately.
+         * </p>
+         * <p>
+         * The data processing loop within <code>{@link #run()}</code> is interrupted
+         * and the result is set to FAILURE.  All processing activity is aborted
+         * and left in its current state.
+         * </p>
+         */
+        public void terminate() {
+            Thread.currentThread().interrupt();
+            
+            this.recResult = ResultRecord.newFailure("The data processing thread was terminted externally.");
         }
         
+        //
+        // State Queries
+        //
+        
         public boolean isSuccess() {
-            return this.recResult.success();
+            if (this.recResult == null)
+                return false;
+            
+            return this.recResult.isSuccess();
         }
         
         public ResultRecord getResult() {
@@ -222,7 +275,7 @@ public class QueryResponseAssembler {
          * </p>
          * <p>
          * Runs a loop that polls the <code>{@link QueryResponseAssembler#queRspData}</code> buffer
-         * for <code>QueryData</code> data messages.  When available, the data messages are
+         * for <code>BucketData</code> data messages.  When available, the data messages are
          * passed to the <code>{@link QueryResponseAssembler#qrcDataCorrelator}</code> for
          * processing.
          * </p>
@@ -238,10 +291,9 @@ public class QueryResponseAssembler {
          */
         @Override
         public void run() {
-            while (this.cntMsgsMax == null || this.cntMsgsPolled < this.cntMsgsMax) {
+            while (this.cntMsgsMax == null || this.cntMsgsProcessed < this.cntMsgsMax) {
                 try {
-                    QueryResponse.QueryReport.QueryData msgData = QueryResponseAssembler.this.queRspData.poll(CNT_TIMEOUT, TU_TIMEOUT);
-                    this.cntMsgsPolled++;
+                    QueryResponse.QueryReport.BucketData msgData = QueryResponseAssembler.this.queRspData.poll(CNT_TIMEOUT, TU_TIMEOUT);
 
                     if (msgData == null) {
                         this.recResult = ResultRecord.newFailure("A timeout occurred while waiting for the data buffer.");
@@ -251,9 +303,16 @@ public class QueryResponseAssembler {
 
                     // Note that this operation will block until completed
                     QueryResponseAssembler.this.qrcDataCorrelator.insertQueryData(msgData);
+                    this.cntMsgsProcessed++;
 
                 } catch (InterruptedException e) {
-                    this.recResult = ResultRecord.newFailure("Process interrupted while waiting for the data buffer.", e);
+                    if (this.cntMsgsMax != null && (this.cntMsgsProcessed >= this.cntMsgsMax)) {
+                        this.recResult = ResultRecord.SUCCESS;
+                        
+                        return;
+                    }
+                    
+                    this.recResult = ResultRecord.newFailure("Process interrupted externally while waiting for the data buffer.", e);
 
                     return;
                 }
@@ -334,7 +393,7 @@ public class QueryResponseAssembler {
     //
     
     /** The queue buffering all response messages for data correlation processing */
-    private final BlockingQueue<QueryData>  queRspData = new LinkedBlockingQueue<>();
+    private final BlockingQueue<BucketData>  queRspData = new LinkedBlockingQueue<>();
     
     /** The thread pool service for processing composite requests */
     private final ExecutorService           exeThreadPool = Executors.newFixedThreadPool(CNT_MULTISTREAM);
@@ -359,14 +418,57 @@ public class QueryResponseAssembler {
     // Operations
     //
     
-    public SamplingProcess  processRequest(DpDataRequest dpRequest) {
+    public SamplingProcess  performRequest(DpDataRequest dpRequest) throws InterruptedException, TimeoutException, ExecutionException {
         
+        // Process with a single data stream if multi-streaming is not active
+        if (!BOL_MULTISTREAM)
+            return processSingleStream(dpRequest);
+
+        // Check if request domain size is large enough to pivot to multi-streaming
         long szRequest = dpRequest.getDomainSize(TU_MULTISTREAM_PIVOT);
         
-        if (BOL_MULTISTREAM && (szRequest > LNG_MULTISTREAM_PIVOT))
-            return processMultiStream(dpRequest);
+        if (szRequest < LNG_MULTISTREAM_PIVOT)
+            return processSingleStream(dpRequest);
         
-        return processSingleStream(dpRequest);
+        // Okay - we are doing multiple gRPC streams
+        List<DpDataRequest>     lstCmpRqsts;    // composite request
+        
+        //  - Check if default query domain decomposition will work
+        DpDataRequest.DomainDecomposition recDomain = dpRequest.getDecompositionDefault();
+        
+        if (recDomain.totalCovers() < CNT_MULTISTREAM) {
+            lstCmpRqsts = dpRequest.buildCompositeRequest(recDomain);
+            
+            this.processMultiStream(lstCmpRqsts);
+        }
+        
+        //  - Check if we can decompose by data sources
+        if (dpRequest.getSourceCount() > CNT_MULTISTREAM) {
+            lstCmpRqsts = dpRequest.buildCompositeRequest(CompositeType.HORIZONTAL, CNT_MULTISTREAM);
+        
+            return processMultiStream(lstCmpRqsts);
+        }
+        
+        //  - Decompose vertically in sizes of the pivot number
+        long cntRqsts = szRequest / LNG_MULTISTREAM_PIVOT + ((szRequest % LNG_MULTISTREAM_PIVOT > 0) ? 1 : 0);
+        
+        if (cntRqsts < CNT_MULTISTREAM) {
+            lstCmpRqsts = dpRequest.buildCompositeRequest(CompositeType.VERTICAL, Long.valueOf(cntRqsts).intValue());
+            
+            this.processMultiStream(lstCmpRqsts);
+        }
+        
+        //  - Attempt a grid decomposition
+        if (dpRequest.getSourceCount() > (CNT_MULTISTREAM/2)) {
+            lstCmpRqsts = dpRequest.buildCompositeRequest(CompositeType.GRID, CNT_MULTISTREAM);
+            
+            this.processMultiStream(lstCmpRqsts);
+        }
+        
+        
+        // We cannot find a decomposition - Default back to single stream processing  
+        return this.processSingleStream(dpRequest);
+        
     }
     
     
@@ -374,23 +476,60 @@ public class QueryResponseAssembler {
     // Support Methods
     //
     
-    private SamplingProcess processSingleStream(DpDataRequest dpRequest) {
+    private SamplingProcess processSingleStream(DpDataRequest dpRequest) throws InterruptedException, TimeoutException, ExecutionException {
 
-        Consumer<QueryData> ifcDataSink = msgData -> { this.queRspData.add(msgData); };
-        QueryDataConsumer   actDataSink = QueryDataConsumer.newConsumer(this);
-        
-        QueryResponseStreamProcessor    prcStream = QueryResponseStreamProcessor.newTask(dpRequest, this.stubAsync, actDataSink);
-        QueryDataProcessor              prcData = QueryDataProcessor.newProcessor(this);
+        QueryResponseStreamProcessor    taskStream = QueryResponseStreamProcessor.newTask(
+                dpRequest, 
+                this.stubAsync, 
+                QueryDataConsumer.newInstance(this)
+                );
 
-        prcData.start();
-        prcStream.run();
-        prcData.setMaxMessages(prcStream.getResponseCount());
-        
+        Thread              thdStream = new Thread(taskStream);
+        QueryDataProcessor  thdProcess = QueryDataProcessor.newThread(this);
+
         try {
-            prcData.join();
+            thdProcess.start();
+            thdStream.start();
+
+            thdStream.join(timeoutLimitDefaultMillis());
+            
+            // Check for timeout limit
+            if (!taskStream.isCompleted()) {
+                String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() + " - Time limit expired while gRPC data streaming.";
+
+                if (BOL_LOGGING)
+                    LOGGER.error(strMsg);
+                
+                throw new TimeoutException(strMsg);
+            }
+
+            // Check for streaming error
+            if (!taskStream.isSuccess()) {
+                ResultRecord    recResult = taskStream.getResult();
+                String          strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+                        + " - gRPC streaming error; message="
+                        + recResult.message();
+                if (recResult.hasCause())
+                    strMsg += ", cause=" + recResult.cause();
+                
+                if (BOL_LOGGING)
+                    LOGGER.error(strMsg);
+                
+                thdProcess.terminate();
+                
+                throw new ExecutionException(strMsg, recResult.cause());
+            }
+            
+            // Set the number of messages to process
+            thdProcess.setMaxMessages(taskStream.getResponseCount());
+
+            thdProcess.join(timeoutLimitDefaultMillis());
+            
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            if (BOL_LOGGING)
+                LOGGER.error("{}: Interrupted while waiting for data streaming/processing to complete - {}.", JavaRuntime.getCallerName(), e.getMessage());
+            
+            throw e;
         }
         
         SamplingProcess sp = SamplingProcess.from(this.qrcDataCorrelator.getTargetSet());
@@ -398,8 +537,104 @@ public class QueryResponseAssembler {
         return sp;
     }
     
-    private SamplingProcess processMultiStream(DpDataRequest dpRequest) {
+    private SamplingProcess processMultiStream(List<DpDataRequest> lstRequests) throws InterruptedException, TimeoutException, ExecutionException {
         
-        return null;
+        // Create the multiple stream processing tasks
+        List<QueryResponseStreamProcessor>  lstStrmTasks = new LinkedList<>();
+        for (DpDataRequest dpRequest : lstRequests) {
+            QueryResponseStreamProcessor    taskStrm = QueryResponseStreamProcessor.newTask(
+                    dpRequest, 
+                    this.stubAsync, 
+                    QueryDataConsumer.newInstance(this)
+                    );
+            
+            lstStrmTasks.add(taskStrm);
+        }
+        
+        // Create the single data processing task thread
+        //  Then start the thread so its ready for incoming data from streams
+        QueryDataProcessor  thdProcessor = QueryDataProcessor.newThread(this);
+        
+        thdProcessor.start();
+        
+        // Now start all data stream tasks and wait for completion
+        this.exeThreadPool.invokeAll(lstStrmTasks, CNT_TIMEOUT, TU_TIMEOUT);
+        
+        // Check for timeout - not all data streams will have completed.
+        boolean bolCompleted = lstStrmTasks.stream().allMatch(p -> p.isCompleted());
+        
+        if (!bolCompleted) {
+            thdProcessor.terminate();
+            
+            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() + " - Time limit expired while gRPC data streaming.";
+
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new TimeoutException(strMsg);
+        }
+
+        // Check for streaming error
+        boolean bolSuccess = lstStrmTasks.stream().allMatch(p -> p.isSuccess());
+        
+        if (!bolSuccess) {
+            thdProcessor.terminate();
+            
+            ResultRecord recResult = lstStrmTasks
+                                    .stream()
+                                    .filter(p  -> p.getResult().isFailure())
+                                    .<ResultRecord>map(p -> p.getResult())
+                                    .findAny()
+                                    .get();
+            String strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                    + " - At least one gRPC streaming error: message=" 
+                    + recResult.message()
+                    + ( (recResult.hasCause()) ? ", cause=" + recResult.cause() : "");
+            
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new ExecutionException(strMsg, recResult.cause());
+        }
+        
+        // Recover the total number of messages streamed 
+        int cntMsgs = lstStrmTasks.stream().mapToInt(p -> p.getResponseCount()).sum();
+        
+        // Set the total number of data messages to process then wait for completion
+        thdProcessor.setMaxMessages(cntMsgs);
+        
+        thdProcessor.join(timeoutLimitDefaultMillis());
+
+        // Create the sampling process and return it
+        SamplingProcess sp = SamplingProcess.from(this.qrcDataCorrelator.getTargetSet());
+        
+        return sp;
+    }
+    
+    private Thread  newStreamProcessor(DpDataRequest dpRequest) {
+        QueryResponseStreamProcessor    taskProcessor = QueryResponseStreamProcessor.newTask(
+                dpRequest, 
+                this.stubAsync, 
+                QueryDataConsumer.newInstance(this)
+                );
+        
+        Thread  thdProcessor = new Thread(taskProcessor);
+        
+        return thdProcessor;
+    }
+    
+    /**
+     * Computes and returns the default timeout limit in unites of milliseconds 
+     * 
+     * @return  default timeout limit in milliseconds
+     * 
+     * @see #CNT_TIMEOUT
+     * @see #TU_TIMEOUT
+     * @see TimeUnit#MILLISECONDS
+     */
+    private static long    timeoutLimitDefaultMillis() {
+        long    lngTimeoutMs = TU_TIMEOUT.convert(CNT_TIMEOUT, TimeUnit.MILLISECONDS);
+        
+        return lngTimeoutMs;
     }
 }

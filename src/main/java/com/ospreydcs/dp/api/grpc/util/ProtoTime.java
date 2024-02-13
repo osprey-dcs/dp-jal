@@ -62,6 +62,43 @@ public final class ProtoTime {
     
     /**
      * <p>
+     * Computes the sum of the <code>{@link Timestamp}</code> message and the given number of nanoseconds.
+     * </p>
+     * <p>
+     * Returns a new <code>{@link Timestamp}</code> message which represents the sum of the
+     * arguments.  The returned value is normalized.  Specifically, the returned timestamp
+     * has the nanosecond offset less than 
+     * <code>{@link #LNG_TMS_NSECS_LUB}</code> = {@value #LNG_TMS_NSECS_LUB}.
+     * </p> 
+     * 
+     * @param tms               addend
+     * @param lngAddendNanos    number of nanoseconds to be added to addend
+     * 
+     * @return  new <code>{@link Timestamp} representing the sum of the argument values
+     */
+    public static Timestamp addNanos(Timestamp tms, long lngAddendNanos) {
+        long    lngSecs = tms.getEpochSeconds();
+        long    lngNanos = tms.getNanoseconds();
+        
+        // Sum in the addend
+        lngNanos += lngAddendNanos;
+        
+        // Normalize if necessary
+        if (lngNanos >= ProtoTime.LNG_TMS_NSECS_LUB) {
+            lngSecs += lngNanos / ProtoTime.LNG_TMS_NSECS_LUB;
+            lngNanos = lngNanos % ProtoTime.LNG_TMS_NSECS_LUB;
+        }
+        
+        Timestamp   tmsSum = Timestamp.newBuilder()
+                .setEpochSeconds(lngSecs)
+                .setNanoseconds(lngNanos)
+                .build();
+        
+        return tmsSum;
+    }
+    
+    /**
+     * <p>
      * Returns the normalized <code>{@link Timestamp}</code> message of the argument.
      * </p>
      * <p>
@@ -177,10 +214,39 @@ public final class ProtoTime {
      * @see #equals(Timestamp, Timestamp)
      */
     public static boolean equivalence(Timestamp tms1, Timestamp tms2) {
-        Instant tm1 = ProtoMsg.toInstant(tms1);
-        Instant tm2 = ProtoMsg.toInstant(tms2);
+        return (ProtoTime.compare(tms1, tms2) == 0);
+    }
+    
+    /**
+     * <p>
+     * Ordered comparison of the two <code>{@link Timestamp}</code> Protobuf messages.
+     * </p>
+     * <p>
+     * The method returns the Java standard comparison result for two ordered objects.
+     * In this case the result is determined as follows:
+     * <ul>
+     * <li>negative integer - iff <code>tms1</code> occurs <em>before</em> <code>tme2</code>.</li> 
+     * <li>0 - iff <code>tms1</code> occurs <em>exactly at</em> <code>tme2</code>.</li>
+     * <li>positive integer - iff <code>tms1</code> occurs <em>after</em> <code>tme2</code>.</li>
+     * </ul>
+     * The magnitude of the result can reflect the difference in values, although this is not
+     * guaranteed.
+     * </p>
+     * <p>
+     * Internally the two arguments are compared as their equivalent Java <code>{@link Instant}</code>
+     * types.
+     * </p>
+     *  
+     * @param tms1  first Timestamp message for comparison
+     * @param tms2  second Timestamp message for comparison
+     * 
+     * @return comparison result as would be returned by <code>{@link Comparator}</code> interface 
+     */
+    public static int   compare(Timestamp tms1, Timestamp tms2) {
+        Instant ins1 = ProtoMsg.toInstant(tms1);
+        Instant ins2 = ProtoMsg.toInstant(tms2);
         
-        return (tm1.compareTo(tm2) == 0);
+        return ins1.compareTo(ins2);
     }
     
     /**

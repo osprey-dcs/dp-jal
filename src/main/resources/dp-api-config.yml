@@ -92,7 +92,7 @@ query:      # Data Platform Query Service operations
             active: true             # use multistreamed responses : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_ACTIVE
             pivotSize: 4000          # query domain size (srcs-time): DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
             pivotUnits: SECONDS      # java.concurrent.TimeUnit    : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_UNITS 
-            maxStreams: 8            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
+            maxStreams: 5            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency           : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE

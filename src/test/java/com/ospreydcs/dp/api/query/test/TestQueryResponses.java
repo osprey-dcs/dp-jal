@@ -39,6 +39,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
@@ -83,11 +84,25 @@ public class TestQueryResponses {
     public static enum SingleQueryType {
 
         /**
-         * Query for a single data source over a limited time-range duration.
+         * Query for a single Data Platform archive "bucket" (1 data source, over ~1 second)
          * 
-         * @see TestQueryResponses#QREC_SNGL
+         * @see TestQueryResponses#QREC_BCKT
          */
-        SINGLE(TestQueryResponses.QREC_SNGL),
+        BUCKET(TestQueryResponses.QREC_BCKT),
+        
+        /**
+         * Query for a single data source over an extended time-range duration.
+         * 
+         * @see TestQueryResponses#QREC_1SRC
+         */
+        ONE_SOURCE(TestQueryResponses.QREC_1SRC),
+        
+        /**
+         * Query for two data sources over an extended time-range duration
+         * 
+         * @see TestQueryResponses#QREC_2SRC
+         */
+        TWO_SOURCE(TestQueryResponses.QREC_2SRC),
         
         /**
          * Query for many data sources over a limited time-range duration.
@@ -179,16 +194,42 @@ public class TestQueryResponses {
     //
     
     /** 
-     * Query definition record for "single" query  
+     * Query definition record for "one bucket" query  
+     * <p>
+     * 1 data source(s)<br/>
+     * 1 second(s) duration
+     */
+    public static final TestQueryRecord     QREC_BCKT = new TestQueryRecord(
+                                                "queryresults-single-bucket.dat", 
+                                                1, 
+                                                0, 
+                                                1L, 
+                                                0L);
+    
+    /** 
+     * Query definition record for "1 source" single data source query  
      * <p>
      * 1 data source(s)<br/>
      * 10 second(s) duration
      */
-    public static final TestQueryRecord     QREC_SNGL = new TestQueryRecord(
-                                                "queryresults-single-single.dat", 
+    public static final TestQueryRecord     QREC_1SRC = new TestQueryRecord(
+                                                "queryresults-single-1source.dat", 
                                                 1, 
                                                 0, 
                                                 10L, 
+                                                0L);
+    
+    /** 
+     * Query definition record for "2 source" two data source query  
+     * <p>
+     * 2 data source(s)<br/>
+     * 2 second(s) duration
+     */
+    public static final TestQueryRecord     QREC_2SRC = new TestQueryRecord(
+                                                "queryresults-single-2source.dat", 
+                                                2, 
+                                                0, 
+                                                2L, 
                                                 0L);
     
     /** 
@@ -283,7 +324,9 @@ public class TestQueryResponses {
         // Create collects of all results sets and add them all
         SET_QRECS_ALL = new LinkedList<>();
         
-        SET_QRECS_ALL.add(QREC_SNGL);
+        SET_QRECS_ALL.add(QREC_BCKT);
+        SET_QRECS_ALL.add(QREC_1SRC);
+        SET_QRECS_ALL.add(QREC_2SRC);
         SET_QRECS_ALL.add(QREC_WIDE);
         SET_QRECS_ALL.add(QREC_LONG);
         
@@ -297,6 +340,92 @@ public class TestQueryResponses {
     // Public Operations
     // 
     
+    /**
+     * <p>
+     * Creates and returns a new <code>QueryRequest</code> Protobuf message for the given query.
+     * </p>
+     * <p>
+     * Recovers the <code>{@link TestQueryRecord}<?code> from the argument, using it to
+     * create the Query Service data request message for the query.
+     * </p>
+     * 
+     * @param enmType   enumeration constant specifying the desired single query type
+     * 
+     * @return  the <code>QueryRequest</code> message defining the Query Service data request
+     */
+    public static QueryRequest  request(SingleQueryType enmType) {
+        return enmType.getQueryRecord().createRequest();
+    }
+    
+    /**
+     * <p>
+     * Recovers the results set for the given query, extracts the data buckets and returns them.
+     * </p>
+     * <p>
+     * The results sets <em>data buckets</em> for all the supported single query cases are available here.
+     * </p>
+     * <p>
+     * This method defers to <code>{@link #queryData(SingleQueryType)}</code> to recover the 
+     * the results set data for the given query.  The <code>DataBucket</code> messages are extracted
+     * and returned in order.
+     * </p>
+     *  
+     * @param enmType   enumeration constant specifying the desired single query type
+     * 
+     * @return  the collection of ordered data buckets within the results set of the argument
+     * 
+     * @see #queryData(SingleQueryType)
+     * @see SingleQueryType
+     */
+    public static List<QueryResponse.QueryReport.BucketData.DataBucket> queryBuckets(SingleQueryType enmType) {
+        
+        // Recover results set and extract data
+        List<QueryResponse.QueryReport.BucketData>   lstData = TestQueryResponses.queryData(enmType);
+        
+        // Extract all data buckets
+        List<QueryResponse.QueryReport.BucketData.DataBucket> lstBuckets = lstData
+                .stream()
+                .flatMap(
+                        msgData -> msgData.getDataBucketsList().stream()
+                        )
+                .toList();
+        
+        return lstBuckets;
+    }
+    
+    /**
+     * <p>
+     * Recovers the results set for the given query, extracts the data and returns it.
+     * </p>
+     * <p>
+     * The results sets <em>data</em> for all the supported single query cases are available here.
+     * </p>
+     * <p>
+     * This method defers to <code>{@link #queryResults(SingleQueryType)}</code> to recover the 
+     * the results set for the given query.  The <code>BucketData</code> messages are extracted
+     * and returned in order.
+     * </p>
+     *  
+     * @param enmType   enumeration constant specifying the desired single query type
+     * 
+     * @return  the collection of ordered data within the results set of the argument
+     * 
+     * @see #queryResults(SingleQueryType)
+     * @see SingleQueryType
+     */
+    public static List<QueryResponse.QueryReport.BucketData>    queryData(SingleQueryType enmType) {
+        
+        // Recover the results set
+        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(enmType);
+        
+        // Extract the BucketData messages
+        List<QueryResponse.QueryReport.BucketData> lstData = lstRsps
+                .stream()
+                .map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                .toList();
+        
+        return lstData;
+    }
     /**
      * <p>
      * Recover and return the result set for the given single query.
@@ -355,7 +484,7 @@ public class TestQueryResponses {
      * </p>
      * 
      * @param enmType   enumeration constant specifying the desired composite query type
-     * @param index index of the component query in the composite query set
+     * @param index     index of the component query in the composite query set
      * 
      * @return  the results set of the given (indexed) sub-query within the composite query
      * 

@@ -33,7 +33,7 @@ import java.util.function.Consumer;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
 
 /**
  * <p>
@@ -91,7 +91,7 @@ public final class QueryResponseStreamUniProcessor extends QueryResponseStreamPr
     public static QueryResponseStreamUniProcessor  newTask(
             QueryRequest msgRequest, 
             DpQueryServiceStub stubAsync, 
-            Consumer<QueryData> ifcDataSink) {
+            Consumer<BucketData> ifcDataSink) {
         return new QueryResponseStreamUniProcessor(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -108,7 +108,7 @@ public final class QueryResponseStreamUniProcessor extends QueryResponseStreamPr
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    public QueryResponseStreamUniProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<QueryData> ifcDataSink) {
+    public QueryResponseStreamUniProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<BucketData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }
     

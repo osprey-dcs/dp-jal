@@ -182,26 +182,77 @@ public record ResultRecord(boolean success, String message, Throwable cause) {
     }
 
     //
-    // Field Getters
+    // Conditionals
     //
     
     /**
      * Returns whether or not the condition/verification check was successful.
      *  
-     * @return <code>true</code> if condition/verification check was succesul
+     * @return <code>true</code> if condition/verification check was successful
+     */
+    public final boolean isSuccess() {
+        return this.success == true;
+    }
+    
+    /**
+     * Returns whether or not the condition/verification check failed.
+     *  
+     * @return <code>true</code> if condition/verification check failed
+     */
+    public final boolean isFailure() {
+        return this.success == false;
+    }
+    
+    /**
+     * <p>
+     * Returns whether or not the record contains an associated message.
+     * </p>
+     * <p>
+     * Intended for failure situations where a failure message is typically provided.
+     * </p>
+     * 
+     * @return  <code>true</code> if a result message was set (i.e., not equal to <code>{@link #STR_EMPTY}</code>)
+     */
+    public final boolean hasMessage() {
+        return this.message != STR_EMPTY;
+    }
+    
+    /**
+     * <p>
+     * Returns whether or not the record contains an associated exception.
+     * </p>
+     * <p>
+     * Intended for failure situations where the cause exception could be provided.
+     * </p>
+     * 
+     * @return  <code>true</code> if cause exception was set (i.e., not equal to <code>{@link #THR_EMPTY}</code>)
+     */
+    public final boolean hasCause() {
+        return this.cause != THR_EMPTY;
+    }
+    
+    
+    //
+    // Field Getters
+    //
+    
+    /**
+     * Returns the <code>{@link #success}</code> attribute directly
+     *  
+     * @return <code>true</code> if condition/verification check was successful
      */
     public final boolean success() {
         return this.success;
     }
     
-    /**
-     * Returns whether of not the condition/verification check failed.
-     * 
-     * @return <code>true</code> if condition/verification check failed.
-     */
-    public final boolean failed() {
-        return this.success == false;
-    }
+//    /**
+//     * Returns whether of not the condition/verification check failed.
+//     * 
+//     * @return <code>true</code> if condition/verification check failed.
+//     */
+//    public final boolean failed() {
+//        return this.success == false;
+//    }
 
     /**
      * <p>
@@ -213,7 +264,7 @@ public record ResultRecord(boolean success, String message, Throwable cause) {
      * 
      * @return message associated with success or failure
      */
-    public final String getMessage() {
+    public final String message() {
         return this.message;
     }
 
@@ -227,7 +278,7 @@ public record ResultRecord(boolean success, String message, Throwable cause) {
      * 
      * @return  the exception causing the failure
      */
-    public final Throwable getCause() {
+    public final Throwable cause() {
         return this.cause;
     }
     

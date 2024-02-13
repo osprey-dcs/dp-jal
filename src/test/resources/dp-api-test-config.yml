@@ -18,7 +18,7 @@ testArchive:
    inception: 1698767462      # epoch seconds since inception       : DP_API_TEST_ARCHIVE_INCEPTION     
    duration: 60               # (seconds) duration of archive data  : DP_API_TEST_ARCHIVE_DURATION
    pvCount: 4000              # number of data sources (PV names)   : DP_API_TEST_ARCHIVE_PV_COUNT
-   pvPrefix: "pv_"            # the prefix ofdata source names      : DP_API_TEST_ARCHIVE_PV_PREFIX
+   pvPrefix: "dpTest_"            # the prefix ofdata source names      : DP_API_TEST_ARCHIVE_PV_PREFIX
    
 testQuery:
    data:

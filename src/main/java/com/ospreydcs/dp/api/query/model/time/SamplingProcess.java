@@ -28,6 +28,8 @@
 package com.ospreydcs.dp.api.query.model.time;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -174,7 +176,7 @@ public class SamplingProcess {
 //    private final List<SamplingPair>    lstSmplPairs;
     
     /** Ordered vector of uniform sampling blocks comprising the sampling process */
-    private final Vector<UniformSamplingBlock>  vecSmplBlock;
+    private final List<UniformSamplingBlock>  vecSmplBlock;
     
     
     //
@@ -271,13 +273,13 @@ public class SamplingProcess {
         
         //  Check start time ordering
         result = this.verifyStartTimes(setTargetData);
-        if (result.failed())
-            throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, result.getMessage());
+        if (result.isFailure())
+            throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, result.message());
         
         //  Check for time domain intersections - works if start time ordering is correct 
         result = this.verifyTimeDomains(setTargetData);
-        if (result.failed())
-            throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, result.getMessage());
+        if (result.isFailure())
+            throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, result.message());
         
         // Build sampling blocks and get source names from target data set
         this.vecSmplBlock = this.buildSamplingBlocks(setTargetData);
@@ -290,16 +292,16 @@ public class SamplingProcess {
         
         // Verify the consistency of the sampling blocks
         result = this.verifyStartTimes(this.vecSmplBlock);
-        if (result.failed())
-            throw new CompletionException(result.getMessage(), result.getCause());
+        if (result.isFailure())
+            throw new CompletionException(result.message(), result.cause());
         
         result = this.verifyTimeDomains(this.vecSmplBlock);
-        if (result.failed())
-            throw new CompletionException(result.getMessage(), result.getCause());
+        if (result.isFailure())
+            throw new CompletionException(result.message(), result.cause());
         
         result = this.verifySourceTypes(vecSmplBlock);
-        if (result.failed())
-            throw new CompletionException(result.getMessage(), result.getCause());
+        if (result.isFailure())
+            throw new CompletionException(result.message(), result.cause());
     }
 
     
@@ -460,6 +462,7 @@ public class SamplingProcess {
         
         // Get the start times for each correlated query data block in order, remove the first
         List<Instant> lstStartTimes = setQueryData.stream().sequential().map(cqd -> cqd.getStartInstant()).toList();
+        lstStartTimes = new ArrayList<>(lstStartTimes);
         Instant insPrev = lstStartTimes.remove(0);
         
         // Check that all remaining start times are in order
@@ -527,6 +530,7 @@ public class SamplingProcess {
         
         // Get the time domains for each query data block, remove the first
         List<TimeInterval>  lstTimeDomains = setQueryData.stream().sequential().map(cqd -> cqd.getTimeDomain()).toList();
+        lstTimeDomains = new ArrayList<>(lstTimeDomains);
         TimeInterval        domPrev = lstTimeDomains.remove(0);
         
         // Check that remaining time domains are disjoint - this works if the argument is ordered correctly
@@ -632,7 +636,7 @@ public class SamplingProcess {
      * throws RangeException           the argument has bad ordering or contains time domain collisions
      * @throws UnsupportedOperationException an unsupported data type was detected within the argument
      */
-    private Vector<UniformSamplingBlock>    buildSamplingBlocks(SortedSet<CorrelatedQueryData> setQueryData) 
+    private List<UniformSamplingBlock>    buildSamplingBlocks(SortedSet<CorrelatedQueryData> setQueryData) 
             throws MissingResourceException, IllegalArgumentException, IllegalStateException, /* RangeException,*/ UnsupportedOperationException {
         
 //        // First check all query data for correct ordering and time domain collisions
@@ -672,20 +676,25 @@ public class SamplingProcess {
 //        setQueryData.add(cqdFirst);
         
         // Create the sample blocks, pivoting to concurrency by container size
-        Vector<UniformSamplingBlock>    vecSmplBlocks = new Vector<>(setQueryData.size());
+        List<UniformSamplingBlock>    vecSmplBlocks;
         
         if (BOL_CONCURRENCY && (setQueryData.size() > SZ_CONCURRENCY_PIVOT) ) {
             // invoke concurrency
-            Vector<CorrelatedQueryData> vecQueryData = new Vector<>(setQueryData);
+            UniformSamplingBlock           arrSmplBlocks[] = new UniformSamplingBlock[setQueryData.size()];
+            ArrayList<CorrelatedQueryData> vecQueryData = new ArrayList<>(setQueryData);
             
             IntStream.range(0, setQueryData.size())
                 .parallel()
                 .forEach(
-                        i -> vecSmplBlocks.add(i, UniformSamplingBlock.from(vecQueryData.elementAt(i)))
+                        i -> {arrSmplBlocks[i] = UniformSamplingBlock.from(vecQueryData.get(i)); } 
                         );
+
+            vecSmplBlocks = Arrays.asList(arrSmplBlocks);
             
         } else {
             // serial processing
+            vecSmplBlocks = new ArrayList<>(setQueryData.size());
+
             setQueryData.stream()
                 .sequential()
                 .forEachOrdered(
@@ -752,7 +761,7 @@ public class SamplingProcess {
      * 
      * @return  map of {(source name, source type)} entries for all data sources within argument
      */
-    private Map<String, DpSupportedType>    buildSourceNameToTypeMap(Vector<UniformSamplingBlock> vecBlocks) {
+    private Map<String, DpSupportedType>    buildSourceNameToTypeMap(List<UniformSamplingBlock> vecBlocks) {
         
         // Local type used for intermediate results
         record Pair(String name, DpSupportedType type) {};
@@ -816,9 +825,9 @@ public class SamplingProcess {
      * 
      * @return  the time domain over which this sample process has values
      */
-    private TimeInterval    computeTimeDomain(Vector<UniformSamplingBlock> vecBlocks) {
-        UniformSamplingBlock    blkFirst = vecBlocks.firstElement();
-        UniformSamplingBlock    blkLast = vecBlocks.lastElement();
+    private TimeInterval    computeTimeDomain(List<UniformSamplingBlock> vecBlocks) {
+        UniformSamplingBlock    blkFirst = vecBlocks.get(0);
+        UniformSamplingBlock    blkLast = vecBlocks.get(vecBlocks.size() - 1);
         
         Instant insStart = blkFirst.getStartInstant();
         Instant insStop = blkLast.getTimeDomain().end();
@@ -846,7 +855,7 @@ public class SamplingProcess {
      * 
      * @return  total size of each time series within the sample process
      */
-    private int computeSampleCount(Vector<UniformSamplingBlock> vecBlocks) {
+    private int computeSampleCount(List<UniformSamplingBlock> vecBlocks) {
         int cntSamples = vecBlocks
                 .stream()
                 .map(cqd -> cqd.getSampleCount())
@@ -886,7 +895,7 @@ public class SamplingProcess {
      * 
      * @return  <code>ResultRecord</code> containing result of test, with message if failure
      */
-    private ResultRecord verifyStartTimes(Vector<UniformSamplingBlock> vecBlocks) {
+    private ResultRecord verifyStartTimes(List<UniformSamplingBlock> vecBlocks) {
         
         // Get the start times for each block in order, remove the first
         List<Instant> lstStartTimes = vecBlocks.stream().sequential().map(usb -> usb.getStartInstant()).toList();
@@ -953,7 +962,7 @@ public class SamplingProcess {
      * 
      * @return  <code>ResultRecord</code> containing result of test, with message if failure
      */
-    private ResultRecord verifyTimeDomains(Vector<UniformSamplingBlock> vecBlocks) {
+    private ResultRecord verifyTimeDomains(List<UniformSamplingBlock> vecBlocks) {
         
         // Get the time domains for each block, remove the first
         List<TimeInterval>  lstTimeDomains = vecBlocks.stream().sequential().map(usb -> usb.getTimeDomain()).toList();
@@ -1022,7 +1031,7 @@ public class SamplingProcess {
      * 
      * @return  <code>ResultRecord</code> containing result of test, with message if failure
      */
-    private  ResultRecord verifySourceTypes(Vector<UniformSamplingBlock> vecBlocks) {
+    private  ResultRecord verifySourceTypes(List<UniformSamplingBlock> vecBlocks) {
         
         // Local type used for intermediate results
         record Pair(String name, DpSupportedType type) {};

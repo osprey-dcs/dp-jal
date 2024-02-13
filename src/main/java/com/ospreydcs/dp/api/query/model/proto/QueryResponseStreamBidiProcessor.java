@@ -34,7 +34,7 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorOperation;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
 
 import io.grpc.stub.CallStreamObserver;
 
@@ -111,7 +111,7 @@ public class QueryResponseStreamBidiProcessor extends QueryResponseStreamProcess
      * @see #isSuccess()
      */
     public static QueryResponseStreamBidiProcessor  newTask(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
-            Consumer<QueryData> ifcDataSink) {
+            Consumer<BucketData> ifcDataSink) {
         return new QueryResponseStreamBidiProcessor(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -130,7 +130,7 @@ public class QueryResponseStreamBidiProcessor extends QueryResponseStreamProcess
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
     public QueryResponseStreamBidiProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
-            Consumer<QueryData> ifcDataSink) {
+            Consumer<BucketData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }
 

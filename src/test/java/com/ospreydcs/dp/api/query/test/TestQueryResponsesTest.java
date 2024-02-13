@@ -111,16 +111,16 @@ public class TestQueryResponsesTest {
      */
     @Test
     public final void testQueryResultsSingleQueryTypeSingle() {
-        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.SINGLE);
+        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.ONE_SOURCE);
         
         Assert.assertFalse("The QueryResponse list was empty." , lstRsps.isEmpty());
         Assert.assertFalse("The query has a rejection.", this.hasRejection(lstRsps));
         
-        System.out.println("Size of the SINGLE single query response list = " + lstRsps.size());
+        System.out.println("Size of the ONE_SOURCE single query response list = " + lstRsps.size());
         
-        List<QueryResponse.QueryReport.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
-        System.out.println("Number of data buckets in the SINGLE query results set = " + lstBuckets.size());
+        System.out.println("Number of data buckets in the ONE_SOURCE query results set = " + lstBuckets.size());
     }
 
     /**
@@ -135,7 +135,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Size of the WIDE single query response list = " + lstRsps.size());
         
-        List<QueryResponse.QueryReport.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the WIDE query results set = " + lstBuckets.size());
     }
@@ -152,7 +152,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Size of the LONG single query response list = " + lstRsps.size());
         
-        List<QueryResponse.QueryReport.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the LONG query results set = " + lstBuckets.size());
     }
@@ -177,7 +177,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the HORIZONTAL composite query response list = " + lstRspsAll.size());
         
-        List<QueryResponse.QueryReport.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the HORIZONTAL composite query results set = " + lstBuckets.size());
     }
@@ -202,7 +202,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the VERTICAL composite query response list = " + lstRspsAll.size());
         
-        List<QueryResponse.QueryReport.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the VERTICAL composite query results set = " + lstBuckets.size());
     }
@@ -227,7 +227,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the GRID composite query response list = " + lstRspsAll.size());
         
-        List<QueryResponse.QueryReport.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the GRID composite query results set = " + lstBuckets.size());
     }
@@ -238,10 +238,10 @@ public class TestQueryResponsesTest {
     @Test
     public final void testShutdown() {
         try {
-            TestQueryResponses.QREC_SNGL.performQuery();
+            TestQueryResponses.QREC_1SRC.performQuery();
         
         } catch (DpGrpcException e) {
-            Assert.fail("Attempt to query QREC_SNGL failed with DpGrpcException = " + e.getMessage());
+            Assert.fail("Attempt to query QREC_1SRC failed with DpGrpcException = " + e.getMessage());
             return;
         }
         
@@ -320,16 +320,16 @@ public class TestQueryResponsesTest {
     }
     
     /**
-     * Extracts the <code>QueryData</code> messages from the query results set.
+     * Extracts the <code>BucketData</code> messages from the query results set.
      * 
      * @param lstRsps   the target query results set
      *  
-     * @return  the list of QueryData messages in the given results set (one for each QueryResponse message)
+     * @return  the list of BucketData messages in the given results set (one for each QueryResponse message)
      */
-    private List<QueryResponse.QueryReport.QueryData>   extractData(List<QueryResponse> lstRsps) {
-        List<QueryResponse.QueryReport.QueryData>   lstData = lstRsps
+    private List<QueryResponse.QueryReport.BucketData>   extractData(List<QueryResponse> lstRsps) {
+        List<QueryResponse.QueryReport.BucketData>   lstData = lstRsps
                 .stream()
-                .map( r -> r.getQueryReport().getQueryData())
+                .map( r -> r.getQueryReport().getBucketData())
                 .toList();
         
         return lstData;
@@ -337,11 +337,11 @@ public class TestQueryResponsesTest {
     
     /**
      * <p>
-     * Extracts all the <code>DataBucket</code> messages from all the <code>QueryData</code> messages.
+     * Extracts all the <code>DataBucket</code> messages from all the <code>BucketData</code> messages.
      * </p>
      * <p>
-     * First extracts all <code>QueryData</code> messages from the given results set then collects all
-     * <code>DataBucket</code> messages from each <code>QueryData</code> message into a final collection.
+     * First extracts all <code>BucketData</code> messages from the given results set then collects all
+     * <code>DataBucket</code> messages from each <code>BucketData</code> message into a final collection.
      * </p>
      * 
      * @param lstRsps   the target query results set
@@ -350,10 +350,10 @@ public class TestQueryResponsesTest {
      * 
      * @see #extractData(List)
      */
-    private List<QueryResponse.QueryReport.QueryData.DataBucket> extractBuckets(List<QueryResponse> lstRsps) {
-        List<QueryResponse.QueryReport.QueryData>   lstData = this.extractData(lstRsps);
+    private List<QueryResponse.QueryReport.BucketData.DataBucket> extractBuckets(List<QueryResponse> lstRsps) {
+        List<QueryResponse.QueryReport.BucketData>   lstData = this.extractData(lstRsps);
         
-        List<QueryResponse.QueryReport.QueryData.DataBucket> lstBuckets = lstData
+        List<QueryResponse.QueryReport.BucketData.DataBucket> lstBuckets = lstData
                 .stream()
                 .collect(LinkedList::new, 
                         (lst, data) -> lst.addAll(data.getDataBucketsList()), 

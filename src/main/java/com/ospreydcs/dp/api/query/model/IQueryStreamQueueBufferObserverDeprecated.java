@@ -97,7 +97,7 @@ public interface IQueryStreamQueueBufferObserverDeprecated {
      * @param indPage       index of the data page in the stream
      * @param msgRspData    gRPC message containing page of requested data
      */
-    public void notifyDataPageReady(Integer indPage, QueryResponse.QueryReport.QueryData msgRspData);
+    public void notifyDataPageReady(Integer indPage, QueryResponse.QueryReport.BucketData msgRspData);
     
     /**
      * <p>

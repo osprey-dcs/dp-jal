@@ -292,32 +292,32 @@ public final record TestQueryRecord (
     
     /**
      * <p>
-     * Convenience method for extracting the <code>QueryData</code> messages from the
+     * Convenience method for extracting the <code>BucketData</code> messages from the
      * results set of <code>QueryResponse</code> messages.
      * </p>
      * <p>
      * This method assumes that the query results set is valid, that is, the query 
      * was not rejected and each <code>QueryResponse</code> contains a valid 
-     * <code>QueryData</code> message.  
+     * <code>BucketData</code> message.  
      * <ul>
      * <li>If the above conditions hold, the data is extracted and returned as a list.</li>
      * <li>If the query request was rejected the return list contains empty data messages.</li> 
-     * <li>If a query error occurred the corresponding <code>QueryData</code> message is empty.</li>
+     * <li>If a query error occurred the corresponding <code>BucketData</code> message is empty.</li>
      * <li>If the result set is unavailable a <code>null</code> value is returned.</li>
      * </ul>
      * 
-     * @return  an ordered list of extracted <code>QueryData</code> messages from results set,
+     * @return  an ordered list of extracted <code>BucketData</code> messages from results set,
      *          or <code>null</code> if result set is  not available 
      */
-    public List<QueryResponse.QueryReport.QueryData> extractQueryData() {
+    public List<QueryResponse.QueryReport.BucketData> extractQueryData() {
         
         // Check that result set is available
         if (this.lstResults.isEmpty())
             return null;
         
-        List<QueryResponse.QueryReport.QueryData>   lstDataMsgs = this.lstResults
+        List<QueryResponse.QueryReport.BucketData>   lstDataMsgs = this.lstResults
                 .stream()
-                .map(qr -> qr.getQueryReport().getQueryData())
+                .map(qr -> qr.getQueryReport().getBucketData())
                 .toList();
         
         return lstDataMsgs;

@@ -324,7 +324,7 @@ public class QueryResponseCorrelator {
      * 
      * @param msgBucket Query Service Protobuf message containing a query result data unit
      */
-    public void    insertBucketData(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
+    public void    insertBucketData(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
 
         // This operation must be atomic - potentially modifies the target set 
         synchronized (this.objLock) {
@@ -356,11 +356,11 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
-     * Inserts a Query Service <code>QueryData</code> message obtained from a 
+     * Inserts a Query Service <code>BucketData</code> message obtained from a 
      * <code>QueryResponse</code> message, without error checking.
      * </p>
      * <p>
-     * Inserts all data columns within the <code>QueryData</code> message into the current target set of 
+     * Inserts all data columns within the <code>BucketData</code> message into the current target set of 
      * correlated data references, creating new references if needed.  No error checking is
      * enforced.
      * </p>
@@ -387,12 +387,12 @@ public class QueryResponseCorrelator {
      * <p>
      * <h2>NOTES:</h2>
      * This is the preferred method of data processing.  It processes all data within a 
-     * <code>QueryResponse.QueryReport.QueryData</code> message without error checking.
+     * <code>QueryResponse.QueryReport.BucketData</code> message without error checking.
      * </p>
      *  
      * @param msgData   Query Service response data message
      */
-    public void insertQueryData(QueryResponse.QueryReport.QueryData msgData) {
+    public void insertQueryData(QueryResponse.QueryReport.BucketData msgData) {
         
         // Check for empty data message
         if (msgData.getDataBucketsList().isEmpty()) {
@@ -413,7 +413,7 @@ public class QueryResponseCorrelator {
             }
 
             // If the target set is large - pivot to concurrent processing of message data
-            Collection<QueryResponse.QueryReport.QueryData.DataBucket>  setFreeBuckets = this.attemptDataInsertConcurrent(msgData);
+            Collection<QueryResponse.QueryReport.BucketData.DataBucket>  setFreeBuckets = this.attemptDataInsertConcurrent(msgData);
             SortedSet<CorrelatedQueryData>  setNewTargets = this.buildTargetRefs(setFreeBuckets);
             this.setTargetRefs.addAll(setNewTargets);
 
@@ -426,9 +426,9 @@ public class QueryResponseCorrelator {
      * performing response error checking.
      * </p>
      * <p>
-     * The method extracts the <code>QueryData</code> message from the argument then defers 
+     * The method extracts the <code>BucketData</code> message from the argument then defers 
      * processing to 
-     * <code>{@link #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData)}</code>.
+     * <code>{@link #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>.
      * The argument is first checked for a rejected request by the Query Service and throws an
      * exception if so.  The argument data is then extracted and passed to the 
      * <code>insertQueryData()</code> method for data processing.
@@ -438,7 +438,7 @@ public class QueryResponseCorrelator {
      * 
      * @throws CannotProceedException   the argument contained a query response error
      * 
-     * @see #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData)
+     * @see #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
      */
     public void insertQueryReport(QueryResponse.QueryReport msgReport) throws CannotProceedException {
         
@@ -455,7 +455,7 @@ public class QueryResponseCorrelator {
         }
         
         // Insert the query response data
-        QueryResponse.QueryReport.QueryData msgData = msgReport.getQueryData();
+        QueryResponse.QueryReport.BucketData msgData = msgReport.getBucketData();
         
         this.insertQueryData(msgData);
     }
@@ -465,7 +465,7 @@ public class QueryResponseCorrelator {
      * performing all error checking.
      * </p>
      * <p>
-     * The method extracts the <code>QueryData</code> message from the argument then defers 
+     * The method extracts the <code>BucketData</code> message from the argument then defers 
      * further processing to 
      * <code>{@link #insertQueryReport(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport)}</code>.
      * The argument is first checked for a rejected request by the Query Service and throws an
@@ -506,7 +506,7 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
-     * Inserts all data columns within the <code>QueryData</code> message into the target set of 
+     * Inserts all data columns within the <code>BucketData</code> message into the target set of 
      * interval references, creating new target references if necessary.
      * </p>
      * <p>
@@ -536,9 +536,9 @@ public class QueryResponseCorrelator {
      * 
      * @param msgData   Query Service data message to be processed into this collection
      */
-    private void insertDataSerial(QueryResponse.QueryReport.QueryData msgData) {
+    private void insertDataSerial(QueryResponse.QueryReport.BucketData msgData) {
 
-        for (QueryResponse.QueryReport.QueryData.DataBucket msgBucket : msgData.getDataBucketsList()) {
+        for (QueryResponse.QueryReport.BucketData.DataBucket msgBucket : msgData.getDataBucketsList()) {
             
             // Attempt to add the message data into the current set of sampling interval references
             boolean bolSuccess = this.setTargetRefs
@@ -554,7 +554,7 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
-     * Attempts to insert all the data columns within the <code>QueryData</code> message into 
+     * Attempts to insert all the data columns within the <code>BucketData</code> message into 
      * the target set of interval references.
      * </p>
      * <p>
@@ -584,7 +584,7 @@ public class QueryResponseCorrelator {
      * 
      * @return  the collection of <code>DataBucket</code> messages that failed insertion 
      */
-    private Collection<QueryResponse.QueryReport.QueryData.DataBucket>  attemptDataInsertConcurrent(QueryResponse.QueryReport.QueryData msgData) {
+    private Collection<QueryResponse.QueryReport.BucketData.DataBucket>  attemptDataInsertConcurrent(QueryResponse.QueryReport.BucketData msgData) {
         
         // Create the data insertion tasks
         Collection<BucketDataInsertTask> lstTasks = this.createInsertionTasks(msgData);
@@ -600,8 +600,8 @@ public class QueryResponseCorrelator {
             .forEach(t -> t.run());
         
         // Collect all data buckets messages that were not processed
-        Collection<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
-//        ArrayList<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = lstTasks
+        Collection<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
+//        ArrayList<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = lstTasks
 //                .stream()
 //                .collect(
 //                        ArrayList::new, 
@@ -614,7 +614,7 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
-     * Attempts to insert all the data columns within the <code>QueryData</code> message into 
+     * Attempts to insert all the data columns within the <code>BucketData</code> message into 
      * the target set of interval references.
      * </p>
      * <p>
@@ -650,7 +650,7 @@ public class QueryResponseCorrelator {
      * @return  the collection of <code>DataBucket</code> messages that failed insertion 
      */
     @SuppressWarnings("unused")
-    private Collection<QueryResponse.QueryReport.QueryData.DataBucket>  attemptDataInsertThreadPool(QueryResponse.QueryReport.QueryData msgData) 
+    private Collection<QueryResponse.QueryReport.BucketData.DataBucket>  attemptDataInsertThreadPool(QueryResponse.QueryReport.BucketData msgData) 
             throws DpQueryException 
     {
         
@@ -685,8 +685,8 @@ public class QueryResponseCorrelator {
         }
 
         // Collect all data buckets messages that were not processed
-        Collection<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
-//        ArrayList<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = lstTasks
+        Collection<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
+//        ArrayList<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = lstTasks
 //                .stream()
 //                .collect(
 //                        ArrayList::new, 
@@ -722,13 +722,13 @@ public class QueryResponseCorrelator {
      * 
      * @return  set of new target references associated with the given argument data
      */
-    private SortedSet<CorrelatedQueryData>  buildTargetRefs(Collection<QueryResponse.QueryReport.QueryData.DataBucket> setBuckets) {
+    private SortedSet<CorrelatedQueryData>  buildTargetRefs(Collection<QueryResponse.QueryReport.BucketData.DataBucket> setBuckets) {
         
         // The returned sampling interval reference - that is, the targets
         SortedSet<CorrelatedQueryData>  setRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
         
         // Treat each data bucket individually - high probability of modifying target set 
-        for (QueryResponse.QueryReport.QueryData.DataBucket msgBucket : setBuckets) {
+        for (QueryResponse.QueryReport.BucketData.DataBucket msgBucket : setBuckets) {
 
             // Attempt to insert bucket data into existing targets
             boolean bolSuccess = setRefs.stream().anyMatch(r -> r.insertBucketData(msgBucket));
@@ -755,7 +755,7 @@ public class QueryResponseCorrelator {
      * 
      * @return  collection of data insertion tasks for current target set, one for each data bucket of the argument
      */
-    private Collection<BucketDataInsertTask> createInsertionTasks(QueryResponse.QueryReport.QueryData msgData) {
+    private Collection<BucketDataInsertTask> createInsertionTasks(QueryResponse.QueryReport.BucketData msgData) {
         
         List<BucketDataInsertTask> lstTasks = msgData
                 .getDataBucketsList()
@@ -779,9 +779,9 @@ public class QueryResponseCorrelator {
      * 
      * @return  collection of task subjects where task execution failed
      */
-    private Collection<QueryResponse.QueryReport.QueryData.DataBucket>  extractFailedTaskBuckets(Collection<BucketDataInsertTask> setTasks) {
+    private Collection<QueryResponse.QueryReport.BucketData.DataBucket>  extractFailedTaskBuckets(Collection<BucketDataInsertTask> setTasks) {
         
-        ArrayList<QueryResponse.QueryReport.QueryData.DataBucket>  lstBuckets = setTasks
+        ArrayList<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = setTasks
                 .stream()
                 .collect(
                         ArrayList::new, 

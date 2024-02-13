@@ -180,10 +180,10 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
     //
 
     /** The data page buffer, also used as a queue buffer - contains all the data responses from the Query Service */
-    private final LinkedList<QueryResponse.QueryReport.QueryData>   lstDataBuffer = new LinkedList<>();
+    private final LinkedList<QueryResponse.QueryReport.BucketData>   lstDataBuffer = new LinkedList<>();
 
 //    /** Contains all the data responses from the Query Service - indexed by data page */
-//    private final Map<Integer, QueryResponse.QueryReport.QueryData>   mapRspBuffer = new HashMap<>();
+//    private final Map<Integer, QueryResponse.QueryReport.BucketData>   mapRspBuffer = new HashMap<>();
 //
 //    /** Map of page monitors for each data page in the stream - to block on {@link #getPage(Integer)} */
 //    private final Map<Integer, CountDownLatch>      mapPgMons = new HashMap<>();
@@ -1060,7 +1060,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * 
      * @return  the entire data page buffer in its current state   
      */
-    public final List<QueryResponse.QueryReport.QueryData>  getBuffer() {
+    public final List<QueryResponse.QueryReport.BucketData>  getBuffer() {
         return this.lstDataBuffer;
     }
     
@@ -1138,7 +1138,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * throws TimeoutException  the page monitor timed out while waiting for the data page to become available
      * @throws IndexOutOfBoundsException the given index is not in the index set of data pages
      */
-    public QueryResponse.QueryReport.QueryData getBufferPage(Integer indPage) throws /* InterruptedException, TimeoutException, */ IndexOutOfBoundsException {
+    public QueryResponse.QueryReport.BucketData getBufferPage(Integer indPage) throws /* InterruptedException, TimeoutException, */ IndexOutOfBoundsException {
         
         return this.lstDataBuffer.get(indPage);
         
@@ -1193,7 +1193,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * 
      * @throws InterruptedException if the current thread is interrupted
      */
-    public QueryResponse.QueryReport.QueryData removeQueuePage() throws InterruptedException {
+    public QueryResponse.QueryReport.BucketData removeQueuePage() throws InterruptedException {
         
         // Block (indefinitely) until a data page becomes available
         this.semPageRdy.acquire();
@@ -1225,7 +1225,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * @throws TimeoutException     no data page available within the timeout limit
      * @throws InterruptedException if the current thread is interrupted
      */
-    public QueryResponse.QueryReport.QueryData removeQueuePageTimeout() throws TimeoutException, InterruptedException {
+    public QueryResponse.QueryReport.BucketData removeQueuePageTimeout() throws TimeoutException, InterruptedException {
         
         // Block (with timeout) until a data page becomes available
         boolean bolResult = this.semPageRdy.tryAcquire(this.cntTimeout, this.tuTimeout);
@@ -1350,7 +1350,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
         // Normal operation - Save the returned data page and request next page if bidirectional
         //  - the data is stored in the data buffer
         //  - all callback functions are notified that the page is available
-        this.storePage(msgRsp.getQueryReport().getQueryData());
+        this.storePage(msgRsp.getQueryReport().getBucketData());
 
         // Request next page 
         //  This is active only for bidirectional streams
@@ -1510,7 +1510,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * 
      * @param msgRspData    gRPC response message containing data (the data page)
      */
-    private void storePage(QueryResponse.QueryReport.QueryData msgRspData) {
+    private void storePage(QueryResponse.QueryReport.BucketData msgRspData) {
 
 //        this.indLastPage = this.indLastPage + 1;
 //        
@@ -1606,7 +1606,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * @param indPage       page index within stream buffer
      * @param msgRspData    gRPC message containing page of requested data
      */
-    private void notifyPageReady(Integer indPage, QueryResponse.QueryReport.QueryData msgRspData) {
+    private void notifyPageReady(Integer indPage, QueryResponse.QueryReport.BucketData msgRspData) {
         this.lstStreamObservers.forEach( o -> o.notifyDataPageReady(indPage, msgRspData));
     }
     

@@ -120,7 +120,12 @@ public class TestQueryService {
          * @param msgRqst   the query request containing the <code>QuerySpec</code> message
          */
         public void start(QueryRequest msgRqst) {
+            
+            // Perform RPC operation to get the backward stream handle
             this.strmForward = TestQueryService.this.connTestArchive.getStubAsync().queryResponseCursor(this);
+            
+            // Send the data request on the handle starting the stream
+            this.strmForward.onNext(msgRqst);
         }
         
         /**
@@ -191,6 +196,34 @@ public class TestQueryService {
     private final DpQueryConnection         connTestArchive;
     
     
+    //
+    // Creator
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new instance of <code>TestQueryService</code>.
+     * </p>
+     * <p>
+     * The returned instance is a Query Service API connected to the test archive
+     * as defined in <code>{@link DpApiTestingConfig.TestQuery}</code>.
+     * <p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * When no longer needed the returned instance should be shutdown to release
+     * gRPC resources.  See <code>{@link #shutdown()}</code>.
+     * </p>
+     * 
+     * @return  a new Query Service interface connected to the test archive
+     * 
+     * @throws DpGrpcException  unable to connect to test archive Query Service (see message)
+     * 
+     * @see #shutdown()
+     */
+    public static TestQueryService  newService() throws DpGrpcException {
+        return new TestQueryService();
+    }
+    
     
     //
     // Constructor
@@ -200,18 +233,23 @@ public class TestQueryService {
      * <p>
      * Constructs a new instance of <code>TestQueryService</code>.
      * </p>
+     * <p>
+     * Instance should be shutdown using <code>{@link #shutdown()}</code> when
+     * no longer needed.
+     * </p>
      * 
      * @throws DpGrpcException   unable to connect to test archive Query Service 
      */
     public TestQueryService() throws DpGrpcException {
         this.facTestArchive = DpQueryConnectionFactory.newFactory(CFG_QUERY.connection);
+//        this.facTestArchive = DpQueryConnectionFactory.FACTORY;
         this.connTestArchive = this.facTestArchive.connect();
     }
 
     
     //
     // Operations
-    
+    //
     
     /**
      * Performs the <code>queryResponseSingle</code> operation on the <code>DpQueryServiceGrpc</code>

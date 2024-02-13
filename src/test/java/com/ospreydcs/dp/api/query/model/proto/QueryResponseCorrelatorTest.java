@@ -72,10 +72,10 @@ public class QueryResponseCorrelatorTest {
     //
     
     /** Sample query data for test cases - Loaded by test fixture */
-    public static List<QueryResponse.QueryReport.QueryData>   LST_QUERY_DATA_WIDE;
+    public static List<QueryResponse.QueryReport.BucketData>   LST_QUERY_DATA_WIDE;
     
     /** Sample query data for test cases - Loaded by test fixture */
-    public static List<QueryResponse.QueryReport.QueryData>   LST_QUERY_DATA_LONG;
+    public static List<QueryResponse.QueryReport.BucketData>   LST_QUERY_DATA_LONG;
     
     
     //
@@ -92,7 +92,7 @@ public class QueryResponseCorrelatorTest {
 //        InputStream         isFile = QueryResponseCorrelatorTest.class.getClassLoader().getResourceAsStream(STR_FILENAME_QUERY_RESULTS_WIDE);
 //        ObjectInputStream   isQueryData = new ObjectInputStream(isFile);
 //        
-//        LST_QUERY_DATA_WIDE = (List<QueryResponse.QueryReport.QueryData>)isQueryData.readObject();
+//        LST_QUERY_DATA_WIDE = (List<QueryResponse.QueryReport.BucketData>)isQueryData.readObject();
 //        
 //        isQueryData.close();
 //        isFile.close();
@@ -101,16 +101,16 @@ public class QueryResponseCorrelatorTest {
 //        isFile = QueryResponseCorrelatorTest.class.getClassLoader().getResourceAsStream(STR_FILENAME_QUERY_RESULTS_LONG);
 //        isQueryData = new ObjectInputStream(isFile);
 //        
-//        LST_QUERY_DATA_LONG = (List<QueryResponse.QueryReport.QueryData>)isQueryData.readObject();
+//        LST_QUERY_DATA_LONG = (List<QueryResponse.QueryReport.BucketData>)isQueryData.readObject();
 //        
 //        isQueryData.close();
 //        isFile.close();
         
         List<QueryResponse> lstRspsWide = TestQueryResponses.queryResults(SingleQueryType.WIDE);
-        LST_QUERY_DATA_WIDE = lstRspsWide.stream().map(m -> m.getQueryReport().getQueryData()).toList();
+        LST_QUERY_DATA_WIDE = lstRspsWide.stream().map(m -> m.getQueryReport().getBucketData()).toList();
         
         List<QueryResponse> lstRspsLong = TestQueryResponses.queryResults(SingleQueryType.LONG);
-        LST_QUERY_DATA_LONG = lstRspsLong.stream().map(m -> m.getQueryReport().getQueryData()).toList();
+        LST_QUERY_DATA_LONG = lstRspsLong.stream().map(m -> m.getQueryReport().getBucketData()).toList();
     }
 
     /**
@@ -118,6 +118,7 @@ public class QueryResponseCorrelatorTest {
      */
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
+        TestQueryResponses.shutdown();
     }
 
     /**
@@ -148,7 +149,7 @@ public class QueryResponseCorrelatorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCorrelator#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCorrelator#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testInsertBucketData() {
@@ -156,13 +157,13 @@ public class QueryResponseCorrelatorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryData() {
         QueryResponseCorrelator  col = new QueryResponseCorrelator();
         
-        for (QueryResponse.QueryReport.QueryData msgData : LST_QUERY_DATA_WIDE) {
+        for (QueryResponse.QueryReport.BucketData msgData : LST_QUERY_DATA_WIDE) {
             col.insertQueryData(msgData);
         }
         

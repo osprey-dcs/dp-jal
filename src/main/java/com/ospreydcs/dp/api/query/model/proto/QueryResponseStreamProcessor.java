@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.query.model.proto;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
@@ -41,7 +42,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorOperation;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryStatus;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryStatus.QueryStatusType;
 
@@ -70,11 +71,11 @@ import io.grpc.stub.StreamObserver;
  * <p>
  * <h2>Data Processing</h2>
  * An implementation of the <code>{@link Consumer}</code> interface bound to the 
- * <code>{@link QueryResponse.QueryReport.QueryData}</code> type must be provided at
+ * <code>{@link QueryResponse.QueryReport.BucketData}</code> type must be provided at
  * creation to receive the incoming data from the Query Service.  The implementation
  * should perform <em>all</em> actual and specific data processing.
  * <br/><br/>
- * <code>QueryResponseStreamProcessor</code> objects extract the <code>QueryData</code>
+ * <code>QueryResponseStreamProcessor</code> objects extract the <code>BucketData</code>
  * messages from the streaming <code>QueryReponse</code> messages and pass only the data
  * messages to the <code>Consumer</code> object.  Thus, all errors and exceptions are
  * processed by the <code>QueryResponseStreamProcess</code> object. However, it does not
@@ -103,7 +104,7 @@ import io.grpc.stub.StreamObserver;
  * <li>
  * Query Error - If an error occurs during the query operation the Query Service will send a 
  * <code>QueryStatus</code> message within the <code>QueryReport</code> message 
- * (i.e., rather than <code>QueryData</code> containing data). The message contains information
+ * (i.e., rather than <code>BucketData</code> containing data). The message contains information
  * concerning the cause of the error.
  * </li>
  * </ul>
@@ -127,6 +128,12 @@ import io.grpc.stub.StreamObserver;
  * to block on this condition before returning.)
  * The success of the gRPC stream processing can be determined by calling 
  * <code>{@link #isSuccess()}</code> at this point.
+ * <br/> <br/>
+ * The class also implements the <code>{@link Callable}</code> bound to the <code>Boolean</code>
+ * Java type.  Thus, instances can also be run within <code>ExecutorService</code> objects.
+ * The <code>{@link #call()}</code> implementation simply invokes the <code>{@link #run()}</code>
+ * abstract method then returns the result <code>{@link #isSuccess()}</code>.
+ * </p>
  * <p>
  * <h2>Abstract Methods</h2>
  * Derived classes must override the following methods:
@@ -151,7 +158,7 @@ import io.grpc.stub.StreamObserver;
  * @since Feb 6, 2024
  *
  */
-public abstract class QueryResponseStreamProcessor implements Runnable, StreamObserver<QueryResponse> {
+public abstract class QueryResponseStreamProcessor implements Runnable, Callable<Boolean>, StreamObserver<QueryResponse> {
 
 
     //
@@ -165,7 +172,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, StreamOb
     protected final DpQueryServiceStub        stubAsync;
     
     /** The query data consumer receiving all incoming Query Service data */
-    protected final Consumer<QueryData>       ifcDataSink;
+    protected final Consumer<BucketData>       ifcDataSink;
     
     
     //
@@ -228,7 +235,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, StreamOb
     public static QueryResponseStreamProcessor  newTask(
             DpDataRequest dpRequest,
             DpQueryServiceStub  stubAsync,
-            Consumer<QueryResponse.QueryReport.QueryData> ifcDataSink) 
+            Consumer<QueryResponse.QueryReport.BucketData> ifcDataSink) 
     {
         // Extract the preferred stream type and the Protobuf query result message
         DpQueryStreamType   enmType = dpRequest.getStreamType();
@@ -255,7 +262,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, StreamOb
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    protected QueryResponseStreamProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<QueryData> ifcDataSink) {
+    protected QueryResponseStreamProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<BucketData> ifcDataSink) {
         this.msgRequest = msgRequest;
         this.stubAsync = stubAsync;
         this.ifcDataSink = ifcDataSink;
@@ -459,6 +466,33 @@ public abstract class QueryResponseStreamProcessor implements Runnable, StreamOb
     
     
     //
+    // Callable<Boolean> Interface
+    //
+
+    /**
+     * <p>
+     * Implementation of the <code>{@link Callable}</code> interface for <code>ExecutorService</code> execution.
+     * </p>
+     * <p>
+     * This method defers to the abstract implementation <code>{@link #run()}</code> to 
+     * start the gRPC data stream then wait for completion.  The value returned by
+     * <code>{@link #isSuccess()}</code> is returned.
+     * </p>
+     * 
+     * @return  the value of <code>{@link #isSuccess()}</code>
+     * 
+     * @see Callable#call()
+     * @see #isSuccess()
+     */
+    @Override
+    public Boolean call() {
+        this.run();
+        
+        return this.isSuccess();
+    }
+    
+    
+    //
     // StreamObserver<QueryResponse> Interface
     //
     
@@ -473,7 +507,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, StreamOb
      * <li>Processes all data within the argument.</li>
      *   <ol>
      *   <li>Checks for response status error and processes it if present.</li>
-     *   <li>Extracts <code>QueryData</code> message and passes it to consumer if present.</li>
+     *   <li>Extracts <code>BucketData</code> message and passes it to consumer if present.</li>
      *   <li>Increments the data page counter if a data message was successfully consumed.</li>
      *   </ol>
      * </ol>
@@ -506,7 +540,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, StreamOb
             // - save the rejected result record
             // - release the stream completed monitor
             // - return - the stream is over
-            if (accepted.failed()) {
+            if (accepted.isFailure()) {
                 this.recResult = accepted;
                 
                 this.monStreamCompleted.countDown();
@@ -521,7 +555,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, StreamOb
         // - save the failure result record
         // - release the stream completed monitor 
         // - return - the stream is over
-        if (result.failed()) {
+        if (result.isFailure()) {
             this.recResult = result;
 
             this.monStreamCompleted.countDown();
@@ -680,7 +714,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, StreamOb
      * Processes the data within the given Query Service response message.
      * </p>
      * <p>
-     * For normal operation <code>QueryData</code> message is extracted from the argument 
+     * For normal operation <code>BucketData</code> message is extracted from the argument 
      * then passed to the data consumer identified in construction.  A SUCCESS result
      * record is then returned indicating successful consumption of response data.
      * </p>
@@ -701,8 +735,8 @@ public abstract class QueryResponseStreamProcessor implements Runnable, StreamOb
         QueryReport     msgReport = msgRsp.getQueryReport();
         
         // Extract the query data if present, then process
-        if (msgReport.hasQueryData()) {
-            QueryData   msgData = msgReport.getQueryData();
+        if (msgReport.hasBucketData()) {
+            BucketData   msgData = msgReport.getBucketData();
             
             this.ifcDataSink.accept(msgData);
             
@@ -780,7 +814,7 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
     public static QueryResponseUniStreamProcessor  newUniTask(
             QueryRequest msgRequest, 
             DpQueryServiceStub stubAsync, 
-            Consumer<QueryData> ifcDataSink) {
+            Consumer<BucketData> ifcDataSink) {
         return new QueryResponseUniStreamProcessor(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -797,7 +831,7 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    public QueryResponseUniStreamProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<QueryData> ifcDataSink) {
+    public QueryResponseUniStreamProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<BucketData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -924,7 +958,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * @see #isSuccess()
      */
     public static QueryResponseBidiStreamProcessor  newBidiTask(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
-            Consumer<QueryData> ifcDataSink) {
+            Consumer<BucketData> ifcDataSink) {
         return new QueryResponseBidiStreamProcessor(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -943,7 +977,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
     public QueryResponseBidiStreamProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
-            Consumer<QueryData> ifcDataSink) {
+            Consumer<BucketData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }
 

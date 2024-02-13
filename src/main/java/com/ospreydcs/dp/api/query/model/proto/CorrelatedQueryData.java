@@ -29,6 +29,7 @@ package com.ospreydcs.dp.api.query.model.proto;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -170,7 +171,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * 
      * @return  new <code>CorrelatedQueryData</code> instance initialized with data from the argument
      */
-    public static CorrelatedQueryData   from(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
+    public static CorrelatedQueryData   from(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
         return new CorrelatedQueryData(msgBucket);
     }
     
@@ -186,7 +187,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      *
      * @param msgBucket source of initializing data
      */
-    public CorrelatedQueryData(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
+    public CorrelatedQueryData(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
         Timestamp   msgTmsStart = msgBucket.getSamplingInterval().getStartTime();
         DataColumn  msgDataCol = msgBucket.getDataColumn(); 
     
@@ -254,10 +255,19 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     }
 
     /**
+     * Returns the number of unique data source names within the current collection of data messages.
+     * 
+     * @return  number of unique data source names encountered so far
+     */
+    public final int    getSourceCount() {
+        return this.setSrcNms.size();
+    }
+    
+    /**
      * Returns the set of unique names for all the data sources that are active within the
      * subject sampling interval.
      *  
-     * @return
+     * @return  set of unique data source names for current collection of data messages
      */
     public final Set<String>    getSourceNames() {
         return this.setSrcNms;
@@ -335,18 +345,19 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         
         // Create list of all (potentially repeating) data source names within column collection
         List<String>    lstSrcNms = this.lstMsgCols.stream().map(DataColumn::getName).toList();
+        List<String>    vecSrcNms = new ArrayList<>(lstSrcNms);
         
         // Remove from the above list each unique data source name recorded so far
         boolean bolMissingSource = this.setSrcNms
                             .stream()
-                            .allMatch(strNm -> lstSrcNms.remove(strNm));
+                            .allMatch(strNm -> vecSrcNms.remove(strNm));
 
         // Check for registered data sources that are missing from the data columns list
         if (!bolMissingSource)
             return ResultRecord.newFailure("Serious Error: data column list was missing at least one data source");
         
         // Check for repeated data source entries within the data columns list
-        if (!lstSrcNms.isEmpty())
+        if (!vecSrcNms.isEmpty())
             return ResultRecord.newFailure("Data column list contains multiple entries for following data sources: " + lstSrcNms);
         
         return ResultRecord.SUCCESS;
@@ -419,7 +430,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * @return      <code>true</code> only if argument data was successfully added to this reference,
      *              <code>false</code> otherwise (nothing done)
      */
-    public boolean insertBucketData(QueryResponse.QueryReport.QueryData.DataBucket msgBucket) {
+    public boolean insertBucketData(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
         
         // Check if list addition is possible - must have same sampling interval
         if (ProtoTime.equals(this.msgSmplClk, msgBucket.getSamplingInterval())) {
