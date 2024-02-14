@@ -399,7 +399,7 @@ public class QueryResponseAssembler {
     private final ExecutorService           exeThreadPool = Executors.newFixedThreadPool(CNT_MULTISTREAM);
     
     /** The Query Service response data correlator */
-    private final QueryResponseCorrelator   qrcDataCorrelator = new QueryResponseCorrelator();  
+    private final QueryDataCorrelator   qrcDataCorrelator = new QueryDataCorrelator();  
     
     
     /**
@@ -532,7 +532,7 @@ public class QueryResponseAssembler {
             throw e;
         }
         
-        SamplingProcess sp = SamplingProcess.from(this.qrcDataCorrelator.getTargetSet());
+        SamplingProcess sp = SamplingProcess.from(this.qrcDataCorrelator.getProcessedSet());
         
         return sp;
     }
@@ -606,7 +606,7 @@ public class QueryResponseAssembler {
         thdProcessor.join(timeoutLimitDefaultMillis());
 
         // Create the sampling process and return it
-        SamplingProcess sp = SamplingProcess.from(this.qrcDataCorrelator.getTargetSet());
+        SamplingProcess sp = SamplingProcess.from(this.qrcDataCorrelator.getProcessedSet());
         
         return sp;
     }

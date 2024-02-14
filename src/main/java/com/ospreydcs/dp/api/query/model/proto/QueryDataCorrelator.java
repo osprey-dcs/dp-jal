@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryResponseCorrelator.java
+ * File:	QueryDataCorrelator.java
  * Package: com.ospreydcs.dp.api.query.model.proto
- * Type: 	QueryResponseCorrelator
+ * Type: 	QueryDataCorrelator
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -46,8 +46,11 @@ import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.model.ResultRecord;
+import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.RejectDetails;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
@@ -64,16 +67,23 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * one <code>CorrelatedQueryData</code> instance.
  * </p>
  * <p>
+ * <h2>Data Processing Verification</code>
+ * There are multiple static utility methods for verifying correct processing of a results set.  These methods
+ * are prefixed with <code>verify</code>.  They perform various verification checks on the processed results
+ * set obtained from <code>{@link #getProcessedSet()}</code>, such as ordering, time domain collisions, and
+ * time series sizes.
+ * </p>
+ * <p>
  * <h2>NOTES:</h2>
  * <ul>
  * <li>
- * The correlation operations performed within <code>QueryResponseCorrelator</code>
+ * The correlation operations performed within <code>QueryDataCorrelator</code>
  * allow a high-level of multi-threaded, concurrent, data processing.  Using concurrency
  * can significantly reduce processing time for a results set.
  * </li>
  * <br/>
  * <li>
- * The <code>QueryResponseCorrelator</code> is currently designed to exploit all available 
+ * The <code>QueryDataCorrelator</code> is currently designed to exploit all available 
  * CPU cores.  Thus, for some situations it may be desirable to stop concurrent processing
  * so it does not interfere with other real-time operations (e.g., such as gRPC streaming).
  * </li>
@@ -101,7 +111,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * @see CorrelatedQueryData
  * @see BucketDataInsertTask
  */
-public class QueryResponseCorrelator {
+public class QueryDataCorrelator {
 
     //
     // Application Resources
@@ -109,7 +119,6 @@ public class QueryResponseCorrelator {
     
     /** The Data Platform API default configuration parameter set */
     private static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
-    
     
     
     //
@@ -164,6 +173,40 @@ public class QueryResponseCorrelator {
     private boolean     bolConcurrency = BOL_CONCURRENCY;
     
 
+    //
+    // Creator
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>QueryDataCorrelator</code> instance ready for processing.
+     * </p>
+     * <p>
+     * Instances are created in their initial state - ready for processing.  The method 
+     * <code>{@link #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
+     * is recommended for query response data processing; that is, it is recommended to process all query and 
+     * streaming errors externally, supplying only <code>BucketData</code> messages to 
+     * <code>QueryDataCorrelator</code> objects.
+     * </p>
+     * <p>
+     * One the entire query results set has be passed to a <code>QueryDataCorrelator</code> object
+     * (e.g., using the above method repeated for each data message), the correlated data is recoverable
+     * with <code>{@link #getProcessedSet()}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <code>QueryDataCorrelator</code> objects can be reused for multiple query results sets.
+     * Use the method <code>{@link #reset()}</code> before processing a new results set.
+     * </p>
+     * 
+     * @return
+     * 
+     * @see #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
+     * @see #getProcessedSet()
+     */
+    public static QueryDataCorrelator newInstance() {
+        return new QueryDataCorrelator();
+    }
     
     //
     // Constructors
@@ -171,11 +214,14 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseCorrelator</code>.
+     * Constructs a new instance of <code>QueryDataCorrelator</code>.
      * </p>
-     *
+     * <p>
+     * Instances are created in their initialized state and are ready for the processing of
+     * Query Service results sets.
+     * </p>
      */
-    public QueryResponseCorrelator() {
+    public QueryDataCorrelator() {
     }
     
     
@@ -196,7 +242,7 @@ public class QueryResponseCorrelator {
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * <code>QueryResponseCorrelator</code> objects can be reused.  After calling this method the 
+     * <code>QueryDataCorrelator</code> objects can be reused.  After calling this method the 
      * collector is returned to its initial state and is ready to process another Query Service
      * response results set.
      * </p>
@@ -221,13 +267,13 @@ public class QueryResponseCorrelator {
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The correlation operations performed within <code>QueryResponseCorrelator</code>
+     * The correlation operations performed within <code>QueryDataCorrelator</code>
      * allow a high-level of multi-threaded, concurrent, data processing.  Using concurrency
      * can significantly reduce processing time for a results set.
      * </li>
      * <br/>
      * <li>
-     * The <code>QueryResponseCorrelator</code> is currently designed to exploit all available 
+     * The <code>QueryDataCorrelator</code> is currently designed to exploit all available 
      * CPU cores.  Thus, for some situations it may be desirable to stop concurrent processing
      * so it does not interfere with other real-time operations (e.g., such as gRPC streaming).
      * </li>
@@ -259,7 +305,7 @@ public class QueryResponseCorrelator {
      * 
      * @return  the target set of the query data collection and organization operations
      */
-    public final SortedSet<CorrelatedQueryData>   getTargetSet() {
+    public final SortedSet<CorrelatedQueryData>   getProcessedSet() {
         return this.setTargetRefs;
     }
     
@@ -268,7 +314,7 @@ public class QueryResponseCorrelator {
      * 
      * @return  current size of the target set
      */
-    public int sizeTargetSet() {
+    public int sizeProcessedSet() {
         return this.setTargetRefs.size();
     }
     
@@ -297,7 +343,7 @@ public class QueryResponseCorrelator {
     
     
     // 
-    // Correlation Operations
+    // Processing Operations
     //
     
     /**
@@ -499,6 +545,158 @@ public class QueryResponseCorrelator {
         this.insertQueryReport(msgReport);
     }
 
+    
+    // 
+    // Processing Verification
+    //
+    
+    /**
+     * <p>
+     * Verifies the correct ordering (i.e., by sampling start time) of the given processed data set.
+     * </p>
+     * <p>
+     * Loops through the sorted set of <code>CorrelatedQueryData</code> instances checking all adjacent
+     * instances for proper ordering.  If a mis-ordered instance is found all further checking stops
+     * and a FAILURE result is returned with a message describing the index.
+     * </p>
+     * 
+     * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelator</code>
+     * 
+     * @return  <code>{@link ResultRecord#SUCCESS}</code> if the set is properly ordered,
+     *          otherwise a FAILURE result with description message
+     */
+    public static ResultRecord    verifyOrdering(SortedSet<CorrelatedQueryData> setProcData) {
+        
+        // We need at least one data set
+        if (setProcData.isEmpty())
+            return ResultRecord.newFailure("Empty argument - cannot verify empty data set.");
+        
+        // Loop through all processed data in order
+        int                 indPrev = 0;
+        CorrelatedQueryData cqdPrev = null;
+        
+        for (CorrelatedQueryData cqdCurr : setProcData) {
+
+            // Initiate loop
+            if (cqdPrev == null) {
+                cqdPrev = cqdCurr;
+                continue;
+            }
+            
+            if (cqdPrev.compareTo(cqdCurr) >= 0) {
+                return ResultRecord.newFailure("Bad ordering found at index " + Integer.toString(indPrev));
+            }
+            
+            cqdPrev = cqdCurr;
+            indPrev++;
+        }
+        
+        return ResultRecord.SUCCESS;
+    }
+    
+    /**
+     * <p>
+     * Verifies that each data set within the argument has the correct column size.
+     * </p>
+     * <p>
+     * Loops through all processed data.  The sample count for each data set is taken from
+     * the sampling clock message.  All <code>DataColumn</code> messages within the correlated
+     * set are then checked for the proper size (i.e., the sample count).  If a correlated data
+     * object is found to have data columns with incorrect size all further processing stops
+     * and a FAILURE result is returned with a message describing the bad columns.
+     * </p>
+     * 
+     * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelator</code>
+     * 
+     * @return  <code>{@link ResultRecord#SUCCESS}</code> if all column sizes are correct,
+     *          otherwise a FAILURE result with description message
+     */
+    public static ResultRecord    verifyColumnSizes(SortedSet<CorrelatedQueryData> setProcData) {
+
+        // We need at least one data set
+        if (setProcData.isEmpty())
+            return ResultRecord.newFailure("Empty argument - cannot verify empty data set.");
+        
+        // Loop through all processed data in order
+        int     indCurr = 0;
+        for (CorrelatedQueryData cqdCurr : setProcData) {
+
+            // Get the sample count for each set
+            final int cntSamples = cqdCurr.getSamplingMessage().getNumSamples();
+
+            // Filter all processed data columns with size unequal to sample count
+            List<DataColumn>    lstBadCols = cqdCurr
+                    .getAllDataMessages()
+                    .stream()
+                    .filter(msgCol -> (msgCol.getDataValuesCount() != cntSamples) )
+                    .toList();
+            
+            if (!lstBadCols.isEmpty()) {
+                List<String>    lstBadSrcNms = lstBadCols.stream().map(DataColumn::getName).toList();
+                
+                return ResultRecord.newFailure("Bad column size(s) for data set index " 
+                        + Integer.toString(indCurr)
+                        + ": " + lstBadSrcNms);
+            }
+            
+            indCurr++;
+        }
+        
+        return ResultRecord.SUCCESS;
+    }
+    
+    /**
+     * <p>
+     * Verifies that all time domains within the given processed data set are disjiont.
+     * </p>
+     * <p>
+     * Checks all adjacent time domains within the sorted set of processed data for closed intersections.
+     * If an intersection is detected all further checking stops and a FAILURE results is returned along
+     * with a message containing the offending element index.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This verification must be run after <code>{@link #verifyOrdering(SortedSet)}</code>.  The algorithm
+     * is accurate ONLY IF the set is ordered correctly, specifically, by sampling start times.
+     * </p>
+     * 
+     * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelator</code>
+     * 
+     * @return  <code>{@link ResultRecord#SUCCESS}</code> if no time domain collisions are detected,
+     *          otherwise a FAILURE result with description message
+     */
+    public static ResultRecord    verifyTimeDomains(SortedSet<CorrelatedQueryData> setProcData) {
+        
+        // We need at least one data set
+        if (setProcData.isEmpty())
+            return ResultRecord.newFailure("Empty argument - cannot verify empty data set.");
+        
+        // Loop through all processed data in order
+        int                 indPrev = 0;
+        CorrelatedQueryData cqdPrev = null;
+        
+        for (CorrelatedQueryData cqdCurr : setProcData) {
+
+            // Initiate loop
+            if (cqdPrev == null) {
+                cqdPrev = cqdCurr;
+                continue;
+            }
+
+            TimeInterval    domPrev = cqdPrev.getTimeDomain();
+            TimeInterval    domCurr = cqdCurr.getTimeDomain();
+            
+            if (domPrev.hasIntersectionClosed(domCurr)) {
+                return ResultRecord.newFailure("Time domain intersect found at index " + Integer.toString(indPrev));
+            }
+            
+            cqdPrev = cqdCurr;
+            indPrev++;
+        }
+        
+        return ResultRecord.SUCCESS;
+    }
+    
     
     //
     // Support Methods
@@ -703,7 +901,7 @@ public class QueryResponseCorrelator {
      * </p>
      * <p>
      * The assumption is that the argument collection is not associated with the current managed set of 
-     * target references returned by <code>{@link #getTargetSet()}</code>.  More specifically, the arguments
+     * target references returned by <code>{@link #getProcessedSet()}</code>.  More specifically, the arguments
      * have already been checked against the current target set and we know that new sampling interval references 
      * must be created.
      * </p>
@@ -760,7 +958,7 @@ public class QueryResponseCorrelator {
         List<BucketDataInsertTask> lstTasks = msgData
                 .getDataBucketsList()
                 .stream()
-                .map(buc -> BucketDataInsertTask.newTask(buc, this.getTargetSet()))
+                .map(buc -> BucketDataInsertTask.newTask(buc, this.getProcessedSet()))
                 .toList();
                 
         return lstTasks;

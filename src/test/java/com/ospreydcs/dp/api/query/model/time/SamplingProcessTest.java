@@ -46,10 +46,11 @@ import org.junit.Test;
 import org.w3c.dom.ranges.RangeException;
 
 import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.proto.QueryResponseCorrelator;
+import com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
 
 /**
  * JUnit test cases for <code>{@link SamplingProcess}</code>.
@@ -62,11 +63,32 @@ public class SamplingProcessTest {
 
     
     //
+    // Class Constants
+    //
+    
+    /** Sample query response for test cases */
+    public static final List<QueryResponse>   LST_QUERY_RSP = TestQueryResponses.queryResults(SingleQueryType.WIDE);
+    
+    
+    /** Sample query data for test cases - 1 source, 10 seconds */
+    public static final List<BucketData>   LST_QUERY_DATA_ONE = TestQueryResponses.queryData(SingleQueryType.ONE_SOURCE);
+    
+    /** Sample query data for test cases - 2 sources, 2 seconds */
+    public static final List<BucketData>   LST_QUERY_DATA_TWO = TestQueryResponses.queryData(SingleQueryType.TWO_SOURCE);
+    
+    /** Sample query data for test cases - 100 sources, 5 seconds */
+    public static final List<BucketData>   LST_QUERY_DATA_WIDE = TestQueryResponses.queryData(SingleQueryType.WIDE);
+    
+    /** Sample query data for test cases - 5 sources, 60 seconds */
+    public static final List<BucketData>   LST_QUERY_DATA_LONG = TestQueryResponses.queryData(SingleQueryType.LONG);
+    
+    
+    //
     // Test Case Resources
     //
     
     /** The query results set correlator - we only need one */
-    private final static QueryResponseCorrelator  CORRELATOR = new QueryResponseCorrelator();
+    private final static QueryDataCorrelator  CORRELATOR = new QueryDataCorrelator();
     
     
     //
@@ -120,11 +142,11 @@ public class SamplingProcessTest {
                 CORRELATOR.insertQueryResponse(msgRsp);
 
         } catch (OperationNotSupportedException | CannotProceedException e) {
-            Assert.fail(failMessage("QueryResponseCorrelator#insertQueryResponse()", e));
+            Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
             
         }
         
-        SortedSet<CorrelatedQueryData>  setData = CORRELATOR.getTargetSet();
+        SortedSet<CorrelatedQueryData>  setData = CORRELATOR.getProcessedSet();
         
         try {
             SamplingProcess result = SamplingProcess.from(setData);

@@ -71,7 +71,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <p>
  * Note that <code>SamplingProcess</code> instances can be created from the correlated results
  * set of a Query Service data request, as obtained from 
- * <code>{@link QueryResponseCorrelator#getTargetSet()</code>.  Thus, this class can be used
+ * <code>{@link QueryDataCorrelator#getTargetSet()</code>.  Thus, this class can be used
  * in the reconstruction process of Data Platform Query Service data requests.
  * </p>  
  * <p>
