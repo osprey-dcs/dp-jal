@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.query.model.proto;
 
-import static org.junit.Assert.*;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;

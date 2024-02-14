@@ -72,7 +72,7 @@ public class SampledTimeSeries {
     private final DpSupportedType   enmType;
     
     /** Sampled data value of the time series - linked list for anticipated modifications */
-    private final List<Object>      lstValues = new LinkedList<>();
+    private final List<Object>      lstValues; // = new LinkedList<>();
 
     
     //
@@ -153,6 +153,7 @@ public class SampledTimeSeries {
     public SampledTimeSeries(String strSourceName, DpSupportedType enmType) {
         this.strSourceName = strSourceName;
         this.enmType = enmType;
+        this.lstValues = new LinkedList<>();
     }
 
     /**
@@ -170,8 +171,7 @@ public class SampledTimeSeries {
             throws IllegalArgumentException {
         this.strSourceName = strSourceName;
         this.enmType = enmType;
-
-        this.appendValues(lstValues);
+        this.lstValues = new ArrayList<>(lstValues);
     }
 
 

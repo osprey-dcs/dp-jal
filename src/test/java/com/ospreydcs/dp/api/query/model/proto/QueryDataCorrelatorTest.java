@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.query.model.proto;
 
-import static org.junit.Assert.fail;
-
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -44,11 +42,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.api.model.ResultRecord;
-import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
 

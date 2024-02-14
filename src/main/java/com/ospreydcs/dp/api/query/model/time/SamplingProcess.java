@@ -106,9 +106,9 @@ public class SamplingProcess {
 //        }
 //    }
     
-//    public static record   SamplingPair(UniformClockDuration setTms, List<DataColumn> lstDataCols) {
+//    public static record   SamplingPair(UniformSamplingClock setTms, List<DataColumn> lstDataCols) {
 //        
-//        public static SamplingPair  of(UniformClockDuration setTms, List<DataColumn> lstDataCols) {
+//        public static SamplingPair  of(UniformSamplingClock setTms, List<DataColumn> lstDataCols) {
 //            return new SamplingPair(setTms, lstDataCols);
 //        }
 //    };
@@ -454,31 +454,37 @@ public class SamplingProcess {
      * </ul>
      * </p>
      * 
-     * @param setQueryData  the target set of <code>CorrelatedQueryData</code> objects 
+     * @param setPrcdData  the target set of processed <code>CorrelatedQueryData</code> objects 
      * 
      * @return  <code>ResultRecord</code> containing result of test, with message if failure
      */
-    private ResultRecord verifyStartTimes(SortedSet<CorrelatedQueryData> setQueryData) {
+    private ResultRecord verifyStartTimes(SortedSet<CorrelatedQueryData> setPrcdData) {
         
-        // Get the start times for each correlated query data block in order, remove the first
-        List<Instant> lstStartTimes = setQueryData.stream().sequential().map(cqd -> cqd.getStartInstant()).toList();
-        lstStartTimes = new ArrayList<>(lstStartTimes);
-        Instant insPrev = lstStartTimes.remove(0);
         
-        // Check that all remaining start times are in order
-        int     indBlk = 0;
-        for (Instant insCurr : lstStartTimes) {
+        // Loop through set checking that all start times are in order
+        int                 indPrev = 0;
+        CorrelatedQueryData cqdPrev = null;
+        for (CorrelatedQueryData cqdCurr : setPrcdData) {
+            
+            // Initialize the loop - first time through
+            if (cqdPrev == null) {
+                cqdPrev = cqdCurr;
+                continue;
+            }
             
             // Compare the two instants
+            Instant     insPrev = cqdPrev.getStartInstant();
+            Instant     insCurr = cqdCurr.getStartInstant();
+            
             if (insPrev.compareTo(insCurr) >= 0) {
                 if (BOL_LOGGING)
-                    LOGGER.error("{}: Bad start time ordering at query data block {} with start time = {}", JavaRuntime.getCallerName(), Integer.toString(indBlk), insCurr);
+                    LOGGER.error("{}: Bad start time ordering at query data block {} with start time = {}", JavaRuntime.getCallerName(), Integer.toString(indPrev), insPrev);
                 
-                return ResultRecord.newFailure("Bad start time ordering for query data block " + Integer.toString(indBlk) + " with start time = " + insCurr);
+                return ResultRecord.newFailure("Bad start time ordering for processed data block " + Integer.toString(indPrev) + " with start time = " + insPrev);
             }
             
             // Update state to next instant
-            indBlk++;
+            indPrev++;
             insPrev = insCurr;
         }
         
@@ -522,28 +528,36 @@ public class SamplingProcess {
      * </ul>
      * </p>
      * 
-     * @param setQueryData  the target set of <code>CorrelatedQueryData</code> objects, corrected ordered 
+     * @param setPrcdData  the target set of <code>CorrelatedQueryData</code> objects, corrected ordered 
      * 
      * @return  <code>ResultRecord</code> containing result of test, with message if failure
      */
-    private ResultRecord verifyTimeDomains(SortedSet<CorrelatedQueryData> setQueryData) {
-        
-        // Get the time domains for each query data block, remove the first
-        List<TimeInterval>  lstTimeDomains = setQueryData.stream().sequential().map(cqd -> cqd.getTimeDomain()).toList();
-        lstTimeDomains = new ArrayList<>(lstTimeDomains);
-        TimeInterval        domPrev = lstTimeDomains.remove(0);
+    private ResultRecord verifyTimeDomains(SortedSet<CorrelatedQueryData> setPrcdData) {
         
         // Check that remaining time domains are disjoint - this works if the argument is ordered correctly
-        int     indBlk = 0;
-        for (TimeInterval domCurr : lstTimeDomains) {
-            if (domPrev.hasIntersectionClosed(domCurr)) {
-                if (BOL_LOGGING)
-                    LOGGER.error("{}: Collision between time domains at query data block {}, {} with {}.", JavaRuntime.getCallerName(), Integer.toString(indBlk), domCurr, domPrev);
-                
-                return ResultRecord.newFailure("Time domain collision at query data block " + Integer.toString(indBlk) + ": " + domCurr + " with " + domPrev);
+        // Loop through set checking that all start times are in order
+        int                 indPrev = 0;
+        CorrelatedQueryData cqdPrev = null;
+        for (CorrelatedQueryData cqdCurr : setPrcdData) {
+            
+            // Initialize the loop - first time through
+            if (cqdPrev == null) {
+                cqdPrev = cqdCurr;
+                continue;
             }
             
-            indBlk++;
+            // Extract time domains and check for closed intersection
+            TimeInterval    domPrev = cqdPrev.getTimeDomain();
+            TimeInterval    domCurr = cqdCurr.getTimeDomain();
+            
+            if (domPrev.hasIntersectionClosed(domCurr)) {
+                if (BOL_LOGGING)
+                    LOGGER.error("{}: Collision between time domains at query data block {}, {} with {}.", JavaRuntime.getCallerName(), Integer.toString(indPrev), domCurr, domPrev);
+                
+                return ResultRecord.newFailure("Time domain collision at query data block " + Integer.toString(indPrev) + ": " + domCurr + " with " + domPrev);
+            }
+            
+            indPrev++;
             domPrev = domCurr;
         }
         
@@ -891,30 +905,36 @@ public class SamplingProcess {
      * </ul>
      * </p>
      * 
-     * @param vecBlocks the constructed vector of <code>UniformSamplingBlock</code> objects for this process 
+     * @param lstBlocks the constructed list of <code>UniformSamplingBlock</code> objects for this process 
      * 
      * @return  <code>ResultRecord</code> containing result of test, with message if failure
      */
-    private ResultRecord verifyStartTimes(List<UniformSamplingBlock> vecBlocks) {
+    private ResultRecord verifyStartTimes(List<UniformSamplingBlock> lstBlocks) {
         
-        // Get the start times for each block in order, remove the first
-        List<Instant> lstStartTimes = vecBlocks.stream().sequential().map(usb -> usb.getStartInstant()).toList();
-        Instant insPrev = lstStartTimes.remove(0);
-        
-        // Check that all remaining start times are in order
-        int     indBlk = 0;
-        for (Instant insCurr : lstStartTimes) {
+        // Loop through all ordered blocks - Check that all start times are in order
+        int                     indPrev = 0;
+        UniformSamplingBlock    blkPrev = null;
+        for (UniformSamplingBlock blkCurr : lstBlocks) {
+            
+            // Initialize loop - first time through
+            if (blkPrev == null) {
+                blkPrev = blkCurr;
+                continue;
+            }
             
             // Compare the two instants
+            Instant insPrev = blkPrev.getStartInstant();
+            Instant insCurr = blkCurr.getStartInstant();
+            
             if (insPrev.compareTo(insCurr) >= 0) {
                 if (BOL_LOGGING)
-                    LOGGER.error("{}: Bad start time ordering at sample block {} with start time = {}", JavaRuntime.getCallerName(), Integer.toString(indBlk), insCurr);
+                    LOGGER.error("{}: Bad start time ordering at sample block {} with start time = {}", JavaRuntime.getCallerName(), Integer.toString(indPrev), insPrev);
                 
-                return ResultRecord.newFailure("Bad start time ordering for sample block " + Integer.toString(indBlk) + " with start time = " + insCurr);
+                return ResultRecord.newFailure("Bad start time ordering for sample block " + Integer.toString(indPrev) + " with start time = " + insPrev);
             }
             
             // Update state to next instant
-            indBlk++;
+            indPrev++;
             insPrev = insCurr;
         }
         
@@ -958,27 +978,36 @@ public class SamplingProcess {
      * </ul>
      * </p>
      * 
-     * @param vecBlocks the constructed vector of <code>UniformSamplingBlock</code> objects for this process 
+     * @param lstBlocks the constructed list of <code>UniformSamplingBlock</code> objects for this process 
      * 
      * @return  <code>ResultRecord</code> containing result of test, with message if failure
      */
-    private ResultRecord verifyTimeDomains(List<UniformSamplingBlock> vecBlocks) {
+    private ResultRecord verifyTimeDomains(List<UniformSamplingBlock> lstBlocks) {
         
-        // Get the time domains for each block, remove the first
-        List<TimeInterval>  lstTimeDomains = vecBlocks.stream().sequential().map(usb -> usb.getTimeDomain()).toList();
-        TimeInterval        domPrev = lstTimeDomains.remove(0);
-        
-        // Check that remaining time domains are disjoint - this works if the argument is ordered correctly
-        int     indBlk = 0;
-        for (TimeInterval domCurr : lstTimeDomains) {
+        // Loop through all ordered blocks - Check that time domains are disjoint 
+        // - this works if the argument is ordered correctly
+        int                     indPrev = 0;
+        UniformSamplingBlock    blkPrev = null;
+        for (UniformSamplingBlock blkCurr : lstBlocks) {
+            
+            // Initialize loop - first time through
+            if (blkPrev == null) {
+                blkPrev = blkCurr;
+                continue;
+            }
+
+            // Extract time domains and check for closed intersection
+            TimeInterval    domPrev = blkPrev.getTimeDomain();
+            TimeInterval    domCurr = blkCurr.getTimeDomain();
+            
             if (domPrev.hasIntersectionClosed(domCurr)) {
                 if (BOL_LOGGING)
-                    LOGGER.error("{}: Collision between time domains at sampling block {}, {} with {}.", JavaRuntime.getCallerName(), Integer.toString(indBlk), domCurr, domPrev);
+                    LOGGER.error("{}: Collision between time domains at sampling block {}, {} with {}.", JavaRuntime.getCallerName(), Integer.toString(indPrev), domPrev, domCurr);
                 
-                return ResultRecord.newFailure("Time domain collision at sample block " + Integer.toString(indBlk) + ": " + domCurr + " with " + domPrev);
+                return ResultRecord.newFailure("Time domain collision at sample block " + Integer.toString(indPrev) + ": " + domPrev + " with " + domCurr);
             }
             
-            indBlk++;
+            indPrev++;
             domPrev = domCurr;
         }
         
@@ -1027,11 +1056,11 @@ public class SamplingProcess {
      * </ul>
      * </p>
      * 
-     * @param vecBlocks the constructed vector of <code>UniformSamplingBlock</code> objects for this process 
+     * @param lstBlocks the constructed list of <code>UniformSamplingBlock</code> objects for this process 
      * 
      * @return  <code>ResultRecord</code> containing result of test, with message if failure
      */
-    private  ResultRecord verifySourceTypes(List<UniformSamplingBlock> vecBlocks) {
+    private  ResultRecord verifySourceTypes(List<UniformSamplingBlock> lstBlocks) {
         
         // Local type used for intermediate results
         record Pair(String name, DpSupportedType type) {};
@@ -1040,10 +1069,10 @@ public class SamplingProcess {
         List<Pair> lstBadSrcs;
         
         // Pivot concurrency on the size of container (always use concurrency within sampling blocks)
-        if (BOL_CONCURRENCY && (vecBlocks.size() > SamplingProcess.SZ_CONCURRENCY_PIVOT) ) {
+        if (BOL_CONCURRENCY && (lstBlocks.size() > SamplingProcess.SZ_CONCURRENCY_PIVOT) ) {
             
             // Process vector concurrently, blocks concurrently 
-            lstBadSrcs = vecBlocks
+            lstBadSrcs = lstBlocks
                     .parallelStream()
                     .<Pair>flatMap(usb -> usb
                             .getSourceNames()
@@ -1056,7 +1085,7 @@ public class SamplingProcess {
         } else if (BOL_CONCURRENCY) {
 
             // Process vector serially, blocks concurrently 
-            lstBadSrcs = vecBlocks
+            lstBadSrcs = lstBlocks
                     .stream()
                     .<Pair>flatMap(usb -> usb
                             .getSourceNames()
@@ -1070,7 +1099,7 @@ public class SamplingProcess {
         } else {
             
             // Process everything serially
-            lstBadSrcs = vecBlocks
+            lstBadSrcs = lstBlocks
                     .stream()
                     .<Pair>flatMap(usb -> usb
                             .getSourceNames()
@@ -1100,10 +1129,10 @@ public class SamplingProcess {
 //        
 //        setRefs.remove(refFirst);
 //        
-//        UniformClockDuration  setPrev = UniformClockDuration.from(refFirst.getSamplingMessage());
+//        UniformSamplingClock  setPrev = UniformSamplingClock.from(refFirst.getSamplingMessage());
 //        lstPairs.add( SamplingPair.of(setPrev, refFirst.getAllDataMessages()) ) ;
 //        for (CorrelatedQueryData ref : setRefs) {
-//            UniformClockDuration  setCurr = UniformClockDuration.from(ref.getSamplingMessage());
+//            UniformSamplingClock  setCurr = UniformSamplingClock.from(ref.getSamplingMessage());
 //            
 //            if (setCurr.hasDomainIntersection(setPrev))
 //                throw new IllegalStateException("Collision between internal sampling domains.");

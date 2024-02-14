@@ -135,7 +135,7 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testFrom() {
-        List<QueryResponse> lstRspMsgs = TestQueryResponses.queryResults(SingleQueryType.LONG);
+        List<QueryResponse> lstRspMsgs = LST_QUERY_RSP;
         
         try {
             for (QueryResponse msgRsp : lstRspMsgs)
@@ -146,6 +146,7 @@ public class SamplingProcessTest {
             
         }
         
+        // Get the processed data and try to create SamplingProcess
         SortedSet<CorrelatedQueryData>  setData = CORRELATOR.getProcessedSet();
         
         try {
@@ -211,7 +212,7 @@ public class SamplingProcessTest {
 
     
     //
-    // Suport Methods
+    // Support Methods
     //
     
     /**

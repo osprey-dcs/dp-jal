@@ -30,6 +30,8 @@ package com.ospreydcs.dp.api.model;
 import java.util.Map;
 import java.util.Vector;
 
+import com.google.protobuf.ByteString;
+
 /**
  * <p>
  * Enumeration of data types supported as heterogeneous <em>data values</em> within the Data Platform.
@@ -41,28 +43,28 @@ import java.util.Vector;
  */
 public enum DpSupportedType {
 
-    BOOLEAN(boolean.class),
-    INTEGER(int.class),
-    LONG(long.class),
-    FLOAT(float.class),
-    DOUBLE(double.class),
+//    BOOLEAN(boolean.class),
+//    INTEGER(int.class),
+//    LONG(long.class),
+//    FLOAT(float.class),
+//    DOUBLE(double.class),
+//    STRING(String.class),
+//    BYTE_ARRAY(byte[].class),
+//    IMAGE(BufferedImage.class),
+//    ARRAY(Vector.class),
+//    STRUCTURE(Map.class),
+//    UNSUPPORTED_TYPE(null)
+    BOOLEAN(Boolean.class),
+    INTEGER(Integer.class),
+    LONG(Long.class),
+    FLOAT(Float.class),
+    DOUBLE(Double.class),
     STRING(String.class),
-    BYTE_ARRAY(byte[].class),
+    BYTE_ARRAY(ByteString.class),
     IMAGE(BufferedImage.class),
     ARRAY(Vector.class),
     STRUCTURE(Map.class),
     UNSUPPORTED_TYPE(null)
-//    BOOLEAN(Boolean.class),
-//    INTEGER(Integer.class),
-//    LONG(Long.class),
-//    FLOAT(Float.class),
-//    DOUBLE(Double.class),
-//    STRING(String.class),
-//    BYTE_ARRAY(ByteString.class),
-//    IMAGE(BufferedImage.class),
-//    ARRAY(Vector.class),
-//    STRUCTURE(Map.class)
-//    UNSUPPORTED_TYPE(null)
     ;
 
     //

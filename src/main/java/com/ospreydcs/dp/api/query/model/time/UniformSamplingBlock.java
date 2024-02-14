@@ -28,6 +28,7 @@
 package com.ospreydcs.dp.api.query.model.time;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +58,7 @@ import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
  * <p>
  * Class instances maintain an collection of <code>{@link SampledTimeSeries}</code> objects 
  * containing the time-series data for the sampling block.
- * The class also contains a uniform sampling clock <code>{@link UniformClockDuration}</code>
+ * The class also contains a uniform sampling clock <code>{@link UniformSamplingClock}</code>
  * of finite duration producing the timestamps for all time-series data sets within the block. 
  * Instances are intended to be created from <code>{@link CorrelatedQueryData}</code> objects
  * during Data Platform Query Service results set reconstruction.
@@ -187,10 +188,10 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     //
     
     /** The uniform clock duration for this sample block */
-    private final   UniformClockDuration    clkParams;
+    private final   UniformSamplingClock    clkParams;
     
     /** The vector of ordered timestamps correspond to this sample block */
-    private final   Vector<Instant>         vecTimestamps;
+    private final   ArrayList<Instant>      vecTimestamps;
     
     /** Set of data source names for sample block */
     private final   Set<String>             setSourceNames;
@@ -276,7 +277,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
         List<DataColumn>            lstMsgDataCols = cqdSampleBlock.getAllDataMessages();
         
         // Create the sampling clock and the timestamps for this block
-        this.clkParams = UniformClockDuration.from(msgClockParams);
+        this.clkParams = UniformSamplingClock.from(msgClockParams);
         this.vecTimestamps = this.clkParams.createTimestamps();
         
         // Get the set of data source names and create all the time-series data for this block
@@ -369,7 +370,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      *  
      * @return  the time domain which the clock is active, minus the final period duration
      * 
-     * @see UniformClockDuration#getTimeDomain()
+     * @see UniformSamplingClock#getTimeDomain()
      */
     public final TimeInterval   getTimeDomain() {
         return this.clkParams.getTimeDomain();
@@ -377,7 +378,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     
     /**
      * <p>
-     * Returns the order vector of timestamp instants corresponding to this sampling block.
+     * Returns the order vector (<code>ArrayList</code>) of timestamp instants corresponding to this sampling block.
      * </p>
      * <p>
      * The returned vector is ordered from earliest timestamp to latest timestamp.  All
@@ -390,7 +391,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * 
      * @return  ordered vector of timestamps for this sampling block, earliest to latest
      */
-    public final Vector<Instant>    getTimestamps() {
+    public final ArrayList<Instant>    getTimestamps() {
         return this.vecTimestamps;
     }
     
@@ -404,9 +405,9 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * 
      * @return  the sampling clock parameters
      * 
-     * @see UniformClockDuration
+     * @see UniformSamplingClock
      */
-    public final UniformClockDuration getSamplingClock() {
+    public final UniformSamplingClock getSamplingClock() {
         return this.clkParams;
     }
     
@@ -472,7 +473,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * is not represented within this sampled data block a <code>null</code> value is returned.
      * </p>
      * <p>
-     * <h2>NOTES:<h2>
+     * <h2>NOTES:</h2>
      * <ul>
      * <li>Do not modify the returned object, it is owned by this sampling block.</li>
      * <li>Use <code>{@link #getSourceNames()}</code> to obtain all data sources names in block.</li>
@@ -537,7 +538,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * @return <code>true</code> if the given sampling time domain collides with this one,
      *         <code>false</code> otherwise
      *         
-     * @see UniformClockDuration#hasDomainIntersection(UniformClockDuration)
+     * @see UniformSamplingClock#hasDomainIntersection(UniformSamplingClock)
      */
     public boolean  hasDomainIntersection(UniformSamplingBlock usbCmp) {
         return this.clkParams.hasDomainIntersection(usbCmp.clkParams);
@@ -545,7 +546,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
 
     /**
      * <p>
-     * Creates and returns a vector of timestamp instants for the sampling block.
+     * Creates and returns a new vector (<code>ArrayList</code>) of timestamp instants for the sampling block.
      * </p>
      * <p>
      * An ordered vector of time instants is created and returned.  The timestamp vector
@@ -562,9 +563,9 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * 
      * @return  ordered vector of timestamp instants corresponding to all data within this block
      * 
-     * @see UniformClockDuration#createTimestamps()
+     * @see UniformSamplingClock#createTimestamps()
      */
-    public Vector<Instant>  createTimestamps() {
+    public ArrayList<Instant>  createTimestamps() {
         return this.clkParams.createTimestamps();
     }
 

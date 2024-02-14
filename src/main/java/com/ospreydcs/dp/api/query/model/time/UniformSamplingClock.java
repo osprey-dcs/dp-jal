@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	UniformClockDuration.java
+ * File:	UniformSamplingClock.java
  * Package: com.ospreydcs.dp.api.model
- * Type: 	UniformClockDuration
+ * Type: 	UniformSamplingClock
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -30,7 +30,7 @@ package com.ospreydcs.dp.api.query.model.time;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.TimeInterval;
@@ -45,7 +45,7 @@ import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
  * The clock can be used to generate the timestamps for a finite interval of uniform samples.
  * </p>
  * <p>
- * Note that <code>UniformClockDuration</code> instances can be created from the Protobuf
+ * Note that <code>UniformSamplingClock</code> instances can be created from the Protobuf
  * message representing a sampling interval using creator 
  * <code>{@link #from(FixedIntervalTimestampSpec)}</code>.
  *
@@ -54,7 +54,7 @@ import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
  *
  * @see #from(FixedIntervalTimestampSpec)
  */
-public class UniformClockDuration implements Comparable<Instant> { 
+public class UniformSamplingClock implements Comparable<Instant> { 
 
     //
     // Defining Attributes
@@ -90,20 +90,20 @@ public class UniformClockDuration implements Comparable<Instant> {
     
     /**
      * <p>
-     * Create a new, initialized instance of <code>UniformClockDuration</code> from the given
+     * Create a new, initialized instance of <code>UniformSamplingClock</code> from the given
      * Protobuf message representing a sampling interval.
      * </p>
      * 
      * @param msgTms    Protobuf message representing a uniform sampling interval
      * 
-     * @return  new <code>UniformClockDuration</code> instance initialized from the argument
+     * @return  new <code>UniformSamplingClock</code> instance initialized from the argument
      */
-    public static UniformClockDuration    from(FixedIntervalTimestampSpec msgTms) {
+    public static UniformSamplingClock    from(FixedIntervalTimestampSpec msgTms) {
         Instant insStart = ProtoMsg.toInstant(msgTms.getStartTime());
         int     intCount = msgTms.getNumSamples();
         long    lngPeriod = msgTms.getSampleIntervalNanos();
         
-        return new UniformClockDuration(insStart, intCount, lngPeriod, ChronoUnit.NANOS);
+        return new UniformSamplingClock(insStart, intCount, lngPeriod, ChronoUnit.NANOS);
     }
     
     
@@ -113,7 +113,7 @@ public class UniformClockDuration implements Comparable<Instant> {
     
     /**
      * <p>
-     * Constructs a new, initialized instance of <code>UniformClockDuration</code>.
+     * Constructs a new, initialized instance of <code>UniformSamplingClock</code>.
      * </p>
      *
      * @param insStart  The starting instant of the sampling process 
@@ -121,7 +121,7 @@ public class UniformClockDuration implements Comparable<Instant> {
      * @param lngPeriod The sampling period  
      * @param cuPeriod  The sampling period time units
      */
-    public UniformClockDuration(Instant insStart, int intCount, long lngPeriod, ChronoUnit cuPeriod) {
+    public UniformSamplingClock(Instant insStart, int intCount, long lngPeriod, ChronoUnit cuPeriod) {
         this.insStart = insStart;
         this.intCount = intCount;
         this.lngPeriod = lngPeriod;
@@ -226,7 +226,7 @@ public class UniformClockDuration implements Comparable<Instant> {
      * @return <code>true</code> if the given sampling set collides with this one,
      *         <code>false</code> otherwise
      */
-    public boolean  hasDomainIntersection(UniformClockDuration domCmp) {
+    public boolean  hasDomainIntersection(UniformSamplingClock domCmp) {
         return this.ivlDomain.hasIntersectionClosed(domCmp.ivlDomain);
     }
 
@@ -237,17 +237,17 @@ public class UniformClockDuration implements Comparable<Instant> {
     
     /**
      * <p>
-     * Creates a vector of time instants embodied by this <code>UniformClockDuration</code>.
+     * Creates a vector (<code>ArrayList</code>) of time instants embodied by this <code>UniformSamplingClock</code>.
      * </p>
      * <p>
      * An ordered vector of Java <code>{@link Instant}</code> objects is created according
-     * to the parameters of this <code>UniformClockDuration</code>.
+     * to the parameters of this <code>UniformSamplingClock</code>.
      * </p>
      * 
      * @return  a new vector of timestamp instants represented by this object
      */
-    public Vector<Instant>  createTimestamps() {
-        Vector<Instant>     vecTms = new Vector<>(this.intCount);
+    public ArrayList<Instant>  createTimestamps() {
+        ArrayList<Instant>     vecTms = new ArrayList<>(this.intCount);
         
         Instant insTms = this.insStart;
         for (int n=0; n<this.intCount; n++) {
