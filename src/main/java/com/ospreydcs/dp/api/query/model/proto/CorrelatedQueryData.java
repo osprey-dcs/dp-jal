@@ -242,6 +242,11 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * Returns the time domain of the sampling interval.
      * </p>
      * <p>
+     * The time domain is the <em>smallest</em>, connected time interval that contains
+     * all sample points.  Thus, the returned interval DOES NOT include the last sample
+     * period.
+     * </p>
+     * <p>
      * The returned interval left end point is the start time of the sampling interval 
      * returned by <code>{@link #getStartInstant()}</code>.  The right end point is the
      * last timestamp of the sampled data within the query data.  Specifically, it 
@@ -347,13 +352,13 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         List<String>    lstSrcNms = this.lstMsgCols.stream().map(DataColumn::getName).toList();
         List<String>    vecSrcNms = new ArrayList<>(lstSrcNms);
         
-        // Remove from the above list each unique data source name recorded so far
-        boolean bolMissingSource = this.setSrcNms
+        // Remove from the above vector - each unique data source name recorded so far
+        boolean bolAllRemoved = this.setSrcNms
                             .stream()
                             .allMatch(strNm -> vecSrcNms.remove(strNm));
 
         // Check for registered data sources that are missing from the data columns list
-        if (!bolMissingSource)
+        if (!bolAllRemoved)
             return ResultRecord.newFailure("Serious Error: data column list was missing at least one data source");
         
         // Check for repeated data source entries within the data columns list
@@ -416,7 +421,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     /**
      * <p>
      * Adds the <code>DataColumn</code> within the argument to the list of referenced data ONLY IF 
-     * sampling intervals are equivalent.
+     * sampling intervals are equivalent AND the data column is not already referenced.
      * </p>
      * <p>
      * Checks for an equivalent sampling interval within the argument and, if so, adds the data column
@@ -424,6 +429,11 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * If the sampling intervals are NOT equivalent then nothing is done and a value 
      * <code>false</code> is returned.
      * </p>
+     * <p>
+     * If the argument has an equivalent sampling interval, the argument data column is then
+     * checked to see if already exists within the referenced collection.  If it is already
+     * present in the colllection nothing is done and the method returns <code>false</code>.
+     * </p> 
      * 
      * @param msgBucket Protobuf message containing sampling interval and column data
      * 
@@ -431,16 +441,23 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      *              <code>false</code> otherwise (nothing done)
      */
     public boolean insertBucketData(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
+        FixedIntervalTimestampSpec msgClock = msgBucket.getSamplingInterval();
+        DataColumn                 msgCol = msgBucket.getDataColumn();
         
-        // Check if list addition is possible - must have same sampling interval
-        if (ProtoTime.equals(this.msgSmplClk, msgBucket.getSamplingInterval())) {
-            this.lstMsgCols.add( msgBucket.getDataColumn() );
-            this.setSrcNms.add( msgBucket.getDataColumn().getName() );
-            
-            return true;
-        }
+        // Check if list addition is possible 
+        // - must have same sampling interval
+        if (!ProtoTime.equals(this.msgSmplClk, msgClock)) 
+            return false;
+
+        // - must not be already present
+        if (this.lstMsgCols.contains(msgCol))
+            return false;
         
-        return false;
+        // Add the data column and record its data source 
+        this.lstMsgCols.add( msgCol );
+        this.setSrcNms.add( msgCol.getName() );
+        
+        return true;
     }
     
     
