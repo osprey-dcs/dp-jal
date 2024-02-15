@@ -72,7 +72,7 @@ public class SampledTimeSeries {
     private final DpSupportedType   enmType;
     
     /** Sampled data value of the time series - linked list for anticipated modifications */
-    private final List<Object>      lstValues; // = new LinkedList<>();
+    private final ArrayList<Object> vecValues; // = new LinkedList<>();
 
     
     //
@@ -95,7 +95,7 @@ public class SampledTimeSeries {
      * @return  a new <code>SampledTimeSeries</code> instance containing <code>null</code> data values
      */
     public static SampledTimeSeries nullSeries(String strSourceName, DpSupportedType enmType, int cntSize) {
-        List<Object>    lstNulls = new ArrayList<>(cntSize);
+        ArrayList<Object>    lstNulls = new ArrayList<>(cntSize);
         
         for (int n=0; n<cntSize; n++) 
             lstNulls.add(null);
@@ -153,17 +153,21 @@ public class SampledTimeSeries {
     public SampledTimeSeries(String strSourceName, DpSupportedType enmType) {
         this.strSourceName = strSourceName;
         this.enmType = enmType;
-        this.lstValues = new LinkedList<>();
+        this.vecValues = new ArrayList<>();
     }
 
     /**
      * <p>
      * Constructs a new, initialized instance of <code>SampledTimeSeries</code>.
      * </p>
+     * <p>
+     * Copies the values from argument <code>lstValues</code> into a new <code>{@link ArrayList}</code>
+     * for faster indexed access.
+     * </p>
      *
      * @param strSourceName     the name of the data source (PV) producing time series data
      * @param enmType           the data type of the time series
-     * @param lstValues         ordered list of sampled data values in time series
+     * @param vecValues         ordered list of sampled data values in time series
      * 
      * @throws IllegalArgumentException the given sample values are of incompatible type
      */
@@ -171,7 +175,29 @@ public class SampledTimeSeries {
             throws IllegalArgumentException {
         this.strSourceName = strSourceName;
         this.enmType = enmType;
-        this.lstValues = new ArrayList<>(lstValues);
+        this.vecValues = new ArrayList<>(lstValues);
+    }
+
+    /**
+     * <p>
+     * Constructs a new, initialized instance of <code>SampledTimeSeries</code>.
+     * </p>
+     * <p>
+     * Sets the attribute <code>{@link #vecValues}</code> directly from argument <code>vecValues</code>. 
+     * </p>
+     *
+     * @param strSourceName     the name of the data source (PV) producing time series data
+     * @param enmType           the data type of the time series
+     * @param vecValues         ordered list of sampled data values in time series
+     * 
+     * @throws IllegalArgumentException the given sample values are of incompatible type
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends Object> SampledTimeSeries(String strSourceName, DpSupportedType enmType, ArrayList<T> vecValues) 
+            throws IllegalArgumentException {
+        this.strSourceName = strSourceName;
+        this.enmType = enmType;
+        this.vecValues = (ArrayList<Object>) vecValues;
     }
 
 
@@ -203,7 +229,7 @@ public class SampledTimeSeries {
      * @return  the number of data values within the time series
      */
     public final int getSize() {
-        return this.lstValues.size();
+        return this.vecValues.size();
     }
 
     /**
@@ -211,8 +237,8 @@ public class SampledTimeSeries {
      * 
      * @return the current list of time series values
      */
-    public final List<Object> getValues() {
-        return lstValues;
+    public final ArrayList<Object> getValues() {
+        return vecValues;
     }
 
     
@@ -233,7 +259,7 @@ public class SampledTimeSeries {
      *  
      * @param <T>       type of the new sample values, must be compatible with current time series
      * 
-     * @param lstValues new sample value for time series
+     * @param vecValues new sample value for time series
      * 
      * @return  <code>true</code> if the time series was modified by the operation,
      *          <code>false</code> otherwise (typically the argument list was empty)
@@ -253,7 +279,7 @@ public class SampledTimeSeries {
             throw new IllegalArgumentException("Agument type " + value.getClass().getSimpleName() + " is incompatible with internal supported type " + this.enmType);
 
         // Add new values
-        return this.lstValues.addAll(0, lstValues);
+        return this.vecValues.addAll(0, lstValues);
     }
     
     /**
@@ -286,7 +312,7 @@ public class SampledTimeSeries {
             throw new IllegalArgumentException("Argument type " + stsSeries.getType() + " not equal to " + this.enmType);
         
         // Add argument data values to this time series
-        return this.lstValues.addAll(0, stsSeries.getValues());
+        return this.vecValues.addAll(0, stsSeries.getValues());
     }
     
     /**
@@ -302,7 +328,7 @@ public class SampledTimeSeries {
      *  
      * @param <T>       type of the new sample values, must be compatible with current time series
      * 
-     * @param lstValues new sample value for time series
+     * @param vecValues new sample value for time series
      * 
      * @return  <code>true</code> if the time series was modified by the operation,
      *          <code>false</code> otherwise (typically the argument list was empty)
@@ -322,7 +348,7 @@ public class SampledTimeSeries {
             throw new IllegalArgumentException("Agument type " + value.getClass().getSimpleName() + " is incompatible with internal supported type " + this.enmType);
 
         
-        return this.lstValues.addAll(lstValues);
+        return this.vecValues.addAll(lstValues);
     }
     
     /**
@@ -355,7 +381,7 @@ public class SampledTimeSeries {
             throw new IllegalArgumentException("Argument type " + stsSeries.getType() + " not equal to " + this.enmType);
         
         // Add argument data values to this time series
-        return this.lstValues.addAll(stsSeries.getValues());
+        return this.vecValues.addAll(stsSeries.getValues());
     }
     
 }

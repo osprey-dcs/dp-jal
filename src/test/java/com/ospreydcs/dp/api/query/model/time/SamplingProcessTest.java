@@ -379,6 +379,42 @@ public class SamplingProcessTest {
         
         Assert.assertTrue("Sampling process PV(s) had bad types: " + lstBadProcessPvs, lstBadProcessPvs.isEmpty());
     }
+    
+    /**
+     * Test method for {@link SamplingProcess#timeSeries(String)}.
+     */
+    @Test
+    public void testTimeSeries() {
+        List<BucketData>    lstRawData = LST_QUERY_DATA_ONE;
+        
+        SamplingProcess processTest = this.process(lstRawData);
+
+        
+        // Get the sampling values from the raw data in a map {(start time, data column)}
+        Map<Instant, DataColumn>    mapStartToCol = lstRawData
+                .stream()
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .collect(Collectors.toMap(
+                                msgBucket -> ProtoMsg.toInstant(msgBucket.getSamplingInterval().getStartTime()), 
+                                DataBucket::getDataColumn
+                                )
+                        );
+        // Create set of ordered start times
+        SortedSet<Instant>      setStartTimes = new TreeSet<>(mapStartToCol.keySet());
+        
+        // Build the data values list
+        List<Object>        lstValsRaw = setStartTimes
+                .stream()
+                .flatMap(t -> ProtoMsg.extractValues(mapStartToCol.get(t)).stream())
+                .toList();
+        
+        // Compare raw and process values
+        String  strSrcNm = lstRawData.get(0).getDataBucketsList().get(0).getDataColumn().getName();
+        
+        List<Object>    lstValsPrcs = processTest.timeSeries(strSrcNm).getValues();
+        
+        Assert.assertEquals(lstValsRaw, lstValsPrcs);
+    }
 
     
     //

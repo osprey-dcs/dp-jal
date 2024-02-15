@@ -53,6 +53,7 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.ResultRecord;
 import com.ospreydcs.dp.api.model.TimeInterval;
+import com.ospreydcs.dp.api.query.model.data.SampledTimeSeries;
 import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
@@ -70,11 +71,26 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * sub-time domain within a <code>UniformSamplingBlock</code>.
  * </p>
  * <p>
- * Note that <code>SamplingProcess</code> instances can be created from the correlated results
- * set of a Query Service data request, as obtained from 
- * <code>{@link QueryDataCorrelator#getTargetSet()</code>.  Thus, this class can be used
- * in the reconstruction process of Data Platform Query Service data requests.
+ * <h2>Creation</h2>
+ * Note that <code>SamplingProcess</code> instances are created from the processed data
+ * sets produced by the class <code>{@link QueryDataCorrelator}</code>.
+ * The raw data obtained from a data request of the Query Service is then correlated
+ * into an ordered sets of <code>{@link CorrelatedQueryData}</code> instances, each instance 
+ * all represent query results all within the same sampling clock.  
+ * These correlated results sets are obtained from 
+ * <code>{@link QueryDataCorrelator#getProcessedSet()}</code>.  The correlated results sets
+ * are then used in the creation of <code>SamplingProcess</code> instances. 
+ * Thus, this class can be used in the reconstruction process of Data Platform 
+ * Query Service data requests.
  * </p>  
+ * <p>
+ * <h2>WARNINGS:</h2>
+ * The current implement includes extensive error checking intended to mitigate external
+ * implementation problems during development.   
+ * The error checking is performed when creating <code>SamplingProcess</code> instances.  
+ * Such error checking could present a <em>performance burden</em> during operation.
+ * Developers should consider reducing the error check when mature.
+ * </p>
  * <p>
  * <h2>NOTES:</h2>
  * It is quite possible that not every data source is represented in each component sampling
@@ -85,6 +101,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <h2>TODO</h2>
  * <ul>
  * <li>Implement a possible interface <code>IDataTable</code> for table-like data retrieval.</li>
+ * <li>Reduce exception checking when mature - for performance consideration.</li>
  * </ul>
  * </p>
  * 
@@ -96,23 +113,6 @@ public class SamplingProcess {
     //
     // Class Types
     //
-    
-//    public static class TimestampBlock extends Vector<Instant> {
-//
-//        private static final long serialVersionUID = 656239993644617465L;
-//        
-//        
-//        public TimestampBlock(Vector<Instant> vecTms) {
-//            super(vecTms);
-//        }
-//    }
-    
-//    public static record   SamplingPair(UniformSamplingClock setTms, List<DataColumn> lstDataCols) {
-//        
-//        public static SamplingPair  of(UniformSamplingClock setTms, List<DataColumn> lstDataCols) {
-//            return new SamplingPair(setTms, lstDataCols);
-//        }
-//    };
     
 
     //
@@ -172,9 +172,6 @@ public class SamplingProcess {
     
     /** Map of data source names to their data type - taken from processed sampling blocks */
     private final Map<String, DpSupportedType>  mapSrcNmToType;
-    
-//    /** Ordered list of <code>SamplingPair</code> instances for process build */
-//    private final List<SamplingPair>    lstSmplPairs;
     
     /** Ordered vector of uniform sampling blocks comprising the sampling process */
     private final List<UniformSamplingBlock>  vecSmplBlock;
@@ -250,6 +247,7 @@ public class SamplingProcess {
      * <li>Any detected data inconsistencies result in an exception. </li>
      * <li>Exception type determines the nature of any Data inconsistency. </li>
      * </ul>  
+     * </p>
      *
      * @param setTargetData sorted set of <code>CorrelatedQueryData</code> used to build this process
      *  
@@ -310,6 +308,47 @@ public class SamplingProcess {
     // Attribute/Property Query
     //
     
+    /**
+     * <p>
+     * Returns the number of component <code>{@link UniformSamplingBlock}</code> forming this process.
+     * </p>
+     * <p>
+     * Internally, <code>SamplingProcess</code> objects are composed of an ordered vector
+     * of <code>UniformSamplingBlock</code> instances. Each sampling block instance contains
+     * the time-series data for the process for a given duration and uniform sampling clock.
+     * This method returns the total number sampling block instances forming the composite 
+     * sampling process.
+     * </p>
+     * 
+     * @return  number of component sampling blocks within composite sampling process
+     */
+    public final int    getSamplingBlockCount() {
+        return this.vecSmplBlock.size();
+    }
+
+
+    /**
+     * <p>
+     * Returns the component <code>{@link UniformSamplingBlock}</code> at given index.
+     * </p>
+     * <p>
+     * Internally, <code>SamplingProcess</code> objects are composed of an ordered vector
+     * of <code>UniformSamplingBlock</code> instances. Each sampling block instance contains
+     * the time-series data for the process for a given duration and uniform sampling clock.
+     * This method returns the sampling block instance at the given index.
+     * </p>
+     * 
+     * @param index index of desired sampling block within composite sampling process
+     * 
+     * @return  component sampling block (within sampling process) at given index
+     * 
+     * @throws IndexOutOfBoundsException    the index is larger the the number of component blocks
+     */
+    public final UniformSamplingBlock   getSamplingBlock(int index) throws IndexOutOfBoundsException {
+        return this.vecSmplBlock.get(index);
+    }
+
+
     /**
      * <p>
      * Returns the total number of samples within each time series of the sampling process.
@@ -425,42 +464,68 @@ public class SamplingProcess {
     
     /**
      * <p>
-     * Returns the number of component <code>{@link UniformSamplingBlock}</code> forming this process.
+     * Creates and returns a new <code>{@link SampledTimeSeries}</code> instance containing all 
+     * time-series data from the given data source.
      * </p>
      * <p>
-     * Internally, <code>SamplingProcess</code> objects are composed of an ordered vector
-     * of <code>UniformSamplingBlock</code> instances. Each sampling block instance contains
-     * the time-series data for the process for a given duration and uniform sampling clock.
-     * This method returns the total number sampling block instances forming the composite 
-     * sampling process.
+     * The time-series for the given data source is returned for the <em>entire</em> sampling
+     * process.  The returned value is a composite of all time-series data within component 
+     * sampling blocks.
+     * </p>
+     * <p>
+     * <h2>NOTES</h2>
+     * <ul>
+     * <li>
+     * The returned time-series data set is created <em>dynamically</em> from all the sampling 
+     * block components within the sampling process.  Thus, avoid repeated calls to this 
+     * method for the same data source.
+     * <li>
+     * <br/>
+     * <li>
+     * If the time series for the given data source is to be used repeatedly, the returned value
+     * should be saved locally.
+     * </li>
+     * </ul>
      * </p>
      * 
-     * @return  number of component sampling blocks within composite sampling process
+     * @param strSourceName     data source unique name
+     * @return  new instance of <code>SampledTimeSeries</code> containing full time-series for given source
+     * 
+     * @throws IllegalArgumentException the data source is not represented in this process
      */
-    public final int    getSamplingBlockCount() {
-        return this.vecSmplBlock.size();
+    public SampledTimeSeries     timeSeries(String strSourceName) throws IllegalArgumentException {
+        
+        // Check source name
+        if (!this.getDataSourceNames().contains(strSourceName))
+            throw new IllegalArgumentException("SamplingProcess contain no data source " + strSourceName);
+        
+        // Create the full time-series data-value vector for the given data source
+        DpSupportedType         enmSrcType = this.getSourceType(strSourceName);
+        ArrayList<Object>       vecSrcValues = new ArrayList<>(this.getSampleCount());
+        
+        for (UniformSamplingBlock blk : this.vecSmplBlock) {
+            
+            // Check if data source is represented within current sampling block
+            SampledTimeSeries   stms;
+            if (blk.hasSourceData(strSourceName)) {
+                stms = blk.getTimeSeries(strSourceName);
+                
+            } else {
+                stms = SampledTimeSeries.nullSeries(strSourceName, enmSrcType, blk.getSampleCount());
+                
+            }
+
+            // Add time-series data values to vector of full time series
+            vecSrcValues.addAll(stms.getValues());
+        }
+        
+        // Create the full time-series instance for the given data source and return it
+        SampledTimeSeries   stmsNew = new SampledTimeSeries(strSourceName, enmSrcType, vecSrcValues);
+        
+        return stmsNew;
     }
     
-    /**
-     * <p>
-     * Returns the component <code>{@link UniformSamplingBlock}</code> at given index.
-     * </p>
-     * <p>
-     * Internally, <code>SamplingProcess</code> objects are composed of an ordered vector
-     * of <code>UniformSamplingBlock</code> instances. Each sampling block instance contains
-     * the time-series data for the process for a given duration and uniform sampling clock.
-     * This method returns the sampling block instance at the given index.
-     * </p>
-     * 
-     * @param index index of desired sampling block within composite sampling process
-     * 
-     * @return  component sampling block (within sampling process) at given index
-     * 
-     * @throws IndexOutOfBoundsException    the index is larger the the number of component blocks
-     */
-    public final UniformSamplingBlock   getSamplingBlock(int index) throws IndexOutOfBoundsException {
-        return this.vecSmplBlock.get(index);
-    }
+    
 
     
     //

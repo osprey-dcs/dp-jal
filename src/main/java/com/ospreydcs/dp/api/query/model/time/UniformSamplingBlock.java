@@ -515,8 +515,27 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     
     
     //
-    // Operations
+    // State Queries
     //
+    
+    /**
+     * <p>
+     * Determine whether or not the sampling block contains time-series data for the given 
+     * data source.
+     * </p>
+     * <p>
+     * Simply checks the given data source name against the internal set of represented
+     * data sources.
+     * </p>
+     *  
+     * @param strSourceName unique name of data source
+     * 
+     * @return  <code>true</code> if the data source is represented within this sampling block,
+     *          <code>false</code> otherwise
+     */
+    public boolean  hasSourceData(String strSourceName) {
+        return this.setSourceNames.contains(strSourceName);
+    }
     
     /**
      * <p>
@@ -544,6 +563,11 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
         return this.clkParams.hasDomainIntersection(usbCmp.clkParams);
     }
 
+    
+    //
+    // Operations
+    //
+    
     /**
      * <p>
      * Creates and returns a new vector (<code>ArrayList</code>) of timestamp instants for the sampling block.
