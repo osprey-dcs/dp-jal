@@ -223,6 +223,21 @@ public final record TestQueryRecord (
     
     /**
      * <p>
+     * Clears the results set field <code>{@link #lstResults}</code> of any current data.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Clearing the results set will force <code>{@link #recoverQueryResults()}</code> to
+     * reload query results set from persistent storage, or perform the actual query operation
+     * if no persistent storage is available.
+     * </p>
+     */
+    public void clearQueryResults() {
+        this.lstResults.clear();
+    }
+    
+    /**
+     * <p>
      * Returns the results set field <code>{@link #lstResults}</code> this record if available.
      * </p>
      * <p>
@@ -279,7 +294,7 @@ public final record TestQueryRecord (
             return this.lstResults;
         
         // Try to load data from existing file
-        if (this.loadQueryResults())
+        if (this.loadPersistentResults())
             return this.lstResults;
         
         // Query the test archive to load data
@@ -396,7 +411,7 @@ public final record TestQueryRecord (
      * @throws ClassNotFoundException   the data file does not contain a <code>List&lt;QueryResponse&gt;</code> object
      */
     @SuppressWarnings("unchecked")
-    boolean loadQueryResults() throws SecurityException, IOException, ClassNotFoundException {
+    boolean loadPersistentResults() throws SecurityException, IOException, ClassNotFoundException {
 
         // Assemble the path to the persistent storage file
         Path    pathData = Paths.get(STR_PATH_DIR_DATA, this.strFileName);
@@ -452,6 +467,7 @@ public final record TestQueryRecord (
         List<QueryResponse> lstResults = qsTestArchive.queryResponseStream(msgRqst);
         
         // Add results to record
+        this.lstResults.clear();
         this.lstResults.addAll(lstResults);
         
         return true;

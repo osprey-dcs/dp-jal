@@ -30,10 +30,16 @@ package com.ospreydcs.dp.api.query.model.time;
 import static org.junit.Assert.*;
 import org.junit.Assert;
 
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
 
 import javax.naming.CannotProceedException;
 import javax.naming.OperationNotSupportedException;
@@ -45,12 +51,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.ranges.RangeException;
 
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
+import com.ospreydcs.dp.api.model.DpSupportedType;
+import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
+import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
+import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket;
 
 /**
  * JUnit test cases for <code>{@link SamplingProcess}</code>.
@@ -67,7 +79,10 @@ public class SamplingProcessTest {
     //
     
     /** Sample query response for test cases */
-    public static final List<QueryResponse>   LST_QUERY_RSP = TestQueryResponses.queryResults(SingleQueryType.WIDE);
+    public static final List<QueryResponse>   LST_QUERY_RSP_WIDE = TestQueryResponses.queryResults(SingleQueryType.WIDE);
+    
+    /** Sample query response for test cases */
+    public static final List<QueryResponse>   LST_QUERY_RSP_LONG = TestQueryResponses.queryResults(SingleQueryType.LONG);
     
     
     /** Sample query data for test cases - 1 source, 10 seconds */
@@ -135,7 +150,7 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testFrom() {
-        List<QueryResponse> lstRspMsgs = LST_QUERY_RSP;
+        List<QueryResponse> lstRspMsgs = LST_QUERY_RSP_WIDE;
         
         try {
             for (QueryResponse msgRsp : lstRspMsgs)
@@ -147,19 +162,18 @@ public class SamplingProcessTest {
         }
         
         // Get the processed data and try to create SamplingProcess
-        SortedSet<CorrelatedQueryData>  setData = CORRELATOR.getProcessedSet();
+        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getProcessedSet();
         
         try {
-            SamplingProcess result = SamplingProcess.from(setData);
+            SamplingProcess process = SamplingProcess.from(setPrcdData);
             
-            assertTrue("Results set contained no data sources.", result.getDataSourceCount() > 0);
+            assertTrue("Results set contained no data sources.", process.getSamplingBlockCount() > 0);
             
         } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | 
                  RangeException | UnsupportedOperationException | CompletionException e) {
             
             Assert.fail(failMessage("SamplingProcess#from()", e));
         }
-        
     }
 
     /**
@@ -167,7 +181,30 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testSamplingProcess() {
-        fail("Not yet implemented"); // TODO
+        List<QueryResponse> lstRspMsgs = LST_QUERY_RSP_LONG;
+        
+        try {
+            for (QueryResponse msgRsp : lstRspMsgs)
+                CORRELATOR.insertQueryResponse(msgRsp);
+
+        } catch (OperationNotSupportedException | CannotProceedException e) {
+            Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
+            
+        }
+        
+        // Get the processed data and try to create SamplingProcess
+        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getProcessedSet();
+        
+        try {
+            SamplingProcess process = new SamplingProcess(setPrcdData);
+            
+            assertTrue("Results set contained no data sources.", process.getSamplingBlockCount() > 0);
+            
+        } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | 
+                 RangeException | UnsupportedOperationException | CompletionException e) {
+            
+            Assert.fail(failMessage("new SamplingProcess()", e));
+        }
     }
 
     /**
@@ -175,7 +212,22 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testGetSampleCount() {
-        fail("Not yet implemented"); // TODO
+        List<BucketData>    lstRawData = LST_QUERY_DATA_ONE;
+        
+        SamplingProcess processTest = this.process(lstRawData);
+        
+        // Get the total number of samples from raw data sampling clocks 
+        //  - This works assuming only 1 data source
+        int     cntSamplesRaw = lstRawData
+                    .stream()
+                    .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                    .mapToInt(msgBucket -> msgBucket.getSamplingInterval().getNumSamples())
+                    .sum();
+     
+        // Compare the sample counts
+        int     cntSamplesPrcd = processTest.getSampleCount();
+        
+        Assert.assertEquals(cntSamplesRaw, cntSamplesPrcd);
     }
 
     /**
@@ -183,7 +235,48 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testGetTimeDomain() {
-        fail("Not yet implemented"); // TODO
+        List<BucketData>    lstRawData = LST_QUERY_DATA_ONE;
+        
+        SamplingProcess processTest = this.process(lstRawData);
+
+        // Get the total number of samples from raw data sampling clocks 
+        //  - This works assuming only 1 data source
+        int     cntSamplesRaw = lstRawData
+                    .stream()
+                    .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                    .mapToInt(msgBucket -> msgBucket.getSamplingInterval().getNumSamples())
+                    .sum();
+        
+        // Get the start time from the raw data sampling clocks
+        Instant     insBegin = lstRawData
+                    .stream()
+                    .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                    .<Instant>map(msgBucket -> ProtoMsg.toInstant(
+                                      msgBucket.getSamplingInterval().getStartTime()
+                                      )
+                                  )
+                    .reduce( (t1,t2) -> (t1.isBefore(t2)) ? t1 : t2 )
+                    .get();
+        
+        // Get the sample period from the raw data sampling clock
+        //  - This work only if all clocks have the same period 
+        //    (otherwise it returns the smallest period)
+        long        longPeriodNs = lstRawData
+                .stream()
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .<Long>map(msgBucket -> msgBucket.getSamplingInterval().getSampleIntervalNanos() )
+                .reduce( (T1,T2) -> (T1 < T2) ? T1 : T2 )
+                .get(); 
+        
+        // Create the time domain from raw data and compare
+        // - Recall that sampling process time domains are the 
+        //   SMALLEST, connect interval containing all sample times
+        Instant         insEnd = insBegin.plusNanos( (cntSamplesRaw - 1) * longPeriodNs);
+        TimeInterval    domRaw = TimeInterval.from(insBegin, insEnd);
+        
+        TimeInterval    domProcess = processTest.getTimeDomain();
+        
+        Assert.assertEquals(domRaw, domProcess);
     }
 
     /**
@@ -191,7 +284,26 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testGetDataSourceCount() {
-        fail("Not yet implemented"); // TODO
+        List<BucketData>    lstRawData = LST_QUERY_DATA_WIDE;
+        
+        SamplingProcess processTest = this.process(lstRawData);
+
+        // Extract all data source names from raw data (including repeats)
+        //  Then create set of unique data source names
+        //  Then get the size of unique name set
+        List<String>    lstPvNmsRaw = lstRawData
+                    .stream()
+                    .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                    .<String>map(msgBucket -> msgBucket.getDataColumn().getName())
+                    .toList();
+        
+        Set<String>     setPvNmsRaw = new TreeSet<>(lstPvNmsRaw);
+        int             cntPvNmsRaw = setPvNmsRaw.size();
+        
+        // Compare source name count from raw data and source count from sampling process
+        int         cntPvsPrcs = processTest.getDataSourceCount();
+        
+        Assert.assertEquals(cntPvNmsRaw, cntPvsPrcs);
     }
 
     /**
@@ -199,7 +311,23 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testGetDataSourceNames() {
-        fail("Not yet implemented"); // TODO
+        List<BucketData>    lstRawData = LST_QUERY_DATA_WIDE;
+        
+        SamplingProcess processTest = this.process(lstRawData);
+
+        // Extract all data source names from raw data (including repeats)
+        //  Then create set of unique data source names
+        List<String>    lstPvNmsRaw = lstRawData
+                    .stream()
+                    .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                    .<String>map(msgBucket -> msgBucket.getDataColumn().getName())
+                    .toList();
+        Set<String>     setPvNmsRaw = new TreeSet<>(lstPvNmsRaw);
+        
+        // Compare source names from raw data and sampling process
+        Set<String>     setPvNmsPrcs = processTest.getDataSourceNames();
+        
+        Assert.assertEquals(setPvNmsRaw, setPvNmsPrcs);
     }
 
     /**
@@ -207,7 +335,49 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testGetSourceType() {
-        fail("Not yet implemented"); // TODO
+        List<BucketData>    lstRawData = LST_QUERY_DATA_WIDE;
+        
+        SamplingProcess processTest = this.process(lstRawData);
+
+        // Create a map of {(pv name, pv data type)} pairs from raw data
+        List<DataBucket>    lstBucketsRaw = lstRawData
+                .stream()
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .toList();
+        Map<String, DpSupportedType>    mapPvTypesRaw = lstBucketsRaw
+                .stream()
+                .<DataColumn>map(DataBucket::getDataColumn)
+                .collect(Collectors.toMap(
+                                        DataColumn::getName, 
+                                        ProtoMsg::extractType, 
+                                        (T1, T2) -> (T1 == T2) ? T1 : DpSupportedType.UNSUPPORTED_TYPE
+                                        )
+                        );
+
+        // First check raw data for PVs with inconsistent types
+        List<String>    lstBadPvs = mapPvTypesRaw
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() == DpSupportedType.UNSUPPORTED_TYPE)
+                .<String>map(Map.Entry::getKey)
+                .toList();
+        Assert.assertTrue("Raw data contained PV with inconsistent types: " + lstBadPvs, lstBadPvs.isEmpty());
+        
+        // Compare all sample process PV types with raw data PV types
+        //  First check that all PVs are present
+        Set<String>     setPvNmsRaw = mapPvTypesRaw.keySet();
+        Set<String>     setPvNmsPrcs = processTest.getDataSourceNames();
+        Assert.assertEquals("Process PV name set NOT EQUAL to raw data PV name set.", setPvNmsRaw, setPvNmsPrcs);
+        
+        //  Now check all types
+        List<String>    lstBadProcessPvs = mapPvTypesRaw
+                .entrySet()
+                .stream()
+                .filter(entry -> processTest.getSourceType(entry.getKey()) != entry.getValue())
+                .<String>map(Map.Entry::getKey)
+                .toList();
+        
+        Assert.assertTrue("Sampling process PV(s) had bad types: " + lstBadProcessPvs, lstBadProcessPvs.isEmpty());
     }
 
     
@@ -215,6 +385,65 @@ public class SamplingProcessTest {
     // Support Methods
     //
     
+    /**
+     * <p>
+     * Processes the results set from a data query request into returned 
+     * <code>SamplingProcess</code> instance.
+     * </p>
+     * <p>
+     * Uses the <code>{@link #CORRELATOR}</code> singleton to process the given data into
+     * a sorted set of correlated data.  
+     * (Resets the <code>CORRELATOR</code> singleton before
+     * processing.)  
+     * Creates a <code>SamplingProcess</code> instance from the sorted correlated set.
+     * </p>
+     * <p>
+     * If any exceptions originate from the internal invocation of creator
+     * <code>{@link SamplingProcess#from(SortedSet)}</code>
+     * a FAILURE assertion is made halting the test case using this method.
+     * </p>
+     *  
+     * @param lstRawData    raw query results set data 
+     * 
+     * @return  ordered list of sampling blocks processed from given raw data
+     */ 
+    private SamplingProcess process(List<BucketData> lstRawData) {
+        SortedSet<CorrelatedQueryData>  setPrcdData = correlate(lstRawData);
+        
+        try {
+            SamplingProcess process = SamplingProcess.from(setPrcdData);
+
+            return process;
+            
+        } catch (Exception e) {
+            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            return null;
+        }
+    }
+
+    /**
+     * <p>
+     * Correlates the given Query Service data into a processed data set and returns it.
+     * </p>
+     * <p>
+     * Uses the <code>{@link #CORRELATOR}</code> singleton to process the given data into
+     * a sorted set of correlated data.  Resets the <code>CORRELATOR</code> singleton before
+     * processing.
+     * </p>
+     * 
+     * @param lstRawData   raw query results set data to be correlated
+     * 
+     * @return  a sorted set of <code>CorrelatedQueryData</code> objects 
+     */
+    private SortedSet<CorrelatedQueryData>  correlate(List<BucketData> lstRawData) {
+
+        CORRELATOR.reset();
+        lstRawData.forEach(msgData -> CORRELATOR.insertQueryData(msgData));
+
+        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getProcessedSet();
+        
+        return setPrcdData;
+    }
     /**
      * Creates an exception failure message from the given arguments
      * 

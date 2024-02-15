@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.query.test;
 
-import static org.junit.Assert.*;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +34,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletionException;
 
-import org.junit.Assert;
-
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;

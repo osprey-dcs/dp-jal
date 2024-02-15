@@ -38,6 +38,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.concurrent.CompletionException;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -311,7 +312,7 @@ public class SamplingProcess {
     
     /**
      * <p>
-     * Returns the number samples within each time series of the sampling process.
+     * Returns the total number of samples within each time series of the sampling process.
      * </p>
      * <p>
      * Note that each time series within the sampling process must have the same size.  
@@ -420,6 +421,45 @@ public class SamplingProcess {
      */
     public final DpSupportedType    getSourceType(String strSourceName) throws NullPointerException {
         return this.mapSrcNmToType.get(strSourceName);
+    }
+    
+    /**
+     * <p>
+     * Returns the number of component <code>{@link UniformSamplingBlock}</code> forming this process.
+     * </p>
+     * <p>
+     * Internally, <code>SamplingProcess</code> objects are composed of an ordered vector
+     * of <code>UniformSamplingBlock</code> instances. Each sampling block instance contains
+     * the time-series data for the process for a given duration and uniform sampling clock.
+     * This method returns the total number sampling block instances forming the composite 
+     * sampling process.
+     * </p>
+     * 
+     * @return  number of component sampling blocks within composite sampling process
+     */
+    public final int    getSamplingBlockCount() {
+        return this.vecSmplBlock.size();
+    }
+    
+    /**
+     * <p>
+     * Returns the component <code>{@link UniformSamplingBlock}</code> at given index.
+     * </p>
+     * <p>
+     * Internally, <code>SamplingProcess</code> objects are composed of an ordered vector
+     * of <code>UniformSamplingBlock</code> instances. Each sampling block instance contains
+     * the time-series data for the process for a given duration and uniform sampling clock.
+     * This method returns the sampling block instance at the given index.
+     * </p>
+     * 
+     * @param index index of desired sampling block within composite sampling process
+     * 
+     * @return  component sampling block (within sampling process) at given index
+     * 
+     * @throws IndexOutOfBoundsException    the index is larger the the number of component blocks
+     */
+    public final UniformSamplingBlock   getSamplingBlock(int index) throws IndexOutOfBoundsException {
+        return this.vecSmplBlock.get(index);
     }
 
     
@@ -770,6 +810,12 @@ public class SamplingProcess {
      * this method utilizes streaming parallelism if the argument size is greater than the
      * pivot number <code>{@link #SZ_CONCURRENCY_PIVOT}</code>.
      * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * The map will contain the value <code>{@link DpSupportedType#UNSUPPORTED_TYPE}</code> 
+     * for any data source producing time series data with inconsistent types.  This condition
+     * is indicative of a corrupt archive and should be checked.
+     * </p> 
      *  
      * @param vecBlocks the entire collection of sampling blocks within this process
      * 
@@ -788,6 +834,19 @@ public class SamplingProcess {
                     .stream()
                     .<Pair>map(name -> new Pair(name, usb.getSourceType(name)));
         };
+
+        // Mapping function for value merging when multiple keys are encountered
+        BinaryOperator<DpSupportedType> bopValMerger = (valOld, valNew) -> {
+            if (valOld == null)
+                return valNew;
+            if (valNew == null)
+                return valOld;
+            if (valNew == valOld)
+                return valOld;
+
+            // If we are here - This indicates different types for sample PV 
+            return DpSupportedType.UNSUPPORTED_TYPE;
+        };
         
         // Create the {(source name, source type)} map, pivoting to concurrency on container size  
         Map<String, DpSupportedType>    mapSrcToType; // = new HashMap<>();
@@ -802,7 +861,7 @@ public class SamplingProcess {
                                             .map( name -> new Pair(name, usb.getSourceType(name)) )
                                 )
                     .collect(
-                            Collectors.toConcurrentMap(pair -> pair.name, pair -> pair.type)
+                            Collectors.toConcurrentMap(pair -> pair.name, pair -> pair.type, bopValMerger)
                             );
             
         } else {
@@ -815,7 +874,7 @@ public class SamplingProcess {
                                             .<Pair>map(name -> new Pair(name, usb.getSourceType(name)))
                                 )
                     .collect(
-                            Collectors.toMap(pair -> pair.name, pair->pair.type)
+                            Collectors.toMap(pair -> pair.name, pair->pair.type, bopValMerger)
                             );
 
         }
@@ -1019,11 +1078,23 @@ public class SamplingProcess {
      * Verifies that all data sources within the argument set produce data of the same type.
      * </p>
      * <p>
-     * Extracts pairs all pairs {(source name, source type)} from each instance of 
-     * <code>UniformSamplingBlock</code> within the argument collection.
+     * Performs the following verification checks:
+     * <ol>
+     * <li>
+     * First the attribute <code>{@link #mapSrcNmToType}</code> is inspected for values
+     * of <code>{@link DpSupportedType#UNSUPPORTED_TYPE}</code>, which indicates a 
+     * time series with inconsistent data types.  If that value is found a FAILURE result
+     * is returned immediately.
+     * </li>
+     * <br/>
+     * <li>
+     * Then the method extracts pairs all pairs {(source name, source type)} from each instance 
+     * of <code>UniformSamplingBlock</code> within the argument collection.
      * Each pair is then checked against the data types within (previously constructed) map 
      * <code>{@link #mapSrcNmToType}</code>.  Any data sources that have a different
      * type are recorded and contained within the returned <code>ResultRecord</code> object.
+     * </li>
+     * </ol>
      * </p>
      * <h2>Concurrency</h2>
      * <ul>
@@ -1061,6 +1132,17 @@ public class SamplingProcess {
      * @return  <code>ResultRecord</code> containing result of test, with message if failure
      */
     private  ResultRecord verifySourceTypes(List<UniformSamplingBlock> lstBlocks) {
+        
+        // First check for UNSUPPORTED_TYPE in the (pv name, pv type) map
+        List<String> lstBadPvs = this.mapSrcNmToType
+                .entrySet()
+                .stream()
+                .filter(entry -> (entry.getValue() == DpSupportedType.UNSUPPORTED_TYPE))
+                .<String>map(Map.Entry::getKey)
+                .toList();
+        
+        if (!lstBadPvs.isEmpty())
+            return ResultRecord.newFailure("Sampling process contains PVs with inconsistent types: " + lstBadPvs);
         
         // Local type used for intermediate results
         record Pair(String name, DpSupportedType type) {};

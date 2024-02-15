@@ -110,8 +110,25 @@ public class TestQueryResponsesTest {
      * Test method for {@link com.ospreydcs.dp.api.query.test.TestQueryResponses#queryResults(com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType)}.
      */
     @Test
-    public final void testQueryResultsSingleQueryTypeSingle() {
+    public final void testQueryResultsSingleQueryTypeOne() {
         List<QueryResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.ONE_SOURCE);
+        
+        Assert.assertFalse("The QueryResponse list was empty." , lstRsps.isEmpty());
+        Assert.assertFalse("The query has a rejection.", this.hasRejection(lstRsps));
+        
+        System.out.println("Size of the ONE_SOURCE single query response list = " + lstRsps.size());
+        
+        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        
+        System.out.println("Number of data buckets in the ONE_SOURCE query results set = " + lstBuckets.size());
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.test.TestQueryResponses#queryResults(com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType)}.
+     */
+    @Test
+    public final void testQueryResultsSingleQueryTypeTwo() {
+        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.TWO_SOURCE);
         
         Assert.assertFalse("The QueryResponse list was empty." , lstRsps.isEmpty());
         Assert.assertFalse("The query has a rejection.", this.hasRejection(lstRsps));

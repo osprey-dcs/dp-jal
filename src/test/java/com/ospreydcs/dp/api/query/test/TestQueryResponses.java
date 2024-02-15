@@ -597,12 +597,18 @@ public class TestQueryResponses {
         
         for (TestQueryRecord rec : TestQueryResponses.SET_QRECS_ALL) {
             
+            // Clear any current results set
+            if (rec.hasQueryResults())
+                rec.clearQueryResults();
+            
+            // Query new results set
             if (!rec.performQuery()) {
                 LOGGER.error("{}: query operation failed for record {}.", JavaRuntime.getCallerName(), rec.strFileName());
                 
                 bolSuccess = false;
             }
             
+            // Store the results set to disk
             if (!rec.storeQueryResults()) {
                 LOGGER.error("{}: results set not available for storage operation in record {}.", JavaRuntime.getCallerName(), rec.strFileName());
                 
@@ -663,12 +669,12 @@ public class TestQueryResponses {
      * Attempts to recover the results set for the given managed query record.
      * </p>
      * <p>
-     * The operation <code>{@link TestQueryRecord#recoverQueryResults()</code> is invoked
+     * The operation <code>{@link TestQueryRecord#recoverQueryResults()}</code> is invoked
      * on the argument to recover the results set associated with the argument.
      * </p>
      * <p>
      * This method catches all exceptions thrown by 
-     * <code>{@link TestQueryRecord#recoverQueryResults()</code> and logs them to the
+     * <code>{@link TestQueryRecord#recoverQueryResults()}</code> and logs them to the
      * class logger as errors.  This behavior allows users to invoke the 
      * <code>queryResults(...)</code> methods without implementing exception handling
      * while still recording all exceptions into the log for diagnosis and debugging.
