@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.query.DpDataRequest;
 
 /**
  * <p>
@@ -52,10 +51,37 @@ public class DpDataResponseConfig extends CfgStructure<DpDataResponseConfig> {
     // Configuration Fields
     //
     
+    /** Query response data correlation parameters */
+    @ACfgOverride.Struct(pathelem="CORRELATE")
+    public Correlate        correlate;
+    
     /** Multi-streaming parameters for query responses */
     @ACfgOverride.Struct(pathelem="MULTISTREAM")
     public Multistream      multistream;
+
     
+    /**
+     * Structure class defining default configuration parameters for query response data correlation
+     */
+    @ACfgOverride.Root(root="DP_API_QUERY_DATA_RESPONSE_CORRELATE")
+    public static class Correlate extends CfgStructure<Correlate> {
+        
+        /** Default constructor required for base structure class */
+        public Correlate() { super(Correlate.class); };
+        
+        
+        //
+        // Configuration Fields
+        //
+        
+        /** Use concurrency during query data correlation */
+        @ACfgOverride.Field(name="CONCURRENCY")
+        public Boolean  useConcurrency;
+        
+        /** Correlate query data while gRPC streaming (otherwise after stream completion) */
+        @ACfgOverride.Field(name="WHILE_STREAMING")
+        public Boolean  whileStreaming;
+    }
     
     /**
      *  Structure class defining default configuration parameters for multi-streaming data responses.
@@ -80,8 +106,8 @@ public class DpDataResponseConfig extends CfgStructure<DpDataResponseConfig> {
         public Long         pivotSize;
         
         /** Time units used for pivotSize */
-        @ACfgOverride.Field(name="PIVOT_UNITS")
-        public TimeUnit     pivotUnits;
+        @ACfgOverride.Field(name="PIVOT_PERIOD")
+        public TimeUnit     pivotPeriod;
         
         /** Maximum number of gRPC data stream to use for request recover */
         @ACfgOverride.Field(name="MAX_STREAMS")

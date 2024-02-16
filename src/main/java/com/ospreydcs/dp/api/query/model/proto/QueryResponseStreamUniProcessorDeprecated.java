@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    QueryResponseStreamUniProcessor.java
+ * File:    QueryResponseStreamUniProcessorDeprecated.java
  * Package: com.ospreydcs.dp.api.query.model.proto
- * Type:    QueryResponseStreamUniProcessor
+ * Type:    QueryResponseStreamUniProcessorDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -41,7 +41,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
  * </p>
  * <p>
  * This implementation assumes a <em>unidirectional</em> backwards gRPC data stream from the
- * Query Service to this object.  That is, objects of <code>QueryResponseStreamUniProcessor</code>
+ * Query Service to this object.  That is, objects of <code>QueryResponseStreamUniProcessorDeprecated</code>
  * represent the backward stream handle (data sink for the Query Service). All processing
  * is done in the base class <code>{@link QueryResponseStreamProcessor}</code>.
  * No processing or streaming operations are performed in the 
@@ -62,7 +62,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
  * @deprecated Moved into base class source file
  */
 @Deprecated(since="Feb 9, 2024", forRemoval=true)
-public final class QueryResponseStreamUniProcessor extends QueryResponseStreamProcessor {
+public final class QueryResponseStreamUniProcessorDeprecated extends QueryResponseStreamProcessor {
 
     
     //
@@ -71,7 +71,7 @@ public final class QueryResponseStreamUniProcessor extends QueryResponseStreamPr
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>QueryResponseStreamUniProcessor</code> ready for processing.
+     * Creates and returns a new instance of <code>QueryResponseStreamUniProcessorDeprecated</code> ready for processing.
      * </p>
      * <p>
      * The returned instance is ready for independent thread execution via the 
@@ -88,11 +88,11 @@ public final class QueryResponseStreamUniProcessor extends QueryResponseStreamPr
      * 
      * @see #isSuccess()
      */
-    public static QueryResponseStreamUniProcessor  newTask(
+    public static QueryResponseStreamUniProcessorDeprecated  newTask(
             QueryRequest msgRequest, 
             DpQueryServiceStub stubAsync, 
             Consumer<BucketData> ifcDataSink) {
-        return new QueryResponseStreamUniProcessor(msgRequest, stubAsync, ifcDataSink);
+        return new QueryResponseStreamUniProcessorDeprecated(msgRequest, stubAsync, ifcDataSink);
     }
     
     //
@@ -101,14 +101,14 @@ public final class QueryResponseStreamUniProcessor extends QueryResponseStreamPr
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseStreamUniProcessor</code> ready for processing.
+     * Constructs a new instance of <code>QueryResponseStreamUniProcessorDeprecated</code> ready for processing.
      * </p>
      *
      * @param msgRequest    the Query Service request to process
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    public QueryResponseStreamUniProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<BucketData> ifcDataSink) {
+    public QueryResponseStreamUniProcessorDeprecated(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<BucketData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }
     

@@ -54,6 +54,12 @@ import io.grpc.stub.StreamObserver;
  * Query Service gRPC streaming response processor base class.
  * </p>
  * <p>
+ * Subclass function as gRPC <em>stream processors</em>, no query data processing is performed.
+ * The gRPC data stream is maintained, the query data is extracted from the data stream, and
+ * any Query Service rejections and errors are intercepted here.  Clients of this class and
+ * sub-classes must supply a data sink for the query data at creation.
+ * </p>
+ * <p>
  * This class is intended as a base for the processing of gRPC data streams connected to the 
  * Data Platform Query Service.  It is also intended to be used as an independent thread
  * task as derived classes must implement the <code>{@link Runnable}</code> interface.
@@ -940,7 +946,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>QueryResponseStreamBidiProcessor</code> ready for processing.
+     * Creates and returns a new instance of <code>QueryResponseStreamBidiProcessorDeprecated</code> ready for processing.
      * </p>
      * <p>
      * The returned instance is ready for independent thread execution via the 
@@ -969,7 +975,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseStreamBidiProcessor</code> ready for processing.
+     * Constructs a new instance of <code>QueryResponseStreamBidiProcessorDeprecated</code> ready for processing.
      * </p>
      *
      * @param msgRequest    the Query Service request to process

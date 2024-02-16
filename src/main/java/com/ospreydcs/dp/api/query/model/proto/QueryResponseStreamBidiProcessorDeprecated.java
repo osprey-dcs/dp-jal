@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryResponseStreamBidiProcessor.java
+ * File:	QueryResponseStreamBidiProcessorDeprecated.java
  * Package: com.ospreydcs.dp.api.query.model.proto
- * Type: 	QueryResponseStreamBidiProcessor
+ * Type: 	QueryResponseStreamBidiProcessorDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -76,7 +76,7 @@ import io.grpc.stub.CallStreamObserver;
  * @deprecated Moved into base class source file
  */
 @Deprecated(since="Feb 9, 2024", forRemoval=true)
-public class QueryResponseStreamBidiProcessor extends QueryResponseStreamProcessor {
+public class QueryResponseStreamBidiProcessorDeprecated extends QueryResponseStreamProcessor {
 
     
     // 
@@ -93,7 +93,7 @@ public class QueryResponseStreamBidiProcessor extends QueryResponseStreamProcess
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>QueryResponseStreamBidiProcessor</code> ready for processing.
+     * Creates and returns a new instance of <code>QueryResponseStreamBidiProcessorDeprecated</code> ready for processing.
      * </p>
      * <p>
      * The returned instance is ready for independent thread execution via the 
@@ -110,9 +110,9 @@ public class QueryResponseStreamBidiProcessor extends QueryResponseStreamProcess
      * 
      * @see #isSuccess()
      */
-    public static QueryResponseStreamBidiProcessor  newTask(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
+    public static QueryResponseStreamBidiProcessorDeprecated  newTask(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
             Consumer<BucketData> ifcDataSink) {
-        return new QueryResponseStreamBidiProcessor(msgRequest, stubAsync, ifcDataSink);
+        return new QueryResponseStreamBidiProcessorDeprecated(msgRequest, stubAsync, ifcDataSink);
     }
     
 
@@ -122,14 +122,14 @@ public class QueryResponseStreamBidiProcessor extends QueryResponseStreamProcess
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseStreamBidiProcessor</code> ready for processing.
+     * Constructs a new instance of <code>QueryResponseStreamBidiProcessorDeprecated</code> ready for processing.
      * </p>
      *
      * @param msgRequest    the Query Service request to process
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    public QueryResponseStreamBidiProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
+    public QueryResponseStreamBidiProcessorDeprecated(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
             Consumer<BucketData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }

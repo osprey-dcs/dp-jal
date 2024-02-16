@@ -733,48 +733,271 @@ public final class DpDataRequest {
      * </p>
      * <p>
      * Computes the current "area" of the query domain represented by this request.
-     * The returned value is in the units of "(data source count)-TimeUnit."  The value
+     * The returned value is in the units of "(data source count)-seconds."  The value
      * provides a rough estimate of the size of the results set for the data request.
      * </p>  
      * <p>
-     * For example, if all request data sources produce double-valued scalar time-series data 
-     * which is sampled at 1 kHz, then when using 
-     * <code>tuDomain</code> = <code>{@link TimeUnit#MILLISECONDS}</code> 
-     * the returned value actually represents the number of values within the results set.
+     * For example, suppose all data sources within the current request produced time-series
+     * data at a sampling rate of <i>f</i> = 1 kHz, or 1,000 samples/second.  Then multiplying 
+     * the returned value with the sampling rate produces the total number of samples in the
+     * results set of the data request.  Specifically, let <i>A</i> denote the returned value,
+     * <i>f</i> the sampling rate, and <i>N</i> the total number of samples in the data request
+     * results set, then
+     * <pre>  
+     *     <i>N</i> (samples) &approx; <i>f</i> (samples/second) * <i>A</i> (source count-seconds)
+     *                 &approx; <i>f</i><i>A</i> (samples)
+     * </pre>  
+     * since the "source count" dimension is without units.
+     * Again this is an approximation, only accurate if ALL requested data sources have the
+     * same sample rate <i>f</i>.
      * </p>
      * 
-     * @param   tuTimeRange time units to use for time range
-     * 
-     * @return  the current query domain size in (data source count)-(<code>tuTimeRange</code> seconds)
+     * @return  the current query domain size in (data source count)-(seconds)
      */
-    public long getDomainSize(TimeUnit tuTimeRange) {
+    public long approxDomainSize() {
+        // Compute the time dimension - the duration of the time range in units seconds 
         Duration    durRange = this.getRangeDuration();
-        long        lngRangeSize = tuTimeRange.convert(durRange);
-        long        lngCntSources = this.getSourceCount();
-        long        lngDomainSize = lngRangeSize * lngCntSources;
+        long        lngRangeSize = TimeUnit.SECONDS.convert(durRange);
+        
+        // Compute the data source dimension
+        long        cntDataSources = this.getSourceCount();
+        
+        // Return the product
+        long        lngDomainSize = cntDataSources * lngRangeSize;
         
         return lngDomainSize;
     }
     
     /**
      * <p>
+     * Computes and returns an approximation for the number of samples in the current 
+     * data request results set.
+     * </p>
+     * <p>
+     * Computes an approximation for the size of the results set <i>N</i> in units of "samples".
+     * The returned value <i>N</i> is essentially the equivalent of multiply the inverse of 
+     * sampling period <i>T</i> (i.e., the argument) by the value obtained from
+     * <code>{@link #approxDomainSize()}</code>.  However, the method of computation
+     * differs in order to better accommodate integer arithmetic.
+     * </p> 
+     * <p>
+     * The returned value <i>N</i> is in the units of "samples."  The returned value is
+     * accurate whenever all the data sources identified in the data request are sampled
+     * at the given period.
+     * For example, if all request data sources produce time-series data sampled at 1 kHz, 
+     * then when using 
+     * <code>tuSamplingPeriodUnits</code> = <code>{@link TimeUnit#MILLISECONDS}</code> 
+     * the returned value actually represents the number of sample values within the results set.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * The returned value is an estimate of the number of <em>samples</em>, or data value,
+     * within the results set.  Do to the heterogeneous nature of the Data Platform data
+     * archive, the actual memory size, in <em>bytes</em>, of the results set can vary
+     * significantly according to the data type of the data source.
+     * </p>  
+     * 
+     * @param   tuSamplingPeriodUnits time units to use for time range
+     * 
+     * @return  the current query domain size in (data source count)-(<code>tuTimeRange</code> seconds)
+     * 
+     * @see #approxDomainSize()
+     */
+    public long approxRequestSamples(long lngSamplingPeriod, TimeUnit tuSamplingPeriodUnits) {
+        
+        // Compute the duration of the time range in units of the sampling period 
+        Duration    durRange = this.getRangeDuration();
+        long        lngRangeSize = tuSamplingPeriodUnits.convert(durRange);
+        
+        // Compute N the number of samples/source within the duration
+        //  Note - this is equivalent to N = [duration (in seconds)] * [f = 1/T (1/seconds)]
+        //         but works better for integer arithmetic
+        long        lngSamples = lngRangeSize / lngSamplingPeriod;
+        
+        // Compute the number of sources * number of samples
+        long        lngCntSources = this.getSourceCount();
+        long        lngRequestSize = lngCntSources * lngSamples;
+        
+        return lngRequestSize;
+    }
+    
+    //    /**
+    //     * <p>
+    //     * Creates the <em>Query Service</em> query language (DQL) string based upon 
+    //     * the history of calls to the range, selection, and filter methods.
+    //     * </p>
+    //     * <p>  
+    //     * The string is formatted in the DQL language.  It is used for building
+    //     * gRPC request messages by the other builder methods.
+    //     * </p>
+    //     * <p>
+    //     * <h2>NOTES:</h2>
+    //     * <ul>
+    //     * <li> 
+    //     * If no <code>range</code> methods were called then the returned query
+    //     * defaults to the inception time defined in the applications properties.
+    //     * </li>
+    //     * <li> 
+    //     * If no <code>select</code> methods were called then the returned 
+    //     * query defaults to all PV names in the <em>Query Service</em>.
+    //     * </li>
+    //     * <li>
+    //     * If the <code>{@link #pageSize(Integer)}</code> method was not called
+    //     * then the returned query defaults the page size specified in the
+    //     * <i>application.yml</i> configuration file.
+    //     * </li>
+    //     * <li>
+    //     * If the <code>{@link #pageStartIndex(Integer)}</code> method was not called
+    //     * then the returned query defaults to the zero index indicating that
+    //     * the <em>Query Service</em> send all data indicated in the query request.
+    //     * </li>
+    //     * </ul>
+    //     * </p>
+    //     * 
+    //     * @return  properly formatted <em>Query Service</em> DQL snapshot data request query
+    //     */
+    //    public String buildDqlQueryString() {
+    //        StringBuffer bufQuery  = new StringBuffer();
+    //
+    //        // Build the SELECT phrase
+    //        bufQuery.append( "SELECT ");
+    //        
+    //        //   If the SELECT phase list is empty select for everything
+    //        if (this.lstSelCmps.isEmpty())
+    //            this.lstSelCmps.add( this.createSelectCmpAllPvs() );
+    //        
+    //        String strSelLast = this.lstSelCmps.removeLast();
+    //        this.lstSelCmps.forEach( s -> bufQuery.append(s + ", "));
+    //        bufQuery.append(strSelLast + " ");
+    //        this.lstSelCmps.add(strSelLast);
+    //        
+    //        // Build the WHERE phrase
+    //        bufQuery.append( " WHERE ");
+    //
+    //        if (this.lstWhrCmps.isEmpty()) 
+    //            try {    
+    //                this.lstWhrCmps.add( this.createWhereCmpDsInception() );
+    //            } catch (DsGrpcException e) {
+    //                this.lstWhrCmps.add( this.createSelectCmpBeforeNow() );
+    //            }
+    //        
+    //        String strWhrLast = this.lstWhrCmps.removeLast();
+    //        this.lstWhrCmps.forEach( s -> bufQuery.append(s + " AND ") );
+    //        bufQuery.append(strWhrLast);
+    //        this.lstWhrCmps.add(strWhrLast);
+    //        
+    //        return bufQuery.toString();
+    //    }
+        
+    /**
+     * <p>
      * Computes and returns the query domain decomposition parameters for a default decomposition. 
      * </p>
      * <p>
+     * Computes the query sub-domain parameters for a default composite query.
      * Query domain decomposition parameters are used to build composite queries.
      * This method computes and returns the parameters used for a query domain decomposition 
      * when using the default decomposition parameters specified in the application default 
      * parameters (i.e., rather than decomposition parameters given by users).
      * </p>
-     *  
-     * @return  record of default query domain decomposition parameters for a composite query.
+     * <p>
+     * The method uses the class constants <code>{@link #CNT_COMPOSITE_MAX_SOURCES}</code>
+     * and <code>{@link #DUR_COMPOSITE_MAX}</code> to compute the number of query domain
+     * sub-divisions using default decomposition.  Specifically, we compute
+     * <code>
+     * <pre>
+     *   cntQueriesHor = {@link #getSourceCount()} / {@link #CNT_COMPOSITE_MAX_SOURCES}
+     *   cntQueriesVer = {@link #getRangeDuration()}.divideBy({@link #DUR_COMPOSITE_MAX})
+     * </pre>
+     * </code>
+     * Note further that if there exists a non-zero remainder for the above integer divisions
+     * the domain subdivision count must be incremented to accommodate the excess domain.
+     * We perform the following modifications
+     * <code>
+     * <pre>
+     *   cntQueriesHor += ({@link #getSourceCount()} % {@link #CNT_COMPOSITE_MAX_SOURCES} == 0) ? 0 : 1
+     *   cntQueriesVer += {{@link #getRangeDuration()}.minus({@link #DUR_COMPOSITE_MAX}.multiedBy(cntQueryiesVer).isZero) ? 0 : 1
+     * </pre>
+     * </code>
+     * </p>
+     * <p>
+     * The composite query type is also determined by the value of the above quantities
+     * according to the following:
+     * <code>
+     * <pre>
+     *   {@link CompositeType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) 
+     *   {@link CompositeType#HORIZONTAL} <- (cntQueriesHor > 1) && (cntQueriesVer == 1) 
+     *   {@link CompositeType#VERTICAL}   <- (cntQueriesHor == 1) && (cntQueriesVer > 1) 
+     *   {@link CompositeType#GRID}       <- (cntQueriesHor > 1) && (cntQueriesVer > 1) 
+     * </pre>
+     * </code>
+     * </p>
+     * 
+     * @return  record containing sub-domain parameters when using default decomposition
      * 
      * @see DpApiConfig
      * @see DpQueryConfig
      */
-    public DomainDecomposition  getDecompositionDefault() {
-        return this.decomposeDomainDefault();
+    public DomainDecomposition decomposeDomainDefault() {
+
+        // The composite query type
+        CompositeType   enmType;
+
+        // Determine composite query domain sizes
+        int     cntQueriesHor = this.getSourceCount() / CNT_COMPOSITE_MAX_SOURCES;
+        long    cntQueriesVer = this.getRangeDuration().dividedBy(DUR_COMPOSITE_MAX);
+
+
+        // Note integer division, must increment count if non-zero remainder
+        if (this.getSourceCount() % CNT_COMPOSITE_MAX_SOURCES > 0)
+            cntQueriesHor++;
+        if (!this.getRangeDuration().minus(DUR_COMPOSITE_MAX.multipliedBy(cntQueriesVer)).isZero())
+            cntQueriesVer++;
+
+        // The overall request is not large enough to invoke decomposition
+        if ((cntQueriesHor == 1) && (cntQueriesVer == 1)) {
+
+            enmType = CompositeType.NONE;
+
+            // Horizontal composite request
+        } else if ((cntQueriesHor > 1) && (cntQueriesVer == 1)) {
+
+            enmType = CompositeType.HORIZONTAL;
+
+            // Vertical composite request
+        } else if ((cntQueriesHor == 1) && (cntQueriesVer > 1)) {
+
+            enmType = CompositeType.VERTICAL;
+
+            // Grid composite request
+        } else {
+
+            enmType = CompositeType.GRID;
+
+        }
+
+        return new DomainDecomposition(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
     }
+
+//    /**
+//     * <p>
+//     * Computes and returns the query domain decomposition parameters for a default decomposition. 
+//     * </p>
+//     * <p>
+//     * Query domain decomposition parameters are used to build composite queries.
+//     * This method computes and returns the parameters used for a query domain decomposition 
+//     * when using the default decomposition parameters specified in the application default 
+//     * parameters (i.e., rather than decomposition parameters given by users).
+//     * </p>
+//     *  
+//     * @return  record of default query domain decomposition parameters for a composite query.
+//     * 
+//     * @see DpApiConfig
+//     * @see DpQueryConfig
+//     */
+//    public DomainDecomposition  getDecompositionDefault() {
+//        return this.decomposeDomainDefault();
+//    }
     
     
     // 
@@ -1685,85 +1908,6 @@ public final class DpDataRequest {
 //        
 //        return bufQuery.toString();
 //    }
-    
-    /**
-     * <p>
-     * Computes the query sub-domain parameters for a default composite query.
-     * </p>
-     * <p>
-     * The method uses the class constants <code>{@link #CNT_COMPOSITE_MAX_SOURCES}</code>
-     * and <code>{@link #DUR_COMPOSITE_MAX}</code> to compute the number of query domain
-     * sub-divisions using default decomposition.  Specifically, we compute
-     * <code>
-     * <pre>
-     *   cntQueriesHor = {@link #getSourceCount()} / {@link #CNT_COMPOSITE_MAX_SOURCES}
-     *   cntQueriesVer = {@link #getRangeDuration()}.divideBy({@link #DUR_COMPOSITE_MAX})
-     * </pre>
-     * </code>
-     * Note further that if there exists a non-zero remainder for the above integer divisions
-     * the domain subdivision count must be incremented to accommodate the excess domain.
-     * We perform the following modifications
-     * <code>
-     * <pre>
-     *   cntQueriesHor += ({@link #getSourceCount()} % {@link #CNT_COMPOSITE_MAX_SOURCES} == 0) ? 0 : 1
-     *   cntQueriesVer += {{@link #getRangeDuration()}.minus({@link #DUR_COMPOSITE_MAX}.multiedBy(cntQueryiesVer).isZero) ? 0 : 1
-     * </pre>
-     * </code>
-     * </p>
-     * <p>
-     * The composite query type is also determined by the value of the above quantities
-     * according to the following:
-     * <code>
-     * <pre>
-     *   {@link CompositeType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) 
-     *   {@link CompositeType#HORIZONTAL} <- (cntQueriesHor > 1) && (cntQueriesVer == 1) 
-     *   {@link CompositeType#VERTICAL}   <- (cntQueriesHor == 1) && (cntQueriesVer > 1) 
-     *   {@link CompositeType#GRID}       <- (cntQueriesHor > 1) && (cntQueriesVer > 1) 
-     * </pre>
-     * </code>
-     * </p>
-     * @return  record containing sub-domain parameters when using default decomposition
-     */
-    private DomainDecomposition decomposeDomainDefault() {
-        
-        // The composite query type
-        CompositeType   enmType;
-        
-        // Determine composite query domain sizes
-        int     cntQueriesHor = this.getSourceCount() / CNT_COMPOSITE_MAX_SOURCES;
-        long    cntQueriesVer = this.getRangeDuration().dividedBy(DUR_COMPOSITE_MAX);
-
-        
-        // Note integer division, must increment count if non-zero remainder
-        if (this.getSourceCount() % CNT_COMPOSITE_MAX_SOURCES > 0)
-            cntQueriesHor++;
-        if (!this.getRangeDuration().minus(DUR_COMPOSITE_MAX.multipliedBy(cntQueriesVer)).isZero())
-            cntQueriesVer++;
-        
-        // The overall request is not large enough to invoke decomposition
-        if ((cntQueriesHor == 1) && (cntQueriesVer == 1)) {
-            
-            enmType = CompositeType.NONE;
-            
-        // Horizontal composite request
-        } else if ((cntQueriesHor > 1) && (cntQueriesVer == 1)) {
-
-            enmType = CompositeType.HORIZONTAL;
-            
-        // Vertical composite request
-        } else if ((cntQueriesHor == 1) && (cntQueriesVer > 1)) {
-            
-            enmType = CompositeType.VERTICAL;
-
-        // Grid composite request
-        } else {
-            
-            enmType = CompositeType.GRID;
-            
-        }
-
-        return new DomainDecomposition(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
-    }
     
     /**
      * <p>

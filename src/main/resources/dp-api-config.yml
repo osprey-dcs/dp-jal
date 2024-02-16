@@ -88,16 +88,19 @@ query:      # Data Platform Query Service operations
             maxDuration: 1000           # max time range duration  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
             unitDuration: MILLISECONDS  # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_UNIT_DURATION
       response:       # Default parameters used for data responses
+         correlate:        # Query data correlation parameters
+            useConcurrency: true     # use mult-thread correlation : DP_API_QUERY_DATA_RESPONSE_CORRELATE_USE_CONCURRENCY
+            whileStreaming: true     # correlate during gRPC stream: DP_API_QUERY_DATA_RESPONSE_CORRELATE_WHILE_STREAMING
          multistream:      # Multiple gRPC data stream parameters
             active: true             # use multistreamed responses : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_ACTIVE
-            pivotSize: 4000          # query domain size (srcs-time): DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
-            pivotUnits: SECONDS      # java.concurrent.TimeUnit    : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_UNITS 
+            pivotSize: 4000000       # approx request size (samples): DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
+            pivotPeriod: MILLISECONDS # java.concurrent.TimeUnit    : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_PERIOD 
             maxStreams: 5            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency           : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
       threadCount: 5                 # worker thread count       : DP_API_QUERY_CONCURRENCY_THREAD_COUNT
-   timeout:      # General connection timeout properties (e.g., used in API interface shutdown)
+   timeout:      # General query timeout properties (e.g., used for query respponse wait timeout)
       active: true                   # apply timeout condition   : DP_API_QUERY_TIMEOUT_ACTIVE
       limit: 30                      # timeout limit             : DP_API_QUERY_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit  : DP_API_QUERY_TIMEOUT_UNIT
