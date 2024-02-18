@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -142,6 +143,9 @@ public class QueryDataCorrelator {
     /** Parallelism tuning parameter - pivot to parallel processing when target set size hits this limit */
     public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
+    /** Parallelism tuning parameter - default number of independent processing threads */
+    public static final int        CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.threadCount;
+    
     
     //
     // Class Resources
@@ -159,7 +163,8 @@ public class QueryDataCorrelator {
     private final Object            objLock = new Object();
     
     /** Manages thread pools of many, short-lived execution tasks */
-    private final ExecutorService   exeThreadPool = Executors.newCachedThreadPool();
+//    private final ExecutorService   exeThreadPool = Executors.newCachedThreadPool();
+    private final ExecutorService   exeThreadPool = Executors.newFixedThreadPool(CNT_CONCURRENCY_THDS);
     
     /** Target Set - Ordered set of sampling interval references */
     private final SortedSet<CorrelatedQueryData> setTargetRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
@@ -301,9 +306,18 @@ public class QueryDataCorrelator {
     //
     
     /**
+     * <p>
      * Returns the target set of <code>CorrelatedQueryData</code> instances in its current state.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This <code>QueryDataCorrelator</code> instance retains ownership of the returned set.
+     * If the <code>{@link #reset()}</code> method is invoked this set is destroyed.
+     * All subsequent processing of the returned data set must be completed before invoking
+     * <code>{@link #reset()}</code>.
+     * <p>
      * 
-     * @return  the target set of the query data collection and organization operations
+     * @return  the sorted set (by start-time instant) of currently processed data 
      */
     public final SortedSet<CorrelatedQueryData>   getProcessedSet() {
         return this.setTargetRefs;
@@ -334,7 +348,6 @@ public class QueryDataCorrelator {
                 .stream()
                 .collect(
                         TreeSet::new, 
-//                        (set, r) -> set.addAll(r.extractDataSourceNames()), 
                         (set, r) -> set.addAll(r.getSourceNames()), 
                         TreeSet::addAll
                         );
@@ -437,8 +450,10 @@ public class QueryDataCorrelator {
      * </p>
      *  
      * @param msgData   Query Service response data message
+     * 
+     * @throws CompletionException  error in <code>DataBucket</code> insertion task execution (see cause)
      */
-    public void insertQueryData(QueryResponse.QueryReport.BucketData msgData) {
+    public void insertQueryData(QueryResponse.QueryReport.BucketData msgData) throws CompletionException {
         
         // Check for empty data message
         if (msgData.getDataBucketsList().isEmpty()) {
@@ -459,8 +474,9 @@ public class QueryDataCorrelator {
             }
 
             // If the target set is large - pivot to concurrent processing of message data
-            Collection<QueryResponse.QueryReport.BucketData.DataBucket>  setFreeBuckets = this.attemptDataInsertConcurrent(msgData);
-            SortedSet<CorrelatedQueryData>  setNewTargets = this.buildTargetRefs(setFreeBuckets);
+//            Collection<QueryResponse.QueryReport.BucketData.DataBucket>  setFreeBuckets = this.attemptDataInsertConcurrent(msgData);
+            Collection<QueryResponse.QueryReport.BucketData.DataBucket>  setFreeBuckets = this.attemptDataInsertThreadPool(msgData);
+            SortedSet<CorrelatedQueryData>  setNewTargets = this.buildDisjointTargets(setFreeBuckets);
             this.setTargetRefs.addAll(setNewTargets);
 
         }
@@ -780,18 +796,16 @@ public class QueryDataCorrelator {
      * 
      * @param msgData   Query Service response data to be inserted into the target set of references
      * 
-     * @return  the collection of <code>DataBucket</code> messages that failed insertion 
+     * @return  the collection of <code>DataBucket</code> messages that failed insertion
+     * 
+     * @Deprecated  Unstable for large target sets - seems to be Java internal TreeMap problem
      */
+    @Deprecated(since="Feb 17, 2024")
     private Collection<QueryResponse.QueryReport.BucketData.DataBucket>  attemptDataInsertConcurrent(QueryResponse.QueryReport.BucketData msgData) {
         
         // Create the data insertion tasks
         Collection<BucketDataInsertTask> lstTasks = this.createInsertionTasks(msgData);
-//        List<BucketDataInsertTask> lstTasks = msgData
-//                .getDataBucketsList()
-//                .stream()
-//                .map( buc -> BucketDataInsertTask.newTask(buc, this.getTargetRefs()) )
-//                .toList();
-                
+
         // Execute all tasks simultaneously then wait for join
         lstTasks
             .parallelStream()
@@ -799,13 +813,6 @@ public class QueryDataCorrelator {
         
         // Collect all data buckets messages that were not processed
         Collection<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
-//        ArrayList<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = lstTasks
-//                .stream()
-//                .collect(
-//                        ArrayList::new, 
-//                        (c, t) -> { if (!t.isSuccess()) c.add(t.getSubject()); }, 
-//                        ArrayList::addAll
-//                        );
         
         return lstBuckets;
     }
@@ -845,52 +852,41 @@ public class QueryDataCorrelator {
      * 
      * @param msgData   Query Service response data to be inserted into the target set of references
      * 
-     * @return  the collection of <code>DataBucket</code> messages that failed insertion 
+     * @return  the collection of <code>DataBucket</code> messages that failed insertion
+     * 
+     * @throws CompletionException  error in <code>DataBucket</code> insertion task execution (see cause)
      */
-    @SuppressWarnings("unused")
     private Collection<QueryResponse.QueryReport.BucketData.DataBucket>  attemptDataInsertThreadPool(QueryResponse.QueryReport.BucketData msgData) 
-            throws DpQueryException 
+//            throws DpQueryException
+            throws CompletionException
     {
         
-//      // Create the thread pool executor for the data insertion tasks
-//      ExecutorService exeThreadPool = Executors.newCachedThreadPool();
-      
         // Create the data insertion tasks
         Collection<BucketDataInsertTask> lstTasks = this.createInsertionTasks(msgData);
-//        List<BucketDataInsertTask> lstTasks = msgData
-//                .getDataBucketsList()
-//                .stream()
-//                .map( buc -> BucketDataInsertTask.newTask(buc, this.getTargetRefs()) )
-//                .toList();
 
         // Execute all tasks simultaneously then wait for completion or timeout
         try {
             this.exeThreadPool.invokeAll(lstTasks, LNG_TIMEOUT, TU_TIMEOUT);
 
         } catch (InterruptedException e) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": thread pool execution interrupted with exception - " + e.getMessage();
+            String strMsg = JavaRuntime.getQualifiedCallerName() + ": thread pool execution interrupted - " + e.getMessage();
             
-            LOGGER.error(strMsg);
-            
-            throw new DpQueryException(strMsg);
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+
+            throw new CompletionException(strMsg, e);
             
         } catch (RejectedExecutionException e) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": thread pool execution interrupted with exception - " + e.getMessage();
+            String strMsg = JavaRuntime.getQualifiedCallerName() + ": thread pool executor rejected execution - " + e.getMessage();
             
-            LOGGER.error(strMsg);
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
             
-            throw new DpQueryException(strMsg);
+            throw new CompletionException(strMsg, e);
         }
 
         // Collect all data buckets messages that were not processed
         Collection<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
-//        ArrayList<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = lstTasks
-//                .stream()
-//                .collect(
-//                        ArrayList::new, 
-//                        (c, t) -> { if (!t.isSuccess()) c.add(t.getSubject()); }, 
-//                        ArrayList::addAll
-//                        );
 
         return lstBuckets;
     }
@@ -920,7 +916,7 @@ public class QueryDataCorrelator {
      * 
      * @return  set of new target references associated with the given argument data
      */
-    private SortedSet<CorrelatedQueryData>  buildTargetRefs(Collection<QueryResponse.QueryReport.BucketData.DataBucket> setBuckets) {
+    private SortedSet<CorrelatedQueryData>  buildDisjointTargets(Collection<QueryResponse.QueryReport.BucketData.DataBucket> setBuckets) {
         
         // The returned sampling interval reference - that is, the targets
         SortedSet<CorrelatedQueryData>  setRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
@@ -958,7 +954,7 @@ public class QueryDataCorrelator {
         List<BucketDataInsertTask> lstTasks = msgData
                 .getDataBucketsList()
                 .stream()
-                .map(buc -> BucketDataInsertTask.newTask(buc, this.getProcessedSet()))
+                .map(buc -> BucketDataInsertTask.newTask(buc, this.setTargetRefs))
                 .toList();
                 
         return lstTasks;
@@ -979,13 +975,17 @@ public class QueryDataCorrelator {
      */
     private Collection<QueryResponse.QueryReport.BucketData.DataBucket>  extractFailedTaskBuckets(Collection<BucketDataInsertTask> setTasks) {
         
-        ArrayList<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = setTasks
+        List<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = setTasks
                 .stream()
-                .collect(
-                        ArrayList::new, 
-                        (c, t) -> { if (!t.isSuccess()) c.add(t.getSubject()); }, 
-                        ArrayList::addAll
-                        );
+                .filter(t -> !t.isSuccess())
+                .map(t -> t.getSubject())
+                .toList();
+//                .stream()
+//                .collect(
+//                        ArrayList::new, 
+//                        (c, t) -> { if (!t.isSuccess()) c.add(t.getSubject()); }, 
+//                        ArrayList::addAll
+//                        );
 
         return lstBuckets;
     }

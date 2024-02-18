@@ -99,7 +99,7 @@ query:      # Data Platform Query Service operations
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency           : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
-      threadCount: 5                 # worker thread count       : DP_API_QUERY_CONCURRENCY_THREAD_COUNT
+      threadCount: 20                 # worker thread count       : DP_API_QUERY_CONCURRENCY_THREAD_COUNT
    timeout:      # General query timeout properties (e.g., used for query respponse wait timeout)
       active: true                   # apply timeout condition   : DP_API_QUERY_TIMEOUT_ACTIVE
       limit: 30                      # timeout limit             : DP_API_QUERY_TIMEOUT_LIMIT

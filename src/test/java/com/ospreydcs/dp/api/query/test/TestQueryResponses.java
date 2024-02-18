@@ -38,6 +38,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
@@ -118,6 +119,13 @@ public class TestQueryResponses {
          */
         LONG(TestQueryResponses.QREC_LONG);
         
+//        /**
+//         * Query for many data sources over the entire time-range duration
+//         * 
+//         * @see TestQueryResponses#QREC_BIG
+//         */
+//        BIG(TestQueryResponses.QREC_BIG);
+        
         /** The record instance for the query type */
         private TestQueryRecord recQuery;
         
@@ -158,13 +166,16 @@ public class TestQueryResponses {
         GRID(TestQueryResponses.CQRECS_GRID);
         
         /** The composite of record instances for the query type */
-        private TestQueryCompositeRecords   recsQuery;
+        private TestQueryCompositeRecord   recsQuery;
         
         /** Enumeration constant constructor */
-        private CompositeQueryType(TestQueryCompositeRecords recs) { this.recsQuery = recs; };
+        private CompositeQueryType(TestQueryCompositeRecord recs) { this.recsQuery = recs; };
 
         /** @return the number of sub-queries in this composite query */
         public int                  getQueryCount()    { return this.recsQuery.getQueryCount(); };
+        
+        /** @return the composite query record instance for this composite query type */
+        public TestQueryCompositeRecord    getCompositeRecord() { return this.recsQuery; };
         
         /**
          * Returns the query record instance for this constant by composite index.
@@ -257,6 +268,19 @@ public class TestQueryResponses {
                                                 0, 
                                                 60L, 
                                                 0L);
+    
+    /**
+     * Query definition record for "big" query
+     * <p>
+     * 100 data source(s)<br/>
+     * 60 seconds(s) duration
+     */
+    public static final TestQueryRecord     QREC_BIG = new TestQueryRecord(
+                                                "queryresults-single-big.dat",
+                                                100,
+                                                0,
+                                                60L,
+                                                0L);
 
     
     /**
@@ -266,8 +290,8 @@ public class TestQueryResponses {
      * 50 data source(s) total - 10 per sub-query <br/>
      * 5 second(s) duration
      */
-    public static final TestQueryCompositeRecords   CQRECS_HOR = new TestQueryCompositeRecords(
-                                                        TestQueryCompositeRecords.CompositeStrategy.HORIZONTAL,
+    public static final TestQueryCompositeRecord   CQRECS_HOR = new TestQueryCompositeRecord(
+                                                        TestQueryCompositeRecord.CompositeStrategy.HORIZONTAL,
                                                         5,
                                                         50,
                                                         5L,
@@ -280,8 +304,8 @@ public class TestQueryResponses {
      * 10 data source(s) <br/>
      * 5 second(s) total duration - 1 second per sub-query 
      */
-    public static final TestQueryCompositeRecords   CQRECS_VER = new TestQueryCompositeRecords(
-                                                        TestQueryCompositeRecords.CompositeStrategy.VERTICAL,
+    public static final TestQueryCompositeRecord   CQRECS_VER = new TestQueryCompositeRecord(
+                                                        TestQueryCompositeRecord.CompositeStrategy.VERTICAL,
                                                         5,
                                                         50,
                                                         5L,
@@ -294,8 +318,8 @@ public class TestQueryResponses {
      * 50 data source(s) - 10 per sub-query<br/>
      * 5 second(s) total duration - 1 second per sub-query 
      */
-    public static final TestQueryCompositeRecords   CQRECS_GRID = new TestQueryCompositeRecords(
-                                                        TestQueryCompositeRecords.CompositeStrategy.GRID,
+    public static final TestQueryCompositeRecord   CQRECS_GRID = new TestQueryCompositeRecord(
+                                                        TestQueryCompositeRecord.CompositeStrategy.GRID,
                                                         10,
                                                         50,
                                                         5L,
@@ -329,6 +353,7 @@ public class TestQueryResponses {
         SET_QRECS_ALL.add(QREC_2SRC);
         SET_QRECS_ALL.add(QREC_WIDE);
         SET_QRECS_ALL.add(QREC_LONG);
+//        SET_QRECS_ALL.add(QREC_BIG);
         
         SET_QRECS_ALL.addAll(CQRECS_HOR.getQueryRecordsAll());
         SET_QRECS_ALL.addAll(CQRECS_VER.getQueryRecordsAll());
@@ -353,8 +378,44 @@ public class TestQueryResponses {
      * 
      * @return  the <code>QueryRequest</code> message defining the Query Service data request
      */
-    public static QueryRequest  request(SingleQueryType enmType) {
+    public static QueryRequest  requestMessage(SingleQueryType enmType) {
+        return enmType.getQueryRecord().createRequestMessage();
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>{@link DpDataRequest}</code> Data Platform API request 
+     * for the given query.
+     * </p>
+     * <p>
+     * Recovers the <code>{@link TestQueryRecord}<?code> from the argument, using it to
+     * create the DP API data request object for the query.
+     * </p>
+     * 
+     * @param enmType   enumeration constant specifying the desired single query type
+     * 
+     * @return  the <code>DpDataRequest</code> object defining the data request
+     */
+    public static DpDataRequest  request(SingleQueryType enmType) {
         return enmType.getQueryRecord().createRequest();
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new list of <code>{@link DpDataRequest}</code> objects representing
+     * the composite data query of the given composite query.
+     * </p>
+     * <p>
+     * Recovers the <code>{@link TestCompositeQueryRecord}<?code> from the argument, using it to
+     * create the DP API data request objects for the query.
+     * </p>
+     *  
+     * @param enmType   enumeration constant specifying the desired composite query type
+     * 
+     * @return  list of <code>DpDataRequest</code> objects defining the composite data request
+     */
+    public static List<DpDataRequest>   request(CompositeQueryType enmType) {
+        return enmType.getCompositeRecord().createCompositeRequest();
     }
     
     /**
@@ -517,7 +578,7 @@ public class TestQueryResponses {
      * 
      * @return  the number of sub-queries within the given, managed composite query
      * 
-     * @see TestQueryCompositeRecords#getQueryCount()
+     * @see TestQueryCompositeRecord#getQueryCount()
      */
     public static int   getSubQueryCount(CompositeQueryType enmType) {
        
@@ -669,12 +730,12 @@ public class TestQueryResponses {
      * Attempts to recover the results set for the given managed query record.
      * </p>
      * <p>
-     * The operation <code>{@link TestQueryRecord#recoverQueryResults()}</code> is invoked
+     * The operation <code>{@link TestQueryRecord#recoverQueryResponses()}</code> is invoked
      * on the argument to recover the results set associated with the argument.
      * </p>
      * <p>
      * This method catches all exceptions thrown by 
-     * <code>{@link TestQueryRecord#recoverQueryResults()}</code> and logs them to the
+     * <code>{@link TestQueryRecord#recoverQueryResponses()}</code> and logs them to the
      * class logger as errors.  This behavior allows users to invoke the 
      * <code>queryResults(...)</code> methods without implementing exception handling
      * while still recording all exceptions into the log for diagnosis and debugging.
@@ -688,7 +749,7 @@ public class TestQueryResponses {
     private static List<QueryResponse>  recoverQueryResults(TestQueryRecord rec) {
         
         try {
-            List<QueryResponse> lstRspMsgs = rec.recoverQueryResults();
+            List<QueryResponse> lstRspMsgs = rec.recoverQueryResponses();
             
             if (lstRspMsgs == null)
                 LOGGER.error("{}: the {} recover query results operation returned null for record {}.", 

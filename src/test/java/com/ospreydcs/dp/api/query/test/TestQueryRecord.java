@@ -57,7 +57,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * <code>{@link TestDpDataRequestGenerator}</code> utility.  Query result sets can be 
  * actively maintained in the field <code>{@link #lstResults}</code> and be 
  * recovered (i.e., either through persistence or directly through the Query Service)
- * with operation <code>{@link #recoverQueryResults()}</code>.
+ * with operation <code>{@link #recoverQueryResponses()}</code>.
  * Record contains file name where results can be stored and recovered for persistence.  
  * The record also performs various operations associated with the query, its results set, 
  * and persistence.
@@ -227,7 +227,7 @@ public final record TestQueryRecord (
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * Clearing the results set will force <code>{@link #recoverQueryResults()}</code> to
+     * Clearing the results set will force <code>{@link #recoverQueryResponses()}</code> to
      * reload query results set from persistent storage, or perform the actual query operation
      * if no persistent storage is available.
      * </p>
@@ -241,7 +241,7 @@ public final record TestQueryRecord (
      * Returns the results set field <code>{@link #lstResults}</code> this record if available.
      * </p>
      * <p>
-     * Note that the method <code>{@link #recoverQueryResults()}</code> will load the results
+     * Note that the method <code>{@link #recoverQueryResponses()}</code> will load the results
      * set from persistent storage or query the Query Service to create results set if it
      * is not already available.
      * </p>
@@ -249,9 +249,9 @@ public final record TestQueryRecord (
      * @return  the value of <code>{@link #lstResults}</code> if non-empty,
      *          otherwise <code>null</code> is returned
      *          
-     * @see #recoverQueryResults()
+     * @see #recoverQueryResponses()
      */
-    public List<QueryResponse>  getQueryResults() {
+    public List<QueryResponse>  getQueryResponses() {
         if (this.hasQueryResults())
             return this.lstResults;
         
@@ -287,7 +287,7 @@ public final record TestQueryRecord (
      * @throws ClassNotFoundException   the data file does not contain a List<QueryResponse> object
      * @throws DpGrpcException          unable to establish <code>TestQueryService</code> connection
      */
-    public List<QueryResponse> recoverQueryResults() throws IOException, ClassNotFoundException, DpGrpcException {
+    public List<QueryResponse> recoverQueryResponses() throws IOException, ClassNotFoundException, DpGrpcException {
         
         // If the query results data is already available return it
         if (!this.lstResults.isEmpty())
@@ -311,24 +311,36 @@ public final record TestQueryRecord (
      * results set of <code>QueryResponse</code> messages.
      * </p>
      * <p>
-     * This method assumes that the query results set is valid, that is, the query 
-     * was not rejected and each <code>QueryResponse</code> contains a valid 
-     * <code>BucketData</code> message.  
+     * This method first checks that the query results set is available, that is, the query 
+     * was recovered previously through <code>{@link #recoverQueryResponses()}</code>.
+     * If not, then the method attempts to recover the query results.  Note that all
+     * exceptions are thrown by the potential invocation of 
+     * <code>{@link #recoverQueryResponses()}</code>. 
+     * </p>
+     * <p>
+     * Assuming the results set was obtained, that is not rejected and each <code>QueryResponse</code> 
+     * contains a valid <code>BucketData</code> message.  Then
      * <ul>
      * <li>If the above conditions hold, the data is extracted and returned as a list.</li>
      * <li>If the query request was rejected the return list contains empty data messages.</li> 
      * <li>If a query error occurred the corresponding <code>BucketData</code> message is empty.</li>
-     * <li>If the result set is unavailable a <code>null</code> value is returned.</li>
+     * <li>If the result set is unobtainable a <code>null</code> value is returned.</li>
      * </ul>
      * 
      * @return  an ordered list of extracted <code>BucketData</code> messages from results set,
-     *          or <code>null</code> if result set is  not available 
+     *          or <code>null</code> if result set is  not available
+     *           
+     * @throws IOException              the data file is corrupt
+     * @throws ClassNotFoundException   the data file does not contain a List<QueryResponse> object
+     * @throws DpGrpcException          unable to establish <code>TestQueryService</code> connection
+     * 
+     * @see #recoverQueryResponses()
      */
-    public List<QueryResponse.QueryReport.BucketData> extractQueryData() {
+    public List<QueryResponse.QueryReport.BucketData> recoverQueryData() throws IOException, ClassNotFoundException, DpGrpcException {
         
         // Check that result set is available
         if (this.lstResults.isEmpty())
-            return null;
+            this.recoverQueryResponses();
         
         List<QueryResponse.QueryReport.BucketData>   lstDataMsgs = this.lstResults
                 .stream()
@@ -339,13 +351,25 @@ public final record TestQueryRecord (
     }
 
     /**
+     * Creates and returns a new Data Platform API <code>{@link DpDataRequest}</code> object that
+     * realizes the query request described by this record.
+     * 
+     * @return  Data Platform <code>DpDataRequest</code> instance
+     */
+    public DpDataRequest createRequest() {
+        DpDataRequest   dpRqst = TestDpDataRequestGenerator.createRequest(this.cntSources, this.indSourceFirst, this.lngDuration, this.lngStartTime);
+        
+        return dpRqst;
+    }
+    
+    /**
      * Creates and returns a new Query Service <code>QueryRequest</code> Protobuf message that
      * realizes the query request described by this record.
      * 
      * @return  Data Platform Query Service <code>QueryRequest</code> message
      */
-    public QueryRequest createRequest() {
-        DpDataRequest   dpRqst = TestDpDataRequestGenerator.createRequest(this.cntSources, this.indSourceFirst, this.lngDuration, this.lngStartTime);
+    public QueryRequest createRequestMessage() {
+        DpDataRequest   dpRqst = this.createRequest();
         QueryRequest    msgRqst = dpRqst.buildQueryRequest();
         
         return msgRqst;
@@ -462,7 +486,7 @@ public final record TestQueryRecord (
             qsTestArchive = new TestQueryService();
         
         // Perform the query
-        QueryRequest    msgRqst = this.createRequest();
+        QueryRequest    msgRqst = this.createRequestMessage();
         
         List<QueryResponse> lstResults = qsTestArchive.queryResponseStream(msgRqst);
         

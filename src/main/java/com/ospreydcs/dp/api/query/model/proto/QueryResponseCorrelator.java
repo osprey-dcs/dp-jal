@@ -190,6 +190,17 @@ public class QueryResponseCorrelator {
             return parent.new QueryDataProcessor();
         }
 
+        
+        // 
+        // Class Constants
+        //
+        
+        /** Polling timeout limit */
+        public static final long        LNG_TIMEOUT = 15;
+        
+        /** Polling timeout units */
+        public static final TimeUnit    TU_TIMEOUT = TimeUnit.MILLISECONDS;
+        
         //
         // State Variables
         //
@@ -232,11 +243,11 @@ public class QueryResponseCorrelator {
         public void setMaxMessages(int cntMsgsMax) {
             this.cntMsgsMax = cntMsgsMax;
             
-            if (this.cntMsgsProcessed >= this.cntMsgsMax) {
-                Thread.currentThread().interrupt();
-                
-                this.recResult = ResultRecord.SUCCESS;
-            }
+//            if (this.cntMsgsProcessed >= this.cntMsgsMax) {
+//                Thread.currentThread().interrupt();
+//                
+//                this.recResult = ResultRecord.SUCCESS;
+//            }
         }
 
         /**
@@ -312,24 +323,35 @@ public class QueryResponseCorrelator {
             
             while (this.cntMsgsMax == null || this.cntMsgsProcessed < this.cntMsgsMax) {
                 try {
-                    QueryResponse.QueryReport.BucketData msgData = QueryResponseCorrelator.this.queRspData.poll(CNT_TIMEOUT, TU_TIMEOUT);
+                    QueryResponse.QueryReport.BucketData msgData = QueryResponseCorrelator.this.queRspData.poll(LNG_TIMEOUT, TU_TIMEOUT);
+//                    QueryResponse.QueryReport.BucketData msgData = QueryResponseCorrelator.this.queRspData.take();
 
                     if (msgData == null) {
-                        this.recResult = ResultRecord.newFailure("A timeout occurred while waiting for the data buffer.");
-
-                        return;
+//                        this.recResult = ResultRecord.newFailure("A timeout occurred while waiting for the data buffer.");
+//
+//                        return;
+                        continue;
                     }
 
                     // Note that this operation will block until completed
                     QueryResponseCorrelator.this.qcdCorrelator.insertQueryData(msgData);
                     this.cntMsgsProcessed++;
+                    
+                    // TODO - remove
+                    System.out.println("Processed message " + this.cntMsgsProcessed);
 
                 } catch (InterruptedException e) {
                     if (this.cntMsgsMax != null && (this.cntMsgsProcessed >= this.cntMsgsMax)) {
                         this.recResult = ResultRecord.SUCCESS;
                         
+                        // TODO - remove
+                        System.out.println("Interrupted but successful.");
+                        
                         return;
                     }
+                    
+                    // TODO - remove
+                    System.out.println("HA HA HA HA - Interrupted and FAILED.");
                     
                     this.recResult = ResultRecord.newFailure("Process interrupted externally while waiting for the data buffer.", e);
 
@@ -337,6 +359,9 @@ public class QueryResponseCorrelator {
                 }
             }
 
+            // TODO - remove
+            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + ": Exiting processing loop.");
+            
             this.recResult = ResultRecord.SUCCESS;
         }
     }
@@ -460,7 +485,15 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
-     * Toggles the use of multiple query response gRPC data streams.
+     * Toggles the use of multiple query response gRPC data streams in
+     * <code>{@link #processRequestStream(DpDataRequest)}</code>.
+     * </p>
+     * <p>
+     * The method <code>{@link #processRequestStream(DpDataRequest)}</code>
+     * is capable of using multiple gRPC data streams.  The method attempts to decompose
+     * large data requests into composite request according to settings in the default
+     * Data Platform API configuration (see <code>{@link DpApiConfig}</code>).  This
+     * operation can turn off the default behavior.
      * </p>
      * <p>
      * This is a performance parameter where a potentially large results set can be recovered
@@ -477,6 +510,7 @@ public class QueryResponseCorrelator {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
+     * <li>Only affects the operation of <code>{@link #processRequestStream(DpDataRequest)}</code>.</li>
      * <li>All composite query configuration parameters are taken from the default API parameters.</li>
      * <li>All gRPC multi-streaming parameters are taken from the default API parameters.</li>
      * </ul>
@@ -515,11 +549,11 @@ public class QueryResponseCorrelator {
      * </ul>
      * </p>
      * 
-     * @param bolCorrelateConcurrency   turn on/off the use of parallelism for data correlation
+     * @param bolCorrelateConcurrently   turn on/off the use of parallelism for data correlation
      */
-    public void setCorrelateConcurrency(boolean bolCorrelateConcurrency) {
-        this.bolCorrelateConcurrency = bolCorrelateConcurrency;
-        this.qcdCorrelator.setConcurrency(bolCorrelateConcurrency);
+    public void setCorrelationConcurrency(boolean bolCorrelateConcurrently) {
+        this.bolCorrelateConcurrency = bolCorrelateConcurrently;
+        this.qcdCorrelator.setConcurrency(bolCorrelateConcurrently);
     }
     
     /**
@@ -544,7 +578,6 @@ public class QueryResponseCorrelator {
      * <li>This feature should be tuned in consideration with other performance parameters.</li>
      * </ul>
      * </p>
-     * </p>
      *   
      * @param bolCorrelateMidstream turn on/off the use of correlation processing while gRPC streaming
      */
@@ -559,9 +592,37 @@ public class QueryResponseCorrelator {
     
     
     /**
-     * @param dpRequest
-     * @return
-     * @throws DpQueryException
+     * <p>
+     * Use a unary gRPC operation to recover the request data.
+     * </p>
+     * <p>
+     * Recovers the query data using a unary gRPC operation blocking until all data is
+     * recovered and processed.  Note that all raw query data is processed post recovery.  
+     * The only processing option affecting this operation is 
+     * <code>{@link #setCorrelationConcurrency(boolean)}</code>. 
+     * </p>
+     * <p>
+     * <h2>WARNINGS:</h2>
+     * <ul>
+     * <li>
+     * This method should be used ONLY for small results sets.
+     * The method will fail (with exception) if the data request is larger than the 
+     * default gRPC message size.  Use a streaming request for large results sets.
+     * </li>
+     * <br/>
+     * <li>
+     * The returned data set is owned by the internal data correlator of this object and will
+     * be destroyed whenever a subsequent data request is made.
+     * Do not make additional data requests until the returned object is fully processed.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param dpRequest data request to be recovered from Query Service and processed
+     * 
+     * @return  a sorted set (according to start time) of correlated data obtained from given request 
+     * 
+     * @throws DpQueryException general exception during data recovery and/or processing (see cause)
      */
     public SortedSet<CorrelatedQueryData>   processRequestUnary(DpDataRequest dpRequest) throws DpQueryException {
 
@@ -571,7 +632,7 @@ public class QueryResponseCorrelator {
         // Create the data request message
         QueryRequest    msgRequest = dpRequest.buildQueryRequest();
         
-        // Perform the unary data request
+        // Perform the unary data request directly on blocking stub
         QueryResponse msgResponse = this.connQuery.getStubBlock().queryResponseSingle(msgRequest);
         
         // Process the request data
@@ -598,17 +659,164 @@ public class QueryResponseCorrelator {
     }
     
     /**
-     * @param dpRequest
-     * @return
-     * @throws DpQueryException
+     * <p>
+     * Use gRPC data streaming to recover the given request.
+     * </p>
+     * <p>
+     * Performs the given request using gRPC data streaming and blocks until request and 
+     * processing are complete.  The type of data stream used,
+     * either a unidirectional stream or a bidirectional stream, 
+     * is determined by the value of 
+     * <code>{@link DpDataRequest#getStreamType()}</code>.  
+     * Note that performance can be affected by choice of data stream type. 
+     * </p>
+     * <p> 
+     * Various data correlation processing options are available for this method.  See the
+     * following methods for more information:
+     * <ul>
+     * <li><code>{@link #setCorrelateMidstream(boolean)}</code></li>
+     * <li><code>{@link #setCorrelationConcurrency(boolean)}</code></li>
+     * <li><code>{@link #setMultiStreaming(boolean)}</code></li>
+     * </ul>
+     * These are all performance options that should be tuned for specific platforms.
+     * The default values for these options are set in the Data Platform API configuration
+     * (see {@link DpApiConfig}</code>).  
+     * </p>
+     * <p>
+     * <h2>Multi-Streaming</h2>
+     * The method attempts to decompose large data requests into composite request according to 
+     * settings in the default Data Platform API configuration (see <code>{@link DpApiConfig}</code>).  
+     * The <code>{@link #setMultiStreaming(boolean)}</code> operation can be used to turn off 
+     * the default behavior.
+     * </p>
+     * <p>
+     * <h2>WARNINGS:</h2>
+     * The returned data set is owned by the internal data correlator of this object and will
+     * be destroyed whenever a subsequent data request is made.
+     * Do not make additional data requests until the returned object is fully processed.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The data request and subsequent data correlation are done in method
+     * <code>{@link #processRequestMultiStream(List)}</code>.  If the default multi-streaming
+     * option is turned off a list containing the single request <code>dpRequest</code> is
+     * passed, otherwise a default query decomposition is attempted.
+     * </li>
+     * <br/>
+     * <li>
+     * The default query decomposition attempt is performed by the support method
+     * <code>{@link #attemptCompositeRequest(DpDataRequest)}</code>.  If this method
+     * fails to find an adequate decomposition (e.g., the request size is too small)
+     * it simply returns a list containing only the original request.
+     * </li>
+     * </ul>
+     * </p> 
+     *  
+     * @param dpRequest data request to be recovered from Query Service and processed
+     * 
+     * @return  a sorted set (according to start time) of correlated data obtained from given request 
+     * 
+     * @throws DpQueryException general exception during data recovery and/or processing (see cause)
+     * 
+     * @see #setCorrelateMidstream(boolean)
+     * @see #setCorrelationConcurrency(boolean)
+     * @see #setMultiStreaming(boolean)
      */
     public SortedSet<CorrelatedQueryData>   processRequestStream(DpDataRequest dpRequest) throws DpQueryException {
 
+        // Create request list according to multi-streaming configuration
+        List<DpDataRequest>     lstRequests;
+        
+        // If multi-streaming is turned off return original request
+        if (!this.bolMultiStream)
+            lstRequests = List.of(dpRequest);
+        else
+            lstRequests = this.attemptCompositeRequest(dpRequest);
+        
+        // Defer to the multi-streaming processor method
+        return this.processRequestMultiStream(lstRequests);
+        
+//        // Create streaming task for each component request
+//        List<QueryResponseStreamProcessor>  lstStrmTasks = this.createStreamingTasks(lstRequests);
+//        
+//        // Create the data correlation thread task
+//        QueryDataProcessor  thdDataProcessor = QueryDataProcessor.newThread(this);
+//
+//        
+//        // Start data processing thread if mid-stream processing true
+//        if (this.bolCorrelateMidstream)
+//            thdDataProcessor.start();
+//        
+//        
+//        // Start all streaming tasks and wait for completion 
+//        int     cntMsgs;    // returns number of response messages streamed
+//        
+//        try {
+//            cntMsgs = this.performDataStreaming(lstStrmTasks);
+//            
+//        } catch (InterruptedException e) {
+//            thdDataProcessor.terminate();
+//            
+//            if (BOL_LOGGING)
+//                LOGGER.error("{}: InterruptedException while streaming request results - {}", e.getMessage());
+//            
+//            throw new DpQueryException(e);
+//
+//        } catch (TimeoutException e) {
+//            thdDataProcessor.terminate();
+//            
+//            if (BOL_LOGGING)
+//                LOGGER.error("{}: TimeoutException while streaming requst results - {}", JavaRuntime.getCallerName(), e.getMessage());
+//            
+//            throw new DpQueryException(e);
+//
+//        } catch (ExecutionException e) {
+//            thdDataProcessor.terminate();
+//        
+//            if (BOL_LOGGING)
+//                LOGGER.error("{}: ExecutionException while streaming request results - {}", JavaRuntime.getCallerName(), e.getMessage());
+//            
+//            throw new DpQueryException(e);
+//        }
+//        
+//        // Return to request results data processing
+//        // - Tell the data processor task the number of messages to process
+//        // - Start if it has not already been started (i.e., via mid-stream processing)
+//        // - Wait for it to finish
+//        thdDataProcessor.setMaxMessages(cntMsgs);
+//        
+//        if (!thdDataProcessor.isStarted())
+//            thdDataProcessor.start();
+//        
+//        try {
+//            thdDataProcessor.join(timeoutLimitDefaultMillis());
+//            
+//        } catch (InterruptedException e) {
+//            if (BOL_LOGGING)
+//                LOGGER.error("{}: InterruptedException while processing request data - {}", JavaRuntime.getCallerName(), e.getMessage());
+//            
+//            throw new DpQueryException(e);
+//        }
+//    
+//        // Check for successful processing then return processed data
+//        ResultRecord    recProcessed = thdDataProcessor.getResult();
+//        if (recProcessed.isFailure()) {
+//            if (BOL_LOGGING)
+//                LOGGER.error("{}: Data correlation processing FAILED - {}", JavaRuntime.getCallerName(), recProcessed.message());
+//
+//            throw new DpQueryException("Data correlation processing FAILED: " + recProcessed.message());
+//        }
+//        
+//        SortedSet<CorrelatedQueryData>  setPrcdData = this.qcdCorrelator.getProcessedSet();
+//        return setPrcdData;
+    }
+    
+    public SortedSet<CorrelatedQueryData>   processRequestMultiStream(List<DpDataRequest> lstRequests) throws DpQueryException {
+        
         // Reset the data correlator
         this.qcdCorrelator.reset();
-        
-        // Create request list according to multi-streaming configuration 
-        List<DpDataRequest>     lstRequests = this.createRequestList(dpRequest);
         
         // Create streaming task for each component request
         List<QueryResponseStreamProcessor>  lstStrmTasks = this.createStreamingTasks(lstRequests);
@@ -620,7 +828,6 @@ public class QueryResponseCorrelator {
         // Start data processing thread if mid-stream processing true
         if (this.bolCorrelateMidstream)
             thdDataProcessor.start();
-        
         
         // Start all streaming tasks and wait for completion 
         int     cntMsgs;    // returns number of response messages streamed
@@ -752,12 +959,8 @@ public class QueryResponseCorrelator {
      * @param dpRequest
      * @return
      */
-    private List<DpDataRequest> createRequestList(DpDataRequest dpRequest) {
+    private List<DpDataRequest> attemptCompositeRequest(DpDataRequest dpRequest) {
         
-        // If multi-streaming is turned off return original request
-        if (!this.bolMultiStream)
-            return List.of(dpRequest);
-
         // Check if request size approximation is large enough to pivot to multi-streaming
         long szRequest = dpRequest.approxRequestSamples(1, TU_MULTISTREAM_PERIOD);
         

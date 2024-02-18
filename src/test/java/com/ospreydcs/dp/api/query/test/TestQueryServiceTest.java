@@ -100,19 +100,19 @@ public class TestQueryServiceTest {
     //
 
     /** Query Service request whose result should be a single data bucket */
-    public static QueryRequest  MSG_REQUEST_BUCKET = TestQueryResponses.request(SingleQueryType.BUCKET);
+    public static QueryRequest  MSG_REQUEST_BUCKET = TestQueryResponses.requestMessage(SingleQueryType.BUCKET);
     
     /** Query Service request whose result should be a single data source time series */
-    public static QueryRequest  MSG_REQUEST_ONE = TestQueryResponses.request(SingleQueryType.ONE_SOURCE);
+    public static QueryRequest  MSG_REQUEST_ONE = TestQueryResponses.requestMessage(SingleQueryType.ONE_SOURCE);
 
     /** Query Service request whose result should be two data source time series */
-    public static QueryRequest  MSG_REQUEST_TWO = TestQueryResponses.request(SingleQueryType.TWO_SOURCE);
+    public static QueryRequest  MSG_REQUEST_TWO = TestQueryResponses.requestMessage(SingleQueryType.TWO_SOURCE);
     
     /** Query Service request whose result should be two data source time series */
-    public static QueryRequest  MSG_REQUEST_WIDE = TestQueryResponses.request(SingleQueryType.WIDE);
+    public static QueryRequest  MSG_REQUEST_WIDE = TestQueryResponses.requestMessage(SingleQueryType.WIDE);
     
     /** Query Service request whose result should be two data source time series */
-    public static QueryRequest  MSG_REQUEST_LONG = TestQueryResponses.request(SingleQueryType.LONG);
+    public static QueryRequest  MSG_REQUEST_LONG = TestQueryResponses.requestMessage(SingleQueryType.LONG);
     
 
     

@@ -41,16 +41,25 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.model.ResultRecord;
+import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
+import com.ospreydcs.dp.api.query.test.TestQueryService;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
 
 /**
  * <p>
  * JUnit test cases for the <code>{@link QueryDataCorrelator}</code> class.
+ * </p>
+ * <p>
+ * Note that the integrity of the processed data is checked in 
+ * <code>{@link UniformSamplingBlockTest}</code>.
  * </p>
  * 
  * @author Christopher K. Allen
@@ -296,6 +305,152 @@ public class QueryDataCorrelatorTest {
         
         for (QueryResponse.QueryReport.BucketData msgData : lstRawData) {
             prcrTest.insertQueryData(msgData);
+        }
+        
+        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeProcessedSet() > 0);
+
+        // Extract data source names and print them out
+        Set<String> setDataSrcs = prcrTest.extractDataSourceNames();
+        
+        System.out.println("Data Source Names: " + setDataSrcs);
+        
+        
+        // Perform available verification checks
+        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getProcessedSet();
+        
+        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        if (recOrder.isFailure())
+            Assert.fail(recOrder.message());
+        
+        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        if (recSizes.isFailure())
+            Assert.fail(recSizes.message());
+        
+        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        if (recDomains.isFailure())
+            Assert.fail(recDomains.message());
+    }
+    
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     */
+    @Test
+    public final void testInsertQueryDataBig() {
+        
+        // First, get the test data from a test Query API
+        List<QueryResponse>     lstMsgRsps;
+        
+        try {
+            DpDataRequest       dpRqstBig = TestQueryResponses.QREC_BIG.createRequest();
+            QueryRequest        msgRqstBig = dpRqstBig.buildQueryRequest();
+            
+            TestQueryService    apiQueryTest = TestQueryService.newService();
+            
+            lstMsgRsps = apiQueryTest.queryResponseStream(msgRqstBig);
+        
+            apiQueryTest.shutdown();
+            
+        } catch (DpGrpcException e) {
+            Assert.fail("Unable to create test Query Service API: DpGrpcException thrown - " + e.getMessage());
+            return;
+            
+        }
+        
+        
+        // Process the raw query responses with a new data correlator
+        QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
+//        prcrTest.setConcurrency(false);
+        
+        int cntr = 0;
+        for (QueryResponse msgRsp: lstMsgRsps) {
+            try {
+                prcrTest.insertQueryResponse(msgRsp);
+                
+                cntr++;
+                System.out.println("Interted message " + Integer.valueOf(cntr).toString());
+                
+            } catch (OperationNotSupportedException e) {
+                Assert.fail("Processor reports query request was rejected: " + e.getMessage());
+                return;
+                
+            } catch (CannotProceedException e) {
+                Assert.fail("Processor reports query response error: " + e.getMessage());
+                return;
+                
+            }
+        }
+        
+        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeProcessedSet() > 0);
+
+        // Extract data source names and print them out
+        Set<String> setDataSrcs = prcrTest.extractDataSourceNames();
+        
+        System.out.println("Data Source Names: " + setDataSrcs);
+        
+        
+        // Perform available verification checks
+        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getProcessedSet();
+        
+        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        if (recOrder.isFailure())
+            Assert.fail(recOrder.message());
+        
+        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        if (recSizes.isFailure())
+            Assert.fail(recSizes.message());
+        
+        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        if (recDomains.isFailure())
+            Assert.fail(recDomains.message());
+    }
+    
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     */
+    @Test
+    public final void testInsertQueryDataHuge() {
+        
+        // First, get the test data from a test Query API
+        List<QueryResponse>     lstMsgRsps;
+        
+        try {
+            DpDataRequest       dpRqstHuge = TestDpDataRequestGenerator.createRequest(1000, 50L);
+            QueryRequest        msgRqstHuge = dpRqstHuge.buildQueryRequest();
+            
+            TestQueryService    apiQueryTest = TestQueryService.newService();
+            
+            lstMsgRsps = apiQueryTest.queryResponseStream(msgRqstHuge);
+        
+            apiQueryTest.shutdown();
+            
+        } catch (DpGrpcException e) {
+            Assert.fail("Unable to create test Query Service API: DpGrpcException thrown - " + e.getMessage());
+            return;
+            
+        }
+        
+        
+        // Process the raw query responses with a new data correlator
+        QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
+//        prcrTest.setConcurrency(false);
+        
+        int cntr = 0;
+        for (QueryResponse msgRsp: lstMsgRsps) {
+            try {
+                prcrTest.insertQueryResponse(msgRsp);
+                
+                cntr++;
+                System.out.println("Interted message " + Integer.valueOf(cntr).toString());
+                
+            } catch (OperationNotSupportedException e) {
+                Assert.fail("Processor reports query request was rejected: " + e.getMessage());
+                return;
+                
+            } catch (CannotProceedException e) {
+                Assert.fail("Processor reports query response error: " + e.getMessage());
+                return;
+                
+            }
         }
         
         Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeProcessedSet() > 0);

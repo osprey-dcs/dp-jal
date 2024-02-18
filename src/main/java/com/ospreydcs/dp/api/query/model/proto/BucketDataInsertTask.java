@@ -27,7 +27,7 @@
  */
 package com.ospreydcs.dp.api.query.model.proto;
 
-import java.util.Collection;
+import java.util.SortedSet;
 import java.util.concurrent.Callable;
 
 import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
@@ -83,7 +83,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
     private final QueryResponse.QueryReport.BucketData.DataBucket    msgSubject;
     
     /** The target collection of existing sampling intervals */
-    private final Collection<CorrelatedQueryData>                   setTarget;
+    private final SortedSet<CorrelatedQueryData>                    setTarget;
     
     //
     // State Variables
@@ -106,7 +106,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * 
      * @return  new, initialized thread task ready for execution
      */
-    public static BucketDataInsertTask newTask(QueryResponse.QueryReport.BucketData.DataBucket msgSubject, final Collection<CorrelatedQueryData> setTarget) {
+    public static BucketDataInsertTask newTask(QueryResponse.QueryReport.BucketData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
         return new BucketDataInsertTask(msgSubject, setTarget);
     }
 
@@ -123,7 +123,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * @param msgSubject    the task subject - a QueryService data bucket message
      * @param setTarget     the data insertion target - an collection of <code>CorrelatedQueryData</code> instances
      */
-    public BucketDataInsertTask(QueryResponse.QueryReport.BucketData.DataBucket msgSubject, final Collection<CorrelatedQueryData> setTarget) {
+    public BucketDataInsertTask(QueryResponse.QueryReport.BucketData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
         this.msgSubject = msgSubject;
         this.setTarget = setTarget;
     }
@@ -173,7 +173,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * 
      * @return  the collection of <code>CorrelatedQueryData</code> instances 
      */
-    public final Collection<CorrelatedQueryData>    getTarget() {
+    public final SortedSet<CorrelatedQueryData>    getTarget() {
         return this.setTarget;
     }
 
@@ -235,7 +235,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
         this.bolSuccess = this.setTarget
                 .stream()
                 .map(tar -> tar.insertBucketData(this.msgSubject))
-                .anyMatch( r -> r );
+                .anyMatch( rBIG -> rBIG );
         
         this.bolExecuted = true;
     }

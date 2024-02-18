@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    TestQueryCompositeRecords.java
+ * File:    TestQueryCompositeRecord.java
  * Package: com.ospreydcs.dp.api.query.test
- * Type:    TestQueryCompositeRecords
+ * Type:    TestQueryCompositeRecord
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -27,7 +27,14 @@
  */
 package com.ospreydcs.dp.api.query.test;
 
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
+
+import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
  * <p>
@@ -90,7 +97,7 @@ import java.util.Vector;
  * @since Jan 22, 2024
  *
  */
-public class TestQueryCompositeRecords {
+public class TestQueryCompositeRecord {
 
     //
     // Class Types
@@ -168,7 +175,7 @@ public class TestQueryCompositeRecords {
      * Defining Constructor.
      * </p>
      * <p>
-     * Constructs a new, fully-initialized instance of <code>TestQueryCompositeRecords</code>.
+     * Constructs a new, fully-initialized instance of <code>TestQueryCompositeRecord</code>.
      * All <code>TestQueryRecord</code> instances are created according to the given strategy.
      * </p>
      *
@@ -178,7 +185,7 @@ public class TestQueryCompositeRecords {
      * @param lngDuration   Time range duration of the primary query
      * @param strFilePrefix File name prefix used in persistent storage - full names are suffixed with query index
      */
-    public TestQueryCompositeRecords(CompositeStrategy enmStrategy, int cntThreads, int cntSources, long lngDuration, String strFilePrefix) {
+    public TestQueryCompositeRecord(CompositeStrategy enmStrategy, int cntThreads, int cntSources, long lngDuration, String strFilePrefix) {
         this.enmStrategy = enmStrategy;
         this.cntQueries = cntThreads;
         this.cntSources = cntSources;
@@ -258,6 +265,93 @@ public class TestQueryCompositeRecords {
      */
     public final TestQueryRecord    getQueryRecord(int index) throws IndexOutOfBoundsException {
         return this.vecRecords.elementAt(index);
+    }
+    
+    /**
+     * <p>
+     * Recovers and/or returns the results set associated with this 
+     * <code>TestQueryCompositeRecord</code> record.
+     * </p>
+     * <p>
+     * This method can be used in general to acquire the results set.
+     * The query responses are recovered from all the component 
+     * <code>{@link TestQueryRecord}</code> records using a 
+     * <code>{@link TestQueryRecord#recoverQueryResponses()}</code> invocation.
+     * Note that all exceptions are produced by this invocation.
+     * </p> 
+     * 
+     * @return      the result set of the query operation described by record,
+     *              or <code>null</code> if the data file is missing and query operation failed
+     * 
+     * @throws IOException              the data file is corrupt
+     * @throws ClassNotFoundException   the data file does not contain a List<QueryResponse> object
+     * @throws DpGrpcException          unable to establish <code>TestQueryService</code> connection
+     * 
+     * @see {@link TestQueryRecord#recoverQueryResponses()}
+     */
+    public List<QueryResponse> recoverQueryResponses() throws IOException, ClassNotFoundException, DpGrpcException {
+        List<QueryResponse>    lstResponses = new LinkedList<>();
+        
+        for (TestQueryRecord rec : this.vecRecords) {
+            List<QueryResponse> lstCmpRsps = rec.recoverQueryResponses();
+            
+            lstResponses.addAll(lstCmpRsps);
+        }
+        
+        return lstResponses;
+    }
+        
+    /**
+     * <p>
+     * Convenience method for extracting the <code>BucketData</code> messages from the
+     * results set of <code>QueryResponse</code> messages.
+     * </p>
+     * <p>
+     * The query data are recovered from all the component 
+     * <code>{@link TestQueryRecord}</code> records using a 
+     * <code>{@link TestQueryRecord#recoverQueryData()}</code> invocation.
+     * Note that all exceptions are produced by this invocation.
+     * </p>
+     *  
+     * @return  an ordered list of extracted <code>BucketData</code> messages from results set,
+     *          or <code>null</code> if result set is  not available
+     *           
+     * @throws IOException              the data file is corrupt
+     * @throws ClassNotFoundException   the data file does not contain a List<QueryResponse> object
+     * @throws DpGrpcException          unable to establish <code>TestQueryService</code> connection
+     * 
+     * @see TestQueryRecord#recoverQueryData()
+     */
+    public List<QueryResponse.QueryReport.BucketData> recoverQueryData() throws IOException, ClassNotFoundException, DpGrpcException {
+        List<QueryResponse.QueryReport.BucketData>  lstData = new LinkedList<>();
+        
+        for (TestQueryRecord rec : this.vecRecords) {
+            List<QueryResponse.QueryReport.BucketData> lstCmpData = rec.recoverQueryData();
+            
+            lstData.addAll(lstCmpData);
+        }
+        
+        return lstData;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns the composite request defined by this composite record.
+     * </p>
+     * <p>
+     * Calls the <code>{@link TestQueryRecord#createRequest()}</code> method for component
+     * record within this composite record.
+     * </p>
+     *  
+     * @return  list of <code>{@link DpDataRequest}</code> objects for each component record
+     */
+    public List<DpDataRequest>  createCompositeRequest() {
+        List<DpDataRequest> lstRequests = this.vecRecords
+                .stream()
+                .<DpDataRequest>map(TestQueryRecord::createRequest)
+                .toList();
+        
+        return lstRequests;
     }
     
 
