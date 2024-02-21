@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	GrpcConnectionConfig.java
+ * File:	DpGrpcConnectionConfig.java
  * Package: com.ospreydcs.dp.api.config.grpc
- * Type: 	GrpcConnectionConfig
+ * Type: 	DpGrpcConnectionConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -38,6 +38,15 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  * Structure Containing gRPC Connection Parameters
  * </p>
  * <p>
+ * A "connection" is an API abstraction for the gRPC channel.  This abstraction includes additional notations
+ * beyond the the standard channel properties and functionality.  Connections also contain information about
+ * the gRPC "service interface" for which the channel is connected, specifically, the Protocol Buffers 
+ * generated "communication stub" used to perform the RPC operations of the interface.  These stubs rely
+ * on the gRPC channel for the actual Protocal Buffers message transport.  Within Protocol
+ * Buffers, the communication stubs can be further configured beyond their underlying gRPC channel configuration.
+ * For example, timeout limits can be set, compression algorithms can be specified, etc.
+ * </p>  
+ * <p>
  * Contains common parameters used when creating gRPC <code>Channel</code> objects 
  * (i.e. <code>ManagedChannel</code> in Java gRPC).   Note that these parameters are
  * all contained in the <code>{@link #channel}</code> field.  Additional, higher-level
@@ -48,14 +57,19 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  * @since Dec 18, 2023
  *
  */
-@ACfgOverride.Root(root="DP_API_CONNECTION")
-public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfig>{
+@ACfgOverride.Root(root="DP_API_CONNECTION")        // Note this is just for show
+public final class DpGrpcConnectionConfig extends CfgStructure<DpGrpcConnectionConfig>{
     
     /** Default constructor required for structure base class */
-    public GrpcConnectionConfig() {
-        super(GrpcConnectionConfig.class);
+    public DpGrpcConnectionConfig() {
+        super(DpGrpcConnectionConfig.class);
     }
 
+    
+    // 
+    // Configuration Parameters
+    //
+    
     /** Optional configuration name */
     @ACfgOverride.Field(name="NAME")
     public String   name;
@@ -93,6 +107,10 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
             super(Channel.class);
         }
 
+        // 
+        // Configuration Parameters
+        //
+        
         /** Server host identification - name and port address (URI) */
         @ACfgOverride.Struct(pathelem="HOST")
         public Host     host;
@@ -116,6 +134,11 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
             public Host() {
                 super(Host.class);
             }
+
+            
+            // 
+            // Configuration Parameters
+            //
             
             /** Host network URL */
             @ACfgOverride.Field(name="URL")
@@ -140,13 +163,17 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
                 super(TLS.class);
             }
 
+            // 
+            // Configuration Parameters
+            //
+            
             /** Is TLS security used */
             @ACfgOverride.Field(name="ACTIVE")
-            public Boolean  active;
+            public Boolean      active;
             
             /** Use default TLS security */
             @ACfgOverride.Field(name="DEFAULT")
-            public Boolean  defaultTls;
+            public Boolean      defaultTls;
             
             /** File path locations for TLS certificates and keys */
             @ACfgOverride.Struct(pathelem="FILE")
@@ -164,6 +191,10 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
                     super(FilePaths.class);
                 }
 
+                // 
+                // Configuration Parameters
+                //
+                
                 /** Collection of all trusted sources */
                 @ACfgOverride.Field(name="TRUSTED_CERTS")
                 public String   trustedCerts;
@@ -192,6 +223,10 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
                 super(Grpc.class);
             }
 
+            // 
+            // Configuration Parameters
+            //
+            
             /** Timeout limit used for connection establishment */
             @ACfgOverride.Field(name="TIMEOUT_LIMIT")
             public Long     timeoutLimit;
@@ -220,4 +255,4 @@ public final class GrpcConnectionConfig extends CfgStructure<GrpcConnectionConfi
         
     } /* Channel */
 
-} /* GrpcConnectionConfig */
+} /* DpGrpcConnectionConfig */

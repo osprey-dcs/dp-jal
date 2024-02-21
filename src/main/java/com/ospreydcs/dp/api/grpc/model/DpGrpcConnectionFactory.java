@@ -27,7 +27,7 @@
  */
 package com.ospreydcs.dp.api.grpc.model;
 
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 
 /**
  * <p>
@@ -37,7 +37,7 @@ import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
  * Creates <code>DsGrpcConnection</code> instances supporting the Protocol Buffers connection
  * stubs specified by the generic parameter types.  Various configuration 
  * combinations are available which mix user-supplied gRPC connection parameters
- * and default connection parameters supplied by the <code>GrpcConnectionConfig<code> instance
+ * and default connection parameters supplied by the <code>DpGrpcConnectionConfig<code> instance
  * at creation.
  * </p>
  * <p>
@@ -145,7 +145,7 @@ public class DpGrpcConnectionFactory<
      * @param clsService    the class type of the Protobuf-generated gRPC service 
      * @param cfgConn       default parameter set to use in connect(...) methods
      */
-    protected DpGrpcConnectionFactory(Class<ServiceGrpc> clsService, GrpcConnectionConfig cfgConn) {
+    protected DpGrpcConnectionFactory(Class<ServiceGrpc> clsService, DpGrpcConnectionConfig cfgConn) {
         super(clsService, cfgConn);
     }
 
@@ -194,7 +194,7 @@ public class DpGrpcConnectionFactory<
         AsyncStub extends io.grpc.stub.AbstractAsyncStub<AsyncStub>
         > 
     DpGrpcConnectionFactory<ServiceGrpc, BlockStub, FutureStub, AsyncStub>  newFactory(Class<ServiceGrpc> clsService, 
-            GrpcConnectionConfig cfgConn
+            DpGrpcConnectionConfig cfgConn
             ) 
     {
         return new DpGrpcConnectionFactory<ServiceGrpc, BlockStub, FutureStub, AsyncStub>(clsService, cfgConn);        

@@ -54,7 +54,7 @@ import io.grpc.stub.StreamObserver;
  * Query Service gRPC streaming response processor base class.
  * </p>
  * <p>
- * Subclass function as gRPC <em>stream processors</em>, no query data processing is performed.
+ * Subclasses function as gRPC <em>stream processors</em>, no query data processing is performed.
  * The gRPC data stream is maintained, the query data is extracted from the data stream, and
  * any Query Service rejections and errors are intercepted here.  Clients of this class and
  * sub-classes must supply a data sink for the query data at creation.
@@ -199,7 +199,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
     
     
     //
-    // Creator
+    // Creators
     //
     
     /**
@@ -208,6 +208,8 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * ready for processing.
      * </p>
      * <p>
+     * The <code>{@link QueryRequest}</code> message is extracted from the argument <code>dpRequest</code>
+     * using <code>{@link DpDataRequest#buildQueryRequest()}</code>.
      * The specific implementation of the <code>QueryResponseStreamProcessor</code> depends upon
      * the preferred gRPC data stream indicated by 
      * <code>{@link DpDataRequest#getStreamType()}</code>.
@@ -251,6 +253,56 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
         case UNIDIRECTIONAL -> QueryResponseUniStreamProcessor.newUniTask(msgRqst, stubAsync, ifcDataSink);
         case BIDIRECTIONAL -> QueryResponseBidiStreamProcessor.newBidiTask(msgRqst, stubAsync, ifcDataSink);
         default -> throw new IllegalArgumentException("Unexpected value: " + enmType);
+        };
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new concrete instance of <code>QueryResponseStreamProcessor</code> 
+     * ready for processing.
+     * </p>
+     * <p>
+     * The specific implementation of the <code>QueryResponseStreamProcessor</code> depends upon
+     * the argument <code>enmStreamType</code>. 
+     * The concrete type is given according to the following:
+     * <ul>
+     * <li><code>{@link DpQueryStreamType#UNIDIRECTIONAL}</code> -> <code>{@link QueryResponseUniStreamProcessor}</code>.</li>
+     * <li><code>{@link DpQueryStreamType#BIDIRECTIONAL}</code> -> <code>{@link QueryResponseBidiStreamProcessor}</code>.</li>
+     * </li>
+     * </ul>
+     * Both concrete implementations above are contained within this source file. 
+     * </p>
+     * <p>
+     * <h2>USE</h2>
+     * The returned instance is ready for independent thread execution via the 
+     * <code>{@link #run()}</code> method.  Once that method returns the gRPC stream processing
+     * task is complete, either normally or terminated due to error.  At that point use the 
+     * <code>{@link #isSuccess()}</code> method to determine success/failure.
+     * </p>
+     * 
+     * @param enmStreamType data stream type to use for gRPC streaming
+     * @param msgRequest    the Query Service <code>DpDataRequest</code> request to process
+     * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
+     * @param ifcDataSink   the target receiving the incoming results set from Query Service
+     * 
+     * @return  a new unidirectional Query Service data stream processor ready for starting
+     * 
+     * @see #isSuccess()
+     * 
+     * @see QueryResponseUniStreamProcessor
+     * @see QueryResponseBidiStreamProcessor
+     */
+    public static QueryResponseStreamProcessor  newTask(
+            DpQueryStreamType   enmStreamType,
+            QueryRequest        msgRequest,
+            DpQueryServiceStub  stubAsync,
+            Consumer<QueryResponse.QueryReport.BucketData> ifcDataSink) 
+    {
+        // Choose stream process implementation based upon requested stream type
+        return switch (enmStreamType) {
+        case UNIDIRECTIONAL -> QueryResponseUniStreamProcessor.newUniTask(msgRequest, stubAsync, ifcDataSink);
+        case BIDIRECTIONAL -> QueryResponseBidiStreamProcessor.newBidiTask(msgRequest, stubAsync, ifcDataSink);
+        default -> throw new IllegalArgumentException("Unexpected value: " + enmStreamType);
         };
     }
     

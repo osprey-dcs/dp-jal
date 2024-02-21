@@ -154,7 +154,7 @@ public class SamplingProcessTest {
         
         try {
             for (QueryResponse msgRsp : lstRspMsgs)
-                CORRELATOR.insertQueryResponse(msgRsp);
+                CORRELATOR.addQueryResponse(msgRsp);
 
         } catch (OperationNotSupportedException | CannotProceedException e) {
             Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
@@ -162,7 +162,7 @@ public class SamplingProcessTest {
         }
         
         // Get the processed data and try to create SamplingProcess
-        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getProcessedSet();
+        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getCorrelatedSet();
         
         try {
             SamplingProcess process = SamplingProcess.from(setPrcdData);
@@ -185,7 +185,7 @@ public class SamplingProcessTest {
         
         try {
             for (QueryResponse msgRsp : lstRspMsgs)
-                CORRELATOR.insertQueryResponse(msgRsp);
+                CORRELATOR.addQueryResponse(msgRsp);
 
         } catch (OperationNotSupportedException | CannotProceedException e) {
             Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
@@ -193,7 +193,7 @@ public class SamplingProcessTest {
         }
         
         // Get the processed data and try to create SamplingProcess
-        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getProcessedSet();
+        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getCorrelatedSet();
         
         try {
             SamplingProcess process = new SamplingProcess(setPrcdData);
@@ -474,9 +474,9 @@ public class SamplingProcessTest {
     private SortedSet<CorrelatedQueryData>  correlate(List<BucketData> lstRawData) {
 
         CORRELATOR.reset();
-        lstRawData.forEach(msgData -> CORRELATOR.insertQueryData(msgData));
+        lstRawData.forEach(msgData -> CORRELATOR.addQueryData(msgData));
 
-        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getProcessedSet();
+        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getCorrelatedSet();
         
         return setPrcdData;
     }

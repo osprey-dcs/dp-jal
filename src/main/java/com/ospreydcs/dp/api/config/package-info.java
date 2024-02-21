@@ -60,7 +60,7 @@
  * <li>{@link com.ospreydcs.dp.api.config.db.MongoDbConfig} - (Default) configuration parameters for MongoDD
  * access.
  * </li>
- * <li>{@link com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig} - Configuration parameters for a gRPC channel
+ * <li>{@link com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig} - Configuration parameters for a gRPC channel
  * connection.
  * </li>
  * </ul>

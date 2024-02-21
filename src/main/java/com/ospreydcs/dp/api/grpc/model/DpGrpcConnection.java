@@ -43,6 +43,25 @@ import io.grpc.ManagedChannel;
  * for a gRPC service interface.
  * </p>
  * <p>
+ * A "connection" is an API generalization for the gRPC channel.  This abstraction includes additional notations
+ * beyond the the standard channel properties and functionality.  Connections also contain information about
+ * the gRPC "service interface" for which the channel is connected, specifically, the Protocol Buffers 
+ * generated "communication stub" used to perform the RPC operations of the interface.  These stubs rely
+ * on the gRPC channel for the actual Protocal Buffers message transport.  Within Protocol
+ * Buffers, the communication stubs can be further configured beyond their underlying gRPC channel configuration.
+ * For example, timeout limits can be set, compression algorithms can be specified, etc.
+ * </p>  
+ * <p>
+ * <h2>Java Generic Types</h2>
+ * The inclusion of the Protocol Buffers ("Protobuf") communications stub types is necessary to access the
+ * configuration mechanism within Protobuf provided within the superclass implementation.  The gRPC service
+ * class type is also added to maintain consistency with the communications stubs, since they are not
+ * sub- or super- typed to any particular service (only by naming convention).  Maintaining the gRPC service
+ * type also always for use of Java reflection in communications stub creation (they are created automatically
+ * within constructors.
+ * </p>    
+ * <p>
+ * <h2>Communication Stubs</h2>
  * The blocking gRPC communication stub (<code>SyncStub</code>)
  * for synchronous communication, the future stub (<code>FutureStub</code>) for
  * non-block unary operations, and the non-blocking, asynchronous stub (<code>AsyncStub</code>)
@@ -53,6 +72,15 @@ import io.grpc.ManagedChannel;
  * The constructor arguments are assumed to be created in a connection factory
  * offering various connection configurations for the communications services.
  * </p>
+ * <p>
+ * <h2>NOTES:</h2>
+ * <ul>
+ * <li>In the current version configuration of communication stubs is not yet implemented, although there
+ * are properties available in the configuration record <code>DpGrpcConnectionConfig</code> (e.g., 
+ * "timeout", etc.).
+ * </li>
+ * </ul>
+ * </p> 
  * 
  * @param <ServiceGrpc> Protocol Buffers generated gRPC service class
  * @param <BlockStub>   Protocol Buffer communication stub containing blocking, synchronous RPC operations
@@ -99,13 +127,13 @@ public class DpGrpcConnection<
     //
     
     /** The class type of the gRPC service service being supported */
-    private final Class<ServiceGrpc>    clsService;
+    private final Class<ServiceGrpc> clsService;
     
     /** The single gRPC data channel supporting all communications stubs */
     private final ManagedChannel    grpcChan;
     
     /** Blocking, synchronous communications stub (no streaming operations)*/
-    private final BlockStub          stubBlock;
+    private final BlockStub         stubBlock;
     
     /** Non-blocking communications stub (no streaming operations) */
     private final FutureStub        stubFuture;

@@ -817,9 +817,9 @@ public class UniformSamplingBlockTest {
         
         // Correlate raw data
         CORRELATOR.reset();
-        lstRawData.forEach(msgData -> CORRELATOR.insertQueryData(msgData));
+        lstRawData.forEach(msgData -> CORRELATOR.addQueryData(msgData));
         
-        SortedSet<CorrelatedQueryData>   setPrcdData = CORRELATOR.getProcessedSet();
+        SortedSet<CorrelatedQueryData>   setPrcdData = CORRELATOR.getCorrelatedSet();
         
         // Convert to ordered list of sampling blocks and return
         List<UniformSamplingBlock>  lstBlocks = setPrcdData
@@ -847,9 +847,9 @@ public class UniformSamplingBlockTest {
     private SortedSet<CorrelatedQueryData>  correlate(List<BucketData> lstRawData) {
         
         CORRELATOR.reset();
-        lstRawData.forEach(msgData -> CORRELATOR.insertQueryData(msgData));
+        lstRawData.forEach(msgData -> CORRELATOR.addQueryData(msgData));
         
-        SortedSet<CorrelatedQueryData>   setPrcdData = CORRELATOR.getProcessedSet();
+        SortedSet<CorrelatedQueryData>   setPrcdData = CORRELATOR.getCorrelatedSet();
         
         return setPrcdData;
     }

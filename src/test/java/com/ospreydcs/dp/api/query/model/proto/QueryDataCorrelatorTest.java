@@ -142,7 +142,7 @@ public class QueryDataCorrelatorTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#getProcessedSet()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#getCorrelatedSet()}.
      */
     @Test
     public final void testGetTargetSet() {
@@ -151,14 +151,14 @@ public class QueryDataCorrelatorTest {
         QueryDataCorrelator prcrTest = QueryDataCorrelator.newInstance();
         
         // Get the empty processed data set and try to verify
-        SortedSet<CorrelatedQueryData>  setPrcdData = prcrTest.getProcessedSet();
+        SortedSet<CorrelatedQueryData>  setPrcdData = prcrTest.getCorrelatedSet();
         
         ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         Assert.assertTrue("QueryDataCorrelator verified order of empty data set.", recOrder.isFailure());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#addBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testInsertQueryResponse() {
@@ -169,7 +169,7 @@ public class QueryDataCorrelatorTest {
         
         try {
             for (QueryResponse msgRsp : lstRsps) 
-                prcrTest.insertQueryResponse(msgRsp);
+                prcrTest.addQueryResponse(msgRsp);
             
         } catch (OperationNotSupportedException | CannotProceedException e) {
             Assert.fail("Exception thrown will processing data: type=" + e.getClass().getSimpleName() + ", message=" + e.getMessage());
@@ -177,7 +177,7 @@ public class QueryDataCorrelatorTest {
         }
         
         // Perform available verification checks
-        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getProcessedSet();
+        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
         ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
@@ -193,7 +193,7 @@ public class QueryDataCorrelatorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataOne() {
@@ -203,13 +203,13 @@ public class QueryDataCorrelatorTest {
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
         for (QueryResponse.QueryReport.BucketData msgData : lstRawData) {
-            prcrTest.insertQueryData(msgData);
+            prcrTest.addQueryData(msgData);
         }
         
-        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeProcessedSet() > 0);
+        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeCorrelatedSet() > 0);
         
         // Perform available verification checks
-        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getProcessedSet();
+        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
         ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
@@ -224,11 +224,11 @@ public class QueryDataCorrelatorTest {
             Assert.fail(recDomains.message());
 
         // Printout processed set
-        this.printProperties(JavaRuntime.getQualifiedCallerNameSimple(), prcrTest.getProcessedSet());
+        this.printProperties(JavaRuntime.getQualifiedCallerNameSimple(), prcrTest.getCorrelatedSet());
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataTwo() {
@@ -238,13 +238,13 @@ public class QueryDataCorrelatorTest {
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
         for (QueryResponse.QueryReport.BucketData msgData : lstRawData) {
-            prcrTest.insertQueryData(msgData);
+            prcrTest.addQueryData(msgData);
         }
         
-        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeProcessedSet() > 0);
+        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeCorrelatedSet() > 0);
         
         // Perform available verification checks
-        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getProcessedSet();
+        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
         ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
@@ -259,11 +259,11 @@ public class QueryDataCorrelatorTest {
             Assert.fail(recDomains.message());
 
         // Printout processed set
-        this.printProperties(JavaRuntime.getQualifiedCallerNameSimple(), prcrTest.getProcessedSet());
+        this.printProperties(JavaRuntime.getQualifiedCallerNameSimple(), prcrTest.getCorrelatedSet());
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataLong() {
@@ -273,13 +273,13 @@ public class QueryDataCorrelatorTest {
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
         for (QueryResponse.QueryReport.BucketData msgData : lstRawData) {
-            prcrTest.insertQueryData(msgData);
+            prcrTest.addQueryData(msgData);
         }
         
-        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeProcessedSet() > 0);
+        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeCorrelatedSet() > 0);
         
         // Perform available verification checks
-        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getProcessedSet();
+        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
         ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
@@ -295,7 +295,7 @@ public class QueryDataCorrelatorTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataWide() {
@@ -304,10 +304,10 @@ public class QueryDataCorrelatorTest {
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
         for (QueryResponse.QueryReport.BucketData msgData : lstRawData) {
-            prcrTest.insertQueryData(msgData);
+            prcrTest.addQueryData(msgData);
         }
         
-        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeProcessedSet() > 0);
+        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeCorrelatedSet() > 0);
 
         // Extract data source names and print them out
         Set<String> setDataSrcs = prcrTest.extractDataSourceNames();
@@ -316,7 +316,7 @@ public class QueryDataCorrelatorTest {
         
         
         // Perform available verification checks
-        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getProcessedSet();
+        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
         ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
@@ -332,7 +332,7 @@ public class QueryDataCorrelatorTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataBig() {
@@ -364,7 +364,7 @@ public class QueryDataCorrelatorTest {
         int cntr = 0;
         for (QueryResponse msgRsp: lstMsgRsps) {
             try {
-                prcrTest.insertQueryResponse(msgRsp);
+                prcrTest.addQueryResponse(msgRsp);
                 
                 cntr++;
                 System.out.println("Interted message " + Integer.valueOf(cntr).toString());
@@ -380,7 +380,7 @@ public class QueryDataCorrelatorTest {
             }
         }
         
-        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeProcessedSet() > 0);
+        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeCorrelatedSet() > 0);
 
         // Extract data source names and print them out
         Set<String> setDataSrcs = prcrTest.extractDataSourceNames();
@@ -389,7 +389,7 @@ public class QueryDataCorrelatorTest {
         
         
         // Perform available verification checks
-        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getProcessedSet();
+        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
         ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
@@ -405,7 +405,7 @@ public class QueryDataCorrelatorTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataHuge() {
@@ -437,7 +437,7 @@ public class QueryDataCorrelatorTest {
         int cntr = 0;
         for (QueryResponse msgRsp: lstMsgRsps) {
             try {
-                prcrTest.insertQueryResponse(msgRsp);
+                prcrTest.addQueryResponse(msgRsp);
                 
                 cntr++;
                 System.out.println("Interted message " + Integer.valueOf(cntr).toString());
@@ -453,7 +453,7 @@ public class QueryDataCorrelatorTest {
             }
         }
         
-        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeProcessedSet() > 0);
+        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeCorrelatedSet() > 0);
 
         // Extract data source names and print them out
         Set<String> setDataSrcs = prcrTest.extractDataSourceNames();
@@ -462,7 +462,7 @@ public class QueryDataCorrelatorTest {
         
         
         // Perform available verification checks
-        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getProcessedSet();
+        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
         ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())

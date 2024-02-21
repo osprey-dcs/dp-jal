@@ -41,7 +41,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.api.config.DpApiTestingConfig;
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
@@ -67,7 +67,7 @@ public class QueryResponseCorrelatorTest {
     //
     
     /** The configuration for the Query Service connection to the test archive */
-    private static final GrpcConnectionConfig  CFG_CONN_TEST  = DpApiTestingConfig.getInstance().testQuery.connection;
+    private static final DpGrpcConnectionConfig  CFG_CONN_TEST  = DpApiTestingConfig.getInstance().testQuery.connection;
     
     
     /** Data Platform API Query Service test request/response - (single bucket) 1 data source, 1 seconds */
@@ -252,6 +252,28 @@ public class QueryResponseCorrelatorTest {
             SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
+            
+        } catch (DpQueryException e) {
+            Assert.fail("Request processing threw exception: message=" + e.getMessage() + ", cause=" + e.getCause());
+        } 
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.model.proto.QueryResponseCorrelator#setCorrelateMidstream(boolean)}.
+     * <p>
+     * Turns off the stream/correlate concurrently option
+     */
+//    @Test
+    public final void testSetCorrelateMidstreamFalseHuge() {
+        TestQueryRecord     recTest = REC_HUGE;
+        
+        DpDataRequest       dpRequest = recTest.createRequest();
+        
+        // Perform request and process response data, then compare
+        try {
+            corrTest.setCorrelateMidstream(false);  // method under test
+            
+            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
             
         } catch (DpQueryException e) {
             Assert.fail("Request processing threw exception: message=" + e.getMessage() + ", cause=" + e.getCause());
@@ -640,9 +662,9 @@ public class QueryResponseCorrelatorTest {
         try {
             List<BucketData>    lstRawData = recTest.recoverQueryData();
             
-            lstRawData.forEach(msgData -> corrData.insertQueryData(msgData));
+            lstRawData.forEach(msgData -> corrData.addQueryData(msgData));
             
-            SortedSet<CorrelatedQueryData>   setPrcdData = corrData.getProcessedSet();
+            SortedSet<CorrelatedQueryData>   setPrcdData = corrData.getCorrelatedSet();
             
             return setPrcdData;
             
@@ -672,9 +694,9 @@ public class QueryResponseCorrelatorTest {
         try {
             List<BucketData>    lstRawData = recTest.recoverQueryData();
             
-            lstRawData.forEach(msgData -> corrData.insertQueryData(msgData));
+            lstRawData.forEach(msgData -> corrData.addQueryData(msgData));
             
-            SortedSet<CorrelatedQueryData>   lstPrcdData = corrData.getProcessedSet();
+            SortedSet<CorrelatedQueryData>   lstPrcdData = corrData.getCorrelatedSet();
             
             return lstPrcdData;
             

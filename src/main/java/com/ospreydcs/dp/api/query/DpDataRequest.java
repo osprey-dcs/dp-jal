@@ -1008,24 +1008,34 @@ public final class DpDataRequest {
      * <p>
      * Sets the gRPC data stream type to use when recovering query results set.
      * </p>
-     * <p> 
-     * Note that this value is only applicable if a streaming RPC operation is 
-     * used to recover the query results set.  Even then, the choice of preferred
-     * gRPC data stream type is not guaranteed.
-     * </p>
      * <p>
+     * Sets the preferred gRPC data stream "type" used for the data request operation.  The currently supported
+     * Query Service data stream types are provided in the enumeration <code>{@link DpQueryStreamType}</code>.
+     * See the enumeration documentation for further details on gRPC data streams supported by the Query Service.
+     * types 
+     * <p> 
      * <h2>NOTES:</h2>
-     * This is a metadata property to be set for advanced operations.  Typically,
-     * the default value is chosen for performance considerations.
-     * The default value is current given by
+     * <ul>
+     * <li>
+     * This value is only applicable if a streaming RPC operation is used to recover the query results set.  
+     * Even then, the choice of preferred gRPC data stream type is not guaranteed.
+     * </li>
+     * <br/>
+     * <li>
+     * This is a metadata property to be set for advanced operations.  Typically, the default value is chosen for 
+     * performance considerations.  The default value is current given by
      * <code>
      * <pre>
      *   {@link #ENM_STREAM_PREF} = {@value #ENM_STREAM_PREF}
      * </pre>
      * </code> 
+     * The value for class constant <code>{@link #ENM_STREAM_PREF}</code> is taken from the Query Service
+     * API configuration in <code>{@link DpApiConfig}</code>.
+     * </li>
+     * </ul>
      * </p>
      * 
-     * @param enmStreamType preferred gRPC data stream type for query operation
+     * @param enmStreamType preferred gRPC data stream type for streaming query operation
      */
     public void setStreamType(DpQueryStreamType enmStreamType) {
         this.enmStrmType = enmStreamType;

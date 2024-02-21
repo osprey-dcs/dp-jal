@@ -28,7 +28,40 @@
 package com.ospreydcs.dp.api.query.model;
 
 /**
+ * <p>
  * Enumeration of gRPC data streaming services currently supported by the Query Service.
+ * </p>
+ * <p>
+ * Currently there are two type of gRPC data streams available for Query Service data requests:
+ * <ul>
+ * <li>
+ * <code>{@link #UNIDIRECTIONAL}</code> - Unidirectional gRPC data streaming.  A single data stream is 
+ * established between the client and the Query Service.  This is a "backward stream" transmitting request data
+ * from the Query Service to the client.  Transmission rates are determined by the Query Service.
+ * </li>
+ * <br/>
+ * <code>{@link #BIDIRECTIONAL}</code> - Bidirectional gRPC data streaming.  Both a "forward stream" and a 
+ * "backward stream" are established between client and Query Service.  The backward stream sends data messages
+ * containing requested data back to the client.  The forward stream sends data receipt "acknowledgments" forward
+ * to the Query Service.  The client is able to control data transmission rates via the acknowledgment process.
+ * </li>
+ * </ul>
+ * <p>
+ * <h2>NOTES:</h2>
+ * <ul>
+ * <li>
+ * The gRPC data stream type can affect transmission performance.  Generally, the unidirectional stream will have
+ * better performance as the Query Service typically transmits requested data as fast as it is available.
+ * </li>
+ * <br/>
+ * <li>
+ * Bidirectional streams provide synchronization between client and Query Service.  This can be beneficial when
+ * network traffic is high, or if the client has expensive processing requirements for each "data page" recovered.
+ * However, the additional synchronization between client and Query Service can affect the recovery time of 
+ * a data request.
+ * </li>
+ * </ul>
+ * </p>
  */
 public enum DpQueryStreamType {
     

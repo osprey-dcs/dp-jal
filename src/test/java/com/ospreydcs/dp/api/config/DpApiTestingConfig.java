@@ -33,7 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
@@ -181,7 +181,7 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
         public DpTimeoutConfig      timeoutLong;
         
         @ACfgOverride.Struct(pathelem="CONNECTION")
-        public GrpcConnectionConfig connection;
+        public DpGrpcConnectionConfig connection;
     }
     
     

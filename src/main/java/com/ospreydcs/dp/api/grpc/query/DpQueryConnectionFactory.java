@@ -28,7 +28,7 @@
 package com.ospreydcs.dp.api.grpc.query;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
@@ -58,7 +58,7 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * <h2>NOTES:</h2>
  * It is possible to create Query Service connection factory instances that use alternate default
  * parameters for connection configurations.  The static creator method 
- * <code>{@link #newFactory(GrpcConnectionConfig)}</code> is available for this purpose.
+ * <code>{@link #newFactory(DpGrpcConnectionConfig)}</code> is available for this purpose.
  * (It also creates the static instance <code>{@link #FACTORY}</code> using the DP API library
  * configuration.
  * </p>
@@ -78,7 +78,7 @@ public final class DpQueryConnectionFactory extends
     //
     
     /** The API Library default Query Service configuration parameters */
-    private static final GrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
+    private static final DpGrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
 
     
     //
@@ -124,7 +124,7 @@ public final class DpQueryConnectionFactory extends
      * 
      * @return  a new Query Service connection factory use the given default parameters
      */
-    public static DpQueryConnectionFactory  newFactory(GrpcConnectionConfig cfgDefault) {
+    public static DpQueryConnectionFactory  newFactory(DpGrpcConnectionConfig cfgDefault) {
         return new DpQueryConnectionFactory(cfgDefault);
     }
     
@@ -138,7 +138,7 @@ public final class DpQueryConnectionFactory extends
      * Constructs a new instance of <code>DpQueryConnectionFactory</code>.
      * </p>
      */
-    protected DpQueryConnectionFactory(GrpcConnectionConfig cfgDefault) {
+    protected DpQueryConnectionFactory(DpGrpcConnectionConfig cfgDefault) {
         super(DpQueryServiceGrpc.class, cfgDefault);
     }
 

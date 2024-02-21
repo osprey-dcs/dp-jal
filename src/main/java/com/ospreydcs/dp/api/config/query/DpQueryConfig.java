@@ -30,6 +30,7 @@ package com.ospreydcs.dp.api.config.query;
 import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
 import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
 import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcStreamConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 import com.ospreydcs.dp.api.model.AUnavailable;
@@ -37,7 +38,7 @@ import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 
 /**
  * <p>
- * Structure class containing default configuration parameters for Data Platform Query Service operations.
+ * Structure class containing default configuration parameters for Data Platform Query Service API operations.
  * </p>
  *
  * @author Christopher K. Allen
@@ -63,6 +64,10 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
     /** Default parameters for Query Service time-series data requests and responses */
     @ACfgOverride.Struct(pathelem="DATA")
     public TimeSeriesDataConfig data;
+    
+    /** Default parameters for general Query Service gRPC streaming operations */
+    @ACfgOverride.Struct(pathelem="STREAM")
+    public DpGrpcStreamConfig   stream;
     
     /** Default concurrency parameters for Query Service operations */
     @ACfgOverride.Struct(pathelem="CONCURRENCY")

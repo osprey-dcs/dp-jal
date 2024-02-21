@@ -78,7 +78,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * into an ordered sets of <code>{@link CorrelatedQueryData}</code> instances, each instance 
  * all represent query results all within the same sampling clock.  
  * These correlated results sets are obtained from 
- * <code>{@link QueryDataCorrelator#getProcessedSet()}</code>.  The correlated results sets
+ * <code>{@link QueryDataCorrelator#getCorrelatedSet()}</code>.  The correlated results sets
  * are then used in the creation of <code>SamplingProcess</code> instances. 
  * Thus, this class can be used in the reconstruction process of Data Platform 
  * Query Service data requests.

@@ -51,7 +51,7 @@ import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 
 /**
  * <p>
- * Test Cases for <code>GrpcConnectionConfig</code> structure class.
+ * Test Cases for <code>DpGrpcConnectionConfig</code> structure class.
  * </p>
  * <p>
  * Tests correct loading of YAML files using the CfgLoaderYaml utility class.
@@ -73,8 +73,8 @@ public class GrpcConnectionConfigTest {
     public static final String      STR_CONFIG_FILENAME_1 = "test-grpc-connection-1.yml";
     
     /** Comparison configuration records */
-    public static GrpcConnectionConfig   CFG_1 = createConfig1();
-    public static GrpcConnectionConfig   CFG_ENV = createConfigEnv();
+    public static DpGrpcConnectionConfig   CFG_1 = createConfig1();
+    public static DpGrpcConnectionConfig   CFG_ENV = createConfigEnv();
 
     static {
     }
@@ -85,31 +85,31 @@ public class GrpcConnectionConfigTest {
     //
     
     /**
-     * Creates and populates a <code>GrpcConnectionConfig</code> structure equivalent to the
+     * Creates and populates a <code>DpGrpcConnectionConfig</code> structure equivalent to the
      * first test configuration {@value #STR_CONFIG_FILENAME_1}.
      * 
      * @return new, populated test configuration
      */
-    public static GrpcConnectionConfig    createConfig1() {
+    public static DpGrpcConnectionConfig    createConfig1() {
         
         DpTimeoutConfig timeout = new DpTimeoutConfig();
         timeout.active = true;
         timeout.limit = 5L;
         timeout.unit = TimeUnit.SECONDS;
         
-        GrpcConnectionConfig.Channel.Host host = new GrpcConnectionConfig.Channel.Host();
+        DpGrpcConnectionConfig.Channel.Host host = new DpGrpcConnectionConfig.Channel.Host();
         host.url = "localhost";
         host.port = 50051;
         
-        GrpcConnectionConfig.Channel.TLS tls = new GrpcConnectionConfig.Channel.TLS();
+        DpGrpcConnectionConfig.Channel.TLS tls = new DpGrpcConnectionConfig.Channel.TLS();
         tls.active = true;
         tls.defaultTls = true;
-        tls.filepaths = new GrpcConnectionConfig.Channel.TLS.FilePaths();
+        tls.filepaths = new DpGrpcConnectionConfig.Channel.TLS.FilePaths();
         tls.filepaths.trustedCerts = new String();
         tls.filepaths.clientCerts = new String();
         tls.filepaths.clientKey = new String();
         
-        GrpcConnectionConfig.Channel.Grpc grpc = new GrpcConnectionConfig.Channel.Grpc();
+        DpGrpcConnectionConfig.Channel.Grpc grpc = new DpGrpcConnectionConfig.Channel.Grpc();
         grpc.messageSizeMax = 4194304;
         grpc.timeoutLimit = 5L;
         grpc.timeoutUnit = TimeUnit.SECONDS;
@@ -117,12 +117,12 @@ public class GrpcConnectionConfigTest {
         grpc.keepAliveWithoutCalls = false;
         grpc.gzip = false;
         
-        GrpcConnectionConfig.Channel chan = new GrpcConnectionConfig.Channel();
+        DpGrpcConnectionConfig.Channel chan = new DpGrpcConnectionConfig.Channel();
         chan.host = host;
         chan.tls = tls;
         chan.grpc = grpc;
 
-        GrpcConnectionConfig   cfg = new GrpcConnectionConfig();
+        DpGrpcConnectionConfig   cfg = new DpGrpcConnectionConfig();
         cfg.timeout = timeout;
         cfg.channel = chan;
         cfg.name = "test-grpc-channel-1";
@@ -135,7 +135,7 @@ public class GrpcConnectionConfigTest {
     
     /**
      * <p>
-     * Creates and populates a <code>GrpcConnectionConfig</code> structure that is equivalent
+     * Creates and populates a <code>DpGrpcConnectionConfig</code> structure that is equivalent
      * to the first test case (i.e., {@value #STR_CONFIG_FILENAME_1} after being overridden by 
      * pre-assigned system variables.
      * </p>
@@ -147,9 +147,9 @@ public class GrpcConnectionConfigTest {
      * 
      * @return new test configuration which overrides the first configuration with different values
      */
-    public static GrpcConnectionConfig    createConfigEnv() {
+    public static DpGrpcConnectionConfig    createConfigEnv() {
         
-        GrpcConnectionConfig   cfg = createConfig1();
+        DpGrpcConnectionConfig   cfg = createConfig1();
         
         cfg.timeout.limit = 60L;
         cfg.timeout.unit = TimeUnit.SECONDS;
@@ -212,8 +212,8 @@ public class GrpcConnectionConfigTest {
      */
     @Test
     public final void testFixtureConfigurations() {
-        GrpcConnectionConfig cfg1 = GrpcConnectionConfigTest.createConfig1();
-        GrpcConnectionConfig cfg2 = GrpcConnectionConfigTest.createConfigEnv();
+        DpGrpcConnectionConfig cfg1 = GrpcConnectionConfigTest.createConfig1();
+        DpGrpcConnectionConfig cfg2 = GrpcConnectionConfigTest.createConfigEnv();
         
         
         try {
@@ -240,7 +240,7 @@ public class GrpcConnectionConfigTest {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            GrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(strFile, GrpcConnectionConfig.class);
+            DpGrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(strFile, DpGrpcConnectionConfig.class);
             
             Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgChan);
             
@@ -262,7 +262,7 @@ public class GrpcConnectionConfigTest {
         
         try {
             File        fileCfg = new File(urlFile.toURI());
-            GrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(fileCfg, GrpcConnectionConfig.class);
+            DpGrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(fileCfg, DpGrpcConnectionConfig.class);
             
             Assert.assertEquals("Configuration has at least one incorrect field", CFG_1, cfgChan);
             
@@ -286,7 +286,7 @@ public class GrpcConnectionConfigTest {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            GrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(strFile, GrpcConnectionConfig.class);
+            DpGrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(strFile, DpGrpcConnectionConfig.class);
 
             boolean bolResult = CfgOverrideUtility.overrideRoot(cfgChan, CfgOverrideUtility.SOURCE.ENVIRONMENT);
             
@@ -302,11 +302,11 @@ public class GrpcConnectionConfigTest {
             e.printStackTrace();
             
         } catch (IllegalArgumentException e) {
-            fail("There was and attempt to override with invalid argument in GrpcConnectionConfig.");
+            fail("There was and attempt to override with invalid argument in DpGrpcConnectionConfig.");
             e.printStackTrace();
             
         } catch (IllegalAccessException e) {
-            fail("The GrpcConnectionConfig instance refused access to its fields.");
+            fail("The DpGrpcConnectionConfig instance refused access to its fields.");
             e.printStackTrace();
         }
         
@@ -338,29 +338,29 @@ public class GrpcConnectionConfigTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig#toString()}.
+     * Test method for {@link com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig#toString()}.
      */
     @Test
     public void testGrpcConnnectionConfigToString() {
         String      strFile = STR_CONFIG_FILENAME_1;
         
         try {
-            GrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(strFile, GrpcConnectionConfig.class);
+            DpGrpcConnectionConfig   cfgChan = CfgLoaderYaml.load(strFile, DpGrpcConnectionConfig.class);
             
             System.out.println();
-            System.out.println("GrpcConnectionConfig Parameters:");
+            System.out.println("DpGrpcConnectionConfig Parameters:");
             System.out.println("name = " + cfgChan.name);
             System.out.println("version = " + cfgChan.version);
             System.out.println("description = " + cfgChan.description);
             System.out.println("supplement = " + cfgChan.supplement);
             
 
-            System.out.println("GrpcConnectionConfig#toString() for " + strFile);
+            System.out.println("DpGrpcConnectionConfig#toString() for " + strFile);
             System.out.println(cfgChan.toString());
             System.out.println();
             
             CfgOverrideUtility.overrideRoot(cfgChan, CfgOverrideUtility.SOURCE.ENVIRONMENT);
-            System.out.println("GrpcConnectionConfig#toString() after envionment override:");
+            System.out.println("DpGrpcConnectionConfig#toString() after envionment override:");
             System.out.println(cfgChan);
             
             

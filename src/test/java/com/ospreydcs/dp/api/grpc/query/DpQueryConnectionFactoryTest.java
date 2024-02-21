@@ -40,7 +40,7 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.DpApiTestingConfig;
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 
 /**
@@ -60,10 +60,10 @@ public class DpQueryConnectionFactoryTest {
     //
     
     /** The DP API Library Query Service default configuration parameters */
-    private static final GrpcConnectionConfig.Channel   CFG_DEFAULT = DpApiConfig.getInstance().connections.query.channel;
+    private static final DpGrpcConnectionConfig.Channel   CFG_DEFAULT = DpApiConfig.getInstance().connections.query.channel;
 
     /** The DP API Library Query Service testing configuration parameters */
-    private static final GrpcConnectionConfig           CFG_TESTING = DpApiTestingConfig.getInstance().testQuery.connection;
+    private static final DpGrpcConnectionConfig           CFG_TESTING = DpApiTestingConfig.getInstance().testQuery.connection;
 
     
     //
@@ -114,7 +114,7 @@ public class DpQueryConnectionFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory#newFactory(com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory#newFactory(com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig)}.
      */
     @Test
     public final void testNewFactory() {

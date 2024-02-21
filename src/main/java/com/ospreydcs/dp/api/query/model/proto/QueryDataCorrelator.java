@@ -27,7 +27,6 @@
  */
 package com.ospreydcs.dp.api.query.model.proto;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -49,7 +48,6 @@ import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.ResultRecord;
 import com.ospreydcs.dp.api.model.TimeInterval;
-import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.RejectDetails;
@@ -57,51 +55,159 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
 
 /**
  * <p>
- * Collects, organizes, and reduces the result set from a stream of <code>QueryResponse</code> Protobuf messages.
+ * Time correlates the result set from a stream of <code>QueryResponse</code> Protobuf messages.
  * </p>
  * <p>
- * The intent is to organize the results of a Data Platform Query Service query according to the sampling
- * intervals.  That is, the collector parses the result sets for equivalent sampling intervals then associates
- * each data column of the result set to a <code>{@link CorrelatedQueryData}</code> instance.  Once the query
- * result is fully processed there should be one <code>CorrelatedQueryData</code> instance for every unique
- * sampling interval within the result set.  Every data column within the result set will be associated with
- * one <code>CorrelatedQueryData</code> instance.
+ * Correlates all time-series data within the results set of a Query Service data request into
+ * a sorted collection of <code>{@link CorrelatedQueryData}</code> data instances.  Each instance within
+ * the sorted collection contains a <code>{@link FixedIntervalTimestampSpec}</code> sampling 
+ * clock Protobuf message and collection of <code>{@link DataColumn}</code> Protobuf data 
+ * messages all correlated to that sample sampling clock.
+ * </p>  
+ * <p>
+ * Once processing of a results set is complete, the results are available from the 
+ * <code>{@link #getCorrelatedSet()}</code> method.
+ * Note, however, <code>QueryDataCorrelator</code> objects maintain ownership of the returned
+ * sorted set and all data within that set should be further processed (or copied) before 
+ * attempting to correlated another results set; specifically, before invoking the 
+ * <code>{@link #reset()}</code> method. 
  * </p>
  * <p>
- * <h2>Data Processing Verification</code>
- * There are multiple static utility methods for verifying correct processing of a results set.  These methods
- * are prefixed with <code>verify</code>.  They perform various verification checks on the processed results
- * set obtained from <code>{@link #getProcessedSet()}</code>, such as ordering, time domain collisions, and
+ * <h2>Time Correlation</h2>
+ * The intent is to correlate the results set of a Data Platform Query Service data request 
+ * according to the sampling clocks.  That is, the correlator parses the results set for 
+ * equivalent sampling intervals as specified by the sampling clock data message 
+ * <code>{@link FixedIntervalTimestampSpec}</code>. 
+ * The time-series for each data source corresponding to equivalent sampling clocks are collected
+ * into a single <code>{@link CorrelatedQueryData}</code> instance.  
+ * Once the query results set is fully processed there should be one <code>CorrelatedQueryData</code> 
+ * instance for every unique sampling interval within the result set.  Every data column within the 
+ * results set will be associated with one <code>CorrelatedQueryData</code> instance.
+ * </p>
+ * <p>
+ * <h2>Operation</h2>
+ * Data correlation is performed using the methods prefixed with <code>add</code>.  The preferred
+ * method is 
+ * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>,
+ * which processes data messages within the Query Service response stream.  That is, the data
+ * messages are extracted from the <code>{@link QueryResponse}</code> messages externally.
+ * However, for convenience there are additional <code>add</code> methods that extract the data
+ * messages which are then passed to the above method for actual processing.  Exceptions are
+ * thrown if an error is encountered within the response message.
+ * Processing follows the general flow:
+ * <ol>
+ * <li>Results sets are "added" to the correlator, message by message, until stream completion.</li>
+ * <li>Correlated data is then available from the method <code>{@link #getCorrelatedSet()}</code>.</li>
+ * <li>The correlator is then reset for further processing with method <code>{@link #reset()}</code>.</li>
+ * </ol>
+ * </p>
+ * <p>
+ * Once the entire results set data is "added" to a <code>QueryDataCorrelator</code> object, 
+ * it is fully correlated.  The correlated data is then available from the method
+ * <code>{@link #getCorrelatedSet()}</code>.  Each <code>{@link CorrelatedQueryData}</code> 
+ * instance within the returned set contains all the data messages for a single sampling clock.
+ * Further, the set is ordered according to the start time instant for each clock.
+ * </p>
+ * <p>
+ * <code>QueryDataCorrelator</code> objects can be reused.  That is, a single 
+ * <code>QueryDataCorrelator</code> instance can be used to process multiple data request
+ * results sets (serially, of course).  To reuse a instances invoke the <code>{@link #reset()}</code>
+ * method before processing another results set.  WARNING: <code>QueryDataCorrelator</code> 
+ * objects maintain ownership of the correlated data set returned by 
+ * <code>{@link #getCorrelatedSet()}</code>.  Thus, all data returned by that method must be
+ * either copied or fully processed before reusing an instance.
+ * </p>
+ * <p>
+ * All correlation operations are done ATOMICALLY.  Specifically, the 
+ * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
+ * method is synchronized with the internal lock <code>{@link #objLock}</code>.  If concurrent
+ * threads attempt to add Query Service messages they will block until the previous correlation
+ * operation is complete.  Thus condition is necessary to maintain consistency within the
+ * processed set.     
+ * </p>
+ * <p>
+ * <h2>Data Processing Verification</h2>
+ * There are multiple static utility methods for verifying correct processing of a results set.  
+ * These methods are prefixed with <code>verify</code> in their method name.  They perform 
+ * various verification checks on the processed results set obtained from 
+ * <code>{@link #getCorrelatedSet()}</code>, such as ordering, time domain collisions, and
  * time series sizes.
+ * </p>
+ * <p>
+ * <h2>Concurrency</h2>
+ * The correlation operations performed within <code>QueryDataCorrelator</code>
+ * allow a high-level of multi-threaded, concurrent, data processing.  Using concurrency
+ * can significantly reduce processing time for a results set.  However, use of concurrency
+ * can also steal CPU resources for any other concurrent operations.
+ * <ul>
+ * <li>
+ * The concurrency mechanism utilizes <code>{@link BucketDataInsertTask}</code> instances to
+ * perform thread operations.  Each task attempts to insert a single data bucket message
+ * into the current target set of correlated data and can be executed on a separate thread.
+ * </li>
+ * <br/> 
+ * <li>
+ * Concurrency will not be activated until the size of the correlated data set
+ * <code>{@link #setPrcdData}</code> becomes larger than the 
+ * <code>{@link #SZ_CONCURRENCY_PIVOT}</code> value.  This is done to avoid the overhead
+ * of parallel processing for small data sets.  Thus, the <code>{@link #SZ_CONCURRENCY_PIVOT}</code>
+ * can be used as a tuning parameter.  The default value is taken from the
+ * Query Service API configuration parameters.  
+ * </li>
+ * <br/>
+ * <li>
+ * The number of independent threads used for concurrent processing is determined by
+ * <code>{@link #CNT_CONCURRENCY_THDS}</code>.  The default value is taken from the
+ * Query Service API configuration parameters.  
+ * </li>
+ * <br/>  
+ * <li>
+ * For some situations it may be desirable to stop concurrent processing
+ * so it does not interfere with other real-time operations (e.g., such as gRPC streaming).
+ * The method <code>{@link #setConcurrency(boolean)}</code> is available to toggle processing
+ * concurrency ON/OFF.
+ * </li>
+ * <br/>
+ * <li>
+ * Due to thread safety, concurrency toggling is synchronized.  That is, a toggle operation
+ * <code>{@link #setConcurrency(boolean)}</code> will not apply until a correlation
+ * operation (i.e., <code>add...</code> method) has completed.  The
+ * <code>{@link #setConcurrency(boolean)}</code> will block on the internal synchronization
+ * lock <code>{@link #objLock}</code> until a processing method releases it.
+ * </li>
+ * <br/>
+ * <li>
+ * The <code>QueryDataCorrelator</code> class uses the default concurrency configuration in the 
+ * Query Service API default parameters (@see {@link DpApiConfig}</code>). The concurrency 
+ * configuration parameters there can be used to tune performance (or hard-coded into this
+ * class).
+ * </li>
+ * </ul>
  * </p>
  * <p>
  * <h2>NOTES:</h2>
  * <ul>
  * <li>
- * The correlation operations performed within <code>QueryDataCorrelator</code>
- * allow a high-level of multi-threaded, concurrent, data processing.  Using concurrency
- * can significantly reduce processing time for a results set.
+ * Correlator objects maintain ownership of processed data sets available with
+ * <code>{@link #getCorrelatedSet()}</code>.  Invoking the <code>{@link #reset()}</code>
+ * method will destroy the current processed data set.
  * </li>
  * <br/>
  * <li>
- * The <code>QueryDataCorrelator</code> is currently designed to exploit all available 
- * CPU cores.  Thus, for some situations it may be desirable to stop concurrent processing
- * so it does not interfere with other real-time operations (e.g., such as gRPC streaming).
- * </li>
- * <br/>
- * <li>
- * Due to thread safety synchronization concurrency cannot be toggled until a correlation
- * operation (i.e., <code>insert...</code> method) has completed.
- * </li>
- * </ul>
- * </p>
- * <p>
- * <h2>TODO</h2>
- * <ul>
- * <li>
- * It may be beneficial to introduce a limit on the number of concurrent processing threads
+ * It may be beneficial to limit the number of concurrent processing threads
+ * (i.e., within the default API configuration parameters)
  * so that concurrent processing does not interfere with real-time operations requiring
  * dedicated processor cores.
+ * </li>
+ * <br/>
+ * <li>
+ * It may be beneficial to eliminate concurrency altogether using method 
+ * <code>{@link #setConcurrency(boolean)}</code>.
+ * </li>
+ * <br/>
+ * <li>
+ * The processing methods <code>add...</code> are internally synchronized and competing threads
+ * will block until the method completes the correlation operation.
  * </li>
  * </ul>
  * </p> 
@@ -111,6 +217,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  *
  * @see CorrelatedQueryData
  * @see BucketDataInsertTask
+ * @see DpApiConfig
  */
 public class QueryDataCorrelator {
 
@@ -166,8 +273,8 @@ public class QueryDataCorrelator {
 //    private final ExecutorService   exeThreadPool = Executors.newCachedThreadPool();
     private final ExecutorService   exeThreadPool = Executors.newFixedThreadPool(CNT_CONCURRENCY_THDS);
     
-    /** Target Set - Ordered set of sampling interval references */
-    private final SortedSet<CorrelatedQueryData> setTargetRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
+    /** Target set of correlated results set data - Ordered according to sampling interval start time */
+    private final SortedSet<CorrelatedQueryData> setPrcdData = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
 
     
     //
@@ -188,7 +295,7 @@ public class QueryDataCorrelator {
      * </p>
      * <p>
      * Instances are created in their initial state - ready for processing.  The method 
-     * <code>{@link #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
+     * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
      * is recommended for query response data processing; that is, it is recommended to process all query and 
      * streaming errors externally, supplying only <code>BucketData</code> messages to 
      * <code>QueryDataCorrelator</code> objects.
@@ -196,7 +303,7 @@ public class QueryDataCorrelator {
      * <p>
      * One the entire query results set has be passed to a <code>QueryDataCorrelator</code> object
      * (e.g., using the above method repeated for each data message), the correlated data is recoverable
-     * with <code>{@link #getProcessedSet()}</code>.
+     * with <code>{@link #getCorrelatedSet()}</code>.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
@@ -204,14 +311,15 @@ public class QueryDataCorrelator {
      * Use the method <code>{@link #reset()}</code> before processing a new results set.
      * </p>
      * 
-     * @return
+     * @return  a new <code>QueryDataCorrelator</code> instance ready for processing
      * 
-     * @see #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
-     * @see #getProcessedSet()
+     * @see #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
+     * @see #getCorrelatedSet()
      */
     public static QueryDataCorrelator newInstance() {
         return new QueryDataCorrelator();
     }
+    
     
     //
     // Constructors
@@ -222,9 +330,25 @@ public class QueryDataCorrelator {
      * Constructs a new instance of <code>QueryDataCorrelator</code>.
      * </p>
      * <p>
-     * Instances are created in their initialized state and are ready for the processing of
-     * Query Service results sets.
+     * Instances are created in their initial state - ready for processing.  The method 
+     * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
+     * is recommended for query response data processing; that is, it is recommended to process all query and 
+     * streaming errors externally, supplying only <code>BucketData</code> messages to 
+     * <code>QueryDataCorrelator</code> objects.
      * </p>
+     * <p>
+     * One the entire query results set has be passed to a <code>QueryDataCorrelator</code> object
+     * (e.g., using the above method repeated for each data message), the correlated data is recoverable
+     * with <code>{@link #getCorrelatedSet()}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <code>QueryDataCorrelator</code> objects can be reused for multiple query results sets.
+     * Use the method <code>{@link #reset()}</code> before processing a new results set.
+     * </p>
+     * 
+     * @see #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
+     * @see #getCorrelatedSet()
      */
     public QueryDataCorrelator() {
     }
@@ -239,6 +363,11 @@ public class QueryDataCorrelator {
      * Reset this correlator instance to its original (default) state.
      * </p>
      * <p>
+     * <code>QueryDataCorrelator</code> objects can be reused.  After calling this method the 
+     * correlator is returned to its initial state and is ready to process another Query Service
+     * response results set.
+     * </p>
+     * <p>
      * This is a thread-safe operation.  Performs the following operations:
      * <ul>
      * <li>Clears out the target set of all <code>CorrelatedQueryData</code> references.</li>
@@ -246,17 +375,17 @@ public class QueryDataCorrelator {
      * </ul>
      * </p>
      * <p>
-     * <h2>NOTES:</h2>
-     * <code>QueryDataCorrelator</code> objects can be reused.  After calling this method the 
-     * collector is returned to its initial state and is ready to process another Query Service
-     * response results set.
+     * <h2>WARNINGS:</h2>
+     * Any processed data previous returned by <code>{@link #getCorrelatedSet()}</code> is destroyed
+     * by this method.  All previously correlated data should be either copied or fully processed
+     * before calling this method.
      * </p>
      * 
      */
     public void reset() {
         
         synchronized (this.objLock) {
-            this.setTargetRefs.clear();
+            this.setPrcdData.clear();
             this.bolConcurrency = BOL_CONCURRENCY;
         }
     }
@@ -266,7 +395,7 @@ public class QueryDataCorrelator {
      * Toggles ON/OFF the use of concurrency in data processing. 
      * </p>
      * <p>
-     * This is a thread-safe operation and will not interrupt any ongoing processing.
+     * This is a thread-safe operation and will not interrupt any current processing.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
@@ -278,20 +407,21 @@ public class QueryDataCorrelator {
      * </li>
      * <br/>
      * <li>
-     * The <code>QueryDataCorrelator</code> is currently designed to exploit all available 
-     * CPU cores.  Thus, for some situations it may be desirable to stop concurrent processing
+     * The <code>QueryDataCorrelator</code> is currently designed to exploit multiple
+     * CPU cores for correlation operations (i.e., method prefixed with <code>add</code>).  
+     * Thus, for some situations it may be desirable to stop concurrent processing
      * so it does not interfere with other real-time operations (e.g., such as gRPC streaming).
      * </li>
      * <br/>
      * <li>
-     * Due to thread safety synchronization concurrency cannot be toggled until a correlation
-     * operation (i.e., <code>insert...</code> method) has completed.
+     * For to thread safety this method is synchronized. Concurrency processing will not be 
+     * toggled until a correlation operation (i.e., <code>add...</code> method) has completed.
      * </li>
      * </ul>
      * </p>
      * 
      * @param bolUseConcurrency     set <code>true</code> to utilize concurrent processing, 
-     *                              set <code>false</code> to turn off
+     *                              set <code>false</code> to correlate all data serially
      */
     public void setConcurrency(boolean bolUseConcurrency) {
         
@@ -307,29 +437,37 @@ public class QueryDataCorrelator {
     
     /**
      * <p>
-     * Returns the target set of <code>CorrelatedQueryData</code> instances in its current state.
+     * Returns the target set of <code>CorrelatedQueryData</code> instances in its current 
+     * processing state.
      * </p>
+     * <p>
+     * If the entire results set of a Query Service data request has been added to the
+     * correlator instance then the returned collection is the fully correlated data set
+     * of the data request, ordered according to sampling clock start times.
      * <p>
      * <h2>WARNING:</h2>
      * This <code>QueryDataCorrelator</code> instance retains ownership of the returned set.
      * If the <code>{@link #reset()}</code> method is invoked this set is destroyed.
      * All subsequent processing of the returned data set must be completed before invoking
-     * <code>{@link #reset()}</code>.
+     * <code>{@link #reset()}</code>, or the data set must be copied.
      * <p>
      * 
      * @return  the sorted set (by start-time instant) of currently processed data 
      */
-    public final SortedSet<CorrelatedQueryData>   getProcessedSet() {
-        return this.setTargetRefs;
+    public final SortedSet<CorrelatedQueryData>   getCorrelatedSet() {
+        return this.setPrcdData;
     }
     
     /**
-     * Returns the current size of the target set of <code>CorrelatedQueryData</code> instances.
+     * <p>
+     * Returns the size of the correlated set of <code>CorrelatedQueryData</code> 
+     * instances processed so far.
+     * </p>
      * 
-     * @return  current size of the target set
+     * @return  current size of the correlated data set 
      */
-    public int sizeProcessedSet() {
-        return this.setTargetRefs.size();
+    public int sizeCorrelatedSet() {
+        return this.setPrcdData.size();
     }
     
     /**
@@ -337,14 +475,18 @@ public class QueryDataCorrelator {
      * Extracts and returns a set of unique data source names for all data within target set.
      * </p>
      * <p>
-     * Collects all data source names within the target set of sampling interval references and
-     * adds them to the returned set of unique names.
+     * Extracts all data source names within the target set of <code>CorrelatedQueryData</code> 
+     * objects and collects them to the returned set of unique names.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This operation can be expansive for large data sets.  Use should be limited.
      * </p>
      * 
-     * @return  set of all data source names within the Query Service response collection 
+     * @return  set of all data source names within the processed results set so far
      */
     public Set<String>   extractDataSourceNames() {
-        Set<String> setNames = this.setTargetRefs
+        Set<String> setNames = this.setPrcdData
                 .stream()
                 .collect(
                         TreeSet::new, 
@@ -361,7 +503,7 @@ public class QueryDataCorrelator {
     
     /**
      * <p>
-     * Insert the column data from a single <code>DataBucket</code> message into the target set.
+     * Add the column data from a single <code>DataBucket</code> message into the target set.
      * </p>
      * <p>
      * The sampling interval within the argument is compared against the current target set.  
@@ -383,7 +525,7 @@ public class QueryDataCorrelator {
      * 
      * @param msgBucket Query Service Protobuf message containing a query result data unit
      */
-    public void    insertBucketData(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
+    public void    addBucketData(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
 
         // This operation must be atomic - potentially modifies the target set 
         synchronized (this.objLock) {
@@ -392,13 +534,13 @@ public class QueryDataCorrelator {
             
             // Attempt to add the message data into the current set of sampling interval references
             
-            if (this.bolConcurrency && (this.setTargetRefs.size() > SZ_CONCURRENCY_PIVOT)) {
-                bolSuccess = this.setTargetRefs
+            if (this.bolConcurrency && (this.setPrcdData.size() > SZ_CONCURRENCY_PIVOT)) {
+                bolSuccess = this.setPrcdData
                         .parallelStream()
                         .anyMatch( i -> i.insertBucketData(msgBucket) );
                 
             } else {
-                bolSuccess = this.setTargetRefs
+                bolSuccess = this.setPrcdData
                         .stream()
                         .anyMatch( i -> i.insertBucketData(msgBucket) );
 
@@ -408,39 +550,42 @@ public class QueryDataCorrelator {
             if (!bolSuccess) {
                 CorrelatedQueryData refNew = CorrelatedQueryData.from(msgBucket);
 
-                this.setTargetRefs.add(refNew);
+                this.setPrcdData.add(refNew);
             }
         }
     }
     
     /**
      * <p>
-     * Inserts a Query Service <code>BucketData</code> message obtained from a 
-     * <code>QueryResponse</code> message, without error checking.
+     * Adds all data within a Query Service <code>BucketData</code> message <code>QueryResponse</code> message.
      * </p>
      * <p>
-     * Inserts all data columns within the <code>BucketData</code> message into the current target set of 
-     * correlated data references, creating new references if needed.  No error checking is
-     * enforced.
+     * The preferred method for correlating results sets from Query Service data requests.
+     * Correlates all data columns within the <code>BucketData</code> message, adding the 
+     * data into the current target set of correlated data instances, creating new instances 
+     * if needed.  (No data stream error checking is enforced.)
      * </p>
      * <p>
-     * Once this method returns all <code>DataBucket</code> messages within the argument are processed
-     * and its data column is associated with some sampling interval reference within the target set.
+     * Once this method returns all <code>DataBucket</code> messages within the argument are 
+     * processed and its data column is associated with some <code>{@link CorrelatedQueryData}</code>
+     * instance within the target set.
      * </p>
      * <p>
      * <h2>Concurrency</h2>
-     * The data processing technique pivots upon the size of the current target set.
-     * For target set size less than <code>{@link #SZ_CONCURRENCY_PIVOT}</code> data buckets are processed
-     * serially, as frequent additions to the target reference set are expected.  
-     * For larger target sets the processing technique pivots to a parallel method.  An attempt is made to 
-     * insert each data bucket within the argument concurrently into the target set.  
+     * The data processing operation pivots upon the size of the current target set.
+     * For target set size less than <code>{@link #SZ_CONCURRENCY_PIVOT}</code> data buckets are 
+     * processed serially, as frequent additions to the target reference set are expected.  
+     * For larger target sets the processing technique pivots to a parallel method.  An attempt 
+     * is made to insert each data bucket within the argument concurrently into the target set.  
      * (The probability of insertion is higher since the target set is large.) 
-     * Then a new reference set is created for the collection of data buckets that failed insertion.
-     * The new reference set is inserted into the target set.
+     * Then a <code>CorrelatedQueryData</code> set is created for the collection of data buckets 
+     * that failed insertion. The new correlated set is then added to the target set.  Note
+     * that the new correlated set is necessary disjoint (i.e., references different sampling
+     * clocks) to the current target set.
      * </p>
      * <p>
-     * This is an atomic operation potentially modifying the target set. 
-     * It synchronizes on the <code>{@link #objLock}</code> lock to maintain thread
+     * This must be an atomic operation, since it typically modifies the target set. 
+     * Thus, it synchronizes on the <code>{@link #objLock}</code> lock to maintain thread
      * safety.
      * </p>
      * <p>
@@ -449,15 +594,15 @@ public class QueryDataCorrelator {
      * <code>QueryResponse.QueryReport.BucketData</code> message without error checking.
      * </p>
      *  
-     * @param msgData   Query Service response data message
+     * @param msgData   data message extracted from response data message
      * 
      * @throws CompletionException  error in <code>DataBucket</code> insertion task execution (see cause)
      */
-    public void insertQueryData(QueryResponse.QueryReport.BucketData msgData) throws CompletionException {
+    public void addQueryData(QueryResponse.QueryReport.BucketData msgData) throws CompletionException {
         
         // Check for empty data message
         if (msgData.getDataBucketsList().isEmpty()) {
-            if (isLogging())
+            if (BOL_LOGGING)
                 LOGGER.warn("{}: attempt to insert data from empty data message.", JavaRuntime.getCallerName());
             
             return;
@@ -467,8 +612,8 @@ public class QueryDataCorrelator {
         synchronized (this.objLock) {
             
             // If the target set is small or concurrency is inactive - insert all data at once
-            if (!this.bolConcurrency || (this.setTargetRefs.size() < SZ_CONCURRENCY_PIVOT)) {
-                this.insertDataSerial(msgData);
+            if (!this.bolConcurrency || (this.setPrcdData.size() < SZ_CONCURRENCY_PIVOT)) {
+                this.processDataSerial(msgData);
 
                 return;
             }
@@ -476,33 +621,35 @@ public class QueryDataCorrelator {
             // If the target set is large - pivot to concurrent processing of message data
 //            Collection<QueryResponse.QueryReport.BucketData.DataBucket>  setFreeBuckets = this.attemptDataInsertConcurrent(msgData);
             Collection<QueryResponse.QueryReport.BucketData.DataBucket>  setFreeBuckets = this.attemptDataInsertThreadPool(msgData);
-            SortedSet<CorrelatedQueryData>  setNewTargets = this.buildDisjointTargets(setFreeBuckets);
-            this.setTargetRefs.addAll(setNewTargets);
+            SortedSet<CorrelatedQueryData>  setNewTargets = this.processDisjointTargets(setFreeBuckets);
+            this.setPrcdData.addAll(setNewTargets);
 
         }
     }
     
     /**
      * <p>
-     * Inserts the data from the given <code>QueryReport</code> message into the correlated data set,
-     * performing response error checking.
+     * Adds the data from the given <code>QueryReport</code> message into the correlated data set,
+     * performing response stream error checking.
      * </p>
      * <p>
      * The method extracts the <code>BucketData</code> message from the argument then defers 
      * processing to 
-     * <code>{@link #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>.
+     * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>.
      * The argument is first checked for a rejected request by the Query Service and throws an
      * exception if so.  The argument data is then extracted and passed to the 
-     * <code>insertQueryData()</code> method for data processing.
+     * <code>addQueryData</code> method for data processing.
      * </p>
      * 
      * @param msgReport the <code>QueryReport</code> message within a <code>QueryResponse</code>
      * 
+     * @throws CompletionException      error in <code>DataBucket</code> insertion task execution (see cause)
      * @throws CannotProceedException   the argument contained a query response error
      * 
-     * @see #insertQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
+     * @see #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
      */
-    public void insertQueryReport(QueryResponse.QueryReport msgReport) throws CannotProceedException {
+    public void addQueryReport(QueryResponse.QueryReport msgReport) 
+            throws CompletionException, CannotProceedException {
         
         // Check for response errors
         if (msgReport.hasQueryStatus()) {
@@ -510,7 +657,7 @@ public class QueryDataCorrelator {
             String strStatusMsg = msgStatus.getStatusMessage();
             QueryResponse.QueryReport.QueryStatus.QueryStatusType enmStatus = msgStatus.getQueryStatusType();
             
-            if (isLogging()) 
+            if (BOL_LOGGING) 
                 LOGGER.error("{}: Query Service response reported error with status={}, message={}", JavaRuntime.getCallerName(), enmStatus, strStatusMsg);
             
             throw new CannotProceedException("Query Service response reported error with status=" + enmStatus + " and message=" + strStatusMsg);
@@ -519,17 +666,17 @@ public class QueryDataCorrelator {
         // Insert the query response data
         QueryResponse.QueryReport.BucketData msgData = msgReport.getBucketData();
         
-        this.insertQueryData(msgData);
+        this.addQueryData(msgData);
     }
     /**
      * <p>
-     * Inserts all data from the given <code>QueryResponse</code> into the correlated data set,
-     * performing all error checking.
+     * Adds all data from the given <code>QueryResponse</code> into the correlated data set,
+     * performing ALL response stream error checking.
      * </p>
      * <p>
      * The method extracts the <code>BucketData</code> message from the argument then defers 
      * further processing to 
-     * <code>{@link #insertQueryReport(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport)}</code>.
+     * <code>{@link #addQueryReport(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport)}</code>.
      * The argument is first checked for a rejected request by the Query Service and throws an
      * exception if so.  It then extracts the <code>QueryResport</code> message and passes it
      * to the <code>insertQueryReport</code> method. 
@@ -537,19 +684,21 @@ public class QueryDataCorrelator {
      * 
      * @param msgRsp    the Query Service query response raw response message
      * 
-     * @throws OperationNotSupportedException   the query request was rejected by the Query Service
+     * @throws CompletionException  error in <code>DataBucket</code> insertion task execution (see cause)
      * @throws CannotProceedException           the argument contained a query response error
+     * @throws OperationNotSupportedException   the query request was rejected by the Query Service
      * 
-     * @see #insertQueryReport(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport)
+     * @see #addQueryReport(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport)
      */
-    public void insertQueryResponse(QueryResponse msgRsp) throws OperationNotSupportedException, CannotProceedException {
+    public void addQueryResponse(QueryResponse msgRsp) 
+            throws CompletionException, CannotProceedException, OperationNotSupportedException {
      
         // Check for rejected request
         if (msgRsp.hasQueryReject()) {
             RejectDetails msgReject = msgRsp.getQueryReject();
             String strRejectMsg = msgReject.getMessage();
             
-            if (isLogging()) 
+            if (BOL_LOGGING) 
                 LOGGER.error("{}: Query Service reported request rejection with message {}", JavaRuntime.getCallerName(), strRejectMsg);
 
             throw new OperationNotSupportedException("Query Service reported request rejection: " + strRejectMsg);
@@ -558,7 +707,7 @@ public class QueryDataCorrelator {
         // Get the query report pass it for further processing
         QueryResponse.QueryReport   msgReport = msgRsp.getQueryReport();
 
-        this.insertQueryReport(msgReport);
+        this.addQueryReport(msgReport);
     }
 
     
@@ -720,48 +869,49 @@ public class QueryDataCorrelator {
     
     /**
      * <p>
-     * Inserts all data columns within the <code>BucketData</code> message into the target set of 
-     * interval references, creating new target references if necessary.
+     * Processes all data columns within the <code>BucketData</code> message into the target 
+     * set of correlated data, creating new target data instances if necessary.
      * </p>
      * <p>
      * This method processes each <code>DataBucket</code> message within the argument serially.
-     * An attempt is made to insert its data column into the existing target set of references.
-     * If the attempt fails a new reference is created, the message is associated, then the reference
-     * is added to the target set.
+     * An attempt is made to insert its data column into the existing target set of correlated data.
+     * If the attempt fails a new correlated data instance is created, the message is associated, 
+     * then the instance is added to the target set.
      * </p>
      * <p>
-     * This method leaves the overall collection consistent.  All the <code>DataBucket</code> messages within
-     * the argument are processed upon completion. 
+     * This method leaves the overall collection consistent.  All the <code>DataBucket</code> 
+     * messages within the argument are processed upon completion. 
      * </p>
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * This method should be efficient for small target sets where the probability for new reference creation
-     * is high.  All operations are serial.
+     * This method should be efficient for small target sets where the probability for new 
+     * reference creation is high.  All operations are serial.
      * </li>
      * <br/>
      * <li>
-     * This method is not thread safe.  The method modifies the target set of references.  The target set 
-     * must not be modified during method call and should be synchronized externally.
+     * This method is not thread safe.  The method modifies the target set of references.  
+     * The target set must not be modified during method call and should be synchronized 
+     * externally.
      * </li>
      * </ul>
      * </p>
      * 
      * @param msgData   Query Service data message to be processed into this collection
      */
-    private void insertDataSerial(QueryResponse.QueryReport.BucketData msgData) {
+    private void processDataSerial(QueryResponse.QueryReport.BucketData msgData) {
 
         for (QueryResponse.QueryReport.BucketData.DataBucket msgBucket : msgData.getDataBucketsList()) {
             
             // Attempt to add the message data into the current set of sampling interval references
-            boolean bolSuccess = this.setTargetRefs
+            boolean bolSuccess = this.setPrcdData
                     .stream()
                     .anyMatch( i -> i.insertBucketData(msgBucket) );
 
             // If the message data was not added we must create a new reference and add it to the current target set
             if (!bolSuccess) 
-                this.setTargetRefs.add( CorrelatedQueryData.from(msgBucket) );
+                this.setPrcdData.add( CorrelatedQueryData.from(msgBucket) );
             
         }
     }
@@ -783,13 +933,13 @@ public class QueryDataCorrelator {
      * <ul>
      * <li>
      * This method does NOT modify the target set.  However, it requires a consistent target set
-     * during its operation.  Thus, external synchronization is advised.
+     * during its operation.  Thus, external synchronization is required.
      * </li>
      * <br/>
      * <li>
      * This method should be efficient for large target sets.  For an example in the contrary, 
-     * if the target set is empty then all <code>DataBucket</code> messages with the argument are returned 
-     * (after considerable computation).  
+     * if the target set is empty then all <code>DataBucket</code> messages with the argument 
+     * are returned (after considerable computation).  
      * </li>
      * </ul>
      * </p>
@@ -839,13 +989,13 @@ public class QueryDataCorrelator {
      * <ul>
      * <li>
      * This method does NOT modify the target set.  However, it requires a consistent target set
-     * during its operation.  Thus, external synchronization is advised.
+     * during its operation.  Thus, external synchronization is required.
      * </li>
      * <br/>
      * <li>
      * This method should be efficient for large target sets.  For an example in the contrary, 
-     * if the target set is empty then all <code>DataBucket</code> messages with the argument are returned 
-     * (after considerable computation).  
+     * if the target set is empty then all <code>DataBucket</code> messages with the argument 
+     * are returned (after considerable computation).  
      * </li>
      * </ul>
      * </p>
@@ -857,7 +1007,6 @@ public class QueryDataCorrelator {
      * @throws CompletionException  error in <code>DataBucket</code> insertion task execution (see cause)
      */
     private Collection<QueryResponse.QueryReport.BucketData.DataBucket>  attemptDataInsertThreadPool(QueryResponse.QueryReport.BucketData msgData) 
-//            throws DpQueryException
             throws CompletionException
     {
         
@@ -893,30 +1042,52 @@ public class QueryDataCorrelator {
 
     /**
      * <p>
-     * Builds a set of target references for the collection of <code>DataBucket</code> messages.
+     * Correlates the given argument producing a separate <code>CorrelatedQueryData</code>
+     * sorted data, disjoint from the current target set.
+     * </p>  
+     * <p>
+     * Builds and returns a disjoint set of <code>CorrelatedQueryData</code> instances 
+     * corresponding to the given collection of <code>DataBucket</code> messages.  That is,
+     * the returned collection is a consistent set of correlated data processed from the 
+     * given argument and sorted according to sampling clock start times.  
      * </p>
      * <p>
-     * The assumption is that the argument collection is not associated with the current managed set of 
-     * target references returned by <code>{@link #getProcessedSet()}</code>.  More specifically, the arguments
-     * have already been checked against the current target set and we know that new sampling interval references 
-     * must be created.
+     * The assumption is that the argument collection is not associated with the current managed 
+     * target set returned by <code>{@link #getCorrelatedSet()}</code>.  More specifically, the 
+     * arguments have already been checked against the current target set and we KNOW that new 
+     * <code>CorrelatedQueryData</code> instances must be created.
      * </p>
+     * <p>
+     * A new <code>{@link SortedSet}</code> of <code>CorrelatedQueryData</code> object is created.
+     * An attempt is made to insert each <code>{@link DataBucket}</code> message within the argument 
+     * into this collection of correlated data (clearly the first attempt will always fail).
+     * If the insertion fails, a new <code>CorrelatedQueryData</code> instance is created for the
+     * message and the new instance is added to the sorted set.
+     * </p> 
      * <p>  
-     * If the above assumption holds, then the references returned by this method are consistent, disjoint
-     * from the current managed target set, and associated with the argument data.  As such, the returned
+     * If the previous assumption holds, then the set returned by this method are 
+     * consistent and disjoint from the current managed target set.  As such, the returned
      * collection can then be safely added to the existing managed target set.
      * </p>
      * <p>
      * <h2>NOTE:</h2>
-     * The operations here are self-contained and orthogonal to the consistency of the managed target set.
-     * Thus, everything here should be thread safe.
+     * <ul>
+     * <li>
+     * The operations here are self-contained and orthogonal to the consistency of the managed 
+     * target set. Thus, everything here should be thread safe.
+     * </li>
+     * <br/>
+     * <li>
+     * All operations are performed serially, there is no internal multi-threading.
+     * </li>
+     * </ul>
      * </p>  
      * 
      * @param setBuckets    collection of <code>DataBucket</code> messages disjoint with the current managed target set
      * 
      * @return  set of new target references associated with the given argument data
      */
-    private SortedSet<CorrelatedQueryData>  buildDisjointTargets(Collection<QueryResponse.QueryReport.BucketData.DataBucket> setBuckets) {
+    private SortedSet<CorrelatedQueryData>  processDisjointTargets(Collection<QueryResponse.QueryReport.BucketData.DataBucket> setBuckets) {
         
         // The returned sampling interval reference - that is, the targets
         SortedSet<CorrelatedQueryData>  setRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
@@ -937,10 +1108,19 @@ public class QueryDataCorrelator {
     
     /**
      * <p>
-     * Creates a collection of data bucket insertion tasks for the given argument and current target set of 
-     * references.
+     * Creates and returns a collection of data bucket insertion tasks for the given argument
+     * and the current target set of correlated data.
      * </p>
      * <p>
+     * A separate <code>{@link BucketDataInsertTask}</code> object is create for each 
+     * <code>{@link DataBucket}</code> message contained (the subject) within the argument 
+     * message.  The object of each task is the current of correlated data set 
+     * <code>{@link #setPrcdData}</code>.  Specifically, each task attempts, when activated,
+     * attempts to insert its data bucket message into the current correlated data set.
+     * If the task fails, its data bucket should be recovered and further processed in the
+     * <code>{@link #processDisjointTargets(Collection)}</code> operation. 
+     * <p>
+     * <h2>NOTES:</h2>
      * This operation is currently serial.  If the bucket count of the argument is large parallelization may
      * be appropriate.
      * </p>
@@ -954,7 +1134,7 @@ public class QueryDataCorrelator {
         List<BucketDataInsertTask> lstTasks = msgData
                 .getDataBucketsList()
                 .stream()
-                .map(buc -> BucketDataInsertTask.newTask(buc, this.setTargetRefs))
+                .map(buc -> BucketDataInsertTask.newTask(buc, this.setPrcdData))
                 .toList();
                 
         return lstTasks;
@@ -966,6 +1146,7 @@ public class QueryDataCorrelator {
      * <code>DataBucket</code> subjects.
      * </p>
      * <p>
+     * <h2>NOTES:</h2>
      * This operation is currently serial.  For large task collections parallelization may be appropriate.
      * </p>
      * 
@@ -980,27 +1161,8 @@ public class QueryDataCorrelator {
                 .filter(t -> !t.isSuccess())
                 .map(t -> t.getSubject())
                 .toList();
-//                .stream()
-//                .collect(
-//                        ArrayList::new, 
-//                        (c, t) -> { if (!t.isSuccess()) c.add(t.getSubject()); }, 
-//                        ArrayList::addAll
-//                        );
 
         return lstBuckets;
     }
     
-
-    //
-    // Class Support
-    //
-    
-    /**
-     * Returns whether or not class logging is active.
-     * 
-     * @return  <code>true</code> if logging is active, <code>false</code> otherwise
-     */
-    private static boolean isLogging() {
-        return BOL_LOGGING;
-    }
 }

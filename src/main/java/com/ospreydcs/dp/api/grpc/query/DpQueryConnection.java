@@ -28,7 +28,7 @@
 package com.ospreydcs.dp.api.grpc.query;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
@@ -61,7 +61,7 @@ public class DpQueryConnection extends DpGrpcConnection<DpQueryServiceGrpc, DpQu
     //
     
     /** The Query Service default connection parameters */
-    public static final GrpcConnectionConfig        CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
+    public static final DpGrpcConnectionConfig        CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
     
     
     //

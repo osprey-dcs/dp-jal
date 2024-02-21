@@ -35,7 +35,7 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  * Structure containing connection parameters for Data Platform services.
  * </p>
  *
- * @see GrpcConnectionConfig
+ * @see DpGrpcConnectionConfig
  */
 @ACfgOverride.Root(root="DP_API_CONNECTIION")
 public final class DpConnectionsConfig extends CfgStructure<DpConnectionsConfig> {
@@ -48,10 +48,10 @@ public final class DpConnectionsConfig extends CfgStructure<DpConnectionsConfig>
 
     /** Data Platform Ingestion Service connection parameters */
     @ACfgOverride.Struct(pathelem="INGESTION")
-    public GrpcConnectionConfig     ingestion;
+    public DpGrpcConnectionConfig     ingestion;
     
     /** Data Platform Query Service connection parameters */
     @ACfgOverride.Struct(pathelem="QUERY")
-    public GrpcConnectionConfig     query;
+    public DpGrpcConnectionConfig     query;
 
 }

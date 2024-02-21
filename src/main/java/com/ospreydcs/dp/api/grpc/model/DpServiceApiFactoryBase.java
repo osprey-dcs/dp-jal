@@ -30,7 +30,7 @@ package com.ospreydcs.dp.api.grpc.model;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 
 /**
  * <p>
@@ -104,14 +104,14 @@ public abstract class DpServiceApiFactoryBase<
      */
 //    private class ConnectionFactory extends DpGrpcConnectionFactory<ServiceGrpc, BlockStub, FutureStub, AsyncStub> {
 //
-//        protected ConnectionFactory(Class<ServiceGrpc> clsService, GrpcConnectionConfig cfgConn) {
+//        protected ConnectionFactory(Class<ServiceGrpc> clsService, DpGrpcConnectionConfig cfgConn) {
 //            super(clsService, cfgConn);
 //        }
 //        
 //    }
     private class ConnectionFactory extends DpGrpcConnectionFactoryBase<Connection, ServiceGrpc, BlockStub, FutureStub, AsyncStub> {
 
-        protected ConnectionFactory(Class<ServiceGrpc> clsService, GrpcConnectionConfig cfgConn) {
+        protected ConnectionFactory(Class<ServiceGrpc> clsService, DpGrpcConnectionConfig cfgConn) {
             super(clsService, cfgConn);
         }
 
@@ -175,7 +175,7 @@ public abstract class DpServiceApiFactoryBase<
      * @param clsService    class type of the Protobuf-generated gRPC interface supporting the service APIs
      * @param cfg           default configuration parameters for the gRPC connections required by service APIs
      */
-    protected DpServiceApiFactoryBase(Class<ServiceGrpc> clsService, GrpcConnectionConfig cfg) {
+    protected DpServiceApiFactoryBase(Class<ServiceGrpc> clsService, DpGrpcConnectionConfig cfg) {
         this.fac = new ConnectionFactory(clsService, cfg);
     }
     

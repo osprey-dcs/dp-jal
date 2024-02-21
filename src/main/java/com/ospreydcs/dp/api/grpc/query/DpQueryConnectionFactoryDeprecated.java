@@ -31,7 +31,7 @@ import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
@@ -67,7 +67,7 @@ public final class DpQueryConnectionFactoryDeprecated {
     //
     
     /** The API Library default Query Service configuration parameters */
-    private static final GrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
+    private static final DpGrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
 
     
     //
@@ -254,7 +254,7 @@ public final class DpQueryConnectionFactoryDeprecated {
      * Prevents creation of <code>DpQueryConnectionFactoryDeprecated</code> instances.
      * </p>
      */
-    private DpQueryConnectionFactoryDeprecated(GrpcConnectionConfig cfgDefault) {
+    private DpQueryConnectionFactoryDeprecated(DpGrpcConnectionConfig cfgDefault) {
 //        super(DpQueryServiceGrpc.class, cfgDefault)
     }
 

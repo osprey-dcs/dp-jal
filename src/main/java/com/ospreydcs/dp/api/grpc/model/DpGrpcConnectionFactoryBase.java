@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 
 import io.grpc.ChannelCredentials;
 import io.grpc.Grpc;
@@ -59,13 +59,13 @@ import io.grpc.TlsChannelCredentials;
  * connection parameters.  For example, the method {@link #connect()} returns an active 
  * <code>Connection</code> instance with all default connection parameters.  The default
  * connection parameters are provided to the class constructor and are of type
- * <code>{@link GrpcConnectionConfig}</code>.
+ * <code>{@link DpGrpcConnectionConfig}</code>.
  * </p>
  * <p>
  * Derived classes must implement the following methods:
  * <ul>
  * <li>
- * <code>{@link #DpGrpcConnectionFactoryBase(Class, GrpcConnectionConfig)}</code> - The base
+ * <code>{@link #DpGrpcConnectionFactoryBase(Class, DpGrpcConnectionConfig)}</code> - The base
  * class must implement a constructor that supplies the arguments for the <code>ServiceGrpc</code>
  * type and the default parameters used for gRPC connections.
  * </li>
@@ -187,7 +187,7 @@ public abstract class DpGrpcConnectionFactoryBase<
     private final Class<ServiceGrpc>    clsService;
     
     /** Record containing default connection parameters */
-    private final GrpcConnectionConfig  cfgConn;
+    private final DpGrpcConnectionConfig  cfgConn;
     
     
     
@@ -230,7 +230,7 @@ public abstract class DpGrpcConnectionFactoryBase<
      * @param clsService class type of the gRPC communications service
      * @param cfgConn    record of the default configuration parameters
      */
-    protected DpGrpcConnectionFactoryBase(Class<ServiceGrpc> clsService, GrpcConnectionConfig cfgConn) {
+    protected DpGrpcConnectionFactoryBase(Class<ServiceGrpc> clsService, DpGrpcConnectionConfig cfgConn) {
         this.clsService = clsService;
         this.cfgConn    = cfgConn;
     }
@@ -340,7 +340,7 @@ public abstract class DpGrpcConnectionFactoryBase<
      * This method decides upon <em>default</em> TLS security or <em>explicit</em> TLS security.
      * <br/><br/>
      * The decision depends upon the default configuration parameter 
-     * <code>GrpcConnectionConfig#channel.tls.defaultTls</code>.
+     * <code>DpGrpcConnectionConfig#channel.tls.defaultTls</code>.
      * <br/><br/>
      * It defers to the following methods depending on the value of this parameter:
      * <ul>
@@ -356,7 +356,7 @@ public abstract class DpGrpcConnectionFactoryBase<
      * </p> 
      * <h2>NOTES:</h2>
      * <ul>
-     * <li>If the default configuration parameter <code>GrpcConnectionConfig#channel.tls.active</code> 
+     * <li>If the default configuration parameter <code>DpGrpcConnectionConfig#channel.tls.active</code> 
      * is set to <code>false</code> then the method 
      * <code>{@link #connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)}</code>
      * is always called with parameter <code>bolTlsActive</code> set to <code>false</code>.
@@ -560,7 +560,7 @@ public abstract class DpGrpcConnectionFactoryBase<
      * Defers to method <code>{@link #connect(String, int, File, File, File)}</code>
      * </p>
      * <h2>NOTES:</h2>
-     * If the <code>GrpcConnectionConfig.channel.grpc.usePlainText</code> default parameter is
+     * If the <code>DpGrpcConnectionConfig.channel.grpc.usePlainText</code> default parameter is
      * set to <code>true</code> all TLS security is <b>negated</b>.
      * </p>
      * 
@@ -600,7 +600,7 @@ public abstract class DpGrpcConnectionFactoryBase<
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * If the <code>GrpcConnectionConfig.channel.grpc.usePlainText</code> default parameter is
+     * If the <code>DpGrpcConnectionConfig.channel.grpc.usePlainText</code> default parameter is
      * set to <code>true</code> all TLS security is <b>negated</b>.
      * </p>
      * 

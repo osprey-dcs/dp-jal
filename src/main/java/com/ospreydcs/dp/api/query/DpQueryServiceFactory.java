@@ -28,7 +28,7 @@
 package com.ospreydcs.dp.api.query;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase;
@@ -81,7 +81,7 @@ public final class DpQueryServiceFactory
     //
     
     /** Default configuration parameters for all DP Query Service connections as taken from the application configuration */
-    private static final GrpcConnectionConfig   CFG_CONN_DEFAULT = DpApiConfig.getInstance().connections.query;
+    private static final DpGrpcConnectionConfig   CFG_CONN_DEFAULT = DpApiConfig.getInstance().connections.query;
 
     
     //
@@ -110,7 +110,7 @@ public final class DpQueryServiceFactory
      * 
      * @return  a new Query Service API factory ready for <code>DpQueryService</code> creation and connection
      */
-    public static final DpQueryServiceFactory   newFactory(GrpcConnectionConfig cfgDefault) {
+    public static final DpQueryServiceFactory   newFactory(DpGrpcConnectionConfig cfgDefault) {
         return new DpQueryServiceFactory(cfgDefault);
     }
     
@@ -144,7 +144,7 @@ public final class DpQueryServiceFactory
      * 
      * @param   cfgDefault  the default connection parameters for the query service used by new factory
      */
-    private DpQueryServiceFactory(GrpcConnectionConfig cfgDefault) {
+    private DpQueryServiceFactory(DpGrpcConnectionConfig cfgDefault) {
         super(DpQueryServiceGrpc.class, cfgDefault);
     }
 

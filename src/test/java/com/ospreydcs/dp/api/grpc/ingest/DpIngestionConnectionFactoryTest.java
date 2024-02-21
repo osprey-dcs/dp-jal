@@ -40,7 +40,7 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.DpApiTestingConfig;
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 
 /**
@@ -60,10 +60,10 @@ public class DpIngestionConnectionFactoryTest {
     //
     
     /** The DP API Library Ingestion Service default configuration parameters */
-    private static final GrpcConnectionConfig.Channel   CFG_DEFAULT = DpApiConfig.getInstance().connections.ingestion.channel;
+    private static final DpGrpcConnectionConfig.Channel   CFG_DEFAULT = DpApiConfig.getInstance().connections.ingestion.channel;
 
     /** The DP API Library Query Service testing configuration parameters - Ingestion not avaible yet */
-    private static final GrpcConnectionConfig           CFG_TESTING = DpApiTestingConfig.getInstance().testQuery.connection;
+    private static final DpGrpcConnectionConfig           CFG_TESTING = DpApiTestingConfig.getInstance().testQuery.connection;
 
     
     //
@@ -114,7 +114,7 @@ public class DpIngestionConnectionFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory#newFactory(com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory#newFactory(com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig)}.
      */
     @Test
     public final void testNewFactory() {

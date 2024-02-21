@@ -28,7 +28,7 @@
 package com.ospreydcs.dp.api.grpc.ingest;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.grpc.GrpcConnectionConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
@@ -58,7 +58,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
  * <h2>NOTES:</h2>
  * It is possible to create Ingestion Service connection factory instances that use alternate default
  * parameters for connection configurations.  The static creator method 
- * <code>{@link #newFactory(GrpcConnectionConfig)}</code> is available for this purpose.
+ * <code>{@link #newFactory(DpGrpcConnectionConfig)}</code> is available for this purpose.
  * (It also creates the static instance <code>{@link #FACTORY}</code> using the DP API library
  * configuration.
  * </p>
@@ -82,7 +82,7 @@ public class DpIngestionConnectionFactory extends
     //
     
     /** The API Library default Query Service configuration parameters */
-    private static final GrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.ingestion;
+    private static final DpGrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.ingestion;
 
     
     //
@@ -128,7 +128,7 @@ public class DpIngestionConnectionFactory extends
      * 
      * @return  a new Ingestion Service connection factory use the given default parameters
      */
-    public static DpIngestionConnectionFactory  newFactory(GrpcConnectionConfig cfgDefault) {
+    public static DpIngestionConnectionFactory  newFactory(DpGrpcConnectionConfig cfgDefault) {
         return new DpIngestionConnectionFactory(cfgDefault);
     }
     
@@ -145,7 +145,7 @@ public class DpIngestionConnectionFactory extends
      *
      * @param cfgConn   configuration structure supplying connection default parameters 
      */
-    protected DpIngestionConnectionFactory(GrpcConnectionConfig cfgConn) {
+    protected DpIngestionConnectionFactory(DpGrpcConnectionConfig cfgConn) {
         super(DpIngestionServiceGrpc.class, cfgConn);
     }
 
