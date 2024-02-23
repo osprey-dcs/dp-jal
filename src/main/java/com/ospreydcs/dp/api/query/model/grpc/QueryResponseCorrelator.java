@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	QueryResponseCorrelator.java
- * Package: com.ospreydcs.dp.api.query.model.proto
+ * Package: com.ospreydcs.dp.api.query.model.grpc
  * Type: 	QueryResponseCorrelator
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.proto;
+package com.ospreydcs.dp.api.query.model.grpc;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -46,15 +46,15 @@ import javax.naming.OperationNotSupportedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.ResultRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
-import com.ospreydcs.dp.api.model.ResultRecord;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpDataRequest.CompositeType;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
-import com.ospreydcs.dp.api.query.model.time.SamplingProcess;
+import com.ospreydcs.dp.api.query.model.process.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryRequest;

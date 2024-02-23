@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.api.query.model.time
+ * Package: com.ospreydcs.dp.api.common
  * Type: 	package-info
  *
  * Copyright 2010-2023 the original author or authors.
@@ -20,18 +20,22 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jan 11, 2024
+ * @since Feb 21, 2024
  *
  * TODO:
  * - None
  */
+
 /**
  * <p>
- * Contains classes and resources for managing the time and timestamp components of Query Service responses.
+ * Package of common resources used by the entire Data Platform API Library.
  * </p>
- * 
+ * <p>
+ * The package contains resource common to all Data Platform API library classes, operations, and resources.
+ * </p> 
+ *
  * @author Christopher K. Allen
- * @since Jan 11, 2024
+ * @since Feb 21, 2024
  *
  */
-package com.ospreydcs.dp.api.query.model.time;
+package com.ospreydcs.dp.api.common;

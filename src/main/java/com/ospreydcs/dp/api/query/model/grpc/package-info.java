@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.api.model
+ * Package: com.ospreydcs.dp.api.query.model.grpc
  * Type: 	package-info
  *
  * Copyright 2010-2023 the original author or authors.
@@ -20,22 +20,18 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jan 5, 2024
+ * @since Jan 12, 2024
  *
  * TODO:
  * - None
  */
-
 /**
  * <p>
- * Contains common modeling resources used by the Data Platform API library.
- * </p>
- * <p>
- * The package contains essential modeling resources common to all other API library systems.
+ * Contains classes and resources for processing the Protobuf messages of the Query Service.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Jan 5, 2024
+ * @since Jan 12, 2024
  *
  */
-package com.ospreydcs.dp.api.model;
+package com.ospreydcs.dp.api.query.model.grpc;

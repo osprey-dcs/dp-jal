@@ -40,9 +40,9 @@ import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.ospreydcs.dp.api.common.BufferedImage;
+import com.ospreydcs.dp.api.common.BufferedImage.Format;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
-import com.ospreydcs.dp.api.model.BufferedImage;
-import com.ospreydcs.dp.api.model.BufferedImage.Format;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
@@ -208,12 +208,12 @@ public final class ProtoMsg {
      * 
      * @return a new <code>DataColumn</code> message populated with the given arguments
      * 
-     * @throws UnsupportedOperationException the object argument was not one of the supported types (see {@link #toDatum(Object)})
+     * @throws TypeNotPresentException the object argument was not one of the supported types (see {@link #createDataValue(Object)})
      * @throws ClassCastException attempted conversion of list to array to sorted map to structure failed
      * 
      * @see #toDatum(Object)
      */
-    public static DataColumn createDataColumn(String strName, List<Object> lstVals) throws UnsupportedOperationException, ClassCastException {
+    public static DataColumn createDataColumn(String strName, List<Object> lstVals) throws TypeNotPresentException, ClassCastException {
         List<DataValue> lstValMsgs = lstVals.stream().map(v -> ProtoMsg.createDataValue(v)).toList();
         
         DataColumn.Builder  bldr = DataColumn.newBuilder();
@@ -289,7 +289,7 @@ public final class ProtoMsg {
      * 
      * @return <code>DataValue</code> message containing the given value
      * 
-     * @throws UnsupportedOperationException the argument was not one of the above types
+     * @throws TypeNotPresentException the argument was not one of the above types
      * @throws ClassCastException attempted conversion of list to array to sorted map to structure failed
      * 
      * @see #toArray(List)
@@ -297,7 +297,7 @@ public final class ProtoMsg {
      * @see SuppressWarnings
      */
     @SuppressWarnings({ "unchecked" })
-    public static DataValue createDataValue(Object objValue) throws UnsupportedOperationException, ClassCastException {
+    public static DataValue createDataValue(Object objValue) throws TypeNotPresentException, ClassCastException {
         DataValue.Builder bldrDatum = DataValue.newBuilder();
         
         if (objValue instanceof Boolean val) {
@@ -325,7 +325,7 @@ public final class ProtoMsg {
             bldrDatum.setImage( ProtoMsg.from(img) );
             
         } else {
-            throw new UnsupportedOperationException("ProtoMsg#toDatum(Object): Unsupported type " + objValue.getClass().getName());
+            throw new TypeNotPresentException("ProtoMsg#toDatum(Object): Unsupported type " + objValue.getClass().getName(), null);
         }
         return bldrDatum.build(); 
     }
@@ -345,12 +345,12 @@ public final class ProtoMsg {
      * 
      * @return a new linear array gRPC message populated with the given argument data
      * 
-     * @throws UnsupportedOperationException encountered an unsupported type in the argument list (see {@link #toDatum(Object)})
+     * @throws TypeNotPresentException encountered an unsupported type in the argument list (see {@link #createDataValue(Object)})
      * @throws ClassCastException a data structure did not have the appropriate type
      * 
      * @see ProtoMsg#from(Object)
      */
-    public static Array createArray(List<Object> lstObjs) throws UnsupportedOperationException, ClassCastException {
+    public static Array createArray(List<Object> lstObjs) throws TypeNotPresentException, ClassCastException {
         Array.Builder bldrArr = Array.newBuilder();
         List<DataValue>   lstVals = lstObjs.stream().map( o -> ProtoMsg.createDataValue(o) ).toList();
         bldrArr.addAllDataValues(lstVals);
@@ -585,11 +585,11 @@ public final class ProtoMsg {
      * 
      * @return  The uniform data type of all data contained within the argument
      * 
-     * @throws MissingResourceException         the argument was empty (contained no data)
-     * @throws IllegalStateException            the column data was of non-uniform type
-     * @throws UnsupportedOperationException    an unsupported data type was encountered
+     * @throws MissingResourceException   the argument was empty (contained no data)
+     * @throws IllegalStateException      the column data was of non-uniform type
+     * @throws TypeNotPresentException    an unsupported data type was encountered
      */
-    public static DpSupportedType extractType(DataColumn msgDataCol) throws MissingResourceException, IllegalStateException, UnsupportedOperationException {
+    public static DpSupportedType extractType(DataColumn msgDataCol) throws MissingResourceException, IllegalStateException, TypeNotPresentException {
         List<DataValue> lstVals = msgDataCol.getDataValuesList();
         
         // Check the argument
@@ -637,11 +637,11 @@ public final class ProtoMsg {
      * 
      * @return  a Java ordered <code>List</code> containing the data of the given argument
      * 
-     * @throws UnsupportedOperationException an unsupported type was encountered (see message)
+     * @throws TypeNotPresentException an unsupported type was encountered (see message)
      * 
      * @see #extractValue(DataValue)
      */
-    public static List<Object> extractValues(DataColumn msgDataCol) throws UnsupportedOperationException {
+    public static List<Object> extractValues(DataColumn msgDataCol) throws TypeNotPresentException {
         List<DataValue> lstMsgVals = msgDataCol.getDataValuesList();
         List<Object>    lstObjVals = lstMsgVals.stream().map( ProtoMsg::extractValue ).toList();
         
@@ -667,14 +667,14 @@ public final class ProtoMsg {
      * 
      * @return  ordered list of data values within argument converted to type <code>T</code>
      * 
-     * @throws UnsupportedOperationException an unsupported type was encountered
-     * @throws ClassCastException            the message data value could not be cast to the given type
+     * @throws TypeNotPresentException  an unsupported type was encountered
+     * @throws ClassCastException       the message data value could not be cast to the given type
      * 
      * @see #extractValueAs(Class, DataValue)
      */
-    @AAdvancedApi(status=AAdvancedApi.STATUS.TESTED_ALPHA, note="Calls extractValuesAs(Class<T>, DataValue).")
+    @AAdvancedApi(status=AAdvancedApi.STATUS.TESTED_BETA, note="Calls extractValuesAs(Class<T>, DataValue).")
     public static <T extends Object> List<T> extractValuesAs(Class<T> clsType, DataColumn msgDataCol) 
-        throws UnsupportedOperationException, ClassCastException {
+        throws TypeNotPresentException, ClassCastException {
         List<DataValue> lstMsgVals = msgDataCol.getDataValuesList();
         List<T>         lstVals = lstMsgVals.stream().map(msgVal -> ProtoMsg.extractValueAs(clsType, msgVal)).toList();
         
@@ -696,9 +696,10 @@ public final class ProtoMsg {
      * 
      * @return  Java <code>Vector</code> of extracted message data
      * 
+     * @throws  TypeNotPresentException unsupported data type encountered
      * @see #extractValue(DataValue)
      */
-    public static Vector<Object> extractValues(Array msgArray) {
+    public static Vector<Object> extractValues(Array msgArray) throws TypeNotPresentException {
         List<DataValue> lstVals = msgArray.getDataValuesList();
         List<Object>    lstObjs = lstVals.stream().map(ProtoMsg::extractValue).toList();
         Vector<Object>  vecObjs = new Vector<>(lstObjs);
@@ -751,9 +752,9 @@ public final class ProtoMsg {
      * @return a <code>Map</code> where the keys are the structure field names and
      *         the values are the extracted data values from the <code>Field</code> value fields
      *         
-     * @throws UnsupportedOperationException an unsupported type was encountered (see message) 
+     * @throws TypeNotPresentException an unsupported type was encountered (see message) 
      */
-    public static Map<String, Object> extractValues(Structure msgStruct) throws UnsupportedOperationException {
+    public static Map<String, Object> extractValues(Structure msgStruct) throws TypeNotPresentException {
         List<Field>         lstFlds = msgStruct.getFieldsList();
         Map<String, Object> map = lstFlds.stream().collect(Collectors.toMap(Field::getName, f -> ProtoMsg.extractValue(f.getValue())));
 
@@ -770,10 +771,10 @@ public final class ProtoMsg {
      *  
      * @return  <code>DpSupportedType</code> representation of the message value data type
      * 
-     * @throws IllegalArgumentException      the data value field was not set (empty)
-     * @throws UnsupportedOperationException an unsupported type was encountered
+     * @throws IllegalArgumentException the data value field was not set (empty)
+     * @throws TypeNotPresentException  an unsupported type was encountered
      */
-    public static DpSupportedType   extractType(DataValue msgDataValue) throws IllegalArgumentException, UnsupportedOperationException {
+    public static DpSupportedType   extractType(DataValue msgDataValue) throws IllegalArgumentException, TypeNotPresentException {
         
         return switch (msgDataValue.getValueOneofCase()) {
         case STRINGVALUE -> DpSupportedType.STRING;
@@ -785,7 +786,7 @@ public final class ProtoMsg {
         case STRUCTUREVALUE -> DpSupportedType.STRUCTURE;
         case IMAGE -> DpSupportedType.IMAGE;
         case VALUEONEOF_NOT_SET -> throw new IllegalArgumentException("The data value was not set.");
-        default -> throw new UnsupportedOperationException("The data value type was not recognized.");
+        default -> throw new TypeNotPresentException("The data value type was not recognized.", null);
         };
     }
     
@@ -809,10 +810,10 @@ public final class ProtoMsg {
      *  
      * @return  Java object representation of the message value
      * 
-     * throws IllegalArgumentException      the data value field was not set (empty)
-     * @throws UnsupportedOperationException an unsupported type was encountered
+     * throws IllegalArgumentException  the data value field was not set (empty)
+     * @throws TypeNotPresentException  an unsupported type was encountered
      */
-    public static Object extractValue(DataValue msgDataValue) throws /* IllegalArgumentException, */ UnsupportedOperationException {
+    public static Object extractValue(DataValue msgDataValue) throws /* IllegalArgumentException, */ TypeNotPresentException {
         
         return switch (msgDataValue.getValueOneofCase()) {
             case STRINGVALUE -> msgDataValue.getStringValue();
@@ -827,7 +828,7 @@ public final class ProtoMsg {
                 null;
 //                throw new IllegalArgumentException("The data value was not set.");
             default ->
-                throw new UnsupportedOperationException("The data value was not unrecognized - value " + msgDataValue.getDescriptorForType());
+                throw new TypeNotPresentException("The data value was not unrecognized - value " + msgDataValue.getDescriptorForType(), null);
         };
     }
 
@@ -872,12 +873,12 @@ public final class ProtoMsg {
      * 
      * @return          extracted data value of the given message cast to the given type
      * 
-     * throws IllegalArgumentException      the data value field was not set (empty)
-     * @throws UnsupportedOperationException an unsupported type was encountered
-     * @throws ClassCastException            the message data value could not be cast to the given type
+     * throws IllegalArgumentException  the data value field was not set (empty)
+     * @throws TypeNotPresentException  an unsupported type was encountered
+     * @throws ClassCastException       the message data value could not be cast to the given type
      */
     @AAdvancedApi(status=AAdvancedApi.STATUS.TESTED_ALPHA, note="Passes through if-then cases")
-    public static <T extends Object> T extractValueAs(Class<T> clsVal, DataValue msgVal) throws UnsupportedOperationException, ClassCastException {
+    public static <T extends Object> T extractValueAs(Class<T> clsVal, DataValue msgVal) throws TypeNotPresentException, ClassCastException {
         
         if (msgVal.getValueOneofCase() == ValueOneofCase.VALUEONEOF_NOT_SET)
 //            throw new IllegalArgumentException("The data value was not set.");
@@ -905,7 +906,7 @@ public final class ProtoMsg {
         else if (clsVal.equals(Image.class))
             obj = msgVal.getImage();
         else
-            throw new UnsupportedOperationException("Unsupported class type " + clsVal.getName());
+            throw new TypeNotPresentException("Unsupported class type " + clsVal.getName(), null);
         
         return clsVal.cast(obj);
     }

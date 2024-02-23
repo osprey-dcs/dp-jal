@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	QueryResponseStreamBidiProcessorDeprecated.java
- * Package: com.ospreydcs.dp.api.query.model.proto
+ * Package: com.ospreydcs.dp.api.query.model.grpc
  * Type: 	QueryResponseStreamBidiProcessorDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.proto;
+package com.ospreydcs.dp.api.query.model.grpc;
 
 import java.util.function.Consumer;
 
@@ -162,7 +162,7 @@ public class QueryResponseStreamBidiProcessorDeprecated extends QueryResponseStr
      * because of an error).
      * </p>
      *
-     * @see com.ospreydcs.dp.api.query.model.proto.QueryResponseStreamProcessor#run()
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#run()
      */
     @Override
     public void run() {
@@ -192,7 +192,7 @@ public class QueryResponseStreamBidiProcessorDeprecated extends QueryResponseStr
      * 
      * @throws Exception    the <code>{@link #hndQueryService}</code> instance is <code>null<?coce>
      * 
-     * @see com.ospreydcs.dp.api.query.model.proto.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
     protected void requestProcessed(QueryResponse msgRsp) throws Exception {

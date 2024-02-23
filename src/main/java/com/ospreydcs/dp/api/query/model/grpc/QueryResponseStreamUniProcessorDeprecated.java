@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:    QueryResponseStreamUniProcessorDeprecated.java
- * Package: com.ospreydcs.dp.api.query.model.proto
+ * Package: com.ospreydcs.dp.api.query.model.grpc
  * Type:    QueryResponseStreamUniProcessorDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
@@ -26,7 +26,7 @@
  * - None
  */
 
-package com.ospreydcs.dp.api.query.model.proto;
+package com.ospreydcs.dp.api.query.model.grpc;
 
 import java.util.function.Consumer;
 
@@ -158,7 +158,7 @@ public final class QueryResponseStreamUniProcessorDeprecated extends QueryRespon
      *
      * @param   msgRsp  response message that was just processed (unused)
      * 
-     * @see com.ospreydcs.dp.api.query.model.proto.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
     protected void requestProcessed(QueryResponse msgRsp) {

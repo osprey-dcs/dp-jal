@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.api.query.model.proto
+ * Package: com.ospreydcs.dp.api.query.model.process
  * Type: 	package-info
  *
  * Copyright 2010-2023 the original author or authors.
@@ -20,18 +20,18 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jan 12, 2024
+ * @since Jan 11, 2024
  *
  * TODO:
  * - None
  */
 /**
  * <p>
- * Contains classes and resources for processing the Protobuf messages of the Query Service.
+ * Contains classes and resources for defining formal time-series processes.
  * </p>
- *
+ * 
  * @author Christopher K. Allen
- * @since Jan 12, 2024
+ * @since Jan 11, 2024
  *
  */
-package com.ospreydcs.dp.api.query.model.proto;
+package com.ospreydcs.dp.api.query.model.process;

@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Vector;
 
 import com.google.protobuf.ByteString;
+import com.ospreydcs.dp.api.common.BufferedImage;
+import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 
 /**
  * <p>
@@ -54,16 +56,30 @@ public enum DpSupportedType {
 //    ARRAY(Vector.class),
 //    STRUCTURE(Map.class),
 //    UNSUPPORTED_TYPE(null)
+    
     BOOLEAN(Boolean.class),
+    
     INTEGER(Integer.class),
+    
     LONG(Long.class),
+    
     FLOAT(Float.class),
+    
     DOUBLE(Double.class),
+    
     STRING(String.class),
+    
     BYTE_ARRAY(ByteString.class),
+    
+    @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented")
     IMAGE(BufferedImage.class),
+    
+    @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented")
     ARRAY(Vector.class),
+    
+    @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented")
     STRUCTURE(Map.class),
+    
     UNSUPPORTED_TYPE(null)
     ;
 

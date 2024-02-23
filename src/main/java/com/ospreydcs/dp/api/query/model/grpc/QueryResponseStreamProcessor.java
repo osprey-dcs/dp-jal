@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	QueryResponseStreamProcessor.java
- * Package: com.ospreydcs.dp.api.query.model.proto
+ * Package: com.ospreydcs.dp.api.query.model.grpc
  * Type: 	QueryResponseStreamProcessor
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,13 +25,13 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.proto;
+package com.ospreydcs.dp.api.query.model.grpc;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
-import com.ospreydcs.dp.api.model.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultRecord;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -939,7 +939,7 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
      *
      * @param   msgRsp  response message that was just processed (unused)
      * 
-     * @see com.ospreydcs.dp.api.query.model.proto.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
     protected void requestProcessed(QueryResponse msgRsp) {
@@ -1067,7 +1067,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * because of an error).
      * </p>
      *
-     * @see com.ospreydcs.dp.api.query.model.proto.QueryResponseStreamProcessor#run()
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#run()
      */
     @Override
     public void run() {
@@ -1097,7 +1097,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * 
      * @throws Exception    the <code>{@link #hndQueryService}</code> instance is <code>null<?coce>
      * 
-     * @see com.ospreydcs.dp.api.query.model.proto.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
     protected void requestProcessed(QueryResponse msgRsp) throws Exception {

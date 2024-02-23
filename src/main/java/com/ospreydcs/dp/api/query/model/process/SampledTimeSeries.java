@@ -25,15 +25,19 @@
  * TODO:
  * - See documentation
  */
-package com.ospreydcs.dp.api.query.model.data;
+package com.ospreydcs.dp.api.query.model.process;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.DpSupportedType;
+import com.ospreydcs.dp.api.model.IDataColumn;
 
 /**
  * <p>
@@ -50,16 +54,26 @@ import com.ospreydcs.dp.api.model.DpSupportedType;
  * <p>
  * <h2>TODO</h2>
  * <ul>
- * <li>Depending upon final usage, the container type for values might be changed to <code>Vector</code>.</li>
- * <li>Add an interface implementation such as <code>IDataColumn</code>.</li>
+ * <li><s>Depending upon final usage, the container type for values might be changed to <code>Vector</code></s>.</li>
+ * <li><s>Add an interface implementation such as <code>IDataColumn</code></s>.</li>
  * </ul>
+ * 
+ * @param   <T>     data type of the sampled value
  *
  * @author Christopher K. Allen
  * @since Jan 30, 2024
  *
  */
-public class SampledTimeSeries {
+public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Serializable {
     
+    
+    //
+    // Class Constants
+    //
+    
+    /** <code>Serializable</code> interface serialization ID - used for allocation size estimation */
+    private static final long serialVersionUID = 7510269355880505323L;
+
     
     //
     // Attributes
@@ -72,7 +86,7 @@ public class SampledTimeSeries {
     private final DpSupportedType   enmType;
     
     /** Sampled data value of the time series - linked list for anticipated modifications */
-    private final ArrayList<Object> vecValues; // = new LinkedList<>();
+    private final ArrayList<T>      vecValues; // = new LinkedList<>();
 
     
     //
@@ -94,16 +108,17 @@ public class SampledTimeSeries {
      * 
      * @return  a new <code>SampledTimeSeries</code> instance containing <code>null</code> data values
      */
-    public static SampledTimeSeries nullSeries(String strSourceName, DpSupportedType enmType, int cntSize) {
-        ArrayList<Object>    lstNulls = new ArrayList<>(cntSize);
+    public static <T extends Object> SampledTimeSeries<T> nullSeries(String strSourceName, DpSupportedType enmType, int cntSize) {
+//        ArrayList<T>    lstNulls = new ArrayList<>(cntSize);
+//        
+//        for (int n=0; n<cntSize; n++) 
+//            lstNulls.add(null);
         
-        for (int n=0; n<cntSize; n++) 
-            lstNulls.add(null);
-        
-        SampledTimeSeries   stms = new SampledTimeSeries(strSourceName, enmType, lstNulls);
+        SampledTimeSeries<T>   stms = new SampledTimeSeries<T>(strSourceName, enmType, cntSize);
         
         return stms;
     }
+    
     /**
      * <p>
      * Creates a new, initialized <code>SampledTimeSeries</code> instance populated with the given argument.
@@ -117,23 +132,26 @@ public class SampledTimeSeries {
      * 
      * @return  new <code>SampledTimeSeries</code> instance populated with argument data
      * 
-     * @throws MissingResourceException      the argument contained no data (empty message)
-     * @throws IllegalStateException         the argument contained non-uniform data types
-     * @throws UnsupportedOperationException the argument contained an unsupported data type
+     * @throws MissingResourceException the argument contained no data (empty message)
+     * @throws IllegalStateException    the argument contained non-uniform data types
+     * @throws TypeNotPresentException  the argument contained an unsupported data type
      */
-    public static SampledTimeSeries  from(com.ospreydcs.dp.grpc.v1.common.DataColumn msgDataCol) 
-            throws MissingResourceException, IllegalStateException, UnsupportedOperationException {
+    @SuppressWarnings("unchecked")
+    public static <T extends Object> SampledTimeSeries<T>  from(com.ospreydcs.dp.grpc.v1.common.DataColumn msgDataCol) 
+            throws MissingResourceException, IllegalStateException, TypeNotPresentException {
         
         // Extract message data
-        String          strName = msgDataCol.getName();
-        DpSupportedType enmType = ProtoMsg.extractType(msgDataCol);
-        List<Object>    lstVals = ProtoMsg.extractValues(msgDataCol);
+        String                  strName = msgDataCol.getName();
+        DpSupportedType         enmType = ProtoMsg.extractType(msgDataCol);
+        Class<? extends Object> clsType = enmType.getType();
+        List<T>                 lstVals = (List<T>) ProtoMsg.extractValuesAs(clsType, msgDataCol);
 
         // Create initialized time series
-        SampledTimeSeries   stms = new SampledTimeSeries(strName, enmType, lstVals);
+        SampledTimeSeries<T>   stms = new SampledTimeSeries<T>(strName, enmType, lstVals);
 
         return stms;
     }
+    
     
     //
     // Constructors
@@ -144,7 +162,7 @@ public class SampledTimeSeries {
      * Constructs a new, partially initialized instance of <code>SampledTimeSeries</code>.
      * </p>
      * <p>
-     * The list of values for the sampled time series is empty.
+     * The list of values for the sampled time series is constructed but empty.
      * </p>
      *
      * @param strSourceName     the name of the data source (PV) producing time series data
@@ -155,6 +173,30 @@ public class SampledTimeSeries {
         this.enmType = enmType;
         this.vecValues = new ArrayList<>();
     }
+    
+    /**
+     * <p>
+     * Constructs a new instance of <code>SampledTimeSeries</code> populated with <code>null</code> values.
+     * </p>
+     * <p>
+     * Creates the <code>null</code> time series with length given by argument <code>{@link cntSize}</code>.
+     * Can be used to represent time series were sampling was interrupted or otherwise unavailable.
+     * </p>
+     *
+     * @param strSourceName name of the data source producing <code>null</code> values
+     * @param enmType       assumed type of the <code>null</code> values
+     * @param cntSize       size of the time series (i.e., number of <code>null</code> data values)
+     */
+    public SampledTimeSeries(String strSourceName, DpSupportedType enmType, int cntSize) {
+
+        this.strSourceName = strSourceName;
+        this.enmType = enmType;
+        this.vecValues = new ArrayList<>(cntSize);
+        
+        // Populate sample value vector with null values
+        for (int n=0; n<cntSize; n++) 
+            this.vecValues.add(null);
+    }
 
     /**
      * <p>
@@ -164,18 +206,22 @@ public class SampledTimeSeries {
      * Copies the values from argument <code>lstValues</code> into a new <code>{@link ArrayList}</code>
      * for faster indexed access.
      * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Do NOT supply an empty data values container, an exception will be thrown.
+     * Use constructor <code>{@link #SampledTimeSeries(String, DpSupportedType)}</code> instead.
+     * </p>
      *
      * @param strSourceName     the name of the data source (PV) producing time series data
      * @param enmType           the data type of the time series
      * @param vecValues         ordered list of sampled data values in time series
      * 
-     * @throws IllegalArgumentException the given sample values are of incompatible type
+     * @throws MissingResourceException the data values container was empty (cannot check type consistency)
+     * @throws IllegalArgumentException the specified data type is incompatible with generic parameter <code>T</code>
      */
-    public <T extends Object> SampledTimeSeries(String strSourceName, DpSupportedType enmType, List<T> lstValues) 
-            throws IllegalArgumentException {
-        this.strSourceName = strSourceName;
-        this.enmType = enmType;
-        this.vecValues = new ArrayList<>(lstValues);
+    public SampledTimeSeries(String strSourceName, DpSupportedType enmType, List<T> lstValues) 
+            throws MissingResourceException, IllegalArgumentException {
+        this(strSourceName, enmType, new ArrayList<T>(lstValues));
     }
 
     /**
@@ -185,63 +231,37 @@ public class SampledTimeSeries {
      * <p>
      * Sets the attribute <code>{@link #vecValues}</code> directly from argument <code>vecValues</code>. 
      * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Do NOT supply an empty data values container, an exception will be thrown.
+     * Use constructor <code>{@link #SampledTimeSeries(String, DpSupportedType)}</code> instead.
+     * </p>
      *
      * @param strSourceName     the name of the data source (PV) producing time series data
      * @param enmType           the data type of the time series
      * @param vecValues         ordered list of sampled data values in time series
      * 
-     * @throws IllegalArgumentException the given sample values are of incompatible type
+     * @throws MissingResourceException the data values container was empty (cannot check type consistency)
+     * @throws IllegalArgumentException the specified data type is incompatible with generic parameter <code>T</code>
      */
-    @SuppressWarnings("unchecked")
-    public <T extends Object> SampledTimeSeries(String strSourceName, DpSupportedType enmType, ArrayList<T> vecValues) 
-            throws IllegalArgumentException {
+    public SampledTimeSeries(String strSourceName, DpSupportedType enmType, ArrayList<T> vecValues) 
+            throws MissingResourceException, IllegalArgumentException {
+
+        // Check the argument
+        if (vecValues.isEmpty())
+            throw new MissingResourceException("The data value container was empty.", vecValues.getClass().getName(), "vecValues");
+        
         this.strSourceName = strSourceName;
         this.enmType = enmType;
-        this.vecValues = (ArrayList<Object>) vecValues;
+        this.vecValues = vecValues;
+        
+        // Check the type
+        T   val = this.vecValues.get(0);
+        if (!enmType.isAssignableFrom(val))
+            throw new IllegalArgumentException("Data value type unassignable to requested type " + enmType);
     }
 
 
-    //
-    // Attribute Getters
-    //
-    
-    /**
-     * Returns the data source name for the time series.
-     * 
-     * @return data source name
-     */
-    public final String getSourceName() {
-        return strSourceName;
-    }
-
-    /**
-     * Returns the data type of the time series.
-     * 
-     * @return time series data type as <code>DpSupportedType</code> enumeration constant
-     */
-    public final DpSupportedType getType() {
-        return enmType;
-    }
-    
-    /**
-     * Returns the size of the time series.
-     * 
-     * @return  the number of data values within the time series
-     */
-    public final int getSize() {
-        return this.vecValues.size();
-    }
-
-    /**
-     * Returns the ordered list time series values.
-     * 
-     * @return the current list of time series values
-     */
-    public final ArrayList<Object> getValues() {
-        return vecValues;
-    }
-
-    
     //
     // Operations
     //
@@ -266,7 +286,7 @@ public class SampledTimeSeries {
      * 
      * @throws IllegalArgumentException the given sample values are of incompatible type
      */
-    public <T extends Object> boolean prependValues(List<T> lstValues) throws IllegalArgumentException {
+    public boolean prependValues(List<T> lstValues) throws IllegalArgumentException {
         
         // Check for empty list
         if (lstValues.isEmpty())
@@ -301,10 +321,10 @@ public class SampledTimeSeries {
      *          
      * @throws IllegalArgumentException the argument was from a different data source and/or has different type
      */
-    public boolean prependSeries(SampledTimeSeries stsSeries) throws IllegalArgumentException {
+    public boolean prependSeries(SampledTimeSeries<T> stsSeries) throws IllegalArgumentException {
         
         // Check the argument data source
-        if (! this.strSourceName.equals(stsSeries.getSourceName()) )
+        if (! this.strSourceName.equals(stsSeries.getName()) )
             throw new IllegalArgumentException("Argument is from a data source other than " + this.strSourceName);
         
         // Check the argument data type
@@ -312,7 +332,7 @@ public class SampledTimeSeries {
             throw new IllegalArgumentException("Argument type " + stsSeries.getType() + " not equal to " + this.enmType);
         
         // Add argument data values to this time series
-        return this.vecValues.addAll(0, stsSeries.getValues());
+        return this.vecValues.addAll(0, stsSeries.getValuesTyped());
     }
     
     /**
@@ -335,7 +355,7 @@ public class SampledTimeSeries {
      * 
      * @throws IllegalArgumentException the given sample values are of incompatible type
      */
-    public <T extends Object> boolean appendValues(List<T> lstValues) throws IllegalArgumentException {
+    public boolean appendValues(List<T> lstValues) throws IllegalArgumentException {
 
         // Check for empty list
         if (lstValues.isEmpty())
@@ -370,10 +390,10 @@ public class SampledTimeSeries {
      *          
      * @throws IllegalArgumentException the argument was from a different data source and/or has different type
      */
-    public boolean appendSeries(SampledTimeSeries stsSeries) throws IllegalArgumentException {
+    public boolean appendSeries(SampledTimeSeries<T> stsSeries) throws IllegalArgumentException {
         
         // Check the argument data source
-        if (! this.strSourceName.equals(stsSeries.getSourceName()) )
+        if (! this.strSourceName.equals(stsSeries.getName()) )
             throw new IllegalArgumentException("Argument is from a data source other than " + this.strSourceName);
         
         // Check the argument data type
@@ -381,7 +401,105 @@ public class SampledTimeSeries {
             throw new IllegalArgumentException("Argument type " + stsSeries.getType() + " not equal to " + this.enmType);
         
         // Add argument data values to this time series
-        return this.vecValues.addAll(stsSeries.getValues());
+        return this.vecValues.addAll(stsSeries.getValuesTyped());
+    }
+    
+    
+    //
+    // IDataColumn<T> Interface
+    //
+    
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getName()
+     */
+    @Override
+    public String getName() {
+        return this.strSourceName;
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getType()
+     */
+    @Override
+    public DpSupportedType getType() {
+        return this.enmType;
+    }
+    
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getSize()
+     */
+    @Override
+    public final Integer getSize() {
+        return this.vecValues.size();
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getValue(int)
+     */
+    @Override
+    public final Object getValue(int index) throws IndexOutOfBoundsException, ArithmeticException {
+        return this.vecValues.get(index);
+    }
+    
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getValues()
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public final ArrayList<Object> getValues() {
+        return (ArrayList<Object>) vecValues;
+    }
+    
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getValuesTyped()
+     */
+    @Override
+    public final List<T> getValuesTyped() throws ArithmeticException {
+        return this.vecValues;
+    }
+    
+    /**
+     * <p>
+     * Returns the number of bytes required to serialize this time series.
+     * </p>
+     * <p>
+     * The time series is serialized into a byte array buffer.
+     * The size of the buffer is returned after serialization.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * If the serialization size of the time series is to large to fit in the data buffer 
+     * (larger than <code>{@link Integer#MAX_VALUE}</code>) then an exception is thrown.
+     * </p>
+     * 
+     * @throws UnsupportedOperationException    not thrown
+     * @throws ArithmeticException              the time series could not be serialized (e.g., too large)
+     * 
+     * @see com.ospreydcs.dp.api.model.IDataColumn#allocationSize()
+     */
+    @Override
+    public long allocationSize() throws UnsupportedOperationException, ArithmeticException {
+        ByteArrayOutputStream   osByteArray = new ByteArrayOutputStream();
+        
+        try {
+            ObjectOutputStream      osByteCounter = new ObjectOutputStream(osByteArray);
+            
+            osByteCounter.writeObject(this);
+            osByteCounter.flush();
+            osByteCounter.close();
+            
+            return osByteArray.size();
+            
+        } catch (IOException e) {
+            throw new ArithmeticException("Unable to compute table size (e.g., too large)");
+            
+        }
     }
     
 }

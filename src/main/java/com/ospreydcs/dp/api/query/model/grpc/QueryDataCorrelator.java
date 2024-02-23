@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	QueryDataCorrelator.java
- * Package: com.ospreydcs.dp.api.query.model.proto
+ * Package: com.ospreydcs.dp.api.query.model.grpc
  * Type: 	QueryDataCorrelator
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - See documentation
  */
-package com.ospreydcs.dp.api.query.model.proto;
+package com.ospreydcs.dp.api.query.model.grpc;
 
 import java.util.Collection;
 import java.util.List;
@@ -44,10 +44,10 @@ import javax.naming.OperationNotSupportedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
-import com.ospreydcs.dp.api.model.ResultRecord;
-import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.RejectDetails;

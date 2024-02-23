@@ -10,7 +10,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.model;
+package com.ospreydcs.dp.api.common;
 
 import java.util.Collection;
 import java.util.LinkedList;

@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	BucketDataInsertTask.java
- * Package: com.ospreydcs.dp.api.query.model.proto
+ * Package: com.ospreydcs.dp.api.query.model.grpc
  * Type: 	BucketDataInsertTask
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.proto;
+package com.ospreydcs.dp.api.query.model.grpc;
 
 import java.util.SortedSet;
 import java.util.concurrent.Callable;

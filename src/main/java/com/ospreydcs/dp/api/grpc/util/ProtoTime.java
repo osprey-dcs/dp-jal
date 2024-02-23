@@ -30,7 +30,7 @@ package com.ospreydcs.dp.api.grpc.util;
 import java.time.Duration;
 import java.time.Instant;
 
-import com.ospreydcs.dp.api.model.TimeInterval;
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 

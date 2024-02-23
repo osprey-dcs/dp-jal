@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	UniformSamplingBlockTest.java
- * Package: com.ospreydcs.dp.api.query.model.time
+ * Package: com.ospreydcs.dp.api.query.model.process
  * Type: 	UniformSamplingBlockTest
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.time;
+package com.ospreydcs.dp.api.query.model.process;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -47,13 +47,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.TimeInterval;
-import com.ospreydcs.dp.api.query.model.data.SampledTimeSeries;
-import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -143,7 +142,7 @@ public class UniformSamplingBlockTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#from(com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#from(com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData)}.
      */
     @Test
     public final void testFrom() {
@@ -161,7 +160,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#UniformSamplingBlock(com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#UniformSamplingBlock(com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData)}.
      */
     @Test
     public final void testUniformSamplingBlock() {
@@ -179,7 +178,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#getSampleCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#getSampleCount()}.
      */
     @Test
     public final void testGetSampleCount() {
@@ -204,7 +203,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#getDataSourceCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#getDataSourceCount()}.
      */
     @Test
     public final void testGetDataSourceCount() {
@@ -241,7 +240,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#getStartInstant()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#getStartInstant()}.
      */
     @Test
     public final void testGetStartInstant() {
@@ -281,7 +280,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#getTimeDomain()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#getTimeDomain()}.
      */
     @Test
     public final void testGetTimeDomain() {
@@ -342,7 +341,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#getTimestamps()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#getTimestamps()}.
      */
     @Test
     public final void testGetTimestamps() {
@@ -407,7 +406,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#getSamplingClock()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#getSamplingClock()}.
      */
     @Test
     public final void testGetSamplingClock() {
@@ -459,7 +458,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#getSourceNames()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#getSourceNames()}.
      */
     @Test
     public final void testGetSourceNames() {
@@ -494,7 +493,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#getSourceType(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#getSourceType(java.lang.String)}.
      */
     @Test
     public final void testGetSourceType() {
@@ -553,7 +552,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#getTimeSeries(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#getTimeSeries(java.lang.String)}.
      */
     @Test
     public final void testGetTimeSeries() {
@@ -591,7 +590,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#getTimeSeriesAll()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#getTimeSeriesAll()}.
      */
     @Test
     public final void testGetTimeSeriesAll() {
@@ -629,7 +628,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#hasDomainIntersection(com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#hasDomainIntersection(com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock)}.
      */
     @Test
     public final void testHasDomainIntersection() {
@@ -667,7 +666,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#createTimestamps()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#createTimestamps()}.
      */
     @Test
     public final void testCreateTimestamps() {
@@ -675,7 +674,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#insertEmptyTimeSeries(java.lang.String, com.ospreydcs.dp.api.model.DpSupportedType)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#insertEmptyTimeSeries(java.lang.String, com.ospreydcs.dp.api.model.DpSupportedType)}.
      */
     @Test
     public final void testInsertEmptyTimeSeries() {
@@ -714,7 +713,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock#compareTo(com.ospreydcs.dp.api.query.model.time.UniformSamplingBlock)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock#compareTo(com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock)}.
      */
     @Test
     public final void testCompareTo() {

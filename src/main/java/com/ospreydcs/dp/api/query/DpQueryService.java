@@ -41,7 +41,7 @@ import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver;
-import com.ospreydcs.dp.api.query.model.data.DataTable;
+import com.ospreydcs.dp.api.query.model.data.StaticDataTable;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceFutureStub;
@@ -170,12 +170,12 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * @return      fully populated (static) data table.
      */
     @AUnavailable(status=STATUS.ACCEPTED, note="The request is performed but the returned table is empty")
-    public DataTable querySingle(DpDataRequest rqst) {
+    public StaticDataTable querySingle(DpDataRequest rqst) {
         QueryRequest qry = rqst.buildQueryRequest();
         
         QueryResponse msgRsp = super.grpcConn.getStubBlock().queryResponseSingle(qry);
         
-        return new DataTable();
+        return new StaticDataTable();
     }
     
     /**

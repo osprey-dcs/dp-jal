@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SamplingProcess.java
- * Package: com.ospreydcs.dp.api.query.model.time
+ * Package: com.ospreydcs.dp.api.query.model.process
  * Type: 	SamplingProcess
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - See documentation
  */
-package com.ospreydcs.dp.api.query.model.time;
+package com.ospreydcs.dp.api.query.model.process;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -48,13 +48,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.ranges.RangeException;
 
+import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.ResultRecord;
-import com.ospreydcs.dp.api.model.TimeInterval;
-import com.ospreydcs.dp.api.query.model.data.SampledTimeSeries;
-import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -174,7 +173,7 @@ public class SamplingProcess {
     private final Map<String, DpSupportedType>  mapSrcNmToType;
     
     /** Ordered vector of uniform sampling blocks comprising the sampling process */
-    private final List<UniformSamplingBlock>  vecSmplBlock;
+    private final List<UniformSamplingBlock>    vecSmplBlock;
     
     
     //

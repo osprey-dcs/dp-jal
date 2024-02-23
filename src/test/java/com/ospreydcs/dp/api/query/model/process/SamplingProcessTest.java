@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SamplingProcessTest.java
- * Package: com.ospreydcs.dp.api.query.model.time
+ * Package: com.ospreydcs.dp.api.query.model.process
  * Type: 	SamplingProcessTest
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,13 +25,11 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.time;
+package com.ospreydcs.dp.api.query.model.process;
 
-import static org.junit.Assert.*;
-import org.junit.Assert;
+import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -46,16 +44,17 @@ import javax.naming.OperationNotSupportedException;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.ranges.RangeException;
 
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.TimeInterval;
-import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.proto.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -146,7 +145,7 @@ public class SamplingProcessTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.SamplingProcess#from(java.util.SortedSet)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.SamplingProcess#from(java.util.SortedSet)}.
      */
     @Test
     public final void testFrom() {
@@ -177,7 +176,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.SamplingProcess#SamplingProcess(java.util.SortedSet)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.SamplingProcess#SamplingProcess(java.util.SortedSet)}.
      */
     @Test
     public final void testSamplingProcess() {
@@ -208,7 +207,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.SamplingProcess#getSampleCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.SamplingProcess#getSampleCount()}.
      */
     @Test
     public final void testGetSampleCount() {
@@ -231,7 +230,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.SamplingProcess#getTimeDomain()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.SamplingProcess#getTimeDomain()}.
      */
     @Test
     public final void testGetTimeDomain() {
@@ -280,7 +279,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.SamplingProcess#getDataSourceCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.SamplingProcess#getDataSourceCount()}.
      */
     @Test
     public final void testGetDataSourceCount() {
@@ -307,7 +306,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.SamplingProcess#getDataSourceNames()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.SamplingProcess#getDataSourceNames()}.
      */
     @Test
     public final void testGetDataSourceNames() {
@@ -331,7 +330,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.time.SamplingProcess#getSourceType(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.process.SamplingProcess#getSourceType(java.lang.String)}.
      */
     @Test
     public final void testGetSourceType() {

@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	UniformSamplingBlock.java
- * Package: com.ospreydcs.dp.api.query.model.time
+ * Package: com.ospreydcs.dp.api.query.model.process
  * Type: 	UniformSamplingBlock
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,28 +25,33 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.time;
+package com.ospreydcs.dp.api.query.model.process;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.NoSuchElementException;
+import java.util.OptionalInt;
 import java.util.Set;
-import java.util.Vector;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.ResultRecord;
-import com.ospreydcs.dp.api.model.TimeInterval;
-import com.ospreydcs.dp.api.query.model.data.SampledTimeSeries;
-import com.ospreydcs.dp.api.query.model.proto.CorrelatedQueryData;
+import com.ospreydcs.dp.api.model.IDataColumn;
+import com.ospreydcs.dp.api.model.IDataTable;
+import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
@@ -75,7 +80,7 @@ import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
  * @since Jan 30, 2024
  *
  */
-public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
+public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, IDataTable {
 
     
     //
@@ -197,8 +202,10 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
     private final   Set<String>             setSourceNames;
     
     /** Map of data source name to data source sample values */
-    private final   Map<String, SampledTimeSeries>  mapSrcToSmpls;
+    private final   Map<String, SampledTimeSeries<Object>>  mapSrcToSmpls;
     
+    /** The vector of time-series data columns - for IDataTable implementation */
+    private final   ArrayList<SampledTimeSeries<Object>>    vecColumns;
     
     //
     // Creator
@@ -221,10 +228,10 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * @throws MissingResourceException the argument is has empty data column(s)
      * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
-     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      */
     public static UniformSamplingBlock  from(CorrelatedQueryData cqdSampleBlock) 
-            throws MissingResourceException, IllegalArgumentException, IllegalStateException, UnsupportedOperationException 
+            throws MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException 
     {
         return new UniformSamplingBlock(cqdSampleBlock);
     }
@@ -249,10 +256,10 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * @throws MissingResourceException the argument is has empty data column(s)
      * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
-     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      */
     public UniformSamplingBlock(CorrelatedQueryData cqdSampleBlock) 
-            throws MissingResourceException, IllegalArgumentException, IllegalStateException, UnsupportedOperationException {
+            throws MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException {
         
         // Check the argument for data source name uniqueness
         ResultRecord    rsltUnique = cqdSampleBlock.verifySourceUniqueness();
@@ -281,15 +288,15 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
         this.vecTimestamps = this.clkParams.createTimestamps();
         
         // Get the set of data source names and create all the time-series data for this block
-        this.setSourceNames = cqdSampleBlock.getSourceNames();
-        this.mapSrcToSmpls = this.createTimeSeries(lstMsgDataCols);
+        this.mapSrcToSmpls = this.createTimeSeriesMap(lstMsgDataCols);
+        this.vecColumns = this.createTimeSeriesVector(this.mapSrcToSmpls);
+        this.setSourceNames = new HashSet<>(this.mapSrcToSmpls.keySet());
     }
 
     
     //
     // Attribute and Property Query
     //
-    
     
     /**
      * <p>
@@ -374,25 +381,6 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      */
     public final TimeInterval   getTimeDomain() {
         return this.clkParams.getTimeDomain();
-    }
-    
-    /**
-     * <p>
-     * Returns the order vector (<code>ArrayList</code>) of timestamp instants corresponding to this sampling block.
-     * </p>
-     * <p>
-     * The returned vector is ordered from earliest timestamp to latest timestamp.  All
-     * timestamps are separated by the clock period.  
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * Do not modify the returned vector, it is owned by this sampling block.
-     * </p>
-     * 
-     * @return  ordered vector of timestamps for this sampling block, earliest to latest
-     */
-    public final ArrayList<Instant>    getTimestamps() {
-        return this.vecTimestamps;
     }
     
     /**
@@ -484,7 +472,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * 
      * @return  all time-series data for the given source , or <code>null</code> if data source is not present 
      */
-    public final SampledTimeSeries    getTimeSeries(String strSourceName) {
+    public final SampledTimeSeries<Object>    getTimeSeries(String strSourceName) {
         return this.mapSrcToSmpls.get(strSourceName);
     }
     
@@ -509,7 +497,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * 
      * @return  collection of all time-series data for all data sources within this block
      */
-    public final Map<String, SampledTimeSeries> getTimeSeriesAll() {
+    public final Map<String, SampledTimeSeries<Object>> getTimeSeriesAll() {
         return this.mapSrcToSmpls;
     }
     
@@ -621,9 +609,10 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
         if (this.setSourceNames.contains(strSourceName))
             return false;
         
-        SampledTimeSeries   stsEmpty = SampledTimeSeries.nullSeries(strSourceName, enmType, this.getSampleCount());
+        SampledTimeSeries<Object>   stsEmpty = SampledTimeSeries.nullSeries(strSourceName, enmType, this.getSampleCount());
         this.mapSrcToSmpls.put(strSourceName, stsEmpty);
         this.setSourceNames.add(strSourceName);
+        this.vecColumns.add(stsEmpty);
         
         return true;
     }
@@ -668,6 +657,161 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
         return t1.compareTo(t2);
     }
     
+    
+    //
+    // IDataTable Interface
+    //
+    
+    /**
+     * @return always returns <code>true</code> since table is populated at construction
+     *
+     * @see com.ospreydcs.dp.api.model.IDataTable#isTableComplete()
+     */
+    @Override
+    public boolean isTableComplete() {
+        return true;
+    }
+
+    /**
+     * @return always returns <code>false</code> since table was populated at construction (throws exception if error)
+     * 
+     * @see com.ospreydcs.dp.api.model.IDataTable#hasError()
+     */
+    @Override
+    public boolean hasError() {
+        return false;
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataTable#getRowCount()
+     */
+    @Override
+    public Integer getRowCount() {
+        return this.getSampleCount();
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnCount()
+     */
+    @Override
+    public Integer getColumnCount() {
+        return this.getDataSourceCount();
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnName(int)
+     */
+    @Override
+    public String getColumnName(int indCol) throws IndexOutOfBoundsException {
+        return this.vecColumns.get(indCol).getName();
+    }
+
+    /**
+     * <p>
+     * <h2>WARNING:</h2>
+     * This operation is expensive, use sparingly.
+     * </p>
+     *
+     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnIndex(java.lang.String)
+     */
+    @Override
+    public int getColumnIndex(String strName) throws NoSuchElementException {
+        OptionalInt index = IntStream.range(0, this.getDataSourceCount()).filter(i -> this.vecColumns.get(i).getName().equals(strName)).findAny();
+        
+        if (index.isEmpty())
+            throw new NoSuchElementException("Time series not contained in UniformSamplingBlock: " + strName);
+        
+        return index.getAsInt();
+    }
+
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnNames()
+     */
+    @Override
+    public final List<String> getColumnNames() {
+        return this.vecColumns.stream().map(SampledTimeSeries::getName).toList();
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataTable#getTimestamp(int)
+     */
+    @Override
+    public Instant getTimestamp(int indRow) throws IndexOutOfBoundsException {
+        return this.vecTimestamps.get(indRow);
+    }
+
+    /**
+     * <p>
+     * Returns the order vector (<code>ArrayList</code>) of timestamp instants corresponding to this sampling block.
+     * </p>
+     * <p>
+     * The returned vector is ordered from earliest timestamp to latest timestamp.  All
+     * timestamps are separated by the clock period.  
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Do not modify the returned vector, it is owned by this sampling block.
+     * </p>
+     * 
+     * @return  ordered vector of timestamps for this sampling block, earliest to latest
+     */
+    @Override
+    public final List<Instant>    getTimestamps() {
+        return this.vecTimestamps;
+    }
+    
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataTable#getValue(int, int)
+     */
+    @Override
+    public final Object getValue(int indRow, int indCol) throws IndexOutOfBoundsException, ArithmeticException {
+        return this.vecColumns.get(indCol).getValue(indRow);
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataTable#getRowValues(int)
+     */
+    @Override
+    public final Object[] getRowValues(int indRow) throws IndexOutOfBoundsException {
+        Integer         cntCols = this.getColumnCount();
+        
+        // Create object array as ordered column values (at indRow) across column collection 
+        Object[] arrVals = IntStream
+                .range(0, cntCols)
+                .mapToObj(i -> this.vecColumns.get(i).getValue(indRow) )
+                .toArray();
+        
+        return arrVals;
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumn(int)
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    public final <T> IDataColumn<T> getColumn(int indCol) throws IndexOutOfBoundsException {
+        return (IDataColumn<T>) this.vecColumns.get(indCol);
+    }
+
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumn(java.lang.String)
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    public final <T> IDataColumn<T> getColumn(String strName) throws NoSuchElementException {
+        return (IDataColumn<T>) this.mapSrcToSmpls.get(strName);
+    }
+    
 
     //
     // Support Methods
@@ -703,11 +847,11 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
      * @throws IllegalStateException         the list contained duplicate data source names, or non-uniform data types
      * @throws UnsupportedOperationException an unsupported data type was detected within the argument
      */
-    private Map<String, SampledTimeSeries> createTimeSeries(List<DataColumn> lstMsgDataCols) 
+    private Map<String, SampledTimeSeries<Object>> createTimeSeriesMap(List<DataColumn> lstMsgDataCols) 
             throws MissingResourceException, IllegalStateException, UnsupportedOperationException {
 
         // Time series are created, one for each unique data source name
-        Map<String, SampledTimeSeries>  mapSrcToCols;
+        Map<String, SampledTimeSeries<Object>>  mapSrcToCols;
 
         // Create processing stream based upon number of data columns
         if (BOL_CONCURRENCY && (lstMsgDataCols.size() > SZ_CONCURRENCY_PIVOT)) {
@@ -735,4 +879,35 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock> {
         return mapSrcToCols;
     }
     
+    /**
+     * <p>
+     * Creates the vector of sampled time series for the data source.
+     * </p>
+     * <p>
+     * This method is intended for the creation of attribute <code>{@link #vecColumns}</code> needed for the
+     * <code>{@link IDataTable}</code> implementation (i.e., for table column indexing).
+     * We assume that all <code>{@link SampledTimeSeries}</code> objects have already been created and are present
+     * in the argument.
+     * The returned vector is ordered according to the ordering of the argument entries obtained through 
+     * <code>{@link Map#entrySet()}</code>.
+     * </p>
+     * 
+     * @param mapSrcToCols  map containing the <code>SampledTimeSeries</code> objects in returned vector
+     *  
+     * @return  vector of all <code>SampledTimeSeries</code> objects in the argument
+     */
+    private ArrayList<SampledTimeSeries<Object>> createTimeSeriesVector(Map<String, SampledTimeSeries<Object>> mapSrcToCols) {
+
+        // Create the vector of table column in the order that they appear in the map
+        ArrayList<SampledTimeSeries<Object>> vecCols = mapSrcToCols
+                .entrySet()
+                .stream()
+                .collect(
+                        ArrayList::new, 
+                        (list, entry) -> list.add(entry.getValue()), 
+                        (collector, list) -> collector.addAll(list)
+                        );
+        
+        return vecCols;
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:    CorrelatedQueryData.java
- * Package: com.ospreydcs.dp.api.query.model.proto
+ * Package: com.ospreydcs.dp.api.query.model.grpc
  * Type:    CorrelatedQueryData
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.proto;
+package com.ospreydcs.dp.api.query.model.grpc;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -36,10 +36,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
-import com.ospreydcs.dp.api.model.ResultRecord;
-import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;

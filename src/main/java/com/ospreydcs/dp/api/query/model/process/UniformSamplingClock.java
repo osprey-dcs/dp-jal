@@ -25,15 +25,15 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.time;
+package com.ospreydcs.dp.api.query.model.process;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.model.TimeInterval;
 import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
 
 /**
