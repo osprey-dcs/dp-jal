@@ -153,8 +153,8 @@ public interface IDataColumn<T extends Object> {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
-     * <li>Should return a <code>null</code> value if the data column has not been initialized.</li>
      * <li>Should return an empty container if data column has not been populated.</li>
+     * <li>Should return a <code>null</code> value if the data column has not been initialized.</li>
      * </ul>
      * </p>
      * 
@@ -163,19 +163,6 @@ public interface IDataColumn<T extends Object> {
      * @throws ArithmeticException  internal overflow - column is too large 
      */
     public List<Object> getValues() throws ArithmeticException;
-    
-    /**
-     * <p>
-     * Returns all the data values in the data column as a typed ordered vector,  
-     * or the empty vector if the column has not been initialized or 
-     * not populated.
-     * </p>
-     * 
-     * @return all typed data values of the column 
-     * 
-     * @throws ArithmeticException internal overflow - column is too large
-     */
-    public List<T> getValuesTyped() throws ArithmeticException;
     
     
     //
@@ -205,7 +192,123 @@ public interface IDataColumn<T extends Object> {
      * @throws ArithmeticException              error in allocation calculation (e.g., column to large)
      */
     public long allocationSize() throws UnsupportedOperationException, ArithmeticException;
+    
+    
+    //
+    // Default Implementation
+    //
+    
+    /**
+     * </p>
+     * <Returns the column value at given index as a typed value.
+     * </p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataColumn}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * <b>Uses <code>{@link #getValue(int)}</code></b>.
+     * <br/></br>
+     * The <code>default</code> implementation provided in <code>{@link IDataColumn}</code> interface
+     * is just a convenience method.  
+     * It calls <code>{@link #getValue(int)}</code> and <code>{@link IDataColumn#getType()}</code> 
+     * to obtain the returned value and check the type.
+     * </ul>
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Returns <code>null</code> if the data column has not been populated.</li>
+     * <li>Returns <code>null</code> if the data column has not been initialized.</li>
+     * <li>Throws exception if <code>T</code> is incompatible with column data type,</li>
+     * </ul>
+     * </p>  
+     * 
+     * @param index column index
+     * 
+     * @return  the data entry at given column index as a typed value
+     * 
+     * @throws IndexOutOfBoundsException    index out of bounds (0 &le; index &lt; <code>{@link #getSize()}</code>) 
+     * @throws ArithmeticException          overflow of the row index (this should be rare) 
+     * @throws ClassCastException           generic type T incompatible with column data type
+     */
+    @SuppressWarnings("unchecked")
+    default public T getValueTyped(int index)
+            throws IndexOutOfBoundsException, ArithmeticException, ClassCastException {
+        
+        Object              objVal = this.getValue(index);
 
+        // Check the value
+        if (objVal == null)
+            return null;
+        
+        // Check the data type
+        DpSupportedType     enmType = this.getType();
+        if ( !enmType.isAssignableFrom(objVal.getClass()) )
+            throw new ClassCastException("IDataColumn<T>.getValueTyped(int) - Generic parameter T incompatible with column type " + enmType);
+        
+        // Data object can be safely cast
+        return (T)objVal;
+    }
+
+    /**
+     * <p>
+     * Returns all the data values in the data column as a typed ordered vector,  
+     * or the empty vector if the column has not been initialized or 
+     * not populated.
+     * </p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataColumn}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * <b>Uses <code>{@link #getValues()}</code></b>.
+     * <br/></br>
+     * The <code>default</code> implementation provided in <code>{@link IDataColumn}</code> interface
+     * is just a convenience method.  
+     * It calls <code>{@link #getValues()}</code> and <code>{@link IDataColumn#getType()}</code> 
+     * to obtain the returned value and check the type.
+     * </ul>
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Returns empty list if the data column has not been populated.</li>
+     * <li>Returns <code>null</code> if the data column has not been initialized.</li>
+     * <li>Throws exception if <code>T</code> is incompatible with column data type,</li>
+     * </ul>
+     * </p>  
+     * 
+     * @return all typed data values of the column 
+     * 
+     * @throws ArithmeticException internal overflow - column is too large
+     * @throws ClassCastException  generic type T incompatible with column data type
+     */
+    @SuppressWarnings("unchecked")
+    default public List<T> getValuesTyped() throws ArithmeticException, ClassCastException {
+      
+        List<Object>    lstVals = this.getValues();
+        
+        // Check value list
+        if (lstVals == null)
+            return null;
+        
+        if (lstVals.isEmpty())
+            return (List<T>) lstVals;
+        
+        // Check type
+        Object              objVal = lstVals.get(0);
+        DpSupportedType     enmType = this.getType();
+        if ( !enmType.isAssignableFrom(objVal.getClass()) )
+            throw new ClassCastException("IDataColumn<T>.getValuesTyped() - Generic parameter T incompatible with column type " + enmType);
+        
+        // Value list can be safely cast
+        return (List<T>) lstVals;
+    };
+    
+    
 //    //
 //    // Data Modification
 //    //

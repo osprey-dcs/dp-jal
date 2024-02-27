@@ -30,16 +30,12 @@ package com.ospreydcs.dp.api.query.model.process;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
-import java.util.OptionalInt;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -164,12 +160,6 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     /** Concurrency tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
     public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
-//  /** Parallelism timeout limit  - for parallel thread pool tasks */
-//  public static final long       LNG_TIMEOUT = CFG_QUERY.timeout.limit;
-//  
-//  /** Parallelism timeout units - for parallel thread pool tasks */
-//  public static final TimeUnit   TU_TIMEOUT = CFG_QUERY.timeout.unit;
-  
 
     //
     // Class Resources
@@ -178,34 +168,30 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     /** Event logger for class */
     private static final Logger LOGGER = LogManager.getLogger();
     
-    //
-    // Defining Attributes
-    //
-    
-//    /** Protobuf message describing uniform sampling duration */
-//    private final   FixedIntervalTimestampSpec  msgClockParams;
-//    
-//    /** Protobuf sampled (correlated) data sets for sampling duration */
-//    private final   List<DataColumn>            lstMsgDataCols;
 
     //
     // Instance Attributes
     //
     
     /** The uniform clock duration for this sample block */
-    private final   UniformSamplingClock    clkParams;
+    private final   UniformSamplingClock                    clkParams;
     
     /** The vector of ordered timestamps correspond to this sample block */
-    private final   ArrayList<Instant>      vecTimestamps;
+    private final   ArrayList<Instant>                      vecTimestamps;
     
-    /** Set of data source names for sample block */
-    private final   Set<String>             setSourceNames;
+    /** The vector of time-series data in this sampling block */
+    private final   ArrayList<SampledTimeSeries<Object>>    vecSeriess;
     
-    /** Map of data source name to data source sample values */
-    private final   Map<String, SampledTimeSeries<Object>>  mapSrcToSmpls;
     
-    /** The vector of time-series data columns - for IDataTable implementation */
-    private final   ArrayList<SampledTimeSeries<Object>>    vecColumns;
+    /** Set of data source names for sample block - used for IDataTable implementation */
+    private final   List<String>                            lstSourceNames;
+    
+    /** Map of data source name to table column index - used for IDataTable implementation */
+    private final   Map<String, Integer>                    mapSrcToIndex;
+    
+    /** Map of data source name to time series - used for IDataTable implementation */
+    private final   Map<String, SampledTimeSeries<Object>>  mapSrcToSeries;
+    
     
     //
     // Creator
@@ -288,9 +274,11 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         this.vecTimestamps = this.clkParams.createTimestamps();
         
         // Get the set of data source names and create all the time-series data for this block
-        this.mapSrcToSmpls = this.createTimeSeriesMap(lstMsgDataCols);
-        this.vecColumns = this.createTimeSeriesVector(this.mapSrcToSmpls);
-        this.setSourceNames = new HashSet<>(this.mapSrcToSmpls.keySet());
+        this.vecSeriess = this.createTimeSeriesVector(lstMsgDataCols);
+        
+        this.lstSourceNames = this.createSourceNameList(this.vecSeriess);
+        this.mapSrcToIndex = this.createSrcToIndexMap(this.vecSeriess);
+        this.mapSrcToSeries = this.createSrcToSeriesMap(this.vecSeriess);
     }
 
     
@@ -327,7 +315,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      * @return  the number of data sources contributing to this sampling block
      */
     public final int getDataSourceCount() {
-        return this.setSourceNames.size();
+        return this.lstSourceNames.size();
     }
     
     /**
@@ -401,22 +389,21 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     
     /**
      * <p>
-     * Returns the set of all data source names for data sources contributing to this block.
+     * Returns list of all data source names for data sources contributing to this block.
      * </p>
      * <p>
      * Each data source name should be unique.  After construction there should be only one
-     * time series data set for each data source.  Time series data may be recovered by
-     * name.
+     * time series data set for each data source.  Time series data may be recovered by name.
      * </p>
      * <p>
      * <h2>NOTES:<h2>
-     * Do not modify the returned set, it is owned by this sampling block.
+     * Do not modify the returned collection, it is owned by this sampling block.
      * </p>
      *  
      * @return  set of all data sources (by name) contributing time-series data to this block
      */
-    public final Set<String>  getSourceNames() {
-        return this.setSourceNames;
+    public final List<String>  getSourceNames() {
+        return this.lstSourceNames;
     }
     
     /**
@@ -448,7 +435,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      * @see DpSupportedType
      */
     public final DpSupportedType    getSourceType(String strSourceName) throws NullPointerException {
-        return this.mapSrcToSmpls.get(strSourceName).getType();
+        return this.mapSrcToSeries.get(strSourceName).getType();
     }
 
 
@@ -473,7 +460,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      * @return  all time-series data for the given source , or <code>null</code> if data source is not present 
      */
     public final SampledTimeSeries<Object>    getTimeSeries(String strSourceName) {
-        return this.mapSrcToSmpls.get(strSourceName);
+        return this.mapSrcToSeries.get(strSourceName);
     }
     
     /**
@@ -498,7 +485,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      * @return  collection of all time-series data for all data sources within this block
      */
     public final Map<String, SampledTimeSeries<Object>> getTimeSeriesAll() {
-        return this.mapSrcToSmpls;
+        return this.mapSrcToSeries;
     }
     
     
@@ -522,7 +509,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      *          <code>false</code> otherwise
      */
     public boolean  hasSourceData(String strSourceName) {
-        return this.setSourceNames.contains(strSourceName);
+        return this.lstSourceNames.contains(strSourceName);
     }
     
     /**
@@ -606,13 +593,20 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     public boolean  insertEmptyTimeSeries(String strSourceName, DpSupportedType enmType) {
         
         // Check if data source name is already present
-        if (this.setSourceNames.contains(strSourceName))
+        if (this.hasSourceData(strSourceName))
             return false;
         
+        // Create the null series
         SampledTimeSeries<Object>   stsEmpty = SampledTimeSeries.nullSeries(strSourceName, enmType, this.getSampleCount());
-        this.mapSrcToSmpls.put(strSourceName, stsEmpty);
-        this.setSourceNames.add(strSourceName);
-        this.vecColumns.add(stsEmpty);
+        
+        // Add null series to collection and lookup maps
+        Integer     indLast = this.vecSeriess.size();
+        
+        this.vecSeriess.add(stsEmpty);
+
+        this.lstSourceNames.add(strSourceName);
+        this.mapSrcToSeries.put(strSourceName, stsEmpty);
+        this.mapSrcToIndex.put(strSourceName, indLast);
         
         return true;
     }
@@ -700,31 +694,33 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         return this.getDataSourceCount();
     }
 
-    /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnName(int)
-     */
-    @Override
-    public String getColumnName(int indCol) throws IndexOutOfBoundsException {
-        return this.vecColumns.get(indCol).getName();
-    }
+//    /**
+//     *
+//     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnName(int)
+//     */
+//    @Override
+//    public String getColumnName(int indCol) throws IndexOutOfBoundsException {
+//        return this.vecColumns.get(indCol).getName();
+//    }
 
     /**
-     * <p>
-     * <h2>WARNING:</h2>
-     * This operation is expensive, use sparingly.
-     * </p>
-     *
+     * 
      * @see com.ospreydcs.dp.api.model.IDataTable#getColumnIndex(java.lang.String)
      */
     @Override
     public int getColumnIndex(String strName) throws NoSuchElementException {
-        OptionalInt index = IntStream.range(0, this.getDataSourceCount()).filter(i -> this.vecColumns.get(i).getName().equals(strName)).findAny();
         
-        if (index.isEmpty())
-            throw new NoSuchElementException("Time series not contained in UniformSamplingBlock: " + strName);
-        
-        return index.getAsInt();
+        // Check argument
+        if (!this.hasSourceData(strName))
+            throw new NoSuchElementException(JavaRuntime.getCallerClassSimple() + " does NOT contain source " + strName);
+            
+        return this.mapSrcToIndex.get(strName);
+//        OptionalInt index = IntStream.range(0, this.getDataSourceCount()).filter(i -> this.vecSeriess.get(i).getName().equals(strName)).findAny();
+//        
+//        if (index.isEmpty())
+//            throw new NoSuchElementException("Time series not contained in UniformSamplingBlock: " + strName);
+//        
+//        return index.getAsInt();
     }
 
 
@@ -734,17 +730,17 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      */
     @Override
     public final List<String> getColumnNames() {
-        return this.vecColumns.stream().map(SampledTimeSeries::getName).toList();
+        return this.lstSourceNames;
     }
 
-    /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getTimestamp(int)
-     */
-    @Override
-    public Instant getTimestamp(int indRow) throws IndexOutOfBoundsException {
-        return this.vecTimestamps.get(indRow);
-    }
+//    /**
+//     *
+//     * @see @see com.ospreydcs.dp.api.model.IDataTable#getTimestamp(int)
+//     */
+//    @Override
+//    public Instant getTimestamp(int indRow) throws IndexOutOfBoundsException {
+//        return this.vecTimestamps.get(indRow);
+//    }
 
     /**
      * <p>
@@ -766,50 +762,36 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         return this.vecTimestamps;
     }
     
-    /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getValue(int, int)
-     */
-    @Override
-    public final Object getValue(int indRow, int indCol) throws IndexOutOfBoundsException, ArithmeticException {
-        return this.vecColumns.get(indCol).getValue(indRow);
-    }
-
-    /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getRowValues(int)
-     */
-    @Override
-    public final Object[] getRowValues(int indRow) throws IndexOutOfBoundsException {
-        Integer         cntCols = this.getColumnCount();
-        
-        // Create object array as ordered column values (at indRow) across column collection 
-        Object[] arrVals = IntStream
-                .range(0, cntCols)
-                .mapToObj(i -> this.vecColumns.get(i).getValue(indRow) )
-                .toArray();
-        
-        return arrVals;
-    }
+//    /**
+//     *
+//     * @see @see com.ospreydcs.dp.api.model.IDataTable#getValue(int, int)
+//     */
+//    @Override
+//    public final Object getValue(int indRow, int indCol) throws IndexOutOfBoundsException, ArithmeticException {
+//        return this.vecColumns.get(indCol).getValue(indRow);
+//    }
 
     /**
      *
      * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumn(int)
      */
-    @SuppressWarnings("unchecked")
     @Override
-    public final <T> IDataColumn<T> getColumn(int indCol) throws IndexOutOfBoundsException {
-        return (IDataColumn<T>) this.vecColumns.get(indCol);
+    public final /* <T extends Object> IDataColumn<T> */ IDataColumn<Object> getColumn(int indCol) throws IndexOutOfBoundsException {
+        return this.vecSeriess.get(indCol);
     }
 
     /**
      *
      * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumn(java.lang.String)
      */
-    @SuppressWarnings("unchecked")
     @Override
-    public final <T> IDataColumn<T> getColumn(String strName) throws NoSuchElementException {
-        return (IDataColumn<T>) this.mapSrcToSmpls.get(strName);
+    public final /* <T> IDataColumn<T> */ IDataColumn<Object> getColumn(String strName) throws NoSuchElementException {
+
+        // Check argument
+        if (!this.hasSourceData(strName))
+            throw new NoSuchElementException(JavaRuntime.getCallerClassSimple() + " does NOT contain source " + strName);
+            
+        return this.mapSrcToSeries.get(strName);
     }
     
 
@@ -846,7 +828,11 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      * @throws MissingResourceException      a data column message contained no data
      * @throws IllegalStateException         the list contained duplicate data source names, or non-uniform data types
      * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     * 
+     * @deprecated now uses {@link #createTimeSeriesVector(List)} to create time-series, after implementing IDataTable
      */
+    @SuppressWarnings("unused")
+    @Deprecated(since="Feb 23, 2024", forRemoval=true)
     private Map<String, SampledTimeSeries<Object>> createTimeSeriesMap(List<DataColumn> lstMsgDataCols) 
             throws MissingResourceException, IllegalStateException, UnsupportedOperationException {
 
@@ -881,33 +867,195 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     
     /**
      * <p>
-     * Creates the vector of sampled time series for the data source.
+     * Creates all <code>{@link SampledTimeSeries}</code> objects and returns as a vector (i.e. array list).
      * </p>
      * <p>
-     * This method is intended for the creation of attribute <code>{@link #vecColumns}</code> needed for the
+     * Creates all the <code>{@link SampledTimeSeries}</code> instances for this sampling
+     * block using the given argument as source data.  The returned object is a vector of
+     * of such objects ordered according to the argument.  It is assumed that the data
+     * sources within the argument are all unique. This condition should, however, be checked.
+     * </p>
+     * <p>
+     * <p>
+     * This method is intended for the creation of attribute <code>{@link #vecSeriess}</code>, also needed for the
      * <code>{@link IDataTable}</code> implementation (i.e., for table column indexing).
-     * We assume that all <code>{@link SampledTimeSeries}</code> objects have already been created and are present
-     * in the argument.
-     * The returned vector is ordered according to the ordering of the argument entries obtained through 
-     * <code>{@link Map#entrySet()}</code>.
+     * The returned vector is ordered according to the ordering of the argument entries.
+     * </p>
+     * <h2>Concurrency</h2>
+     * If concurrency is enabled (i.e., <code>{@link #BOL_CONCURRENCY}</code> = <code>true</code>),
+     * this method utilizes streaming parallelism if the argument size is greater than the
+     * pivot number <code>{@link #SZ_CONCURRENCY_PIVOT}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned Java container is mutable, additional entries can be added (e.g., null series).
+     * </li>
+     * <li>
+     * The argument should have already been checked for duplicate data source names using
+     * <code>{@link CorrelatedQueryData#verifySourceUniqueness()}</code>.
+     * </li>
+     * </ul>
      * </p>
      * 
-     * @param mapSrcToCols  map containing the <code>SampledTimeSeries</code> objects in returned vector
-     *  
-     * @return  vector of all <code>SampledTimeSeries</code> objects in the argument
+     * @param lstMsgDataCols   source data for sampled time series creation
+     * 
+     * @return  vector containing a time series for each data column in the argument, ordered by argument
+     * 
+     * @throws MissingResourceException      a data column message contained no data
+     * @throws IllegalStateException         the argument contained or non-uniform data types
+     * @throws TypeNotPresentException an unsupported data type was detected within the argument
      */
-    private ArrayList<SampledTimeSeries<Object>> createTimeSeriesVector(Map<String, SampledTimeSeries<Object>> mapSrcToCols) {
+    private ArrayList<SampledTimeSeries<Object>> createTimeSeriesVector(List<DataColumn> lstMsgDataCols) 
+            throws MissingResourceException, IllegalStateException, TypeNotPresentException {
 
-        // Create the vector of table column in the order that they appear in the map
-        ArrayList<SampledTimeSeries<Object>> vecCols = mapSrcToCols
-                .entrySet()
-                .stream()
-                .collect(
-                        ArrayList::new, 
-                        (list, entry) -> list.add(entry.getValue()), 
-                        (collector, list) -> collector.addAll(list)
-                        );
+        // List of time series are created, one for each unique data source name
+        List<SampledTimeSeries<Object>>  lstCols = new ArrayList<>();
+
+        // Create processing stream based upon number of data columns
+        if (BOL_CONCURRENCY && (lstMsgDataCols.size() > SZ_CONCURRENCY_PIVOT)) {
+            lstCols = lstMsgDataCols
+                    .parallelStream()
+                    .<SampledTimeSeries<Object>>map(SampledTimeSeries::from)           // throws MissingResourceException, IllegalStateExcepiont, TypeNotPresentException
+                    .toList();
+            
+        } else {
+            lstCols = lstMsgDataCols
+                    .stream()
+                    .<SampledTimeSeries<Object>>map(SampledTimeSeries::from)           // throws MissingResourceException, IllegalStateExcepiont, TypeNotPresentException
+                    .toList();
+        }
+        
+        // Create the final ArrayList (vector) for time-series and return
+        ArrayList<SampledTimeSeries<Object>>  vecCols = new ArrayList<>(lstCols);
         
         return vecCols;
+//        // Create the vector of table column in the order that they appear in the map
+//        ArrayList<SampledTimeSeries<Object>> vecCols = mapSrcToCols
+//                .entrySet()
+//                .stream()
+//                .collect(
+//                        ArrayList::new, 
+//                        (list, entry) -> list.add(entry.getValue()), 
+//                        (collector, list) -> collector.addAll(list)
+//                        );
+//        
+//        return vecCols;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a map of (source name, time series) pairs from the argument.
+     * </p>
+     * <p>
+     * This method is used to create a lookup map for data column (i.e., time series) by column name
+     * required by the <code>{@link IDataTable}</code> interface.  It is assumed that the argument
+     * contains all time series within the sampling block.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned collection is mutable.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param lstSeries vector containing a time series for each data column in the sampling block
+     * 
+     * @return  map of (source name, time series) pairs used for time series lookup by name
+     * 
+     * @throws IllegalStateException    the argument contained duplicate data source names 
+     */
+    private Map<String, SampledTimeSeries<Object>>  createSrcToSeriesMap(List<SampledTimeSeries<Object>> lstSeries) 
+            throws IllegalStateException {
+        
+        // Map of unique data source name to time series
+        Map<String, SampledTimeSeries<Object>>  mapSrcToCols = lstSeries
+                .stream()
+                .collect(
+                        Collectors.toMap(               // throws IllegalStateException for duplicate keys
+                                s -> s.getName(), 
+                                s -> s
+                                )
+                        );
+        
+        return mapSrcToCols;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a map of (source name, column index) pairs from the argument.
+     * </p>
+     * <p>
+     * This method is used to create a lookup map for table column index by column name
+     * required by the <code>{@link IDataTable}</code> interface.  It is assumed that the argument
+     * contains all time series within the sampling block.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned collection is mutable.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param lstSeries vector containing a time series for each data column in the sampling block
+     * 
+     * @return  map of (source name, table column index) pairs used for time series lookup by table column index
+     */
+    private Map<String, Integer> createSrcToIndexMap(List<SampledTimeSeries<Object>> lstSeries) {
+        
+        // Returned map
+        Map<String, Integer>    mapSrcToIndex = new HashMap<>();
+        
+        // Populate map and return
+        Integer     indCurr = 0;
+        for (SampledTimeSeries<Object> stms : lstSeries) {
+            String  strName = stms.getName();
+            
+            mapSrcToIndex.put(strName, indCurr);
+            
+            indCurr++;
+        }
+        
+        return mapSrcToIndex;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a map of (source name, column index) pairs from the argument.
+     * </p>
+     * <p>
+     * This method is used to create a data column name list required by the <code>{@link IDataTable}</code> 
+     * interface.  It is assumed that the argument contains all time series within the sampling block.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned collection is mutable.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param lstSeries vector containing a time series for each data column in the sampling block
+     * 
+     * @return ordered list of data source names within the argument
+     */
+    private List<String>    createSourceNameList(List<SampledTimeSeries<Object>> lstSeries) {
+        
+        // Extract the source names
+        List<String>    lstNames = lstSeries
+                .stream()
+                .<String>map(SampledTimeSeries::getName)
+                .toList();
+        
+        // Create a mutable vector and return
+        ArrayList<String>   vecNames = new ArrayList<>(lstNames);
+        
+        return vecNames;
     }
 }

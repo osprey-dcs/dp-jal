@@ -30,6 +30,7 @@ package com.ospreydcs.dp.api.model;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.IntStream;
 
 
 /**
@@ -187,33 +188,6 @@ public interface IDataTable {
     
     /**
      * <p>
-     * Return the name of the data column at the given column index.
-     * </p>
-     * <p>
-     * <code>IDataTable</code> implementations are not prescribed to follow any indexing scheme.  The indices
-     * assigned to data columns are determined completely by the implementing class.
-     * This method is provided to determine the ordering of table columns within the data table. 
-     * This method is included determination of table column ordering within the data table. 
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>Should return <code>null</code> if the data table has not been populated.</li> 
-     * </ul>
-     * </p>  
-     * 
-     * @param indCol    column index - must be one less than the number of columns 
-     * 
-     * @return name of data column at the given column index, 
-     *         or <code>null</code> if the data table has not been populated
-     * 
-     * @throws IndexOutOfBoundsException    column index is out of bounds (0 &le; index &lt; <code>{@link #getColumnCount()}</code>)
-     * 
-     * @see #getColumnIndex(String)
-     */
-    public String   getColumnName(int indCol) throws IndexOutOfBoundsException;
-    
-    /**
-     * <p>
      * Returns the table column index for the column with the given name.
      * </p>
      * <p>
@@ -242,6 +216,11 @@ public interface IDataTable {
      * Returns an ordered list of all data table column names, in the order of index.
      * </p>
      * <p>
+     * A default implementation could be implemented.  However, for the sake of performance and resource
+     * minimization it is best to force implementations to provide the list of column names
+     * (a default implementation would require the generation of a new list at each invocation).
+     * </p> 
+     * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>Should return an empty collection if the data table has not been populated.</li>
@@ -258,27 +237,6 @@ public interface IDataTable {
     //
     // Data Query
     //
-    
-    /**
-     * <p>
-     * Returns the timestamp for the given row index.
-     * </p> 
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>Should return <code>null</code> if the data table has not been initialized.</li>
-     * <li>Should return <code>null</code> if the data table has not been populated.</li>
-     * </ul>
-     * </p>  
-     * 
-     * @param indRow row index
-     * 
-     * @return  timestamp at the given row index,
-     *          or <code>null</code> if the data table has not been populated
-     * 
-     * @throws IndexOutOfBoundsException    index is out of bounds (0 &le; index &lt; <code>{@link #getRowCount()}</code>)
-     */
-    public Instant getTimestamp(int indRow) throws IndexOutOfBoundsException;
     
     /**
      * <p>
@@ -301,9 +259,111 @@ public interface IDataTable {
     
     /**
      * <p>
+     * Returns an entire column of the data table for the given column index, 
+     * or <code>null</code> if the data table has not been populated.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The returned object should be immutable - Do NOT modify this object.</li>
+     * <li>Should return <code>null</code> if the data table has not been populated.</li>
+     * <li>Should return <code>null</code> if the data table has not been initialized.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param indCol column index - must be one less than the column count
+     * 
+     * @return  the <code>IDataColumn</code> object corresponding to the given index,
+     *          or <code>null</code> if the data table has not been populated
+     * 
+     * @throws IndexOutOfBoundsException column index out of bounds (0 &le; index &lt; <code>{@link #getColumnCount()}</code>)
+     * throws ClassCastException        generic parameter <code>T</code> is not compatible with column type
+     */
+    public /* <T extends Object> IDataColumn<T> */ IDataColumn<Object> getColumn(int indCol) throws IndexOutOfBoundsException /*, ClassCastException */;
+    
+    /**
+     * <p>
+     * Returns an entire column of the data table for given column name, 
+     * or <code>null</code> if the data table has not been populated.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The returned object should be immutable - Do NOT modify this object.</li>
+     * <li>Should return <code>null</code> if the data table has not been populated.</li>
+     * <li>Should return <code>null</code> if the data table has not been initialized.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param <T> data type of column data
+     * 
+     * @param strName column name for the returned object
+     * 
+     * @return  the <code>IDataColumn</code> object corresponding to the given label,
+     *          or <code>null</code> if the data set has not been initialized
+     * 
+     * @throws NoSuchElementException   the given column name is not within the managed column collection
+     * throws ClassCastException       generic parameter <code>T</code> is not compatible with column type
+     */
+    public /* <T extends Object> IDataColumn<T> */ IDataColumn<Object> getColumn(String strName) throws NoSuchElementException /*, ClassCastException */;
+    
+    
+    //
+    // Default Interface Implementations
+    //
+    
+    /**
+     * <p>
+     * Returns the timestamp for the given row index.
+     * </p> 
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+     * simply calls <code>{@link #getTimestamps()}.{@link List#get(int)}</code> and returns 
+     * the Java <code>Instant</code> value.  
+     * </ul>
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Should return <code>null</code> if the data table has not been initialized.</li>
+     * <li>Should return <code>null</code> if the data table has not been populated.</li>
+     * </ul>
+     * </p>  
+     * 
+     * @param indRow row index
+     * 
+     * @return  timestamp at the given row index,
+     *          or <code>null</code> if the data table has not been populated
+     * 
+     * @throws IndexOutOfBoundsException    index is out of bounds (0 &le; index &lt; <code>{@link #getRowCount()}</code>)
+     */
+    default public Instant getTimestamp(int indRow) throws IndexOutOfBoundsException {
+        return this.getTimestamps().get(indRow);
+    };
+    
+    /**
+     * <p>
      * Return the single value of time-series data at the given indices, or <code>null</code> if the data table
      * has not been populated or initialized. 
      * </p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * <b>Uses <code>{@link #getColumn(int)}</code></b>.
+     * <br/><br/>
+     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+     * simply calls <code>{@link #getColumn(int)}.{@link IDataColumn#getValue(int)}</code> and returns 
+     * the Java <code>Object</code> value.  
+     * </ul>
+     * </p> 
      * <p>
      * <h2>WARNING:</h2>
      * The data type of the returned value could be any heterogeneous type defined in
@@ -328,17 +388,80 @@ public interface IDataTable {
      * @throws IndexOutOfBoundsException an index is out of bounds = [0, {@link getRowCount}</code>) &times; [0, <code>{@link #getColumnCount()}</code>)
      * @throws ArithmeticException       overflow exception - table is too large 
      */
-    public Object getValue(int indRow, int indCol) throws IndexOutOfBoundsException, ArithmeticException;
-    
+    default public Object getValue(int indRow, int indCol) throws IndexOutOfBoundsException, ArithmeticException {
+        return this.getColumn(indCol).getValue(indRow);
+    }
+
+    /**
+     * <p>
+     * Return the single value of time-series data at the given indices, or <code>null</code> if the data table
+     * has not been populated or initialized. 
+     * </p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * <b>Uses <code>{@link #getColumn(String)}</code></b>.
+     * <br/><br/>
+     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+     * simply calls <code>{@link #getColumn(String)}.{@link IDataColumn#getValue(int)}</code> and returns 
+     * the Java <code>Object</code> value.  
+     * </ul>
+     * </p> 
+     * <p>
+     * <h2>WARNING:</h2>
+     * The data type of the returned value could be any heterogeneous type defined in
+     * <code>{@link DpSupportedType}</code>.  
+     * This includes a scalar value, an array, a data structure, an image, etc.
+     * Use <code>{@link #getColumnType(String)}</code> to determine the returned value data type.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Should return <code>null</code> if the data table has not been populated.</li>
+     * <li>Should return <code>null</code> if the data table has not been initialized.</li>
+     * </ul>
+     * </p>  
+     * 
+     * @param indRow    data table row index
+     * @param strName    data table column name
+     * 
+     * @return  data value (object) at the given row index and column name,
+     *          or <code>null</code> if the data table has not been populated
+     * 
+     * @throws IndexOutOfBoundsException row index is out of bounds = [0 &le; index < {@link getRowCount}</code>))
+     * @throws NoSuchElementException    the given column name is not within the managed column collection
+     * @throws ArithmeticException       overflow exception - table is too large 
+     */
+    default public Object getValue(int indRow, String strName) throws IndexOutOfBoundsException, NoSuchElementException, ArithmeticException {
+        return this.getColumn(strName).getValue(indRow);
+    }
+
     /**
      * <p>
      * Returns all row data at the given table row index as an <code>Object</code> array.
      * </p>
      * <p>
-     * Since data tables are composed of <code>{@link IDataColumn}</code> implementations, typically they
+     * Since data tables are composed of <code>{@link IDataColumn}</code> implementations, tables
      * are required to create new containers or objects to return data values across rows.  
-     * This operation allows for the return of a Java array, providing fastest lookup via indexing.
+     * This operation returns a Java array, providing fast lookup via indexing.
      * </p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * <b>Uses <code>{@link #getValue(int, int)}</code></b>.
+     * <br/><br/>
+     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+     * calls <code>{@link #getValue(int, int)}, in order of column index, to obtain 
+     * a Java <code>Object</code> for each column.  
+     * A new Java array is returned containing the data values in order of index. 
+     * </ul>
+     * </p> 
      * <p>
      * <h2>WARNING:</h2>
      * The data types within the returned array could be any heterogeneous type defined in
@@ -350,6 +473,7 @@ public interface IDataTable {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
+     * <li>The value ordering is that of the column ordering.</li>
      * <li>Should return <code>null</code> if the data table has not been populated.</li>
      * <li>Should return <code>null</code> if the data table has not been initialized.</li>
      * </ul>
@@ -363,60 +487,23 @@ public interface IDataTable {
      * @throws IndexOutOfBoundsException row index out of bounds (0 &le; index &lt; <code>{@link #getRowCount()}</code>) 
      * @throws ArithmeticException       overflow exception - table is too large 
      */
-    public Object[] getRowValues(int indRow) throws IndexOutOfBoundsException;
-    
-    /**
-     * <p>
-     * Returns an entire column of the data table for the given column index, 
-     * or <code>null</code> if the data table has not been populated.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>The returned object should be immutable - Do NOT modify this object.</li>
-     * <li>Should return <code>null</code> if the data table has not been populated.</li>
-     * <li>Should return <code>null</code> if the data table has not been initialized.</li>
-     * </ul>
-     * </p>
-     * 
-     * @param indCol column index - must be one less than the column count
-     * 
-     * @return  the <code>IDataColumn</code> object corresponding to the given index,
-     *          or <code>null</code> if the data table has not been populated
-     * 
-     * @throws IndexOutOfBoundsException column index out of bounds (0 &le; index &lt; <code>{@link #getColumnCount()}</code>)
-     */
-    public <T extends Object> IDataColumn<T> getColumn(int indCol) throws IndexOutOfBoundsException;
-    
-    /**
-     * <p>
-     * Returns an entire column of the data table for given column name, 
-     * or <code>null</code> if the data table has not been populated.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>The returned object should be immutable - Do NOT modify this object.</li>
-     * <li>Should return <code>null</code> if the data table has not been populated.</li>
-     * <li>Should return <code>null</code> if the data table has not been initialized.</li>
-     * </ul>
-     * </p>
-     * 
-     * @param <T> data type of column data
-     * 
-     * @param strName column name for the returned object
-     * 
-     * @return  the <code>IDataColumn</code> object corresponding to the given label,
-     *          or <code>null</code> if the data set has not been initialized
-     * 
-     * @throws NoSuchElementException     the given column name is not within the managed column collection
-     */
-    public <T extends Object> IDataColumn<T> getColumn(String strName) throws NoSuchElementException;
-    
-    
-    //
-    // Default Interface Implementations
-    //
+    default public Object[] getRowValues(int indRow) throws IndexOutOfBoundsException {
+        
+        // Get the number of columns and check it
+        Integer         cntCols = this.getColumnCount();
+        
+        if (cntCols == null)
+            return null;
+        
+        // Create object array as ordered column values (at indRow) across column collection 
+        Object[] arrVals = IntStream
+                .range(0, cntCols)
+                .mapToObj(i -> this.getValue(indRow, i) )
+                .toArray();
+        
+        return arrVals;
+        
+    };
     
     /**
      * <p>
@@ -435,6 +522,8 @@ public interface IDataTable {
      * Implementing classes may wish to override the default implementation if better options are available.
      * <br/><br/>
      * <ul>
+     * <b>Uses <code>{@link #getRowValues(int)}</code></b>.
+     * <br/><br/>
      * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
      * calls <code>{@link #getRowValues(int)}</code> to obtain a Java <code>Object</code> array of data values.
      * The Java array is used to populate a Java <code>{@link List}</code> which is then returned.
@@ -469,38 +558,222 @@ public interface IDataTable {
     
     /**
      * <p>
-     * Returns all data columns of the data table as a list.
+     * Return the name of the data column at the given column index.
      * </p>
+     * <p>
+     * <code>IDataTable</code> implementations are not prescribed to follow any indexing scheme.  The indices
+     * assigned to data columns are determined completely by the implementing class.
+     * This method is provided to determine the ordering of table columns within the data table. 
+     * This method is included determination of table column ordering within the data table. 
+     * <p>
+     * <p>
      * <h2>Default Implementation</h2>
      * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
      * Implementing classes may wish to override the default implementation if better options are available.
      * <br/><br/>
      * <ul>
+     * <b>Uses <code>{@link #getColumn(int)}</code></b>.
+     * <br/></br>
      * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
-     * calls <code>{@link #getColumnNames()}</code> to the list of data column names.  A new immutable list
-     * of data columns is created via repeated invocations of <code>{@link #getColumn(String)}</code> which is
-     * then returned.
+     * calls <code>{@link #getColumn(int)}.{@link IDataColumn#getName()}</code> to obtain the returned  
+     * a Java <code>String</code> value.  
+     * </ul>
+     * </p> 
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Should return <code>null</code> if the data table has not been populated.</li> 
+     * </ul>
+     * </p>  
+     * 
+     * @param indCol    column index - must be one less than the number of columns 
+     * 
+     * @return name of data column at the given column index, 
+     *         or <code>null</code> if the data table has not been populated
+     * 
+     * @throws IndexOutOfBoundsException    column index is out of bounds (0 &le; index &lt; <code>{@link #getColumnCount()}</code>)
+     * 
+     * @see #getColumnIndex(String)
+     */
+    default public String   getColumnName(int indCol) throws IndexOutOfBoundsException {
+        IDataColumn<Object> col = this.getColumn(indCol);
+        
+        if (col == null)
+            return null;
+        
+        return col.getName();
+    }
+
+    /**
+     * <p>
+     * Returns the data type of the table data column with the given column index.
+     * </p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * <b>Uses <code>{@link #getColumn(int)}</code></b>.
+     * <br/></br>
+     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+     * is just a convenience method.  
+     * It calls <code>{@link #getColumn(int)}.{@link IDataColumn#getType()}</code> 
+     * to obtain the returned type.
      * </ul>
      * </p> 
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
-     * <li>Returns an empty collection if the data table has not been populated.</li>
-     * <li>Returns <code>null</code> value if the data table has not been initialized.</li>
+     * <li>Returns <code>null</code> if the data table has not been populated.</li>
+     * <li>Returns <code>null</code> if the data table has not been initialized.</li>
      * </ul>
      * </p>  
      * 
-     * @return  immutable list of table data columns in order given by <code>{@link #getColumnNames()}</code>
+     * @param indCol column index for the returned object
+     * 
+     * @return the column data type enumeration constant
+     * 
+     * @throws IndexOutOfBoundsException column index out of bounds (0 &le; index &lt; <code>{@link #getColumnCount()}</code>)
      */
-    default public List<IDataColumn<Object>>   getColumns() {
-        List<String>    lstNames = this.getColumnNames();
+    default public DpSupportedType getColumnType(int indCol) throws IndexOutOfBoundsException {
+        IDataColumn<Object>     col = this.getColumn(indCol);
         
-        if (lstNames == null)
+        if (col == null || col.getSize()==0)
+            return null;
+    
+        return col.getType();        
+    }
+
+    /**
+     * <p>
+     * Returns the data type of the table data column with the given name.
+     * </p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * <b>Uses <code>{@link #getColumn(String)}</code></b>.
+     * <br/></br>
+     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+     * is just a convenience method.  
+     * It calls <code>{@link #getColumn(String)}.{@link IDataColumn#getType()}</code> 
+     * to obtain the returned type.
+     * </ul>
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Returns <code>null</code> if the data table has not been populated.</li>
+     * <li>Returns <code>null</code> if the data table has not been initialized.</li>
+     * </ul>
+     * </p>  
+     * 
+     * @param strName column name for the returned object
+     * 
+     * @return the column data type enumeration constant
+     * 
+     * @throws NoSuchElementException     the given column name is not within the managed column collection
+     */
+    default public DpSupportedType getColumnType(String strName) throws NoSuchElementException {
+        IDataColumn<Object>     col = this.getColumn(strName);
+        
+        if (col == null)
+            return null;
+                
+        if (col.getSize()==0)
+            return null;
+    
+        return col.getType();        
+    }
+
+    /**
+     * <p>
+     * Returns the size (number of data values) of the data table column with the given index,
+     * or 0 if the data table has not been populated.
+     * </p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * <b>Uses <code>{@link #getColumn(int)}</code></b>.
+     * <br/></br>
+     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+     * is just a convenience method.  
+     * It calls <code>{@link #getColumn(int)}.{@link IDataColumn#getSize()}</code> 
+     * to obtain the returned type.
+     * </ul>
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Returns 0 if the data table has not been populated.</li>
+     * <li>Returns <code>null</code> if the data table has not been initialized.</li>
+     * </ul>
+     * </p>  
+     * 
+     * @param indCol data table column index
+     * 
+     * @return  the number of data values within the specified data table column,
+     *          or 0 if the data table has not been populated
+     * 
+     * @throws IndexOutOfBoundsException column index out of bounds (0 &le; index &lt; <code>{@link #getColumnCount()}</code>)
+     */
+    default public Integer getColumnSize(final int indCol) throws IndexOutOfBoundsException {
+        IDataColumn<Object>     col = this.getColumn(indCol);
+        
+        if (col == null)
             return null;
         
-        return lstNames.stream().map(s -> this.getColumn(s)).toList();
+        return col.getSize();
     }
-    
+
+    /**
+     * <p>
+     * Returns the size (number of data values) of the data table column with the given name,
+     * or 0 if the data table has not been populated.
+     * </p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * <b>Uses <code>{@link #getColumn(String)}</code></b>.
+     * <br/></br>
+     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+     * is just a convenience method.  
+     * It calls <code>{@link #getColumn(String)}.{@link IDataColumn#getSize()}</code> 
+     * to obtain the returned type.
+     * </ul>
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Returns 0 if the data table has not been populated.</li>
+     * <li>Returns <code>null</code> if the data table has not been initialized.</li>
+     * </ul>
+     * </p>  
+     * 
+     * @param strName name of the table column
+     * 
+     * @return  the number of data values within the specified data table column,
+     *          or 0 if the data table has not been populated
+     * 
+     * @throws NoSuchElementException column does not exist within column collection
+     */
+    default public Integer getColumnSize(String strName) throws NoSuchElementException {
+        IDataColumn<Object>     col = this.getColumn(strName);
+        
+        if (col == null)
+            return null;
+        
+        return col.getSize();
+    }
+
     /**
      * <p>
      * Returns all column data of table column for the given table column index as an ordered list, 
@@ -512,6 +785,8 @@ public interface IDataTable {
      * Implementing classes may wish to override the default implementation if better options are available.
      * <br/><br/>
      * <ul>
+     * <b>Uses <code>{@link #getColumn(int)}</code></b>.
+     * <br/></br>
      * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
      * is just a convenience method.  
      * It calls <code>{@link #getColumn(int)}.{@link IDataColumn#getValues()}</code> 
@@ -554,6 +829,8 @@ public interface IDataTable {
      * Implementing classes may wish to override the default implementation if better options are available.
      * <br/><br/>
      * <ul>
+     * <b>Uses <code>{@link #getColumn(String)}</code></b>.
+     * <br/></br>
      * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
      * is just a convenience method.  
      * It calls <code>{@link #getColumn(String)}.{@link IDataColumn#getValuesTyped()}</code> 
@@ -578,7 +855,7 @@ public interface IDataTable {
      * @throws NoSuchElementException     the given column name is not within the managed column collection
      */
     default public List<Object> getColumnData(String strName) throws IllegalArgumentException, NoSuchElementException {
-
+    
         // Exception checking
         if (strName == null)
             throw new IllegalArgumentException("IDataSet#getColumnData(String) - Cannot use null value as argument <strName>");
@@ -590,7 +867,7 @@ public interface IDataTable {
         
         return col.getValues();
     }
-    
+
     /**
      * <p>
      * Returns all column data for the given table column index as an ordered list of typed values, 
@@ -602,6 +879,8 @@ public interface IDataTable {
      * Implementing classes may wish to override the default implementation if better options are available.
      * <br/><br/>
      * <ul>
+     * <b>Uses <code>{@link #getColumn(int)}</code></b>.
+     * <br/></br>
      * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
      * is just a convenience method.  
      * It calls <code>{@link #getColumn(int)}.{@link IDataColumn#getValuesTyped()}</code> 
@@ -625,15 +904,28 @@ public interface IDataTable {
      *          or <code>null</code> if the data set has not been initialized
      * 
      * @throws IndexOutOfBoundsException column index out of bounds (0 &le; index &lt; <code>{@link #getColumnCount()}</code>)
+     * @throws ClassCastException        generic parameter <code>T</code> is not compatible with column type
      */
-    default public <T extends Object> List<T> getColumnDataTyped(int indCol) throws IndexOutOfBoundsException {
+    @SuppressWarnings("unchecked")
+    default public <T extends Object> List<T> getColumnDataTyped(int indCol) throws IndexOutOfBoundsException, ClassCastException {
 
-        IDataColumn<T> col = this.getColumn(indCol);
+        IDataColumn<Object> colObj = this.getColumn(indCol);
         
-        if (col == null)
+        // Check column
+        if (colObj == null)
             return List.of();
         
-        List<T>      lstVals = col.getValuesTyped();
+        if (colObj.getSize() == 0)
+            return List.of();
+        
+        // Check column type
+        Object          objVal = colObj.getValue(0);
+        DpSupportedType enmType = colObj.getType();
+        if (!enmType.isAssignableFrom(objVal.getClass()))
+            throw new ClassCastException("Generic parameter T is incompatible with columnType " + enmType);
+
+        // Can safely cast 
+        List<T>     lstVals = (List<T>)colObj.getValues();
         
         return lstVals;
     }
@@ -649,6 +941,8 @@ public interface IDataTable {
      * Implementing classes may wish to override the default implementation if better options are available.
      * <br/><br/>
      * <ul>
+     * <b>Uses <code>{@link #getColumn(String)}</code></b>.
+     * <br/></br>
      * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
      * is just a convenience method.  
      * It calls <code>{@link #getColumn(String)}.{@link IDataColumn#getValues()}</code> 
@@ -671,187 +965,71 @@ public interface IDataTable {
      * @return  ordered list of typed column values for the given column name, 
      *          or empty if the data table has not been populated
      * 
-     * @throws IllegalArgumentException   the given column label was <code>null</code> 
-     * @throws NoSuchElementException     the given column name is not within the managed column collection
+     * @throws IllegalArgumentException the given column label was <code>null</code> 
+     * @throws NoSuchElementException   the given column name is not within the managed column collection
+     * @throws ClassCastException       generic parameter <code>T</code> is not compatible with column type
      */
+    @SuppressWarnings("unchecked")
     default public <T extends Object> List<T> getColumnDataTyped(String strName) 
-            throws IllegalArgumentException, NoSuchElementException {
+            throws IllegalArgumentException, NoSuchElementException, ClassCastException {
 
         // Exception checking
         if (strName == null)
-            throw new IllegalArgumentException("IDataSet#getColumnData(String) - Cannot use null value as argument <strLbl>");
+            throw new IllegalArgumentException("IDataSet#getColumnDataTyped(String) - Cannot use null value as argument <strLbl>");
         
-        IDataColumn<T> col = this.getColumn(strName);
+        IDataColumn<Object> colObj = this.getColumn(strName);
         
-        if (col == null)
+        if (colObj == null)
             return List.of();
         
-        return col.getValuesTyped();
-    }
-    
-    /**
-     * <p>
-     * Returns the data type of the table data column with the given name.
-     * </p>
-     * <p>
-     * <h2>Default Implementation</h2>
-     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
-     * Implementing classes may wish to override the default implementation if better options are available.
-     * <br/><br/>
-     * <ul>
-     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
-     * is just a convenience method.  
-     * It calls <code>{@link #getColumn(String)}.{@link IDataColumn#getType()}</code> 
-     * to obtain the returned type.
-     * </ul>
-     * </p> 
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>Returns <code>null</code> if the data table has not been populated.</li>
-     * <li>Returns <code>null</code> if the data table has not been initialized.</li>
-     * </ul>
-     * </p>  
-     * 
-     * @param strName column name for the returned object
-     * 
-     * @return the column data type enumeration constant
-     * 
-     * @throws NoSuchElementException     the given column name is not within the managed column collection
-     */
-    default public DpSupportedType getColumnType(String strName) throws NoSuchElementException {
-        IDataColumn<Object>     col = this.getColumn(strName);
+        if (colObj.getSize() == 0)
+            return List.of();
         
-        if (col == null)
-            return null;
-                
-        if (col.getSize()==0)
-            return null;
+        // Check column type
+        Object          objVal = colObj.getValue(0);
+        DpSupportedType enmType = colObj.getType();
+        if (!enmType.isAssignableFrom(objVal.getClass()))
+            throw new ClassCastException("Generic parameter T is incompatible with columnType " + enmType);
 
-        return col.getType();        
+        // Can safely cast 
+        List<T>     lstVals = (List<T>)colObj.getValues();
+        
+        return lstVals;
     }
     
-    /**
-     * <p>
-     * Returns the data type of the table data column with the given column index.
-     * </p>
-     * <p>
-     * <h2>Default Implementation</h2>
-     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
-     * Implementing classes may wish to override the default implementation if better options are available.
-     * <br/><br/>
-     * <ul>
-     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
-     * is just a convenience method.  
-     * It calls <code>{@link #getColumn(int)}.{@link IDataColumn#getType()}</code> 
-     * to obtain the returned type.
-     * </ul>
-     * </p> 
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>Returns <code>null</code> if the data table has not been populated.</li>
-     * <li>Returns <code>null</code> if the data table has not been initialized.</li>
-     * </ul>
-     * </p>  
-     * 
-     * @param indCol column index for the returned object
-     * 
-     * @return the column data type enumeration constant
-     * 
-     * @throws IndexOutOfBoundsException column index out of bounds (0 &le; index &lt; <code>{@link #getColumnCount()}</code>)
-     */
-    default public DpSupportedType getColumnType(int indCol) throws IndexOutOfBoundsException {
-        IDataColumn<Object>     col = this.getColumn(indCol);
-        
-        if (col == null || col.getSize()==0)
-            return null;
-
-        return col.getType();        
-    }
-    
-    /**
-     * <p>
-     * Returns the size (number of data values) of the data table column with the given index,
-     * or 0 if the data table has not been populated.
-     * </p>
-     * <p>
-     * <h2>Default Implementation</h2>
-     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
-     * Implementing classes may wish to override the default implementation if better options are available.
-     * <br/><br/>
-     * <ul>
-     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
-     * is just a convenience method.  
-     * It calls <code>{@link #getColumn(int)}.{@link IDataColumn#getSize()}</code> 
-     * to obtain the returned type.
-     * </ul>
-     * </p> 
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>Returns 0 if the data table has not been populated.</li>
-     * <li>Returns <code>null</code> if the data table has not been initialized.</li>
-     * </ul>
-     * </p>  
-     * 
-     * @param indCol data table column index
-     * 
-     * @return  the number of data values within the specified data table column,
-     *          or 0 if the data table has not been populated
-     * 
-     * @throws IndexOutOfBoundsException column index out of bounds (0 &le; index &lt; <code>{@link #getColumnCount()}</code>)
-     */
-    default public Integer getColumnSize(final int indCol) throws IndexOutOfBoundsException {
-        IDataColumn<Object>     col = this.getColumn(indCol);
-        
-        if (col == null)
-            return null;
-        
-        return col.getSize();
-    }
-
-    
-    /**
-     * <p>
-     * Returns the size (number of data values) of the data table column with the given name,
-     * or 0 if the data table has not been populated.
-     * </p>
-     * <p>
-     * <h2>Default Implementation</h2>
-     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
-     * Implementing classes may wish to override the default implementation if better options are available.
-     * <br/><br/>
-     * <ul>
-     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
-     * is just a convenience method.  
-     * It calls <code>{@link #getColumn(String)}.{@link IDataColumn#getSize()}</code> 
-     * to obtain the returned type.
-     * </ul>
-     * </p> 
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>Returns 0 if the data table has not been populated.</li>
-     * <li>Returns <code>null</code> if the data table has not been initialized.</li>
-     * </ul>
-     * </p>  
-     * 
-     * @param strName name of the table column
-     * 
-     * @return  the number of data values within the specified data table column,
-     *          or 0 if the data table has not been populated
-     * 
-     * @throws NoSuchElementException column does not exist within column collection
-     */
-    default public Integer getColumnSize(String strName) throws NoSuchElementException {
-        IDataColumn<Object>     col = this.getColumn(strName);
-        
-        if (col == null)
-            return null;
-        
-        return col.getSize();
-    }
+//    /**
+//     * <p>
+//     * Returns all data columns of the data table as a list.
+//     * </p>
+//     * <h2>Default Implementation</h2>
+//     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+//     * Implementing classes may wish to override the default implementation if better options are available.
+//     * <br/><br/>
+//     * <ul>
+//     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+//     * calls <code>{@link #getColumnNames()}</code> to the list of data column names.  A new immutable list
+//     * of data columns is created via repeated invocations of <code>{@link #getColumn(String)}</code> which is
+//     * then returned.
+//     * </ul>
+//     * </p> 
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li>Returns an empty collection if the data table has not been populated.</li>
+//     * <li>Returns <code>null</code> value if the data table has not been initialized.</li>
+//     * </ul>
+//     * </p>  
+//     * 
+//     * @return  immutable list of table data columns in order given by <code>{@link #getColumnNames()}</code>
+//     */
+//    default public List<IDataColumn<Object>>   getColumns() {
+//        List<String>    lstNames = this.getColumnNames();
+//        
+//        if (lstNames == null)
+//            return null;
+//        
+//        return lstNames.stream().map(s -> this.getColumn(s)).toList();
+//    }
 
     /**
      * <p>
@@ -868,8 +1046,10 @@ public interface IDataTable {
      * Implementing classes may wish to override the default implementation if better options are available.
      * <br/><br/>
      * <ul>
+     * <b>Uses <code>{@link #getColumnNames()} {@link #getColumnSize(String)}</code></b>.
+     * <br/></br>
      * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
-     * iterates (streams) through the list of table column names.   
+     * iterates (streams) through the list of table column names from <code>{@link #getColumnNames()}</code>.   
      * It calls <code>{@link IDataColumn#getColumnSize(String)}</code> parsing the values 
      * to obtain the returned value.
      * </ul>
@@ -877,7 +1057,7 @@ public interface IDataTable {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
-     * <li>Returns 0 if the data table has not been populated.</li>
+     * <li>Returns <code>null</code> if the data table has not been populated.</li>
      * <li>Returns 0 if the data table has not been initialized.</li>
      * </ul>
      * </p>  
@@ -889,11 +1069,10 @@ public interface IDataTable {
         List<String> lstColNms = this.getColumnNames();
         
         if (lstColNms == null)
-            return 0;
+            return null;
         
         if (lstColNms.isEmpty())
             return 0;
-
         
         return lstColNms
                 .stream()
@@ -917,8 +1096,10 @@ public interface IDataTable {
      * Implementing classes may wish to override the default implementation if better options are available.
      * <br/><br/>
      * <ul>
+     * <b>Uses <code>{@link #getColumnNames()} {@link #getColumnSize(String)}</code></b>.
+     * <br/></br>
      * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
-     * iterates (streams) through the list of table column names.   
+     * iterates (streams) through the list of table column names from <code>{@link #getColumnNames()}</code>.   
      * It calls <code>{@link IDataColumn#getColumnSize(String)}</code> parsing the values 
      * to obtain the returned value.
      * </ul>
@@ -926,7 +1107,7 @@ public interface IDataTable {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
-     * <li>Returns 0 if the data table has not been populated.</li>
+     * <li>Returns <code>null</code> if the data table has not been populated.</li>
      * <li>Returns 0 if the data table has not been initialized.</li>
      * </ul>
      * </p>  
@@ -934,23 +1115,23 @@ public interface IDataTable {
      * @return  Size of the largest data column in the table at time of calling
      *          (0 if the table has not been initialized)
      */
-    default public Long getColumnSizeMax() {
+    default public Integer getColumnSizeMax() {
         List<String> lstColNms = this.getColumnNames();
         
         if (lstColNms == null)
-            return 0L;
+            return null;
         
         if (lstColNms.isEmpty())
-            return 0L;
-
+            return 0;
         
         return lstColNms
                 .stream()
-                .mapToLong( s -> this.getColumnSize(s) )
+                .mapToInt( s -> this.getColumnSize(s) )
                 .max()
-                .getAsLong();
+                .getAsInt();
     }
 
+    
     //
     // Memory Allocation
     //
@@ -969,6 +1150,8 @@ public interface IDataTable {
      * Implementing classes may wish to override the default implementation if better options are available.
      * <br/><br/>
      * <ul>
+     * <b>Uses <code>{@link #getColumn(int)}</code></b>.
+     * <br/></br>
      * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
      * iterates through all table columns invoking <code>{@link IDataColumn#allocationSize()}</code>
      * to sum the allocation size of each table column.
@@ -992,8 +1175,9 @@ public interface IDataTable {
      */
     default public long allocationSize() throws UnsupportedOperationException, ArithmeticException {
         long    lngSzTms = 2 * this.getRowCount() * Long.BYTES;
-        long    lngSzCols = this.getColumns().stream().mapToLong(IDataColumn::allocationSize).sum();
-
+//        long    lngSzCols = this.getColumns().stream().mapToLong(IDataColumn::allocationSize).sum();
+        long    lngSzCols = IntStream.range(0, this.getColumnCount()).mapToLong(i -> this.getColumn(i).allocationSize()).sum();
+        
         return lngSzTms + lngSzCols;
     }
 

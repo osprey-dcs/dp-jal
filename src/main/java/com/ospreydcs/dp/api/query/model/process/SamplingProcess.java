@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -99,7 +100,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <p>
  * <h2>TODO</h2>
  * <ul>
- * <li>Implement a possible interface <code>IDataTable</code> for table-like data retrieval.</li>
+ * <li><s>Implement a possible interface <code>IDataTable</code> for table-like data retrieval.</s></li>
  * <li>Reduce exception checking when mature - for performance consideration.</li>
  * </ul>
  * </p>
@@ -109,17 +110,13 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  */
 public class SamplingProcess {
 
-    //
-    // Class Types
-    //
-    
 
     //
     // Application Resources
     //
     
     /** The Data Platform API default configuration parameter set */
-    private static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    protected static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
     
     
     //
@@ -142,17 +139,9 @@ public class SamplingProcess {
     //
     
     /** Event logger for class */
-    private static final Logger LOGGER = LogManager.getLogger();
+    protected static final Logger LOGGER = LogManager.getLogger();
     
 
-    //
-    // Defining Attributes
-    //
-    
-//    /** Sorted set of <code>CorrelatedQueryData</code> used to build this process */
-//    private final SortedSet<CorrelatedQueryData>    setSubjectRefs;
-    
-    
     //
     // Attributes
     //
@@ -163,17 +152,15 @@ public class SamplingProcess {
     /** The time domain of the sampling process */
     private final TimeInterval          ivlDomain;
     
-//    /** The vector of timestamps for this sampling process */
-//    private final Vector<Instant>       vecTimestamps;
     
     /** The set of all unique data sources names - taken from initializing correlated query data */
-    private final Set<String>                   setSourceNames;
+    protected final SortedSet<String>             setSrcNms;
     
     /** Map of data source names to their data type - taken from processed sampling blocks */
-    private final Map<String, DpSupportedType>  mapSrcNmToType;
+    protected final Map<String, DpSupportedType>  mapSrcNmToType;
     
     /** Ordered vector of uniform sampling blocks comprising the sampling process */
-    private final List<UniformSamplingBlock>    vecSmplBlock;
+    protected final List<UniformSamplingBlock>    vecSmplBlocks;
     
     
     //
@@ -280,24 +267,24 @@ public class SamplingProcess {
             throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, result.message());
         
         // Build sampling blocks and get source names from target data set
-        this.vecSmplBlock = this.buildSamplingBlocks(setTargetData);
-        this.setSourceNames = this.buildSourceNameSet(setTargetData);
+        this.vecSmplBlocks = this.buildSamplingBlocks(setTargetData);
+        this.setSrcNms = this.buildSourceNameSet(setTargetData);
         
         // Create the auxiliary resources from the new sampling blocks
-        this.mapSrcNmToType = this.buildSourceNameToTypeMap(this.vecSmplBlock);
-        this.ivlDomain = this.computeTimeDomain(this.vecSmplBlock);
-        this.cntSamples = this.computeSampleCount(this.vecSmplBlock);
+        this.mapSrcNmToType = this.buildSourceNameToTypeMap(this.vecSmplBlocks);
+        this.ivlDomain = this.computeTimeDomain(this.vecSmplBlocks);
+        this.cntSamples = this.computeSampleCount(this.vecSmplBlocks);
         
         // Verify the consistency of the sampling blocks
-        result = this.verifyStartTimes(this.vecSmplBlock);
+        result = this.verifyStartTimes(this.vecSmplBlocks);
         if (result.isFailure())
             throw new CompletionException(result.message(), result.cause());
         
-        result = this.verifyTimeDomains(this.vecSmplBlock);
+        result = this.verifyTimeDomains(this.vecSmplBlocks);
         if (result.isFailure())
             throw new CompletionException(result.message(), result.cause());
         
-        result = this.verifySourceTypes(vecSmplBlock);
+        result = this.verifySourceTypes(vecSmplBlocks);
         if (result.isFailure())
             throw new CompletionException(result.message(), result.cause());
     }
@@ -306,6 +293,25 @@ public class SamplingProcess {
     //
     // Attribute/Property Query
     //
+    
+    /**
+     * <p>
+     * Determine whether or not the sampling process contains time-series data for the given 
+     * data source.
+     * </p>
+     * <p>
+     * Simply checks the given data source name against the internal set of represented
+     * data sources.
+     * </p>
+     *  
+     * @param strSourceName unique name of data source
+     * 
+     * @return  <code>true</code> if the data source is represented within this sampling process,
+     *          <code>false</code> otherwise
+     */
+    public boolean  hasSourceData(String strSourceName) {
+        return this.setSrcNms.contains(strSourceName);
+    }
     
     /**
      * <p>
@@ -322,7 +328,7 @@ public class SamplingProcess {
      * @return  number of component sampling blocks within composite sampling process
      */
     public final int    getSamplingBlockCount() {
-        return this.vecSmplBlock.size();
+        return this.vecSmplBlocks.size();
     }
 
 
@@ -344,9 +350,8 @@ public class SamplingProcess {
      * @throws IndexOutOfBoundsException    the index is larger the the number of component blocks
      */
     public final UniformSamplingBlock   getSamplingBlock(int index) throws IndexOutOfBoundsException {
-        return this.vecSmplBlock.get(index);
+        return this.vecSmplBlocks.get(index);
     }
-
 
     /**
      * <p>
@@ -408,7 +413,7 @@ public class SamplingProcess {
      * @return  the number of data sources contributing to this sampling process
      */
     public final int getDataSourceCount() {
-        return this.setSourceNames.size();
+        return this.setSrcNms.size();
     }
     
     /**
@@ -428,7 +433,7 @@ public class SamplingProcess {
      * @return  set of all data sources (by name) contributing time-series data to this process
      */
     public final Set<String>  getDataSourceNames() {
-        return this.setSourceNames;
+        return this.setSrcNms;
     }
     
     /**
@@ -445,7 +450,7 @@ public class SamplingProcess {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
-     * <li>If the given data source is not contained within the process a <code>null</code> is returned.</li>
+     * <li>If the given data source is not contained within the process an exception is thrown.</li>
      * <li>Use <code>{@link #getDataSourceNames()}</code> to obtain all data sources names in process.</li>
      * </ul>
      * </p>
@@ -454,11 +459,57 @@ public class SamplingProcess {
      * 
      * @return  the data type of the given data source time series, or <code>null</code> if source not present 
      *
+     * @throws  NoSuchElementException  data source name is not represented in the time series data collection
+     * 
      * @see #getDataSourceNames()
      * @see DpSupportedType
      */
-    public final DpSupportedType    getSourceType(String strSourceName) throws NullPointerException {
+    public final DpSupportedType    getSourceType(String strSourceName) throws NoSuchElementException {
+        
+        // Check argument
+        if (!this.hasSourceData(strSourceName))
+            throw new NoSuchElementException("Data source not represented in time-series collection: " + strSourceName);
+        
         return this.mapSrcNmToType.get(strSourceName);
+    }
+    
+    
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new, ordered list of timestamps for all time-series data within this process.
+     * </p>
+     * <p>
+     * The timestamps returned are for the <em>entire</em> stampling process.  It is a composite of all
+     * sampling blocks within the sampling process. 
+     * <p>
+     * <h2>NOTES</h2>
+     * This method should be called once.
+     * <ul>
+     * <li>
+     * The returned timestamp list is <em>created</em> dynamically from all the sampling 
+     * block components within the sampling process.  Thus, avoid repeated calls to this method. 
+     * </li>
+     * <br/>
+     * <li>
+     * If the timestamps are to be used repeatedly, the returned value should be saved locally.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @return  ordered list of timestamp instants for all time-series data within this sampling process
+     */
+    public ArrayList<Instant>    timestamps() {
+        
+        ArrayList<Instant>   lstTms = this.vecSmplBlocks
+                .stream()
+                .sequential()
+                .collect(ArrayList::new, (lst, blk) -> lst.addAll(blk.getTimestamps()), (agg, lst) -> agg.addAll(lst));
+        
+        return lstTms;
     }
     
     /**
@@ -473,12 +524,13 @@ public class SamplingProcess {
      * </p>
      * <p>
      * <h2>NOTES</h2>
+     * This method should be called at most once for each data source.
      * <ul>
      * <li>
-     * The returned time-series data set is created <em>dynamically</em> from all the sampling 
+     * The returned time-series data set is <em>created</em> dynamically from all the sampling 
      * block components within the sampling process.  Thus, avoid repeated calls to this 
      * method for the same data source.
-     * <li>
+     * </li>
      * <br/>
      * <li>
      * If the time series for the given data source is to be used repeatedly, the returned value
@@ -490,22 +542,22 @@ public class SamplingProcess {
      * @param strSourceName     data source unique name
      * @return  new instance of <code>SampledTimeSeries</code> containing full time-series for given source
      * 
-     * @throws IllegalArgumentException the data source is not represented in this process
+     * @throws NoSuchElementException the data source is not represented in this process
      */
-    public SampledTimeSeries     timeSeries(String strSourceName) throws IllegalArgumentException {
+    public SampledTimeSeries<Object>    timeSeries(String strSourceName) throws NoSuchElementException {
         
         // Check source name
-        if (!this.getDataSourceNames().contains(strSourceName))
-            throw new IllegalArgumentException("SamplingProcess contain no data source " + strSourceName);
+        if (!this.hasSourceData(strSourceName))
+            throw new NoSuchElementException("SamplingProcess contain no data source " + strSourceName);
         
         // Create the full time-series data-value vector for the given data source
         DpSupportedType         enmSrcType = this.getSourceType(strSourceName);
         ArrayList<Object>       vecSrcValues = new ArrayList<>(this.getSampleCount());
         
-        for (UniformSamplingBlock blk : this.vecSmplBlock) {
+        for (UniformSamplingBlock blk : this.vecSmplBlocks) {
             
             // Check if data source is represented within current sampling block
-            SampledTimeSeries   stms;
+            SampledTimeSeries<Object>   stms;
             if (blk.hasSourceData(strSourceName)) {
                 stms = blk.getTimeSeries(strSourceName);
                 
@@ -519,13 +571,11 @@ public class SamplingProcess {
         }
         
         // Create the full time-series instance for the given data source and return it
-        SampledTimeSeries   stmsNew = new SampledTimeSeries(strSourceName, enmSrcType, vecSrcValues);
+        SampledTimeSeries<Object>   stmsNew = new SampledTimeSeries<Object>(strSourceName, enmSrcType, vecSrcValues);
         
         return stmsNew;
     }
     
-    
-
     
     //
     // Support Methods
@@ -752,46 +802,10 @@ public class SamplingProcess {
      * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
      * throws RangeException           the argument has bad ordering or contains time domain collisions
-     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     * @throws TypeNotPresentException an unsupported data type was detected within the argument
      */
     private List<UniformSamplingBlock>    buildSamplingBlocks(SortedSet<CorrelatedQueryData> setQueryData) 
-            throws MissingResourceException, IllegalArgumentException, IllegalStateException, /* RangeException,*/ UnsupportedOperationException {
-        
-//        // First check all query data for correct ordering and time domain collisions
-//        CorrelatedQueryData cqdFirst = setQueryData.first();
-//        
-//        setQueryData.remove(cqdFirst);
-//        CorrelatedQueryData cqdPrev = cqdFirst;
-//        for (CorrelatedQueryData cqdCurr : setQueryData) {
-//            
-//            // Check time order
-//            Instant insPrev = cqdPrev.getStartInstant();
-//            Instant insCurr = cqdCurr.getStartInstant();
-//            
-//            if (insPrev.compareTo(insCurr) >= 0) {
-//                setQueryData.add(cqdFirst);
-//
-//                if (BOL_LOGGING)
-//                    LOGGER.error("{}: Bad ordering in start times, {} ordred after {}.", JavaRuntime.getCallerName(), insPrev, insCurr);
-//                
-//                throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, "Bad ordering in start times " + insPrev + " ordered after " + insCurr);
-//            }
-//
-//            // Since collection is ordered, only need to check proximal domains
-//            TimeInterval    domPrev = cqdPrev.getTimeDomain();
-//            TimeInterval    domCurr = cqdCurr.getTimeDomain();
-//            
-//            if (domPrev.hasIntersectionClosed(domCurr)) {
-//                setQueryData.add(cqdFirst);
-//
-//                if (BOL_LOGGING)
-//                    LOGGER.error("{}: Collision between sampling domains {} and {}.", JavaRuntime.getCallerName(), domPrev, domCurr);
-//                
-//                throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, "Collision between sampling domains " + domPrev + " and " + domCurr);
-//            }
-//                
-//        }
-//        setQueryData.add(cqdFirst);
+            throws MissingResourceException, IllegalArgumentException, IllegalStateException, /* RangeException,*/ TypeNotPresentException {
         
         // Create the sample blocks, pivoting to concurrency by container size
         List<UniformSamplingBlock>    vecSmplBlocks;
@@ -842,8 +856,8 @@ public class SamplingProcess {
      * 
      * @return  set of all data source names within the Query Service correlated data collection 
      */
-    private Set<String>    buildSourceNameSet(SortedSet<CorrelatedQueryData> setQueryData) {
-        Set<String> setNames = setQueryData
+    private SortedSet<String>    buildSourceNameSet(SortedSet<CorrelatedQueryData> setQueryData) {
+        SortedSet<String> setNames = setQueryData
                 .stream()
                 .collect(
                         TreeSet::new, 

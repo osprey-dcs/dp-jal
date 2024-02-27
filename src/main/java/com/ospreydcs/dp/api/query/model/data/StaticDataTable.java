@@ -27,9 +27,6 @@
  */
 package com.ospreydcs.dp.api.query.model.data;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -38,8 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.OptionalInt;
-import java.util.Vector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -107,6 +102,12 @@ public class StaticDataTable implements IDataTable, Serializable {
     /** The ordered vector of table data columns */
     private final ArrayList<IDataColumn<Object>>    vecCols;
     
+    /** The vector of column names in order of indexing */
+    private final ArrayList<String>                 vecColNms;
+    
+    /** Map of column names to table column index */
+    private final Map<String, Integer>              mapNmToInd;
+    
     /** Map of column names to table columns */
     private final Map<String, IDataColumn<Object>>  mapNmToCol;
     
@@ -123,10 +124,7 @@ public class StaticDataTable implements IDataTable, Serializable {
     // Creators
     //
     
-//    public static from(QueryResponse.QueryReport.QueryData msgData) {
-//        msgData.
-//    }
-    
+
     //
     // Constructors
     //
@@ -141,7 +139,10 @@ public class StaticDataTable implements IDataTable, Serializable {
     public StaticDataTable() {
         this.vecTms = new ArrayList<>();
         this.vecCols = new ArrayList<>();
+        
+        this.vecColNms = new ArrayList<>();
         this.mapNmToCol = new HashMap<>();
+        this.mapNmToInd = new HashMap<>();
     }
     
     /**
@@ -162,11 +163,14 @@ public class StaticDataTable implements IDataTable, Serializable {
      * @throws  IllegalStateException       column data contained columns with duplicate names
      * @throws  IllegalArgumentException    column data contained columns with bad sizes (not equal to timestamp data)
      */
-    public StaticDataTable(ArrayList<Instant> vecTms, Collection<IDataColumn<Object>> setCols) 
+    public StaticDataTable(List<Instant> vecTms, Collection<IDataColumn<Object>> setCols) 
             throws IllegalStateException, IllegalArgumentException {
-        this.vecTms = vecTms;
+        this.vecTms = new ArrayList<>(vecTms);
         this.vecCols = new ArrayList<>(setCols);
+        
+        this.vecColNms = this.vecCols.stream().sequential().collect(ArrayList::new, (vec, col) -> vec.add(col.getName()), (agg, vec) -> agg.addAll(vec));
         this.mapNmToCol = this.vecCols.stream().collect(Collectors.toMap(c -> c.getName(), c -> c)); // throws IllegalStateException
+        this.mapNmToInd = IntStream.range(0, this.vecCols.size()).collect(HashMap::new, (map, i) -> map.put(this.vecCols.get(i).getName(), i), (c, m) -> c.putAll(m));
 
         // Check the sizes
         Integer         cntRows = vecTms.size();
@@ -298,9 +302,13 @@ public class StaticDataTable implements IDataTable, Serializable {
         
         // Add the data column to the existing collection
         IDataColumn<Object> colObj =  (IDataColumn<Object>)colTyped;
+        Integer             indCol = this.vecCols.size();
 
         this.vecCols.add(colObj);
-        this.mapNmToCol.put(colObj.getName(), colObj);
+        
+        this.vecColNms.add(strName);
+        this.mapNmToCol.put(strName, colObj);
+        this.mapNmToInd.put(strName, indCol);
         
         return true;
     }
@@ -382,43 +390,35 @@ public class StaticDataTable implements IDataTable, Serializable {
         return this.vecCols.size();
     }
 
-    /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnName(int)
-     */
-    @Override
-    public String getColumnName(int indCol) throws IndexOutOfBoundsException {
-        return this.vecCols.get(indCol).getName();
-    }
+//    /**
+//     *
+//     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnName(int)
+//     */
+//    @Override
+//    public String getColumnName(int indCol) throws IndexOutOfBoundsException {
+//        return this.vecCols.get(indCol).getName();
+//    }
 
     /**
-     * <p>
-     * Returns the table column index for the given data column name.
-     * </p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>Table column names are a unique property of the data column.</li>
-     * <li>Table column indices are arbitrarily determined by the table itself.</li>
-     * </ul>
-     * </p>
-     * 
-     * @param strColName    data column name
-     * 
-     * @return  the table column index for the given data column name
-     * 
-     * @throws NoSuchElementException   table contains no data columns with given name
      * 
      * @see com.ospreydcs.dp.api.model.IDataTable#getColumnName(int)
      */
     @Override
     public int  getColumnIndex(String strColName) throws NoSuchElementException {
+
+        Integer indCol = this.mapNmToInd.get(strColName);
         
-        OptionalInt index = IntStream.range(0, this.vecCols.size()).filter(i -> this.vecCols.get(i).getName().equals(strColName)).findAny();
+        if (indCol == null)
+          throw new NoSuchElementException("Table contains no column with name " + strColName);
         
-        if (index.isEmpty())
-            throw new NoSuchElementException("Table contains no column with name " + strColName);
-        
-        return index.getAsInt();
+        return indCol;
+            
+//        OptionalInt index = IntStream.range(0, this.vecCols.size()).filter(i -> this.vecCols.get(i).getName().equals(strColName)).findAny();
+//        
+//        if (index.isEmpty())
+//            throw new NoSuchElementException("Table contains no column with name " + strColName);
+//        
+//        return index.getAsInt();
     }
 
     /**
@@ -426,24 +426,25 @@ public class StaticDataTable implements IDataTable, Serializable {
      * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnNames()
      */
     @Override
-    public List<String> getColumnNames() {
-        // Create a column name list in order of indexing
-        List<String>    lstNms = this.vecCols
-                                .stream()
-                                .<String>map(IDataColumn::getName)
-                                .toList();
-        
-        return lstNms;
+    public final List<String> getColumnNames() {
+        return this.vecColNms;
+//        // Create a column name list in order of indexing
+//        List<String>    lstNms = this.vecCols
+//                                .stream()
+//                                .<String>map(IDataColumn::getName)
+//                                .toList();
+//        
+//        return lstNms;
     }
 
-    /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getTimestamp(int)
-     */
-    @Override
-    public Instant getTimestamp(int indRow) throws IndexOutOfBoundsException {
-        return this.vecTms.get(indRow);
-    }
+//    /**
+//     *
+//     * @see @see com.ospreydcs.dp.api.model.IDataTable#getTimestamp(int)
+//     */
+//    @Override
+//    public Instant getTimestamp(int indRow) throws IndexOutOfBoundsException {
+//        return this.vecTms.get(indRow);
+//    }
 
     /**
      *
@@ -454,43 +455,42 @@ public class StaticDataTable implements IDataTable, Serializable {
         return this.vecTms;
     }
 
-    /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getValue(int, int)
-     */
-    @Override
-    public Object getValue(int indRow, int indCol) throws IndexOutOfBoundsException, ArithmeticException {
-        IDataColumn<Object>     col = this.vecCols.get(indCol);
-        Object                  val = col.getValue(indRow);
-        
-        return val;
-    }
+//    /**
+//     *
+//     * @see @see com.ospreydcs.dp.api.model.IDataTable#getValue(int, int)
+//     */
+//    @Override
+//    public Object getValue(int indRow, int indCol) throws IndexOutOfBoundsException, ArithmeticException {
+//        IDataColumn<Object>     col = this.vecCols.get(indCol);
+//        Object                  val = col.getValue(indRow);
+//        
+//        return val;
+//    }
 
-    /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getRowValues(int)
-     */
-    @Override
-    public Object[] getRowValues(int indRow) throws IndexOutOfBoundsException {
-        Integer         cntCols = this.getColumnCount();
-        
-        // Create object array as ordered column values (at indRow) across column collection 
-        Object[] arrVals = IntStream
-                .range(0, cntCols)
-                .mapToObj(i -> this.vecCols.get(i).getValue(indRow) )
-                .toArray();
-        
-        return arrVals;
-    }
+//    /**
+//     *
+//     * @see @see com.ospreydcs.dp.api.model.IDataTable#getRowValues(int)
+//     */
+//    @Override
+//    public Object[] getRowValues(int indRow) throws IndexOutOfBoundsException {
+//        Integer         cntCols = this.getColumnCount();
+//        
+//        // Create object array as ordered column values (at indRow) across column collection 
+//        Object[] arrVals = IntStream
+//                .range(0, cntCols)
+//                .mapToObj(i -> this.vecCols.get(i).getValue(indRow) )
+//                .toArray();
+//        
+//        return arrVals;
+//    }
 
     /**
      *
      * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumn(int)
      */
     @Override
-    @SuppressWarnings("unchecked")
-    public <T extends Object> IDataColumn<T>    getColumn(int indCol) throws IndexOutOfBoundsException {
-        return (IDataColumn<T>) this.vecCols.get(indCol);
+    public final /*<T extends Object> IDataColumn<T> */ IDataColumn<Object>   getColumn(int indCol) throws IndexOutOfBoundsException {
+        return this.vecCols.get(indCol);
     }
 
     /**
@@ -498,14 +498,13 @@ public class StaticDataTable implements IDataTable, Serializable {
      * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumn(java.lang.String)
      */
     @Override
-    @SuppressWarnings("unchecked")
-    public <T extends Object> IDataColumn<T>    getColumn(String strName) throws NoSuchElementException {
+    public final /*<T extends Object> IDataColumn<T> */ IDataColumn<Object>    getColumn(String strName) throws NoSuchElementException {
         IDataColumn<Object>  col = this.mapNmToCol.get(strName);
         
         if (col == null) 
             throw new NoSuchElementException("Table contains no column with name " + strName);
         
-        return (IDataColumn<T>) col;
+        return col;
     }
 
 //    /**

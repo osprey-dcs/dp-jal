@@ -190,7 +190,7 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
      * @see @see com.ospreydcs.dp.api.model.IDataColumn#getValue(int)
      */
     @Override
-    public T getValue(int index) throws IndexOutOfBoundsException {
+    public Object getValue(int index) throws IndexOutOfBoundsException {
         return this.vecValues.get(index);
     }
 
@@ -211,15 +211,6 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
     @Override
     public List<Object> getValues() throws ArithmeticException {
         return (List<Object>) this.vecValues;
-    }
-
-
-    /**
-     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getValuesTyped()
-     */
-    @Override
-    public List<T> getValuesTyped() throws ArithmeticException {
-        return this.vecValues;
     }
 
     /**
@@ -258,6 +249,31 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
             throw new ArithmeticException("Unable to compute table size (e.g., too large)");
             
         }
+    }
+    
+
+    //
+    // IDataColumn<T> Default Implementation Overrides
+    //
+    
+    /**
+     * Overrides Default Implementation
+     *
+     * @see com.ospreydcs.dp.api.model.IDataColumn#getValueTyped(int)
+     */
+    @Override
+    public T getValueTyped(int index) throws IndexOutOfBoundsException, ArithmeticException, ClassCastException {
+        return this.vecValues.get(index);
+    }
+
+    /**
+     * Overrides Default Implementation
+     * 
+     * @see com.ospreydcs.dp.api.model.IDataColumn#getValuesTyped()
+     */
+    @Override
+    public List<T> getValuesTyped() throws ArithmeticException {
+        return this.vecValues;
     }
     
 }
