@@ -1,0 +1,27 @@
+#
+# test-mongodb-client-1.yml
+#
+# Sample parameters for testing the MongoDB configuration mechanism.
+#
+# Author: Christopher K. Allen
+# Since: December 18, 2023
+#
+# WARNING:
+#  - DO NOT modify this file.  Used for JUnit testing and parameter values are checked. 
+#
+# NOTES:
+#
+ 
+name: test-mongodb-1
+version: 0.0.0
+description: Testing parameter set for default MongoDB configuration
+supplement: No supplemental parameters 
+
+host:
+  url: localhost      # MongoDB host location:      DP_API_MONGODB_HOST_URL
+  port: 27017         # MongoDB host port address:  DP_API_MONGODB_HOST_PORT
+  
+client:
+  user: admin         # MongoDB client user ID:      DP_API_MONGODB_CLIENT_USERID
+  password: admin     # MongoDB client password:     DP_API_MONGODB_CLIENT_PASSWORD
+

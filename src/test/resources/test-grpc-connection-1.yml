@@ -1,0 +1,57 @@
+#
+# test-grpc-channel-1.yml
+#
+# Sample parameters for testing the gRPC Channel configuration mechanism.
+#
+# Author: Christopher K. Allen
+# Since: December 18, 2023
+#
+# WARNING:
+#  - DO NOT modify this file.  Used for JUnit testing and parameter values are checked. 
+#
+# NOTES:
+# - Use of compression slows overall transission significantly
+# - Default gRPC message size is 2^22 = 4194304
+# - Looks like we want to keep gRPC message size <= 2^24 = 16,777,216
+#    2^26 = 67,108,864
+#    2^25 = 33,554,432
+#    2^24 = 16,777,216
+#    2^23 =  8,388,608
+#    2^22 =  4,194,304
+#    2^21 =  2,097,152
+#    2^20 =  1,048,576
+#    2^19 =    524,288
+#
+ 
+name: test-grpc-channel-1
+version: 0.0.0
+description: Testing parameter set for default channel configuration
+supplement: No supplemental parameters 
+
+timeout:               # General connection timeout properties
+  active: true                # apply timeout condition   : DP_API_CONNECTION_TIMEOUT_ACTIVE
+  limit: 5                    # timeout limit             : DP_API_CONNECTION_TIMEOUT_LIMIT
+  unit: SECONDS               # java.concurrent.TimeUnit  : DP_API_CONNECTION_TIMEOUT_UNIT
+  
+channel:
+  host:               # host server location 
+    url: localhost              # host server URL
+    port: 50051                 # server port address
+    
+  tls:
+    active: true                # use TLS security          : DP_API_CONNECTION_CHANNEL_TLS_ACTIVE
+    defaultTls: true            # use default TLS operation : DP_API_CONNECTION_CHANNEL_TLS_DEFAULT
+    
+    filepaths:         # file path locations for TLS certificates and keys (only if defaultTls == false)
+      trustedCerts: ""          # trusted certs collection  : DP_API_CONNECTION_CHANNEL_TLS_FILE_TRUSTED_CERTS
+      clientCerts: ""           # client certificates chain : DP_API_CONNECTION_CHANNEL_TLS_FILE_CLIENT_CERTS
+      clientKey: ""             # client private key        : DP_API_CONNECTION_CHANNEL_TLS_FILE_CLIENT_KEY
+      
+  grpc:                # gRPC channel parameters
+    timeoutLimit: 5             # channel operation timeout    : DP_API_CONNECTION_CHANNEL_GRPC_TIMEOUT_LIMIT
+    timeoutUnit: SECONDS        # timeout units                : DP_API_CONNECTION_CHANNEL_GRPC_TIMEOUT_UNIT
+    messageSizeMax: 4194304     # (bytes) max message size     : DP_API_CONNECTION_CHANNEL_GRPC_MESSAGE_SIZE_MAX
+    usePlainText: false         # plain text transmission      : DP_API_CONNECTION_CHANNEL_GRPC_XMIT_PLAIN_TEXT   
+    keepAliveWithoutCalls: false # channel never idle          : DP_API_CONNECTION_CHANNEL_GRPC_KEEP_ALIVE
+    gzip: false                 # use gzip compression         : DP_API_CONNECTION_CHANNEL_GRPC_COMPRESS_GZIP
+    
