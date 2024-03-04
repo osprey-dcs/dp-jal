@@ -422,7 +422,7 @@ public record TimeInterval(Instant begin, Instant end) {
     }
 
     /**
-     * Checks whether or not the given time interval has a setwise intersection
+     * Checks whether or not the given time interval has a set-wise intersection
      * with this time interval (as closed intervals).
      * 
      * @param tvlArg    time interval to be checked
@@ -437,6 +437,23 @@ public record TimeInterval(Instant begin, Instant end) {
         Instant right = min(this.end, tvlArg.end);
 
         return left.equals(right) || left.isBefore(right);
+    }
+    
+    /**
+     * Checks whether or not this time interval <i>I</i> contains the given time interval <i>I</i><sub>test</sub>
+     * as a set.
+     *  
+     * @param tvlArg    time interval <i>I</i><sub>test</sub> under test
+     * 
+     * @return  <code>true</code> if <i>I</i><sub>test</sub> &sube; <i>I</i>,
+     *          <code>false</code> otherwise
+     */
+    public boolean contains(TimeInterval tvlArg) {
+        if (this.equals(EMPTY) || tvlArg.equals(EMPTY))
+            return false;
+
+        return (this.begin.compareTo(tvlArg.begin) <= 0) 
+            && (this.end.compareTo(tvlArg.end) >= 0);
     }
 
     

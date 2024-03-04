@@ -145,7 +145,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      * <h2>NOTES:</h2>
      * <ul>
      * <li>The argument collection is assumed to be sorted in the order of clock starting instants</li>
-     * <li>Extensive data consistency check is performed during construction.</li>
+     * <li>Extensive data consistency check is performed during construction (within <code>SamplingProcess</code>).</li>
      * <li>Any detected data inconsistencies result in an exception. </li>
      * <li>Exception type determines the nature of any Data inconsistency. </li>
      * </ul>  
@@ -163,7 +163,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      * 
      * @see SamplingProcess
      */
-    public static SamplingProcess from(SortedSet<CorrelatedQueryData> setTargetData) 
+    public static SamplingProcessTable from(SortedSet<CorrelatedQueryData> setTargetData) 
             throws  MissingResourceException, 
                     IllegalArgumentException, 
                     IllegalStateException, 
@@ -171,7 +171,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
                     UnsupportedOperationException, 
                     CompletionException 
     {
-        return new SamplingProcess(setTargetData);
+        return new SamplingProcessTable(setTargetData);
     }
     
     //
@@ -181,6 +181,11 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     /**
      * <p>
      * Constructs a new instance of <code>SamplingProcessTable</code>.
+     * </p>
+     * <p>
+     * The argument is passed to the superclass constructor <code>{@link SamplingProcess(SortedSet)}</code> where
+     * all the time-series data initialization occurs.  This constructor then initializes the auxiliary 
+     * containers used for table access.
      * </p>
      *
      * @param setTargetData sorted set of <code>CorrelatedQueryData</code> used to build this table
@@ -205,45 +210,12 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         
         this.mapSrcNmToFullColumn = new HashMap<>();
     }
+    
+//    public SamplingProcessTable(SamplingProcess source) {
+//        super(source);
+//    }
 
     
-    //
-    // Operations
-    //
-
-    /**
-     * <p>
-     * Creates and returns 
-     * @return
-     */
-    public IDataTable createStaticDataTable() {
-    
-        // Create the collection of full time series for each data source
-        List<IDataColumn<Object>>    lstCols;
-        
-        if (BOL_CONCURRENCY && (this.getDataSourceCount() > SZ_CONCURRENCY_PIVOT)) {
-            lstCols = this.setSrcNms
-                    .parallelStream()
-                    .<IDataColumn<Object>>map(strNm -> this.timeSeries(strNm))
-                    .toList();
-            
-        } else {
-            lstCols = this.setSrcNms
-                    .stream()
-                    .<IDataColumn<Object>>map(strNm -> this.timeSeries(strNm))
-                    .toList();
-            
-        }
-        
-        // Create the data table and return it
-        List<Instant>   lstTms = this.timestamps();
-        
-        StaticDataTable     tblProcess = new StaticDataTable(lstTms, lstCols);
-        
-        return tblProcess;
-    }
-
-
     //
     // IDataTable Interface
     //
@@ -381,7 +353,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     public IDataColumn<Object> getColumn(String strName) throws NoSuchElementException, ClassCastException {
         
         // Check the column name
-        if (super.hasSourceData(strName))
+        if (!super.hasSourceData(strName))
             throw new NoSuchElementException("Table has no data source with name " + strName);
         
         // Is already created?
@@ -519,7 +491,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
             return null;
 
         // Return value
-        Object      objVal = tblPage.getValue(indRow, strColNm);
+        Object      objVal = tblPage.getValue(recIndex.indPageRow, strColNm);
 
         return objVal;
     }
@@ -564,7 +536,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         UniformSamplingBlock    tblPage = super.getSamplingBlock(recIndex.indPage);
 
         // Allocate the object array and populate it
-        Object[]    arrObjs = new Object[this.getRowCount()];
+        Object[]    arrObjs = new Object[this.getColumnCount()];
 
         int indCol = 0;
         for (String strName : this.vecColumnName) { // thru ordered vector of column names
@@ -729,7 +701,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     
     /**
      * <p>
-     * Creates and returns a map of (data source name, table column index) pairs.
+     * Creates and returns data source name to column index map - (data source name, table column index) pairs.
      * </p>
      * <p>
      * Given the ordered collection of data source names for the entire table, creates a map of 
@@ -758,7 +730,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     
     /**
      * <p>
-     * Creates and returns a map of (table column index, data source name) pairs.
+     * Creates and return the column index to data source name map - (table column index, data source name) pairs.
      * </p>
      * <p>
      * Given the ordered collection of data source names for the entire table, creates a map of 
@@ -798,7 +770,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      * <p>
      * The returned vector of indices has the form
      * <pre>
-     *   [<i>i</i><sub>page<sub>0</sub></sub>, <i>i</i><sub>page<sub>0</sub></sub>, ..., <i>i</i><sub>page<sub><i>N</i>-1</sub></sub>]
+     *   [<i>i</i><sub>page<sub>0</sub></sub>, <i>i</i><sub>page<sub>1</sub></sub>, ..., <i>i</i><sub>page<sub><i>N</i>-1</sub></sub>]
      * </pre>
      * where <i>N</i> is the total number of data pages.  
      * Note that due to Java 0-based indexing <i>i</i><sub>page<sub>0</sub></sub> = 0.
@@ -825,10 +797,15 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     
     /**
      * <p>
-     * Computes the <code>UniformSamplingBlock</code> indices from the given table index.
+     * Computes the table data page indices for the given table row index.
      * </p>
      * <p>
-     * From the argument table row index, the pair of indices identifying the table page and and the page
+     * Table data pages consist of <code>UniformSamplingBlock</code>, which themselves implement the 
+     * <code>{@link IDataTable}</code> interface.  Thus, any (outer table) row index must identify both
+     * the data page and the row index within the data page.
+     * </p>
+     * <p>
+     * From the table row index argument, the pair of indices identifying the table page and and the page
      * row is returned.  The method iterates through each page index within the attribute 
      * <code>{@link #vecPageRowInd}</code> until it finds the smallest index 
      * <i>i</i><sub>page<sub><i>n</i></sub></sub>
@@ -853,8 +830,8 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      * 
      * @return  data page index and row index within that data page  
      * 
-     * @throws IndexOutOfBoundsException
-     * @throws IllegalStateException
+     * @throws IndexOutOfBoundsException    row index out of bounds (0 &le; index < <code>{@link #getRowCount()}</code>)
+     * @throws IllegalStateException        serious algorithm error, table page indexing vector likely corrupt
      */
     private PageIndex     computePageIndex(int indTblRow) throws IndexOutOfBoundsException, IllegalStateException {
         
@@ -889,8 +866,8 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         }
         
         // Check last page
-        if (indPage !=  (vecPageRowInd.size() -1) )
-            throw new IllegalStateException("Table row index inconsistent with block index list " + this.vecPageRowInd);
+        if (indPage !=  (vecPageRowInd.size() - 1) )
+            throw new IllegalStateException("Table row index inconsistent with page index list " + this.vecPageRowInd);
 
         // Process the last page
         indPageRow = indTblRow - indPrev;

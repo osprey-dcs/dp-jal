@@ -53,6 +53,9 @@ import org.w3c.dom.ranges.RangeException;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.DpSupportedType;
+import com.ospreydcs.dp.api.model.IDataColumn;
+import com.ospreydcs.dp.api.model.IDataTable;
+import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
@@ -383,7 +386,7 @@ public class SamplingProcessTest {
      * Test method for {@link SamplingProcess#timeSeries(String)}.
      */
     @Test
-    public void testTimeSeries() {
+    public final void testTimeSeries() {
         List<BucketData>    lstRawData = LST_QUERY_DATA_ONE;
         
         SamplingProcess processTest = this.process(lstRawData);
@@ -415,6 +418,96 @@ public class SamplingProcessTest {
         Assert.assertEquals(lstValsRaw, lstValsPrcs);
     }
 
+    /**
+     * Test method for {@link SamplingProcess#createStaticDataTable()}.
+     */
+    @Test
+    public final void   testCreateStaticTable() {
+        
+        // Test data request
+        SingleQueryType     enmQryType = SingleQueryType.WIDE;
+        
+        // Get original data request for this query and extract parameters
+        DpDataRequest       dpRequest = TestQueryResponses.request(enmQryType);
+        TimeInterval        domRqstRng = dpRequest.range();
+        List<String>        lstRqstSrcs = dpRequest.getSourceNames();
+        
+        // Create the static data table under test
+        // - get the query results set
+        // - create sampling process
+        // - create static data table
+        List<BucketData>    lstRawData = TestQueryResponses.queryData(enmQryType);
+        SamplingProcess     processTest = process(lstRawData);
+        IDataTable          tableTest = processTest.createStaticDataTable();
+        
+        
+        // Test the table column names
+        List<String> lstMissingCols = lstRqstSrcs
+                .stream()
+                .filter(strName -> !tableTest.hasColumn(strName))
+                .toList();
+        Assert.assertTrue("Table contained missing data columns " + lstMissingCols, lstMissingCols.isEmpty());
+        
+        // Test the table timestamp range
+        List<Instant>   lstTms = tableTest.getTimestamps();
+        Instant         insStart = lstTms.get(0);
+        Instant         insStop = lstTms.get( lstTms.size() - 1);
+        TimeInterval    domTblRng = TimeInterval.from(insStart, insStop);
+        Assert.assertTrue("Table timestamp range not contained in data request range.", domRqstRng.contains(domTblRng));
+        
+        // Test table columns
+        int     cntRows = tableTest.getRowCount();
+        int     cntCols = tableTest.getColumnCount();
+        Assert.assertEquals(lstTms.size(), cntRows);
+        Assert.assertEquals(lstRqstSrcs.size(), cntCols);
+        
+        for (int iCol=0; iCol<cntCols; iCol++) {
+            String      strName = tableTest.getColumnName(iCol);
+            
+            try {
+                IDataColumn<Object>     col = tableTest.getColumn(strName);
+
+                Assert.assertTrue("Column " + strName + " size " + col.getSize() + " not equal " + cntRows, cntRows == col.getSize());
+            
+            } catch (Exception e) {
+                Assert.fail("tableTest.getColumn(" + strName + ") threw exception " + e);
+                
+            }
+        }
+        
+        // Check table data against process data 
+        int cntBlocks = processTest.getSamplingBlockCount();
+        int indOffset = 0;
+        
+        for (int iBlock=0; iBlock<cntBlocks; iBlock++) {
+            UniformSamplingBlock    block = processTest.getSamplingBlock(iBlock);
+            
+            int cntBlkRows = block.getRowCount();
+            int cntBlkCols = block.getColumnCount();
+            for (int iRow = 0; iRow < cntBlkRows; iRow++) {
+                int indTblRow = indOffset + iRow;
+
+                // check timestamp
+                Instant     insBlk = block.getTimestamp(iRow);
+                Instant     insTbl = tableTest.getTimestamp(indTblRow);
+                
+                Assert.assertEquals("Table timestamp at row index " + indTblRow + " not equal to block at " + iRow, insBlk, insTbl);
+                
+                // check values
+                for (int iCol = 0; iCol < cntBlkCols; iCol++) {
+                    String      strName = block.getColumnName(iCol);
+
+                    Object  objBlk = block.getValue(iRow, iCol);
+                    Object  objTbl = tableTest.getValue(indTblRow, iCol);
+
+                    Assert.assertEquals("Table value at row index  " + indTblRow + " not equal to block at " +iRow + " for " + strName, objBlk, objTbl);
+                }
+            }
+
+            indOffset += block.getRowCount();
+        }
+    }
+    
     
     //
     // Support Methods
@@ -479,6 +572,7 @@ public class SamplingProcessTest {
         
         return setPrcdData;
     }
+    
     /**
      * Creates an exception failure message from the given arguments
      * 

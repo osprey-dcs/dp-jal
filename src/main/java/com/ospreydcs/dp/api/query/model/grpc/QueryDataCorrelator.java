@@ -284,6 +284,9 @@ public class QueryDataCorrelator {
     /** Toggle the use of concurrency in data processing */
     private boolean     bolConcurrency = BOL_CONCURRENCY;
     
+    /** Byte counter for processed data - measured results set size */
+    private long        lngBytesProcessed = 0;
+    
 
     //
     // Creator
@@ -385,6 +388,7 @@ public class QueryDataCorrelator {
     public void reset() {
         
         synchronized (this.objLock) {
+            this.lngBytesProcessed = 0L;
             this.setPrcdData.clear();
             this.bolConcurrency = BOL_CONCURRENCY;
         }
@@ -456,6 +460,29 @@ public class QueryDataCorrelator {
      */
     public final SortedSet<CorrelatedQueryData>   getCorrelatedSet() {
         return this.setPrcdData;
+    }
+    
+    /**
+     * <p>
+     * Returned the number of bytes the correlator has processed so far.
+     * </p>
+     * <p>
+     * The returned value is the serialized size of all Protobuf messages added to the correlator for
+     * processing so far.  The value provides an estimate of size of any sampling process or results set
+     * table created from the processed data.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Actual processed data sizes (in bytes) are typically larger than serialized size (> ~110%).</li>
+     * <li>This value is reset to 0 after invoking <code>{@link #reset()}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @return      the number of serialized bytes processed by the correlator so far
+     */
+    public long getBytesProcessed() {
+        return this.lngBytesProcessed;
     }
     
     /**
@@ -552,6 +579,9 @@ public class QueryDataCorrelator {
 
                 this.setPrcdData.add(refNew);
             }
+            
+            // Increment byte counter
+            this.lngBytesProcessed += msgBucket.getSerializedSize();
         }
     }
     
@@ -615,6 +645,9 @@ public class QueryDataCorrelator {
             if (!this.bolConcurrency || (this.setPrcdData.size() < SZ_CONCURRENCY_PIVOT)) {
                 this.processDataSerial(msgData);
 
+                // Increment byte counter
+                this.lngBytesProcessed += msgData.getSerializedSize();
+                
                 return;
             }
 
@@ -624,6 +657,8 @@ public class QueryDataCorrelator {
             SortedSet<CorrelatedQueryData>  setNewTargets = this.processDisjointTargets(setFreeBuckets);
             this.setPrcdData.addAll(setNewTargets);
 
+            // Increment byte counter
+            this.lngBytesProcessed += msgData.getSerializedSize();
         }
     }
     

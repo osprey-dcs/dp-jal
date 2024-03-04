@@ -314,6 +314,39 @@ public interface IDataTable {
     
     /**
      * <p>
+     * Determine whether or not the given column name is present within the table.
+     * </p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+     * simply calls <code>{@link #getColumnIndex(String)}</code> and catches the 
+     * <code>NoSuchElementException</code> to determine the returned value.  
+     * </ul>
+     * </p> 
+     * 
+     * @param strName column name to be checked
+     * 
+     * @return  <code>true</code> if table contains column (whether populated or not),
+     *          <code>false</code> otherwise
+     */
+    default public boolean  hasColumn(String strName) {
+        
+        try {
+            this.getColumnIndex(strName);
+            
+            return true;
+            
+        } catch (NoSuchElementException e) {
+            return false;
+        }
+    }
+    
+    /**
+     * <p>
      * Returns the timestamp for the given row index.
      * </p> 
      * <p>

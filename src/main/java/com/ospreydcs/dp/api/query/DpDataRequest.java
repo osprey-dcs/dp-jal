@@ -35,6 +35,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
@@ -712,16 +713,52 @@ public final class DpDataRequest {
     
     /**
      * <p>
-     * Returns the time duration of this data request.
+     * Return a list of all data sources currently specified by the data request.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Do not make critical use of this method at this time.
+     * <ul>
+     * <li>Currently regular expressions are not supported.</li>
+     * <li>Due to the above condition the returned list is complete.</li>
+     * <li>If regular expressions are supported in the future this method may be modified or removed altogether.</li>
+     * </ul>
+     * <p>
+     * 
+     * @return  (unordered) list of all data source names in the current data request configuration
+     */
+    @AAdvancedApi(note="This method is subject to modification or removall.")
+    public final List<String>   getSourceNames() {
+        return this.lstSelCmps;
+    }
+    
+    /**
+     * <p>
+     * Computes and returns the current range of the data request.
+     * </p>
+     * <p>
+     * Computes the time domain interval for the current data request configuration.  That is, the "vertical"
+     * domain of the current query.
+     * </p>
+     *  
+     * @return  query time domain currently specified by data request
+     */
+    public TimeInterval range() {
+        return TimeInterval.from(this.insStart, this.insStop);
+    }
+    
+    /**
+     * <p>
+     * Computes and returns the time duration of this data request.
      * </p>
      * <p>
      * Computes and returns the total time duration for the range of the current data 
-     * request.  That is, the size of the "cntVer" query domain.
+     * request.  That is, the size of the "vertical" query domain.
      * </p>
      *  
      * @return  duration of the time range within the current query configuration
      */
-    public Duration getRangeDuration() {
+    public Duration rangeDuration() {
         Duration    durQuery = Duration.between(this.insStart, this.insStop);
         
         return durQuery;
@@ -729,7 +766,8 @@ public final class DpDataRequest {
     
     /**
      * <p>
-     * Computes and returns an approximation for the current query domain size.
+     * Computes and returns an approximation for the current query domain size
+     * (in source count-seconds).
      * </p>
      * <p>
      * Computes the current "area" of the query domain represented by this request.
@@ -756,7 +794,7 @@ public final class DpDataRequest {
      */
     public long approxDomainSize() {
         // Compute the time dimension - the duration of the time range in units seconds 
-        Duration    durRange = this.getRangeDuration();
+        Duration    durRange = this.rangeDuration();
         long        lngRangeSize = TimeUnit.SECONDS.convert(durRange);
         
         // Compute the data source dimension
@@ -806,7 +844,7 @@ public final class DpDataRequest {
     public long approxRequestSamples(long lngSamplingPeriod, TimeUnit tuSamplingPeriodUnits) {
         
         // Compute the duration of the time range in units of the sampling period 
-        Duration    durRange = this.getRangeDuration();
+        Duration    durRange = this.rangeDuration();
         long        lngRangeSize = tuSamplingPeriodUnits.convert(durRange);
         
         // Compute N the number of samples/source within the duration
@@ -907,7 +945,7 @@ public final class DpDataRequest {
      * <code>
      * <pre>
      *   cntQueriesHor = {@link #getSourceCount()} / {@link #CNT_COMPOSITE_MAX_SOURCES}
-     *   cntQueriesVer = {@link #getRangeDuration()}.divideBy({@link #DUR_COMPOSITE_MAX})
+     *   cntQueriesVer = {@link #rangeDuration()}.divideBy({@link #DUR_COMPOSITE_MAX})
      * </pre>
      * </code>
      * Note further that if there exists a non-zero remainder for the above integer divisions
@@ -916,7 +954,7 @@ public final class DpDataRequest {
      * <code>
      * <pre>
      *   cntQueriesHor += ({@link #getSourceCount()} % {@link #CNT_COMPOSITE_MAX_SOURCES} == 0) ? 0 : 1
-     *   cntQueriesVer += {{@link #getRangeDuration()}.minus({@link #DUR_COMPOSITE_MAX}.multiedBy(cntQueryiesVer).isZero) ? 0 : 1
+     *   cntQueriesVer += {{@link #rangeDuration()}.minus({@link #DUR_COMPOSITE_MAX}.multiedBy(cntQueryiesVer).isZero) ? 0 : 1
      * </pre>
      * </code>
      * </p>
@@ -945,13 +983,13 @@ public final class DpDataRequest {
 
         // Determine composite query domain sizes
         int     cntQueriesHor = this.getSourceCount() / CNT_COMPOSITE_MAX_SOURCES;
-        long    cntQueriesVer = this.getRangeDuration().dividedBy(DUR_COMPOSITE_MAX);
+        long    cntQueriesVer = this.rangeDuration().dividedBy(DUR_COMPOSITE_MAX);
 
 
         // Note integer division, must increment count if non-zero remainder
         if (this.getSourceCount() % CNT_COMPOSITE_MAX_SOURCES > 0)
             cntQueriesHor++;
-        if (!this.getRangeDuration().minus(DUR_COMPOSITE_MAX.multipliedBy(cntQueriesVer)).isZero())
+        if (!this.rangeDuration().minus(DUR_COMPOSITE_MAX.multipliedBy(cntQueriesVer)).isZero())
             cntQueriesVer++;
 
         // The overall request is not large enough to invoke decomposition

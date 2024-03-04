@@ -54,6 +54,10 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.DpSupportedType;
+import com.ospreydcs.dp.api.model.IDataColumn;
+import com.ospreydcs.dp.api.model.IDataTable;
+import com.ospreydcs.dp.api.query.model.data.SamplingProcessTable;
+import com.ospreydcs.dp.api.query.model.data.StaticDataTable;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
@@ -355,7 +359,11 @@ public class SamplingProcess {
 
     /**
      * <p>
-     * Returns the total number of samples within each time series of the sampling process.
+     * Returns the total number of samples within all time series of the sampling process.
+     * </p>
+     * <p>
+     * The returned value is equivalent to the total number of timestamps for the entire sampling 
+     * process.
      * </p>
      * <p>
      * Note that each time series within the sampling process must have the same size.  
@@ -576,6 +584,62 @@ public class SamplingProcess {
         return stmsNew;
     }
     
+    /**
+     * <p>
+     * Creates and returns a static data table backed by all data within this process.
+     * </p>
+     * <p>
+     * Copies all time-series data into a static implementation of <code>{@link IDataTable}</code>.
+     * The static table will contain columns for each time-series represented within the sampling blocks.
+     * Sampling blocks without time-series data for a data source will have all their values set to
+     * <code>null</code> within the table column.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This can be a resource intensive operation for large sampling processes.  Consider using a 
+     * <code>{@link SamplingProcessTable}</code> instance for large processes.
+     * </p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Use this method when index operations require performance.
+     * </li>
+     * <li>
+     * The current implementation returns an <code>IDataTable</code> interface backed by class
+     * <code>{@link StaticDataTable}</code>
+     * </li>
+     * </ul>
+     * </p>  
+     * 
+     * @return  a static data table instance exposing <code>{@link IDataTable}</code> backed by this process data
+     */
+    public IDataTable createStaticDataTable() {
+    
+        // Create the collection of full time series for each data source
+        List<IDataColumn<Object>>    lstCols;
+        
+        if (BOL_CONCURRENCY && (this.getDataSourceCount() > SZ_CONCURRENCY_PIVOT)) {
+            lstCols = this.setSrcNms
+                    .parallelStream()
+                    .<IDataColumn<Object>>map(strNm -> this.timeSeries(strNm))
+                    .toList();
+            
+        } else {
+            lstCols = this.setSrcNms
+                    .stream()
+                    .<IDataColumn<Object>>map(strNm -> this.timeSeries(strNm))
+                    .toList();
+            
+        }
+        
+        // Create the data table and return it
+        List<Instant>   lstTms = this.timestamps();
+        
+        StaticDataTable     tblProcess = new StaticDataTable(lstTms, lstCols);
+        
+        return tblProcess;
+    }
+
     
     //
     // Support Methods
@@ -988,7 +1052,7 @@ public class SamplingProcess {
     
     /**
      * <p>
-     * Computes the total size of each time series.
+     * Computes the total size of each time series represented in the sampling process.
      * </p>
      * <p>
      * The total size of each time series within the sample process is assumed to be the same.
@@ -1009,7 +1073,7 @@ public class SamplingProcess {
     private int computeSampleCount(List<UniformSamplingBlock> vecBlocks) {
         int cntSamples = vecBlocks
                 .stream()
-                .map(cqd -> cqd.getSampleCount())
+                .mapToInt(cqd -> cqd.getSampleCount())
                 .reduce(0, Integer::sum);
         
         return cntSamples;
