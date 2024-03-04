@@ -27,6 +27,12 @@
  */
 package com.ospreydcs.dp.api.query;
 
+import java.util.SortedSet;
+import java.util.concurrent.CompletionException;
+
+import javax.naming.CannotProceedException;
+import javax.naming.OperationNotSupportedException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,11 +43,16 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.model.AUnavailable;
 import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
+import com.ospreydcs.dp.api.model.IDataTable;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver;
 import com.ospreydcs.dp.api.query.model.data.StaticDataTable;
+import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.process.SamplingProcess;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceFutureStub;
@@ -67,6 +78,14 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
     
     /** Default Query Service configuration parameters */
     private static final DpQueryConfig  CFG_DEFAULT = DpApiConfig.getInstance().query;
+    
+    
+    //
+    // Class Constants
+    //
+    
+    /** Logging active flag */
+    private static final boolean        BOL_LOGGING = CFG_DEFAULT.logging.active;
     
     
     //
@@ -168,14 +187,33 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * @param rqst  an initialized <code>{@link DpDataRequest]</code> request builder instance
      * 
      * @return      fully populated (static) data table.
+     * 
+     * @throws  DpQueryException    general exception during query or data reconstruction (see cause)
      */
     @AUnavailable(status=STATUS.ACCEPTED, note="The request is performed but the returned table is empty")
-    public StaticDataTable querySingle(DpDataRequest rqst) {
+    public IDataTable querySingle(DpDataRequest rqst) throws DpQueryException {
         QueryRequest qry = rqst.buildQueryRequest();
         
         QueryResponse msgRsp = super.grpcConn.getStubBlock().queryResponseSingle(qry);
         
-        return new StaticDataTable();
+        QueryDataCorrelator correlator = new QueryDataCorrelator();
+        
+        try {
+            correlator.addQueryResponse(msgRsp);
+            
+            SortedSet<CorrelatedQueryData>  setPrcdData = correlator.getCorrelatedSet();
+            
+            SamplingProcess process = SamplingProcess.from(setPrcdData);
+            IDataTable      table = process.createStaticDataTable();
+            
+            return table;
+            
+        } catch (CompletionException | CannotProceedException | OperationNotSupportedException e) {
+            if (BOL_LOGGING) 
+                LOGGER.error("{} - Exception while correlating response: {}, {}}", JavaRuntime.getCallerName(), e.getClass().getSimpleName(), e.getMessage());
+
+            throw new DpQueryException("Exception while correlating response: " + e.getClass() + ", " + e.getMessage(), e);
+        }
     }
     
     /**

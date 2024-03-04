@@ -49,6 +49,8 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.model.IDataTable;
+import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
@@ -176,7 +178,30 @@ public class DpQueryServiceTest {
      */
     @Test
     public final void testQuerySingle() {
-        fail("Not yet implemented"); // TODO
+        final int   CNT_SOURCES = 10;
+        final long  LNG_DURATION = 2L;
+        
+        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        
+        try {
+            Instant insStart = Instant.now();
+            IDataTable  table = apiQuery.querySingle(rsqst);
+            Instant insStop = Instant.now();
+            
+            Duration    durQuery = Duration.between(insStart, insStop);
+            Long        szQuery = table.allocationSize();
+            Long        cntVals = szQuery/Double.BYTES;
+            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
+            
+            System.out.println("Single Query completed in " + durQuery.toMillis() + " milliseconds.");
+            System.out.println("  Total query size = " + szQuery);
+            System.out.println("  Double value count = " + cntVals);
+            System.out.println("  Transmission rate = " + dblRate);
+            
+        } catch (DpQueryException e) {
+            Assert.fail("Process exception during query operation: type=" + e.getClass().getSimpleName() + ", message=" + e.getMessage());
+            
+        }
     }
 
     /**
