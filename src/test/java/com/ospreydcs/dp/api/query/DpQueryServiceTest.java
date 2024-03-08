@@ -54,7 +54,7 @@ import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
@@ -229,10 +229,10 @@ public class DpQueryServiceTest {
         
             bufResult.startAndAwaitCompletion();
             
-            List<QueryResponse> lstResultSet = bufResult.getBuffer();
-            List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = lstResultSet
+            List<QueryDataResponse> lstResultSet = bufResult.getBuffer();
+            List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = lstResultSet
                     .stream()
-                    .map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                    .map(msgRsp -> msgRsp.getQueryResult().getQueryData())
                     .flatMap(msgData -> msgData.getDataBucketsList().stream())
                     .toList();
             

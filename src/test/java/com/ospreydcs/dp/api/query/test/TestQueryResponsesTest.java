@@ -44,7 +44,7 @@ import com.ospreydcs.dp.api.config.DpApiTestingConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.CompositeQueryType;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
@@ -111,14 +111,14 @@ public class TestQueryResponsesTest {
      */
     @Test
     public final void testQueryResultsSingleQueryTypeOne() {
-        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.ONE_SOURCE);
+        List<QueryDataResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.ONE_SOURCE);
         
         Assert.assertFalse("The QueryResponse list was empty." , lstRsps.isEmpty());
         Assert.assertFalse("The query has a rejection.", this.hasRejection(lstRsps));
         
         System.out.println("Size of the ONE_SOURCE single query response list = " + lstRsps.size());
         
-        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the ONE_SOURCE query results set = " + lstBuckets.size());
     }
@@ -128,14 +128,14 @@ public class TestQueryResponsesTest {
      */
     @Test
     public final void testQueryResultsSingleQueryTypeTwo() {
-        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.TWO_SOURCE);
+        List<QueryDataResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.TWO_SOURCE);
         
         Assert.assertFalse("The QueryResponse list was empty." , lstRsps.isEmpty());
         Assert.assertFalse("The query has a rejection.", this.hasRejection(lstRsps));
         
         System.out.println("Size of the ONE_SOURCE single query response list = " + lstRsps.size());
         
-        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the ONE_SOURCE query results set = " + lstBuckets.size());
     }
@@ -145,14 +145,14 @@ public class TestQueryResponsesTest {
      */
     @Test
     public final void testQueryResultsSingleQueryTypeWide() {
-        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.WIDE);
+        List<QueryDataResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.WIDE);
         
         Assert.assertFalse("The QueryResponse list was empty." , lstRsps.isEmpty());
         Assert.assertFalse("The query has a rejection.", this.hasRejection(lstRsps));
         
         System.out.println("Size of the WIDE single query response list = " + lstRsps.size());
         
-        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the WIDE query results set = " + lstBuckets.size());
     }
@@ -162,14 +162,14 @@ public class TestQueryResponsesTest {
      */
     @Test
     public final void testQueryResultsSingleQueryTypeLong() {
-        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.LONG);
+        List<QueryDataResponse> lstRsps = TestQueryResponses.queryResults(SingleQueryType.LONG);
         
         Assert.assertFalse("The QueryResponse list was empty." , lstRsps.isEmpty());
         Assert.assertFalse("The query has a rejection.", this.hasRejection(lstRsps));
         
         System.out.println("Size of the LONG single query response list = " + lstRsps.size());
         
-        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the LONG query results set = " + lstBuckets.size());
     }
@@ -179,12 +179,12 @@ public class TestQueryResponsesTest {
      */
     @Test
     public final void testQueryResultsCompositeQueryTypeIntHorizontal() {
-        List<QueryResponse> lstRspsAll = new LinkedList<>();
+        List<QueryDataResponse> lstRspsAll = new LinkedList<>();
         
         int cntQueries = TestQueryResponses.getSubQueryCount(CompositeQueryType.HORIZONTAL);
         
         for (int i = 0; i <cntQueries; i++) {
-            List<QueryResponse> lstRsps = TestQueryResponses.queryResults(CompositeQueryType.HORIZONTAL, i);
+            List<QueryDataResponse> lstRsps = TestQueryResponses.queryResults(CompositeQueryType.HORIZONTAL, i);
             
             Assert.assertFalse("The QueryResponse list for sub-query " + i + " was empty." , lstRsps.isEmpty());
             Assert.assertFalse("Sub-query " + i + " has a rejection.", this.hasRejection(lstRsps));
@@ -194,7 +194,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the HORIZONTAL composite query response list = " + lstRspsAll.size());
         
-        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the HORIZONTAL composite query results set = " + lstBuckets.size());
     }
@@ -204,12 +204,12 @@ public class TestQueryResponsesTest {
      */
     @Test
     public final void testQueryResultsCompositeQueryTypeIntVertical() {
-        List<QueryResponse> lstRspsAll = new LinkedList<>();
+        List<QueryDataResponse> lstRspsAll = new LinkedList<>();
         
         int cntQueries = TestQueryResponses.getSubQueryCount(CompositeQueryType.VERTICAL);
         
         for (int i = 0; i <cntQueries; i++) {
-            List<QueryResponse> lstRsps = TestQueryResponses.queryResults(CompositeQueryType.VERTICAL, i);
+            List<QueryDataResponse> lstRsps = TestQueryResponses.queryResults(CompositeQueryType.VERTICAL, i);
             
             Assert.assertFalse("The QueryResponse list for sub-query " + i + " was empty." , lstRsps.isEmpty());
             Assert.assertFalse("Sub-query " + i + " has a rejection.", this.hasRejection(lstRsps));
@@ -219,7 +219,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the VERTICAL composite query response list = " + lstRspsAll.size());
         
-        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the VERTICAL composite query results set = " + lstBuckets.size());
     }
@@ -229,12 +229,12 @@ public class TestQueryResponsesTest {
      */
     @Test
     public final void testQueryResultsCompositeQueryTypeIntGrid() {
-        List<QueryResponse> lstRspsAll = new LinkedList<>();
+        List<QueryDataResponse> lstRspsAll = new LinkedList<>();
         
         int cntQueries = TestQueryResponses.getSubQueryCount(CompositeQueryType.GRID);
         
         for (int i = 0; i <cntQueries; i++) {
-            List<QueryResponse> lstRsps = TestQueryResponses.queryResults(CompositeQueryType.GRID, i);
+            List<QueryDataResponse> lstRsps = TestQueryResponses.queryResults(CompositeQueryType.GRID, i);
             
             Assert.assertFalse("The QueryResponse list for sub-query " + i + " was empty." , lstRsps.isEmpty());
             Assert.assertFalse("Sub-query " + i + " has a rejection.", this.hasRejection(lstRsps));
@@ -244,7 +244,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the GRID composite query response list = " + lstRspsAll.size());
         
-        List<QueryResponse.QueryReport.BucketData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the GRID composite query results set = " + lstBuckets.size());
     }
@@ -330,8 +330,8 @@ public class TestQueryResponsesTest {
      * @return  <code>true</code> if the list contains a <code>RejectDetails</code> Protobuf message,
      *          <code>false</code> otherwise
      */
-    private boolean hasRejection(List<QueryResponse> lstRsps) {
-        boolean bolRejection = lstRsps.stream().map( r -> r.hasQueryReject()).anyMatch( b -> b == true);
+    private boolean hasRejection(List<QueryDataResponse> lstRsps) {
+        boolean bolRejection = lstRsps.stream().map( r -> r.hasRejectionDetails()).anyMatch( b -> b == true);
         
         return bolRejection;
     }
@@ -343,10 +343,10 @@ public class TestQueryResponsesTest {
      *  
      * @return  the list of BucketData messages in the given results set (one for each QueryResponse message)
      */
-    private List<QueryResponse.QueryReport.BucketData>   extractData(List<QueryResponse> lstRsps) {
-        List<QueryResponse.QueryReport.BucketData>   lstData = lstRsps
+    private List<QueryDataResponse.QueryResult.QueryData>   extractData(List<QueryDataResponse> lstRsps) {
+        List<QueryDataResponse.QueryResult.QueryData>   lstData = lstRsps
                 .stream()
-                .map( r -> r.getQueryReport().getBucketData())
+                .map( r -> r.getQueryResult().getQueryData())
                 .toList();
         
         return lstData;
@@ -367,10 +367,10 @@ public class TestQueryResponsesTest {
      * 
      * @see #extractData(List)
      */
-    private List<QueryResponse.QueryReport.BucketData.DataBucket> extractBuckets(List<QueryResponse> lstRsps) {
-        List<QueryResponse.QueryReport.BucketData>   lstData = this.extractData(lstRsps);
+    private List<QueryDataResponse.QueryResult.QueryData.DataBucket> extractBuckets(List<QueryDataResponse> lstRsps) {
+        List<QueryDataResponse.QueryResult.QueryData>   lstData = this.extractData(lstRsps);
         
-        List<QueryResponse.QueryReport.BucketData.DataBucket> lstBuckets = lstData
+        List<QueryDataResponse.QueryResult.QueryData.DataBucket> lstBuckets = lstData
                 .stream()
                 .collect(LinkedList::new, 
                         (lst, data) -> lst.addAll(data.getDataBucketsList()), 

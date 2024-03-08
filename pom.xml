@@ -22,7 +22,7 @@ NOTES:
     <groupId>com.ospreydcs</groupId>
     <artifactId>dp-api-common</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.0</version>
+    <version>1.2.0</version>
 
     <properties>
 		
@@ -99,11 +99,13 @@ NOTES:
         </dependency>
 
 		<!-- Data Platform Common Utitilies -->
+		<!-- 
         <dependency>
             <groupId>com.ospreydcs</groupId>
             <artifactId>dp-common</artifactId>
             <version>${dp-common.version}</version>
         </dependency>
+        -->
         
         <!-- Data Platform Service Library -->
         <!-- 

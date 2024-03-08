@@ -44,8 +44,8 @@ import java.util.List;
 import com.ospreydcs.dp.api.config.DpApiTestingConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
@@ -88,12 +88,12 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * @see TestQueryService#queryResponseStream(QueryRequest)
  */
 public final record TestQueryRecord (
-        List<QueryResponse> lstResults,
-        String              strFileName, 
-        int                 cntSources, 
-        int                 indSourceFirst,
-        long                lngDuration,
-        long                lngStartTime
+        List<QueryDataResponse> lstResults,
+        String                  strFileName, 
+        int                     cntSources, 
+        int                     indSourceFirst,
+        long                    lngDuration,
+        long                    lngStartTime
         ) 
 {
     
@@ -251,7 +251,7 @@ public final record TestQueryRecord (
      *          
      * @see #recoverQueryResponses()
      */
-    public List<QueryResponse>  getQueryResponses() {
+    public List<QueryDataResponse>  getQueryResponses() {
         if (this.hasQueryResults())
             return this.lstResults;
         
@@ -287,7 +287,8 @@ public final record TestQueryRecord (
      * @throws ClassNotFoundException   the data file does not contain a List<QueryResponse> object
      * @throws DpGrpcException          unable to establish <code>TestQueryService</code> connection
      */
-    public List<QueryResponse> recoverQueryResponses() throws IOException, ClassNotFoundException, DpGrpcException {
+    public List<QueryDataResponse> recoverQueryResponses() 
+            throws IOException, ClassNotFoundException, DpGrpcException {
         
         // If the query results data is already available return it
         if (!this.lstResults.isEmpty())
@@ -336,15 +337,16 @@ public final record TestQueryRecord (
      * 
      * @see #recoverQueryResponses()
      */
-    public List<QueryResponse.QueryReport.BucketData> recoverQueryData() throws IOException, ClassNotFoundException, DpGrpcException {
+    public List<QueryDataResponse.QueryResult.QueryData> recoverQueryData() 
+            throws IOException, ClassNotFoundException, DpGrpcException {
         
         // Check that result set is available
         if (this.lstResults.isEmpty())
             this.recoverQueryResponses();
         
-        List<QueryResponse.QueryReport.BucketData>   lstDataMsgs = this.lstResults
+        List<QueryDataResponse.QueryResult.QueryData>   lstDataMsgs = this.lstResults
                 .stream()
-                .map(qr -> qr.getQueryReport().getBucketData())
+                .map(qr -> qr.getQueryResult().getQueryData())
                 .toList();
         
         return lstDataMsgs;
@@ -368,9 +370,9 @@ public final record TestQueryRecord (
      * 
      * @return  Data Platform Query Service <code>QueryRequest</code> message
      */
-    public QueryRequest createRequestMessage() {
-        DpDataRequest   dpRqst = this.createRequest();
-        QueryRequest    msgRqst = dpRqst.buildQueryRequest();
+    public QueryDataRequest createRequestMessage() {
+        DpDataRequest       dpRqst = this.createRequest();
+        QueryDataRequest    msgRqst = dpRqst.buildQueryRequest();
         
         return msgRqst;
     }
@@ -451,7 +453,7 @@ public final record TestQueryRecord (
         // Read the data file as a serialized List<QueryResponse> object
         ObjectInputStream isObject = new ObjectInputStream(isFile);
     
-        List<QueryResponse> lstRspMsgs = (List<QueryResponse>)isObject.readObject();
+        List<QueryDataResponse> lstRspMsgs = (List<QueryDataResponse>)isObject.readObject();
     
         isObject.close();
         isFile.close();
@@ -486,9 +488,9 @@ public final record TestQueryRecord (
             qsTestArchive = new TestQueryService();
         
         // Perform the query
-        QueryRequest    msgRqst = this.createRequestMessage();
+        QueryDataRequest    msgRqst = this.createRequestMessage();
         
-        List<QueryResponse> lstResults = qsTestArchive.queryResponseStream(msgRqst);
+        List<QueryDataResponse> lstResults = qsTestArchive.queryResponseStream(msgRqst);
         
         // Add results to record
         this.lstResults.clear();

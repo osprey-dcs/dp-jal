@@ -47,15 +47,15 @@ import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
-import com.ospreydcs.dp.grpc.v1.common.DataTable;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
-import com.ospreydcs.dp.grpc.v1.common.DataValue.ValueOneofCase;
-import com.ospreydcs.dp.grpc.v1.common.Field;
+import com.ospreydcs.dp.grpc.v1.common.DataValue.ValueCase;
+import com.ospreydcs.dp.grpc.v1.common.Structure.Field;
 import com.ospreydcs.dp.grpc.v1.common.Image;
 import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
 import com.ospreydcs.dp.grpc.v1.common.Structure;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
+import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
 
 /**
  * <p>
@@ -245,9 +245,9 @@ public final class ProtoMsg {
      *   <li><code>Boolean</code> -> <code>DataValue.booleanValue</code> field</li>
      *   <li><code>Short</code> -> <code>DataValue.intValue</code> field</li>
      *   <li><code>Integer</code> -> <code>DataValue.intValue</code> field</li>
-     *   <li><code>Long</code> -> <code>DataValue.intValue</code> field</li>
+     *   <li><code>Long</code> -> <code>DataValue.longValue</code> field</li>
      *   <li><code>Float</code> -> <code>DataValue.floatValue</code> field</li>
-     *   <li><code>Double</code> -> <code>DataValue.floatValue</code> field</li>
+     *   <li><code>Double</code> -> <code>DataValue.doubleValue</code> field</li>
      *   <li><code>String</code> -> <code>DataValue.stringValue</code> field</li>
      *   <li><code>byte[]</code> -> <code>DataValue.byteArrayValue</code> field</li>
      *   </ul>
@@ -257,7 +257,7 @@ public final class ProtoMsg {
      *   <ul>
      *   <li><code>List&lt;Object&gt;</code> -> <code>DataValue.arrayValue</code> field</li>
      *   <li><code>Map&lt;String, Object&gt;</code> -> <code>DataValue.structureValue</code> field</li>
-     *   <li><code>BufferedImage</code> -> <code>DataValue.image</code> field</li>
+     *   <li><code>BufferedImage</code> -> <code>DataValue.imageValue</code> field</li>
      *   </ul>
      * </li>
      * <li>
@@ -307,11 +307,11 @@ public final class ProtoMsg {
         } else if (objValue instanceof Integer val) {
             bldrDatum.setIntValue(val);
         } else if (objValue instanceof Long val) {
-            bldrDatum.setIntValue(val);
+            bldrDatum.setLongValue(val);
         } else if (objValue instanceof Float val) {
             bldrDatum.setFloatValue(val);
         } else if (objValue instanceof Double val) {
-            bldrDatum.setFloatValue(val);
+            bldrDatum.setDoubleValue(val);
         } else if (objValue instanceof String val) {
             bldrDatum.setStringValue(val);
         } else if (objValue instanceof byte[] val) {
@@ -322,7 +322,7 @@ public final class ProtoMsg {
         } else if (objValue instanceof Map map) {
             bldrDatum.setStructureValue( ProtoMsg.createStructure(map) );
         } else if (objValue instanceof BufferedImage img) {
-            bldrDatum.setImage( ProtoMsg.from(img) );
+            bldrDatum.setImageValue( ProtoMsg.from(img) );
             
         } else {
             throw new TypeNotPresentException("ProtoMsg#toDatum(Object): Unsupported type " + objValue.getClass().getName(), null);
@@ -766,26 +766,51 @@ public final class ProtoMsg {
      * Extracts the data type of the value field from the <code>DataValue</code> argument and returns it
      * as a <code>DpSupportedType</code> enumeration constant.
      * </p>
+     * <p>
+     * <h2>Mappings</h2>
+     * The following mappings are used for the <code>{@link DataValue#getValueCase()}</code> type 
+     * enumeration, along with the corresponding Protobuf type (primitive or message):
+     * <ul>
+     * <code>
+     * <li>bool: BOOLEANVALUE -> DpSupportedType.BOOLEAN</li>
+     * <li>uint32: UINTVALUE -> DpSupportedType.INTEGER</li>
+     * <li>sint32: INTVALUE -> DpSupportedType.INTEGER</li>
+     * <li>uint64: ULONGVALUE -> DpSupportedType.LONG</li>
+     * <li>sint64: LONGVALUE -> DpSupportedType.LONG</li>
+     * <li>float: FLOATVALUE -> DpSupportedType.FLOAT</li>
+     * <li>double: DOUBLEVALUE -> DpSupportedType.DOUBLE</li>
+     * <li>string: STRINGVALUE -> DpSupportedType.STRING</li>
+     * <li>bytes: BYTEARRAYVALUE -> DpSupportedType.BYTE_ARRAY</li>
+     * <li>Array: ARRAYVALUE -> DpSupportedType.ARRAY</li>
+     * <li>Structure: STRUCTUREVALUE -> DpSupportedType.STRUCTURE</li>
+     * <li>Image: IMAGEVALUE -> DpSupportedType.IMAGE</li>
+     * <li>null: VALUE_NOT_SET -> IllegalArgumentException</li>
+     * </code>
+     * </ul>
      *  
      * @param msgDataValue <code>DataValue</code> message whose value type is to be extracted
      *  
      * @return  <code>DpSupportedType</code> representation of the message value data type
      * 
      * @throws IllegalArgumentException the data value field was not set (empty)
-     * @throws TypeNotPresentException  an unsupported type was encountered
+     * @throws TypeNotPresentException  an unrecognized data type was encountered
      */
     public static DpSupportedType   extractType(DataValue msgDataValue) throws IllegalArgumentException, TypeNotPresentException {
         
-        return switch (msgDataValue.getValueOneofCase()) {
-        case STRINGVALUE -> DpSupportedType.STRING;
+        return switch (msgDataValue.getValueCase()) {
         case BOOLEANVALUE -> DpSupportedType.BOOLEAN;
-        case INTVALUE -> DpSupportedType.LONG;
-        case FLOATVALUE -> DpSupportedType.DOUBLE;
+        case UINTVALUE -> DpSupportedType.INTEGER;
+        case INTVALUE -> DpSupportedType.INTEGER;
+        case ULONGVALUE -> DpSupportedType.LONG;
+        case LONGVALUE -> DpSupportedType.LONG;
+        case FLOATVALUE -> DpSupportedType.FLOAT;
+        case DOUBLEVALUE -> DpSupportedType.DOUBLE;
+        case STRINGVALUE -> DpSupportedType.STRING;
         case BYTEARRAYVALUE -> DpSupportedType.BYTE_ARRAY;
         case ARRAYVALUE -> DpSupportedType.ARRAY;
         case STRUCTUREVALUE -> DpSupportedType.STRUCTURE;
-        case IMAGE -> DpSupportedType.IMAGE;
-        case VALUEONEOF_NOT_SET -> throw new IllegalArgumentException("The data value was not set.");
+        case IMAGEVALUE -> DpSupportedType.IMAGE;
+        case VALUE_NOT_SET -> throw new IllegalArgumentException("The data value was not set.");
         default -> throw new TypeNotPresentException("The data value type was not recognized.", null);
         };
     }
@@ -805,6 +830,10 @@ public final class ProtoMsg {
      * <li>an <code>BufferedImage</code> object - the value union contains an image</li>
      * </ul>
      * </p>
+     * <p>
+     * For further details on the Java object mappings used here see <code>{@link #extractType(DataValue)}</code>
+     * and <code>{@link DpSupportedType}</code>.
+     * </p>
      * 
      * @param msgDataValue <code>DataValue</code> message whose value union is to be extracted
      *  
@@ -812,20 +841,26 @@ public final class ProtoMsg {
      * 
      * throws IllegalArgumentException  the data value field was not set (empty)
      * @throws TypeNotPresentException  an unsupported type was encountered
+     * 
+     * @see #extractType(DataValue)
+     * @see DpSupportedType
      */
     public static Object extractValue(DataValue msgDataValue) throws /* IllegalArgumentException, */ TypeNotPresentException {
         
-        return switch (msgDataValue.getValueOneofCase()) {
+        return switch (msgDataValue.getValueCase()) {
+            case BOOLEANVALUE -> Boolean.valueOf( msgDataValue.getBooleanValue() );
+            case UINTVALUE -> Integer.valueOf( msgDataValue.getUintValue() );
+            case INTVALUE -> Integer.valueOf( msgDataValue.getIntValue() );
+            case ULONGVALUE -> Long.valueOf( msgDataValue.getUlongValue() );
+            case LONGVALUE -> Long.valueOf( msgDataValue.getLongValue() );
+            case FLOATVALUE -> Float.valueOf( msgDataValue.getFloatValue() );
+            case DOUBLEVALUE -> Double.valueOf( msgDataValue.getDoubleValue() );
             case STRINGVALUE -> msgDataValue.getStringValue();
-            case BOOLEANVALUE -> msgDataValue.getBooleanValue();
-            case INTVALUE -> msgDataValue.getIntValue();
-            case FLOATVALUE -> msgDataValue.getFloatValue();
             case BYTEARRAYVALUE -> msgDataValue.getByteArrayValue().toByteArray();
             case ARRAYVALUE -> ProtoMsg.extractValues(msgDataValue.getArrayValue());
             case STRUCTUREVALUE -> ProtoMsg.extractValues(msgDataValue.getStructureValue());
-            case IMAGE -> ProtoMsg.toBufferedImage( msgDataValue.getImage() );
-            case VALUEONEOF_NOT_SET ->
-                null;
+            case IMAGEVALUE -> ProtoMsg.toBufferedImage( msgDataValue.getImageValue() );
+            case VALUE_NOT_SET -> null;
 //                throw new IllegalArgumentException("The data value was not set.");
             default ->
                 throw new TypeNotPresentException("The data value was not unrecognized - value " + msgDataValue.getDescriptorForType(), null);
@@ -840,19 +875,23 @@ public final class ProtoMsg {
      * The type of the heterogeneous data value is assumed to be known and given by the <code>Class&lt;T&gt;</code>
      * argument.  The list of currently supported types for parameter <code>&lt;T&gt;</code> is as follows:
      * <ul>
-     * <li><code>String</code></li>
-     * <li><code>Boolean</code></li>
-     * <li><code>Integer</code> (looses precision)</li> 
-     * <li><code>Long</code></li>
-     * <li><code>Float</code> (looses precision)</li>
-     * <li><code>Double</code></li>
-     * <li><code>ByteString</code></li>
-     * <li><code>Array</code></li>
-     * <li><code>Structure</code></li>
-     * <li><code>Image</code></li>
+     * <li><code>java.lang.String</code></li>
+     * <li><code>java.lang.Boolean</code></li>
+     * <li><code>java.lang.Integer</code></li> 
+     * <li><code>java.lang.Long</code></li>
+     * <li><code>java.lang.Float</code></li>
+     * <li><code>java.lang.Double</code></li>
+     * <li><code>com.google.Protobuf.ByteString</code></li>
+     * <li><code>Array</code> (Protobuf message)</li>
+     * <li><code>Structure (Protobuf message)</code></li>
+     * <li><code>Image (Protobuf message)</code></li>
      * </ul>
-     * <b>NOTE</b>: The heterogeneous value may not
-     * include all native types listed above and numeric accuracy may be lost during casts.  
+     * <b>NOTES</b>: 
+     * <ul>
+     * <li>The generic parameter <code>T</code> may include all native types listed above.</li>
+     * <li>The generic parameter <code>T</code> may include Protobuf message listed above.</li>
+     * <li>Unsigned integral Protobuf types are converted to signed Java types.</li> 
+     * <li>Numeric accuracy may be lost during casts (due to sign).</li>  
      * </p>
      * <p>
      * <h2>WARNINGS:</h2>
@@ -880,7 +919,7 @@ public final class ProtoMsg {
     @AAdvancedApi(status=AAdvancedApi.STATUS.TESTED_ALPHA, note="Passes through if-then cases")
     public static <T extends Object> T extractValueAs(Class<T> clsVal, DataValue msgVal) throws TypeNotPresentException, ClassCastException {
         
-        if (msgVal.getValueOneofCase() == ValueOneofCase.VALUEONEOF_NOT_SET)
+        if (msgVal.getValueCase() == ValueCase.VALUE_NOT_SET)
 //            throw new IllegalArgumentException("The data value was not set.");
             return null;
         
@@ -889,14 +928,26 @@ public final class ProtoMsg {
             obj = msgVal.getStringValue();
         else if (clsVal.equals(Boolean.class))
             obj =  msgVal.getBooleanValue();
-        else if (clsVal.equals(Integer.class))
-            obj = msgVal.getIntValue();
-        else if (clsVal.equals(Long.class))
-            obj = msgVal.getIntValue();
+        else if (clsVal.equals(Integer.class)) {
+            if (msgVal.getValueCase() == ValueCase.INTVALUE)
+                obj = msgVal.getIntValue();
+            else if (msgVal.getValueCase() == ValueCase.UINTVALUE)
+                obj = msgVal.getUintValue();
+            else
+                throw new ClassCastException("Attempt to cast non integer value to java.lang.Integer.");
+        }
+        else if (clsVal.equals(Long.class)) {
+            if (msgVal.getValueCase() == ValueCase.LONGVALUE)
+                obj = msgVal.getLongValue();
+            else if (msgVal.getValueCase() == ValueCase.ULONGVALUE)
+                obj = msgVal.getUlongValue();
+            else
+                throw new ClassCastException("Attempt to cast non long integer value to java.lang.Long.");
+        }
         else if (clsVal.equals(Float.class))
             obj = msgVal.getFloatValue();
         else if (clsVal.equals(Double.class))
-            obj = msgVal.getFloatValue();
+            obj = msgVal.getDoubleValue();
         else if (clsVal.equals(ByteString.class))
             obj = msgVal.getByteArrayValue();
         else if (clsVal.equals(Array.class))
@@ -904,7 +955,7 @@ public final class ProtoMsg {
         else if (clsVal.equals(Structure.class))
             obj = msgVal.getStructureValue();
         else if (clsVal.equals(Image.class))
-            obj = msgVal.getImage();
+            obj = msgVal.getImageValue();
         else
             throw new TypeNotPresentException("Unsupported class type " + clsVal.getName(), null);
         
@@ -929,7 +980,7 @@ public final class ProtoMsg {
      * 
      * @return string representation of (some of) the response contents
      */
-    public static String printout(DataTable msgTbl) {
+    public static String printout(QueryTableResponse.QueryResult.TableResult msgTbl) {
         if (msgTbl == null) 
             return "The DataTable is null";
         

@@ -34,7 +34,7 @@ import java.util.Vector;
 
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
@@ -289,11 +289,11 @@ public class TestQueryCompositeRecord {
      * 
      * @see {@link TestQueryRecord#recoverQueryResponses()}
      */
-    public List<QueryResponse> recoverQueryResponses() throws IOException, ClassNotFoundException, DpGrpcException {
-        List<QueryResponse>    lstResponses = new LinkedList<>();
+    public List<QueryDataResponse> recoverQueryResponses() throws IOException, ClassNotFoundException, DpGrpcException {
+        List<QueryDataResponse>    lstResponses = new LinkedList<>();
         
         for (TestQueryRecord rec : this.vecRecords) {
-            List<QueryResponse> lstCmpRsps = rec.recoverQueryResponses();
+            List<QueryDataResponse> lstCmpRsps = rec.recoverQueryResponses();
             
             lstResponses.addAll(lstCmpRsps);
         }
@@ -322,11 +322,11 @@ public class TestQueryCompositeRecord {
      * 
      * @see TestQueryRecord#recoverQueryData()
      */
-    public List<QueryResponse.QueryReport.BucketData> recoverQueryData() throws IOException, ClassNotFoundException, DpGrpcException {
-        List<QueryResponse.QueryReport.BucketData>  lstData = new LinkedList<>();
+    public List<QueryDataResponse.QueryResult.QueryData> recoverQueryData() throws IOException, ClassNotFoundException, DpGrpcException {
+        List<QueryDataResponse.QueryResult.QueryData>  lstData = new LinkedList<>();
         
         for (TestQueryRecord rec : this.vecRecords) {
-            List<QueryResponse.QueryReport.BucketData> lstCmpData = rec.recoverQueryData();
+            List<QueryDataResponse.QueryResult.QueryData> lstCmpData = rec.recoverQueryData();
             
             lstData.addAll(lstCmpData);
         }

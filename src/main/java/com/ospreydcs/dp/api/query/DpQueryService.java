@@ -29,6 +29,7 @@ package com.ospreydcs.dp.api.query;
 
 import java.util.SortedSet;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 
 import javax.naming.CannotProceedException;
 import javax.naming.OperationNotSupportedException;
@@ -57,8 +58,8 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceFutureStub;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
@@ -192,9 +193,9 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      */
     @AUnavailable(status=STATUS.ACCEPTED, note="The request is performed but the returned table is empty")
     public IDataTable querySingle(DpDataRequest rqst) throws DpQueryException {
-        QueryRequest qry = rqst.buildQueryRequest();
+        QueryDataRequest qry = rqst.buildQueryRequest();
         
-        QueryResponse msgRsp = super.grpcConn.getStubBlock().queryResponseSingle(qry);
+        QueryDataResponse msgRsp = super.grpcConn.getStubBlock().queryData(qry);
         
         QueryDataCorrelator correlator = new QueryDataCorrelator();
         
@@ -208,7 +209,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
             
             return table;
             
-        } catch (CompletionException | CannotProceedException | OperationNotSupportedException e) {
+        } catch (CompletionException | CannotProceedException | IllegalArgumentException | ExecutionException e) {
             if (BOL_LOGGING) 
                 LOGGER.error("{} - Exception while correlating response: {}, {}}", JavaRuntime.getCallerName(), e.getClass().getSimpleName(), e.getMessage());
 
@@ -243,7 +244,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
     public DpQueryStreamBuffer   queryStreamUni(DpDataRequest rqst) {
         
         // Extract the Protobuf request message
-        QueryRequest    msgRequest = rqst.buildQueryRequest();
+        QueryDataRequest    msgRequest = rqst.buildQueryRequest();
         
         // Create the query stream buffer and return it
         DpQueryStreamBuffer buf = DpQueryStreamBuffer.newBuffer(
@@ -337,7 +338,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
     public DpQueryStreamBuffer queryStreamBidi(DpDataRequest rqst) {
         
         // Extract the Protobuf request message
-        QueryRequest    msgRequest = rqst.buildQueryRequest();
+        QueryDataRequest    msgRequest = rqst.buildQueryRequest();
         
         // Create the query stream buffer and return it
         DpQueryStreamBuffer buf = DpQueryStreamBuffer.newBuffer(

@@ -27,8 +27,8 @@
  */
 package com.ospreydcs.dp.api.query.model;
 
-import com.ospreydcs.dp.grpc.v1.common.RejectDetails;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.common.RejectionDetails;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
@@ -83,7 +83,7 @@ public interface IQueryStreamQueueBufferObserverDeprecated {
      * 
      * @param msgReject Query Service rejection cause and message
      */
-    public void notifyRequestRejected(RejectDetails msgReject);
+    public void notifyRequestRejected(RejectionDetails msgReject);
     
     /**
      * <p>
@@ -97,7 +97,7 @@ public interface IQueryStreamQueueBufferObserverDeprecated {
      * @param indPage       index of the data page in the stream
      * @param msgRspData    gRPC message containing page of requested data
      */
-    public void notifyDataPageReady(Integer indPage, QueryResponse.QueryReport.BucketData msgRspData);
+    public void notifyDataPageReady(Integer indPage, QueryDataResponse.QueryResult.QueryData msgRspData);
     
     /**
      * <p>

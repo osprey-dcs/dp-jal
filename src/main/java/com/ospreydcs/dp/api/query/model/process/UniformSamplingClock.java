@@ -34,25 +34,35 @@ import java.util.ArrayList;
 
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 
 /**
  * <p>
- * Represents a sampling clock with uniform sampling and active for a finite duration.
+ * Represents a finite-duration sampling clock with uniform sampling period.
  * </p> 
  * <p>
- * Contains parameters defining a uniform sampling clock active for a finite duration.
- * The clock can be used to generate the timestamps for a finite interval of uniform samples.
+ * Contains parameters defining a uniform sampling clock active for a finite duration.  Instances can be used
+ * to identify the sampling times for a uniform, time-series process.
+ * The clock can be also used to generate the timestamps for a finite interval of uniform samples.
  * </p>
  * <p>
+ * <h2>Protobuf Usage</h2>
  * Note that <code>UniformSamplingClock</code> instances can be created from the Protobuf
  * message representing a sampling interval using creator 
- * <code>{@link #from(FixedIntervalTimestampSpec)}</code>.
+ * <code>{@link #from(SamplingClock)}</code>.
+ * </p>
+ * <p>
+ * <h2>Comparable<Instant> Interface</h2>
+ * The <code>UniformSamplingClock</code> class implements the <code>{@link Comparable}</code> interface bound to
+ * the Java <code>{@link Instant}</code> class.  All comparisons are with respect to the starting time instant
+ * of the sampling clock, given by <code>{@link #getStartInstant()}</code>.  Thus, <code>UniformSamplingClock</code>
+ * instances can be sorted by start times.
+ * </p> 
  *
  * @author Christopher K. Allen
  * @since Jan 7, 2024
  *
- * @see #from(FixedIntervalTimestampSpec)
+ * @see #from(SamplingClock)
  */
 public class UniformSamplingClock implements Comparable<Instant> { 
 
@@ -94,14 +104,14 @@ public class UniformSamplingClock implements Comparable<Instant> {
      * Protobuf message representing a sampling interval.
      * </p>
      * 
-     * @param msgTms    Protobuf message representing a uniform sampling interval
+     * @param msgClock    Protobuf message representing a finite-duration uniform sampling clock
      * 
      * @return  new <code>UniformSamplingClock</code> instance initialized from the argument
      */
-    public static UniformSamplingClock    from(FixedIntervalTimestampSpec msgTms) {
-        Instant insStart = ProtoMsg.toInstant(msgTms.getStartTime());
-        int     intCount = msgTms.getNumSamples();
-        long    lngPeriod = msgTms.getSampleIntervalNanos();
+    public static UniformSamplingClock    from(SamplingClock msgClock) {
+        Instant insStart = ProtoMsg.toInstant(msgClock.getStartTime());
+        int     intCount = msgClock.getCount();
+        long    lngPeriod = msgClock.getPeriodNanos();
         
         return new UniformSamplingClock(insStart, intCount, lngPeriod, ChronoUnit.NANOS);
     }

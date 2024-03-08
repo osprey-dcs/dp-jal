@@ -33,6 +33,7 @@ import java.util.Queue;
 import java.util.SortedSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -57,9 +58,9 @@ import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.model.process.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult.QueryData;
 
 /**
  * <p>
@@ -315,7 +316,7 @@ public class QueryResponseCorrelator {
      * @since Feb 8, 2024
      *
      */
-    private static final class QueryDataConsumer implements Consumer<QueryResponse.QueryReport.BucketData> {
+    private static final class QueryDataConsumer implements Consumer<QueryDataResponse.QueryResult.QueryData> {
 
         
         // 
@@ -332,7 +333,7 @@ public class QueryResponseCorrelator {
          * 
          * @return  new <code>QueryDataConsumer</code> attached to the given data buffer
          */
-        public static QueryDataConsumer newInstance(Queue<BucketData>   queDataBuffer) {
+        public static QueryDataConsumer newInstance(Queue<QueryData>   queDataBuffer) {
             return new QueryDataConsumer(queDataBuffer);
         }
         
@@ -344,7 +345,7 @@ public class QueryResponseCorrelator {
          *
          * @param queDataBuffer     data buffer to receive all accepted data messages
          */
-        public QueryDataConsumer(Queue<BucketData> queDataBuffer) {
+        public QueryDataConsumer(Queue<QueryData> queDataBuffer) {
             this.queDataBuffer = queDataBuffer;
         }
 
@@ -353,7 +354,7 @@ public class QueryResponseCorrelator {
         //
         
         /** The queue buffer to receive all accepted data messages - assumes ordering of incoming data */
-        private final Queue<BucketData>     queDataBuffer;
+        private final Queue<QueryData>     queDataBuffer;
         
         
         //
@@ -389,7 +390,7 @@ public class QueryResponseCorrelator {
          * @see java.util.function.Consumer#accept(java.lang.Object)
          */
         @Override
-        public void accept(BucketData msgData) {
+        public void accept(QueryData msgData) {
             this.queDataBuffer.add(msgData);
             
             this.cntMsgs++;
@@ -499,7 +500,7 @@ public class QueryResponseCorrelator {
          * 
          * @return  new <code>QueryDataProcessor</code> attached to the given arguments
          */
-        public static QueryDataProcessor newThread(BlockingQueue<BucketData> queDataBuffer, QueryDataCorrelator theCorrelator) {
+        public static QueryDataProcessor newThread(BlockingQueue<QueryData> queDataBuffer, QueryDataCorrelator theCorrelator) {
             return new QueryDataProcessor(queDataBuffer, theCorrelator);
         }
 
@@ -513,7 +514,7 @@ public class QueryResponseCorrelator {
          * @param queDataBuffer     source of raw data for correlation processing
          * @param theCorrelator     data correlator to receive raw data
          */
-        public QueryDataProcessor(BlockingQueue<BucketData> queDataBuffer, QueryDataCorrelator theCorrelator) {
+        public QueryDataProcessor(BlockingQueue<QueryData> queDataBuffer, QueryDataCorrelator theCorrelator) {
             this.queDataBuffer = queDataBuffer;
             this.theCorrelator = theCorrelator;
         }
@@ -535,7 +536,7 @@ public class QueryResponseCorrelator {
         //
         
         /** The external queued data buffer supplying data messages for correlation */
-        private final BlockingQueue<BucketData>     queDataBuffer;
+        private final BlockingQueue<QueryData>     queDataBuffer;
         
         /** The external data correlator doing the data message processing */
         private final QueryDataCorrelator           theCorrelator;
@@ -746,7 +747,7 @@ public class QueryResponseCorrelator {
             
             while (this.cntMsgsMax == null || this.cntMsgsProcessed < this.cntMsgsMax) {
                 try {
-                    QueryResponse.QueryReport.BucketData msgData = this.queDataBuffer.poll(LNG_TIMEOUT, TU_TIMEOUT);
+                    QueryDataResponse.QueryResult.QueryData msgData = this.queDataBuffer.poll(LNG_TIMEOUT, TU_TIMEOUT);
 
                     // If we timeout try again
                     if (msgData == null) {
@@ -858,7 +859,7 @@ public class QueryResponseCorrelator {
     private final ExecutorService           exeThreadPool = Executors.newFixedThreadPool(CNT_MULTISTREAM);
     
     /** The queue buffering all response messages for data correlation processing */
-    private final BlockingQueue<BucketData> queStreamBuffer = new LinkedBlockingQueue<>();
+    private final BlockingQueue<QueryData>  queStreamBuffer = new LinkedBlockingQueue<>();
     
     /** The single query data theCorrelator used to process all request data */
     private final QueryDataCorrelator       theCorrelator = new QueryDataCorrelator();  
@@ -1059,16 +1060,16 @@ public class QueryResponseCorrelator {
         this.theCorrelator.reset();
         
         // Create the data request message
-        QueryRequest    msgRequest = dpRequest.buildQueryRequest();
+        QueryDataRequest    msgRequest = dpRequest.buildQueryRequest();
         
         // Perform the unary data request directly on blocking stub
-        QueryResponse msgResponse = this.connQuery.getStubBlock().queryResponseSingle(msgRequest);
+        QueryDataResponse   msgResponse = this.connQuery.getStubBlock().queryData(msgRequest);
         
         // Process the request data catching any Query Service errors
         try {
             this.theCorrelator.addQueryResponse(msgResponse);
             
-        } catch (OperationNotSupportedException e) {
+        } catch (ExecutionException e) {
             if (BOL_LOGGING)
                 LOGGER.error("{}: Query request was rejected by Query Service - {}", JavaRuntime.getCallerName(), e.getMessage());
             
@@ -1483,7 +1484,7 @@ public class QueryResponseCorrelator {
         // Create a gRPC stream processor data for each component request within the argument
         for (DpDataRequest dpRequest : lstRequests) {
             DpQueryStreamType       enmStreamType = dpRequest.getStreamType();
-            QueryRequest            msgRequest = dpRequest.buildQueryRequest();
+            QueryDataRequest        msgRequest = dpRequest.buildQueryRequest();
             DpQueryServiceStub      stubAsync = this.connQuery.getStubAsync();
             QueryDataConsumer       fncConsumer = QueryDataConsumer.newInstance(this.queStreamBuffer);
             
