@@ -75,6 +75,9 @@ public class TestQueryResponsesTest {
      */
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        
+        // Make sure there is data
+        TestQueryResponses.storePersistentData();
     }
 
     /**

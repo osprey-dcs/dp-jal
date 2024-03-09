@@ -40,7 +40,7 @@ NOTES:
 		<!-- Data Platform Properties-->        
         <dp-grpc.version>1.0.0</dp-grpc.version>
         <dp-common.version>1.0.0</dp-common.version>
-        <dp-service.version>1.0.0</dp-service.version>
+        <dp-service.version>1.2.0</dp-service.version>
 
         <!-- gRPC Properties -->
         <io.grpc.version>1.49.0</io.grpc.version>
