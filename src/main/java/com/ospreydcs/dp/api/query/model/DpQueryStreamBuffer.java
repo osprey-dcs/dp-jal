@@ -39,7 +39,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.common.RejectionDetails;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation;
@@ -1172,10 +1172,10 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
         
         // Query Failure Check - if this is not a data message something is wrong
         //  NOTE: This should usually happen on the first response
-        if (msgRsp.hasRejectionDetails()) {
+        if (msgRsp.hasExceptionalResult()) {
             
             // Get the details of the rejection and report them
-            RejectionDetails   msgReject = msgRsp.getRejectionDetails();
+            ExceptionalResult   msgReject = msgRsp.getExceptionalResult();
             
             this.processRejectedRequest(msgReject);;
             
@@ -1289,7 +1289,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * 
      * @see IDpQueryStreamObserver#notifyRequestRejected(RejectDetails)
      */
-    private void notifyRejected(RejectionDetails msgReject) {
+    private void notifyRejected(ExceptionalResult msgReject) {
         this.lstStreamObservers.forEach( o -> o.notifyRequestRejected(msgReject));
     }
     
@@ -1429,10 +1429,10 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * 
      * @param msgReject the rejection details Protobuf message within the <code>QueryResponse</code> message
      */
-    protected void processRejectedRequest(RejectionDetails msgReject) {
+    protected void processRejectedRequest(ExceptionalResult msgReject) {
         
         // Get the details of the rejection and report them
-        RejectionDetails.Reason     enmCause = msgReject.getReason();
+        ExceptionalResult.ExceptionalResultStatus     enmCause = msgReject.getExceptionalResultStatus();
         String                      strMsg = msgReject.getMessage();
         
         if (this.bolLogging)

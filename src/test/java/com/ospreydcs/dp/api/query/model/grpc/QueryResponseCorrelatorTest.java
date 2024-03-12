@@ -48,7 +48,7 @@ import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.test.TestQueryCompositeRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * JUnit test cases for class <code>{@link QueryResponseCorrelator}</code>.

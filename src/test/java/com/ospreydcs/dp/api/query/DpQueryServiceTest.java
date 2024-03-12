@@ -230,9 +230,9 @@ public class DpQueryServiceTest {
             bufResult.startAndAwaitCompletion();
             
             List<QueryDataResponse> lstResultSet = bufResult.getBuffer();
-            List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = lstResultSet
+            List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = lstResultSet
                     .stream()
-                    .map(msgRsp -> msgRsp.getQueryResult().getQueryData())
+                    .map(msgRsp -> msgRsp.getQueryData())
                     .flatMap(msgData -> msgData.getDataBucketsList().stream())
                     .toList();
             

@@ -27,7 +27,7 @@
  */
 package com.ospreydcs.dp.api.query.model;
 
-import com.ospreydcs.dp.grpc.v1.common.RejectionDetails;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
@@ -79,7 +79,7 @@ public interface IDpQueryStreamObserver {
      * 
      * @param msgReject Query Service rejection cause and message
      */
-    public void notifyRequestRejected(RejectionDetails msgReject);
+    public void notifyRequestRejected(ExceptionalResult msgReject);
     
     /**
      * <p>

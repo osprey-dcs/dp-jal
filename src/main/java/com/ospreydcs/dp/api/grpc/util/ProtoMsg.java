@@ -980,7 +980,7 @@ public final class ProtoMsg {
      * 
      * @return string representation of (some of) the response contents
      */
-    public static String printout(QueryTableResponse.QueryResult.TableResult msgTbl) {
+    public static String printout(QueryTableResponse.TableResult msgTbl) {
         if (msgTbl == null) 
             return "The DataTable is null";
         

@@ -121,7 +121,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Size of the ONE_SOURCE single query response list = " + lstRsps.size());
         
-        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the ONE_SOURCE query results set = " + lstBuckets.size());
     }
@@ -138,7 +138,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Size of the ONE_SOURCE single query response list = " + lstRsps.size());
         
-        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the ONE_SOURCE query results set = " + lstBuckets.size());
     }
@@ -155,7 +155,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Size of the WIDE single query response list = " + lstRsps.size());
         
-        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the WIDE query results set = " + lstBuckets.size());
     }
@@ -172,7 +172,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Size of the LONG single query response list = " + lstRsps.size());
         
-        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the LONG query results set = " + lstBuckets.size());
     }
@@ -197,7 +197,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the HORIZONTAL composite query response list = " + lstRspsAll.size());
         
-        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the HORIZONTAL composite query results set = " + lstBuckets.size());
     }
@@ -222,7 +222,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the VERTICAL composite query response list = " + lstRspsAll.size());
         
-        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the VERTICAL composite query results set = " + lstBuckets.size());
     }
@@ -247,7 +247,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the GRID composite query response list = " + lstRspsAll.size());
         
-        List<QueryDataResponse.QueryResult.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the GRID composite query results set = " + lstBuckets.size());
     }
@@ -334,7 +334,7 @@ public class TestQueryResponsesTest {
      *          <code>false</code> otherwise
      */
     private boolean hasRejection(List<QueryDataResponse> lstRsps) {
-        boolean bolRejection = lstRsps.stream().map( r -> r.hasRejectionDetails()).anyMatch( b -> b == true);
+        boolean bolRejection = lstRsps.stream().map( r -> r.hasExceptionalResult()).anyMatch( b -> b == true);
         
         return bolRejection;
     }
@@ -346,10 +346,10 @@ public class TestQueryResponsesTest {
      *  
      * @return  the list of BucketData messages in the given results set (one for each QueryResponse message)
      */
-    private List<QueryDataResponse.QueryResult.QueryData>   extractData(List<QueryDataResponse> lstRsps) {
-        List<QueryDataResponse.QueryResult.QueryData>   lstData = lstRsps
+    private List<QueryDataResponse.QueryData>   extractData(List<QueryDataResponse> lstRsps) {
+        List<QueryDataResponse.QueryData>   lstData = lstRsps
                 .stream()
-                .map( r -> r.getQueryResult().getQueryData())
+                .map( r -> r.getQueryData())
                 .toList();
         
         return lstData;
@@ -370,10 +370,10 @@ public class TestQueryResponsesTest {
      * 
      * @see #extractData(List)
      */
-    private List<QueryDataResponse.QueryResult.QueryData.DataBucket> extractBuckets(List<QueryDataResponse> lstRsps) {
-        List<QueryDataResponse.QueryResult.QueryData>   lstData = this.extractData(lstRsps);
+    private List<QueryDataResponse.QueryData.DataBucket> extractBuckets(List<QueryDataResponse> lstRsps) {
+        List<QueryDataResponse.QueryData>   lstData = this.extractData(lstRsps);
         
-        List<QueryDataResponse.QueryResult.QueryData.DataBucket> lstBuckets = lstData
+        List<QueryDataResponse.QueryData.DataBucket> lstBuckets = lstData
                 .stream()
                 .collect(LinkedList::new, 
                         (lst, data) -> lst.addAll(data.getDataBucketsList()), 

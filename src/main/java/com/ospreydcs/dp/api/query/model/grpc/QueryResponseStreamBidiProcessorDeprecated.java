@@ -35,7 +35,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation.CursorOperationType;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 import io.grpc.stub.CallStreamObserver;
 

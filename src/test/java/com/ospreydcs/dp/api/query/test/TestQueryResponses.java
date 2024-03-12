@@ -438,13 +438,13 @@ public class TestQueryResponses {
      * @see #queryData(SingleQueryType)
      * @see SingleQueryType
      */
-    public static List<QueryDataResponse.QueryResult.QueryData.DataBucket> queryBuckets(SingleQueryType enmType) {
+    public static List<QueryDataResponse.QueryData.DataBucket> queryBuckets(SingleQueryType enmType) {
         
         // Recover results set and extract data
-        List<QueryDataResponse.QueryResult.QueryData>   lstData = TestQueryResponses.queryData(enmType);
+        List<QueryDataResponse.QueryData>   lstData = TestQueryResponses.queryData(enmType);
         
         // Extract all data buckets
-        List<QueryDataResponse.QueryResult.QueryData.DataBucket> lstBuckets = lstData
+        List<QueryDataResponse.QueryData.DataBucket> lstBuckets = lstData
                 .stream()
                 .flatMap(
                         msgData -> msgData.getDataBucketsList().stream()
@@ -474,15 +474,15 @@ public class TestQueryResponses {
      * @see #queryResults(SingleQueryType)
      * @see SingleQueryType
      */
-    public static List<QueryDataResponse.QueryResult.QueryData>    queryData(SingleQueryType enmType) {
+    public static List<QueryDataResponse.QueryData>    queryData(SingleQueryType enmType) {
         
         // Recover the results set
         List<QueryDataResponse> lstRsps = TestQueryResponses.queryResults(enmType);
         
         // Extract the BucketData messages
-        List<QueryDataResponse.QueryResult.QueryData> lstData = lstRsps
+        List<QueryDataResponse.QueryData> lstData = lstRsps
                 .stream()
-                .map(msgRsp -> msgRsp.getQueryResult().getQueryData())
+                .map(msgRsp -> msgRsp.getQueryData())
                 .toList();
         
         return lstData;

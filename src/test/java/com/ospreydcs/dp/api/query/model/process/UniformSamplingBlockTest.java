@@ -59,8 +59,8 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult.QueryData;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult.QueryData.DataBucket;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
  * JUnit test cases for <code>{@link UniformSamplingBlock}</code> class.

@@ -337,16 +337,16 @@ public final record TestQueryRecord (
      * 
      * @see #recoverQueryResponses()
      */
-    public List<QueryDataResponse.QueryResult.QueryData> recoverQueryData() 
+    public List<QueryDataResponse.QueryData> recoverQueryData() 
             throws IOException, ClassNotFoundException, DpGrpcException {
         
         // Check that result set is available
         if (this.lstResults.isEmpty())
             this.recoverQueryResponses();
         
-        List<QueryDataResponse.QueryResult.QueryData>   lstDataMsgs = this.lstResults
+        List<QueryDataResponse.QueryData>   lstDataMsgs = this.lstResults
                 .stream()
-                .map(qr -> qr.getQueryResult().getQueryData())
+                .map(qr -> qr.getQueryData())
                 .toList();
         
         return lstDataMsgs;

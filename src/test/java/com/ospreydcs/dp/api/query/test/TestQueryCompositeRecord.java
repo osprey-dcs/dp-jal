@@ -322,11 +322,11 @@ public class TestQueryCompositeRecord {
      * 
      * @see TestQueryRecord#recoverQueryData()
      */
-    public List<QueryDataResponse.QueryResult.QueryData> recoverQueryData() throws IOException, ClassNotFoundException, DpGrpcException {
-        List<QueryDataResponse.QueryResult.QueryData>  lstData = new LinkedList<>();
+    public List<QueryDataResponse.QueryData> recoverQueryData() throws IOException, ClassNotFoundException, DpGrpcException {
+        List<QueryDataResponse.QueryData>  lstData = new LinkedList<>();
         
         for (TestQueryRecord rec : this.vecRecords) {
-            List<QueryDataResponse.QueryResult.QueryData> lstCmpData = rec.recoverQueryData();
+            List<QueryDataResponse.QueryData> lstCmpData = rec.recoverQueryData();
             
             lstData.addAll(lstCmpData);
         }

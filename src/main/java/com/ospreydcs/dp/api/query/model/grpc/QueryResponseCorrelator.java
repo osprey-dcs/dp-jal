@@ -60,7 +60,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * <p>
@@ -316,7 +316,7 @@ public class QueryResponseCorrelator {
      * @since Feb 8, 2024
      *
      */
-    private static final class QueryDataConsumer implements Consumer<QueryDataResponse.QueryResult.QueryData> {
+    private static final class QueryDataConsumer implements Consumer<QueryDataResponse.QueryData> {
 
         
         // 
@@ -747,7 +747,7 @@ public class QueryResponseCorrelator {
             
             while (this.cntMsgsMax == null || this.cntMsgsProcessed < this.cntMsgsMax) {
                 try {
-                    QueryDataResponse.QueryResult.QueryData msgData = this.queDataBuffer.poll(LNG_TIMEOUT, TU_TIMEOUT);
+                    QueryDataResponse.QueryData msgData = this.queDataBuffer.poll(LNG_TIMEOUT, TU_TIMEOUT);
 
                     // If we timeout try again
                     if (msgData == null) {

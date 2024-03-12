@@ -54,7 +54,7 @@ import com.ospreydcs.dp.api.query.test.TestQueryService;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * <p>
@@ -205,7 +205,7 @@ public class QueryDataCorrelatorTest {
         // Create new processor and add raw data
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
-        for (QueryDataResponse.QueryResult.QueryData msgData : lstRawData) {
+        for (QueryDataResponse.QueryData msgData : lstRawData) {
             prcrTest.addQueryData(msgData);
         }
         
@@ -240,7 +240,7 @@ public class QueryDataCorrelatorTest {
         // Create new processor and add raw data
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
-        for (QueryDataResponse.QueryResult.QueryData msgData : lstRawData) {
+        for (QueryDataResponse.QueryData msgData : lstRawData) {
             prcrTest.addQueryData(msgData);
         }
         
@@ -275,7 +275,7 @@ public class QueryDataCorrelatorTest {
         // Create new processor and add raw data
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
-        for (QueryDataResponse.QueryResult.QueryData msgData : lstRawData) {
+        for (QueryDataResponse.QueryData msgData : lstRawData) {
             prcrTest.addQueryData(msgData);
         }
         
@@ -306,7 +306,7 @@ public class QueryDataCorrelatorTest {
         
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
-        for (QueryDataResponse.QueryResult.QueryData msgData : lstRawData) {
+        for (QueryDataResponse.QueryData msgData : lstRawData) {
             prcrTest.addQueryData(msgData);
         }
         

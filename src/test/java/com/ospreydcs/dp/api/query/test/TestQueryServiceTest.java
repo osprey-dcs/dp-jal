@@ -53,16 +53,15 @@ import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
-import com.ospreydcs.dp.grpc.v1.common.RejectionDetails;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult.QueryData;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult.QueryData.DataBucket;
-import com.ospreydcs.dp.grpc.v1.query.QueryStatus;
-import com.ospreydcs.dp.grpc.v1.query.QueryStatus.QueryStatusType;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
  * JUnit test cases for class <code>{@link TestQueryService}</code>.
@@ -218,7 +217,7 @@ public class TestQueryServiceTest {
             Assert.fail(recActivity.message());
         
         // Check the query data
-        QueryData   msgData = msgResponse.getQueryResult().getQueryData();
+        QueryData   msgData = msgResponse.getQueryData();
         
         ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
         if (recUnique.isFailure())
@@ -271,7 +270,7 @@ public class TestQueryServiceTest {
             Assert.fail(recActivity.message());
         
         // Verify the query data
-        QueryData   msgData = msgResponse.getQueryResult().getQueryData();
+        QueryData   msgData = msgResponse.getQueryData();
         
 //        ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
 //        if (recUnique.isFailure())
@@ -339,7 +338,7 @@ public class TestQueryServiceTest {
             Assert.fail(recActivity.message());
         
         // Check the query data
-        QueryData   msgData = msgResponse.getQueryResult().getQueryData();
+        QueryData   msgData = msgResponse.getQueryData();
         
 //        ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
 //        if (recUnique.isFailure())
@@ -433,7 +432,7 @@ public class TestQueryServiceTest {
         
         List<DataBucket>    lstBuckets = lstResultsSet
                 .stream()
-                .<QueryData>map(msgRsp -> msgRsp.getQueryResult().getQueryData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                 .toList();
         
@@ -525,7 +524,7 @@ public class TestQueryServiceTest {
         
         List<DataBucket>    lstBuckets = lstResultsSet
                 .stream()
-                .<QueryData>map(msgRsp -> msgRsp.getQueryResult().getQueryData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                 .toList();
         
@@ -659,7 +658,7 @@ public class TestQueryServiceTest {
         
         List<DataBucket>    lstBuckets = lstResultsSet
                 .stream()
-                .<QueryData>map(msgRsp -> msgRsp.getQueryResult().getQueryData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                 .toList();
         
@@ -682,23 +681,23 @@ public class TestQueryServiceTest {
      */
     private ResultRecord    checkErrors(QueryDataResponse msgResponse) {
 
-        // Check for query rejection
-        if (msgResponse.hasRejectionDetails()) {
-            RejectionDetails        msgReject = msgResponse.getRejectionDetails();
-            RejectionDetails.Reason enmCause = msgReject.getReason();
+        // Check for query rejection or response error
+        if (msgResponse.hasExceptionalResult()) {
+            ExceptionalResult        msgReject = msgResponse.getExceptionalResult();
+            ExceptionalResult.ExceptionalResultStatus enmCause = msgReject.getExceptionalResultStatus();
             String                  strMsg = msgReject.getMessage();
             
-            return ResultRecord.newFailure("Query was rejected: cause=" + enmCause + ", message=" + strMsg);
+            return ResultRecord.newFailure("Query was rejected or response error: cause=" + enmCause + ", message=" + strMsg);
         }
         
-        // Check for response error
-        if (msgResponse.getQueryResult().hasQueryStatus()) {
-            QueryStatus     msgStatus = msgResponse.getQueryResult().getQueryStatus();
-            QueryStatusType enmType = msgStatus.getQueryStatusType();
-            String          strMsg = msgStatus.getStatusMessage();
-
-            return ResultRecord.newFailure("Query contains response error: type="+ enmType + ", message=" + strMsg);
-        }
+//        // Check for response error
+//        if (msgResponse.getQueryResult().hasQueryStatus()) {
+//            QueryStatus     msgStatus = msgResponse.getQueryResult().getQueryStatus();
+//            QueryStatusType enmType = msgStatus.getQueryStatusType();
+//            String          strMsg = msgStatus.getStatusMessage();
+//
+//            return ResultRecord.newFailure("Query contains response error: type="+ enmType + ", message=" + strMsg);
+//        }
         
         return ResultRecord.SUCCESS;
     }
@@ -761,7 +760,7 @@ public class TestQueryServiceTest {
         // Extract all the data columns from the QueryResponse list
         List<DataColumn>    lstMsgCols = lstResultsSet
                 .stream()
-                .<QueryData>map(msgRsp -> msgRsp.getQueryResult().getQueryData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                 .<DataColumn>map(msgBck -> msgBck.getDataColumn())
                 .toList();
@@ -914,7 +913,7 @@ public class TestQueryServiceTest {
         // Extract results set data, check each data set, record results
         List<ResultRecord>    lstFails = lstResultsSet
                 .stream()
-                .<QueryData>map(msgRsp -> msgRsp.getQueryResult().getQueryData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<ResultRecord>map(msgData -> this.verifySourceUniqueness(msgData))
                 .filter(ResultRecord::isFailure)
                 .toList();
@@ -1037,7 +1036,7 @@ public class TestQueryServiceTest {
         // Extract results set data, check each data set, record results
         List<ResultRecord>    lstFails = lstResultsSet
                 .stream()
-                .<QueryData>map(msgRsp -> msgRsp.getQueryResult().getQueryData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<ResultRecord>map(msgData -> this.verifySourceSizes(msgData))
                 .filter(ResultRecord::isFailure)
                 .toList();
@@ -1066,7 +1065,7 @@ public class TestQueryServiceTest {
             // Extract all data columns
             List<DataBucket>    lstMsgBuckets = lstResultsSet
                     .stream()
-                    .<QueryData>map(msgRsp -> msgRsp.getQueryResult().getQueryData())
+                    .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                     .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                     .toList();
     

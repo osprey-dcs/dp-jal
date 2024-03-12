@@ -208,7 +208,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * 
      * @throws IllegalArgumentException     the <code>DataBucket</code> message did not contain a sampling clock
      */
-    public static CorrelatedQueryData   from(QueryDataResponse.QueryResult.QueryData.DataBucket msgBucket) 
+    public static CorrelatedQueryData   from(QueryDataResponse.QueryData.DataBucket msgBucket) 
             throws IllegalArgumentException {
         return new CorrelatedQueryData(msgBucket);
     }
@@ -227,7 +227,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * 
      * @throws IllegalArgumentException     the <code>DataBucket</code> message did not contain a sampling clock
      */
-    public CorrelatedQueryData(QueryDataResponse.QueryResult.QueryData.DataBucket msgBucket) {
+    public CorrelatedQueryData(QueryDataResponse.QueryData.DataBucket msgBucket) {
         
         // Check argument
         if (!msgBucket.getDataTimestamps().hasSamplingClock())
@@ -590,7 +590,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      *              
      * @throws IllegalArgumentException     the <code>DataBucket</code> message did not contain a sampling clock
      */
-    public boolean insertBucketData(QueryDataResponse.QueryResult.QueryData.DataBucket msgBucket) {
+    public boolean insertBucketData(QueryDataResponse.QueryData.DataBucket msgBucket) {
         
         // Check argument
         if (!msgBucket.getDataTimestamps().hasSamplingClock())

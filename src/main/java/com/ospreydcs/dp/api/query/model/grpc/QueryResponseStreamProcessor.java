@@ -35,16 +35,12 @@ import com.ospreydcs.dp.api.common.ResultRecord;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.common.RejectionDetails;
-import com.ospreydcs.dp.grpc.v1.common.RejectionDetails.Reason;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryResult.QueryData;
-import com.ospreydcs.dp.grpc.v1.query.QueryStatus;
-import com.ospreydcs.dp.grpc.v1.query.QueryStatus.QueryStatusType;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 import io.grpc.stub.CallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -243,7 +239,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
     public static QueryResponseStreamProcessor  newTask(
             DpDataRequest dpRequest,
             DpQueryServiceStub  stubAsync,
-            Consumer<QueryDataResponse.QueryResult.QueryData> ifcDataSink) 
+            Consumer<QueryDataResponse.QueryData> ifcDataSink) 
     {
         // Extract the preferred stream type and the Protobuf query result message
         DpQueryStreamType   enmType = dpRequest.getStreamType();
@@ -296,7 +292,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
             DpQueryStreamType   enmStreamType,
             QueryDataRequest    msgRequest,
             DpQueryServiceStub  stubAsync,
-            Consumer<QueryDataResponse.QueryResult.QueryData> ifcDataSink) 
+            Consumer<QueryDataResponse.QueryData> ifcDataSink) 
     {
         // Choose stream process implementation based upon requested stream type
         return switch (enmStreamType) {
@@ -733,11 +729,11 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * This method should be called only once, with the argument being the first response
      * from the Query Service after stream initiation.  If the original data query
      * request was invalid or corrupt the Query Service streams back a single 
-     * <code>QueryResponse</code> message containing a <code>RejectDetails</code> message
+     * <code>QueryResponse</code> message containing a <code>ExceptionalResult</code> message
      * describing the rejection.
      * </p> 
      * <p>
-     * The method Checks for a <code>RejectDatails</code> message within the query response 
+     * The method Checks for a <code>ExceptionalResult</code> message within the query response 
      * argument.  If present then the original data request was rejected by the Query Service.
      * The details of the rejection are then extracted from the argument and returned in
      * a FAILED result record.  Otherwise (i.e., the request was accepted) the method 
@@ -752,10 +748,10 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
     protected ResultRecord isRequestAccepted(QueryDataResponse msgRsp) {
         
         // Check for RequestRejected message
-        if (msgRsp.hasRejectionDetails()) {
-            RejectionDetails            msgReject = msgRsp.getRejectionDetails();
-            String                      strCause = msgReject.getMessage();
-            RejectionDetails.Reason     enmCause = msgReject.getReason();
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult           msgException = msgRsp.getExceptionalResult();
+            String                      strCause = msgException.getMessage();
+            ExceptionalResult.ExceptionalResultStatus     enmCause = msgException.getExceptionalResultStatus();
             
             String       strMsg = "The data request was rejected by Query Service: cause=" + enmCause + ", message=" + strCause;
             ResultRecord result = ResultRecord.newFailure(strMsg);
@@ -772,13 +768,13 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * Processes the data within the given Query Service response message.
      * </p>
      * <p>
-     * For normal operation <code>BucketData</code> message is extracted from the argument 
+     * For normal operation, a <code>QueryData</code> message is extracted from the argument 
      * then passed to the data consumer identified in construction.  A SUCCESS result
      * record is then returned indicating successful consumption of response data.
      * </p>
      * <p>
-     * If the argument contains an status error (i.e., rather than data) then the method
-     * extracts the status error and accompanying message.  An error message is constructed
+     * If the argument contains an exception(i.e., rather than data) then the method
+     * extracts the status and accompanying message.  An error message is constructed
      * and returned via a FAILED result record.
      * </p>
      * 
@@ -789,22 +785,29 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      */
     protected ResultRecord processResponse(QueryDataResponse msgRsp) {
         
-        // Extract the query report message
-        QueryResult     msgReport = msgRsp.getQueryResult();
+//        // Extract the query report message
+//        QueryResult     msgReport = msgRsp.getQueryResult();
+//        
+//        // Extract the query data if present, then process
+//        if (msgReport.hasQueryData()) {
+//            QueryData   msgData = msgReport.getQueryData();
+//            
+//            this.ifcDataSink.accept(msgData);
+//            
+//            return ResultRecord.SUCCESS;
+//        }
         
-        // Extract the query data if present, then process
-        if (msgReport.hasQueryData()) {
-            QueryData   msgData = msgReport.getQueryData();
+        if (msgRsp.hasQueryData()) {
+            QueryData   msgData = msgRsp.getQueryData();
             
             this.ifcDataSink.accept(msgData);
             
             return ResultRecord.SUCCESS;
         }
-        
         // Response Error - extract the details and return them
-        QueryStatus msgStatus = msgReport.getQueryStatus();
-        String          strStatus = msgStatus.getStatusMessage();
-        QueryStatusType enmStatus = msgStatus.getQueryStatusType();
+        ExceptionalResult   msgException = msgRsp.getExceptionalResult();
+        String              strStatus = msgException.getMessage();
+        ExceptionalResult.ExceptionalResultStatus enmStatus = msgException.getExceptionalResultStatus();
         
         String          strMsg = "Query Service reported response error: status=" + enmStatus + ", message= " + strStatus;
         ResultRecord    recErr = ResultRecord.newFailure(strMsg);

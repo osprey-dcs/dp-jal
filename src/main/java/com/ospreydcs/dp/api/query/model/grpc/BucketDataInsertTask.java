@@ -80,10 +80,10 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
     //
     
     /** The subject of this data insertion task */
-    private final QueryDataResponse.QueryResult.QueryData.DataBucket    msgSubject;
+    private final QueryDataResponse.QueryData.DataBucket    msgSubject;
     
     /** The object of this task - target collection of correlated data */
-    private final SortedSet<CorrelatedQueryData>                        setTarget;
+    private final SortedSet<CorrelatedQueryData>            setTarget;
     
     
     //
@@ -112,7 +112,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * 
      * @return  new, initialized thread task ready for execution
      */
-    public static BucketDataInsertTask newTask(QueryDataResponse.QueryResult.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
+    public static BucketDataInsertTask newTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
         return new BucketDataInsertTask(msgSubject, setTarget);
     }
 
@@ -129,7 +129,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * @param msgSubject    the task subject - a QueryService data bucket message
      * @param setTarget     the data insertion target - collection of <code>CorrelatedQueryData</code> instances
      */
-    public BucketDataInsertTask(QueryDataResponse.QueryResult.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
+    public BucketDataInsertTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
         this.msgSubject = msgSubject;
         this.setTarget = setTarget;
     }
@@ -170,7 +170,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * 
      * @return  the <code>DataBucket</code> Protobuf message subject of task
      */
-    public final QueryDataResponse.QueryResult.QueryData.DataBucket    getSubject() {
+    public final QueryDataResponse.QueryData.DataBucket    getSubject() {
         return this.msgSubject;
     }
     
