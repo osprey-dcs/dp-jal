@@ -37,10 +37,10 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import javax.naming.CannotProceedException;
-import javax.naming.OperationNotSupportedException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -62,9 +62,9 @@ import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
  * JUnit test cases for <code>{@link SamplingProcess}</code>.
@@ -81,23 +81,23 @@ public class SamplingProcessTest {
     //
     
     /** Sample query response for test cases */
-    public static final List<QueryResponse>   LST_QUERY_RSP_WIDE = TestQueryResponses.queryResults(SingleQueryType.WIDE);
+    public static final List<QueryDataResponse>   LST_QUERY_RSP_WIDE = TestQueryResponses.queryResults(SingleQueryType.WIDE);
     
     /** Sample query response for test cases */
-    public static final List<QueryResponse>   LST_QUERY_RSP_LONG = TestQueryResponses.queryResults(SingleQueryType.LONG);
+    public static final List<QueryDataResponse>   LST_QUERY_RSP_LONG = TestQueryResponses.queryResults(SingleQueryType.LONG);
     
     
     /** Sample query data for test cases - 1 source, 10 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_ONE = TestQueryResponses.queryData(SingleQueryType.ONE_SOURCE);
+    public static final List<QueryData>   LST_QUERY_DATA_ONE = TestQueryResponses.queryData(SingleQueryType.ONE_SOURCE);
     
     /** Sample query data for test cases - 2 sources, 2 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_TWO = TestQueryResponses.queryData(SingleQueryType.TWO_SOURCE);
+    public static final List<QueryData>   LST_QUERY_DATA_TWO = TestQueryResponses.queryData(SingleQueryType.TWO_SOURCE);
     
     /** Sample query data for test cases - 100 sources, 5 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_WIDE = TestQueryResponses.queryData(SingleQueryType.WIDE);
+    public static final List<QueryData>   LST_QUERY_DATA_WIDE = TestQueryResponses.queryData(SingleQueryType.WIDE);
     
     /** Sample query data for test cases - 5 sources, 60 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_LONG = TestQueryResponses.queryData(SingleQueryType.LONG);
+    public static final List<QueryData>   LST_QUERY_DATA_LONG = TestQueryResponses.queryData(SingleQueryType.LONG);
     
     
     //
@@ -152,13 +152,13 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testFrom() {
-        List<QueryResponse> lstRspMsgs = LST_QUERY_RSP_WIDE;
+        List<QueryDataResponse> lstRspMsgs = LST_QUERY_RSP_WIDE;
         
         try {
-            for (QueryResponse msgRsp : lstRspMsgs)
+            for (QueryDataResponse msgRsp : lstRspMsgs)
                 CORRELATOR.addQueryResponse(msgRsp);
 
-        } catch (OperationNotSupportedException | CannotProceedException e) {
+        } catch (ExecutionException | CannotProceedException e) {
             Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
             
         }
@@ -183,13 +183,13 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testSamplingProcess() {
-        List<QueryResponse> lstRspMsgs = LST_QUERY_RSP_LONG;
+        List<QueryDataResponse> lstRspMsgs = LST_QUERY_RSP_LONG;
         
         try {
-            for (QueryResponse msgRsp : lstRspMsgs)
+            for (QueryDataResponse msgRsp : lstRspMsgs)
                 CORRELATOR.addQueryResponse(msgRsp);
 
-        } catch (OperationNotSupportedException | CannotProceedException e) {
+        } catch (ExecutionException | CannotProceedException e) {
             Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
             
         }
@@ -214,8 +214,18 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testGetSampleCount() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_ONE;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_ONE;
         
+        // Check that raw data contains all sampling clocks
+        boolean bolAllClocks = lstRawData
+                .stream()
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .allMatch(msgBck -> msgBck.getDataTimestamps().hasSamplingClock());
+        
+        if (!bolAllClocks)
+            Assert.fail("Raw data does NOT contain all sampling clocks.");
+        
+        // Create test process
         SamplingProcess processTest = this.process(lstRawData);
         
         // Get the total number of samples from raw data sampling clocks 
@@ -223,7 +233,7 @@ public class SamplingProcessTest {
         int     cntSamplesRaw = lstRawData
                     .stream()
                     .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
-                    .mapToInt(msgBucket -> msgBucket.getSamplingInterval().getNumSamples())
+                    .mapToInt(msgBucket -> msgBucket.getDataTimestamps().getSamplingClock().getCount())
                     .sum();
      
         // Compare the sample counts
@@ -237,8 +247,18 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testGetTimeDomain() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_ONE;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_ONE;
         
+        // Check that raw data contains all sampling clocks
+        boolean bolAllClocks = lstRawData
+                .stream()
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .allMatch(msgBck -> msgBck.getDataTimestamps().hasSamplingClock());
+        
+        if (!bolAllClocks)
+            Assert.fail("Raw data does NOT contain all sampling clocks.");
+        
+        // Create test process
         SamplingProcess processTest = this.process(lstRawData);
 
         // Get the total number of samples from raw data sampling clocks 
@@ -246,7 +266,7 @@ public class SamplingProcessTest {
         int     cntSamplesRaw = lstRawData
                     .stream()
                     .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
-                    .mapToInt(msgBucket -> msgBucket.getSamplingInterval().getNumSamples())
+                    .mapToInt(msgBucket -> msgBucket.getDataTimestamps().getSamplingClock().getCount())
                     .sum();
         
         // Get the start time from the raw data sampling clocks
@@ -254,7 +274,7 @@ public class SamplingProcessTest {
                     .stream()
                     .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                     .<Instant>map(msgBucket -> ProtoMsg.toInstant(
-                                      msgBucket.getSamplingInterval().getStartTime()
+                                      msgBucket.getDataTimestamps().getSamplingClock().getStartTime()
                                       )
                                   )
                     .reduce( (t1,t2) -> (t1.isBefore(t2)) ? t1 : t2 )
@@ -266,7 +286,7 @@ public class SamplingProcessTest {
         long        longPeriodNs = lstRawData
                 .stream()
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
-                .<Long>map(msgBucket -> msgBucket.getSamplingInterval().getSampleIntervalNanos() )
+                .<Long>map(msgBucket -> msgBucket.getDataTimestamps().getSamplingClock().getPeriodNanos() )
                 .reduce( (T1,T2) -> (T1 < T2) ? T1 : T2 )
                 .get(); 
         
@@ -286,7 +306,7 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testGetDataSourceCount() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcess processTest = this.process(lstRawData);
 
@@ -313,7 +333,7 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testGetDataSourceNames() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcess processTest = this.process(lstRawData);
 
@@ -337,7 +357,7 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testGetSourceType() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcess processTest = this.process(lstRawData);
 
@@ -387,17 +407,24 @@ public class SamplingProcessTest {
      */
     @Test
     public final void testTimeSeries() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_ONE;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_ONE;
         
         SamplingProcess processTest = this.process(lstRawData);
 
-        
+        // Check for all sampling clocks
+        if ( !lstRawData
+                .stream()
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .allMatch(msgBck -> msgBck.getDataTimestamps().hasSamplingClock()) 
+                )
+            Assert.fail("Raw data did NOT contain all sampling clocks.");
+            
         // Get the sampling values from the raw data in a map {(start time, data column)}
         Map<Instant, DataColumn>    mapStartToCol = lstRawData
                 .stream()
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                 .collect(Collectors.toMap(
-                                msgBucket -> ProtoMsg.toInstant(msgBucket.getSamplingInterval().getStartTime()), 
+                                msgBucket -> ProtoMsg.toInstant(msgBucket.getDataTimestamps().getSamplingClock().getStartTime()), 
                                 DataBucket::getDataColumn
                                 )
                         );
@@ -436,7 +463,7 @@ public class SamplingProcessTest {
         // - get the query results set
         // - create sampling process
         // - create static data table
-        List<BucketData>    lstRawData = TestQueryResponses.queryData(enmQryType);
+        List<QueryData>    lstRawData = TestQueryResponses.queryData(enmQryType);
         SamplingProcess     processTest = process(lstRawData);
         IDataTable          tableTest = processTest.createStaticDataTable();
         
@@ -535,7 +562,7 @@ public class SamplingProcessTest {
      * 
      * @return  ordered list of sampling blocks processed from given raw data
      */ 
-    private SamplingProcess process(List<BucketData> lstRawData) {
+    private SamplingProcess process(List<QueryData> lstRawData) {
         SortedSet<CorrelatedQueryData>  setPrcdData = correlate(lstRawData);
         
         try {
@@ -563,7 +590,7 @@ public class SamplingProcessTest {
      * 
      * @return  a sorted set of <code>CorrelatedQueryData</code> objects 
      */
-    private SortedSet<CorrelatedQueryData>  correlate(List<BucketData> lstRawData) {
+    private SortedSet<CorrelatedQueryData>  correlate(List<QueryData> lstRawData) {
 
         CORRELATOR.reset();
         lstRawData.forEach(msgData -> CORRELATOR.addQueryData(msgData));

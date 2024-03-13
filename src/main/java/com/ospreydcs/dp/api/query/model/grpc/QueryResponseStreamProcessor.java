@@ -35,16 +35,12 @@ import com.ospreydcs.dp.api.common.ResultRecord;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.common.RejectDetails;
-import com.ospreydcs.dp.grpc.v1.common.RejectDetails.RejectReason;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorOperation;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryStatus;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryStatus.QueryStatusType;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 import io.grpc.stub.CallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -164,7 +160,7 @@ import io.grpc.stub.StreamObserver;
  * @since Feb 6, 2024
  *
  */
-public abstract class QueryResponseStreamProcessor implements Runnable, Callable<Boolean>, StreamObserver<QueryResponse> {
+public abstract class QueryResponseStreamProcessor implements Runnable, Callable<Boolean>, StreamObserver<QueryDataResponse> {
 
 
     //
@@ -172,13 +168,13 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
     //
     
     /** The query request being processed */
-    protected final QueryRequest              msgRequest;
+    protected final QueryDataRequest          msgRequest;
     
     /** The asynchronous (streaming) Protobuf communication stub to Query Service */
     protected final DpQueryServiceStub        stubAsync;
     
     /** The query data consumer receiving all incoming Query Service data */
-    protected final Consumer<BucketData>       ifcDataSink;
+    protected final Consumer<QueryData>       ifcDataSink;
     
     
     //
@@ -243,11 +239,11 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
     public static QueryResponseStreamProcessor  newTask(
             DpDataRequest dpRequest,
             DpQueryServiceStub  stubAsync,
-            Consumer<QueryResponse.QueryReport.BucketData> ifcDataSink) 
+            Consumer<QueryDataResponse.QueryData> ifcDataSink) 
     {
         // Extract the preferred stream type and the Protobuf query result message
         DpQueryStreamType   enmType = dpRequest.getStreamType();
-        QueryRequest        msgRqst = dpRequest.buildQueryRequest();
+        QueryDataRequest    msgRqst = dpRequest.buildQueryRequest();
         
         return switch (enmType) {
         case UNIDIRECTIONAL -> QueryResponseUniStreamProcessor.newUniTask(msgRqst, stubAsync, ifcDataSink);
@@ -294,9 +290,9 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      */
     public static QueryResponseStreamProcessor  newTask(
             DpQueryStreamType   enmStreamType,
-            QueryRequest        msgRequest,
+            QueryDataRequest    msgRequest,
             DpQueryServiceStub  stubAsync,
-            Consumer<QueryResponse.QueryReport.BucketData> ifcDataSink) 
+            Consumer<QueryDataResponse.QueryData> ifcDataSink) 
     {
         // Choose stream process implementation based upon requested stream type
         return switch (enmStreamType) {
@@ -320,7 +316,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    protected QueryResponseStreamProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<BucketData> ifcDataSink) {
+    protected QueryResponseStreamProcessor(QueryDataRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<QueryData> ifcDataSink) {
         this.msgRequest = msgRequest;
         this.stubAsync = stubAsync;
         this.ifcDataSink = ifcDataSink;
@@ -520,7 +516,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * 
      * @throws Exception    general exception thrown by base class to indicate error
      */
-    abstract protected void  requestProcessed(QueryResponse msgRsp) throws Exception;
+    abstract protected void  requestProcessed(QueryDataResponse msgRsp) throws Exception;
     
     
     //
@@ -551,7 +547,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
     
     
     //
-    // StreamObserver<QueryResponse> Interface
+    // StreamObserver<QueryDataResponse> Interface
     //
     
     /**
@@ -585,7 +581,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * @see io.grpc.stub.StreamObserver#onNext(java.lang.Object)
      */
     @Override
-    public void onNext(QueryResponse msgRsp) {
+    public void onNext(QueryDataResponse msgRsp) {
 
         // Process the first response
         if (!this.bolStreamStarted) {
@@ -733,11 +729,11 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * This method should be called only once, with the argument being the first response
      * from the Query Service after stream initiation.  If the original data query
      * request was invalid or corrupt the Query Service streams back a single 
-     * <code>QueryResponse</code> message containing a <code>RejectDetails</code> message
+     * <code>QueryResponse</code> message containing a <code>ExceptionalResult</code> message
      * describing the rejection.
      * </p> 
      * <p>
-     * The method Checks for a <code>RejectDatails</code> message within the query response 
+     * The method Checks for a <code>ExceptionalResult</code> message within the query response 
      * argument.  If present then the original data request was rejected by the Query Service.
      * The details of the rejection are then extracted from the argument and returned in
      * a FAILED result record.  Otherwise (i.e., the request was accepted) the method 
@@ -749,13 +745,13 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * @return  the SUCCESS record if query was accepted, 
      *          otherwise a failure message containing a description of the rejection 
      */
-    protected ResultRecord isRequestAccepted(QueryResponse msgRsp) {
+    protected ResultRecord isRequestAccepted(QueryDataResponse msgRsp) {
         
         // Check for RequestRejected message
-        if (msgRsp.hasQueryReject()) {
-            RejectDetails   msgReject = msgRsp.getQueryReject();
-            String          strCause = msgReject.getMessage();
-            RejectReason    enmCause = msgReject.getRejectReason();
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult           msgException = msgRsp.getExceptionalResult();
+            String                      strCause = msgException.getMessage();
+            ExceptionalResult.ExceptionalResultStatus     enmCause = msgException.getExceptionalResultStatus();
             
             String       strMsg = "The data request was rejected by Query Service: cause=" + enmCause + ", message=" + strCause;
             ResultRecord result = ResultRecord.newFailure(strMsg);
@@ -772,13 +768,13 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * Processes the data within the given Query Service response message.
      * </p>
      * <p>
-     * For normal operation <code>BucketData</code> message is extracted from the argument 
+     * For normal operation, a <code>QueryData</code> message is extracted from the argument 
      * then passed to the data consumer identified in construction.  A SUCCESS result
      * record is then returned indicating successful consumption of response data.
      * </p>
      * <p>
-     * If the argument contains an status error (i.e., rather than data) then the method
-     * extracts the status error and accompanying message.  An error message is constructed
+     * If the argument contains an exception(i.e., rather than data) then the method
+     * extracts the status and accompanying message.  An error message is constructed
      * and returned via a FAILED result record.
      * </p>
      * 
@@ -787,24 +783,31 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * @return  the SUCCESS record if data was extracted and consumed,
      *          otherwise a failure message containing the status error description 
      */
-    protected ResultRecord processResponse(QueryResponse msgRsp) {
+    protected ResultRecord processResponse(QueryDataResponse msgRsp) {
         
-        // Extract the query report message
-        QueryReport     msgReport = msgRsp.getQueryReport();
+//        // Extract the query report message
+//        QueryResult     msgReport = msgRsp.getQueryResult();
+//        
+//        // Extract the query data if present, then process
+//        if (msgReport.hasQueryData()) {
+//            QueryData   msgData = msgReport.getQueryData();
+//            
+//            this.ifcDataSink.accept(msgData);
+//            
+//            return ResultRecord.SUCCESS;
+//        }
         
-        // Extract the query data if present, then process
-        if (msgReport.hasBucketData()) {
-            BucketData   msgData = msgReport.getBucketData();
+        if (msgRsp.hasQueryData()) {
+            QueryData   msgData = msgRsp.getQueryData();
             
             this.ifcDataSink.accept(msgData);
             
             return ResultRecord.SUCCESS;
         }
-        
         // Response Error - extract the details and return them
-        QueryStatus msgStatus = msgReport.getQueryStatus();
-        String          strStatus = msgStatus.getStatusMessage();
-        QueryStatusType enmStatus = msgStatus.getQueryStatusType();
+        ExceptionalResult   msgException = msgRsp.getExceptionalResult();
+        String              strStatus = msgException.getMessage();
+        ExceptionalResult.ExceptionalResultStatus enmStatus = msgException.getExceptionalResultStatus();
         
         String          strMsg = "Query Service reported response error: status=" + enmStatus + ", message= " + strStatus;
         ResultRecord    recErr = ResultRecord.newFailure(strMsg);
@@ -870,9 +873,9 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
      * @see #isSuccess()
      */
     public static QueryResponseUniStreamProcessor  newUniTask(
-            QueryRequest msgRequest, 
+            QueryDataRequest msgRequest, 
             DpQueryServiceStub stubAsync, 
-            Consumer<BucketData> ifcDataSink) {
+            Consumer<QueryData> ifcDataSink) {
         return new QueryResponseUniStreamProcessor(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -882,14 +885,15 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseUniStreamProcessor</code> ready for processing.
+     * Constructs a new instance of <code>QueryResponseUniStreamProcessor</code> ready for processing
+     * unidirectional Query Service data stream.
      * </p>
      *
      * @param msgRequest    the Query Service request to process
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    public QueryResponseUniStreamProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<BucketData> ifcDataSink) {
+    public QueryResponseUniStreamProcessor(QueryDataRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<QueryData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -923,7 +927,7 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
     public void run() {
         
         // Invoke the gRPC data request creating and initiating the gRPC data stream
-        super.stubAsync.queryResponseStream(super.msgRequest, this);
+        super.stubAsync.queryDataStream(super.msgRequest, this);
         
         // Block until the streaming operation is complete
         super.awaitCompletion();
@@ -942,7 +946,7 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
      * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
-    protected void requestProcessed(QueryResponse msgRsp) {
+    protected void requestProcessed(QueryDataResponse msgRsp) {
     }
 }
 
@@ -989,7 +993,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
     //
     
     /** the handle to the forward gRPC stream (to Query Service) */
-    private CallStreamObserver<QueryRequest>   hndQueryService = null;
+    private CallStreamObserver<QueryDataRequest>   hndQueryService = null;
     
     
     //
@@ -998,7 +1002,8 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>QueryResponseStreamBidiProcessorDeprecated</code> ready for processing.
+     * Creates and returns a new instance of <code>QueryResponseBidiStreamProcessor</code> ready for processing
+     * a bidirectional Query Service data stream.
      * </p>
      * <p>
      * The returned instance is ready for independent thread execution via the 
@@ -1015,8 +1020,9 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * 
      * @see #isSuccess()
      */
-    public static QueryResponseBidiStreamProcessor  newBidiTask(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
-            Consumer<BucketData> ifcDataSink) {
+    public static QueryResponseBidiStreamProcessor  newBidiTask(QueryDataRequest msgRequest, 
+            DpQueryServiceStub stubAsync,
+            Consumer<QueryData> ifcDataSink) {
         return new QueryResponseBidiStreamProcessor(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -1027,15 +1033,17 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseStreamBidiProcessorDeprecated</code> ready for processing.
+     * Constructs a new instance of <code>QueryResponseBidiStreamProcessor</code> ready for processing
+     * a bidirectional Query Service data stream.
      * </p>
      *
      * @param msgRequest    the Query Service request to process
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    public QueryResponseBidiStreamProcessor(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
-            Consumer<BucketData> ifcDataSink) {
+    public QueryResponseBidiStreamProcessor(QueryDataRequest msgRequest, 
+            DpQueryServiceStub stubAsync,
+            Consumer<QueryData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }
 
@@ -1073,7 +1081,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
     public void run() {
         
         // Create the bidirectional gRPC data stream
-        this.hndQueryService = (CallStreamObserver<QueryRequest>)super.stubAsync.queryResponseCursor(this);
+        this.hndQueryService = (CallStreamObserver<QueryDataRequest>)super.stubAsync.queryDataBidiStream(this);
 
         // Initiate the data stream by sending the data request
         this.hndQueryService.onNext(super.msgRequest);
@@ -1100,14 +1108,22 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
-    protected void requestProcessed(QueryResponse msgRsp) throws Exception {
+    protected void requestProcessed(QueryDataResponse msgRsp) throws Exception {
         
         // Check that forward stream handle has been initialized
         if (this.hndQueryService == null) 
             throw new Exception(JavaRuntime.getQualifiedCallerNameSimple() + ": Serious streaming error - forward stream handle is null!");
         
         // Create the cursor operation query request message
-        QueryRequest    msgRqst = QueryRequest.newBuilder().setCursorOp(CursorOperation.CURSOR_OP_NEXT).build();
+        CursorOperation     msgCursor = CursorOperation
+                .newBuilder()
+                .setCursorOperationType(CursorOperation.CursorOperationType.CURSOR_OP_NEXT)
+                .build();
+        
+        QueryDataRequest    msgRqst = QueryDataRequest
+                .newBuilder()
+                .setCursorOp(msgCursor)
+                .build();
         
         // Send cursor operation message to Query Service on forward stream
         this.hndQueryService.onNext(msgRqst);

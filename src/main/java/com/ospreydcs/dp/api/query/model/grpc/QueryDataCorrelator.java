@@ -33,13 +33,13 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import javax.naming.CannotProceedException;
-import javax.naming.OperationNotSupportedException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,8 +50,9 @@ import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
-import com.ospreydcs.dp.grpc.v1.common.RejectDetails;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
  * <p>
@@ -552,7 +553,7 @@ public class QueryDataCorrelator {
      * 
      * @param msgBucket Query Service Protobuf message containing a query result data unit
      */
-    public void    addBucketData(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
+    public void    addBucketData(QueryDataResponse.QueryData.DataBucket msgBucket) {
 
         // This operation must be atomic - potentially modifies the target set 
         synchronized (this.objLock) {
@@ -626,9 +627,10 @@ public class QueryDataCorrelator {
      *  
      * @param msgData   data message extracted from response data message
      * 
-     * @throws CompletionException  error in <code>DataBucket</code> insertion task execution (see cause)
+     * @throws IllegalArgumentException a <code>DataBucket</code> message did not contain a sampling clock
+     * @throws CompletionException      error in <code>DataBucket</code> insertion task execution (see cause)
      */
-    public void addQueryData(QueryResponse.QueryReport.BucketData msgData) throws CompletionException {
+    public void addQueryData(QueryDataResponse.QueryData msgData) throws IllegalArgumentException, CompletionException {
         
         // Check for empty data message
         if (msgData.getDataBucketsList().isEmpty()) {
@@ -653,7 +655,7 @@ public class QueryDataCorrelator {
 
             // If the target set is large - pivot to concurrent processing of message data
 //            Collection<QueryResponse.QueryReport.BucketData.DataBucket>  setFreeBuckets = this.attemptDataInsertConcurrent(msgData);
-            Collection<QueryResponse.QueryReport.BucketData.DataBucket>  setFreeBuckets = this.attemptDataInsertThreadPool(msgData);
+            Collection<QueryDataResponse.QueryData.DataBucket>  setFreeBuckets = this.attemptDataInsertThreadPool(msgData);
             SortedSet<CorrelatedQueryData>  setNewTargets = this.processDisjointTargets(setFreeBuckets);
             this.setPrcdData.addAll(setNewTargets);
 
@@ -661,48 +663,55 @@ public class QueryDataCorrelator {
             this.lngBytesProcessed += msgData.getSerializedSize();
         }
     }
+
+    //
+    // The following method is no longer applicable since QueryDataResponse no longer contains a 
+    // QueryStatus message in dp-grpc version 1.3
+    //
     
-    /**
-     * <p>
-     * Adds the data from the given <code>QueryReport</code> message into the correlated data set,
-     * performing response stream error checking.
-     * </p>
-     * <p>
-     * The method extracts the <code>BucketData</code> message from the argument then defers 
-     * processing to 
-     * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>.
-     * The argument is first checked for a rejected request by the Query Service and throws an
-     * exception if so.  The argument data is then extracted and passed to the 
-     * <code>addQueryData</code> method for data processing.
-     * </p>
-     * 
-     * @param msgReport the <code>QueryReport</code> message within a <code>QueryResponse</code>
-     * 
-     * @throws CompletionException      error in <code>DataBucket</code> insertion task execution (see cause)
-     * @throws CannotProceedException   the argument contained a query response error
-     * 
-     * @see #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
-     */
-    public void addQueryReport(QueryResponse.QueryReport msgReport) 
-            throws CompletionException, CannotProceedException {
-        
-        // Check for response errors
-        if (msgReport.hasQueryStatus()) {
-            QueryResponse.QueryReport.QueryStatus msgStatus = msgReport.getQueryStatus();
-            String strStatusMsg = msgStatus.getStatusMessage();
-            QueryResponse.QueryReport.QueryStatus.QueryStatusType enmStatus = msgStatus.getQueryStatusType();
-            
-            if (BOL_LOGGING) 
-                LOGGER.error("{}: Query Service response reported error with status={}, message={}", JavaRuntime.getCallerName(), enmStatus, strStatusMsg);
-            
-            throw new CannotProceedException("Query Service response reported error with status=" + enmStatus + " and message=" + strStatusMsg);
-        }
-        
-        // Insert the query response data
-        QueryResponse.QueryReport.BucketData msgData = msgReport.getBucketData();
-        
-        this.addQueryData(msgData);
-    }
+//    /**
+//     * <p>
+//     * Adds the data from the given <code>QueryReport</code> message into the correlated data set,
+//     * performing response stream error checking.
+//     * </p>
+//     * <p>
+//     * The method extracts the <code>BucketData</code> message from the argument then defers 
+//     * processing to 
+//     * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>.
+//     * The argument is first checked for a rejected request by the Query Service and throws an
+//     * exception if so.  The argument data is then extracted and passed to the 
+//     * <code>addQueryData</code> method for data processing.
+//     * </p>
+//     * 
+//     * @param msgReport the <code>QueryReport</code> message within a <code>QueryResponse</code>
+//     * 
+//     * @throws CannotProceedException   the argument contained a query response error
+//     * @throws IllegalArgumentException a <code>DataBucket</code> message did not contain a sampling clock
+//     * @throws CompletionException      error in <code>DataBucket</code> insertion task execution (see cause)
+//     * 
+//     * @see #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
+//     */
+//    public void addQueryReport(QueryDataResponse.QueryResult msgReport) 
+//            throws CannotProceedException, IllegalArgumentException, CompletionException {
+//        
+//        // Check for response errors
+//        if (msgReport.hasQueryStatus()) {
+//            QueryStatus                 msgStatus = msgReport.getQueryStatus();
+//            String                      strStatusMsg = msgStatus.getStatusMessage();
+//            QueryStatus.QueryStatusType enmStatus = msgStatus.getQueryStatusType();
+//            
+//            if (BOL_LOGGING) 
+//                LOGGER.error("{}: Query Service response reported error with status={}, message={}", JavaRuntime.getCallerName(), enmStatus, strStatusMsg);
+//            
+//            throw new CannotProceedException("Query Service response reported error with status=" + enmStatus + " and message=" + strStatusMsg);
+//        }
+//        
+//        // Insert the query response data
+//        QueryDataResponse.QueryData msgData = msgReport.getQueryData();
+//        
+//        this.addQueryData(msgData);
+//    }
+    
     /**
      * <p>
      * Adds all data from the given <code>QueryResponse</code> into the correlated data set,
@@ -719,30 +728,32 @@ public class QueryDataCorrelator {
      * 
      * @param msgRsp    the Query Service query response raw response message
      * 
-     * @throws CompletionException  error in <code>DataBucket</code> insertion task execution (see cause)
-     * @throws CannotProceedException           the argument contained a query response error
-     * @throws OperationNotSupportedException   the query request was rejected by the Query Service
+     * @throws ExecutionException       the query request was rejected by the Query Service
+     * @throws CannotProceedException   the argument contained a query response error
+     * @throws IllegalArgumentException a <code>DataBucket</code> message did not contain a sampling clock
+     * @throws CompletionException      error in <code>DataBucket</code> insertion task execution (see cause)        
      * 
      * @see #addQueryReport(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport)
      */
-    public void addQueryResponse(QueryResponse msgRsp) 
-            throws CompletionException, CannotProceedException, OperationNotSupportedException {
+    public void addQueryResponse(QueryDataResponse msgRsp) 
+            throws ExecutionException, CannotProceedException, IllegalArgumentException , CompletionException{
      
         // Check for rejected request
-        if (msgRsp.hasQueryReject()) {
-            RejectDetails msgReject = msgRsp.getQueryReject();
-            String strRejectMsg = msgReject.getMessage();
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult msgException = msgRsp.getExceptionalResult();
+            String strRejectMsg = msgException.getMessage();
+            ExceptionalResult.ExceptionalResultStatus   enmStatus = msgException.getExceptionalResultStatus();
             
             if (BOL_LOGGING) 
-                LOGGER.error("{}: Query Service reported request rejection with message {}", JavaRuntime.getCallerName(), strRejectMsg);
+                LOGGER.error("{}: Query Service reported request rejection with status {}, message {}", JavaRuntime.getCallerName(), strRejectMsg, enmStatus);
 
-            throw new OperationNotSupportedException("Query Service reported request rejection: " + strRejectMsg);
+            throw new ExecutionException("Query Service rejected request: status=" + enmStatus + ", message=" + strRejectMsg, null);
         }
         
         // Get the query report pass it for further processing
-        QueryResponse.QueryReport   msgReport = msgRsp.getQueryReport();
+        QueryDataResponse.QueryData   msgData = msgRsp.getQueryData();
 
-        this.addQueryReport(msgReport);
+        this.addQueryData(msgData);
     }
 
     
@@ -822,7 +833,7 @@ public class QueryDataCorrelator {
         for (CorrelatedQueryData cqdCurr : setProcData) {
 
             // Get the sample count for each set
-            final int cntSamples = cqdCurr.getSamplingMessage().getNumSamples();
+            final int cntSamples = cqdCurr.getSamplingMessage().getCount();
 
             // Filter all processed data columns with size unequal to sample count
             List<DataColumn>    lstBadCols = cqdCurr
@@ -935,9 +946,9 @@ public class QueryDataCorrelator {
      * 
      * @param msgData   Query Service data message to be processed into this collection
      */
-    private void processDataSerial(QueryResponse.QueryReport.BucketData msgData) {
+    private void processDataSerial(QueryDataResponse.QueryData msgData) {
 
-        for (QueryResponse.QueryReport.BucketData.DataBucket msgBucket : msgData.getDataBucketsList()) {
+        for (QueryDataResponse.QueryData.DataBucket msgBucket : msgData.getDataBucketsList()) {
             
             // Attempt to add the message data into the current set of sampling interval references
             boolean bolSuccess = this.setPrcdData
@@ -986,7 +997,7 @@ public class QueryDataCorrelator {
      * @Deprecated  Unstable for large target sets - seems to be Java internal TreeMap problem
      */
     @Deprecated(since="Feb 17, 2024")
-    private Collection<QueryResponse.QueryReport.BucketData.DataBucket>  attemptDataInsertConcurrent(QueryResponse.QueryReport.BucketData msgData) {
+    private Collection<QueryDataResponse.QueryData.DataBucket>  attemptDataInsertConcurrent(QueryDataResponse.QueryData msgData) {
         
         // Create the data insertion tasks
         Collection<BucketDataInsertTask> lstTasks = this.createInsertionTasks(msgData);
@@ -997,7 +1008,7 @@ public class QueryDataCorrelator {
             .forEach(t -> t.run());
         
         // Collect all data buckets messages that were not processed
-        Collection<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
+        Collection<QueryDataResponse.QueryData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
         
         return lstBuckets;
     }
@@ -1041,7 +1052,7 @@ public class QueryDataCorrelator {
      * 
      * @throws CompletionException  error in <code>DataBucket</code> insertion task execution (see cause)
      */
-    private Collection<QueryResponse.QueryReport.BucketData.DataBucket>  attemptDataInsertThreadPool(QueryResponse.QueryReport.BucketData msgData) 
+    private Collection<QueryDataResponse.QueryData.DataBucket>  attemptDataInsertThreadPool(QueryDataResponse.QueryData msgData) 
             throws CompletionException
     {
         
@@ -1070,7 +1081,7 @@ public class QueryDataCorrelator {
         }
 
         // Collect all data buckets messages that were not processed
-        Collection<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
+        Collection<QueryDataResponse.QueryData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
 
         return lstBuckets;
     }
@@ -1122,13 +1133,13 @@ public class QueryDataCorrelator {
      * 
      * @return  set of new target references associated with the given argument data
      */
-    private SortedSet<CorrelatedQueryData>  processDisjointTargets(Collection<QueryResponse.QueryReport.BucketData.DataBucket> setBuckets) {
+    private SortedSet<CorrelatedQueryData>  processDisjointTargets(Collection<QueryDataResponse.QueryData.DataBucket> setBuckets) {
         
         // The returned sampling interval reference - that is, the targets
         SortedSet<CorrelatedQueryData>  setRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
         
         // Treat each data bucket individually - high probability of modifying target set 
-        for (QueryResponse.QueryReport.BucketData.DataBucket msgBucket : setBuckets) {
+        for (QueryDataResponse.QueryData.DataBucket msgBucket : setBuckets) {
 
             // Attempt to insert bucket data into existing targets
             boolean bolSuccess = setRefs.stream().anyMatch(r -> r.insertBucketData(msgBucket));
@@ -1164,7 +1175,7 @@ public class QueryDataCorrelator {
      * 
      * @return  collection of data insertion tasks for current target set, one for each data bucket of the argument
      */
-    private Collection<BucketDataInsertTask> createInsertionTasks(QueryResponse.QueryReport.BucketData msgData) {
+    private Collection<BucketDataInsertTask> createInsertionTasks(QueryDataResponse.QueryData msgData) {
         
         List<BucketDataInsertTask> lstTasks = msgData
                 .getDataBucketsList()
@@ -1189,9 +1200,9 @@ public class QueryDataCorrelator {
      * 
      * @return  collection of task subjects where task execution failed
      */
-    private Collection<QueryResponse.QueryReport.BucketData.DataBucket>  extractFailedTaskBuckets(Collection<BucketDataInsertTask> setTasks) {
+    private Collection<QueryDataResponse.QueryData.DataBucket>  extractFailedTaskBuckets(Collection<BucketDataInsertTask> setTasks) {
         
-        List<QueryResponse.QueryReport.BucketData.DataBucket>  lstBuckets = setTasks
+        List<QueryDataResponse.QueryData.DataBucket>  lstBuckets = setTasks
                 .stream()
                 .filter(t -> !t.isSuccess())
                 .map(t -> t.getSubject())

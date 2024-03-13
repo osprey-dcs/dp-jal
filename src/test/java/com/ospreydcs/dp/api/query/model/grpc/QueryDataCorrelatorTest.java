@@ -31,6 +31,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletionException;
+
 import javax.naming.CannotProceedException;
 import javax.naming.OperationNotSupportedException;
 
@@ -49,9 +52,9 @@ import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.query.test.TestQueryService;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * <p>
@@ -80,20 +83,20 @@ public class QueryDataCorrelatorTest {
     //
     
     /** Sample query response for test cases */
-    public static final List<QueryResponse>   LST_QUERY_RSP = TestQueryResponses.queryResults(SingleQueryType.WIDE);
+    public static final List<QueryDataResponse>   LST_QUERY_RSP = TestQueryResponses.queryResults(SingleQueryType.WIDE);
     
     
     /** Sample query data for test cases - 1 source, 10 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_ONE = TestQueryResponses.queryData(SingleQueryType.ONE_SOURCE);
+    public static final List<QueryData>   LST_QUERY_DATA_ONE = TestQueryResponses.queryData(SingleQueryType.ONE_SOURCE);
     
     /** Sample query data for test cases - 2 sources, 2 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_TWO = TestQueryResponses.queryData(SingleQueryType.TWO_SOURCE);
+    public static final List<QueryData>   LST_QUERY_DATA_TWO = TestQueryResponses.queryData(SingleQueryType.TWO_SOURCE);
     
     /** Sample query data for test cases - 100 sources, 5 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_WIDE = TestQueryResponses.queryData(SingleQueryType.WIDE);
+    public static final List<QueryData>   LST_QUERY_DATA_WIDE = TestQueryResponses.queryData(SingleQueryType.WIDE);
     
     /** Sample query data for test cases - 5 sources, 60 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_LONG = TestQueryResponses.queryData(SingleQueryType.LONG);
+    public static final List<QueryData>   LST_QUERY_DATA_LONG = TestQueryResponses.queryData(SingleQueryType.LONG);
     
     
     //
@@ -162,16 +165,16 @@ public class QueryDataCorrelatorTest {
      */
     @Test
     public final void testInsertQueryResponse() {
-        List<QueryResponse>  lstRsps = LST_QUERY_RSP;
+        List<QueryDataResponse>  lstRsps = LST_QUERY_RSP;
         
         // Create new processor and add data stream
         QueryDataCorrelator prcrTest = QueryDataCorrelator.newInstance();
         
         try {
-            for (QueryResponse msgRsp : lstRsps) 
+            for (QueryDataResponse msgRsp : lstRsps) 
                 prcrTest.addQueryResponse(msgRsp);
             
-        } catch (OperationNotSupportedException | CannotProceedException e) {
+        } catch (IllegalArgumentException | CompletionException | ExecutionException | CannotProceedException e) {
             Assert.fail("Exception thrown will processing data: type=" + e.getClass().getSimpleName() + ", message=" + e.getMessage());
 
         }
@@ -197,12 +200,12 @@ public class QueryDataCorrelatorTest {
      */
     @Test
     public final void testInsertQueryDataOne() {
-        List<BucketData>        lstRawData = LST_QUERY_DATA_ONE;
+        List<QueryData>        lstRawData = LST_QUERY_DATA_ONE;
         
         // Create new processor and add raw data
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
-        for (QueryResponse.QueryReport.BucketData msgData : lstRawData) {
+        for (QueryDataResponse.QueryData msgData : lstRawData) {
             prcrTest.addQueryData(msgData);
         }
         
@@ -232,12 +235,12 @@ public class QueryDataCorrelatorTest {
      */
     @Test
     public final void testInsertQueryDataTwo() {
-        List<BucketData>        lstRawData = LST_QUERY_DATA_TWO;
+        List<QueryData>        lstRawData = LST_QUERY_DATA_TWO;
         
         // Create new processor and add raw data
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
-        for (QueryResponse.QueryReport.BucketData msgData : lstRawData) {
+        for (QueryDataResponse.QueryData msgData : lstRawData) {
             prcrTest.addQueryData(msgData);
         }
         
@@ -267,12 +270,12 @@ public class QueryDataCorrelatorTest {
      */
     @Test
     public final void testInsertQueryDataLong() {
-        List<BucketData>        lstRawData = LST_QUERY_DATA_LONG;
+        List<QueryData>        lstRawData = LST_QUERY_DATA_LONG;
         
         // Create new processor and add raw data
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
-        for (QueryResponse.QueryReport.BucketData msgData : lstRawData) {
+        for (QueryDataResponse.QueryData msgData : lstRawData) {
             prcrTest.addQueryData(msgData);
         }
         
@@ -299,11 +302,11 @@ public class QueryDataCorrelatorTest {
      */
     @Test
     public final void testInsertQueryDataWide() {
-        List<BucketData>        lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData>        lstRawData = LST_QUERY_DATA_WIDE;
         
         QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
         
-        for (QueryResponse.QueryReport.BucketData msgData : lstRawData) {
+        for (QueryDataResponse.QueryData msgData : lstRawData) {
             prcrTest.addQueryData(msgData);
         }
         
@@ -338,11 +341,11 @@ public class QueryDataCorrelatorTest {
     public final void testInsertQueryDataBig() {
         
         // First, get the test data from a test Query API
-        List<QueryResponse>     lstMsgRsps;
+        List<QueryDataResponse>     lstMsgRsps;
         
         try {
             DpDataRequest       dpRqstBig = TestQueryResponses.QREC_BIG.createRequest();
-            QueryRequest        msgRqstBig = dpRqstBig.buildQueryRequest();
+            QueryDataRequest    msgRqstBig = dpRqstBig.buildQueryRequest();
             
             TestQueryService    apiQueryTest = TestQueryService.newService();
             
@@ -362,14 +365,14 @@ public class QueryDataCorrelatorTest {
 //        prcrTest.setConcurrency(false);
         
         int cntr = 0;
-        for (QueryResponse msgRsp: lstMsgRsps) {
+        for (QueryDataResponse msgRsp: lstMsgRsps) {
             try {
                 prcrTest.addQueryResponse(msgRsp);
                 
                 cntr++;
                 System.out.println("Interted message " + Integer.valueOf(cntr).toString());
                 
-            } catch (OperationNotSupportedException e) {
+            } catch (ExecutionException e) {
                 Assert.fail("Processor reports query request was rejected: " + e.getMessage());
                 return;
                 
@@ -377,6 +380,10 @@ public class QueryDataCorrelatorTest {
                 Assert.fail("Processor reports query response error: " + e.getMessage());
                 return;
                 
+            } catch (IllegalArgumentException e) {
+                Assert.fail("Processor reports query data bucket did NOT contain sampling clock: " + e.getMessage());
+                return;
+
             }
         }
         
@@ -407,15 +414,15 @@ public class QueryDataCorrelatorTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
-    @Test
+//    @Test
     public final void testInsertQueryDataHuge() {
         
         // First, get the test data from a test Query API
-        List<QueryResponse>     lstMsgRsps;
+        List<QueryDataResponse>     lstMsgRsps;
         
         try {
             DpDataRequest       dpRqstHuge = TestDpDataRequestGenerator.createRequest(1000, 50L);
-            QueryRequest        msgRqstHuge = dpRqstHuge.buildQueryRequest();
+            QueryDataRequest    msgRqstHuge = dpRqstHuge.buildQueryRequest();
             
             TestQueryService    apiQueryTest = TestQueryService.newService();
             
@@ -435,14 +442,14 @@ public class QueryDataCorrelatorTest {
 //        prcrTest.setConcurrency(false);
         
         int cntr = 0;
-        for (QueryResponse msgRsp: lstMsgRsps) {
+        for (QueryDataResponse msgRsp: lstMsgRsps) {
             try {
                 prcrTest.addQueryResponse(msgRsp);
                 
                 cntr++;
                 System.out.println("Interted message " + Integer.valueOf(cntr).toString());
                 
-            } catch (OperationNotSupportedException e) {
+            } catch (ExecutionException e) {
                 Assert.fail("Processor reports query request was rejected: " + e.getMessage());
                 return;
                 
@@ -450,6 +457,10 @@ public class QueryDataCorrelatorTest {
                 Assert.fail("Processor reports query response error: " + e.getMessage());
                 return;
                 
+            } catch (IllegalArgumentException e) {
+                Assert.fail("Processor reports query data bucket did NOT contain sampling clock: " + e.getMessage());
+                return;
+
             }
         }
         

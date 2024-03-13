@@ -40,8 +40,8 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
@@ -378,7 +378,7 @@ public class TestQueryResponses {
      * 
      * @return  the <code>QueryRequest</code> message defining the Query Service data request
      */
-    public static QueryRequest  requestMessage(SingleQueryType enmType) {
+    public static QueryDataRequest  requestMessage(SingleQueryType enmType) {
         return enmType.getQueryRecord().createRequestMessage();
     }
     
@@ -438,13 +438,13 @@ public class TestQueryResponses {
      * @see #queryData(SingleQueryType)
      * @see SingleQueryType
      */
-    public static List<QueryResponse.QueryReport.BucketData.DataBucket> queryBuckets(SingleQueryType enmType) {
+    public static List<QueryDataResponse.QueryData.DataBucket> queryBuckets(SingleQueryType enmType) {
         
         // Recover results set and extract data
-        List<QueryResponse.QueryReport.BucketData>   lstData = TestQueryResponses.queryData(enmType);
+        List<QueryDataResponse.QueryData>   lstData = TestQueryResponses.queryData(enmType);
         
         // Extract all data buckets
-        List<QueryResponse.QueryReport.BucketData.DataBucket> lstBuckets = lstData
+        List<QueryDataResponse.QueryData.DataBucket> lstBuckets = lstData
                 .stream()
                 .flatMap(
                         msgData -> msgData.getDataBucketsList().stream()
@@ -474,15 +474,15 @@ public class TestQueryResponses {
      * @see #queryResults(SingleQueryType)
      * @see SingleQueryType
      */
-    public static List<QueryResponse.QueryReport.BucketData>    queryData(SingleQueryType enmType) {
+    public static List<QueryDataResponse.QueryData>    queryData(SingleQueryType enmType) {
         
         // Recover the results set
-        List<QueryResponse> lstRsps = TestQueryResponses.queryResults(enmType);
+        List<QueryDataResponse> lstRsps = TestQueryResponses.queryResults(enmType);
         
         // Extract the BucketData messages
-        List<QueryResponse.QueryReport.BucketData> lstData = lstRsps
+        List<QueryDataResponse.QueryData> lstData = lstRsps
                 .stream()
-                .map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                .map(msgRsp -> msgRsp.getQueryData())
                 .toList();
         
         return lstData;
@@ -514,7 +514,7 @@ public class TestQueryResponses {
      * 
      * @see SingleQueryType
      */
-    public static List<QueryResponse>   queryResults(SingleQueryType enmType) {
+    public static List<QueryDataResponse>   queryResults(SingleQueryType enmType) {
         TestQueryRecord rec = enmType.getQueryRecord();
         
         return TestQueryResponses.recoverQueryResults(rec);
@@ -553,7 +553,7 @@ public class TestQueryResponses {
      * 
      * @see CompositeQueryType
      */
-    public static List<QueryResponse>   queryResults(CompositeQueryType enmType, int index) throws IndexOutOfBoundsException {
+    public static List<QueryDataResponse>   queryResults(CompositeQueryType enmType, int index) throws IndexOutOfBoundsException {
         
         // Check index value
         if (index >= enmType.getQueryCount())
@@ -746,10 +746,10 @@ public class TestQueryResponses {
      * @return  the results set for the given managed query data record, 
      *          or the value <code>null</code> if any errors or exceptions occurred (see log)
      */
-    private static List<QueryResponse>  recoverQueryResults(TestQueryRecord rec) {
+    private static List<QueryDataResponse>  recoverQueryResults(TestQueryRecord rec) {
         
         try {
-            List<QueryResponse> lstRspMsgs = rec.recoverQueryResponses();
+            List<QueryDataResponse> lstRspMsgs = rec.recoverQueryResponses();
             
             if (lstRspMsgs == null)
                 LOGGER.error("{}: the {} recover query results operation returned null for record {}.", 

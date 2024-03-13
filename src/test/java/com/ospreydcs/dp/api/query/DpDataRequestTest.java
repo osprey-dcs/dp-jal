@@ -49,8 +49,8 @@ import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.query.DpDataRequest.CompositeType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.QuerySpec;
 
 
 /**
@@ -175,11 +175,11 @@ public class DpDataRequestTest {
     public final void testNewRequest() {
         DpDataRequest dpRqst = DpDataRequest.newRequest();
         
-        QueryRequest msgRqst = dpRqst.buildQueryRequest();
-        QuerySpec    msgQry = msgRqst.getQuerySpec();
+        QueryDataRequest msgRqst = dpRqst.buildQueryRequest();
+        QuerySpec        msgQry = msgRqst.getQuerySpec();
         
-        List<String>    lstSrcNames = msgQry.getColumnNamesList();
-        Instant         insStart = ProtoMsg.toInstant( msgQry.getStartTime() );
+        List<String>    lstSrcNames = msgQry.getPvNamesList();
+        Instant         insStart = ProtoMsg.toInstant( msgQry.getBeginTime() );
         Instant         insStop = ProtoMsg.toInstant( msgQry.getEndTime() );
         
         Assert.assertEquals(INS_ARC_START, insStart);
@@ -220,18 +220,18 @@ public class DpDataRequestTest {
         System.out.println("  " + lstSubRqsts);
         
         // Check composite query
-        QueryRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
-        List<String>    lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getColumnNamesList();
-        Timestamp       tmsStartOrg = msgRqstOrg.getQuerySpec().getStartTime();
-        Timestamp       tmsStopOrg = msgRqstOrg.getQuerySpec().getEndTime();
+        QueryDataRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
+        List<String>        lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getPvNamesList();
+        Timestamp           tmsStartOrg = msgRqstOrg.getQuerySpec().getBeginTime();
+        Timestamp           tmsStopOrg = msgRqstOrg.getQuerySpec().getEndTime();
         
         List<String>    lstSrcNmsCmp = new LinkedList<>();
         
         for (DpDataRequest rqst : lstSubRqsts) {
-            QueryRequest    msgSubRqst = rqst.buildQueryRequest();
+            QueryDataRequest    msgSubRqst = rqst.buildQueryRequest();
             
-            List<String>    lstSrcNmsSub = msgSubRqst.getQuerySpec().getColumnNamesList();
-            Timestamp       tmsStartSub = msgSubRqst.getQuerySpec().getStartTime();
+            List<String>    lstSrcNmsSub = msgSubRqst.getQuerySpec().getPvNamesList();
+            Timestamp       tmsStartSub = msgSubRqst.getQuerySpec().getBeginTime();
             Timestamp       tmsStopSub = msgSubRqst.getQuerySpec().getEndTime();
             
             boolean bolStart = ProtoTime.equals(tmsStartOrg, tmsStartSub);
@@ -262,20 +262,20 @@ public class DpDataRequestTest {
         System.out.println("  " + lstSubRqsts);
         
         // Check composite query
-        QueryRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
-        List<String>    lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getColumnNamesList();
-        Timestamp       tmsStartOrg = msgRqstOrg.getQuerySpec().getStartTime();
-        Timestamp       tmsStopOrg = msgRqstOrg.getQuerySpec().getEndTime();
+        QueryDataRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
+        List<String>        lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getPvNamesList();
+        Timestamp           tmsStartOrg = msgRqstOrg.getQuerySpec().getBeginTime();
+        Timestamp           tmsStopOrg = msgRqstOrg.getQuerySpec().getEndTime();
         
         Duration        durComposite = Duration.ZERO;
         Instant         insStartCmp = null;
         Instant         insStopCmp = null;
         
         for (DpDataRequest rqst : lstSubRqsts) {
-            QueryRequest    msgSubRqst = rqst.buildQueryRequest();
+            QueryDataRequest    msgSubRqst = rqst.buildQueryRequest();
             
-            List<String>    lstSrcNmsSub = msgSubRqst.getQuerySpec().getColumnNamesList();
-            Timestamp       tmsStartSub = msgSubRqst.getQuerySpec().getStartTime();
+            List<String>    lstSrcNmsSub = msgSubRqst.getQuerySpec().getPvNamesList();
+            Timestamp       tmsStartSub = msgSubRqst.getQuerySpec().getBeginTime();
             Timestamp       tmsStopSub = msgSubRqst.getQuerySpec().getEndTime();
          
             // Check data sources
@@ -320,10 +320,10 @@ public class DpDataRequestTest {
         System.out.println("  " + lstSubRqsts);
         
         // Too convoluted for a precise check - just check some necessary conditions
-        QueryRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
-        List<String>    lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getColumnNamesList();
-        Timestamp       tmsStartOrg = msgRqstOrg.getQuerySpec().getStartTime();
-        Timestamp       tmsStopOrg = msgRqstOrg.getQuerySpec().getEndTime();
+        QueryDataRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
+        List<String>        lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getPvNamesList();
+        Timestamp           tmsStartOrg = msgRqstOrg.getQuerySpec().getBeginTime();
+        Timestamp           tmsStopOrg = msgRqstOrg.getQuerySpec().getEndTime();
         
         Instant         insStartOrg = ProtoMsg.toInstant(tmsStartOrg);
         Instant         insStopOrg = ProtoMsg.toInstant(tmsStopOrg);
@@ -335,10 +335,10 @@ public class DpDataRequestTest {
         Instant         insStopCmp = null;
 
         for (DpDataRequest rqst : lstSubRqsts) {
-            QueryRequest    msgSubRqst = rqst.buildQueryRequest();
+            QueryDataRequest    msgSubRqst = rqst.buildQueryRequest();
             
-            List<String>    lstSrcNmsSub = msgSubRqst.getQuerySpec().getColumnNamesList();
-            Timestamp       tmsStartSub = msgSubRqst.getQuerySpec().getStartTime();
+            List<String>    lstSrcNmsSub = msgSubRqst.getQuerySpec().getPvNamesList();
+            Timestamp       tmsStartSub = msgSubRqst.getQuerySpec().getBeginTime();
             Timestamp       tmsStopSub = msgSubRqst.getQuerySpec().getEndTime();
          
             // Check sub-query data sources
@@ -423,7 +423,7 @@ public class DpDataRequestTest {
         this.rqstTest.rangeAfter(insNow);
         
         // Extract the target timestamp(s) and compare
-        Timestamp   tmsStart = this.rqstTest.buildQueryRequest().getQuerySpec().getStartTime();
+        Timestamp   tmsStart = this.rqstTest.buildQueryRequest().getQuerySpec().getBeginTime();
         
         boolean bolEquiv = ProtoTime.equivalence(tmsNow, tmsStart);
         
@@ -441,9 +441,9 @@ public class DpDataRequestTest {
         rqst.rangeBetween(INS_ARC_START, INS_ARC_STOP);
 
         // Extract the target timestamp(s) and compare
-        QueryRequest    msgRqst = this.rqstTest.buildQueryRequest();
+        QueryDataRequest    msgRqst = this.rqstTest.buildQueryRequest();
         
-        Timestamp   tmsStartMsg = msgRqst.getQuerySpec().getStartTime();
+        Timestamp   tmsStartMsg = msgRqst.getQuerySpec().getBeginTime();
         Timestamp   tmsStopMsg = msgRqst.getQuerySpec().getEndTime();
 
         Timestamp   tmsStartArc = ProtoMsg.from(INS_ARC_START);
@@ -468,9 +468,9 @@ public class DpDataRequestTest {
         rqst.rangeDuration(INS_ARC_START, LNG_ARC_DURATION, TM_ARC_DURATION);
 
         // Extract the target timestamp(s) and compare
-        QueryRequest    msgRqst = this.rqstTest.buildQueryRequest();
+        QueryDataRequest    msgRqst = this.rqstTest.buildQueryRequest();
         
-        Timestamp   tmsStartMsg = msgRqst.getQuerySpec().getStartTime();
+        Timestamp   tmsStartMsg = msgRqst.getQuerySpec().getBeginTime();
         Timestamp   tmsStopMsg = msgRqst.getQuerySpec().getEndTime();
 
         Timestamp   tmsStartArc = ProtoMsg.from(INS_ARC_START);
@@ -501,9 +501,9 @@ public class DpDataRequestTest {
         long        lngStartSecs = lngStopSecs - lngDurSecs;
         
         // Extract the target timestamp(s) and compare
-        QueryRequest    msgRqst = this.rqstTest.buildQueryRequest();
+        QueryDataRequest    msgRqst = this.rqstTest.buildQueryRequest();
         
-        Timestamp   tmsStart = msgRqst.getQuerySpec().getStartTime();
+        Timestamp   tmsStart = msgRqst.getQuerySpec().getBeginTime();
         Timestamp   tmsStop = msgRqst.getQuerySpec().getEndTime();
         
         Assert.assertEquals("rangeOffset() failed to set start timestamp correctly (seconds).", tmsStart.getEpochSeconds(), lngStartSecs);
@@ -524,7 +524,7 @@ public class DpDataRequestTest {
         this.rqstTest.selectSource(strSourceName);
         
         // Check equality
-        List<String>    lstSrcNms = this.rqstTest.buildQueryRequest().getQuerySpec().getColumnNamesList();
+        List<String>    lstSrcNms = this.rqstTest.buildQueryRequest().getQuerySpec().getPvNamesList();
         
         Assert.assertTrue("The request source name list does not have size 1.", lstSrcNms.size() == 1);
         Assert.assertEquals(strSourceName, lstSrcNms.get(0));
@@ -541,7 +541,7 @@ public class DpDataRequestTest {
         this.rqstTest.selectSources(LST_SOURCE_NAMES);
 
         // Check equality
-        List<String>    lstSrcNms = this.rqstTest.buildQueryRequest().getQuerySpec().getColumnNamesList();
+        List<String>    lstSrcNms = this.rqstTest.buildQueryRequest().getQuerySpec().getPvNamesList();
         
         Assert.assertEquals(LST_SOURCE_NAMES, lstSrcNms);
     }

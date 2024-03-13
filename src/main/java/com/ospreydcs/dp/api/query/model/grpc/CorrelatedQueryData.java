@@ -40,14 +40,15 @@ import com.ospreydcs.dp.api.common.ResultRecord;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
-import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
- * Class used for time correlation of Query Service data request results set raw data.
+ * Class used for time correlation of Query Service data requests using regular sampling (i.e., sampling clocks).
  * </p>
  * <p>
  * Class instances are used to correlate all time-series data within a data request response 
@@ -82,10 +83,19 @@ import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
  * It is provided for explicit comparison in Java container construction.
  * </p> 
  * <p>
- * <h2>WARNING</h2>
+ * <h2>WARNINGS:</h2>
+ * <ul>
+ * <li>
  * It is assumed that the Data Platform archive is consistent!  If correlated 
  * data was archived simultaneously with different sample clocks unpredictable 
  * behavior in reconstruction is possible.
+ * </li>
+ * <br/>
+ * <li>
+ * This class is only applicable to Query Service data responses whose timestamps are defined by a 
+ * sampling clock.  Irregular sampling described with timestamp lists is NOT processed with 
+ * <code>CorrelatedQueryData</code> instances. 
+ * </li>
  * </p> 
  *
  * @author Christopher K. Allen
@@ -154,10 +164,10 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     //
     
     /** The uniform sampling interval Protobuf message - the correlation subject */
-    private final FixedIntervalTimestampSpec    msgSmplClk; 
+    private final SamplingClock     msgSmplClk; 
     
     /** List of all data column Protobuf messages correlated within sampling interval - correlated objects */
-    private final List<DataColumn>              lstMsgCols = new LinkedList<>();
+    private final List<DataColumn>  lstMsgCols = new LinkedList<>();
     
     
     //
@@ -195,8 +205,11 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * @param msgBucket source of initialization data
      * 
      * @return  new <code>CorrelatedQueryData</code> instance initialized with data from the argument
+     * 
+     * @throws IllegalArgumentException     the <code>DataBucket</code> message did not contain a sampling clock
      */
-    public static CorrelatedQueryData   from(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
+    public static CorrelatedQueryData   from(QueryDataResponse.QueryData.DataBucket msgBucket) 
+            throws IllegalArgumentException {
         return new CorrelatedQueryData(msgBucket);
     }
     
@@ -211,19 +224,30 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * </p>
      *
      * @param msgBucket source of initializing data
+     * 
+     * @throws IllegalArgumentException     the <code>DataBucket</code> message did not contain a sampling clock
      */
-    public CorrelatedQueryData(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
-        Timestamp   msgTmsStart = msgBucket.getSamplingInterval().getStartTime();
+    public CorrelatedQueryData(QueryDataResponse.QueryData.DataBucket msgBucket) {
+        
+        // Check argument
+        if (!msgBucket.getDataTimestamps().hasSamplingClock())
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedCallerNameSimple() 
+                    + ": Argument does not contain a sampling clock.");
+        
+        // Extract sampling clock
+        this.msgSmplClk = msgBucket.getDataTimestamps().getSamplingClock();
+        
+//        Timestamp   msgTmsStart = msgBucket.getSamplingInterval().getStartTime();
+        Timestamp   msgTmsStart = this.msgSmplClk.getStartTime();
         DataColumn  msgDataCol = msgBucket.getDataColumn(); 
     
         this.insStart = ProtoMsg.toInstant(msgTmsStart);
-        this.msgSmplClk = msgBucket.getSamplingInterval();
         this.setSrcNms.add(msgDataCol.getName());
         this.lstMsgCols.add(msgDataCol);
         
         // Compute time domain
-        int     cntSamples = this.msgSmplClk.getNumSamples();
-        long    lngPeriodNs = this.msgSmplClk.getSampleIntervalNanos();
+        int     cntSamples = this.msgSmplClk.getCount();
+        long    lngPeriodNs = this.msgSmplClk.getPeriodNanos();
         Duration    durPeriod = Duration.ofNanos(lngPeriodNs);
         Duration    durDomain = durPeriod.multipliedBy(cntSamples - 1);
         Instant     insStop = this.insStart.plus(durDomain);
@@ -250,7 +274,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * @return  the size of each correlated data column within the correlated time-series collection
      */
     public final int    getSampleCount() {
-        return this.msgSmplClk.getNumSamples();
+        return this.msgSmplClk.getCount();
     }
     
     /**
@@ -281,7 +305,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * @return  the sampling period (in nanoseconds) of the associated sampling clock message.
      */
     public final long getSamplingPeriod() {
-        return this.msgSmplClk.getSampleIntervalNanos();
+        return this.msgSmplClk.getPeriodNanos();
     }
     
     /**
@@ -362,7 +386,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * 
      * @see #getAllDataMessages()
      */
-    public final FixedIntervalTimestampSpec getSamplingMessage() {
+    public final SamplingClock getSamplingMessage() {
         return this.msgSmplClk;
     }
 
@@ -485,7 +509,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     public ResultRecord verifySourceSizes() {
         
         // Each source should provide the same number of data samples
-        int cntSamples = this.msgSmplClk.getNumSamples();
+        int cntSamples = this.msgSmplClk.getCount();
         
         // Get list of all data columns with different size
         List<DataColumn> lstBadCols = this.lstMsgCols
@@ -563,10 +587,18 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * 
      * @return      <code>true</code> only if argument data was successfully added to this reference,
      *              <code>false</code> otherwise (nothing done)
+     *              
+     * @throws IllegalArgumentException     the <code>DataBucket</code> message did not contain a sampling clock
      */
-    public boolean insertBucketData(QueryResponse.QueryReport.BucketData.DataBucket msgBucket) {
-        FixedIntervalTimestampSpec msgClock = msgBucket.getSamplingInterval();
-        DataColumn                 msgCol = msgBucket.getDataColumn();
+    public boolean insertBucketData(QueryDataResponse.QueryData.DataBucket msgBucket) {
+        
+        // Check argument
+        if (!msgBucket.getDataTimestamps().hasSamplingClock())
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedCallerNameSimple() 
+                    + ": Argument does not contain a sampling clock.");
+            
+        SamplingClock   msgClock = msgBucket.getDataTimestamps().getSamplingClock();
+        DataColumn      msgCol = msgBucket.getDataColumn();
         
         // Check if list addition is possible 
         // - must have same sampling interval

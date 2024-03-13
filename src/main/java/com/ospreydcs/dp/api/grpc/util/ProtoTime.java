@@ -31,7 +31,8 @@ import java.time.Duration;
 import java.time.Instant;
 
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
+import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 
 /**
@@ -269,17 +270,17 @@ public final class ProtoTime {
      * @return  <code>true</code> if both messages describe the same sampling set,
      *          <code>false</code> otherwise 
      */
-    public static boolean equals(FixedIntervalTimestampSpec msg1, FixedIntervalTimestampSpec msg2) {
+    public static boolean equals(SamplingClock msg1, SamplingClock msg2) {
         
         // Foremost the sampling periods must be equal
-        long    lngPer1 = msg1.getSampleIntervalNanos();
-        long    lngPer2 = msg2.getSampleIntervalNanos();
+        long    lngPer1 = msg1.getPeriodNanos();
+        long    lngPer2 = msg2.getPeriodNanos();
         
         if (lngPer1 != lngPer2)
             return false;
         
         // They must have the same number of samples
-        if (msg1.getNumSamples() != msg2.getNumSamples())
+        if (msg1.getCount() != msg2.getCount())
             return false;
         
         // The must start at the same time instant
@@ -313,17 +314,17 @@ public final class ProtoTime {
      *          
      * @see #equivalence(Timestamp, Timestamp)
      */
-    public static boolean equivalence(FixedIntervalTimestampSpec msg1, FixedIntervalTimestampSpec msg2) {
+    public static boolean equivalence(SamplingClock msg1, SamplingClock msg2) {
         
         // Foremost the sampling periods must be equal
-        long    lngPer1 = msg1.getSampleIntervalNanos();
-        long    lngPer2 = msg2.getSampleIntervalNanos();
+        long    lngPer1 = msg1.getPeriodNanos();
+        long    lngPer2 = msg2.getPeriodNanos();
         
         if (lngPer1 != lngPer2)
             return false;
         
         // They must have the same number of samples
-        if (msg1.getNumSamples() != msg2.getNumSamples())
+        if (msg1.getCount() != msg2.getCount())
             return false;
         
         // The must start at the same time instant
@@ -345,7 +346,7 @@ public final class ProtoTime {
      * @return  <code>true</code> if sampling intervals have intersecting time domains
      *          <code>false</code> if the sampling intervals are disjoint
      */
-    public static boolean hasIntersection(FixedIntervalTimestampSpec msg1, FixedIntervalTimestampSpec msg2) {
+    public static boolean hasIntersection(SamplingClock msg1, SamplingClock msg2) {
         TimeInterval    ivl1 = ProtoTime.domain(msg1);
         TimeInterval    ivl2 = ProtoTime.domain(msg2);
         
@@ -361,9 +362,9 @@ public final class ProtoTime {
      * 
      * @return  the time domain of the given sampling interval
      */
-    public static TimeInterval domain(FixedIntervalTimestampSpec msgTms) {
+    public static TimeInterval domain(SamplingClock msgTms) {
         Instant     insStart = ProtoMsg.toInstant(msgTms.getStartTime());
-        Duration    dur = Duration.ofNanos(msgTms.getNumSamples() * msgTms.getSampleIntervalNanos());
+        Duration    dur = Duration.ofNanos(msgTms.getCount() * msgTms.getPeriodNanos());
         Instant     insStop = insStart.plus(dur);
         
         TimeInterval    ivl = TimeInterval.from(insStart, insStop);

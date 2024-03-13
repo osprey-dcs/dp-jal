@@ -27,14 +27,12 @@
  */
 package com.ospreydcs.dp.api.query.model;
 
-import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiConsumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,14 +40,15 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.common.RejectDetails;
-import com.ospreydcs.dp.grpc.v1.common.RejectDetails.RejectReason;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorOperation;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation.CursorOperationType;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.QuerySpec;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 import io.grpc.stub.CallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -126,7 +125,7 @@ import io.grpc.stub.StreamObserver;
  * @deprecated  Replaced by DpQueryStreamBuffer and DpQueryStreamQueueBufferDeprecated
  */
 @Deprecated(since="Jan 16, 2024", forRemoval=true)
-public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryResponse> /* Serializable */ {
+public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryDataResponse> /* Serializable */ {
 
     
     //
@@ -180,7 +179,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
     //
 
     /** The data page buffer, also used as a queue buffer - contains all the data responses from the Query Service */
-    private final LinkedList<QueryResponse.QueryReport.BucketData>   lstDataBuffer = new LinkedList<>();
+    private final LinkedList<QueryDataResponse.QueryData>   lstDataBuffer = new LinkedList<>();
 
 //    /** Contains all the data responses from the Query Service - indexed by data page */
 //    private final Map<Integer, QueryResponse.QueryReport.BucketData>   mapRspBuffer = new HashMap<>();
@@ -194,7 +193,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
     //
 
     /** Service stream handle of forward stream (to server) if bi-directional stream  - used to send cursor requests */
-    private CallStreamObserver<QueryRequest>        hndSvrStrm = null;
+    private CallStreamObserver<QueryDataRequest>        hndSvrStrm = null;
     
     /** The queue of data page indices acquired so far */
     private final LinkedList<Integer>               lstPgsAcquired = new LinkedList<Integer>();
@@ -390,7 +389,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * throws TimeoutException         timeout waiting for the <em>Query Service</em> response
      * throws InterruptedException     the process was interrupted while waiting for the <em>Query Service</em> 
      */
-    public void startUniStream(QueryRequest msgRqst) throws IllegalStateException, IllegalArgumentException /*, TimeoutException, InterruptedException */ {
+    public void startUniStream(QueryDataRequest msgRqst) throws IllegalStateException, IllegalArgumentException /*, TimeoutException, InterruptedException */ {
 
         synchronized (this.objLock) {
             
@@ -465,7 +464,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * throws TimeoutException         timeout waiting for the <em>Query Service</em> response
      * throws InterruptedException     the process was interrupted while waiting for the <em>Query Service</em> 
      */
-    public void startBidiStream(QueryRequest msgRqst) throws IllegalStateException , IllegalArgumentException /*, InterruptedException */ {
+    public void startBidiStream(QueryDataRequest msgRqst) throws IllegalStateException , IllegalArgumentException /*, InterruptedException */ {
         
         synchronized (this.objLock) {
 
@@ -1060,7 +1059,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * 
      * @return  the entire data page buffer in its current state   
      */
-    public final List<QueryResponse.QueryReport.BucketData>  getBuffer() {
+    public final List<QueryDataResponse.QueryData>  getBuffer() {
         return this.lstDataBuffer;
     }
     
@@ -1138,7 +1137,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * throws TimeoutException  the page monitor timed out while waiting for the data page to become available
      * @throws IndexOutOfBoundsException the given index is not in the index set of data pages
      */
-    public QueryResponse.QueryReport.BucketData getBufferPage(Integer indPage) throws /* InterruptedException, TimeoutException, */ IndexOutOfBoundsException {
+    public QueryDataResponse.QueryData getBufferPage(Integer indPage) throws /* InterruptedException, TimeoutException, */ IndexOutOfBoundsException {
         
         return this.lstDataBuffer.get(indPage);
         
@@ -1193,7 +1192,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * 
      * @throws InterruptedException if the current thread is interrupted
      */
-    public QueryResponse.QueryReport.BucketData removeQueuePage() throws InterruptedException {
+    public QueryDataResponse.QueryData removeQueuePage() throws InterruptedException {
         
         // Block (indefinitely) until a data page becomes available
         this.semPageRdy.acquire();
@@ -1225,7 +1224,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * @throws TimeoutException     no data page available within the timeout limit
      * @throws InterruptedException if the current thread is interrupted
      */
-    public QueryResponse.QueryReport.BucketData removeQueuePageTimeout() throws TimeoutException, InterruptedException {
+    public QueryDataResponse.QueryData removeQueuePageTimeout() throws TimeoutException, InterruptedException {
         
         // Block (with timeout) until a data page becomes available
         boolean bolResult = this.semPageRdy.tryAcquire(this.cntTimeout, this.tuTimeout);
@@ -1274,7 +1273,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * @see StreamObserver#onNext(Object)
      */
     @Override
-    public void onNext(QueryResponse msgRsp) {
+    public void onNext(QueryDataResponse msgRsp) {
 
         // Debugging
         if (isLogging()) {
@@ -1322,12 +1321,12 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
         //  - notify all stream observers
         //  - return (there is nothing else we can do)
 //        if (msgRsp.getResponseType() != ResponseType.DETAIL_RESPONSE) {
-        if (msgRsp.hasQueryReject()) {
+        if (msgRsp.hasExceptionalResult()) {
             
             // Get the details of the rejection and report them
-            RejectDetails   msgReject = msgRsp.getQueryReject();
-            RejectReason    enmCause = msgReject.getRejectReason();
-            String          strMsg = msgReject.getMessage();
+            ExceptionalResult       msgException = msgRsp.getExceptionalResult();
+            ExceptionalResultStatus enmCause = msgException.getExceptionalResultStatus();
+            String                  strMsg = msgException.getMessage();
             
             if (isLogging())
                 LOGGER.error("{}: Query Service rejected request - {}, {}", JavaRuntime.getQualifiedCallerName(), enmCause.name(), strMsg);
@@ -1342,7 +1341,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
             this.monStrmEnd.countDown();
             
             // Notify all observers
-            this.notifyRejected(msgReject);
+            this.notifyRejected(msgException);
             
             return;
         }
@@ -1350,7 +1349,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
         // Normal operation - Save the returned data page and request next page if bidirectional
         //  - the data is stored in the data buffer
         //  - all callback functions are notified that the page is available
-        this.storePage(msgRsp.getQueryReport().getBucketData());
+        this.storePage(msgRsp.getQueryData());
 
         // Request next page 
         //  This is active only for bidirectional streams
@@ -1469,7 +1468,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * @throws IllegalArgumentException gRPC message does not contain a <code>QuerySpec</code> message
      */
 //    @Deprecated(since="Jan 8, 2024", forRemoval=true)
-    private void requestDataStream(QueryRequest msgRqst) throws IllegalArgumentException {
+    private void requestDataStream(QueryDataRequest msgRqst) throws IllegalArgumentException {
 
         // Check argument for required data request
         if (!msgRqst.hasQuerySpec()) {
@@ -1489,7 +1488,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
         if (this.bolStreamBidi) {
             
             // Get the forward stream handle
-            this.hndSvrStrm = (CallStreamObserver<QueryRequest>) this.stubAsync.queryResponseCursor(this);
+            this.hndSvrStrm = (CallStreamObserver<QueryDataRequest>) this.stubAsync.queryDataBidiStream(this);
 
             // Send the first data request initiating the stream
             this.hndSvrStrm.onNext(msgRqst);
@@ -1498,7 +1497,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
         } else {
             
             // Send the data 
-            this.stubAsync.queryResponseStream(msgRqst, this);
+            this.stubAsync.queryDataStream(msgRqst, this);
         }
         
         // Set the active request flag and return
@@ -1510,7 +1509,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * 
      * @param msgRspData    gRPC response message containing data (the data page)
      */
-    private void storePage(QueryResponse.QueryReport.BucketData msgRspData) {
+    private void storePage(QueryDataResponse.QueryData msgRspData) {
 
 //        this.indLastPage = this.indLastPage + 1;
 //        
@@ -1559,7 +1558,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
         this.lstPgsRequested.add(this.indNextPage);
 
         // Create the next page cursor request and send it
-        QueryRequest msgPgRqst = DpQueryStreamQueueBufferDeprecated.createPageRequest();
+        QueryDataRequest msgPgRqst = DpQueryStreamQueueBufferDeprecated.createPageRequest();
 
         this.hndSvrStrm.onNext(msgPgRqst);
     }
@@ -1585,7 +1584,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      *  
      * @param msgReject request rejection details provided by the Query Service
      */
-    private void notifyRejected(RejectDetails msgReject) {
+    private void notifyRejected(ExceptionalResult msgReject) {
         this.lstStreamObservers.forEach( o -> o.notifyRequestRejected(msgReject));
     }
     
@@ -1606,7 +1605,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * @param indPage       page index within stream buffer
      * @param msgRspData    gRPC message containing page of requested data
      */
-    private void notifyPageReady(Integer indPage, QueryResponse.QueryReport.BucketData msgRspData) {
+    private void notifyPageReady(Integer indPage, QueryDataResponse.QueryData msgRspData) {
         this.lstStreamObservers.forEach( o -> o.notifyDataPageReady(indPage, msgRspData));
     }
     
@@ -1640,14 +1639,19 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryR
      * 
      * @return  a <code>QueryRequest</code> encapsulating the next data page request 
      */
-    private static QueryRequest createPageRequest() {
-        QueryRequest.Builder bldr = QueryRequest.newBuilder();
+    private static QueryDataRequest createPageRequest() {
+        CursorOperation     msgCursor = CursorOperation
+                .newBuilder()
+                .setCursorOperationType(CursorOperationType.CURSOR_OP_NEXT)
+                .build();
+
+        QueryDataRequest.Builder bldr = QueryDataRequest.newBuilder();
         
-        bldr.setCursorOp(CursorOperation.CURSOR_OP_NEXT);
+        bldr.setCursorOp(msgCursor);
         
-        QueryRequest    rqstPage = bldr.build();
+        QueryDataRequest    msgRequest = bldr.build();
         
-        return rqstPage;
+        return msgRequest;
     }
     
     /**

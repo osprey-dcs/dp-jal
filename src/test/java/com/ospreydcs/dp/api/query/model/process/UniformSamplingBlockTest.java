@@ -57,10 +57,10 @@ import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
-import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
  * JUnit test cases for <code>{@link UniformSamplingBlock}</code> class.
@@ -80,16 +80,16 @@ public class UniformSamplingBlockTest {
     public static final DataBucket          BUCKET = TestQueryResponses.queryBuckets(SingleQueryType.BUCKET).get(0);
     
     /** Sample query data for test cases - 1 source, 10 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_ONE = TestQueryResponses.queryData(SingleQueryType.ONE_SOURCE);
+    public static final List<QueryData>   LST_QUERY_DATA_ONE = TestQueryResponses.queryData(SingleQueryType.ONE_SOURCE);
     
     /** Sample query data for test cases - 2 sources, 2 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_TWO = TestQueryResponses.queryData(SingleQueryType.TWO_SOURCE);
+    public static final List<QueryData>   LST_QUERY_DATA_TWO = TestQueryResponses.queryData(SingleQueryType.TWO_SOURCE);
     
     /** Sample query data for test cases - 100 sources, 5 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_WIDE = TestQueryResponses.queryData(SingleQueryType.WIDE);
+    public static final List<QueryData>   LST_QUERY_DATA_WIDE = TestQueryResponses.queryData(SingleQueryType.WIDE);
     
     /** Sample query data for test cases - 5 sources, 60 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_LONG = TestQueryResponses.queryData(SingleQueryType.LONG);
+    public static final List<QueryData>   LST_QUERY_DATA_LONG = TestQueryResponses.queryData(SingleQueryType.LONG);
     
     
     //
@@ -146,7 +146,7 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testFrom() {
-        List<BucketData>    lstRawMsgData = LST_QUERY_DATA_WIDE;
+        List<QueryData>    lstRawMsgData = LST_QUERY_DATA_WIDE;
 
         CorrelatedQueryData     cqdFirst = this.correlate(lstRawMsgData).first();
         
@@ -195,8 +195,13 @@ public class UniformSamplingBlockTest {
             
         }
         
+        // Check that raw data contains all sampling clocks
+        if (!msgBucket.getDataTimestamps().hasSamplingClock())
+            Assert.fail("Raw data does NOT contain a sampling clock.");
+        
+        
         // Extract sample count from data bucket clock and compare
-        int     cntSamples = msgBucket.getSamplingInterval().getNumSamples();
+        int     cntSamples = msgBucket.getDataTimestamps().getSamplingClock().getCount();
         int     szSeries = blkTest.getSampleCount();    // method under test
         
         Assert.assertEquals(cntSamples, szSeries);
@@ -207,7 +212,7 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testGetDataSourceCount() {
-        List<BucketData>    lstRawMsgData = LST_QUERY_DATA_WIDE;
+        List<QueryData>    lstRawMsgData = LST_QUERY_DATA_WIDE;
         
         // Create processed sampling blocks
         List<UniformSamplingBlock>     lstBlocksTest;
@@ -244,7 +249,7 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testGetStartInstant() {
-        List<BucketData>    lstRawMsgData = LST_QUERY_DATA_LONG;
+        List<QueryData>    lstRawMsgData = LST_QUERY_DATA_LONG;
         
         // Create processed sampling blocks
         List<UniformSamplingBlock>     lstBlocksTest;
@@ -257,11 +262,20 @@ public class UniformSamplingBlockTest {
             return;
         }
         
+        // Check that raw data contains all sampling clocks
+        boolean bolAllClocks = lstRawMsgData
+                .stream()
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .allMatch(msgBck -> msgBck.getDataTimestamps().hasSamplingClock());
+        
+        if (!bolAllClocks)
+            Assert.fail("Raw data does NOT contain all sampling clocks.");
+        
         // Extract and order all the unique sampling clock start times within raw data
         SortedSet<Instant>   setStartTimes = lstRawMsgData
                 .stream()
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
-                .<Timestamp>map(msgBucket -> msgBucket.getSamplingInterval().getStartTime())
+                .<Timestamp>map(msgBucket -> msgBucket.getDataTimestamps().getSamplingClock().getStartTime())
                 .<Instant>map(ProtoMsg::toInstant)
                 .collect(TreeSet<Instant>::new, TreeSet<Instant>::add, TreeSet<Instant>::addAll);
            
@@ -284,7 +298,16 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testGetTimeDomain() {
-        List<BucketData>    lstRawMsgData = LST_QUERY_DATA_LONG;
+        List<QueryData>    lstRawMsgData = LST_QUERY_DATA_LONG;
+        
+        // Check that raw data contains all sampling clocks
+        boolean bolAllClocks = lstRawMsgData
+                .stream()
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .allMatch(msgBck -> msgBck.getDataTimestamps().hasSamplingClock());
+        
+        if (!bolAllClocks)
+            Assert.fail("Raw data does NOT contain all sampling clocks.");
         
         // Create processed sampling blocks
         List<UniformSamplingBlock>     lstBlocksTest;
@@ -298,17 +321,17 @@ public class UniformSamplingBlockTest {
         }
         
         // Extract all the sampling clock messages within raw data
-        List<FixedIntervalTimestampSpec>   lstMsgClocks = lstRawMsgData
+        List<SamplingClock>   lstMsgClocks = lstRawMsgData
                 .stream()
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
-                .<FixedIntervalTimestampSpec>map(DataBucket::getSamplingInterval)
+                .<SamplingClock>map(msgBck -> msgBck.getDataTimestamps().getSamplingClock())
                 .toList();
            
         // Order all the unique sampling clocks within raw data into a sorted set
-        Comparator<FixedIntervalTimestampSpec>  cmpMsgClock = (clk1, clk2) -> {
+        Comparator<SamplingClock>  cmpMsgClock = (clk1, clk2) -> {
             return ProtoTime.compare(clk1.getStartTime(), clk2.getStartTime());
         };
-        SortedSet<FixedIntervalTimestampSpec>   setMsgClocks = new TreeSet<>(cmpMsgClock);
+        SortedSet<SamplingClock>   setMsgClocks = new TreeSet<>(cmpMsgClock);
         setMsgClocks.addAll(lstMsgClocks);
         
         Assert.assertEquals("Incorrect number of unique sampling clocks from raw data.", lstBlocksTest.size(), setMsgClocks.size());
@@ -317,8 +340,8 @@ public class UniformSamplingBlockTest {
         List<TimeInterval>      lstTimeDomains = setMsgClocks
                 .stream()
                 .<TimeInterval>map(msgClock -> {
-                                    int     cntSamples = msgClock.getNumSamples();
-                                    long    lngPeriodNs = msgClock.getSampleIntervalNanos();
+                                    int     cntSamples = msgClock.getCount();
+                                    long    lngPeriodNs = msgClock.getPeriodNanos();
                                     long    lngDurationNs = (cntSamples - 1) * lngPeriodNs;
                                     Instant insBegin = ProtoMsg.toInstant(msgClock.getStartTime());
                                     Instant insEnd = insBegin.plusNanos(lngDurationNs);
@@ -345,10 +368,19 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testGetTimestamps() {
-        List<BucketData>    lstRawMsgData = LST_QUERY_DATA_LONG;
+        List<QueryData>    lstRawMsgData = LST_QUERY_DATA_LONG;
         
         // Create processed sampling blocks
         List<UniformSamplingBlock>     lstBlocksTest;
+        
+        // Check that raw data contains all sampling clocks
+        boolean bolAllClocks = lstRawMsgData
+                .stream()
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .allMatch(msgBck -> msgBck.getDataTimestamps().hasSamplingClock());
+        
+        if (!bolAllClocks)
+            Assert.fail("Raw data does NOT contain all sampling clocks.");
         
         try {
             lstBlocksTest = this.process(lstRawMsgData);
@@ -359,17 +391,17 @@ public class UniformSamplingBlockTest {
         }
         
         // Extract all the sampling clock messages within raw data
-        List<FixedIntervalTimestampSpec>   lstMsgClocks = lstRawMsgData
+        List<SamplingClock>   lstMsgClocks = lstRawMsgData
                 .stream()
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
-                .<FixedIntervalTimestampSpec>map(DataBucket::getSamplingInterval)
+                .<SamplingClock>map(msgBck -> msgBck.getDataTimestamps().getSamplingClock())
                 .toList();
            
         // Order all the unique sampling clocks within raw data into a sorted set
-        Comparator<FixedIntervalTimestampSpec>  cmpMsgClock = (clk1, clk2) -> {
+        Comparator<SamplingClock>  cmpMsgClock = (clk1, clk2) -> {
             return ProtoTime.compare(clk1.getStartTime(), clk2.getStartTime());
         };
-        SortedSet<FixedIntervalTimestampSpec>   setMsgClocks = new TreeSet<>(cmpMsgClock);
+        SortedSet<SamplingClock>   setMsgClocks = new TreeSet<>(cmpMsgClock);
         setMsgClocks.addAll(lstMsgClocks);
         
         Assert.assertEquals("Incorrect number of unique sampling clocks from raw data.", lstBlocksTest.size(), setMsgClocks.size());
@@ -378,8 +410,8 @@ public class UniformSamplingBlockTest {
         List<List<Instant>>      lstClockTms = setMsgClocks
                 .stream()
                 .<List<Instant>>map(msgClock -> {
-                                    int     cntSamples = msgClock.getNumSamples();
-                                    long    lngPeriodNs = msgClock.getSampleIntervalNanos();
+                                    int     cntSamples = msgClock.getCount();
+                                    long    lngPeriodNs = msgClock.getPeriodNanos();
                                     Instant insBegin = ProtoMsg.toInstant(msgClock.getStartTime());
                                     List<Instant>   lstTms = new ArrayList<>(cntSamples);
                                     
@@ -410,10 +442,19 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testGetSamplingClock() {
-        List<BucketData>    lstRawMsgData = LST_QUERY_DATA_LONG;
+        List<QueryData>    lstRawMsgData = LST_QUERY_DATA_LONG;
         
         // Create processed sampling blocks
         List<UniformSamplingBlock>     lstBlocksTest;
+        
+        // Check that raw data contains all sampling clocks
+        boolean bolAllClocks = lstRawMsgData
+                .stream()
+                .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
+                .allMatch(msgBck -> msgBck.getDataTimestamps().hasSamplingClock());
+        
+        if (!bolAllClocks)
+            Assert.fail("Raw data does NOT contain all sampling clocks.");
         
         try {
             lstBlocksTest = this.process(lstRawMsgData);
@@ -424,28 +465,28 @@ public class UniformSamplingBlockTest {
         }
         
         // Extract all the sampling clock messages within raw data
-        List<FixedIntervalTimestampSpec>   lstMsgClocks = lstRawMsgData
+        List<SamplingClock>   lstMsgClocks = lstRawMsgData
                 .stream()
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
-                .<FixedIntervalTimestampSpec>map(DataBucket::getSamplingInterval)
+                .<SamplingClock>map(msgBck -> msgBck.getDataTimestamps().getSamplingClock())
                 .toList();
            
         // Order all the unique sampling clocks within raw data into a sorted set
-        Comparator<FixedIntervalTimestampSpec>  cmpMsgClock = (clk1, clk2) -> {
+        Comparator<SamplingClock>  cmpMsgClock = (clk1, clk2) -> {
             return ProtoTime.compare(clk1.getStartTime(), clk2.getStartTime());
         };
-        SortedSet<FixedIntervalTimestampSpec>   setMsgClocks = new TreeSet<>(cmpMsgClock);
+        SortedSet<SamplingClock>   setMsgClocks = new TreeSet<>(cmpMsgClock);
         setMsgClocks.addAll(lstMsgClocks);
         
         Assert.assertEquals("Incorrect number of unique sampling clocks from raw data.", lstBlocksTest.size(), setMsgClocks.size());
 
         // Compare sampling block clocks to sampling clock messages 
         int     indCurr = 0;
-        for (FixedIntervalTimestampSpec msgClock : setMsgClocks) {
+        for (SamplingClock msgClock : setMsgClocks) {
             UniformSamplingClock    clkCurr = lstBlocksTest.get(indCurr).getSamplingClock(); // method under test
             
-            int     cntSamples = msgClock.getNumSamples();
-            long    lngPeriodNs = msgClock.getSampleIntervalNanos();
+            int     cntSamples = msgClock.getCount();
+            long    lngPeriodNs = msgClock.getPeriodNanos();
             Instant insStart = ProtoMsg.toInstant(msgClock.getStartTime());
 
             Assert.assertEquals("Sample clock sample count incorrect for index " + Integer.toString(indCurr), cntSamples, clkCurr.getSampleCount());
@@ -462,7 +503,7 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testGetSourceNames() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_WIDE;
         
         // Create processed sampling blocks
         List<UniformSamplingBlock>     lstBlocksTest;
@@ -497,7 +538,7 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testGetSourceType() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_WIDE;
         
         // Create processed sampling blocks
         List<UniformSamplingBlock>     lstBlocksTest;
@@ -514,7 +555,7 @@ public class UniformSamplingBlockTest {
         Map<String, DpSupportedType>    mapTypesRaw = new HashMap<>();
         
         try {
-            for (BucketData msgData : lstRawData) {
+            for (QueryData msgData : lstRawData) {
                 for (DataBucket msgBucket : msgData.getDataBucketsList())  {
                     DataColumn      msgCol = msgBucket.getDataColumn();
                     String          strName = msgCol.getName();
@@ -594,7 +635,7 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testGetTimeSeriesAll() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_WIDE;
         
         // Create processed sampling blocks
         List<UniformSamplingBlock>     lstBlocksTest;
@@ -632,7 +673,7 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testHasDomainIntersection() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_LONG;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_LONG;
         
         // Create processed sampling blocks
         List<UniformSamplingBlock>     lstBlocksTest;
@@ -717,7 +758,7 @@ public class UniformSamplingBlockTest {
      */
     @Test
     public final void testCompareTo() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_LONG;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_LONG;
         
         // Create processed sampling blocks
         List<UniformSamplingBlock>     lstBlocksTest;
@@ -810,7 +851,7 @@ public class UniformSamplingBlockTest {
      * @throws IllegalStateException    the argument contains duplicate data source names
      * @throws UnsupportedOperationException an unsupported data type was detected within the argument
      */
-    private List<UniformSamplingBlock>    process(List<BucketData> lstRawData) 
+    private List<UniformSamplingBlock>    process(List<QueryData> lstRawData) 
             throws MissingResourceException, IllegalArgumentException, IllegalStateException, UnsupportedOperationException
             {
         
@@ -843,7 +884,7 @@ public class UniformSamplingBlockTest {
      * 
      * @return  a sorted set of <code>CorrelatedQueryData</code> objects 
      */
-    private SortedSet<CorrelatedQueryData>  correlate(List<BucketData> lstRawData) {
+    private SortedSet<CorrelatedQueryData>  correlate(List<QueryData> lstRawData) {
         
         CORRELATOR.reset();
         lstRawData.forEach(msgData -> CORRELATOR.addQueryData(msgData));

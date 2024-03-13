@@ -47,9 +47,9 @@ import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
-import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
  * JUnit test cases for <code>{@link CorrelatedQueryData}</code>.
@@ -149,8 +149,12 @@ public class CorrelatedQueryDataTest {
     public final void testGetSampleCount() {
         DataBucket          msgBucket = BUCKET;
         
+        // Check bucket for sampling clock
+        if (!msgBucket.getDataTimestamps().hasSamplingClock())
+            Assert.fail("Data bucket does NOT contain a sampling clock.");
+        
         // Get the sample count for the target sampling clock
-        final int   cntSamples = msgBucket.getSamplingInterval().getNumSamples();
+        final int   cntSamples = msgBucket.getDataTimestamps().getSamplingClock().getCount();
         
         // Create initialized correlated data object 
         CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
@@ -166,8 +170,12 @@ public class CorrelatedQueryDataTest {
     public final void testGetStartInstant() {
         DataBucket          msgBucket = BUCKET;
 
+        // Check bucket for sampling clock
+        if (!msgBucket.getDataTimestamps().hasSamplingClock())
+            Assert.fail("Data bucket does NOT contain a sampling clock.");
+        
         // Get the start time for the sampling clock
-        Timestamp   tmsStart = msgBucket.getSamplingInterval().getStartTime();
+        Timestamp   tmsStart = msgBucket.getDataTimestamps().getSamplingClock().getStartTime();
         Instant     insStart = ProtoMsg.toInstant(tmsStart);
         
         // Create initialized correlated data object 
@@ -187,10 +195,16 @@ public class CorrelatedQueryDataTest {
     public final void testGetTimeDomain() {
         DataBucket          msgBucket = BUCKET;
 
-        // Get the start time, period, and sample count for the sampling clock 
-        Timestamp   tmsStart = msgBucket.getSamplingInterval().getStartTime();
-        int         cntSamples = msgBucket.getSamplingInterval().getNumSamples();
-        long        lngPeriodNs = msgBucket.getSamplingInterval().getSampleIntervalNanos();
+        // Check bucket for sampling clock
+        if (!msgBucket.getDataTimestamps().hasSamplingClock())
+            Assert.fail("Data bucket does NOT contain a sampling clock.");
+        
+        // Get the start time, period, and sample count for the sampling clock
+        SamplingClock   msgClock = msgBucket.getDataTimestamps().getSamplingClock();
+        
+        Timestamp   tmsStart = msgClock.getStartTime();
+        int         cntSamples = msgClock.getCount();
+        long        lngPeriodNs = msgClock.getPeriodNanos();
         
         // Create the time domain interval for the bucket samples
         //  NOTE - the last sample period is NOT included => duration = (cntSamples-1)*lngPeriodNs
@@ -258,9 +272,13 @@ public class CorrelatedQueryDataTest {
         
         Assert.assertTrue("Too many bucket insertion acceptanes", lstInserted.size() < lstBuckets.size());
 
+        // Check bucket for sampling clock
+        if (!msgBucket.getDataTimestamps().hasSamplingClock())
+            Assert.fail("Data bucket does NOT contain a sampling clock.");
+        
         // Compare the sample clocks of the initializing bucket and the correlated data
-        FixedIntervalTimestampSpec  msgClockOrig = msgBucket.getSamplingInterval();
-        FixedIntervalTimestampSpec  msgClockData = cqdTest.getSamplingMessage();
+        SamplingClock  msgClockOrig = msgBucket.getDataTimestamps().getSamplingClock();
+        SamplingClock  msgClockData = cqdTest.getSamplingMessage();
         
         Assert.assertEquals(msgClockOrig, msgClockData);
     }
@@ -284,12 +302,16 @@ public class CorrelatedQueryDataTest {
         
         Assert.assertTrue("Too many bucket insertion acceptanes", lstInserted.size() < lstBuckets.size());
         
+        // Check buckets for sampling clock
+        if ( !lstBuckets.stream().allMatch(msgBck -> msgBck.getDataTimestamps().hasSamplingClock()) )
+            Assert.fail("Data buckets do NOT all contain a sampling clock.");
+        
         // Extract all data columns with the same sampling clock as the initiating data bucket
-        FixedIntervalTimestampSpec msgClock = msgBucket.getSamplingInterval();
+        SamplingClock msgClock = msgBucket.getDataTimestamps().getSamplingClock();
         
         List<DataColumn>    lstColsBuckets = lstBuckets
                 .stream()
-                .filter(msgBck -> ProtoTime.equals(msgClock, msgBck.getSamplingInterval()))
+                .filter(msgBck -> ProtoTime.equals(msgClock, msgBck.getDataTimestamps().getSamplingClock()))
                 .<DataColumn>map(DataBucket::getDataColumn)
                 .toList();
         

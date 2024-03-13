@@ -22,7 +22,7 @@ NOTES:
     <groupId>com.ospreydcs</groupId>
     <artifactId>dp-api-common</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.0</version>
+    <version>1.3.0</version>
 
     <properties>
 		
@@ -38,9 +38,9 @@ NOTES:
         <java.version>16</java.version>
 
 		<!-- Data Platform Properties-->        
-        <dp-grpc.version>1.0.0</dp-grpc.version>
+        <dp-grpc.version>1.3.0</dp-grpc.version>
         <dp-common.version>1.0.0</dp-common.version>
-        <dp-service.version>1.0.0</dp-service.version>
+        <dp-service.version>1.3.0</dp-service.version>
 
         <!-- gRPC Properties -->
         <io.grpc.version>1.49.0</io.grpc.version>
@@ -99,11 +99,13 @@ NOTES:
         </dependency>
 
 		<!-- Data Platform Common Utitilies -->
+		<!-- 
         <dependency>
             <groupId>com.ospreydcs</groupId>
             <artifactId>dp-common</artifactId>
             <version>${dp-common.version}</version>
         </dependency>
+        -->
         
         <!-- Data Platform Service Library -->
         <!-- 

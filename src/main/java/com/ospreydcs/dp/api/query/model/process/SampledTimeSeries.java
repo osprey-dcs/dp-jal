@@ -143,7 +143,7 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
         // Extract message data
         String                  strName = msgDataCol.getName();
         DpSupportedType         enmType = ProtoMsg.extractType(msgDataCol);
-        Class<? extends Object> clsType = enmType.getType();
+        Class<? extends Object> clsType = enmType.getJavaType();
         List<T>                 lstVals = (List<T>) ProtoMsg.extractValuesAs(clsType, msgDataCol);
 
         // Create initialized time series

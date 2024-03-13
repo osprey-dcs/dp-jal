@@ -37,9 +37,10 @@ import com.ospreydcs.dp.api.config.DpApiTestingConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorOperation;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation.CursorOperationType;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 import io.grpc.stub.StreamObserver;
 
@@ -78,20 +79,28 @@ public class TestQueryService {
      *  Result sets are accumulated in a response buffer available at stream
      *  completion.
      */
-    public class CursorResponseBuffer implements StreamObserver<QueryResponse> {
+    public class CursorResponseBuffer implements StreamObserver<QueryDataResponse> {
         
         //
         // Resources
         //
         
         /** Accumulation buffer for responses */
-        private final List<QueryResponse>   lstRspBuffer = new LinkedList<>();
+        private final List<QueryDataResponse>   lstRspBuffer = new LinkedList<>();
         
         /** Completed monitor */
         private final CountDownLatch        monCompleted = new CountDownLatch(1);   
 
         /** The single cursor query request (send next message) */
-        private final QueryRequest          msgCursorRqst = QueryRequest.newBuilder().setCursorOp(CursorOperation.CURSOR_OP_NEXT).build();
+        private final QueryDataRequest      msgCursorRqst = QueryDataRequest
+                .newBuilder()
+                .setCursorOp(
+                        CursorOperation
+                        .newBuilder()
+                        .setCursorOperationType(CursorOperationType.CURSOR_OP_NEXT)
+                        .build()
+                        )
+                .build();
 
         
         //
@@ -99,13 +108,13 @@ public class TestQueryService {
         //
         
         /** Forward data stream handle to the Query Service */
-        private StreamObserver<QueryRequest>    strmForward = null;
+        private StreamObserver<QueryDataRequest>    strmForward = null;
         
         /** Error flag */
-        private boolean                         bolError = false;
+        private boolean                             bolError = false;
         
         /** Any exception thrown by the forward stream */
-        private Throwable                       excpError = null;
+        private Throwable                           excpError = null;
         
         
         //
@@ -119,10 +128,10 @@ public class TestQueryService {
          * 
          * @param msgRqst   the query request containing the <code>QuerySpec</code> message
          */
-        public void start(QueryRequest msgRqst) {
+        public void start(QueryDataRequest msgRqst) {
             
             // Perform RPC operation to get the backward stream handle
-            this.strmForward = TestQueryService.this.connTestArchive.getStubAsync().queryResponseCursor(this);
+            this.strmForward = TestQueryService.this.connTestArchive.getStubAsync().queryDataBidiStream(this);
             
             // Send the data request on the handle starting the stream
             this.strmForward.onNext(msgRqst);
@@ -146,7 +155,7 @@ public class TestQueryService {
          * 
          * @return  the accumulation buffer containing the result set 
          */
-        public final List<QueryResponse>  getResults() {
+        public final List<QueryDataResponse>  getResults() {
             return this.lstRspBuffer;
         }
         
@@ -165,7 +174,7 @@ public class TestQueryService {
         //
         
         @Override
-        public void onNext(QueryResponse value) {
+        public void onNext(QueryDataResponse value) {
             this.lstRspBuffer.add(value);
             this.strmForward.onNext(this.msgCursorRqst);
         }
@@ -259,8 +268,8 @@ public class TestQueryService {
      * 
      * @return          result set of query (single response message)
      */
-    public QueryResponse    queryResponseSingle(QueryRequest msgRqst) {
-        return this.connTestArchive.getStubBlock().queryResponseSingle(msgRqst);
+    public QueryDataResponse    queryResponseSingle(QueryDataRequest msgRqst) {
+        return this.connTestArchive.getStubBlock().queryData(msgRqst);
     }
     
     /**
@@ -271,12 +280,12 @@ public class TestQueryService {
      * 
      * @return          result set of query request
      */
-    public List<QueryResponse> queryResponseStream(QueryRequest msgRqst) {
-        List<QueryResponse>     lstRsps = new LinkedList<>();
+    public List<QueryDataResponse> queryResponseStream(QueryDataRequest msgRqst) {
+        List<QueryDataResponse>     lstRsps = new LinkedList<>();
         
-        Iterator<QueryResponse> iterRsps = this.connTestArchive.getStubBlock().queryResponseStream(msgRqst);
+        Iterator<QueryDataResponse> iterRsps = this.connTestArchive.getStubBlock().queryDataStream(msgRqst);
         while (iterRsps.hasNext()) {
-            QueryResponse   msgRsp = iterRsps.next();
+            QueryDataResponse   msgRsp = iterRsps.next();
             
             lstRsps.add(msgRsp);
         }
@@ -295,7 +304,7 @@ public class TestQueryService {
      * @throws CompletionException  an error occurred during the bidirectional streaming
      * @throws InterruptedException process interrupted by bidirectional stream active
      */
-    public List<QueryResponse>  queryResponseCursor(QueryRequest msgRqst) throws CompletionException, InterruptedException {
+    public List<QueryDataResponse>  queryResponseCursor(QueryDataRequest msgRqst) throws CompletionException, InterruptedException {
         CursorResponseBuffer    strmBackward = new CursorResponseBuffer();
         
         strmBackward.start(msgRqst);

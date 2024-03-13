@@ -29,6 +29,7 @@ package com.ospreydcs.dp.api.query.test;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -51,16 +52,16 @@ import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
-import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
-import com.ospreydcs.dp.grpc.v1.common.RejectDetails;
-import com.ospreydcs.dp.grpc.v1.common.RejectDetails.RejectReason;
+import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryStatus;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.QueryStatus.QueryStatusType;
+import com.ospreydcs.dp.grpc.v1.common.TimestampList;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
  * JUnit test cases for class <code>{@link TestQueryService}</code>.
@@ -100,19 +101,19 @@ public class TestQueryServiceTest {
     //
 
     /** Query Service request whose result should be a single data bucket */
-    public static QueryRequest  MSG_REQUEST_BUCKET = TestQueryResponses.requestMessage(SingleQueryType.BUCKET);
+    public static QueryDataRequest  MSG_REQUEST_BUCKET = TestQueryResponses.requestMessage(SingleQueryType.BUCKET);
     
     /** Query Service request whose result should be a single data source time series */
-    public static QueryRequest  MSG_REQUEST_ONE = TestQueryResponses.requestMessage(SingleQueryType.ONE_SOURCE);
+    public static QueryDataRequest  MSG_REQUEST_ONE = TestQueryResponses.requestMessage(SingleQueryType.ONE_SOURCE);
 
     /** Query Service request whose result should be two data source time series */
-    public static QueryRequest  MSG_REQUEST_TWO = TestQueryResponses.requestMessage(SingleQueryType.TWO_SOURCE);
+    public static QueryDataRequest  MSG_REQUEST_TWO = TestQueryResponses.requestMessage(SingleQueryType.TWO_SOURCE);
     
     /** Query Service request whose result should be two data source time series */
-    public static QueryRequest  MSG_REQUEST_WIDE = TestQueryResponses.requestMessage(SingleQueryType.WIDE);
+    public static QueryDataRequest  MSG_REQUEST_WIDE = TestQueryResponses.requestMessage(SingleQueryType.WIDE);
     
     /** Query Service request whose result should be two data source time series */
-    public static QueryRequest  MSG_REQUEST_LONG = TestQueryResponses.requestMessage(SingleQueryType.LONG);
+    public static QueryDataRequest  MSG_REQUEST_LONG = TestQueryResponses.requestMessage(SingleQueryType.LONG);
     
 
     
@@ -184,11 +185,11 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseSingleBucket() {
-        QueryRequest    msgRequest = MSG_REQUEST_BUCKET;
+        QueryDataRequest    msgRequest = MSG_REQUEST_BUCKET;
         
         // Inspect the request
-        List<String>    lstSrcs = msgRequest.getQuerySpec().getColumnNamesList();
-        Timestamp       msgTms1 = msgRequest.getQuerySpec().getStartTime();
+        List<String>    lstSrcs = msgRequest.getQuerySpec().getPvNamesList();
+        Timestamp       msgTms1 = msgRequest.getQuerySpec().getBeginTime();
         Timestamp       msgTms2 = msgRequest.getQuerySpec().getEndTime();
         
         if (lstSrcs.size() != 1) 
@@ -198,7 +199,7 @@ public class TestQueryServiceTest {
             Assert.fail("Query request had bad time range.");
         
         // Perform the query
-        QueryResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
+        QueryDataResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
         
         // Check the response for errors
         ResultRecord    recValid = this.checkErrors(msgResponse);
@@ -216,7 +217,7 @@ public class TestQueryServiceTest {
             Assert.fail(recActivity.message());
         
         // Check the query data
-        BucketData   msgData = msgResponse.getQueryReport().getBucketData();
+        QueryData   msgData = msgResponse.getQueryData();
         
         ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
         if (recUnique.isFailure())
@@ -237,11 +238,11 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseSingleOne() {
-        QueryRequest    msgRequest = MSG_REQUEST_ONE;
+        QueryDataRequest    msgRequest = MSG_REQUEST_ONE;
         
         // Inspect the request
-        List<String>    lstSrcs = msgRequest.getQuerySpec().getColumnNamesList();
-        Timestamp       msgTms1 = msgRequest.getQuerySpec().getStartTime();
+        List<String>    lstSrcs = msgRequest.getQuerySpec().getPvNamesList();
+        Timestamp       msgTms1 = msgRequest.getQuerySpec().getBeginTime();
         Timestamp       msgTms2 = msgRequest.getQuerySpec().getEndTime();
         
         if (lstSrcs.size() != 1) 
@@ -251,7 +252,7 @@ public class TestQueryServiceTest {
             Assert.fail("Query request had bad time range.");
         
         // Perform the query
-        QueryResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
+        QueryDataResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
         
         // Check the response for errors
         ResultRecord    recValid = this.checkErrors(msgResponse);
@@ -269,7 +270,7 @@ public class TestQueryServiceTest {
             Assert.fail(recActivity.message());
         
         // Verify the query data
-        BucketData   msgData = msgResponse.getQueryReport().getBucketData();
+        QueryData   msgData = msgResponse.getQueryData();
         
 //        ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
 //        if (recUnique.isFailure())
@@ -304,12 +305,12 @@ public class TestQueryServiceTest {
         rqst.rangeBefore(insEnd);
         rqst.setStreamType(enmType);
 
-        QueryRequest    msgCompare = MSG_REQUEST_ONE;
-        QueryRequest    msgRequest = rqst.buildQueryRequest();
+        QueryDataRequest    msgCompare = MSG_REQUEST_ONE;
+        QueryDataRequest    msgRequest = rqst.buildQueryRequest();
         
         // Inspect the request
-        List<String>    lstSrcs = msgRequest.getQuerySpec().getColumnNamesList();
-        Timestamp       msgTms1 = msgRequest.getQuerySpec().getStartTime();
+        List<String>    lstSrcs = msgRequest.getQuerySpec().getPvNamesList();
+        Timestamp       msgTms1 = msgRequest.getQuerySpec().getBeginTime();
         Timestamp       msgTms2 = msgRequest.getQuerySpec().getEndTime();
         
         if (lstSrcs.size() != 1) 
@@ -319,7 +320,7 @@ public class TestQueryServiceTest {
             Assert.fail("Query request had bad time range.");
         
         // Perform the query
-        QueryResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
+        QueryDataResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
         
         // Check the response for errors
         ResultRecord    recValid = this.checkErrors(msgResponse);
@@ -337,7 +338,7 @@ public class TestQueryServiceTest {
             Assert.fail(recActivity.message());
         
         // Check the query data
-        BucketData   msgData = msgResponse.getQueryReport().getBucketData();
+        QueryData   msgData = msgResponse.getQueryData();
         
 //        ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
 //        if (recUnique.isFailure())
@@ -358,10 +359,10 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseSingleTwo() {
-        QueryRequest    msgRequest = MSG_REQUEST_TWO;
+        QueryDataRequest    msgRequest = MSG_REQUEST_TWO;
         
         // Perform the query
-        QueryResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
+        QueryDataResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
         
         // Check the response
         this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, List.of(msgResponse));
@@ -372,10 +373,10 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseSingleLong() {
-        QueryRequest    msgRequest = MSG_REQUEST_LONG;
+        QueryDataRequest    msgRequest = MSG_REQUEST_LONG;
         
         // Perform the query
-        QueryResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
+        QueryDataResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
         
         // Check the response
         this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, List.of(msgResponse));
@@ -386,11 +387,11 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseStreamOne() {
-        QueryRequest    msgRequest = MSG_REQUEST_ONE;
+        QueryDataRequest    msgRequest = MSG_REQUEST_ONE;
         
         // Inspect the request
-        List<String>    lstSrcs = msgRequest.getQuerySpec().getColumnNamesList();
-        Timestamp       msgTms1 = msgRequest.getQuerySpec().getStartTime();
+        List<String>    lstSrcs = msgRequest.getQuerySpec().getPvNamesList();
+        Timestamp       msgTms1 = msgRequest.getQuerySpec().getBeginTime();
         Timestamp       msgTms2 = msgRequest.getQuerySpec().getEndTime();
         
         if (lstSrcs.size() != 1) 
@@ -400,7 +401,7 @@ public class TestQueryServiceTest {
             Assert.fail("Query request had bad time range.");
         
         // Perform the query
-        List<QueryResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
+        List<QueryDataResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
         
         // Check the response for errors
         ResultRecord    recValid = this.checkErrors(lstResultsSet);
@@ -431,7 +432,7 @@ public class TestQueryServiceTest {
         
         List<DataBucket>    lstBuckets = lstResultsSet
                 .stream()
-                .<BucketData>map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                 .toList();
         
@@ -443,10 +444,10 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseStreamTwo() {
-        QueryRequest    msgRequest = MSG_REQUEST_TWO;
+        QueryDataRequest    msgRequest = MSG_REQUEST_TWO;
         
         // Perform the query
-        List<QueryResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
+        List<QueryDataResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
         
         // Check the response
         this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
@@ -457,10 +458,10 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseStreamLong() {
-        QueryRequest    msgRequest = MSG_REQUEST_LONG;
+        QueryDataRequest    msgRequest = MSG_REQUEST_LONG;
         
         // Perform the query
-        List<QueryResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
+        List<QueryDataResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
         
         // Check the response
         this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
@@ -471,11 +472,11 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseCursorOne() {
-        QueryRequest    msgRequest = MSG_REQUEST_ONE;
+        QueryDataRequest    msgRequest = MSG_REQUEST_ONE;
         
         // Inspect the request
-        List<String>    lstSrcs = msgRequest.getQuerySpec().getColumnNamesList();
-        Timestamp       msgTms1 = msgRequest.getQuerySpec().getStartTime();
+        List<String>    lstSrcs = msgRequest.getQuerySpec().getPvNamesList();
+        Timestamp       msgTms1 = msgRequest.getQuerySpec().getBeginTime();
         Timestamp       msgTms2 = msgRequest.getQuerySpec().getEndTime();
         
         if (lstSrcs.size() != 1) 
@@ -485,7 +486,7 @@ public class TestQueryServiceTest {
             Assert.fail("Query request had bad time range.");
         
         // Perform the query
-        List<QueryResponse> lstResultsSet;
+        List<QueryDataResponse> lstResultsSet;
         try {
             lstResultsSet = apiQueryService.queryResponseCursor(msgRequest);
             
@@ -523,7 +524,7 @@ public class TestQueryServiceTest {
         
         List<DataBucket>    lstBuckets = lstResultsSet
                 .stream()
-                .<BucketData>map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                 .toList();
         
@@ -535,10 +536,10 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseCursorTwo() {
-        QueryRequest    msgRequest = MSG_REQUEST_TWO;
+        QueryDataRequest    msgRequest = MSG_REQUEST_TWO;
         
         // Perform the query
-        List<QueryResponse> lstResultsSet;
+        List<QueryDataResponse> lstResultsSet;
         try {
             lstResultsSet = apiQueryService.queryResponseCursor(msgRequest);
             
@@ -556,10 +557,10 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseCursorLong() {
-        QueryRequest    msgRequest = MSG_REQUEST_LONG;
+        QueryDataRequest    msgRequest = MSG_REQUEST_LONG;
         
         // Perform the query
-        List<QueryResponse> lstResultsSet;
+        List<QueryDataResponse> lstResultsSet;
         try {
             lstResultsSet = apiQueryService.queryResponseCursor(msgRequest);
             
@@ -577,10 +578,10 @@ public class TestQueryServiceTest {
      */
     @Test
     public final void testQueryResponseCursorWide() {
-        QueryRequest    msgRequest = MSG_REQUEST_WIDE;
+        QueryDataRequest    msgRequest = MSG_REQUEST_WIDE;
         
         // Perform the query
-        List<QueryResponse> lstResultsSet;
+        List<QueryDataResponse> lstResultsSet;
         try {
             lstResultsSet = apiQueryService.queryResponseCursor(msgRequest);
             
@@ -623,11 +624,11 @@ public class TestQueryServiceTest {
      * @param msgRequest    the data request message
      * @param lstResultsSet the Query Service results set from the given data request 
      */
-    private void    checkResults(String strMsg, QueryRequest msgRequest, List<QueryResponse> lstResultsSet) {
+    private void    checkResults(String strMsg, QueryDataRequest msgRequest, List<QueryDataResponse> lstResultsSet) {
         
         // Inspect the request
-        List<String>    lstSrcs = msgRequest.getQuerySpec().getColumnNamesList();
-        Timestamp       msgTms1 = msgRequest.getQuerySpec().getStartTime();
+        List<String>    lstSrcs = msgRequest.getQuerySpec().getPvNamesList();
+        Timestamp       msgTms1 = msgRequest.getQuerySpec().getBeginTime();
         Timestamp       msgTms2 = msgRequest.getQuerySpec().getEndTime();
         
         if (ProtoTime.compare(msgTms1, msgTms2) >= 0)
@@ -657,7 +658,7 @@ public class TestQueryServiceTest {
         
         List<DataBucket>    lstBuckets = lstResultsSet
                 .stream()
-                .<BucketData>map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                 .toList();
         
@@ -678,25 +679,25 @@ public class TestQueryServiceTest {
      * @return  <code>{@link ResultRecord#SUCCESS</code> if no errors present,
      *          a failure record with message description if errors detected
      */
-    private ResultRecord    checkErrors(QueryResponse msgResponse) {
+    private ResultRecord    checkErrors(QueryDataResponse msgResponse) {
 
-        // Check for query rejection
-        if (msgResponse.hasQueryReject()) {
-            RejectDetails   msgReject = msgResponse.getQueryReject();
-            RejectReason    enmCause = msgReject.getRejectReason();
-            String          strMsg = msgReject.getMessage();
+        // Check for query rejection or response error
+        if (msgResponse.hasExceptionalResult()) {
+            ExceptionalResult        msgReject = msgResponse.getExceptionalResult();
+            ExceptionalResult.ExceptionalResultStatus enmCause = msgReject.getExceptionalResultStatus();
+            String                  strMsg = msgReject.getMessage();
             
-            return ResultRecord.newFailure("Query was rejected: cause=" + enmCause + ", message=" + strMsg);
+            return ResultRecord.newFailure("Query was rejected or response error: cause=" + enmCause + ", message=" + strMsg);
         }
         
-        // Check for response error
-        if (msgResponse.getQueryReport().hasQueryStatus()) {
-            QueryStatus     msgStatus = msgResponse.getQueryReport().getQueryStatus();
-            QueryStatusType enmType = msgStatus.getQueryStatusType();
-            String          strMsg = msgStatus.getStatusMessage();
-
-            return ResultRecord.newFailure("Query contains response error: type="+ enmType + ", message=" + strMsg);
-        }
+//        // Check for response error
+//        if (msgResponse.getQueryResult().hasQueryStatus()) {
+//            QueryStatus     msgStatus = msgResponse.getQueryResult().getQueryStatus();
+//            QueryStatusType enmType = msgStatus.getQueryStatusType();
+//            String          strMsg = msgStatus.getStatusMessage();
+//
+//            return ResultRecord.newFailure("Query contains response error: type="+ enmType + ", message=" + strMsg);
+//        }
         
         return ResultRecord.SUCCESS;
     }
@@ -719,7 +720,7 @@ public class TestQueryServiceTest {
      *          
      * @see #checkErrors(QueryResponse)
      */
-    private ResultRecord checkErrors(List<QueryResponse> lstResultsSet) {
+    private ResultRecord checkErrors(List<QueryDataResponse> lstResultsSet) {
     
         // Check each QueryResponse message and record results
         List<ResultRecord> lstFails  = lstResultsSet
@@ -751,15 +752,15 @@ public class TestQueryServiceTest {
      * @return  <code>{@link ResultRecord#SUCCESS}</code> if all sources are present,
      *          a failure record with description if any are missing
      */
-    private ResultRecord    checkSourceNames(QueryRequest msgRequest, List<QueryResponse> lstResultsSet) {
+    private ResultRecord    checkSourceNames(QueryDataRequest msgRequest, List<QueryDataResponse> lstResultsSet) {
      
         // Extract all the data source names from the query request message
-        List<String>        lstSrcNms = msgRequest.getQuerySpec().getColumnNamesList();
+        List<String>        lstSrcNms = msgRequest.getQuerySpec().getPvNamesList();
         
         // Extract all the data columns from the QueryResponse list
         List<DataColumn>    lstMsgCols = lstResultsSet
                 .stream()
-                .<BucketData>map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                 .<DataColumn>map(msgBck -> msgBck.getDataColumn())
                 .toList();
@@ -798,10 +799,10 @@ public class TestQueryServiceTest {
      * 
      * @see #extractActivityRanges(List)
      */
-    private ResultRecord    checkActivityDomains(QueryRequest msgRequest, List<QueryResponse> lstResultsSet) {
+    private ResultRecord    checkActivityDomains(QueryDataRequest msgRequest, List<QueryDataResponse> lstResultsSet) {
         
         // Extract query time range and create domain interval
-        Timestamp   tmsBegin = msgRequest.getQuerySpec().getStartTime();
+        Timestamp   tmsBegin = msgRequest.getQuerySpec().getBeginTime();
         Timestamp   tmsEnd = msgRequest.getQuerySpec().getEndTime();
         Instant     insBegin = ProtoMsg.toInstant(tmsBegin);
         Instant     insEnd = ProtoMsg.toInstant(tmsEnd);
@@ -848,7 +849,7 @@ public class TestQueryServiceTest {
      * 
      * @return  result of the verification check, containing the cause if failed
      */
-    private ResultRecord verifySourceUniqueness(BucketData msgData) {
+    private ResultRecord verifySourceUniqueness(QueryData msgData) {
         
         // Extract the data columns and create a mutable list of data source names
         List<DataColumn>    lstCols = msgData.getDataBucketsList().stream().map(DataBucket::getDataColumn).toList();
@@ -907,12 +908,12 @@ public class TestQueryServiceTest {
      * 
      * @see #verifySourceUniqueness(BucketData)
      */
-    private ResultRecord verifySourceUniqueness(List<QueryResponse> lstResultsSet) {
+    private ResultRecord verifySourceUniqueness(List<QueryDataResponse> lstResultsSet) {
         
         // Extract results set data, check each data set, record results
         List<ResultRecord>    lstFails = lstResultsSet
                 .stream()
-                .<BucketData>map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<ResultRecord>map(msgData -> this.verifySourceUniqueness(msgData))
                 .filter(ResultRecord::isFailure)
                 .toList();
@@ -946,14 +947,41 @@ public class TestQueryServiceTest {
      * 
      * @return  result of the verification check, containing the cause if failed
      */
-    private ResultRecord verifySourceSizes(BucketData msgData) {
+    private ResultRecord verifySourceSizes(QueryData msgData) {
         
         // This only works if there is at least one DataBucket
         if (msgData.getDataBucketsList().isEmpty())
             return ResultRecord.newFailure("The BucketData message contained no data.");
         
+        // Get the number of samples for the first bucket
+        int             cntSamples;
+        DataTimestamps  msgDataTms = msgData.getDataBuckets(0).getDataTimestamps();
+        
+        if (msgDataTms.hasSamplingClock())
+            cntSamples = msgDataTms.getSamplingClock().getCount();
+        else
+            cntSamples = msgDataTms.getTimestampList().getTimestampsCount();
+        
+        // Check all timestamps counts 
+        int     indBucket = 0;
+        for (DataBucket msgBucket : msgData.getDataBucketsList()) {
+            DataTimestamps  msgTms = msgBucket.getDataTimestamps();
+            
+            if (msgTms.hasSamplingClock()) {
+                if (msgTms.getSamplingClock().getCount() != cntSamples)
+                    return ResultRecord.newFailure("Sampling clock count for bucket " + indBucket + " not equal to " + cntSamples);
+            
+            } else {
+                if (msgTms.getTimestampList().getTimestampsCount() != cntSamples) 
+                    return ResultRecord.newFailure("TimestampList count for bucket " + indBucket + " not equal to " + cntSamples);
+            }
+                    
+            indBucket++;
+        }
+        
+        
         // Each source should provide the same number of data samples
-        int cntSamples = msgData.getDataBuckets(0).getSamplingInterval().getNumSamples();
+//        int cntSamples = msgData.getDataBuckets(0).getSamplingInterval().getNumSamples();
         
         // Extract the data columns 
         List<DataColumn>    lstMsgCols = msgData.getDataBucketsList().stream().map(DataBucket::getDataColumn).toList();
@@ -1003,12 +1031,12 @@ public class TestQueryServiceTest {
      * 
      * @see #verifySourceSizes(BucketData)
      */
-    private ResultRecord    verifySourceSizes(List<QueryResponse> lstResultsSet) {
+    private ResultRecord    verifySourceSizes(List<QueryDataResponse> lstResultsSet) {
         
         // Extract results set data, check each data set, record results
         List<ResultRecord>    lstFails = lstResultsSet
                 .stream()
-                .<BucketData>map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                 .<ResultRecord>map(msgData -> this.verifySourceSizes(msgData))
                 .filter(ResultRecord::isFailure)
                 .toList();
@@ -1028,21 +1056,21 @@ public class TestQueryServiceTest {
      * 
      * @return  a list of pairs (PV name, TimeInterval) containing the time ranges of PV activity
      */
-    private List<PvActivityRange>    extractActivityRanges(/* QueryRequest msgRequest, */ List<QueryResponse> lstResultsSet) {
+    private List<PvActivityRange>    extractActivityRanges(/* QueryRequest msgRequest, */ List<QueryDataResponse> lstResultsSet) {
             
     //        // Get the start and end times of the request
     //        Timestamp   tmsBegin = msgRequest.getQuerySpec().getStartTime();
     //        Timestamp   tmsEnd = msgRequest.getQuerySpec().getEndTime();
             
             // Extract all data columns
-            List<DataBucket>    lstMsgBcks = lstResultsSet
+            List<DataBucket>    lstMsgBuckets = lstResultsSet
                     .stream()
-                    .<BucketData>map(msgRsp -> msgRsp.getQueryReport().getBucketData())
+                    .<QueryData>map(msgRsp -> msgRsp.getQueryData())
                     .<DataBucket>flatMap(msgData -> msgData.getDataBucketsList().stream())
                     .toList();
     
             // Get set of unique source names
-            List<String>    lstSrcNms = lstMsgBcks
+            List<String>    lstSrcNms = lstMsgBuckets
                     .stream()
                     .<DataColumn>map(DataBucket::getDataColumn)
                     .<String>map(DataColumn::getName)
@@ -1056,30 +1084,78 @@ public class TestQueryServiceTest {
             for (String strSrcNm : setSrcNms) {
                 
                 // Get all sampling clocks for the data source
-                List<FixedIntervalTimestampSpec>    lstClocks = lstMsgBcks
+                List<SamplingClock>    lstClocks = lstMsgBuckets
                         .stream()
                         .filter(msgBck -> msgBck.getDataColumn().getName().equals(strSrcNm))
-                        .map(DataBucket::getSamplingInterval)
+                        .<DataTimestamps>map(DataBucket::getDataTimestamps)
+                        .filter(DataTimestamps::hasSamplingClock)
+                        .<SamplingClock>map(DataTimestamps::getSamplingClock)
                         .toList();
+
+                // Get all TimestampList's for the data source
+                List<TimestampList>     lstTmsList = lstMsgBuckets
+                        .stream()
+                        .filter(msgBck -> msgBck.getDataColumn().getName().equals(strSrcNm))
+                        .<DataTimestamps>map(DataBucket::getDataTimestamps)
+                        .filter(DataTimestamps::hasTimestampList)
+                        .<TimestampList>map(DataTimestamps::getTimestampList)
+                        .toList();
+
+                // Collect all start timestamps - then find (i.e. reduce) the smallest one
+                List<Timestamp>     lstTmsFirst = new LinkedList<>();
+
+                lstTmsFirst.addAll( lstClocks.stream().<Timestamp>map(SamplingClock::getStartTime).toList() );
+                lstTmsFirst.addAll( lstTmsList.stream().<Timestamp>map(tsl -> tsl.getTimestamps(0)).toList() );
                 
-                Timestamp   tmsFirst = lstClocks
+                Timestamp   tmsFirst = lstTmsFirst
                         .stream()
-                        .<Timestamp>map(clock -> clock.getStartTime())
+                        .reduce( 
+                                (t1, t2) -> { return (ProtoTime.compare(t1, t2) < 0 ? t1 : t2); } 
+                               )
+                        .get();
+                
+                // Collect all end timestamps - then find (i.e. reduce) the largest one
+                List<Timestamp>     lstTmsLast = new LinkedList<>();
+                
+                lstTmsLast.addAll( 
+                        lstClocks
+                        .stream()
+                        .<Timestamp>map( clock -> ProtoTime.addNanos(clock.getStartTime(), clock.getCount() * clock.getPeriodNanos()) )
+                        .toList()
+                        );
+                lstTmsLast.addAll( 
+                        lstTmsList
+                        .stream()
+                        .<Timestamp>map( tsl -> tsl.getTimestamps(tsl.getTimestampsCount() - 1))
+                        .toList()
+                        );
+                
+                Timestamp   tmsLast = lstTmsLast
+                        .stream()
                         .reduce(
-                            (tms1, tms2) -> { return (ProtoTime.compare(tms1, tms2) < 0) ? tms1 : tms2; }
+                                (t1, t2) -> { return (ProtoTime.compare(t1, t2) < 0) ? t2 : t1; }
                                 )
                         .get();
+                
+//                // Get all SamplingClock's for the data source
+//                Timestamp   tmsFirst = lstClocks
+//                        .stream()
+//                        .<Timestamp>map(clock -> clock.getStartTime())
+//                        .reduce(
+//                            (tms1, tms2) -> { return (ProtoTime.compare(tms1, tms2) < 0) ? tms1 : tms2; }
+//                                )
+//                        .get();
     
-                Timestamp   tmsLast = lstClocks
-                        .stream()
-                        .<Timestamp>map(clock -> ProtoTime.addNanos(clock.getStartTime(), clock.getNumSamples() * clock.getSampleIntervalNanos()) )
-                        .reduce(
-                            (tms1, tms2) -> { return (ProtoTime.compare(tms1, tms2) < 0) ? tms2 : tms1; }
-                                )
-                        .get();
+//                Timestamp   tmsLast = lstClocks
+//                        .stream()
+//                        .<Timestamp>map(clock -> ProtoTime.addNanos(clock.getStartTime(), clock.getCount() * clock.getPeriodNanos()) )
+//                        .reduce(
+//                            (tms1, tms2) -> { return (ProtoTime.compare(tms1, tms2) < 0) ? tms2 : tms1; }
+//                                )
+//                        .get();
     
                 TimeInterval    domActive = TimeInterval.from(ProtoMsg.toInstant(tmsFirst), ProtoMsg.toInstant(tmsLast));
-                PvActivityRange     recActive = PvActivityRange.from(strSrcNm, domActive);
+                PvActivityRange recActive = PvActivityRange.from(strSrcNm, domActive);
                 
                 lstRanges.add(recActive);
             }
@@ -1095,7 +1171,7 @@ public class TestQueryServiceTest {
      * @param strHdr        string header for output message.
      * @param lstResultsSet list of <code>QueryRespoonse</code> messages representing a data query results set
      */
-    private void printActivityRanges(String strHdr, List<QueryResponse> lstResultsSet) {
+    private void printActivityRanges(String strHdr, List<QueryDataResponse> lstResultsSet) {
 
         List<PvActivityRange>   lstRanges = this.extractActivityRanges(lstResultsSet);
         

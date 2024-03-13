@@ -27,7 +27,7 @@
  */
 package com.ospreydcs.dp.api.query.model.data;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -37,10 +37,10 @@ import java.util.List;
 import java.util.MissingResourceException;
 import java.util.SortedSet;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
 import javax.naming.CannotProceedException;
-import javax.naming.OperationNotSupportedException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -61,8 +61,8 @@ import com.ospreydcs.dp.api.query.test.TestQueryRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * JUnit test cases for class <code>{@link SamplingProcessTable}</code>.
@@ -100,23 +100,23 @@ public class SamplingProcessTableTest {
     
     
     /** Sample query response for test cases */
-    public static final List<QueryResponse>   LST_QUERY_RSP_WIDE = TestQueryResponses.queryResults(SingleQueryType.WIDE);
+    public static final List<QueryDataResponse>   LST_QUERY_RSP_WIDE = TestQueryResponses.queryResults(SingleQueryType.WIDE);
     
     /** Sample query response for test cases */
-    public static final List<QueryResponse>   LST_QUERY_RSP_LONG = TestQueryResponses.queryResults(SingleQueryType.LONG);
+    public static final List<QueryDataResponse>   LST_QUERY_RSP_LONG = TestQueryResponses.queryResults(SingleQueryType.LONG);
     
     
     /** Sample query data for test cases - 1 source, 10 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_ONE = TestQueryResponses.queryData(SingleQueryType.ONE_SOURCE);
+    public static final List<QueryData>   LST_QUERY_DATA_ONE = TestQueryResponses.queryData(SingleQueryType.ONE_SOURCE);
     
     /** Sample query data for test cases - 2 sources, 2 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_TWO = TestQueryResponses.queryData(SingleQueryType.TWO_SOURCE);
+    public static final List<QueryData>   LST_QUERY_DATA_TWO = TestQueryResponses.queryData(SingleQueryType.TWO_SOURCE);
     
     /** Sample query data for test cases - 100 sources, 5 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_WIDE = TestQueryResponses.queryData(SingleQueryType.WIDE);
+    public static final List<QueryData>   LST_QUERY_DATA_WIDE = TestQueryResponses.queryData(SingleQueryType.WIDE);
     
     /** Sample query data for test cases - 5 sources, 60 seconds */
-    public static final List<BucketData>   LST_QUERY_DATA_LONG = TestQueryResponses.queryData(SingleQueryType.LONG);
+    public static final List<QueryData>   LST_QUERY_DATA_LONG = TestQueryResponses.queryData(SingleQueryType.LONG);
     
     
     //
@@ -172,13 +172,13 @@ public class SamplingProcessTableTest {
     @Test
     public final void testFrom() {
         
-        List<QueryResponse> lstRspMsgs = LST_QUERY_RSP_WIDE;
+        List<QueryDataResponse> lstRspMsgs = LST_QUERY_RSP_WIDE;
         
         try {
-            for (QueryResponse msgRsp : lstRspMsgs)
+            for (QueryDataResponse msgRsp : lstRspMsgs)
                 CORRELATOR.addQueryResponse(msgRsp);
 
-        } catch (CompletionException | OperationNotSupportedException | CannotProceedException e) {
+        } catch (CompletionException | ExecutionException | CannotProceedException | IllegalArgumentException e) {
             Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
             
         }
@@ -204,13 +204,13 @@ public class SamplingProcessTableTest {
     @Test
     public final void testSamplingProcessTable() {
         
-        List<QueryResponse> lstRspMsgs = LST_QUERY_RSP_WIDE;
+        List<QueryDataResponse> lstRspMsgs = LST_QUERY_RSP_WIDE;
         
         try {
-            for (QueryResponse msgRsp : lstRspMsgs)
+            for (QueryDataResponse msgRsp : lstRspMsgs)
                 CORRELATOR.addQueryResponse(msgRsp);
 
-        } catch (CompletionException | OperationNotSupportedException | CannotProceedException e) {
+        } catch (CompletionException | ExecutionException | CannotProceedException |IllegalArgumentException e) {
             Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
             
         }
@@ -235,7 +235,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testIsTableComplete() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_LONG;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_LONG;
         
         SamplingProcessTable    table = this.createTable(lstRawData);
         
@@ -247,7 +247,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testHasError() {
-        List<BucketData>    lstRawData = LST_QUERY_DATA_LONG;
+        List<QueryData>    lstRawData = LST_QUERY_DATA_LONG;
         
         SamplingProcessTable    table = this.createTable(lstRawData);
         
@@ -264,7 +264,7 @@ public class SamplingProcessTableTest {
         long                cntSamples = INT_SAMPLING_RATE * dpRequest.approxDomainSize();
         
         try {
-            List<BucketData>        lstRawData = recQuery.recoverQueryData();
+            List<QueryData>        lstRawData = recQuery.recoverQueryData();
             SamplingProcessTable    table = this.createTable(lstRawData);
             
             long                    cntRows = table.getRowCount();
@@ -287,7 +287,7 @@ public class SamplingProcessTableTest {
         long                cntSources = dpRequest.getSourceCount();
 
         try {
-            List<BucketData>        lstRawData = recQuery.recoverQueryData();
+            List<QueryData>        lstRawData = recQuery.recoverQueryData();
             SamplingProcessTable    table = this.createTable(lstRawData);
             
             long                    cntCols = table.getColumnCount();
@@ -307,7 +307,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnIndex() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -338,7 +338,7 @@ public class SamplingProcessTableTest {
         
         List<String>        lstSrcNms = dpRequest.getSourceNames();
 
-        List<BucketData>    lstRawData;
+        List<QueryData>    lstRawData;
         try {
             lstRawData = recQuery.recoverQueryData();
         } catch (ClassNotFoundException | IOException | DpGrpcException e) {
@@ -365,7 +365,7 @@ public class SamplingProcessTableTest {
         long                cntSamples = INT_SAMPLING_RATE * dpRequest.approxDomainSize();
         
         try {
-            List<BucketData>        lstRawData = recQuery.recoverQueryData();
+            List<QueryData>        lstRawData = recQuery.recoverQueryData();
             SamplingProcessTable    table = this.createTable(lstRawData);
             
             // Get the timestamps
@@ -412,7 +412,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnName() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -431,7 +431,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnTypeInt() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -454,7 +454,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnTypeString() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -477,7 +477,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnSizeInt() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -496,7 +496,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnSizeString() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -515,7 +515,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnInt() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -561,7 +561,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnString() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -605,7 +605,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnSizeMin() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -628,7 +628,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnSizeMax() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_TWO;
+        List<QueryData> lstRawData = LST_QUERY_DATA_TWO;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -651,7 +651,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetTimestamp() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_TWO;
+        List<QueryData> lstRawData = LST_QUERY_DATA_TWO;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -671,7 +671,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetValueIntInt() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -699,7 +699,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetValueIntString() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -727,7 +727,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetRowValues() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -758,7 +758,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetRowValuesAsList() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -789,7 +789,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnDataInt() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -819,7 +819,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnDataString() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -849,7 +849,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnDataTypedInt() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -879,7 +879,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testGetColumnDataTypedString() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_WIDE;
+        List<QueryData> lstRawData = LST_QUERY_DATA_WIDE;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -909,7 +909,7 @@ public class SamplingProcessTableTest {
      */
     @Test
     public final void testAllocationSize() {
-        List<BucketData> lstRawData = LST_QUERY_DATA_LONG;
+        List<QueryData> lstRawData = LST_QUERY_DATA_LONG;
         
         SamplingProcessTable table = createTable(lstRawData);
         
@@ -964,7 +964,7 @@ public class SamplingProcessTableTest {
      * 
      * @return  ordered list of sampling blocks processed from given raw data
      */ 
-    private SamplingProcessTable createTable(List<BucketData> lstRawData) {
+    private SamplingProcessTable createTable(List<QueryData> lstRawData) {
         SortedSet<CorrelatedQueryData>  setPrcdData = correlate(lstRawData);
         
         try {
@@ -992,7 +992,7 @@ public class SamplingProcessTableTest {
      * 
      * @return  a sorted set of <code>CorrelatedQueryData</code> objects 
      */
-    private SortedSet<CorrelatedQueryData>  correlate(List<BucketData> lstRawData) {
+    private SortedSet<CorrelatedQueryData>  correlate(List<QueryData> lstRawData) {
 
         CORRELATOR.reset();
         lstRawData.forEach(msgData -> CORRELATOR.addQueryData(msgData));

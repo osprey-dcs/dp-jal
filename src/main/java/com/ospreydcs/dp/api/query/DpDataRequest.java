@@ -44,8 +44,8 @@ import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.QuerySpec;
 
 
 /**
@@ -182,6 +182,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryRequest.QuerySpec;
 @AAdvancedApi(status=AAdvancedApi.STATUS.DEVELOPMENT, note="DP Query Service gRPC API is still under development")
 public final class DpDataRequest {
 
+    
     //
     //  Application Resources
     //
@@ -611,19 +612,20 @@ public final class DpDataRequest {
      * @see DpDataRequest#buildRequest()
      * @see DpDataRequest#buildDqlQueryString()
      */
-    public QueryRequest buildQueryRequest() {
+    public QueryDataRequest buildQueryRequest() {
         
         // Create the query specification (the request object)
         QuerySpec.Builder bldrQry = QuerySpec.newBuilder();
-        bldrQry.setStartTime( ProtoMsg.from(this.insStart) );
+        bldrQry.setBeginTime( ProtoMsg.from(this.insStart) );
         bldrQry.setEndTime( ProtoMsg.from( this.insStop) );
-        bldrQry.addAllColumnNames(this.lstSelCmps);
+        bldrQry.addAllPvNames(this.lstSelCmps);
         QuerySpec msgQry = bldrQry.build();
         
         // Create a query request from the query specification
-        QueryRequest.Builder bldrRqst = QueryRequest.newBuilder();
+        QueryDataRequest.Builder bldrRqst = QueryDataRequest.newBuilder();
         bldrRqst.setQuerySpec(msgQry);
-        QueryRequest msgRqst = bldrRqst.build();
+        
+        QueryDataRequest msgRqst = bldrRqst.build();
         
         return msgRqst;
     }
@@ -660,7 +662,7 @@ public final class DpDataRequest {
      * @see DpQueryConfig
      * @see DpApiConfig
      */
-    public List<QueryRequest> buildQueryRequests() {
+    public List<QueryDataRequest> buildQueryRequests() {
         
         // If composite requests are turned off return single request
         if (!BOL_COMPOSITE) {

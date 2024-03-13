@@ -31,9 +31,9 @@ package com.ospreydcs.dp.api.query.model.grpc;
 import java.util.function.Consumer;
 
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * <p>
@@ -89,9 +89,9 @@ public final class QueryResponseStreamUniProcessorDeprecated extends QueryRespon
      * @see #isSuccess()
      */
     public static QueryResponseStreamUniProcessorDeprecated  newTask(
-            QueryRequest msgRequest, 
+            QueryDataRequest msgRequest, 
             DpQueryServiceStub stubAsync, 
-            Consumer<BucketData> ifcDataSink) {
+            Consumer<QueryData> ifcDataSink) {
         return new QueryResponseStreamUniProcessorDeprecated(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -108,7 +108,7 @@ public final class QueryResponseStreamUniProcessorDeprecated extends QueryRespon
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    public QueryResponseStreamUniProcessorDeprecated(QueryRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<BucketData> ifcDataSink) {
+    public QueryResponseStreamUniProcessorDeprecated(QueryDataRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<QueryData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -142,7 +142,7 @@ public final class QueryResponseStreamUniProcessorDeprecated extends QueryRespon
     public void run() {
         
         // Invoke the gRPC data request creating and initiating the gRPC data stream
-        super.stubAsync.queryResponseStream(super.msgRequest, this);
+        super.stubAsync.queryDataStream(super.msgRequest, this);
         
         // Block until the streaming operation is complete
         super.awaitCompletion();
@@ -161,7 +161,7 @@ public final class QueryResponseStreamUniProcessorDeprecated extends QueryRespon
      * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
-    protected void requestProcessed(QueryResponse msgRsp) {
+    protected void requestProcessed(QueryDataResponse msgRsp) {
     }
     
     

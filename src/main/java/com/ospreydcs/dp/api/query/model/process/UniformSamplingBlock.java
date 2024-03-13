@@ -50,7 +50,7 @@ import com.ospreydcs.dp.api.model.IDataTable;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
-import com.ospreydcs.dp.grpc.v1.common.FixedIntervalTimestampSpec;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 
 /**
  * <p>
@@ -266,8 +266,8 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         }
         
         // Extract the relevant Protobuf message from the argument
-        FixedIntervalTimestampSpec  msgClockParams = cqdSampleBlock.getSamplingMessage();
-        List<DataColumn>            lstMsgDataCols = cqdSampleBlock.getAllDataMessages();
+        SamplingClock       msgClockParams = cqdSampleBlock.getSamplingMessage();
+        List<DataColumn>    lstMsgDataCols = cqdSampleBlock.getAllDataMessages();
         
         // Create the sampling clock and the timestamps for this block
         this.clkParams = UniformSamplingClock.from(msgClockParams);

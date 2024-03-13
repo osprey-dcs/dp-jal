@@ -37,7 +37,52 @@ import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 /**
  * <p>
  * Enumeration of data types supported as heterogeneous <em>data values</em> within the Data Platform.
- * </p> 
+ * </p>
+ * <p>
+ * The mapping of Protocol Buffers ("Protobuf") data types to Java data types is NOT one-to-one.  Protobuf
+ * has more <em>primitive</em> types than Java, particularly the unsigned integral values.  Moreover,
+ * structured data defined with Protobuf message (e.g., <code>Array</code>, <code>Structure</code>, 
+ * <code>Image</code>) require special handling within Java.  These types are handled with either specially 
+ * formatted Java containers (e.g., <code>Array</code> and <code>Structure</code>) or with classes defined 
+ * within this library (e.g., <code>Image</code>).
+ * </p>
+ * <p>
+ * <h2>NOTES:</h2>
+ * <ul>
+ * <li>All <em>unsigned</em> Protobuf data types are represented as their signed equivalents.</li>
+ * <li>The <code>bytes</code> Protobuf primitive is represented by the Google class <code>com.google.Protobuf.ByteString</code> class.</li>
+ * <li>The <code>Array</code> Protobuf message is currently represented as a Java <code>Vector</code>. 
+ * <li>The <code>Structure</code> Protobuf message is represented as a Java <code>Map</code>.</li>
+ * <li>The <code>Image</code> Protobuf message is represented with the DP API class <code>BufferedImage</code>.</li>
+ * </ul>
+ * </p>
+ * <p>
+ * <h2>Mappings</h2>
+ * The current Protobuf type to Java object mappings are listed below:
+ * <br/>
+ * <code>
+ * <pre>
+ *    <code>bool</code> -> <code>java.lang.Boolean</code> 
+ *    <code>uint32</code> -> <code>java.lang.Integer</code>
+ *    <code>sint32</code> -> <code>java.lang.Integer</code>
+ *    <s><code>int32</code> -> <code>java.lang.Integer</code></s> (not used)
+ *    <code>uint64</code> -> <code>java.lang.Long</code>
+ *    <code>sint64</code> -> <code>java.lang.Long</code>
+ *    <s><code>int64</code> -> <code>java.lang.Long</code></s> (not used) 
+ *    <code>float</code> -> <code>java.lang.Float</code>
+ *    <code>double</code> -> <code>java.lang.Double</code>
+ *    <code>string</code> -> <code>Java.lang.String</code> 
+ *    <code>bytes</code> -> <code>com.google.Protobuf.ByteString</code>
+ *    <code>Array</code> -> <code>java.util.Vector&lt;Object&gt;</code>
+ *    <code>Structure</code> -> <code>java.util.Map&lt;Object&gt;</code>
+ *    <code>Image</code> -> <code>com.ospreydcs.dp.api.common.BufferedImage</code>
+ * </pre>
+ * </code>
+ * </p>
+ * <p>
+ * <h2>TODO:</h2>
+ * Consider changing the <code>Array</code> representation to a Java <code>ArrayList</code>.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Jan 8, 2024
@@ -57,29 +102,88 @@ public enum DpSupportedType {
 //    STRUCTURE(Map.class),
 //    UNSUPPORTED_TYPE(null)
     
+    /**
+     * The Boolean type {<code>false</code>, <code>true</code>} represented as <code>{@link Boolean}</code>.
+     * <p>
+     * <code>bool</code> -> <code>java.lang.Boolean</code> 
+     */
     BOOLEAN(Boolean.class),
     
+    /**
+     * The 32-bit integer type.
+     * <p>
+     * <code>uint32</code> -> <code>java.lang.Integer</code><br/>
+     * <code>sint32</code> -> <code>java.lang.Integer</code><br/>
+     * <s><code>int32</code> -> <code>java.lang.Integer</code></s> (not used)
+     */
     INTEGER(Integer.class),
     
+    /**
+     * The 64-bit integer type. 
+     * <p>
+     * <code>uint64</code> -> <code>java.lang.Long</code><br/>
+     * <code>sint64</code> -> <code>java.lang.Long</code><br/>
+     * <s><code>int64</code> -> <code>java.lang.Long</code></s> (not used) 
+     */
     LONG(Long.class),
     
+    /**
+     * The 32-bit floating point type.
+     * <p>
+     * <code>float</code> -> <code>java.lang.Float</code>
+     */
     FLOAT(Float.class),
     
+    /**
+     * The 64-bit floating point type (double value).
+     * <p>
+     * <code>double</code> -> <code>java.lang.Double</code>
+     */
     DOUBLE(Double.class),
     
+    /**
+     * Character string type.
+     * <p>
+     * <code>string</code> -> <code>Java.lang.String</code> 
+     */
     STRING(String.class),
     
+    /**
+     * Raw data type, that is, a string of <code>byte</code> values.
+     * <p>
+     * <code>bytes</code> -> <code>com.google.Protobuf.ByteString</code>
+     */
     BYTE_ARRAY(ByteString.class),
     
-    @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented")
+    /**
+     * Image data type.
+     * <p>
+     * <code>Image</code> -> <code>com.ospreydcs.dp.api.common.BufferedImage</code>
+     */
+    @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented within dp-services")
     IMAGE(BufferedImage.class),
     
-    @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented")
+    /**
+     * Array data type (of <code>DataValue</code> messages).
+     * <p>
+     * <code>Array</code> -> <code>java.util.Vector&lt;Object&gt;</code>
+     */
+    @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented withiin dp-services")
     ARRAY(Vector.class),
     
-    @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented")
+    /**
+     * Data structure type (contains fields of <code>Structure.Field</code> messages).
+     * <p>
+     * <code>Structure</code> -> <code>java.util.Map&lt;Object&gt;</code>
+     */
+    @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented within dp-services")
     STRUCTURE(Map.class),
     
+    /**
+     * Enumeration for unsupported or unrecognized data types.
+     * <p>
+     * Indicates an exception condition.
+     */
     UNSUPPORTED_TYPE(null)
     ;
 
@@ -136,7 +240,7 @@ public enum DpSupportedType {
      * 
      * @return  Java class type representing this data value type
      */
-    public Class<? extends Object>  getType() {
+    public Class<? extends Object>  getJavaType() {
         return this.clsType;
     }
     
@@ -153,7 +257,7 @@ public enum DpSupportedType {
     }
     
     /**
-     * Returns whether or not this type is compatible with the given type.
+     * Returns whether or not this type is compatible (assignable) with the given type.
      * <p>
      * Specifically, returns <code>true</code> only if objects of this type can be assigned
      * values with objects of type <code>T</code>.

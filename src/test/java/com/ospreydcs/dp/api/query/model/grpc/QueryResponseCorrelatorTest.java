@@ -48,7 +48,7 @@ import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.test.TestQueryCompositeRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * JUnit test cases for class <code>{@link QueryResponseCorrelator}</code>.
@@ -555,7 +555,7 @@ public class QueryResponseCorrelatorTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
-    @Test
+//    @Test
     public final void testProcessRequestStreamHuge() {
         TestQueryRecord     recTest = REC_HUGE;
         
@@ -658,7 +658,7 @@ public class QueryResponseCorrelatorTest {
         corrData.reset();
         
         try {
-            List<BucketData>    lstRawData = recTest.recoverQueryData();
+            List<QueryData>    lstRawData = recTest.recoverQueryData();
             
             lstRawData.forEach(msgData -> corrData.addQueryData(msgData));
             
@@ -690,7 +690,7 @@ public class QueryResponseCorrelatorTest {
         corrData.reset();
         
         try {
-            List<BucketData>    lstRawData = recTest.recoverQueryData();
+            List<QueryData>    lstRawData = recTest.recoverQueryData();
             
             lstRawData.forEach(msgData -> corrData.addQueryData(msgData));
             

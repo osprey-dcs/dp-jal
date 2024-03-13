@@ -31,10 +31,11 @@ import java.util.function.Consumer;
 
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryRequest.CursorOperation;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.CursorOperation.CursorOperationType;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 import io.grpc.stub.CallStreamObserver;
 
@@ -84,7 +85,7 @@ public class QueryResponseStreamBidiProcessorDeprecated extends QueryResponseStr
     //
     
     /** the handle to the forward gRPC stream (to Query Service) */
-    private CallStreamObserver<QueryRequest>   hndQueryService = null;
+    private CallStreamObserver<QueryDataRequest>   hndQueryService = null;
     
     
     //
@@ -110,8 +111,9 @@ public class QueryResponseStreamBidiProcessorDeprecated extends QueryResponseStr
      * 
      * @see #isSuccess()
      */
-    public static QueryResponseStreamBidiProcessorDeprecated  newTask(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
-            Consumer<BucketData> ifcDataSink) {
+    public static QueryResponseStreamBidiProcessorDeprecated  newTask(QueryDataRequest msgRequest, 
+            DpQueryServiceStub stubAsync,
+            Consumer<QueryData> ifcDataSink) {
         return new QueryResponseStreamBidiProcessorDeprecated(msgRequest, stubAsync, ifcDataSink);
     }
     
@@ -129,8 +131,9 @@ public class QueryResponseStreamBidiProcessorDeprecated extends QueryResponseStr
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    public QueryResponseStreamBidiProcessorDeprecated(QueryRequest msgRequest, DpQueryServiceStub stubAsync,
-            Consumer<BucketData> ifcDataSink) {
+    public QueryResponseStreamBidiProcessorDeprecated(QueryDataRequest msgRequest, 
+            DpQueryServiceStub stubAsync,
+            Consumer<QueryData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }
 
@@ -168,7 +171,7 @@ public class QueryResponseStreamBidiProcessorDeprecated extends QueryResponseStr
     public void run() {
         
         // Create the bidirectional gRPC data stream
-        this.hndQueryService = (CallStreamObserver<QueryRequest>)super.stubAsync.queryResponseCursor(this);
+        this.hndQueryService = (CallStreamObserver<QueryDataRequest>)super.stubAsync.queryDataBidiStream(this);
 
         // Initiate the data stream by sending the data request
         this.hndQueryService.onNext(super.msgRequest);
@@ -195,14 +198,22 @@ public class QueryResponseStreamBidiProcessorDeprecated extends QueryResponseStr
      * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
-    protected void requestProcessed(QueryResponse msgRsp) throws Exception {
+    protected void requestProcessed(QueryDataResponse msgRsp) throws Exception {
         
         // Check that forward stream handle has been initialized
         if (this.hndQueryService == null) 
             throw new Exception(JavaRuntime.getQualifiedCallerNameSimple() + ": Serious streaming error - forward stream handle is null!");
         
         // Create the cursor operation query request message
-        QueryRequest    msgRqst = QueryRequest.newBuilder().setCursorOp(CursorOperation.CURSOR_OP_NEXT).build();
+        CursorOperation     msgCursor = CursorOperation
+                .newBuilder()
+                .setCursorOperationType(CursorOperationType.CURSOR_OP_NEXT)
+                .build();
+        
+        QueryDataRequest    msgRqst = QueryDataRequest
+                .newBuilder()
+                .setCursorOp(msgCursor)
+                .build();
         
         // Send cursor operation message to Query Service on forward stream
         this.hndQueryService.onNext(msgRqst);
