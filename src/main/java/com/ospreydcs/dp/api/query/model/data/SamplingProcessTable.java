@@ -90,7 +90,7 @@ import com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock;
  * @since Feb 23, 2024
  *
  */
-public class SamplingProcessTable extends SamplingProcess implements IDataTable {
+public class SamplingProcessTable /* extends SamplingProcess */ implements IDataTable {
 
     
     //
@@ -104,11 +104,20 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
 
     
     //
-    // Attributes
+    // Defining Attributes
+    //
+    
+    /** The <code>SamplingProcess</code> instance providing source for table data, i.e., the target */
+    private final SamplingProcess       prcTarget;
+    
+    
+    //
+    // Table Resources
     //
 
     /** The vector of timestamps for this sampling process - set at construction */
     private final ArrayList<Instant>    vecTimestamps;
+
     
     /** The vector of data source names - set at construction */
     private final ArrayList<String>     vecColumnName;
@@ -128,14 +137,16 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     
     
     //
-    // Creator
+    // Creators
     //
     
     /**
      * <p>
-     * Creates a new instance of <code>SamplingProcessTable</code> fully populated from argument data.
+     * Creates a new, initialized instance of <code>SamplingProcessTable</code> ready for access.
      * </p>
      * <p>
+     * A new instance of <code>{@link SamplingProcess}</code> is created from the argument and
+     * used internally as a data source for dynamic table lookups.
      * After creation the new instance is fully populated with sampled time-series data from
      * all data sources contained in the argument.  The new instance is also configured according to the order 
      * and the correlations within the argument.
@@ -145,7 +156,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      * <h2>NOTES:</h2>
      * <ul>
      * <li>The argument collection is assumed to be sorted in the order of clock starting instants</li>
-     * <li>Extensive data consistency check is performed during construction (within <code>SamplingProcess</code>).</li>
+     * <li>Extensive data consistency check is performed during construction (within <code>SamplingProcess</code> constructor).</li>
      * <li>Any detected data inconsistencies result in an exception. </li>
      * <li>Exception type determines the nature of any Data inconsistency. </li>
      * </ul>  
@@ -162,6 +173,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      * @throws CompletionException      the sampling process was corrupt after creation (see message)
      * 
      * @see SamplingProcess
+     * @see #SamplingProcessTable(SortedSet)
      */
     public static SamplingProcessTable from(SortedSet<CorrelatedQueryData> setTargetData) 
             throws  MissingResourceException, 
@@ -174,8 +186,31 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         return new SamplingProcessTable(setTargetData);
     }
     
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>SamplingProcessTable</code> ready for access.
+     * </p>
+     * <p>
+     * The <code>{@link SamplingProcess}</code> instance provided in the argument is used as
+     * source data for the <code>{@link IDataTable}</code> implementation returned.  That is,
+     * the returned <code>SamplingProcessTable</code> instance is attached to the argument
+     * and performs all table operations required by <code>IDataTable</code>.
+     * </p>
+     * 
+     * @param target sampling process used as source data for all table operations
+     * 
+     * @return a new instance of <code>SamplingProcessTable</code> attached to the argument and ready for access
+     * 
+     * @see SamplingProcess
+     * @see #SamplingProcessTable(SamplingProcess)
+     */
+    public static SamplingProcessTable from(SamplingProcess target) {
+        return new SamplingProcessTable(target);
+    }
+    
+    
     //
-    // Constructor
+    // Constructors
     //
     
     /**
@@ -183,37 +218,74 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      * Constructs a new instance of <code>SamplingProcessTable</code>.
      * </p>
      * <p>
-     * The argument is passed to the superclass constructor <code>{@link SamplingProcess(SortedSet)}</code> where
-     * all the time-series data initialization occurs.  This constructor then initializes the auxiliary 
-     * containers used for table access.
+     * The argument is used to create a new <code>{@link SamplingProcess}</code> instance using
+     * constructor <code>{@link SamplingProcess(SortedSet)}</code>,  where
+     * all the time-series data initialization occurs.  All exceptions are thrown
+     * by this sampling process construction process.
+     * </p>
+     * <p>  
+     * Once the <code>SamplingProcess</code> internal instance is created, this constructor then 
+     * initializes the auxiliary data structures used for table access.
+     * The internal sampling process is used for all table lookups. 
      * </p>
      *
-     * @param setTargetData sorted set of <code>CorrelatedQueryData</code> used to build this table
+     * @param setTargetData sorted set of <code>CorrelatedQueryData</code> used to build internal sampling process
      * 
      * @throws MissingResourceException the argument is has empty data column(s)
      * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
      * @throws RangeException           the argument contains time domain collisions
-     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      * @throws CompletionException      the sampling process was corrupt after creation (see message)
      */
     public SamplingProcessTable(SortedSet<CorrelatedQueryData> setTargetData)
             throws RangeException, MissingResourceException, IllegalArgumentException, IllegalStateException,
-            UnsupportedOperationException, CompletionException {
-        super(setTargetData);
-
-        this.vecTimestamps = super.timestamps();
-        this.vecColumnName = new ArrayList<>(super.setSrcNms);
-        this.mapSrcNmToInd = this.createSrcNmToIndMap(super.setSrcNms);
-        this.mapIndToSrcNm = this.createIndToSrcNmMap(super.setSrcNms);
-        this.vecPageRowInd = this.createPageIndexVector(super.vecSmplBlocks);
+            TypeNotPresentException, CompletionException {
         
-        this.mapSrcNmToFullColumn = new HashMap<>();
+        // Create the internal SamplingProcess instance
+        this(SamplingProcess.from(setTargetData));
+
+//        this.vecTimestamps = super.timestamps();
+//        this.vecColumnName = new ArrayList<>(super.setSrcNms);
+//        this.mapSrcNmToInd = this.createSrcNmToIndMap(super.setSrcNms);
+//        this.mapIndToSrcNm = this.createIndToSrcNmMap(super.setSrcNms);
+//        this.vecPageRowInd = this.createPageIndexVector(super.vecSmplBlocks);
+//        
+//        this.mapSrcNmToFullColumn = new HashMap<>();
     }
     
-//    public SamplingProcessTable(SamplingProcess source) {
-//        super(source);
-//    }
+    /**
+     * <p>
+     * Constructs a new, initialized instance of <code>SamplingProcessTable</code> ready for access.
+     * </p>
+     * <p>
+     * Creates a new <code>SamplingProcessTable</code> that uses the given argument as its
+     * source data.  The new instance implements the <code>{@link IDataTable}</code> interface
+     * dynamically.  That is, table value lookups are all done dynamically against the given
+     * <code>SamplingProcess</code>.
+     * </p>
+     *
+     * @param source    sampling process used as source data for all table operations
+     */
+    public SamplingProcessTable(SamplingProcess source) {
+        
+        // Set the target sampling process instance
+        this.prcTarget = source;
+        
+        // Create the timestamps for the table.
+        this.vecTimestamps = this.prcTarget.timestamps();
+
+        // Create the auxiliary data structures used for table lookup
+        this.vecColumnName = new ArrayList<>(this.prcTarget.getDataSourceNames());
+        this.mapSrcNmToInd = this.createSrcNmToIndMap(this.vecColumnName);
+        this.mapIndToSrcNm = this.createIndToSrcNmMap(this.vecColumnName);
+        
+        // Create the vector of starting table row indices for each page (sampling block)
+        this.vecPageRowInd = this.createPageIndexVector(this.prcTarget.getSamplingBlocks());
+        
+        // The map of data source name to full table column, which are created as needed.
+        this.mapSrcNmToFullColumn = new HashMap<>();
+    }
 
     
     //
@@ -246,7 +318,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      */
     @Override
     public Integer getRowCount() {
-        return super.getSampleCount();
+        return this.prcTarget.getSampleCount();
     }
 
     /**
@@ -255,7 +327,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      */
     @Override
     public Integer getColumnCount() {
-        return super.getDataSourceCount();
+        return this.prcTarget.getDataSourceCount();
     }
 
     /**
@@ -312,8 +384,10 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     public IDataColumn<Object> getColumn(int indCol) throws IndexOutOfBoundsException, ClassCastException {
 
         // Check index
-        if (indCol < 0 || indCol >= super.getDataSourceCount())
-            throw new IndexOutOfBoundsException("Table column index " + indCol + " out of bounds [0, " + super.getDataSourceCount() + "]");
+        int     cntCols = this.prcTarget.getDataSourceCount();
+        
+        if (indCol < 0 || indCol >= cntCols)
+            throw new IndexOutOfBoundsException("Table column index " + indCol + " out of bounds [0, " + cntCols + "]");
         
         // Get column name
         String  strColNm = this.getColumnName(indCol);
@@ -324,7 +398,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         // Must create the column (and save)
         if (col == null) {
             
-            col = super.timeSeries(strColNm);
+            col = this.prcTarget.timeSeries(strColNm);
             this.mapSrcNmToFullColumn.put(strColNm, col);
         }
         
@@ -353,7 +427,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     public IDataColumn<Object> getColumn(String strName) throws NoSuchElementException, ClassCastException {
         
         // Check the column name
-        if (!super.hasSourceData(strName))
+        if (!this.prcTarget.hasSourceData(strName))
             throw new NoSuchElementException("Table has no data source with name " + strName);
         
         // Is already created?
@@ -362,7 +436,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         // Must create the column (and save)
         if (col == null) {
             
-            col = super.timeSeries(strName);
+            col = this.prcTarget.timeSeries(strName);
             this.mapSrcNmToFullColumn.put(strName, col);
         }
         
@@ -398,7 +472,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     public DpSupportedType getColumnType(int indCol) throws IndexOutOfBoundsException {
         String   strName = this.getColumnName(indCol);
 
-        return super.getSourceType(strName);
+        return this.prcTarget.getSourceType(strName);
     }
 
     /**
@@ -408,7 +482,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      */
     @Override
     public DpSupportedType getColumnType(String strName) throws NoSuchElementException {
-        return super.getSourceType(strName);
+        return this.prcTarget.getSourceType(strName);
     }
 
     /**
@@ -423,7 +497,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         if (indCol < 0 || indCol >= this.getColumnCount())
             throw new IndexOutOfBoundsException("Column index " + indCol + " not in [0, " + this.getColumnCount() + "]");
 
-        return super.getSampleCount();
+        return this.prcTarget.getSampleCount();
     }
 
     /**
@@ -435,10 +509,10 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     public Integer getColumnSize(String strName) throws NoSuchElementException {
 
         // Check argument value
-        if (!super.hasSourceData(strName))
+        if (!this.prcTarget.hasSourceData(strName))
             throw new NoSuchElementException("Column name no represented in time-series data: " + strName);
 
-        return super.getSampleCount();
+        return this.prcTarget.getSampleCount();
     }
 
     /**
@@ -448,7 +522,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      */
     @Override
     public Integer getColumnSizeMin() {
-        return super.getSampleCount();
+        return this.prcTarget.getSampleCount();
     }
 
     /**
@@ -458,7 +532,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      */
     @Override
     public Integer getColumnSizeMax() {
-        return super.getSampleCount();
+        return this.prcTarget.getSampleCount();
     }
 
     /**
@@ -483,7 +557,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         PageIndex  recIndex = this.computePageIndex(indRow);
 
         // Get the page
-        UniformSamplingBlock    tblPage = super.getSamplingBlock(recIndex.indPage);
+        UniformSamplingBlock    tblPage = this.prcTarget.getSamplingBlock(recIndex.indPage);
 
         // Get source name for index and check that page contains data for that source
         String      strColNm = this.getColumnName(indCol);
@@ -509,7 +583,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         PageIndex  recIndex = this.computePageIndex(indRow);
 
         // Get the page
-        UniformSamplingBlock    tblPage = super.getSamplingBlock(recIndex.indPage);
+        UniformSamplingBlock    tblPage = this.prcTarget.getSamplingBlock(recIndex.indPage);
 
         // Check that page contains data for that source
         if (!tblPage.hasSourceData(strName))
@@ -533,7 +607,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         PageIndex  recIndex = this.computePageIndex(indRow);
 
         // Get the page
-        UniformSamplingBlock    tblPage = super.getSamplingBlock(recIndex.indPage);
+        UniformSamplingBlock    tblPage = this.prcTarget.getSamplingBlock(recIndex.indPage);
 
         // Allocate the object array and populate it
         Object[]    arrObjs = new Object[this.getColumnCount()];
@@ -576,9 +650,10 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         String  strName = this.getColumnName(indCol);
         
         // Iterate through all data pages collecting data
-        List<Object>    lstColVals = new ArrayList<>(super.getSampleCount());
+        List<Object>                lstColVals = new ArrayList<>(this.prcTarget.getSampleCount());
+        List<UniformSamplingBlock>  lstPages = this.prcTarget.getSamplingBlocks();
         
-        for (UniformSamplingBlock page : super.vecSmplBlocks) {
+        for (UniformSamplingBlock page : lstPages) {
             
             if (page.hasSourceData(strName))
                 lstColVals.addAll( page.getColumnData(strName) );
@@ -601,13 +676,14 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
     public List<Object> getColumnData(String strName) throws IllegalArgumentException, NoSuchElementException {
         
         // Check argument
-        if (!this.hasSourceData(strName))
+        if (!this.prcTarget.hasSourceData(strName))
             throw new NoSuchElementException("Data source name not represented within time-series data: " + strName);
         
         // Iterate through all data pages collecting data
-        List<Object>    lstColVals = new ArrayList<>(super.getSampleCount());
+        List<Object>                lstColVals = new ArrayList<>(this.prcTarget.getSampleCount());
+        List<UniformSamplingBlock>  lstPages = this.prcTarget.getSamplingBlocks();
         
-        for (UniformSamplingBlock page : super.vecSmplBlocks) {
+        for (UniformSamplingBlock page : lstPages) {
             
             if (page.hasSourceData(strName))
                 lstColVals.addAll( page.getColumnData(strName) );
@@ -687,7 +763,7 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
         // Iterate through all data pages collecting running sum
         long    lngSize = 0;
         
-        for (UniformSamplingBlock page : super.vecSmplBlocks) {
+        for (UniformSamplingBlock page : this.prcTarget.getSamplingBlocks()) {
             lngSize += page.allocationSize();
         }
         
@@ -835,8 +911,11 @@ public class SamplingProcessTable extends SamplingProcess implements IDataTable 
      */
     private PageIndex     computePageIndex(int indTblRow) throws IndexOutOfBoundsException, IllegalStateException {
         
-        if (indTblRow < 0 || indTblRow >= super.getSampleCount())
-            throw new IndexOutOfBoundsException("Table row index " + indTblRow + " out of bounds [0, " + super.getSampleCount() + "]");
+        // Check index
+        int     cntTblRows = this.prcTarget.getSampleCount();
+        
+        if (indTblRow < 0 || indTblRow >= cntTblRows)
+            throw new IndexOutOfBoundsException("Table row index " + indTblRow + " out of bounds [0, " + cntTblRows + "]");
         
         // Iterate through all data page indices
         Integer indPage = 0;

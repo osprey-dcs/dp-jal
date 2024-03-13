@@ -29,7 +29,6 @@ package com.ospreydcs.dp.api.query.model.process;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -59,6 +58,7 @@ import com.ospreydcs.dp.api.model.IDataTable;
 import com.ospreydcs.dp.api.query.model.data.SamplingProcessTable;
 import com.ospreydcs.dp.api.query.model.data.StaticDataTable;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -158,13 +158,13 @@ public class SamplingProcess {
     
     
     /** The set of all unique data sources names - taken from initializing correlated query data */
-    protected final SortedSet<String>             setSrcNms;
+    protected final SortedSet<String>               setSrcNms;
     
     /** Map of data source names to their data type - taken from processed sampling blocks */
-    protected final Map<String, DpSupportedType>  mapSrcNmToType;
+    protected final Map<String, DpSupportedType>    mapSrcNmToType;
     
     /** Ordered vector of uniform sampling blocks comprising the sampling process */
-    protected final List<UniformSamplingBlock>    vecSmplBlocks;
+    protected final ArrayList<UniformSamplingBlock> vecSmplBlocks;
     
     
     //
@@ -199,7 +199,7 @@ public class SamplingProcess {
      * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
      * @throws RangeException           the argument contains time domain collisions
-     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     * @throws TypNotPresentException   an unsupported data type was detected within the argument
      * @throws CompletionException      the sampling process was corrupt after creation (see message)
      */
     public static SamplingProcess from(SortedSet<CorrelatedQueryData> setTargetData) 
@@ -207,7 +207,7 @@ public class SamplingProcess {
                     IllegalArgumentException, 
                     IllegalStateException, 
                     RangeException, 
-                    UnsupportedOperationException, 
+                    TypeNotPresentException, 
                     CompletionException 
     {
         return new SamplingProcess(setTargetData);
@@ -245,7 +245,7 @@ public class SamplingProcess {
      * @throws MissingResourceException the argument is has empty data column(s)
      * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
-     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
+     * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      * @throws CompletionException      the sampling process was corrupt after creation (see message)
      */
     public SamplingProcess(SortedSet<CorrelatedQueryData> setTargetData) 
@@ -253,7 +253,7 @@ public class SamplingProcess {
                     MissingResourceException, 
                     IllegalArgumentException, 
                     IllegalStateException, 
-                    UnsupportedOperationException, 
+                    TypeNotPresentException, 
                     CompletionException 
     {
         
@@ -355,6 +355,25 @@ public class SamplingProcess {
      */
     public final UniformSamplingBlock   getSamplingBlock(int index) throws IndexOutOfBoundsException {
         return this.vecSmplBlocks.get(index);
+    }
+    
+    /**
+     * <p>
+     * Returns all component <code>{@link UniformSamplingBlock}</code> instances in order of
+     * sampling clock start times.
+     * </p>
+     * <p>
+     * Internally, <code>SamplingProcess</code> objects are composed of an ordered vector
+     * of <code>UniformSamplingBlock</code> instances. Each sampling block instance contains
+     * the time-series data for the process for a given duration determined by its uniform 
+     * sampling clock.
+     * This method returns all sampling block instances in order of time.
+     * </p>
+     * 
+     * @return the ordered collection of component sampling blocks for this process
+     */
+    public final ArrayList<UniformSamplingBlock>    getSamplingBlocks() {
+        return this.vecSmplBlocks;
     }
 
     /**
@@ -868,24 +887,30 @@ public class SamplingProcess {
      * throws RangeException           the argument has bad ordering or contains time domain collisions
      * @throws TypeNotPresentException an unsupported data type was detected within the argument
      */
-    private List<UniformSamplingBlock>    buildSamplingBlocks(SortedSet<CorrelatedQueryData> setQueryData) 
+    private ArrayList<UniformSamplingBlock>    buildSamplingBlocks(SortedSet<CorrelatedQueryData> setQueryData) 
             throws MissingResourceException, IllegalArgumentException, IllegalStateException, /* RangeException,*/ TypeNotPresentException {
         
         // Create the sample blocks, pivoting to concurrency by container size
-        List<UniformSamplingBlock>    vecSmplBlocks;
+        ArrayList<UniformSamplingBlock>    vecSmplBlocks;
         
         if (BOL_CONCURRENCY && (setQueryData.size() > SZ_CONCURRENCY_PIVOT) ) {
             // invoke concurrency
             UniformSamplingBlock           arrSmplBlocks[] = new UniformSamplingBlock[setQueryData.size()];
+//            vecSmplBlocks = new ArrayList<>(setQueryData.size());
             ArrayList<CorrelatedQueryData> vecQueryData = new ArrayList<>(setQueryData);
             
             IntStream.range(0, setQueryData.size())
                 .parallel()
                 .forEach(
                         i -> {arrSmplBlocks[i] = UniformSamplingBlock.from(vecQueryData.get(i)); } 
+//                        i -> {vecSmplBlocks.set(i, UniformSamplingBlock.from(vecQueryData.get(i))); } 
                         );
 
-            vecSmplBlocks = Arrays.asList(arrSmplBlocks);
+//            vecSmplBlocks = Arrays.asList(arrSmplBlocks);
+          vecSmplBlocks = new ArrayList<>(setQueryData.size());
+          for (UniformSamplingBlock block : arrSmplBlocks) {
+              vecSmplBlocks.add(block);
+          }
             
         } else {
             // serial processing

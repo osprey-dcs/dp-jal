@@ -170,7 +170,7 @@ public class SamplingProcessTableTest {
      * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#from(java.util.SortedSet)}.
      */
     @Test
-    public final void testFrom() {
+    public final void testFromSortedSet() {
         
         List<QueryDataResponse> lstRspMsgs = LST_QUERY_RSP_WIDE;
         
@@ -187,14 +187,47 @@ public class SamplingProcessTableTest {
         SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getCorrelatedSet();
         
         try {
-            SamplingProcessTable process = SamplingProcessTable.from(setPrcdData);
+            SamplingProcessTable table = SamplingProcessTable.from(setPrcdData);
             
-            assertTrue("Results set contained no data sources.", process.getSamplingBlockCount() > 0);
+            assertTrue("Results set contained no data sources.", table.getColumnCount() > 0);
             
         } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | 
                  RangeException | UnsupportedOperationException | CompletionException e) {
             
-            Assert.fail(failMessage("SamplingProcessTable#from()", e));
+            Assert.fail(failMessage("SamplingProcessTable#from(SortedSet)", e));
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#from(SamplingProcess}.
+     */
+    @Test
+    public final void testFromSamplingProcess() {
+        
+        List<QueryDataResponse> lstRspMsgs = LST_QUERY_RSP_WIDE;
+        
+        try {
+            for (QueryDataResponse msgRsp : lstRspMsgs)
+                CORRELATOR.addQueryResponse(msgRsp);
+
+        } catch (CompletionException | ExecutionException | CannotProceedException | IllegalArgumentException e) {
+            Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
+            
+        }
+        
+        // Get the processed data and try to create SamplingProcess
+        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getCorrelatedSet();
+        
+        try {
+            SamplingProcess         process = SamplingProcess.from(setPrcdData);
+            SamplingProcessTable    table = SamplingProcessTable.from(process); // method under test
+            
+            assertTrue("Results set contained no data sources.", table.getColumnCount() > 0);
+            
+        } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | 
+                 RangeException | UnsupportedOperationException | CompletionException e) {
+            
+            Assert.fail(failMessage("SamplingProcessTable#from(SamplingProcess)", e));
         }
     }
 
@@ -219,14 +252,47 @@ public class SamplingProcessTableTest {
         SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getCorrelatedSet();
         
         try {
-            SamplingProcessTable process = new SamplingProcessTable(setPrcdData);
+            SamplingProcessTable table = new SamplingProcessTable(setPrcdData);
             
-            assertTrue("Results set contained no data sources.", process.getSamplingBlockCount() > 0);
+            assertTrue("Results set contained no data sources.", table.getColumnCount() > 0);
             
         } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | 
                  RangeException | UnsupportedOperationException | CompletionException e) {
             
-            Assert.fail(failMessage("SamplingProcessTable#SamplingProcessTable()", e));
+            Assert.fail(failMessage("SamplingProcessTable#SamplingProcessTable(SortedSet)", e));
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#SamplingProcessTable(SamplingProcess)}.
+     */
+    @Test
+    public final void testSamplingProcessTableSamplingProcess() {
+        
+        List<QueryDataResponse> lstRspMsgs = LST_QUERY_RSP_WIDE;
+        
+        try {
+            for (QueryDataResponse msgRsp : lstRspMsgs)
+                CORRELATOR.addQueryResponse(msgRsp);
+
+        } catch (CompletionException | ExecutionException | CannotProceedException |IllegalArgumentException e) {
+            Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
+            
+        }
+        
+        // Get the processed data and try to create SamplingProcess
+        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getCorrelatedSet();
+        
+        try {
+            SamplingProcess      process = new SamplingProcess(setPrcdData);
+            SamplingProcessTable table = new SamplingProcessTable(process);   // method under test
+            
+            assertTrue("Results set contained no data sources.", table.getColumnCount() > 0);
+            
+        } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | 
+                 RangeException | UnsupportedOperationException | CompletionException e) {
+            
+            Assert.fail(failMessage("SamplingProcessTable#SamplingProcessTable(SamplingProcess)", e));
         }
     }
 
