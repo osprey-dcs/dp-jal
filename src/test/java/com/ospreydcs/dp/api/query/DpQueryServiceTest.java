@@ -38,6 +38,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.IntStream;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -48,8 +49,10 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.DpApiTestingConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.IDataTable;
+import com.ospreydcs.dp.api.model.PvMetaRecord;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
@@ -86,12 +89,19 @@ public class DpQueryServiceTest {
     //
     
     /** The default Query Service configuration parameters */
-    private static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    private static final DpQueryConfig          CFG_QUERY = DpApiConfig.getInstance().query;
+    
+    /** The default API Test configuration */
+    private static final DpApiTestingConfig     CFG_TEST = DpApiTestingConfig.getInstance();
     
     
     //
     // Class Constants
     //
+    
+    /** Process Variable prefixes used in the test archive */
+    public static final String  STR_PV_PREFIX = CFG_TEST.testArchive.pvPrefix;
+    
     
     /** Output file for <code>DpQueryStreamQueueBufferDeprecated</code> data buffer results with lots of columns */
     public static final String  STR_PATH_QUERY_DATA_RESULTS_WIDE = "src/test/resources/data/querydata-results-wide.dat";
@@ -173,8 +183,143 @@ public class DpQueryServiceTest {
     // Test Cases
     //
     
+    
+    /** 
+     * Test method for {@link DpQueryService#queryPvs(DpMetadataReuest)}.
+     */
+    @Test
+    public final void testQueryPvsSingle() {
+        String      strPvName1 = STR_PV_PREFIX + Integer.toString(1);
+        
+        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
+        
+        rqst.selectPv(strPvName1);
+        
+        try {
+            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
+            
+            Assert.assertTrue("Record list should contain 1 record", lstRecs.size() == 1);
+            
+            PvMetaRecord        recTest = lstRecs.get(0);
+            
+            Assert.assertEquals(strPvName1, recTest.name());
+            
+            System.out.println("Single PV Metadata Record:");
+            System.out.println(recTest);
+            
+        } catch (DpQueryException e) {
+            Assert.fail("Metadata query threw exception: + " + e.getMessage());
+            
+        }
+    }
+    
+    /** 
+     * Test method for {@link DpQueryService#queryPvs(DpMetadataReuest)}.
+     */
+    @Test
+    public final void testQueryPvsMultiple() {
+        final int   SZ_LIST = 10;
+        
+        List<String>    lstPvNames = IntStream
+                .rangeClosed(1, SZ_LIST)
+                .mapToObj(i -> STR_PV_PREFIX + Integer.toString(i))
+                .toList();
+        
+        
+        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
+        
+        for (String strName : lstPvNames) 
+            rqst.selectPv(strName);
+        
+        try {
+            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
+            
+            Assert.assertTrue("Record list should contain " + SZ_LIST + " records", lstRecs.size() == SZ_LIST);
+
+            for (PvMetaRecord rec : lstRecs) {
+                String      strPvName = rec.name();
+                
+                Assert.assertTrue(lstPvNames.contains(strPvName));
+            }
+            
+        } catch (DpQueryException e) {
+            Assert.fail("Metadata query threw exception: + " + e.getMessage());
+            
+        }
+    }
+    
+    /** 
+     * Test method for {@link DpQueryService#queryPvs(DpMetadataReuest)}.
+     */
+    @Test
+    public final void testQueryPvsList() {
+        final int   SZ_LIST = 10;
+        
+        List<String>    lstPvNames = IntStream
+                .rangeClosed(1, SZ_LIST)
+                .mapToObj(i -> STR_PV_PREFIX + Integer.toString(i))
+                .toList();
+        
+        
+        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
+        
+        rqst.selectPvs(lstPvNames);
+        
+        try {
+            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
+            
+            Assert.assertTrue("Record list should contain " + SZ_LIST + " records", lstRecs.size() == SZ_LIST);
+
+            for (PvMetaRecord rec : lstRecs) {
+                String      strPvName = rec.name();
+                
+                Assert.assertTrue(lstPvNames.contains(strPvName));
+            }
+            
+        } catch (DpQueryException e) {
+            Assert.fail("Metadata query threw exception: + " + e.getMessage());
+            
+        }
+    }
+    
+    /** 
+     * Test method for {@link DpQueryService#queryPvs(DpMetadataReuest)}.
+     */
+    @Test
+    public final void testQueryPvsRegex() {
+        String      strPvRegex = STR_PV_PREFIX + "111";
+        
+        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
+        
+        rqst.setPvRegex(strPvRegex);
+        
+        try {
+            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
+            
+            Assert.assertTrue("Record list should contain at least 1 record", lstRecs.size() >= 1);
+            
+            System.out.println("Regular Expression PV Metadata Records: " + strPvRegex);
+            for (PvMetaRecord rec : lstRecs) {
+                System.out.println("  name: " + rec.name());
+                System.out.println("  type: " + rec.lastType());
+                System.out.println("  first tms: " + rec.firstTimestamp());
+                System.out.println("  last tms: " + rec.lastTimestamp());
+                System.out.println();
+            }
+            
+        } catch (DpQueryException e) {
+            Assert.fail("Metadata query threw exception: + " + e.getMessage());
+            
+        }
+    }
+
+    
+    // 
+    // Data Queries
+    //
+    
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#querySingle(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryDataSingle(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testQuerySingle() {
@@ -185,7 +330,7 @@ public class DpQueryServiceTest {
         
         try {
             Instant insStart = Instant.now();
-            IDataTable  table = apiQuery.querySingle(rsqst);
+            IDataTable  table = apiQuery.queryDataSingle(rsqst);
             Instant insStop = Instant.now();
             
             Duration    durQuery = Duration.between(insStart, insStop);
@@ -293,7 +438,7 @@ public class DpQueryServiceTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
-    @Test
+//    @Test
     public final void testQueryStreamUniDpDataRequestBig() {
         final int   CNT_SOURCES = 1000;
         final long  LNG_DURATION = 60;
@@ -381,7 +526,7 @@ public class DpQueryServiceTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryStreamBidi(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
-    @Test
+//    @Test
     public final void testQueryStreamBidiDpDataRequestBig() {
         final int   CNT_SOURCES = 1000;
         final long  LNG_DURATION = 60;

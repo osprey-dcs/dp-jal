@@ -50,18 +50,18 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.QuerySpec;
 
 /**
  * <p>
- * Utility class for constructing data requests for the Data Platform <em>Query Service</em>.
+ * Builder class for constructing data requests for the Data Platform <em>Query Service</em>.
  * </p>
  * <p>
  * This class is used to create Query Service data requests without direct knowledge
  * of the underlying query mechanism.  The class exposes a set of methods that 
- * can be called to create a specific snapshot data request.  In this fashion the
+ * can be called to create a specific time-series data request.  In this fashion the
  * query service interface can be narrowed while still providing a wide range
  * of possible queries.  
  * It also simplifies the use of the query service in that
  * the user is not subject to details of the underlying Query Service gRPC interface. 
- * Additionally, modifications to the Query Service gRPC API will be hidden by this
- * concrete class, which presents a consistent interface to clients.
+ * Additionally, any modifications to the Query Service gRPC API can be hidden by this
+ * class presenting a consistent interface to clients.
  * </p>
  * <p>
  * There are 4 classes of methods used to create the data query requests:

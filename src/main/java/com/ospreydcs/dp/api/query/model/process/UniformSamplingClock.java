@@ -107,6 +107,8 @@ public class UniformSamplingClock implements Comparable<Instant> {
      * @param msgClock    Protobuf message representing a finite-duration uniform sampling clock
      * 
      * @return  new <code>UniformSamplingClock</code> instance initialized from the argument
+     * 
+     * @see ProtoMsg#toUniformSamplingClock(SamplingClock)
      */
     public static UniformSamplingClock    from(SamplingClock msgClock) {
         Instant insStart = ProtoMsg.toInstant(msgClock.getStartTime());

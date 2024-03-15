@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.query;
 
+import java.util.List;
 import java.util.SortedSet;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -42,9 +43,11 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.model.AUnavailable;
 import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.model.IDataTable;
+import com.ospreydcs.dp.api.model.PvMetaRecord;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
@@ -54,12 +57,16 @@ import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.process.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceFutureStub;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryMetadataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
 
 /**
  * <p>
@@ -167,7 +174,85 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
 
     
     //
-    // Query Operations
+    // Metadata Query Operations
+    //
+    
+    /**
+     * <p>
+     * Performs a Process Variable metadata request to the Query Service.
+     * </p>
+     * <p>
+     * Available metadata includes information for data sources, or Process Variables (PVs) contributing to
+     * the current data archive.  Metadata is returned in the form of record lists containing information on
+     * each process variable matching the provided request.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * PV metadata requests are performed using synchronous, unary gRPC connections.  Due to this condition
+     * metadata results sets are size limited by the current maximum gRPC message size.
+     * </li>
+     * </ul>
+     * </p> 
+     * 
+     * @param rqst  the metadata request to be performed
+     * 
+     * @return      the results set of the given metadata request
+     * 
+     * @throws DpQueryException     the Query Service reported an error (see message)
+     */
+    public List<PvMetaRecord> queryPvs(DpMetadataRequest rqst) throws DpQueryException {
+        
+        // Get the Protobuf request from the argument
+        QueryMetadataRequest    msgRqst = rqst.buildQueryRequest();
+        
+        // Perform gRPC request
+        QueryMetadataResponse   msgRsp = super.grpcConn.getStubBlock().queryMetadata(msgRqst);
+        
+        // Check for Query Service exception
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
+            ExceptionalResultStatus enmExcept = msgExcept.getExceptionalResultStatus();
+            String                  strExcept = msgExcept.getMessage();
+            
+            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                               + " - Query Service reported an exception: status=" + enmExcept
+                               + ", message=" + strExcept;
+            
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new DpQueryException(strMsg);
+        }
+        
+        // Unpack the response and return it
+        try {
+        List<PvMetaRecord>      lstRecs = msgRsp
+                .getMetadataResult()
+                .getPvInfosList()
+                .stream()
+                .<PvMetaRecord>map(ProtoMsg::toPvMetaRecord)
+                .toList();
+        
+        
+        return lstRecs;
+        
+        } catch (IllegalArgumentException | TypeNotPresentException e) {
+            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+                           + " - Could not convert response to PvMetaRecord: "
+                           + "exception=" + e.getClass().getSimpleName()
+                           + ", message=" + e.getMessage();
+            
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new DpQueryException(strMsg, e);
+        }
+    }
+    
+    //
+    // Time-Series Data Query Operations
     //
     
     /**
@@ -191,8 +276,8 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * 
      * @throws  DpQueryException    general exception during query or data reconstruction (see cause)
      */
-    @AUnavailable(status=STATUS.ACCEPTED, note="The request is performed but the returned table is empty")
-    public IDataTable querySingle(DpDataRequest rqst) throws DpQueryException {
+    @AUnavailable(status=STATUS.ACCEPTED, note="The operation is beta tested and available.")
+    public IDataTable queryDataSingle(DpDataRequest rqst) throws DpQueryException {
         QueryDataRequest qry = rqst.buildQueryRequest();
         
         QueryDataResponse msgRsp = super.grpcConn.getStubBlock().queryData(qry);

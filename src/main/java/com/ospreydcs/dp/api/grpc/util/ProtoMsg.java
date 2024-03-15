@@ -29,6 +29,7 @@ package com.ospreydcs.dp.api.grpc.util;
 
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,17 +45,22 @@ import com.ospreydcs.dp.api.common.BufferedImage;
 import com.ospreydcs.dp.api.common.BufferedImage.Format;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.model.DpSupportedType;
+import com.ospreydcs.dp.api.model.PvMetaRecord;
+import com.ospreydcs.dp.api.query.model.process.UniformSamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.common.DataValue.ValueCase;
+import com.ospreydcs.dp.grpc.v1.common.DataValueType;
 import com.ospreydcs.dp.grpc.v1.common.Structure.Field;
 import com.ospreydcs.dp.grpc.v1.common.Image;
 import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Structure;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
+import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
 
 /**
@@ -484,6 +490,53 @@ public final class ProtoMsg {
     // Protobuf Messages to Java Objects
     //
     
+    
+    /**
+     * <p>
+     * Converts a <code>DataValueType</code> Protobuf enumeration to a <code>{@link DpSupportedType}</code> 
+     * enumeration.
+     * </p>
+     * <p>
+     * This mapping is NOT one-to-one (injective), but it is onto (surjective).  Specifically, there are more
+     * Protobuf primitive types than Java primitive types.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Unsigned Protobuf integral types get mapped to the Java unsigned equivalent.</li>
+     * <li>All Data Platform structured types are part of the <code>DpSupportedType</code> enumeration.</li>
+     * <li>In the case where the argument equals <code>{@link DataValueType#UNRECOGNIZED}</code> the returned 
+     *     value is <code>{@link DpSupportedType#UNSUPPORTED_TYPE}</code>.
+     * </ul>
+     * </p>
+     * 
+     * @param msgValueType  Protobuf supported data type enumeration
+     * @return              Data Platform API supported data type enumeration
+     * 
+     * @throws  TypeNotPresentException    the argument had an recognized type
+     * 
+     * @see DpSupportedType
+     */
+    public static DpSupportedType   toDpSupportedType(DataValueType msgValueType) throws TypeNotPresentException {
+        
+        return switch (msgValueType) {
+        case DATA_TYPE_STRING -> DpSupportedType.STRING;
+        case DATA_TYPE_BOOLEAN -> DpSupportedType.BOOLEAN;
+        case DATA_TYPE_UINT -> DpSupportedType.INTEGER;
+        case DATA_TYPE_ULONG -> DpSupportedType.LONG;
+        case DATA_TYPE_INT -> DpSupportedType.INTEGER;
+        case DATA_TYPE_LONG -> DpSupportedType.LONG;
+        case DATA_TYPE_FLOAT -> DpSupportedType.FLOAT;
+        case DATA_TYPE_DOUBLE -> DpSupportedType.DOUBLE;
+        case DATA_TYPE_BYTES -> DpSupportedType.BYTE_ARRAY;
+        case DATA_TYPE_ARRAY -> DpSupportedType.ARRAY;
+        case DATA_TYPE_STRUCT -> DpSupportedType.STRUCTURE;
+        case DATA_TYPE_IMAGE -> DpSupportedType.IMAGE;
+        case UNRECOGNIZED -> DpSupportedType.UNSUPPORTED_TYPE; // throw new UnsupportedOperationException("Unimplemented case: " + msgValueType);
+        default -> throw new IllegalArgumentException("Unexpected value: " + msgValueType);
+        };
+    }
+    
     /**
      * <p>
      * Converts the given <code>Timestamp</code> message to a Long Unix epoch value in nanoseconds.
@@ -558,6 +611,117 @@ public final class ProtoMsg {
         byte[] arrData = bsData.toByteArray();
         
         return BufferedImage.from(null, Instant.now(), enmFmt, null, arrData);
+    }
+    
+    /**
+     * <p>
+     * Create a new, initialized instance of <code>UniformSamplingClock</code> from the given
+     * Protobuf message representing a uniform sampling interval.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The <code>{@link UniformSamplingClock}</code> class is essentially equivalent in defining
+     * attributes as the Protobuf <code>{@link SamplingClock}</code> message, however it is more
+     * general and offers other features such as timestamp generation.
+     * </p>
+     * 
+     * @param msgClock    Protobuf message representing a finite-duration uniform sampling clock
+     * 
+     * @return  new <code>UniformSamplingClock</code> instance initialized from the argument
+     */
+    public static UniformSamplingClock    toUniformSamplingClock(SamplingClock msgClock) {
+        Instant insStart = ProtoMsg.toInstant(msgClock.getStartTime());
+        int     intCount = msgClock.getCount();
+        long    lngPeriod = msgClock.getPeriodNanos();
+        
+        return new UniformSamplingClock(insStart, intCount, lngPeriod, ChronoUnit.NANOS);
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>{@link PvMetaRecord}</code> populated from the given Query Service metadata query 
+     * response message.
+     * </p>
+     * <p>
+     * Converts the given process variable metadata message into an API metadata record by extracting all 
+     * message fields and converting them into API resources. 
+     * </p>
+     * <p>
+     * <h2>TODO</h2>
+     * <ul>
+     * <li>
+     * <b>Data Type</b> - The data type in the <code>PvInfo</code> message is specified as a string and must be 
+     * converted to a corresponding <code>DpSupportedType</code> enumeration.  Here we assume the string value is 
+     * the name of the <code>{@link DataValueType}</code> enumeration in <code>common.proto</code>.  The current
+     * condition is brittle and a more robust solution should be implemented.
+     * </li>
+     * <br/>
+     * <li>
+     * <b>Data Type</b> - Currently everything is kluged because the Query Service returns a
+     * string with value <code>DOUBLE</code> (all types are double right now).  Thus, this is
+     * not even a constant name within enumeration <code>{@link DataValueType}</code>.  
+     * So the kluge is to append the string "DATA_TYPE_" to the returned value.
+     * </li>
+     * <br/>
+     * <li>
+     * <b>Non-Uniform Sampling</b> - If the process variable had explicit timestamps, rather than a sampling
+     * clock, only the <code>startTime</code> field of the <code>PvInfo</code> message is set.  This is not
+     * particularly robust and should be addressed in the future.  The method here responds by setting the
+     * <code>lastClock</code> record attribute to <code>null</code> 
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param msgPvInfo Query Service process variable metadata response message
+     * 
+     * @return  equivalent API process variable metadata record
+     * 
+     * @throws IllegalArgumentException data type name in the message was not a <code>DataValueType</code> enumeration
+     * @throws TypeNotPresentException  data type in message does not map to <code>DpSupportedType</code> 
+     */
+    public static PvMetaRecord  toPvMetaRecord(QueryMetadataResponse.MetadataResult.PvInfo msgPvInfo) 
+            throws IllegalArgumentException, TypeNotPresentException {
+        
+//        // Check the type value string
+//        String          strType = msgPvInfo.getLastBucketDataType();
+//        boolean         bolValidType = false;
+//        for (DataValueType msgType : DataValueType.values()) {
+//            if ( strType.equals(msgType.name()) ) {
+//                    bolValidType = true;
+//                    break;
+//            }
+//        }
+//        if (!bolValidType)
+//            throw new IllegalArgumentException("Last PV data type " + strType + " is NOT a DataValueType enumeration name.");
+        
+        // Extract the name and timestamps
+        String      strName = msgPvInfo.getPvName();
+        Instant     insFirst = ProtoMsg.toInstant(msgPvInfo.getFirstTimestamp());
+        Instant     insLast = ProtoMsg.toInstant(msgPvInfo.getLastTimestamp());
+
+        // Extract the type value
+        String          strType = msgPvInfo.getLastBucketDataType();
+        
+        // TODO - fix this kluge!
+        strType = "DATA_TYPE_" + strType;
+        // ------------------------
+        
+        DataValueType   msgType = DataValueType.valueOf(DataValueType.class, strType);  // throws IllegalArgumentException
+        DpSupportedType enmType = ProtoMsg.toDpSupportedType(msgType);                    // throws TypeNotPresentException
+
+        // Extract the sampling clock
+        SamplingClock           msgClock = msgPvInfo.getLastSamplingClock();
+        UniformSamplingClock    apiClock;
+        
+        if (msgClock.getCount() > 0)
+            apiClock = ProtoMsg.toUniformSamplingClock(msgClock);
+        else
+            apiClock = null;
+        
+        // Create metadata record
+        PvMetaRecord    recPvInfo = new PvMetaRecord(strName, enmType, apiClock, insFirst, insLast);
+        
+        return recPvInfo;
     }
     
     
