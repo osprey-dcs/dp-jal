@@ -31,9 +31,11 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.MissingResourceException;
 
 import javax.naming.CannotProceedException;
-import javax.naming.OperationNotSupportedException;
+
+import org.w3c.dom.ranges.RangeException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,17 +46,15 @@ import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.model.AUnavailable;
-import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.model.IDataTable;
 import com.ospreydcs.dp.api.model.PvMetaRecord;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver;
-import com.ospreydcs.dp.api.query.model.data.StaticDataTable;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator;
 import com.ospreydcs.dp.api.query.model.process.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
@@ -70,7 +70,140 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
 
 /**
  * <p>
- * Basic Data Platform Query Service interface.
+ * <h1>Data Platform Query Service Application Programming Interface (API).</h1>
+ * </p>
+ * <p>
+ * This class is the primary access point for Query Service clients.  The class exposes all
+ * the fundamental operations of the Query Service without details of the underlying gRPC
+ * interface.
+ * </p>
+ * <p>
+ * <h1>Query Service Requests</h1>
+ * The are currently 3 types of operations available from the Query Service:
+ * <br/>
+ * <ol>
+ * <li>
+ * <b>Metadata Queries</b> - Information about the current query domain of the Data Archive.  
+ * Currently the Query Service supports only Process Variable (PV) metadata queries.  
+ * Information about all the data sources contributing times-series data to the archive is 
+ * available.
+ *   <ul>
+ *   <li>Metadata requests are made using a <code>{@link DpMetadataRequest}</code> object.</li>
+ *   <li>Metadata is returned as a <code>{@link PvMetaRecord}</code> record set, where each 
+ *       record contains information on a single process variable matching the request.</li>
+ *   </ul>
+ * </li>
+ * <li>
+ * <b>Data Queries</b> - Correlated, time-series data within the primary Data Archive.
+ *   <ul>
+ *   <li>Time-series data requests are made using a <code>{@link DpDataRequest}</code> object.</li>
+ *   <li>Time-series data results are returned as a data table, typically an instance exposing
+ *       the <code>{@link IDataTable}</code> interface (table implementation is hidden).</li>
+ *   </ul>
+ * </li>
+ * <li>
+ * <b>Annotation Queries</b> - Annotations of the Data Archive provided by Data Platform users.
+ * <br/>
+ * The annotations feature of the Data Platform is currently being developed and will be available
+ * in future releases.  Thus, the <code>DpQueryService</code> class does not currently offer
+ * annotation queries.
+ * </li>
+ * </ol> 
+ * </p>
+ * <p>
+ * <h1>USAGE</h1>
+ * <h2>Instance Creation</h2>
+ * Instance of <code>DpQueryService</code> should be obtained from the Query Service connection
+ * factory class <code>{@link DpQueryServiceFactory}</code>.  This is a utility class providing
+ * various connection options to the Query Service, including a default connection defined in
+ * the API configuration parameters.
+ * <h2>Query Operations</h2>
+ * All Query Service query methods are prefixed with <code>query</code>.  There are currently
+ * 3 types of queries offered by class <code>DpQueryService</code>:
+ * <ul>
+ * <br/>
+ * <li>
+ *   <b>Process Variable Metadata</b> - methods prefixed with <code>queryPvs</code>.
+ *   <br/>
+ *   The methods take a <code>{@link DpMetadataRequest}</code> instance defining the request and
+ *   return a list of <code>{@link PvMetaRecord}</code> instances matching the request.
+ *   The methods block until all data is available.
+ * </li>
+ * <br/>
+ * <li>
+ *   <b>Time-Series Data</b> - methods prefixed with <code>queryData</code>. 
+ *   <br/>
+ *   The methods take a <code>{@link DpDataRequest}</code> instance defining the request and
+ *   return an <code>{@link IDataTable}</code> implementation containing the results.
+ *   The methods block until all data is available.
+ * </li>
+ * <br/>
+ * <li>
+ *   <b>Raw Time-Series Data</b> - methods prefixed with <code>queryDataStream</code>.
+ *   <br/>
+ *   These are advanced operations offered to clients that which to do their own data processing
+ *   along with some stream management.  Here requests are again made using a 
+ *   <code>{@link DpDataRequest}</code> object but the returned object is a 
+ *   <code>{@link DpQueryStreamBuffer}</code> instance, not results are yet available. 
+ *   Instead, the data stream is initiated with a invocation of 
+ *   <code>{@link DpQueryStreamBuffer#start()}</code> after which results are dynamically 
+ *   available, or <code>{@link DpQueryStreamBuffer#startAndAwaitCompletion()}</code> which does
+ *   not returned until the data buffer has received all data from the Query Service. 
+ * </li>
+ * </ul>
+ * Note that the above methods DO NOT necessarily conform to the gRPC interface operations  
+ * within <code>{@link DpQueryServiceGrpc}</code>. 
+ * </p>
+ * <p>
+ * <h2>Shutdowns</h2>
+ * Always shutdown the interface when no long needed.  This action releases all internal resources
+ * required of this interface ensuring maximum performance.  Shutdown operations are provided by
+ * the methods <code>{@link #shutdownSoft()}</code> and <code>{@link #shutdownNow()}</code>.
+ * The methods <code>{@link #awaitTermination()}</code> and 
+ * <code>{@link #awaitTermination(long, java.util.concurrent.TimeUnit)}</code> are available
+ * to block until shutdown is complete (this step is not required).
+ * </p>
+ * <p>
+ * <h1>GENERAL NOTES</h1>
+ * <h2>Data Processing</h2>
+ * A single data processor is used for all time-series data requests.  The processor is a single
+ * <code>{@link QueryResponseCorrelator}</code> instance maintained by a 
+ * <code>DpQuerySerice</code> class object.  The data process performs both the gRPC data 
+ * streaming from the Query Service AND the correlation of incoming data.  The data processor
+ * offers various configuration options where data can be simultaneously streamed and 
+ * correlated, along with other multi-threading capabilities.  The data processor typically
+ * uses multiple, concurrent gRPC data streams to recover results.  There are several points
+ * to note about this implementation situation:
+ * <ul>
+ * <li>
+ * Since a single data processor is used within this Query Service API, all data request
+ * operations are synchronized.  Only one time-series data request is performed at any
+ * instance and competing threads must wait until completed.
+ * </li>
+ * <li>
+ * The data processor can be tuned with various configuration parameters within the 
+ * <code>dp-api-config.yml</code> configuration file.  See class documentation on 
+ * <code>{@link QueryResponseCorrelator}</code> for more information on performance tuning.
+ * </li>
+ * <li>
+ * It is informative to note that the <code>DpQueryService</code> class shares its single gRPC 
+ * channel connection with its data processor instance.
+ * </ul>
+ * </p>
+ * <p>
+ * <h2>gRPC Connection</h2>
+ * All communication to the Query Service is handled through a single gRPC channel instance.
+ * These channel objects supported concurrency and multiple data streams between a client
+ * and the targeted service.  However, excessive (thread) concurrency for a single 
+ * <code>DpQueryService</code> instance may over-burden the single channel.
+ * </p>
+ * <p>
+ * <h2>Best Practices</h2>
+ * <ul>  
+ * <li>Due to the conditions addressed above, clients utilizing extensive concurrency should 
+ *     create multiple instances of <code>DpQueryService</code> (each containing a single gRPC
+ *     channel and a data processor).</li>
+ * </ul>
  * </p>
  *
  * @author Christopher K. Allen
@@ -107,6 +240,9 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
     //
     // Attributes
     //
+    
+    /** The single query response correlator (for time-series data) used for all data requests */
+    private final QueryResponseCorrelator   dataProcessor;
     
     
     //
@@ -157,6 +293,8 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      */
     public DpQueryService(DpQueryConnection connQuery) {
         super(connQuery);
+        
+        this.dataProcessor =  QueryResponseCorrelator.from(connQuery);
     }
 
 
@@ -251,6 +389,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
         }
     }
     
+    
     //
     // Time-Series Data Query Operations
     //
@@ -262,12 +401,23 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * <p>
      * The method performs a blocking unary request to the Query Service and does not return until
      * the result set is recovered and used to fully populate the returned data table.
+     * The gRPC resource overhead is smallest for this operation and is best used for
+     * situations where many small requests are invoked. 
      * </p>
      * <p>
      * <h2>WARNING</h2>
-     * The unary request is such that the entire result set must be contain in a single gRPC message,
-     * which is size limited.  If the result set of the request is larger than the current gRPC message
-     * size limit, the result is truncated.
+     * This operation should be used only when small results sets are expected.
+     * The unary request is such that the entire result set must be contained in a single gRPC 
+     * message, which is size limited.  Note that the gRPC default size is 4 MBytes, but the 
+     * value is configurable.
+     * </p>
+     * <p>
+     * If the result set of the request is larger than the current gRPC message size limit,
+     * one of the following occur:  
+     * <ul>
+     * <li>The result is truncated. </li>
+     * <li>An exception is thrown.</li>
+     * </ul>
      * </p> 
      * 
      * @param rqst  an initialized <code>{@link DpDataRequest]</code> request builder instance
@@ -276,7 +426,8 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * 
      * @throws  DpQueryException    general exception during query or data reconstruction (see cause)
      */
-    @AUnavailable(status=STATUS.ACCEPTED, note="The operation is beta tested and available.")
+//    @AUnavailable(status=STATUS.ACCEPTED, note="The operation is beta tested and available.")
+    synchronized
     public IDataTable queryDataSingle(DpDataRequest rqst) throws DpQueryException {
         QueryDataRequest qry = rqst.buildQueryRequest();
         
@@ -303,6 +454,129 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
     }
     
     /**
+     * <p
+     * Performs the given data request and returns the results as a table.
+     * </p>
+     * <p>
+     * This is the primary method for Query Service time-series data requests.  This method 
+     * supports query result sets of any size, since the underlying data transport mechanism is
+     * through gRPC data streams.  All results set data is transported back to the client,
+     * processed into appropriate times-series, then assembled into the returned data table. 
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The data streaming and reconstruction can be performed simultaneously, with various
+     * levels of concurrency, with an internal instance of 
+     * <code>{@link QueryResponseCorrelator}</code>.  See the class documentation for details
+     * on tuning the instance with the various performance parameters.
+     * </li>
+     * <br/>
+     * <li>
+     * The Query Service configuration section within the API configuration parameters 
+     * (i.e., those of <code>{@link DpApiConfig}</code> and associated resource file),
+     * provide access to the tuning parameters for this <code>QueryResponseCorrelator</code>
+     * instance and, thus, this method.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param rqst  the data request, a configured <code>{@link DpDataRequest]</code> request instance
+     * 
+     * @return  a data table containing the results set of the given data request
+     * 
+     * @throws DpQueryException general exception during query or data reconstruction (see cause)
+     */
+    synchronized
+    public IDataTable   queryData(DpDataRequest rqst) throws DpQueryException {
+        
+        // Perform request and response correlation
+        SortedSet<CorrelatedQueryData> setPrcdData = this.dataProcessor.processRequestStream(rqst);
+        
+        
+        // Recover the sampling process 
+        // TODO - contains extensive error checking which may be removed when stable
+        try {
+            SamplingProcess process = SamplingProcess.from(setPrcdData);
+            IDataTable      table = process.createStaticDataTable();
+            
+            return table;
+        
+        } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | RangeException | TypeNotPresentException | CompletionException e) {
+            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                           + " - Failed to create SamplingProcess, exception thrown: type="
+                           + e.getClass().getSimpleName()
+                           + ", message=" + e.getMessage();
+            
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new DpQueryException(strMsg, e);
+        }
+    }
+    
+    /**
+     * <p>
+     * Perform a Query Service data query that returns a dynamic stream buffer accumulating the result set.
+     * </p>
+     * <p>
+     * This operation creates a gRPC data stream from the Query Service to the returned stream
+     * buffer instance.  The type of data stream is determined by the value of 
+     * <code>{@link DpDataRequest#getStreamType()}</code> returned by the argument.
+     * Results of the query are accessible via the stream buffer as they are available; that is,
+     * the returned stream buffer is dynamically loaded with the results set after initiating 
+     * the stream.
+     * </p>
+     * <p>
+     * The data stream is initiated with the <code>{@link DpQueryStreamBuffer#start()}</code> method
+     * within the returned object.
+     * Query stream observers implementing the <code>{@link IDpQueryStreamObserver}</code> interface
+     * can register with the returned object to receive callback notifications for data and stream events
+     * using the <code>{@link DpQueryStreamBuffer#addStreamObserver(com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver)}</code>
+     * method.
+     * For more information on use of the returned stream buffer see documention on 
+     * <code>{@link DpQueryStreamBuffer}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Choose the gRPC data stream type using 
+     * <code>{@link DpDataRequest#setStreamType(DpQueryStreamType)}</code>.
+     *   <ul>
+     *   <li>Unidirectional streams are potentially faster but less stable.</li>
+     *   <li>Bidirectional streams are typically more stable but potentially slower.</li>
+     *   <li>The default is a unidirectional stream <code>{@link DpQueryStreamType#UNIDIRECTIONAL}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * </p>  
+     * 
+     * @param rqst  configured <code>{@link DpDataRequest]</code> request builder instance
+     * 
+     * @return      an active query stream buffer ready to accumulate the results set
+     * 
+     * @see DpQueryStreamBuffer
+     * @see DpQueryStreamBuffer#start()
+     */
+    public DpQueryStreamBuffer   queryDataStream(DpDataRequest rqst) {
+        
+        // Extract the Protobuf request message and stream type
+        QueryDataRequest    msgRequest = rqst.buildQueryRequest();
+        DpQueryStreamType   enmStreamType = rqst.getStreamType();
+        
+        // Create the query stream buffer and return it
+        DpQueryStreamBuffer buf = DpQueryStreamBuffer.newBuffer(
+                enmStreamType, 
+                this.getConnection().getStubAsync(),
+                msgRequest,
+                CFG_DEFAULT.logging.active);
+        
+        return buf;
+    }
+    
+    /**
      * <p>
      * Perform a Query Service data query that returns a dynamic stream buffer accumulating the result set.
      * </p>
@@ -312,20 +586,23 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * Results of the query are accessible via the stream buffer as they are available.
      * </p>
      * <p>
-     * The data stream is initiated with the <code>{@link DpQueryStreamBuffer#start()</code> method.
+     * The data stream is initiated with the <code>{@link DpQueryStreamBuffer#start()}</code> method.
      * Query stream observers implementing the <code>{@link IDpQueryStreamObserver}</code> interface
      * can register with the returned object to receive callback notifications for data and stream events
      * using the <code>{@link DpQueryStreamBuffer#addStreamObserver(com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver)</code>
      * method.
      * </p>
      * 
-     * @param rqst  an initialized <code>{@link DpDataRequest]</code> request builder instance
+     * @param rqst  configured <code>{@link DpDataRequest]</code> request builder instance
      * 
      * @return      an active query stream buffer ready to accumulate the results set
      * 
      * @see DpQueryStreamBuffer
      * @see DpQueryStreamBuffer#start()
+     * 
+     * @deprecated stream type is now a parameter of <code>DpDataRequest</code>
      */
+    @Deprecated(since="March 15, 2024", forRemoval=true)
     public DpQueryStreamBuffer   queryStreamUni(DpDataRequest rqst) {
         
         // Extract the Protobuf request message
@@ -340,59 +617,6 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
         
         return buf;
     }
-    
-//    /**
-//     * <p>
-//     * Perform a Query Service data query that returns a dynamic stream buffer accumulating the result set.
-//     * </p>
-//     * <p>
-//     * This operation creates a unidirectional (backward) stream from the Query Service to the returned stream
-//     * buffer instance.  Unidirectional streams are typically faster but potentially less stable.   
-//     * Results of the query are accessible via the stream buffer as they are available.
-//     * </p>
-//     * <p>
-//     * Explicit timeout limits are given for Query Service responses and operations.
-//     * </p>
-//     * 
-//     * @param rqst          an initialized <code>{@link DpDataRequest]</code> request builder instance
-//     * @param cntTimeout    time limit for Query Service timeout limit
-//     * @param tuTimeout     time units for Query Service timeout limit
-//     * 
-//     * @return  an active query stream buffer currently accumulating the result set
-//     * 
-//     * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
-//     * 
-//     * @see DpQueryStreamQueueBufferDeprecated
-//     */
-//    public DpQueryStreamQueueBufferDeprecated  queryUniStream(DpDataRequest rqst, long cntTimeout, TimeUnit tuTimeout) throws DpQueryException {
-//        
-//        // Create the query stream buffer
-//        DpQueryStreamQueueBufferDeprecated bufStr = DpQueryStreamQueueBufferDeprecated.from(super.grpcConn.getStubAsync(), cntTimeout, tuTimeout);
-//                
-//        // Get the query request message
-//        QueryRequest    msgRqst = rqst.buildQueryRequest();
-//                
-//        // Initiate stream and return it
-//        try {
-//            bufStr.startUniStream(msgRqst);
-//            
-//        } catch (IllegalStateException e) {
-//            String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalStateException thrown (this should not occur) - " + e.getMessage();
-//            
-//            LOGGER.error(strMsg);
-//            
-//            throw new DpQueryException(strMsg, e);
-//            
-//        } catch (IllegalArgumentException e) {
-//            String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalArgumentException (malformed QueryRequest) - " + e.getMessage();
-//            
-//            LOGGER.error(strMsg);
-//            
-//            throw new DpQueryException(strMsg, e);
-//        }
-//        
-//        return bufStr;
-//    }
     
     /**
      * <p>
@@ -419,7 +643,10 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * 
      * @see DpQueryStreamBuffer
      * @see DpQueryStreamBuffer#start()
+     * 
+     * @deprecated stream type is now a parameter of <code>DpDataRequest</code>
      */
+    @Deprecated(since="March 15, 2024", forRemoval=true)
     public DpQueryStreamBuffer queryStreamBidi(DpDataRequest rqst) {
         
         // Extract the Protobuf request message
@@ -435,6 +662,59 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
         return buf;
     }
     
+//  /**
+//  * <p>
+//  * Perform a Query Service data query that returns a dynamic stream buffer accumulating the result set.
+//  * </p>
+//  * <p>
+//  * This operation creates a unidirectional (backward) stream from the Query Service to the returned stream
+//  * buffer instance.  Unidirectional streams are typically faster but potentially less stable.   
+//  * Results of the query are accessible via the stream buffer as they are available.
+//  * </p>
+//  * <p>
+//  * Explicit timeout limits are given for Query Service responses and operations.
+//  * </p>
+//  * 
+//  * @param rqst          an initialized <code>{@link DpDataRequest]</code> request builder instance
+//  * @param cntTimeout    time limit for Query Service timeout limit
+//  * @param tuTimeout     time units for Query Service timeout limit
+//  * 
+//  * @return  an active query stream buffer currently accumulating the result set
+//  * 
+//  * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
+//  * 
+//  * @see DpQueryStreamQueueBufferDeprecated
+//  */
+// public DpQueryStreamQueueBufferDeprecated  queryUniStream(DpDataRequest rqst, long cntTimeout, TimeUnit tuTimeout) throws DpQueryException {
+//     
+//     // Create the query stream buffer
+//     DpQueryStreamQueueBufferDeprecated bufStr = DpQueryStreamQueueBufferDeprecated.from(super.grpcConn.getStubAsync(), cntTimeout, tuTimeout);
+//             
+//     // Get the query request message
+//     QueryRequest    msgRqst = rqst.buildQueryRequest();
+//             
+//     // Initiate stream and return it
+//     try {
+//         bufStr.startUniStream(msgRqst);
+//         
+//     } catch (IllegalStateException e) {
+//         String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalStateException thrown (this should not occur) - " + e.getMessage();
+//         
+//         LOGGER.error(strMsg);
+//         
+//         throw new DpQueryException(strMsg, e);
+//         
+//     } catch (IllegalArgumentException e) {
+//         String strMsg = JavaRuntime.getQualifiedCallerName() + ": IllegalArgumentException (malformed QueryRequest) - " + e.getMessage();
+//         
+//         LOGGER.error(strMsg);
+//         
+//         throw new DpQueryException(strMsg, e);
+//     }
+//     
+//     return bufStr;
+// }
+ 
 //    /**
 //     * <p>
 //     * Perform a Query Service data query that returns a dynamic stream buffer accumulating the result set.

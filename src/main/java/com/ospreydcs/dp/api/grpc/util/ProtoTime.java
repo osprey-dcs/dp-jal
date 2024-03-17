@@ -31,7 +31,6 @@ import java.time.Duration;
 import java.time.Instant;
 
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 

@@ -42,7 +42,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import javax.naming.CannotProceedException;
-import javax.naming.OperationNotSupportedException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,7 +83,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <h2>Query Requests</h2>
  * Within the Query Service API library, data requests are represented by <code>{@link DpDataRequest}</code> 
  * objects.  These objects contain the defining parameters for a Query Service data request, then transform the 
- * client request into <code>{@QueryRequest}</code> Protobuf messages recognizable by the Query Service gRPC 
+ * client request into <code>{@QueryDataRequest}</code> Protobuf messages recognizable by the Query Service gRPC 
  * interface.
  * </p>
  * <p>

@@ -199,7 +199,7 @@ public class SamplingProcess {
      * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
      * @throws RangeException           the argument contains time domain collisions
-     * @throws TypNotPresentException   an unsupported data type was detected within the argument
+     * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      * @throws CompletionException      the sampling process was corrupt after creation (see message)
      */
     public static SamplingProcess from(SortedSet<CorrelatedQueryData> setTargetData) 
