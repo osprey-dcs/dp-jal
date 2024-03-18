@@ -410,15 +410,26 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * The unary request is such that the entire result set must be contained in a single gRPC 
      * message, which is size limited.  Note that the gRPC default size is 4 MBytes, but the 
      * value is configurable.
+     * If the result set of the request is larger than the current gRPC message size limit,
+     * an exception is thrown (or the request is truncated if the Query Service does not 
+     * recognize the error).
      * </p>
      * <p>
-     * If the result set of the request is larger than the current gRPC message size limit,
-     * one of the following occur:  
      * <ul>
-     * <li>The result is truncated. </li>
-     * <li>An exception is thrown.</li>
      * </ul>
      * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The <code>{@link DpDataRequest#getStreamType()}</code> property is unused.</li>
+     * <li>If the request is too large there are 2 possible outcomes:
+     *   <ol>
+     *   <li>An exception is thrown.</li>
+     *   <li>The result is truncated. </li>
+     *   </ol>
+     *   TODO: We need to verify which of the above is consistent</li>
+     * </ul>
+     * </p>
      * 
      * @param rqst  an initialized <code>{@link DpDataRequest]</code> request builder instance
      * 
@@ -535,7 +546,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * can register with the returned object to receive callback notifications for data and stream events
      * using the <code>{@link DpQueryStreamBuffer#addStreamObserver(com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver)}</code>
      * method.
-     * For more information on use of the returned stream buffer see documention on 
+     * For more information on use of the returned stream buffer see documentation on 
      * <code>{@link DpQueryStreamBuffer}</code>.
      * </p>
      * <p>
@@ -559,6 +570,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * 
      * @see DpQueryStreamBuffer
      * @see DpQueryStreamBuffer#start()
+     * @see DpQueryStreamBuffer#startAndAwaitCompletion()
      */
     public DpQueryStreamBuffer   queryDataStream(DpDataRequest rqst) {
         

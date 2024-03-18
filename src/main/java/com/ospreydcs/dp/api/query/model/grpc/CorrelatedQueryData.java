@@ -601,7 +601,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         DataColumn      msgCol = msgBucket.getDataColumn();
         
         // Check if list addition is possible 
-        // - must have same sampling interval
+        // - must have same sampling clock
         if (!ProtoTime.equals(this.msgSmplClk, msgClock)) 
             return false;
 

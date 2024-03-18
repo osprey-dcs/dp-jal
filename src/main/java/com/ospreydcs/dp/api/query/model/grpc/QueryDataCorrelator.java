@@ -750,7 +750,7 @@ public class QueryDataCorrelator {
             throw new ExecutionException("Query Service rejected request: status=" + enmStatus + ", message=" + strRejectMsg, null);
         }
         
-        // Get the query report pass it for further processing
+        // Get the query data and pass it for further processing
         QueryDataResponse.QueryData   msgData = msgRsp.getQueryData();
 
         this.addQueryData(msgData);

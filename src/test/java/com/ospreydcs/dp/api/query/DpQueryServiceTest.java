@@ -356,16 +356,42 @@ public class DpQueryServiceTest {
      * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryData(DpDataRequest)
      */
     @Test
-    public final void testQueryData() {
-        final Integer   CNT_SOURCES = 100;
+    public final void testQueryDataUni() {
+        final Integer   CNT_SOURCES = 500;
         final Long      LNG_DURATION = 10L;
         
         final Integer   LNG_ROWS = 1000 * LNG_DURATION.intValue(); // sample rate (1 kHz) times duration
         
-        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        rqst.setStreamType(DpQueryStreamType.UNIDIRECTIONAL);
         
         try {
-            IDataTable  table = apiQuery.queryData(rsqst);
+            IDataTable  table = apiQuery.queryData(rqst);
+            
+            Assert.assertEquals(CNT_SOURCES, table.getColumnCount());
+            Assert.assertEquals(LNG_ROWS, table.getRowCount());
+            
+        } catch (DpQueryException e) {
+            Assert.fail("queryData() threw exception: "  + e);
+            
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryData(DpDataRequest)
+     */
+    @Test
+    public final void testQueryDataBidi() {
+        final Integer   CNT_SOURCES = 10;
+        final Long      LNG_DURATION = 10L;
+        
+        final Integer   LNG_ROWS = 1000 * LNG_DURATION.intValue(); // sample rate (1 kHz) times duration
+        
+        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        rqst.setStreamType(DpQueryStreamType.BIDIRECTIONAL);
+        
+        try {
+            IDataTable  table = apiQuery.queryData(rqst);
             
             Assert.assertEquals(CNT_SOURCES, table.getColumnCount());
             Assert.assertEquals(LNG_ROWS, table.getRowCount());
@@ -380,14 +406,15 @@ public class DpQueryServiceTest {
      * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryDataStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
-    public final void testQueryDataStreamDpDataRequest() {
+    public final void testQueryDataStreamDpDataRequestUni() {
         final int   CNT_SOURCES = 100;
         final long  LNG_DURATION = 10L;
         
-        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        rqst.setStreamType(DpQueryStreamType.UNIDIRECTIONAL);
         
         try {
-            DpQueryStreamBuffer bufResult = apiQuery.queryDataStream(rsqst);
+            DpQueryStreamBuffer bufResult = apiQuery.queryDataStream(rqst);
             
             Instant insStart = Instant.now();
             bufResult.start();
@@ -408,9 +435,54 @@ public class DpQueryServiceTest {
             if (bufResult.isStreamError())
                 Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
             
-//        } catch (DpQueryException e) {
-//            Assert.fail("Exception thrown during query: " + e.getMessage());
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            Assert.fail("Exception thrown during stream start: " + e.getMessage());
+
+        } catch (InterruptedException e) {
+            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
             
+        } catch (TimeoutException e) {
+            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
+            
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryDataStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     */
+    @Test
+    public final void testQueryDataStreamDpDataRequestBidi() {
+        final int   CNT_SOURCES = 100;
+        final long  LNG_DURATION = 10L;
+        
+        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        rqst.setStreamType(DpQueryStreamType.BIDIRECTIONAL);
+        
+        try {
+            DpQueryStreamBuffer bufResult = apiQuery.queryDataStream(rqst);
+            
+            Instant insStart = Instant.now();
+            bufResult.start();
+            bufResult.awaitStreamCompleted();
+            Instant insStop = Instant.now();
+            
+            Duration    durQuery = Duration.between(insStart, insStop);
+            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
+            Long        cntVals = szQuery/Double.BYTES;
+            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
+            
+            System.out.println("Query completed in " + durQuery.toMillis() + " milliseconds.");
+            System.out.println("  Total query size = " + szQuery);
+            System.out.println("  Double value count = " + cntVals);
+            System.out.println("  Transmission rate = " + dblRate);
+            System.out.println(bufResult.toString());
+            
+            if (bufResult.isStreamError())
+                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
+            
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            Assert.fail("Exception thrown during stream start: " + e.getMessage());
+
         } catch (InterruptedException e) {
             Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
             

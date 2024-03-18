@@ -916,11 +916,19 @@ public class SamplingProcess {
             // serial processing
             vecSmplBlocks = new ArrayList<>(setQueryData.size());
 
-            setQueryData.stream()
-                .sequential()
-                .forEachOrdered(
-                        cqd -> vecSmplBlocks.add(UniformSamplingBlock.from(cqd))
-                        );
+            int     indBlock = 0;
+            for (CorrelatedQueryData cqd : setQueryData) {
+                UniformSamplingBlock    block = UniformSamplingBlock.from(cqd);
+                
+                vecSmplBlocks.add(indBlock, block);
+                indBlock++;
+            }
+            
+//            setQueryData.stream()
+//                .sequential()
+//                .forEachOrdered(
+//                        cqd -> vecSmplBlocks.add(UniformSamplingBlock.from(cqd))
+//                        );
         }
         
         return vecSmplBlocks;

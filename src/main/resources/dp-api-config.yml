@@ -93,13 +93,13 @@ query:      # Data Platform Query Service default configuration parameters
             unitDuration: MILLISECONDS  # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_UNIT_DURATION
       response:       # Default parameters used for data responses
          correlate:        # Query data correlation parameters
-            useConcurrency: true     # use mult-thread correlation : DP_API_QUERY_DATA_RESPONSE_CORRELATE_USE_CONCURRENCY
-            whileStreaming: true     # correlate during gRPC stream: DP_API_QUERY_DATA_RESPONSE_CORRELATE_WHILE_STREAMING
+            useConcurrency: true    # use mult-thread correlation : DP_API_QUERY_DATA_RESPONSE_CORRELATE_USE_CONCURRENCY
+            whileStreaming: true    # correlate during gRPC stream: DP_API_QUERY_DATA_RESPONSE_CORRELATE_WHILE_STREAMING
          multistream:      # Multiple gRPC data stream parameters
             active: true             # use multistreamed responses : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_ACTIVE
             pivotSize: 4000000       # approx request size (samples): DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
             pivotPeriod: MILLISECONDS # java.concurrent.TimeUnit   : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_PERIOD 
-            maxStreams: 5            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
+            maxStreams: 3            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
    stream:       # General gRPC streaming parameter for Query Service operations
       active: false;                 # use streaming parameters    : DP_API_QUERY_STREAM_ACTIVE
       type: BACKWARD                 # preferred- DpGrpcStreamType : DP_API_QUERY_STREAM_TYPE

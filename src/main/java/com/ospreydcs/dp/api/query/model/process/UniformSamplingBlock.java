@@ -180,7 +180,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     private final   ArrayList<Instant>                      vecTimestamps;
     
     /** The vector of time-series data in this sampling block */
-    private final   ArrayList<SampledTimeSeries<Object>>    vecSeriess;
+    private final   ArrayList<SampledTimeSeries<Object>>    vecSeries;
     
     
     /** Set of data source names for sample block - used for IDataTable implementation */
@@ -274,11 +274,11 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         this.vecTimestamps = this.clkParams.createTimestamps();
         
         // Get the set of data source names and create all the time-series data for this block
-        this.vecSeriess = this.createTimeSeriesVector(lstMsgDataCols);
+        this.vecSeries = this.createTimeSeriesVector(lstMsgDataCols);
         
-        this.lstSourceNames = this.createSourceNameList(this.vecSeriess);
-        this.mapSrcToIndex = this.createSrcToIndexMap(this.vecSeriess);
-        this.mapSrcToSeries = this.createSrcToSeriesMap(this.vecSeriess);
+        this.lstSourceNames = this.createSourceNameList(this.vecSeries);
+        this.mapSrcToIndex = this.createSrcToIndexMap(this.vecSeries);
+        this.mapSrcToSeries = this.createSrcToSeriesMap(this.vecSeries);
     }
 
     
@@ -600,9 +600,9 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         SampledTimeSeries<Object>   stsEmpty = SampledTimeSeries.nullSeries(strSourceName, enmType, this.getSampleCount());
         
         // Add null series to collection and lookup maps
-        Integer     indLast = this.vecSeriess.size();
+        Integer     indLast = this.vecSeries.size();
         
-        this.vecSeriess.add(stsEmpty);
+        this.vecSeries.add(stsEmpty);
 
         this.lstSourceNames.add(strSourceName);
         this.mapSrcToSeries.put(strSourceName, stsEmpty);
@@ -777,7 +777,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      */
     @Override
     public final /* <T extends Object> IDataColumn<T> */ IDataColumn<Object> getColumn(int indCol) throws IndexOutOfBoundsException {
-        return this.vecSeriess.get(indCol);
+        return this.vecSeries.get(indCol);
     }
 
     /**
@@ -877,7 +877,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      * </p>
      * <p>
      * <p>
-     * This method is intended for the creation of attribute <code>{@link #vecSeriess}</code>, also needed for the
+     * This method is intended for the creation of attribute <code>{@link #vecSeries}</code>, also needed for the
      * <code>{@link IDataTable}</code> implementation (i.e., for table column indexing).
      * The returned vector is ordered according to the ordering of the argument entries.
      * </p>
@@ -911,9 +911,13 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
             throws MissingResourceException, IllegalStateException, TypeNotPresentException {
 
         // List of time series are created, one for each unique data source name
-        List<SampledTimeSeries<Object>>  lstCols = new ArrayList<>();
+        List<SampledTimeSeries<Object>>  lstCols; // = new ArrayList<>();
 
         // Create processing stream based upon number of data columns
+        
+        // TODO 
+        // - I think there is an IllegalStateException thrown intermittently here
+        // "End size 99 is less than fixed size 100"
         if (BOL_CONCURRENCY && (lstMsgDataCols.size() > SZ_CONCURRENCY_PIVOT)) {
             lstCols = lstMsgDataCols
                     .parallelStream()
