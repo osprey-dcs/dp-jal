@@ -156,6 +156,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     
     /** Concurrency active flag */
     public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
+//    public static final boolean     BOL_CONCURRENCY = false;  // TODO - fix
     
     /** Concurrency tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
     public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
