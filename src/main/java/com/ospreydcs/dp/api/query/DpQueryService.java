@@ -465,7 +465,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
     }
     
     /**
-     * <p
+     * <p>
      * Performs the given data request and returns the results as a table.
      * </p>
      * <p>
@@ -506,6 +506,68 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
         SortedSet<CorrelatedQueryData> setPrcdData = this.dataProcessor.processRequestStream(rqst);
         
         
+        // Recover the sampling process 
+        // TODO - contains extensive error checking which may be removed when stable
+        try {
+            SamplingProcess process = SamplingProcess.from(setPrcdData);
+            IDataTable      table = process.createStaticDataTable();
+            
+            return table;
+        
+        } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | RangeException | TypeNotPresentException | CompletionException e) {
+            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                           + " - Failed to create SamplingProcess, exception thrown: type="
+                           + e.getClass().getSimpleName()
+                           + ", message=" + e.getMessage();
+            
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new DpQueryException(strMsg, e);
+        }
+    }
+    
+    /**
+     * <p>
+     * Performs the given list of data requests concurrently and returns all results within a 
+     * single table.
+     * </p>
+     * <p>
+     * This data request option is available for clients wishing to perform simultaneous data
+     * requests where results are all returned in the same table. 
+     * Note that a separate gRPC data stream is established for each request within the argument.
+     * Thus, <b>DO NOT</b> use large argument lists (although large requests are well supported).  
+     * Doing so stresses gRPC resources and can potentially create excessive network traffic.  
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * All data requests within the argument are allocated a separate gRPC data stream and are
+     * recovered concurrently.  DO NOT use an excessive number of requests in the argument.
+     * See configuration parameter <code>query.data.response.multistream.maxStreams</code> within
+     * configuration file <em>dp-api-config.yml</em> for guidance.
+     * </li>
+     * <br/>
+     * <li>
+     * All NOTES of <code>{@link #queryData(DpDataRequest)}</code> applies to this method except
+     * any configuration options limiting the number of gRPC data streams.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param lstRqsts unordered list of data requests to perform concurrently on separate streams
+     * 
+     * @return  a data table containing the results sets of all the given data requests
+     * 
+     * @throws DpQueryException general exception during query or data reconstruction (see cause)
+     */
+    synchronized
+    public IDataTable   queryData(List<DpDataRequest> lstRqsts) throws DpQueryException {
+        
+        // Perform request and response correlation
+        SortedSet<CorrelatedQueryData>  setPrcdData = this.dataProcessor.processRequestMultiStream(lstRqsts);
+
         // Recover the sampling process 
         // TODO - contains extensive error checking which may be removed when stable
         try {

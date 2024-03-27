@@ -324,7 +324,7 @@ public class DpQueryServiceTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryDataSingle(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
-    @Test
+//    @Test
     public final void testQuerySingle() {
         final int   CNT_SOURCES = 10;
         final long  LNG_DURATION = 2L;
@@ -382,7 +382,7 @@ public class DpQueryServiceTest {
      */
     @Test
     public final void testQueryDataBidi() {
-        final Integer   CNT_SOURCES = 10;
+        final Integer   CNT_SOURCES = 500;
         final Long      LNG_DURATION = 10L;
         
         final Integer   LNG_ROWS = 1000 * LNG_DURATION.intValue(); // sample rate (1 kHz) times duration

@@ -391,7 +391,7 @@ public class QueryDataCorrelator {
         synchronized (this.objLock) {
             this.lngBytesProcessed = 0L;
             this.setPrcdData.clear();
-            this.bolConcurrency = BOL_CONCURRENCY;
+//            this.bolConcurrency = BOL_CONCURRENCY;
         }
     }
     
@@ -1015,8 +1015,8 @@ public class QueryDataCorrelator {
     
     /**
      * <p>
-     * Attempts to insert all the data columns within the <code>BucketData</code> message into 
-     * the target set of interval references.
+     * Attempts to insert all the data columns within the <code>QueryData</code> message into 
+     * the target set of correlated data.
      * </p>
      * <p>
      * The method creates a collection of data insertion tasks <code>BucketDataInsertTask</code>
@@ -1058,6 +1058,12 @@ public class QueryDataCorrelator {
         
         // Create the data insertion tasks
         Collection<BucketDataInsertTask> lstTasks = this.createInsertionTasks(msgData);
+        
+//        // TODO - Remove
+//        int cntBckts = msgData.getDataBucketsCount();
+//        int cntTasks = lstTasks.size();
+//        if (cntBckts != cntTasks)
+//            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + "Task size " + cntTasks + " NOT EQUAL to bucket count " + cntBckts);
 
         // Execute all tasks simultaneously then wait for completion or timeout
         try {
@@ -1082,6 +1088,14 @@ public class QueryDataCorrelator {
 
         // Collect all data buckets messages that were not processed
         Collection<QueryDataResponse.QueryData.DataBucket>  lstBuckets = this.extractFailedTaskBuckets(lstTasks);
+        
+//        // TODO - Remove
+//        if (lstBuckets.size() > 0) {
+//            System.out.println("!!!!!!!!!!!--------------------------------");
+//            System.out.print(JavaRuntime.getQualifiedCallerNameSimple());
+//            System.out.println(": Number of UN-INSERTED Bucktes = " + lstBuckets.size());
+//            System.out.println("!!!!!!!!!!!--------------------------------");
+//        }
 
         return lstBuckets;
     }

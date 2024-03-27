@@ -547,34 +547,36 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * class.  It performs the following operations:
      * <ol>
      * <li>
-     * Checks for an equivalent sampling interval within the argument and, if so, continues
+     * Checks for an equivalent sampling clock within the argument and, if so, continues
      * to the next step.  
-     * If the sampling intervals are NOT equivalent then nothing is done and a value 
+     * If the sampling clocks are NOT equivalent then nothing is done and a value 
      * <code>false</code> is returned.
      * </li>
      * <br/>
      * <li>
-     * If the argument has an equivalent sampling interval, the argument data column is then
+     * If the argument has an equivalent sampling clock, the argument data column is then
      * checked to see if already exists within the referenced collection.  If it is already
      * present in the collection nothing is done and the method returns <code>false</code>.
      * </li>
      * </ol>
      * </p>
      * <p>
-     * <h2>Concurrency</h2>
-     * This operation is <em>almost</em> atomic and can be performed concurrently for multiple
-     * <code>DataBucket</code> messages on separate execution threads.  Doing so will provide
-     * consistent results so as NO duplicate data sources within the same sampling clock are
-     * processed.  
+     * <h2>Concurrency (Thread Safe)</h2>
+     * This operation <em>must be</em> atomic and is therefore synchronized for thread safety.
+     * Thus, a single instance of <code>CorrelatedQueryData</code> can be processed concurrently for 
+     * multiple <code>DataBucket</code> messages on separate execution threads with this method.  
+     * Doing so will provide consistent results as NO duplicate data sources within the same 
+     * sampling clock are accepted.  
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
      * The correlated data set can only have ONE data source entry.  Attempting to insert
-     * a duplicate time-series for the SAME sampling clock indicates a serious error with the 
-     * Query Service data request response, or the data archive itself.  Especially egregious 
-     * are duplicate data source with different heterogeneous types.  
-     * However, this error is not caught here; only the value <code>false</code> is returned.
+     * a multiple time-series columns for the SAME sampling clock indicates a likely error with  
+     * the Query Service data request response, or the data archive itself.  Especially egregious 
+     * are multiple data source with different heterogeneous types.  
+     * This error is not caught here; the insertion is rejected and the value <code>false</code> 
+     * is returned.
      * </li>
      * <br/>
      * <li>
@@ -590,6 +592,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      *              
      * @throws IllegalArgumentException     the <code>DataBucket</code> message did not contain a sampling clock
      */
+    synchronized
     public boolean insertBucketData(QueryDataResponse.QueryData.DataBucket msgBucket) {
         
         // Check argument
