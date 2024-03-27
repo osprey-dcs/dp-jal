@@ -53,6 +53,7 @@ import com.ospreydcs.dp.api.config.DpApiTestingConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.IDataTable;
 import com.ospreydcs.dp.api.model.PvMetaRecord;
+import com.ospreydcs.dp.api.query.DpDataRequest.CompositeType;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
@@ -392,6 +393,64 @@ public class DpQueryServiceTest {
         
         try {
             IDataTable  table = apiQuery.queryData(rqst);
+            
+            Assert.assertEquals(CNT_SOURCES, table.getColumnCount());
+            Assert.assertEquals(LNG_ROWS, table.getRowCount());
+            
+        } catch (DpQueryException e) {
+            Assert.fail("queryData() threw exception: "  + e);
+            
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryData(List)
+     */
+    @Test
+    public final void testQueryDataListUni() {
+        final Integer           CNT_SOURCES = 500;
+        final Long              LNG_DURATION = 10L;
+        final int               CNT_REQUESTS = 3;
+        final DpQueryStreamType ENM_STREAM_TYPE = DpQueryStreamType.UNIDIRECTIONAL;
+        
+        final Integer   LNG_ROWS = 1000 * LNG_DURATION.intValue(); // sample rate (1 kHz) times duration
+        
+        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        final List<DpDataRequest>   lstRqsts = rqst.buildCompositeRequest(CompositeType.HORIZONTAL, CNT_REQUESTS);
+        
+        rqst.setStreamType(ENM_STREAM_TYPE);
+        
+        try {
+            IDataTable  table = apiQuery.queryData(lstRqsts);
+            
+            Assert.assertEquals(CNT_SOURCES, table.getColumnCount());
+            Assert.assertEquals(LNG_ROWS, table.getRowCount());
+            
+        } catch (DpQueryException e) {
+            Assert.fail("queryData() threw exception: "  + e);
+            
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryService#queryData(List)
+     */
+    @Test
+    public final void testQueryDataListBidi() {
+        final Integer           CNT_SOURCES = 500;
+        final Long              LNG_DURATION = 10L;
+        final int               CNT_REQUESTS = 3;
+        final DpQueryStreamType ENM_STREAM_TYPE = DpQueryStreamType.BIDIRECTIONAL;
+        
+        final Integer   LNG_ROWS = 1000 * LNG_DURATION.intValue(); // sample rate (1 kHz) times duration
+        
+        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        final List<DpDataRequest>   lstRqsts = rqst.buildCompositeRequest(CompositeType.HORIZONTAL, CNT_REQUESTS);
+        
+        rqst.setStreamType(ENM_STREAM_TYPE);
+        
+        try {
+            IDataTable  table = apiQuery.queryData(lstRqsts);
             
             Assert.assertEquals(CNT_SOURCES, table.getColumnCount());
             Assert.assertEquals(LNG_ROWS, table.getRowCount());
