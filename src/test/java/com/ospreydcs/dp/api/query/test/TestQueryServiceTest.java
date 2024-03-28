@@ -42,7 +42,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
@@ -202,28 +202,28 @@ public class TestQueryServiceTest {
         QueryDataResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
         
         // Check the response for errors
-        ResultRecord    recValid = this.checkErrors(msgResponse);
+        ResultStatus    recValid = this.checkErrors(msgResponse);
         if (recValid.isFailure()) {
             Assert.fail(recValid.message());
         }
 
         // Check the response against the query
-        ResultRecord    recSources = this.checkSourceNames(msgRequest, List.of(msgResponse));
+        ResultStatus    recSources = this.checkSourceNames(msgRequest, List.of(msgResponse));
         if (recSources.isFailure())
             Assert.fail(recSources.message());
         
-        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, List.of(msgResponse));;
+        ResultStatus    recActivity = this.checkActivityDomains(msgRequest, List.of(msgResponse));;
         if (recActivity.isFailure())
             Assert.fail(recActivity.message());
         
         // Check the query data
         QueryData   msgData = msgResponse.getQueryData();
         
-        ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
+        ResultStatus    recUnique = this.verifySourceUniqueness(msgData);
         if (recUnique.isFailure())
             Assert.fail(recUnique.message());
         
-        ResultRecord    recSizes = this.verifySourceSizes(msgData);
+        ResultStatus    recSizes = this.verifySourceSizes(msgData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
@@ -255,28 +255,28 @@ public class TestQueryServiceTest {
         QueryDataResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
         
         // Check the response for errors
-        ResultRecord    recValid = this.checkErrors(msgResponse);
+        ResultStatus    recValid = this.checkErrors(msgResponse);
         if (recValid.isFailure()) {
             Assert.fail(recValid.message());
         }
 
         // Check the response against the query
-        ResultRecord    recSources = this.checkSourceNames(msgRequest, List.of(msgResponse));
+        ResultStatus    recSources = this.checkSourceNames(msgRequest, List.of(msgResponse));
         if (recSources.isFailure())
             Assert.fail(recSources.message());
         
-        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, List.of(msgResponse));;
+        ResultStatus    recActivity = this.checkActivityDomains(msgRequest, List.of(msgResponse));;
         if (recActivity.isFailure())
             Assert.fail(recActivity.message());
         
         // Verify the query data
         QueryData   msgData = msgResponse.getQueryData();
         
-//        ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
+//        ResultStatus    recUnique = this.verifySourceUniqueness(msgData);
 //        if (recUnique.isFailure())
 //            Assert.fail(recUnique.message());
         
-        ResultRecord    recSizes = this.verifySourceSizes(msgData);
+        ResultStatus    recSizes = this.verifySourceSizes(msgData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
@@ -323,28 +323,28 @@ public class TestQueryServiceTest {
         QueryDataResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
         
         // Check the response for errors
-        ResultRecord    recValid = this.checkErrors(msgResponse);
+        ResultStatus    recValid = this.checkErrors(msgResponse);
         if (recValid.isFailure()) {
             Assert.fail(recValid.message());
         }
 
         // Check the response against the request
-        ResultRecord    recSources = this.checkSourceNames(msgRequest, List.of(msgResponse));
+        ResultStatus    recSources = this.checkSourceNames(msgRequest, List.of(msgResponse));
         if (recSources.isFailure())
             Assert.fail(recSources.message());
         
-        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, List.of(msgResponse));
+        ResultStatus    recActivity = this.checkActivityDomains(msgRequest, List.of(msgResponse));
         if (recActivity.isFailure())
             Assert.fail(recActivity.message());
         
         // Check the query data
         QueryData   msgData = msgResponse.getQueryData();
         
-//        ResultRecord    recUnique = this.verifySourceUniqueness(msgData);
+//        ResultStatus    recUnique = this.verifySourceUniqueness(msgData);
 //        if (recUnique.isFailure())
 //            Assert.fail(recUnique.message());
         
-        ResultRecord    recSizes = this.verifySourceSizes(msgData);
+        ResultStatus    recSizes = this.verifySourceSizes(msgData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
@@ -404,26 +404,26 @@ public class TestQueryServiceTest {
         List<QueryDataResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
         
         // Check the response for errors
-        ResultRecord    recValid = this.checkErrors(lstResultsSet);
+        ResultStatus    recValid = this.checkErrors(lstResultsSet);
         if (recValid.isFailure()) {
             Assert.fail(recValid.message());
         }
 
         // Check the response for all data source representation
-        ResultRecord    recSources = this.checkSourceNames(msgRequest, lstResultsSet);
+        ResultStatus    recSources = this.checkSourceNames(msgRequest, lstResultsSet);
         if (recSources.isFailure())
             Assert.fail(recSources.message());
         
-        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, lstResultsSet);;
+        ResultStatus    recActivity = this.checkActivityDomains(msgRequest, lstResultsSet);;
         if (recActivity.isFailure())
             Assert.fail(recActivity.message());
         
         // Check the query data
-//        ResultRecord    recUnique = this.verifySourceUniqueness(lstResultsSet);
+//        ResultStatus    recUnique = this.verifySourceUniqueness(lstResultsSet);
 //        if (recUnique.isFailure())
 //            Assert.fail(recUnique.message());
         
-        ResultRecord    recSizes = this.verifySourceSizes(lstResultsSet);
+        ResultStatus    recSizes = this.verifySourceSizes(lstResultsSet);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
@@ -496,26 +496,26 @@ public class TestQueryServiceTest {
         }
         
         // Check the response for errors
-        ResultRecord    recValid = this.checkErrors(lstResultsSet);
+        ResultStatus    recValid = this.checkErrors(lstResultsSet);
         if (recValid.isFailure()) {
             Assert.fail(recValid.message());
         }
 
         // Check the response against the query
-        ResultRecord    recSources = this.checkSourceNames(msgRequest, lstResultsSet);
+        ResultStatus    recSources = this.checkSourceNames(msgRequest, lstResultsSet);
         if (recSources.isFailure())
             Assert.fail(recSources.message());
         
-        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, lstResultsSet);
+        ResultStatus    recActivity = this.checkActivityDomains(msgRequest, lstResultsSet);
         if (recActivity.isFailure())
             Assert.fail(recActivity.message());
         
         // Check the query data
-//        ResultRecord    recUnique = this.verifySourceUniqueness(lstResultsSet);
+//        ResultStatus    recUnique = this.verifySourceUniqueness(lstResultsSet);
 //        if (recUnique.isFailure())
 //            Assert.fail(recUnique.message());
         
-        ResultRecord    recSizes = this.verifySourceSizes(lstResultsSet);
+        ResultStatus    recSizes = this.verifySourceSizes(lstResultsSet);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
@@ -635,21 +635,21 @@ public class TestQueryServiceTest {
             Assert.fail("Query request had bad time range.");
         
         // Check the response for errors
-        ResultRecord    recValid = this.checkErrors(lstResultsSet);
+        ResultStatus    recValid = this.checkErrors(lstResultsSet);
         if (recValid.isFailure()) {
             Assert.fail(recValid.message());
         }
 
         // Check the response against the query
-        ResultRecord    recSources = this.checkSourceNames(msgRequest, lstResultsSet);
+        ResultStatus    recSources = this.checkSourceNames(msgRequest, lstResultsSet);
         if (recSources.isFailure())
             Assert.fail(recSources.message());
         
-        ResultRecord    recActivity = this.checkActivityDomains(msgRequest, lstResultsSet);
+        ResultStatus    recActivity = this.checkActivityDomains(msgRequest, lstResultsSet);
         if (recActivity.isFailure())
             Assert.fail(recActivity.message());
         
-        ResultRecord    recSizes = this.verifySourceSizes(lstResultsSet);
+        ResultStatus    recSizes = this.verifySourceSizes(lstResultsSet);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
@@ -676,10 +676,10 @@ public class TestQueryServiceTest {
      *  
      * @param msgResponse   <code>QueryResponse</code> message under inspection
      * 
-     * @return  <code>{@link ResultRecord#SUCCESS</code> if no errors present,
+     * @return  <code>{@link ResultStatus#SUCCESS</code> if no errors present,
      *          a failure record with message description if errors detected
      */
-    private ResultRecord    checkErrors(QueryDataResponse msgResponse) {
+    private ResultStatus    checkErrors(QueryDataResponse msgResponse) {
 
         // Check for query rejection or response error
         if (msgResponse.hasExceptionalResult()) {
@@ -687,7 +687,7 @@ public class TestQueryServiceTest {
             ExceptionalResult.ExceptionalResultStatus enmCause = msgReject.getExceptionalResultStatus();
             String                  strMsg = msgReject.getMessage();
             
-            return ResultRecord.newFailure("Query was rejected or response error: cause=" + enmCause + ", message=" + strMsg);
+            return ResultStatus.newFailure("Query was rejected or response error: cause=" + enmCause + ", message=" + strMsg);
         }
         
 //        // Check for response error
@@ -696,10 +696,10 @@ public class TestQueryServiceTest {
 //            QueryStatusType enmType = msgStatus.getQueryStatusType();
 //            String          strMsg = msgStatus.getStatusMessage();
 //
-//            return ResultRecord.newFailure("Query contains response error: type="+ enmType + ", message=" + strMsg);
+//            return ResultStatus.newFailure("Query contains response error: type="+ enmType + ", message=" + strMsg);
 //        }
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -715,24 +715,24 @@ public class TestQueryServiceTest {
      * 
      * @param lstResultsSet list of <code>QueryRespoonse</code> messages representing a data query results set
      * 
-     * @return  <code>{@link ResultRecord#SUCCESS</code> if no errors present,
+     * @return  <code>{@link ResultStatus#SUCCESS</code> if no errors present,
      *          a failure record with message description if errors detected
      *          
      * @see #checkErrors(QueryResponse)
      */
-    private ResultRecord checkErrors(List<QueryDataResponse> lstResultsSet) {
+    private ResultStatus checkErrors(List<QueryDataResponse> lstResultsSet) {
     
         // Check each QueryResponse message and record results
-        List<ResultRecord> lstFails  = lstResultsSet
+        List<ResultStatus> lstFails  = lstResultsSet
                 .stream()
-                .<ResultRecord>map(msgRsp -> this.checkErrors(msgRsp))
-                .filter(ResultRecord::isFailure)
+                .<ResultStatus>map(msgRsp -> this.checkErrors(msgRsp))
+                .filter(ResultStatus::isFailure)
                 .toList();
         
         if (!lstFails.isEmpty())
-            return ResultRecord.newFailure("Results set contains errors: " + lstFails);
+            return ResultStatus.newFailure("Results set contains errors: " + lstFails);
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -749,10 +749,10 @@ public class TestQueryServiceTest {
      * @param msgRequest       request message containing data source names 
      * @param lstResultsSet    results set of a Query service data request
      * 
-     * @return  <code>{@link ResultRecord#SUCCESS}</code> if all sources are present,
+     * @return  <code>{@link ResultStatus#SUCCESS}</code> if all sources are present,
      *          a failure record with description if any are missing
      */
-    private ResultRecord    checkSourceNames(QueryDataRequest msgRequest, List<QueryDataResponse> lstResultsSet) {
+    private ResultStatus    checkSourceNames(QueryDataRequest msgRequest, List<QueryDataResponse> lstResultsSet) {
      
         // Extract all the data source names from the query request message
         List<String>        lstSrcNms = msgRequest.getQuerySpec().getPvNamesList();
@@ -772,10 +772,10 @@ public class TestQueryServiceTest {
         for (String strSrcNm : lstSrcNms) {
             boolean bolExists = lstColNms.contains(strSrcNm);
             if (!bolExists)
-                return ResultRecord.newFailure("Data source name NOT represented: " + strSrcNm);
+                return ResultStatus.newFailure("Data source name NOT represented: " + strSrcNm);
         }
                
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -794,12 +794,12 @@ public class TestQueryServiceTest {
      * @param msgRequest    Query Service data request producing the results set
      * @param lstResultsSet Query Service results set of the given data query
      * 
-     * @return  <code>{@link ResultRecord#SUCCESS}</code> if all data source have activity intervals equal to query time domain,
+     * @return  <code>{@link ResultStatus#SUCCESS}</code> if all data source have activity intervals equal to query time domain,
      *          otherwise a FAILURE record with a list of all offending data sources
      * 
      * @see #extractActivityRanges(List)
      */
-    private ResultRecord    checkActivityDomains(QueryDataRequest msgRequest, List<QueryDataResponse> lstResultsSet) {
+    private ResultStatus    checkActivityDomains(QueryDataRequest msgRequest, List<QueryDataResponse> lstResultsSet) {
         
         // Extract query time range and create domain interval
         Timestamp   tmsBegin = msgRequest.getQuerySpec().getBeginTime();
@@ -821,9 +821,9 @@ public class TestQueryServiceTest {
         
         // Check for bad PV activity ranges
         if (!lstBadPvs.isEmpty())
-            return ResultRecord.newFailure("Results set contains incomplete time series for the following: " + lstBadPvs);
+            return ResultStatus.newFailure("Results set contains incomplete time series for the following: " + lstBadPvs);
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
                     
     }
     
@@ -849,7 +849,7 @@ public class TestQueryServiceTest {
      * 
      * @return  result of the verification check, containing the cause if failed
      */
-    private ResultRecord verifySourceUniqueness(QueryData msgData) {
+    private ResultStatus verifySourceUniqueness(QueryData msgData) {
         
         // Extract the data columns and create a mutable list of data source names
         List<DataColumn>    lstCols = msgData.getDataBucketsList().stream().map(DataBucket::getDataColumn).toList();
@@ -863,21 +863,21 @@ public class TestQueryServiceTest {
             // Remove the first occurrence of target source name from the mutable list
             boolean bolRemoved = lstSrcNmsMutable.remove(strSrcNm);
             if (!bolRemoved)
-                return ResultRecord. newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " Algorithm remove FAILURE for source " + strSrcNm);
+                return ResultStatus. newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " Algorithm remove FAILURE for source " + strSrcNm);
 
             // Check if there are any other source name list entries
             boolean bolMatch = lstSrcNmsMutable.stream().anyMatch(s -> s.equals(strSrcNm));
             if (bolMatch)
-                return ResultRecord.newFailure("Data source name NOT UNIQUE: " + strSrcNm);
+                return ResultStatus.newFailure("Data source name NOT UNIQUE: " + strSrcNm);
             
             // Return the target name to mutable list and continue
             boolean bolReplaced = lstSrcNmsMutable.add(strSrcNm);
             if (!bolReplaced)
-                return ResultRecord. newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " Algorithm replace FAILURE for source " + strSrcNm);
+                return ResultStatus. newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " Algorithm replace FAILURE for source " + strSrcNm);
                 
         }
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -903,25 +903,25 @@ public class TestQueryServiceTest {
      * 
      * @param lstResultsSet list of <code>QueryRespoonse</code> messages representing a data query results set
      * 
-     * @return  <code>{@link ResultRecord#SUCCESS</code> if each data set has unique PV names,
+     * @return  <code>{@link ResultStatus#SUCCESS</code> if each data set has unique PV names,
      *          a failure record with message description if errors detected
      * 
      * @see #verifySourceUniqueness(BucketData)
      */
-    private ResultRecord verifySourceUniqueness(List<QueryDataResponse> lstResultsSet) {
+    private ResultStatus verifySourceUniqueness(List<QueryDataResponse> lstResultsSet) {
         
         // Extract results set data, check each data set, record results
-        List<ResultRecord>    lstFails = lstResultsSet
+        List<ResultStatus>    lstFails = lstResultsSet
                 .stream()
                 .<QueryData>map(msgRsp -> msgRsp.getQueryData())
-                .<ResultRecord>map(msgData -> this.verifySourceUniqueness(msgData))
-                .filter(ResultRecord::isFailure)
+                .<ResultStatus>map(msgData -> this.verifySourceUniqueness(msgData))
+                .filter(ResultStatus::isFailure)
                 .toList();
 
         if (!lstFails.isEmpty())
-            return ResultRecord.newFailure("Results set contained non-unique PVs: " + lstFails);
+            return ResultStatus.newFailure("Results set contained non-unique PVs: " + lstFails);
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -947,11 +947,11 @@ public class TestQueryServiceTest {
      * 
      * @return  result of the verification check, containing the cause if failed
      */
-    private ResultRecord verifySourceSizes(QueryData msgData) {
+    private ResultStatus verifySourceSizes(QueryData msgData) {
         
         // This only works if there is at least one DataBucket
         if (msgData.getDataBucketsList().isEmpty())
-            return ResultRecord.newFailure("The BucketData message contained no data.");
+            return ResultStatus.newFailure("The BucketData message contained no data.");
         
         // Get the number of samples for the first bucket
         int             cntSamples;
@@ -969,11 +969,11 @@ public class TestQueryServiceTest {
             
             if (msgTms.hasSamplingClock()) {
                 if (msgTms.getSamplingClock().getCount() != cntSamples)
-                    return ResultRecord.newFailure("Sampling clock count for bucket " + indBucket + " not equal to " + cntSamples);
+                    return ResultStatus.newFailure("Sampling clock count for bucket " + indBucket + " not equal to " + cntSamples);
             
             } else {
                 if (msgTms.getTimestampList().getTimestampsCount() != cntSamples) 
-                    return ResultRecord.newFailure("TimestampList count for bucket " + indBucket + " not equal to " + cntSamples);
+                    return ResultStatus.newFailure("TimestampList count for bucket " + indBucket + " not equal to " + cntSamples);
             }
                     
             indBucket++;
@@ -994,7 +994,7 @@ public class TestQueryServiceTest {
         
         // If the list is empty we passed the test
         if (lstBadCols.isEmpty())
-            return ResultRecord.SUCCESS;
+            return ResultStatus.SUCCESS;
         
         // Test failed - return failure with list of source names and count
         List<String> lstFailedSrcs = lstBadCols
@@ -1002,7 +1002,7 @@ public class TestQueryServiceTest {
                 .map(msg -> msg.getName() + ": " + Integer.toString(msg.getDataValuesCount()))
                 .toList();
         
-        return ResultRecord.newFailure("Data column(s) had value count != " + Integer.toString(cntSamples) + ": " + lstFailedSrcs);
+        return ResultStatus.newFailure("Data column(s) had value count != " + Integer.toString(cntSamples) + ": " + lstFailedSrcs);
     }
     
     /**
@@ -1026,25 +1026,25 @@ public class TestQueryServiceTest {
      * 
      * @param lstResultsSet list of <code>QueryRespoonse</code> messages representing a data query results set
      * 
-     * @return  <code>{@link ResultRecord#SUCCESS</code> if each data set PV data with same size,
+     * @return  <code>{@link ResultStatus#SUCCESS</code> if each data set PV data with same size,
      *          a failure record with message description if errors detected
      * 
      * @see #verifySourceSizes(BucketData)
      */
-    private ResultRecord    verifySourceSizes(List<QueryDataResponse> lstResultsSet) {
+    private ResultStatus    verifySourceSizes(List<QueryDataResponse> lstResultsSet) {
         
         // Extract results set data, check each data set, record results
-        List<ResultRecord>    lstFails = lstResultsSet
+        List<ResultStatus>    lstFails = lstResultsSet
                 .stream()
                 .<QueryData>map(msgRsp -> msgRsp.getQueryData())
-                .<ResultRecord>map(msgData -> this.verifySourceSizes(msgData))
-                .filter(ResultRecord::isFailure)
+                .<ResultStatus>map(msgData -> this.verifySourceSizes(msgData))
+                .filter(ResultStatus::isFailure)
                 .toList();
 
         if (!lstFails.isEmpty())
-            return ResultRecord.newFailure("Results set inconsistent source sizes: " + lstFails);
+            return ResultStatus.newFailure("Results set inconsistent source sizes: " + lstFails);
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
 
     /**

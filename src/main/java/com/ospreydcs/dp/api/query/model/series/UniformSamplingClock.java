@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.process;
+package com.ospreydcs.dp.api.query.model.series;
 
 import java.time.Duration;
 import java.time.Instant;

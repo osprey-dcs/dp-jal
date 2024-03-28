@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	UniformSamplingBlock.java
- * Package: com.ospreydcs.dp.api.query.model.process
+ * Package: com.ospreydcs.dp.api.query.model.series
  * Type: 	UniformSamplingBlock
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.process;
+package com.ospreydcs.dp.api.query.model.series;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
@@ -249,7 +249,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
             throws MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException {
         
         // Check the argument for data source name uniqueness
-        ResultRecord    rsltUnique = cqdSampleBlock.verifySourceUniqueness();
+        ResultStatus    rsltUnique = cqdSampleBlock.verifySourceUniqueness();
         if (rsltUnique.isFailure()) {
             if (BOL_LOGGING)
                 LOGGER.error("{} correlated data block has non-unique sources: {}", JavaRuntime.getCallerName(), rsltUnique.message());
@@ -258,7 +258,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         }
         
         // Check the argument for data source size consistency
-        ResultRecord    rsltSizes = cqdSampleBlock.verifySourceSizes();
+        ResultStatus    rsltSizes = cqdSampleBlock.verifySourceSizes();
         if (rsltSizes.isFailure()) {
             if (BOL_LOGGING)
                 LOGGER.error("{} correlated data block has columns with bad sizes: {}", JavaRuntime.getCallerName(), rsltSizes.message());

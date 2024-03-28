@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	ResultRecord.java
+ * File:	ResultStatus.java
  * Package: com.ospreydcs.dp.api.model
- * Type: 	ResultRecord
+ * Type: 	ResultStatus
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -29,9 +29,15 @@ package com.ospreydcs.dp.api.common;
 
 /**
  * <p>
- * Convenience record for returning extended results from condition and verification checks.
+ * Convenience record for returning an operation result status. 
  * </p>
  * <p>
+ * The record contains extended information beyond the typical Boolean result of "succeed/fail" for a
+ * processing operation.  The idea is that processing operations can return enough information to create 
+ * for calling method to throw a meaningful exception whenever a failure is encountered.
+ * </p>
+ * <p>
+ * <h2>Conditions and Verifications</h2>
  * According to Java convention, condition and verification checks are typically embodied by
  * class methods with names prefixed by 
  * <ul>
@@ -55,11 +61,11 @@ package com.ospreydcs.dp.api.common;
  *   
  *     private Object   objTarget = null;
  *   
- *     ResultRecord isReady() {
+ *     ResultStatus isReady() {
  *         if (objTarget == null)
- *           return new ResultRecord(false, "Target object has not been assigned.");
+ *           return new ResultStatus(false, "Target object has not been assigned.");
  *         else
- *           return new ResultRecord(true);
+ *           return new ResultStatus(true);
  *     }
  *     
  *     ...
@@ -70,14 +76,15 @@ package com.ospreydcs.dp.api.common;
  * be launched if it is not ready.
  * </p>
  * 
- * @param success       whether or not condition/verification check succeeded
- * @param message      string message containing cause of success/failure
+ * @param success   whether or not the operation/condition/verification succeeded
+ * @param message   string message containing cause of success/failure
+ * @param cause     possible root-cause exception
  * 
  * @author Christopher K. Allen
  * @since Jan 31, 2024
  *
  */
-public record ResultRecord(boolean success, String message, Throwable cause) {
+public record ResultStatus(boolean success, String message, Throwable cause) {
     
     //
     // Private Resources
@@ -95,7 +102,7 @@ public record ResultRecord(boolean success, String message, Throwable cause) {
     //
     
     /** The universal "Success" record - there need only be one. */
-    public static final ResultRecord SUCCESS = new ResultRecord(true);
+    public static final ResultStatus SUCCESS = new ResultStatus(true);
     
     
     //
@@ -104,7 +111,7 @@ public record ResultRecord(boolean success, String message, Throwable cause) {
     
     /**
      * <p>
-     * Creates a new <em>success</em> <code>ResultRecord</code> instance (cause string is empty).
+     * Creates a new <em>success</em> <code>ResultStatus</code> instance (cause string is empty).
      * </p>
      * <p>
      * <h2>NOTE:</h2>
@@ -112,39 +119,39 @@ public record ResultRecord(boolean success, String message, Throwable cause) {
      * <code>{@link #SUCCESS}</code> can be used.
      * </p>
      * 
-     * @return  new <code>ResultRecord(true)</code> instance
+     * @return  new <code>ResultStatus(true)</code> instance
      * 
      * @see #SUCCESS
      */
-    public static ResultRecord newSuccess() {
-        return new ResultRecord(true);
+    public static ResultStatus newSuccess() {
+        return new ResultStatus(true);
     }
     
     /**
      * <p>
-     * Creates a new <em>failed</em> <code>ResultRecord</code> instance with the given message.
+     * Creates a new <em>failed</em> <code>ResultStatus</code> instance with the given message.
      * </p>
      * 
      * @param strMsg description of the failure
      * 
-     * @return  new <code>ResultRecord(false, strMsg)</code> instance
+     * @return  new <code>ResultStatus(false, strMsg)</code> instance
      */
-    public static ResultRecord  newFailure(String strMsg) {
-        return new ResultRecord(false, strMsg, THR_EMPTY);
+    public static ResultStatus  newFailure(String strMsg) {
+        return new ResultStatus(false, strMsg, THR_EMPTY);
     }
     
     /**
      * <p>
-     * Creates a new <em>failed</em> <code>ResultRecord</code> instance with the given message and cause.
+     * Creates a new <em>failed</em> <code>ResultStatus</code> instance with the given message and cause.
      * </p>
      * 
      * @param strMsg    description of the failure
      * @param thrCause  the exception originating the failure
      *  
-     * @return  new <code>ResultRecord(false, strMsg, thrCause)</code> instance
+     * @return  new <code>ResultStatus(false, strMsg, thrCause)</code> instance
      */
-    public static ResultRecord  newFailure(String strMsg, Throwable thrCause) {
-        return new ResultRecord(false, strMsg, thrCause);
+    public static ResultStatus  newFailure(String strMsg, Throwable thrCause) {
+        return new ResultStatus(false, strMsg, thrCause);
     }
     
     
@@ -154,7 +161,7 @@ public record ResultRecord(boolean success, String message, Throwable cause) {
     
     /**
      * <p>
-     * Non-canonical constructor for <code>ResultRecord</code>.
+     * Non-canonical constructor for <code>ResultStatus</code>.
      * </p>
      * <p>
      * Typically used for successful result, no message or cause is provided.
@@ -162,13 +169,13 @@ public record ResultRecord(boolean success, String message, Throwable cause) {
      *
      * @param bolSuccess   result of condition/verification check
      */
-    public ResultRecord(boolean bolSuccess) {
+    public ResultStatus(boolean bolSuccess) {
         this(bolSuccess, STR_EMPTY, THR_EMPTY);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>ResultRecord</code>.
+     * Constructs a new instance of <code>ResultStatus</code>.
      * </p>
      * <p>
      * Typically used for failure result, includes message (no cause).
@@ -177,7 +184,7 @@ public record ResultRecord(boolean success, String message, Throwable cause) {
      * @param bolSuccess    result of condition/verification check
      * @param strMsg        description of success/failure
      */
-    public ResultRecord(boolean bolSuccess, String strMsg) {
+    public ResultStatus(boolean bolSuccess, String strMsg) {
         this(bolSuccess, strMsg, THR_EMPTY);
     }
 

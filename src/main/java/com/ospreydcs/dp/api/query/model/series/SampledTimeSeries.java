@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SampledTimeSeries.java
- * Package: com.ospreydcs.dp.api.query.model.data
+ * Package: com.ospreydcs.dp.api.query.model.table
  * Type: 	SampledTimeSeries
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - See documentation
  */
-package com.ospreydcs.dp.api.query.model.process;
+package com.ospreydcs.dp.api.query.model.series;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

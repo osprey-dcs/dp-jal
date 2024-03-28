@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SamplingProcessTable.java
- * Package: com.ospreydcs.dp.api.query.model.data
+ * Package: com.ospreydcs.dp.api.query.model.table
  * Type: 	SamplingProcessTable
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.data;
+package com.ospreydcs.dp.api.query.model.table;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -44,8 +44,8 @@ import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.IDataTable;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.process.SamplingProcess;
-import com.ospreydcs.dp.api.query.model.process.UniformSamplingBlock;
+import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
+import com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock;
 
 /**
  * <p>

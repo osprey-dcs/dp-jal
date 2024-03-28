@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SamplingProcess.java
- * Package: com.ospreydcs.dp.api.query.model.process
+ * Package: com.ospreydcs.dp.api.query.model.series
  * Type: 	SamplingProcess
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - See documentation
  */
-package com.ospreydcs.dp.api.query.model.process;
+package com.ospreydcs.dp.api.query.model.series;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -48,17 +48,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.ranges.RangeException;
 
-import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.IDataTable;
-import com.ospreydcs.dp.api.query.model.data.SamplingProcessTable;
-import com.ospreydcs.dp.api.query.model.data.StaticDataTable;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
+import com.ospreydcs.dp.api.query.model.table.StaticDataTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -258,7 +258,7 @@ public class SamplingProcess {
     {
         
         // First verify consistency of source data
-        ResultRecord    result;
+        ResultStatus    result;
         
         //  Check start time ordering
         result = this.verifyStartTimes(setTargetData);
@@ -687,15 +687,15 @@ public class SamplingProcess {
      * <ul>
      * <li>This test MUST be run before <code>{@link #verifyTimeDomains(SortedSet)}</code>.</li>
      * <li>Failure messages are written to the class logger if logging is enabled.</li>
-     * <li>The <code>ResultRecord</code> contains a message describing any failure.</li>
+     * <li>The <code>ResultStatus</code> contains a message describing any failure.</li>
      * </ul>
      * </p>
      * 
      * @param setPrcdData  the target set of processed <code>CorrelatedQueryData</code> objects 
      * 
-     * @return  <code>ResultRecord</code> containing result of test, with message if failure
+     * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
-    private ResultRecord verifyStartTimes(SortedSet<CorrelatedQueryData> setPrcdData) {
+    private ResultStatus verifyStartTimes(SortedSet<CorrelatedQueryData> setPrcdData) {
         
         
         // Loop through set checking that all start times are in order
@@ -717,7 +717,7 @@ public class SamplingProcess {
                 if (BOL_LOGGING)
                     LOGGER.error("{}: Bad start time ordering at query data block {} with start time = {}", JavaRuntime.getCallerName(), Integer.toString(indPrev), insPrev);
                 
-                return ResultRecord.newFailure("Bad start time ordering for processed data block " + Integer.toString(indPrev) + " with start time = " + insPrev);
+                return ResultStatus.newFailure("Bad start time ordering for processed data block " + Integer.toString(indPrev) + " with start time = " + insPrev);
             }
             
             // Update state to next instant
@@ -725,7 +725,7 @@ public class SamplingProcess {
             insPrev = insCurr;
         }
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
 
     /**
@@ -761,15 +761,15 @@ public class SamplingProcess {
      * <ul>
      * <li>The argument MUST have correct start time order for this algorithm to work.</li>
      * <li>Failure messages are written to the class logger if logging is enabled.</li>
-     * <li>The <code>ResultRecord</code> contains a message describing any failure.</li>
+     * <li>The <code>ResultStatus</code> contains a message describing any failure.</li>
      * </ul>
      * </p>
      * 
      * @param setPrcdData  the target set of <code>CorrelatedQueryData</code> objects, corrected ordered 
      * 
-     * @return  <code>ResultRecord</code> containing result of test, with message if failure
+     * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
-    private ResultRecord verifyTimeDomains(SortedSet<CorrelatedQueryData> setPrcdData) {
+    private ResultStatus verifyTimeDomains(SortedSet<CorrelatedQueryData> setPrcdData) {
         
         // Check that remaining time domains are disjoint - this works if the argument is ordered correctly
         // Loop through set checking that all start times are in order
@@ -791,14 +791,14 @@ public class SamplingProcess {
                 if (BOL_LOGGING)
                     LOGGER.error("{}: Collision between time domains at query data block {}, {} with {}.", JavaRuntime.getCallerName(), Integer.toString(indPrev), domCurr, domPrev);
                 
-                return ResultRecord.newFailure("Time domain collision at query data block " + Integer.toString(indPrev) + ": " + domCurr + " with " + domPrev);
+                return ResultStatus.newFailure("Time domain collision at query data block " + Integer.toString(indPrev) + ": " + domCurr + " with " + domPrev);
             }
             
             indPrev++;
             domPrev = domCurr;
         }
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
 
     /**
@@ -808,7 +808,7 @@ public class SamplingProcess {
      * @deprecated replaced by {@link #verifyStartTimes(SortedSet)} and {@link #verifyTimeDomains(SortedSet)}
      */
     @Deprecated(since="Feb 2, 2024", forRemoval=true)
-    private ResultRecord verifyTimeRanges(SortedSet<CorrelatedQueryData> setQueryData) {
+    private ResultStatus verifyTimeRanges(SortedSet<CorrelatedQueryData> setQueryData) {
         
         // Check all query data for correct ordering and time domain collisions
         CorrelatedQueryData cqdFirst = setQueryData.first();
@@ -827,7 +827,7 @@ public class SamplingProcess {
                 if (BOL_LOGGING)
                     LOGGER.error("{}: Bad ordering in start times, {} ordred after {}.", JavaRuntime.getCallerName(), insPrev, insCurr);
                 
-                return ResultRecord.newFailure("Bad ordering in start times " + insPrev + " ordered after " + insCurr);
+                return ResultStatus.newFailure("Bad ordering in start times " + insPrev + " ordered after " + insCurr);
             }
     
             // Since collection is ordered, only need to check proximal domains
@@ -840,13 +840,13 @@ public class SamplingProcess {
                 if (BOL_LOGGING)
                     LOGGER.error("{}: Collision between sampling domains {} and {}.", JavaRuntime.getCallerName(), domPrev, domCurr);
                 
-                return ResultRecord.newFailure("Collision between sampling domains " + domPrev + " and " + domCurr);
+                return ResultStatus.newFailure("Collision between sampling domains " + domPrev + " and " + domCurr);
             }
                 
         }
         setQueryData.add(cqdFirst);
     
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
 
     /**
@@ -1135,15 +1135,15 @@ public class SamplingProcess {
      * <ul>
      * <li>This test MUST be run before <code>{@link #verifyTimeDomains(Vector)}</code>.</li>
      * <li>Failure messages are written to the class logger if logging is enabled.</li>
-     * <li>The <code>ResultRecord</code> contains a message describing any failure.</li>
+     * <li>The <code>ResultStatus</code> contains a message describing any failure.</li>
      * </ul>
      * </p>
      * 
      * @param lstBlocks the constructed list of <code>UniformSamplingBlock</code> objects for this process 
      * 
-     * @return  <code>ResultRecord</code> containing result of test, with message if failure
+     * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
-    private ResultRecord verifyStartTimes(List<UniformSamplingBlock> lstBlocks) {
+    private ResultStatus verifyStartTimes(List<UniformSamplingBlock> lstBlocks) {
         
         // Loop through all ordered blocks - Check that all start times are in order
         int                     indPrev = 0;
@@ -1164,7 +1164,7 @@ public class SamplingProcess {
                 if (BOL_LOGGING)
                     LOGGER.error("{}: Bad start time ordering at sample block {} with start time = {}", JavaRuntime.getCallerName(), Integer.toString(indPrev), insPrev);
                 
-                return ResultRecord.newFailure("Bad start time ordering for sample block " + Integer.toString(indPrev) + " with start time = " + insPrev);
+                return ResultStatus.newFailure("Bad start time ordering for sample block " + Integer.toString(indPrev) + " with start time = " + insPrev);
             }
             
             // Update state to next instant
@@ -1172,7 +1172,7 @@ public class SamplingProcess {
             insPrev = insCurr;
         }
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -1208,15 +1208,15 @@ public class SamplingProcess {
      * <ul>
      * <li>The argument MUST have correct start time order for this algorithm to work.</li>
      * <li>Failure messages are written to the class logger if logging is enabled.</li>
-     * <li>The <code>ResultRecord</code> contains a message describing any failure.</li>
+     * <li>The <code>ResultStatus</code> contains a message describing any failure.</li>
      * </ul>
      * </p>
      * 
      * @param lstBlocks the constructed list of <code>UniformSamplingBlock</code> objects for this process 
      * 
-     * @return  <code>ResultRecord</code> containing result of test, with message if failure
+     * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
-    private ResultRecord verifyTimeDomains(List<UniformSamplingBlock> lstBlocks) {
+    private ResultStatus verifyTimeDomains(List<UniformSamplingBlock> lstBlocks) {
         
         // Loop through all ordered blocks - Check that time domains are disjoint 
         // - this works if the argument is ordered correctly
@@ -1238,14 +1238,14 @@ public class SamplingProcess {
                 if (BOL_LOGGING)
                     LOGGER.error("{}: Collision between time domains at sampling block {}, {} with {}.", JavaRuntime.getCallerName(), Integer.toString(indPrev), domPrev, domCurr);
                 
-                return ResultRecord.newFailure("Time domain collision at sample block " + Integer.toString(indPrev) + ": " + domPrev + " with " + domCurr);
+                return ResultStatus.newFailure("Time domain collision at sample block " + Integer.toString(indPrev) + ": " + domPrev + " with " + domCurr);
             }
             
             indPrev++;
             domPrev = domCurr;
         }
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -1267,7 +1267,7 @@ public class SamplingProcess {
      * of <code>UniformSamplingBlock</code> within the argument collection.
      * Each pair is then checked against the data types within (previously constructed) map 
      * <code>{@link #mapSrcNmToType}</code>.  Any data sources that have a different
-     * type are recorded and contained within the returned <code>ResultRecord</code> object.
+     * type are recorded and contained within the returned <code>ResultStatus</code> object.
      * </li>
      * </ol>
      * </p>
@@ -1298,15 +1298,15 @@ public class SamplingProcess {
      * <li>The internal resource <code>{@link #mapSrcNmToType}</code> MUST be constructed before use.</li>
      * <li>Set ordering here is not relevant, but does affect any failure message produced.</li>
      * <li>Failure messages are written to the class logger if logging is enabled.</li>
-     * <li>The <code>ResultRecord</code> contains a message describing any failure.</li>
+     * <li>The <code>ResultStatus</code> contains a message describing any failure.</li>
      * </ul>
      * </p>
      * 
      * @param lstBlocks the constructed list of <code>UniformSamplingBlock</code> objects for this process 
      * 
-     * @return  <code>ResultRecord</code> containing result of test, with message if failure
+     * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
-    private  ResultRecord verifySourceTypes(List<UniformSamplingBlock> lstBlocks) {
+    private  ResultStatus verifySourceTypes(List<UniformSamplingBlock> lstBlocks) {
         
         // First check for UNSUPPORTED_TYPE in the (pv name, pv type) map
         List<String> lstBadPvs = this.mapSrcNmToType
@@ -1317,7 +1317,7 @@ public class SamplingProcess {
                 .toList();
         
         if (!lstBadPvs.isEmpty())
-            return ResultRecord.newFailure("Sampling process contains PVs with inconsistent types: " + lstBadPvs);
+            return ResultStatus.newFailure("Sampling process contains PVs with inconsistent types: " + lstBadPvs);
         
         // Local type used for intermediate results
         record Pair(String name, DpSupportedType type) {};
@@ -1370,9 +1370,9 @@ public class SamplingProcess {
 
         // If the list is non-empty, there are inconsistent data types
         if (!lstBadSrcs.isEmpty())
-            return ResultRecord.newFailure("Sampling blocks contained mixed-type data sources: " + lstBadSrcs);
+            return ResultStatus.newFailure("Sampling blocks contained mixed-type data sources: " + lstBadSrcs);
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
 //    private Vector<Instant> computeTimestamps(Vector<UniformSamplingBlock> vecSmplBlocks) {

@@ -31,7 +31,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
-import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -191,7 +191,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
     private CountDownLatch  monStreamCompleted = new CountDownLatch(1);
     
     /** Was successful ? Were there any errors during streaming ? */
-    private ResultRecord    recResult = null;
+    private ResultStatus    recResult = null;
     
     
     //
@@ -466,11 +466,11 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * method returns <code>false</code>.
      * </p>
      * 
-     * @return  the result of the stream processing task as a <code>ResultRecord</code>
+     * @return  the result of the stream processing task as a <code>ResultStatus</code>
      * 
      * @see #isCompleted()
      */
-    public final ResultRecord   getResult() {
+    public final ResultStatus   getResult() {
         return this.recResult;
     }
     
@@ -588,7 +588,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
             this.bolStreamStarted = true;
             
             // Check for rejected request
-            ResultRecord accepted = this.isRequestAccepted(msgRsp);
+            ResultStatus accepted = this.isRequestAccepted(msgRsp);
             
             // If the request was rejected
             // - save the rejected result record
@@ -603,7 +603,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
         }
         
         // Process the query response message
-        ResultRecord    result = this.processResponse(msgRsp);
+        ResultStatus    result = this.processResponse(msgRsp);
         
         // Check for processing failed - if so...
         // - save the failure result record
@@ -626,7 +626,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
             this.requestProcessed(msgRsp);
             
         } catch (Exception e) {
-            this.recResult = ResultRecord.newFailure("Exception thrown during post-processing.", e);
+            this.recResult = ResultStatus.newFailure("Exception thrown during post-processing.", e);
             
             this.monStreamCompleted.countDown();
             return;
@@ -655,7 +655,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      */
     @Override
     public void onError(Throwable e) {
-        this.recResult = ResultRecord.newFailure("The gRPC stream was terminated during operation (see cause).", e);
+        this.recResult = ResultStatus.newFailure("The gRPC stream was terminated during operation (see cause).", e);
         this.monStreamCompleted.countDown();
     }
 
@@ -680,7 +680,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
     @Override
     public void onCompleted() {
         
-        this.recResult = ResultRecord.SUCCESS;
+        this.recResult = ResultStatus.SUCCESS;
         this.monStreamCompleted.countDown();
     }
 
@@ -717,7 +717,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
         } catch (InterruptedException e) {
             
             // The wait was interrupted - interpret this an error (perhaps originating elsewhere)
-            this.recResult = ResultRecord.newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " - interrupted while waiting for task completion", e);
+            this.recResult = ResultStatus.newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " - interrupted while waiting for task completion", e);
         }
     }
     
@@ -745,7 +745,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * @return  the SUCCESS record if query was accepted, 
      *          otherwise a failure message containing a description of the rejection 
      */
-    protected ResultRecord isRequestAccepted(QueryDataResponse msgRsp) {
+    protected ResultStatus isRequestAccepted(QueryDataResponse msgRsp) {
         
         // Check for RequestRejected message
         if (msgRsp.hasExceptionalResult()) {
@@ -754,13 +754,13 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
             ExceptionalResult.ExceptionalResultStatus     enmCause = msgException.getExceptionalResultStatus();
             
             String       strMsg = "The data request was rejected by Query Service: cause=" + enmCause + ", message=" + strCause;
-            ResultRecord result = ResultRecord.newFailure(strMsg);
+            ResultStatus result = ResultStatus.newFailure(strMsg);
             
             return result;
         }
         
         // No rejection, return success
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -783,7 +783,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * @return  the SUCCESS record if data was extracted and consumed,
      *          otherwise a failure message containing the status error description 
      */
-    protected ResultRecord processResponse(QueryDataResponse msgRsp) {
+    protected ResultStatus processResponse(QueryDataResponse msgRsp) {
         
 //        // Extract the query report message
 //        QueryResult     msgReport = msgRsp.getQueryResult();
@@ -794,7 +794,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
 //            
 //            this.ifcDataSink.accept(msgData);
 //            
-//            return ResultRecord.SUCCESS;
+//            return ResultStatus.SUCCESS;
 //        }
         
         if (msgRsp.hasQueryData()) {
@@ -802,7 +802,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
             
             this.ifcDataSink.accept(msgData);
             
-            return ResultRecord.SUCCESS;
+            return ResultStatus.SUCCESS;
         }
         // Response Error - extract the details and return them
         ExceptionalResult   msgException = msgRsp.getExceptionalResult();
@@ -810,7 +810,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
         ExceptionalResult.ExceptionalResultStatus enmStatus = msgException.getExceptionalResultStatus();
         
         String          strMsg = "Query Service reported response error: status=" + enmStatus + ", message= " + strStatus;
-        ResultRecord    recErr = ResultRecord.newFailure(strMsg);
+        ResultStatus    recErr = ResultStatus.newFailure(strMsg);
         
         return recErr;
     }

@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.api.query.model.data
+ * Package: com.ospreydcs.dp.api.query.model.table
  * Type: 	package-info
  *
  * Copyright 2010-2023 the original author or authors.
@@ -34,4 +34,4 @@
  * @since Jan 11, 2024
  *
  */
-package com.ospreydcs.dp.api.query.model.data;
+package com.ospreydcs.dp.api.query.model.table;

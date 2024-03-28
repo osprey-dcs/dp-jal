@@ -44,7 +44,7 @@ import javax.naming.CannotProceedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
@@ -773,14 +773,14 @@ public class QueryDataCorrelator {
      * 
      * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelator</code>
      * 
-     * @return  <code>{@link ResultRecord#SUCCESS}</code> if the set is properly ordered,
+     * @return  <code>{@link ResultStatus#SUCCESS}</code> if the set is properly ordered,
      *          otherwise a FAILURE result with description message
      */
-    public static ResultRecord    verifyOrdering(SortedSet<CorrelatedQueryData> setProcData) {
+    public static ResultStatus    verifyOrdering(SortedSet<CorrelatedQueryData> setProcData) {
         
         // We need at least one data set
         if (setProcData.isEmpty())
-            return ResultRecord.newFailure("Empty argument - cannot verify empty data set.");
+            return ResultStatus.newFailure("Empty argument - cannot verify empty data set.");
         
         // Loop through all processed data in order
         int                 indPrev = 0;
@@ -795,14 +795,14 @@ public class QueryDataCorrelator {
             }
             
             if (cqdPrev.compareTo(cqdCurr) >= 0) {
-                return ResultRecord.newFailure("Bad ordering found at index " + Integer.toString(indPrev));
+                return ResultStatus.newFailure("Bad ordering found at index " + Integer.toString(indPrev));
             }
             
             cqdPrev = cqdCurr;
             indPrev++;
         }
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -819,14 +819,14 @@ public class QueryDataCorrelator {
      * 
      * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelator</code>
      * 
-     * @return  <code>{@link ResultRecord#SUCCESS}</code> if all column sizes are correct,
+     * @return  <code>{@link ResultStatus#SUCCESS}</code> if all column sizes are correct,
      *          otherwise a FAILURE result with description message
      */
-    public static ResultRecord    verifyColumnSizes(SortedSet<CorrelatedQueryData> setProcData) {
+    public static ResultStatus    verifyColumnSizes(SortedSet<CorrelatedQueryData> setProcData) {
 
         // We need at least one data set
         if (setProcData.isEmpty())
-            return ResultRecord.newFailure("Empty argument - cannot verify empty data set.");
+            return ResultStatus.newFailure("Empty argument - cannot verify empty data set.");
         
         // Loop through all processed data in order
         int     indCurr = 0;
@@ -845,7 +845,7 @@ public class QueryDataCorrelator {
             if (!lstBadCols.isEmpty()) {
                 List<String>    lstBadSrcNms = lstBadCols.stream().map(DataColumn::getName).toList();
                 
-                return ResultRecord.newFailure("Bad column size(s) for data set index " 
+                return ResultStatus.newFailure("Bad column size(s) for data set index " 
                         + Integer.toString(indCurr)
                         + ": " + lstBadSrcNms);
             }
@@ -853,7 +853,7 @@ public class QueryDataCorrelator {
             indCurr++;
         }
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -873,14 +873,14 @@ public class QueryDataCorrelator {
      * 
      * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelator</code>
      * 
-     * @return  <code>{@link ResultRecord#SUCCESS}</code> if no time domain collisions are detected,
+     * @return  <code>{@link ResultStatus#SUCCESS}</code> if no time domain collisions are detected,
      *          otherwise a FAILURE result with description message
      */
-    public static ResultRecord    verifyTimeDomains(SortedSet<CorrelatedQueryData> setProcData) {
+    public static ResultStatus    verifyTimeDomains(SortedSet<CorrelatedQueryData> setProcData) {
         
         // We need at least one data set
         if (setProcData.isEmpty())
-            return ResultRecord.newFailure("Empty argument - cannot verify empty data set.");
+            return ResultStatus.newFailure("Empty argument - cannot verify empty data set.");
         
         // Loop through all processed data in order
         int                 indPrev = 0;
@@ -898,14 +898,14 @@ public class QueryDataCorrelator {
             TimeInterval    domCurr = cqdCurr.getTimeDomain();
             
             if (domPrev.hasIntersectionClosed(domCurr)) {
-                return ResultRecord.newFailure("Time domain intersect found at index " + Integer.toString(indPrev));
+                return ResultStatus.newFailure("Time domain intersect found at index " + Integer.toString(indPrev));
             }
             
             cqdPrev = cqdCurr;
             indPrev++;
         }
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     

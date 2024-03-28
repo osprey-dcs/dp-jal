@@ -55,7 +55,7 @@ import com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator;
-import com.ospreydcs.dp.api.query.model.process.SamplingProcess;
+import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;

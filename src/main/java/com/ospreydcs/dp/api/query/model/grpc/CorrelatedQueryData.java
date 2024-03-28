@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
@@ -463,7 +463,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * 
      * @return  result of the verification check, containing the cause if failure
      */
-    public ResultRecord verifySourceUniqueness() {
+    public ResultStatus verifySourceUniqueness() {
         
         // Create list of all (potentially repeating) data source names within column collection
         List<String>    lstSrcNms = this.lstMsgCols.stream().map(DataColumn::getName).toList();
@@ -476,13 +476,13 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
 
         // Check for registered data sources that are missing from the data columns list
         if (!bolAllRemoved)
-            return ResultRecord.newFailure("Serious Error: data column list was missing at least one data source");
+            return ResultStatus.newFailure("Serious Error: data column list was missing at least one data source");
         
         // Check for repeated data source entries within the data columns list
         if (!vecSrcNms.isEmpty())
-            return ResultRecord.newFailure("Data column list contains multiple entries for following data sources: " + lstSrcNms);
+            return ResultStatus.newFailure("Data column list contains multiple entries for following data sources: " + lstSrcNms);
         
-        return ResultRecord.SUCCESS;
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -506,7 +506,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * 
      * @return  result of the verification check, containing the cause if failed
      */
-    public ResultRecord verifySourceSizes() {
+    public ResultStatus verifySourceSizes() {
         
         // Each source should provide the same number of data samples
         int cntSamples = this.msgSmplClk.getCount();
@@ -519,7 +519,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         
         // If the list is empty we passed the test
         if (lstBadCols.isEmpty())
-            return ResultRecord.SUCCESS;
+            return ResultStatus.SUCCESS;
         
         // Test failed - return failure with list of source names and count
         List<String> lstFailedSrcs = lstBadCols
@@ -527,7 +527,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
                 .map(msg -> msg.getName() + ": " + Integer.toString(msg.getDataValuesCount()))
                 .toList();
         
-        return ResultRecord.newFailure("Data column(s) had value count != " + Integer.toString(cntSamples) + ": " + lstFailedSrcs);
+        return ResultStatus.newFailure("Data column(s) had value count != " + Integer.toString(cntSamples) + ": " + lstFailedSrcs);
     }
     
     

@@ -29,7 +29,7 @@ package com.ospreydcs.dp.api.model;
 
 import java.time.Instant;
 
-import com.ospreydcs.dp.api.query.model.process.UniformSamplingClock;
+import com.ospreydcs.dp.api.query.model.series.UniformSamplingClock;
 
 /**
  * <p>

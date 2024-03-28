@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.api.query.model.process
+ * Package: com.ospreydcs.dp.api.ingest.model
  * Type: 	package-info
  *
  * Copyright 2010-2023 the original author or authors.
@@ -20,18 +20,18 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jan 11, 2024
+ * @since Mar 28, 2024
  *
  * TODO:
  * - None
  */
 /**
  * <p>
- * Contains classes and resources for defining formal time-series processes.
- * </p>
- * 
+ * Package containing model resources for clients interacting with the Data Platform Ingestion Service.
+ * </p> 
+ *
  * @author Christopher K. Allen
- * @since Jan 11, 2024
+ * @since Mar 28, 2024
  *
  */
-package com.ospreydcs.dp.api.query.model.process;
+package com.ospreydcs.dp.api.ingest.model;

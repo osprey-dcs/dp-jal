@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SamplingProcessTableTest.java
- * Package: com.ospreydcs.dp.api.query.model.data
+ * Package: com.ospreydcs.dp.api.query.model.table
  * Type: 	SamplingProcessTableTest
  *
  * Copyright 2010-2023 the original author or authors.
@@ -56,7 +56,8 @@ import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
-import com.ospreydcs.dp.api.query.model.process.SamplingProcess;
+import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
+import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
 import com.ospreydcs.dp.api.query.test.TestQueryRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
@@ -167,7 +168,7 @@ public class SamplingProcessTableTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#from(java.util.SortedSet)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#from(java.util.SortedSet)}.
      */
     @Test
     public final void testFromSortedSet() {
@@ -199,7 +200,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#from(SamplingProcess}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#from(SamplingProcess}.
      */
     @Test
     public final void testFromSamplingProcess() {
@@ -232,7 +233,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#SamplingProcessTable(java.util.SortedSet)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#SamplingProcessTable(java.util.SortedSet)}.
      */
     @Test
     public final void testSamplingProcessTable() {
@@ -264,7 +265,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#SamplingProcessTable(SamplingProcess)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#SamplingProcessTable(SamplingProcess)}.
      */
     @Test
     public final void testSamplingProcessTableSamplingProcess() {
@@ -297,7 +298,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#isTableComplete()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#isTableComplete()}.
      */
     @Test
     public final void testIsTableComplete() {
@@ -309,7 +310,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#hasError()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#hasError()}.
      */
     @Test
     public final void testHasError() {
@@ -321,7 +322,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getRowCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getRowCount()}.
      */
     @Test
     public final void testGetRowCount() {
@@ -344,7 +345,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnCount()}.
      */
     @Test
     public final void testGetColumnCount() {
@@ -369,7 +370,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnIndex(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnIndex(java.lang.String)}.
      */
     @Test
     public final void testGetColumnIndex() {
@@ -395,7 +396,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnNames()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnNames()}.
      */
     @Test
     public final void testGetColumnNames() {
@@ -422,7 +423,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getTimestamps()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getTimestamps()}.
      */
     @Test
     public final void testGetTimestamps() {
@@ -474,7 +475,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnName(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnName(int)}.
      */
     @Test
     public final void testGetColumnName() {
@@ -493,7 +494,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnType(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnType(int)}.
      */
     @Test
     public final void testGetColumnTypeInt() {
@@ -516,7 +517,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnType(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnType(java.lang.String)}.
      */
     @Test
     public final void testGetColumnTypeString() {
@@ -539,7 +540,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnSize(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnSize(int)}.
      */
     @Test
     public final void testGetColumnSizeInt() {
@@ -558,7 +559,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnSize(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnSize(java.lang.String)}.
      */
     @Test
     public final void testGetColumnSizeString() {
@@ -577,7 +578,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumn(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumn(int)}.
      */
     @Test
     public final void testGetColumnInt() {
@@ -623,7 +624,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumn(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumn(java.lang.String)}.
      */
     @Test
     public final void testGetColumnString() {
@@ -667,7 +668,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnSizeMin()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnSizeMin()}.
      */
     @Test
     public final void testGetColumnSizeMin() {
@@ -690,7 +691,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnSizeMax()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnSizeMax()}.
      */
     @Test
     public final void testGetColumnSizeMax() {
@@ -713,7 +714,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getTimestamp(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getTimestamp(int)}.
      */
     @Test
     public final void testGetTimestamp() {
@@ -733,7 +734,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getValue(int, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getValue(int, int)}.
      */
     @Test
     public final void testGetValueIntInt() {
@@ -761,7 +762,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getValue(int, java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getValue(int, java.lang.String)}.
      */
     @Test
     public final void testGetValueIntString() {
@@ -789,7 +790,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getRowValues(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getRowValues(int)}.
      */
     @Test
     public final void testGetRowValues() {
@@ -820,7 +821,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getRowValuesAsList(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getRowValuesAsList(int)}.
      */
     @Test
     public final void testGetRowValuesAsList() {
@@ -851,7 +852,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnData(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnData(int)}.
      */
     @Test
     public final void testGetColumnDataInt() {
@@ -881,7 +882,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnData(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnData(java.lang.String)}.
      */
     @Test
     public final void testGetColumnDataString() {
@@ -911,7 +912,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnDataTyped(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnDataTyped(int)}.
      */
     @Test
     public final void testGetColumnDataTypedInt() {
@@ -941,7 +942,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#getColumnDataTyped(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#getColumnDataTyped(java.lang.String)}.
      */
     @Test
     public final void testGetColumnDataTypedString() {
@@ -971,7 +972,7 @@ public class SamplingProcessTableTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.data.SamplingProcessTable#allocationSize()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.table.SamplingProcessTable#allocationSize()}.
      */
     @Test
     public final void testAllocationSize() {

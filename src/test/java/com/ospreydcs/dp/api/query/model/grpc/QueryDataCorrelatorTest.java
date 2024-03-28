@@ -44,7 +44,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
@@ -156,7 +156,7 @@ public class QueryDataCorrelatorTest {
         // Get the empty processed data set and try to verify
         SortedSet<CorrelatedQueryData>  setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         Assert.assertTrue("QueryDataCorrelator verified order of empty data set.", recOrder.isFailure());
     }
 
@@ -182,15 +182,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
     }
@@ -214,15 +214,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
 
@@ -249,15 +249,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
 
@@ -284,15 +284,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
     }
@@ -321,15 +321,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
     }
@@ -398,15 +398,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
     }
@@ -475,15 +475,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
     }
