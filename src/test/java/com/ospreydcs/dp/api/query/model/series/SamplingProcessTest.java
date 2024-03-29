@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.process;
+package com.ospreydcs.dp.api.query.model.series;
 
 import static org.junit.Assert.assertTrue;
 
@@ -58,8 +58,6 @@ import com.ospreydcs.dp.api.model.IDataTable;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
-import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
-import com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;

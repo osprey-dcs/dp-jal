@@ -260,7 +260,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * <p>
      * <h2>NOTE:</h2>
      * The returned object should be shut down when no longer needed using 
-     * <code>{@link #shutdownSoft()} or <code>{@link #shutdownNow()}</code>.  
+     * <code>{@link #shutdownSoft()}</code> or <code>{@link #shutdownNow()}</code>.  
      * This action is necessary to release unused gRPC resources and maintain 
      * overall performance.  
      * </p>

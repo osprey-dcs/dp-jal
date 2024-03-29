@@ -29,8 +29,6 @@ package com.ospreydcs.dp.api.model;
 
 import java.time.Instant;
 
-import com.ospreydcs.dp.api.query.model.series.UniformSamplingClock;
-
 /**
  * <p>
  * Record containing metadata for a single data source, or Process Variable (PV).

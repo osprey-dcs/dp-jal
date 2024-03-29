@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.data;
+package com.ospreydcs.dp.api.query.model.table;
 
 import static org.junit.Assert.assertTrue;
 

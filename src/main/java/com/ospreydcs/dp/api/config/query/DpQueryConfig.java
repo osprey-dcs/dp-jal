@@ -38,7 +38,7 @@ import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 
 /**
  * <p>
- * Structure class containing default configuration parameters for Data Platform Query Service API operations.
+ * Structure class containing configuration parameters for Data Platform Query Service API operations.
  * </p>
  *
  * @author Christopher K. Allen

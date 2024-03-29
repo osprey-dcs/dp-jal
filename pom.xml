@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-Common Resources for Data Platform Client API Libraries
+Common Resources for Data Platform Client Java API Libraries
 
 Project provides tools for the following:
 - Configuration management using YAML
@@ -49,6 +49,11 @@ NOTES:
         <protobuf.version>4.0.0-rc-2</protobuf.version>
         <protobuf-java-format.version>1.4</protobuf-java-format.version>
         <protoc-gen-validate.version>0.6.7</protoc-gen-validate.version>
+
+		<!-- EPICS Java Library Properties -->
+    	<epics-core.version>7.0.7</epics-core.version>
+    	<epics-ntypes.version>0.3.7</epics-ntypes.version>
+    	<pvaclient.version>4.3.2</pvaclient.version>
 
 		<!-- MongoDB Properties -->
         <mongodb.version>4.9.1</mongodb.version>
@@ -116,6 +121,33 @@ NOTES:
 		</dependency>
 		-->
 
+		<!--  ###### EPICS Resources ##### -->
+		
+		<!-- EPICS Core for Java -->
+	    <dependency>
+	      <groupId>org.epics</groupId>
+	      <artifactId>epics-core</artifactId>
+	      <!--suppress MavenPackageUpdate -->
+	      <version>${epics-core.version}</version>
+	      <type>pom</type>
+	    </dependency>
+    
+    	<!-- EPICS NTTYPES for Java -->
+		<!-- https://mvnrepository.com/artifact/org.epics/epics-ntypes -->
+		<dependency>
+		    <groupId>org.epics</groupId>
+		    <artifactId>epics-ntypes</artifactId>
+		    <version>${epics-ntypes.version}</version>
+		</dependency>
+    
+        <!--  EPICS PVACCESS Protocol for Java -->
+    	<dependency>
+      		<groupId>org.epics</groupId>
+      		<artifactId>epics-pvaclient</artifactId>
+    	  	<version>${pvaclient.version}</version>
+	    </dependency>
+
+
 		<!-- ###### MongoDB Resources ######## -->
         <dependency>
             <groupId>org.mongodb</groupId>
@@ -181,8 +213,6 @@ NOTES:
           <artifactId>snakeyaml</artifactId>
           <version>${snakeyaml.version}</version>
     	</dependency>
-
-
         
     </dependencies>
 

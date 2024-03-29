@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.series;
+package com.ospreydcs.dp.api.model;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -147,6 +147,7 @@ public class UniformSamplingClock implements Comparable<Instant> {
         this.ivlDomain = TimeInterval.from(insStart, insStop);
     }
 
+    
     //
     // Queries
     //
