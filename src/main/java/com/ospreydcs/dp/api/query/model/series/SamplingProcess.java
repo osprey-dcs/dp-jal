@@ -55,10 +55,10 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.IDataTable;
+import com.ospreydcs.dp.api.model.table.StaticDataTable;
 import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
-import com.ospreydcs.dp.api.query.model.table.StaticDataTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**

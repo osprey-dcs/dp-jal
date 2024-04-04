@@ -29,7 +29,6 @@ package com.ospreydcs.dp.api.common;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.Instant;
 import java.util.Date;
 import java.util.LinkedList;
@@ -68,7 +67,7 @@ public class BufferedImage {
     private Format              fmtImage = null;
     
     /** List of image dimensions */
-    private List<Dimension>     lstDims = null;
+    private List<ArrayDimension>     lstDims = null;
     
     /** Storage for the image */
     private byte[]              arrData = null;
@@ -173,24 +172,7 @@ public class BufferedImage {
         }
     }
     
-    /**
-     * <p>
-     * Record containing the dimension attributes for a user formatted image.
-     * </p>
-     *
-     * @param cntVals   Number of image elements (bins) in the dimension
-     * @param indOffset Offset (byte) index into the axis before image element values start
-     * @param szFull    Full size (in bytes) of the dimension including offset and all image element bins
-     * @param szBin     Size (in bytes) of an image element bin, for example a pixel
-     * @param bolReversed Value order reversed flag
-     *  
-     * @author Christopher K. Allen
-     * @since Dec 30, 2023
-     *
-     */
-    public static record Dimension(Integer cntVals, Integer indOffset, Integer szFull, Integer szBin, Boolean bolReversed) {
-        
-    }
+    
     
 //    /**
 //     * <p>
@@ -201,7 +183,7 @@ public class BufferedImage {
 //     * @since Oct 14, 2022
 //     *
 //     */
-//    public class Dimension {
+//    public class ArrayDimension {
 //
 //        /** Number of image element values in the dimension */
 //        private Integer cntVals;
@@ -221,11 +203,11 @@ public class BufferedImage {
 //        
 //        /**
 //         * <p>
-//         * Constructs a new, intialized instance of <code>Dimension</code>.
+//         * Constructs a new, intialized instance of <code>ArrayDimension</code>.
 //         * </p>
 //         *
 //         */
-//        public Dimension(Integer cntVals, Integer indOffset, Integer szFull, Integer szBin, Boolean bolReversed) {
+//        public ArrayDimension(Integer cntVals, Integer indOffset, Integer szFull, Integer szBin, Boolean bolReversed) {
 //            this.cntVals = cntVals;
 //            this.indOffset = indOffset;
 //            this.szFull = szFull;
@@ -279,7 +261,7 @@ public class BufferedImage {
      * 
      * @return new, initialized image populated with data from the arguments
      */
-    public static BufferedImage from(String strName, Instant insTms, Format fmtImage, List<Dimension> lstDims, byte[] arrData) {
+    public static BufferedImage from(String strName, Instant insTms, Format fmtImage, List<ArrayDimension> lstDims, byte[] arrData) {
         return new BufferedImage(strName, insTms, fmtImage, lstDims, arrData);
     }
     
@@ -330,7 +312,7 @@ public class BufferedImage {
      * @param lstDims  list of image dimensions (for custom formats)
      * @param arrData  the image data
      */
-    public BufferedImage(String strName, Instant insTms, Format fmtImage, List<Dimension> lstDims, byte[] arrData) {
+    public BufferedImage(String strName, Instant insTms, Format fmtImage, List<ArrayDimension> lstDims, byte[] arrData) {
         this.strName = strName;
         this.insTms = insTms;
         this.fmtImage = fmtImage;
@@ -353,7 +335,7 @@ public class BufferedImage {
      * @param arrData  the image data
      */
     public BufferedImage(String strName, Instant insTms, Format fmt, byte[] arrData) {
-       this(strName, insTms, fmt, new LinkedList<Dimension>(), arrData); 
+       this(strName, insTms, fmt, new LinkedList<ArrayDimension>(), arrData); 
     }
 
     /**
@@ -365,7 +347,7 @@ public class BufferedImage {
      * </p>
      */
     public BufferedImage() {
-        this(null, null, Format.UNKNOWN, new LinkedList<Dimension>(), null);
+        this(null, null, Format.UNKNOWN, new LinkedList<ArrayDimension>(), null);
     }
     
     
@@ -416,7 +398,7 @@ public class BufferedImage {
      *         
      * @see Format
      */
-    public List<Dimension> getDimensions() {
+    public List<ArrayDimension> getDimensions() {
         return lstDims;
     }
 
@@ -479,7 +461,7 @@ public class BufferedImage {
      * 
      * @see Format
      */
-    public void setLstDims(List<Dimension> lstDims) {
+    public void setLstDims(List<ArrayDimension> lstDims) {
         this.lstDims = lstDims;
     }
 

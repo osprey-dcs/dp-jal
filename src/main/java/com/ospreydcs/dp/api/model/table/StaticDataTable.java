@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.table;
+package com.ospreydcs.dp.api.model.table;
 
 import java.io.Serializable;
 import java.time.Instant;

@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.table;
+package com.ospreydcs.dp.api.model.table;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -84,6 +84,83 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
 
     
     //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>StaticDataColumn</code>.
+     * </p>
+     * <p>
+     * This is the preferred creator for <code>StaticDataColumn</code> objects.
+     * Creates an initialized <code>StaticDataColumn</code> instance fully populated with the argument data.
+     * An exception is thrown if the data values argument is empty or its type is inconsistent with the
+     * generic parameter <code>T</code>.
+     * </p>
+     *
+     * @param <T>           data type of the column data
+     * 
+     * @param strName       name of the data column
+     * @param enmType       data type of all column data (must be compatible with generic parameter <code>T</code>)
+     * @param vecValues     vector of data values for the data column
+     *  
+     * @return  a new data column populated with the given argument data with the specified type
+     *
+     * @see #StaticDataColumn(String, DpSupportedType, ArrayList)
+     */
+    public static <T extends Object> StaticDataColumn<T> from(String strName, DpSupportedType enmType, ArrayList<T> vecValues) 
+            throws MissingResourceException, IllegalArgumentException {
+        
+        return new StaticDataColumn<T>(strName, enmType, vecValues);
+    }
+    
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>StaticDataColumn</code>.
+     * </p>
+     * <p>
+     * Creates an initialized <code>StaticDataColumn</code> instance fully populated with the argument data.
+     * An exception is thrown if the data values argument is empty or its type is inconsistent with the
+     * generic parameter <code>T</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The newly created table does NOT take ownership of the argument data.  It creates a new array list 
+     * container to maintain the data.
+     * </li>
+     * <br/>
+     * <li>
+     * This creator is provided as a convenience. 
+     * Use creator <code>{@link #from(String, DpSupportedType, ArrayList)}</code> whenever possible.
+     * Note that the data value container is left generic.  All data values within the collection are transferred,
+     * in whatever order, to a new <code>{@link ArrayList}</code> for faster indexing.
+     * </li>
+     * </ul>
+     * </p>
+     *
+     * @param <T>           data type of the column data
+     * 
+     * @param strName       name of the data column
+     * @param enmType       data type of all column data (must be compatible with generic parameter <code>T</code>)
+     * @param setValues     collection of data values for the data column
+     *  
+     * @throws MissingResourceException the initializing data values container was empty 
+     * @throws IllegalArgumentException the specified data type is incompatible with generic parameter <code>T</code>
+     * 
+     * @return  a new data column populated with the given argument data with the specified type
+     *
+     * @see #StaticDataColumn(String, DpSupportedType, Collection)
+     */
+    public static <T extends Object> StaticDataColumn<T> from(String strName, DpSupportedType enmType, Collection<T> setValues) 
+            throws MissingResourceException, IllegalArgumentException {
+        
+        return new StaticDataColumn<T>(strName, enmType, setValues);
+    }
+    
+    
+    //
     // Constructors
     //
     
@@ -96,6 +173,12 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
      * Constructs an initialized <code>StaticDataColumn</code> instance fully populated with the argument data.
      * An exception is thrown if the data values argument is empty or its type is inconsistent with the
      * generic parameter <code>T</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The constructed table takes ownership of the given data (i.e., the array list argument).  This is in
+     * contrast to constructor <code>{@link #StaticDataColumn(String, DpSupportedType, Collection)}</code> which
+     * does not.
      * </p>
      *
      * @param strName       name of the data column
@@ -132,11 +215,20 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
      * generic parameter <code>T</code>.
      * </p>
      * <p>
-     * <h2>NOTE:</h2>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The constructed table does NOT take ownership of the argument data.  It creates a new array list container
+     * to maintain the data.
+     * </li>
+     * <br/>
+     * <li>
      * This constructor is provided as a convenience. 
      * Use constructor <code>{@link #StaticDataColumn(String, DpSupportedType, ArrayList)}</code> whenever possible.
      * Note that the data value container is left generic.  All data values within the collection are transferred,
      * in whatever order, to a new <code>{@link ArrayList}</code> for faster indexing.
+     * </li>
+     * </ul>
      * </p>
      *
      * @param strName       name of the data column

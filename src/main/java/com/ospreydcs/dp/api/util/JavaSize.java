@@ -165,7 +165,7 @@ public class JavaSize {
         
         if (o instanceof String s) return stringSizeof(s);
         if (o instanceof Instant) return SZ_Instant;
-//        if (o instanceof Dimension) return SZ_ImageDimension;
+//        if (o instanceof ArrayDimension) return SZ_ImageDimension;
         if (o instanceof BufferedImage img) return imageSizeof(img);
         
         if (o instanceof Serializable s) return serialSizeof(s);
