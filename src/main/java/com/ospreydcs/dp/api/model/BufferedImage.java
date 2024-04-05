@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.common;
+package com.ospreydcs.dp.api.model;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +33,13 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.MissingResourceException;
+
+import org.epics.nt.NTNDArray;
+import org.epics.pvdata.pv.PVStructure;
 
 import com.google.common.io.Files;
+import com.ospreydcs.dp.api.util.Epics;
 import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
 
 /**
@@ -246,6 +251,42 @@ public class BufferedImage {
     //
     // Creators
     //
+    
+    /**
+     * <p>
+     * Creates a new <code>BufferedImage</code> instance initialized with the argument, assumed to be an EPICS
+     * <code>NTNDArray</code> containing image data.
+     * </p>
+     * <p>
+     * </p>
+     * 
+     * @param pvsNdArray    EPICS NTNDArray compatible structure containing image data
+     * 
+     * @return a new <code>BufferedImage</code> instance containing the image data of the argument
+     * 
+     * @throws IllegalArgumentException the argument was not NTNDArray compatible
+     * @throws MissingResourceException the argument was missing data required for image creation (see message)
+     */
+    public static BufferedImage from(PVStructure pvsNdArray) throws IllegalArgumentException, MissingResourceException {
+        
+        // Check for NT array compatibility
+        NTNDArray ntNdArray = NTNDArray.wrap(pvsNdArray);
+        if (ntNdArray == null)
+            throw new IllegalArgumentException("BufferedImage#from(PVStructure) - argument was incompatible with NTNDArray");
+
+        // Extract the image data
+        byte[]                  arrRawData = Epics.extractArrayRawData(pvsNdArray);
+        List<ArrayDimension>    lstDims = Epics.extractArrayDimensions(pvsNdArray); // throws MissingResourceException
+        
+        // Extract optional data
+        Instant     insTms = Epics.extractArrayDataTimestamp(pvsNdArray);
+        String      strLbl = Epics.extractName(pvsNdArray);
+        
+        // Create the image and return it
+        BufferedImage   image = new BufferedImage(strLbl, insTms, Format.NTND,lstDims, arrRawData);
+        
+        return image;
+    }
     
     /**
      * <p>

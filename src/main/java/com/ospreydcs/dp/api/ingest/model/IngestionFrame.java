@@ -28,15 +28,23 @@
 package com.ospreydcs.dp.api.ingest.model;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.Set;
+
+import org.epics.nt.NTTable;
+import org.epics.pvdata.pv.PVStructure;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
+import com.ospreydcs.dp.api.model.table.StaticDataColumn;
+import com.ospreydcs.dp.api.util.Epics;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -68,10 +76,10 @@ public class IngestionFrame {
     //
     
     /** Vector of column data timestamps for each data column of time-series data */
-    private ArrayList<Instant>                  vecTms = null;
+    private ArrayList<Instant>      vecTms = null;
     
     /** Alternate sampling clock for data columns of time series data */
-    private UniformSamplingClock                clkTms = null;
+    private UniformSamplingClock    clkTms = null;
 
     
     /** Array of column data for the table - for fast column index lookup */
@@ -81,9 +89,86 @@ public class IngestionFrame {
     private Map<String, IDataColumn<Object>>    mapNmToCol = new HashMap<>();
 
     
-    /** Collection of (name, value) attribute pairs for the data frame */
-    private Map<String, String>                 mapAttributes = new HashMap<>();
+    /** Optional name for ingestion frame */
+    private String              strLabelFrame = null;
+    
+    /** Optional timestamp for ingestion frame itself */
+    private Instant             insTmsFrame = null;
+    
+    /** Optional collection of (name, value) attribute pairs for the data frame */
+    private Map<String, String> mapAttributes = new HashMap<>();
 
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new, initialized <code>IngestionFrame</code> from an EPICS <code>PVStructure</code> object which
+     * is assumed to be EPICS <code>NTTable</code> compatible.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The argument must be able to be "wrapped" by an <code>{@link NTTable}</code> EPICS type, otherwise an
+     * exception is thrown.  
+     * </li>
+     * <li>The argument must contain a timestamps column to define the ingestion frame timestamps, or an exception
+     * is thrown.
+     * </li>
+     * <li>
+     * The argument must contain at least one column of time-series data (consistent with the timestamp column)
+     * or an exception is thrown.
+     * </li>
+     * <li>
+     * The timestamp column is checked for uniform sampling.  If uniform sampling is detected then a sampling
+     * clock is assigned to the return ingestion frame.  For non-uniform sampling a timestamp list is assigned to
+     * to the ingestion frame (i.e., the argument's timestamp column).
+     * </li> 
+     * </ul>
+     * </p>
+     *  
+     * @param pvsTable  PV structure assumed to be NTTable compatible
+     * 
+     * @return  new ingestion frame populated with the argument data 
+     * 
+     * @throws IllegalArgumentException argument is not NTTable compatible
+     * @throws MissingResourceException argument is missing data to create valid ingestion frame 
+     */
+    public static IngestionFrame from(PVStructure pvsTable) throws IllegalArgumentException, MissingResourceException {
+        
+        // Check the argument for compatibility
+        NTTable ntTable = NTTable.wrap(pvsTable);
+        if (ntTable == null)
+            throw new IllegalArgumentException("IngestionFrame#from(PVStructure) - argument was not compatible with NTTable");
+
+        // Extract the timestamps and data
+        ArrayList<Instant>              vecTms = Epics.extractTableTimestamps(pvsTable);
+        ArrayList<IDataColumn<Object>>  vecCols = Epics.extractTableColumns(pvsTable);
+        
+        // Attempt to convert timestamp list to a uniform sampling clock (for performance)
+        IngestionFrame frame = null;
+        try {
+            UniformSamplingClock clk = UniformSamplingClock.from(vecTms);
+            
+            frame = new IngestionFrame(clk, vecCols);
+            
+        } catch(MissingResourceException | IllegalArgumentException e) {
+            
+            frame = new IngestionFrame(vecTms, vecCols);
+        }
+        
+        // Extract optional parameters and assign them
+        Instant     insTblTms = Epics.extractTableTimestamp(pvsTable);
+        String      strTblLbl = Epics.extractName(pvsTable);
+        
+        frame.setFrameLabel(strTblLbl);
+        frame.setFrameTimestamp(insTblTms);
+        
+        return frame;
+    }
     
     /**
      * <p>
@@ -349,6 +434,9 @@ public class IngestionFrame {
      * This must be the first action when populating an ingestion frame after default construction.
      * </li>
      * <li>
+     * The ingestion frame takes ownership of the argument container - do not modify it.
+     * </li>
+     * <li>
      * All data columns added to the frame henceforth must have size equal to the size of the timestamp list
      * argument.
      * </li>
@@ -398,6 +486,10 @@ public class IngestionFrame {
      * <li>
      * This method can be called as many times as necessary to fully populate the data frame with time-series
      * data.
+     * </li>
+     * <li>
+     * The ingestion frame takes ownership of the given argument - do not modify until after ingestion.
+     * </li>
      * </ul>
      * </p>
      * 
@@ -454,6 +546,10 @@ public class IngestionFrame {
      * <li>
      * This method can be called as many times as necessary to fully populate the data frame with time-series
      * data.
+     * </li>
+     * <li>
+     * The ingestion frame takes ownership of all columns in the argument - do not modify until after ingestion.
+     * </li>
      * </ul>
      * </p>
      * 
@@ -490,6 +586,33 @@ public class IngestionFrame {
             this.vecColData.add(col);
             this.mapNmToCol.put(col.getName(), col);
         }
+    }
+    
+    
+    //
+    // Optional Properties
+    //
+    
+    /**
+     * <p>
+     * Sets the optional ingestion frame label.
+     * </p>
+     * 
+     * @param strLabel  label for ingestion frame itself
+     */
+    public void setFrameLabel(String strLabel) {
+        this.strLabelFrame = strLabel;
+    }
+    
+    /**
+     * <p>
+     * Sets the optional ingestion frame timestamp.
+     * </p>
+     * 
+     * @param insTmsFrame   timestamp for the ingestion frame itself
+     */
+    public void setFrameTimestamp(Instant insTmsFrame) {
+        this.insTmsFrame = insTmsFrame;
     }
     
     /**
@@ -606,6 +729,601 @@ public class IngestionFrame {
         return ResultStatus.newFailure(strMsg);
     }
     
+    /**
+     * <p>
+     * Computes and returns an estimate for the total memory allocation size for this ingestion frame (in bytes).
+     * </p>
+     * <p>
+     * The estimate proceeds by summing the allocation size for each times-series data contained in the frame.
+     * If a timestamp list is used, then the allocation for the timestamps is include.
+     * The estimate does not include allocation for the optional parameters.
+     * </p>
+     * 
+     * @return  a conservative estimate of the memory allocation size for this frame (in bytes)
+     */
+    public long allocationSize() {
+        
+        // Check for exceptional cases
+        if (this.vecColData == null || this.vecColData.isEmpty())
+            return 0L;
+        
+        // Compute the total allocation for the ingestion frame
+        long    szBytes = 0;
+        for (IDataColumn<Object> col : this.vecColData) 
+            szBytes += col.allocationSize();
+        
+        // Add in timestamp list allocation if present
+        if (this.vecTms != null && !this.vecTms.isEmpty())
+            szBytes += 2 * Long.BYTES * this.vecTms.size();
+        
+        return szBytes;
+    }
+    
+    /**
+     * <p>
+     * Removes the head (whose size is given by the argument) of the current ingestion frame, leaving the 
+     * remaining tail.
+     * </p>
+     * <p>
+     * This method is intended for use in ingestion frame <em>binning</em>.  Specifically, if the allocation
+     * size of the ingestion frame is larger than the current gRPC message size limit then it must be 
+     * transmitted over several smaller messages.  This provided a mean by which large ingestion frames can
+     * be decomposed into a collection of smaller frames meeting the gRPC transmission size limitation.
+     * </p>
+     * <p>
+     * Splits this ingestion frame in two by removing the first <code>cntRows</code>
+     * number of data rows.  The size of the data frame after the call will 
+     * be given by the size before the call minus the argument.  The first data
+     * row will be the data row with index <code>cntRows</code> before the
+     * call.
+     * </p> 
+     * <p>
+     * The method <em>returns the head</em> of the data frame, that is, the portion of
+     * the frame that was removed.  The size of the head is given by the the
+     * argument.
+     * All properties and attributes of the returned frame will be identical
+     * with the original (e.i., the timestamp, and the attributes collection).
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * If the size given in the argument is larger than or equal to the current size 
+     * of the data frame, all the data is removed from this frame and an exact copy
+     * is returned.  The current frame is then empty. 
+     * </p> 
+     * 
+     * @param cntRows the number of data rows to remove at the head of this frame
+     * 
+     * @return  the head of the original data frame, or <code>null</code> if head count too large
+     * 
+     * @throws IllegalStateException the current frame has not been populated (see message)
+     */
+    public IngestionFrame removeHead(int cntRows) throws IllegalStateException {
+        
+        // Check that frame has been initialized
+        if (this.clkTms != null && this.vecTms == null)
+            throw new IllegalStateException("IngestionFrame#removeHead(int) - No timestamps have been assigned.");
+        
+        if (this.vecColData == null)
+            throw new IllegalStateException("IngestionFrame#removeHead(int) - No data has been assigned.");
+
+        
+        // Special Case: Check if the head size is greater than or equal to this size
+        if (cntRows >= this.getRowCount()) {
+            
+            // Returned ingestion frame
+            IngestionFrame  frmHead = this.copy();
+            
+            // Clear out all current data - the current frame is now empty
+            if (this.clkTms != null)
+                this.clkTms = this.createReducedSampleClock(0);
+            
+            if (this.vecTms != null)
+                this.vecTms.clear();
+            
+            if (this.vecColData != null) 
+                this.vecColData.clear();
+            
+            return frmHead;
+        }
+        
+        // --- General Case ---
+        // Compute the start and stop row indices for the head
+        Integer indStart = 0;
+        Integer indStop  = cntRows;
+        Integer szFrame  = this.getRowCount();
+
+        // Returned ingestion frame
+        IngestionFrame  frmHead = new IngestionFrame();
+
+        // Set the timestamps
+        // - If we are using a sampling clock
+        if (this.clkTms != null) {
+            UniformSamplingClock    clkHead = this.createReducedSampleClock(cntRows);
+            
+            frmHead.assignSamplingClock(clkHead);
+            
+            // Need to reset the current sampling clock
+            this.clkTms = this.createReducedSampleClock(szFrame - cntRows);
+        }
+
+        // - If we are using a timestamp list
+        if (this.vecTms != null) {
+            // Take the head and tail of the timestamp list
+            List<Instant>   vecHeadTms = this.vecTms.subList(indStart, indStop);
+            List<Instant>   vecTailTms = this.vecTms.subList(indStop, szFrame);
+
+            frmHead.assignTimestampList(new ArrayList<>(vecHeadTms));
+            
+            // Need to reset current timestamp list to tail
+            this.vecTms = new ArrayList<>(vecTailTms);
+        }
+        
+        
+        // Identify the head and tail of the data columns 
+        // - creates new columns for head
+        List<IDataColumn<Object>> lstHeadCols = this.vecColData
+                .stream()
+                .<IDataColumn<Object>>map( c -> StaticDataColumn.from(
+                                               c.getName(),
+                                               c.getType(),
+                                               c.getValues().subList(indStart, indStop)
+                                               )  
+                                          ).toList();
+        
+        // - creates new columns for tail
+        List<IDataColumn<Object>> lstTailCols = this.vecColData
+                .stream()
+                .<IDataColumn<Object>>map( c -> StaticDataColumn.from(
+                                                c.getName(),
+                                                c.getType(),
+                                                c.getValues().subList(indStop, szFrame)
+                                                )  
+                                          ).toList();
+        
+        // Assign the new frame head data
+        frmHead.addColumns(lstHeadCols);
+        
+        // We need to reset the current ingestion frame data to the tail
+        this.vecColData = new ArrayList<IDataColumn<Object>>(lstTailCols);
+
+        
+        // Now assign any optional data
+        frmHead.setFrameLabel(this.strLabelFrame);
+        frmHead.setFrameTimestamp(this.insTmsFrame);
+        frmHead.addAttributes(this.mapAttributes);
+        
+        // Return the head of this ingestion frame         
+        return frmHead;
+    }
+    
+    /**
+     * <p>
+     * Removes the tail of the current data frame, whose size is given by the 
+     * argument, leaving only the head.
+     * </p>
+     * <p>
+     * This method is intended for use in ingestion frame <em>binning</em>.  Specifically, if the allocation
+     * size of the ingestion frame is larger than the current gRPC message size limit then it must be 
+     * transmitted over several smaller messages.  This provided a mean by which large ingestion frames can
+     * be decomposed into a collection of smaller frames meeting the gRPC transmission size limitation.
+     * </p>
+     * <p>
+     * Splits this data frame in two by removing the last <code>cntRows</code>
+     * number of data rows.  That is, the data frame after the call will have 
+     * the size before the call minus the argument.
+     * </p> 
+     * <p>
+     * The method returns the tail of the data frame, that is, the portion of
+     * the frame that was removed.  The size of the tail is given by the argument.
+     * The returned frame will have identical properties and attributes as the 
+     * original frame (e.g., timestamps and attributes collection). 
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * If the size given in the argument is larger than or equal to the current size 
+     * of the data frame, the contents of the original frame is returned
+     * as the tail and the original frame is left empty.  The returned frame
+     * is a copy of the original frame.
+     * </p> 
+     * 
+     * @param cntRows number of data rows to remove from the tail 
+     * 
+     * @return  the tail of the current data frame
+     * 
+     * @throws IllegalStateException the current frame has not been populated (see message)
+     */
+    public IngestionFrame removeTail(int cntRows) throws IllegalArgumentException {
+        
+        // Check that frame has been initialized
+        if (this.clkTms != null && this.vecTms == null)
+            throw new IllegalStateException("IngestionFrame#removeTail(int) - No timestamps have been assigned.");
+        
+        if (this.vecColData == null)
+            throw new IllegalStateException("IngestionFrame#removeTail(int) - No data has been assigned.");
+
+        
+        // Special Case: Check if the head size is greater than or equal to this size
+        if (cntRows >= this.getRowCount()) {
+            
+            // Returned ingestion frame
+            IngestionFrame  frmTail = this.copy();
+            
+            // Clear out all current data - the current frame is now empty
+            if (this.clkTms != null)
+                this.clkTms = this.createReducedSampleClock(0);
+            
+            if (this.vecTms != null)
+                this.vecTms.clear();
+            
+            if (this.vecColData != null) 
+                this.vecColData.clear();
+            
+            return frmTail;
+        }
+        
+        // --- General Case ---
+        // Compute the start and stop row indices for the head
+        Integer szFrame  = this.getRowCount();
+        Integer indStart = szFrame - cntRows;
+        Integer indStop  = szFrame;
+
+        // Returned ingestion frame
+        IngestionFrame  frmTail = new IngestionFrame();
+
+        // Set the timestamps
+        // - If we are using a sampling clock
+        if (this.clkTms != null) {
+            UniformSamplingClock    clkTail = this.createReducedSampleClock(cntRows);
+            
+            frmTail.assignSamplingClock(clkTail);
+            
+            // Need to reset the current sampling clock
+            this.clkTms = this.createReducedSampleClock(szFrame - cntRows);
+        }
+
+        // - If we are using a timestamp list
+        if (this.vecTms != null) {
+            // Take the head and tail of the timestamp list
+            List<Instant>   vecHeadTms = this.vecTms.subList(0, indStart);
+            List<Instant>   vecTailTms = this.vecTms.subList(indStart, indStop);
+
+            frmTail.assignTimestampList(new ArrayList<>(vecTailTms));
+            
+            // Need to reset current timestamp list to head
+            this.vecTms = new ArrayList<>(vecHeadTms);
+        }
+        
+        // Identify the head and tail of the data columns 
+        // - creates new columns for head
+        List<IDataColumn<Object>> lstHeadCols = this.vecColData
+                .stream()
+                .<IDataColumn<Object>>map( c -> StaticDataColumn.from(
+                                               c.getName(),
+                                               c.getType(),
+                                               c.getValues().subList(0, indStart)
+                                               )  
+                                          ).toList();
+        
+        // - creates new columns for tail
+        List<IDataColumn<Object>> lstTailCols = this.vecColData
+                .stream()
+                .<IDataColumn<Object>>map( c -> StaticDataColumn.from(
+                                                c.getName(),
+                                                c.getType(),
+                                                c.getValues().subList(indStart, indStop)
+                                                )  
+                                          ).toList();
+        
+        // Assign the new frame head data
+        frmTail.addColumns(lstTailCols);
+        
+        // We need to reset the current ingestion frame data to the tail
+        this.vecColData = new ArrayList<IDataColumn<Object>>(lstHeadCols);
+
+        
+        // Now assign any optional data
+        frmTail.setFrameLabel(this.strLabelFrame);
+        frmTail.setFrameTimestamp(this.insTmsFrame);
+        frmTail.addAttributes(this.mapAttributes);
+        
+        // Return the head of this ingestion frame         
+        return frmTail;
+    }
+    
+    /**
+     * <p>
+     * Performs a shallow copy of the current ingestion frame and returns it.
+     * </p>
+     * <p>
+     * Specifically, the returned ingestion frame has all the same data objects as the current frame,
+     * the time-series values, the timestamps (if timestamp list), and the sampling clock are NOT copied.  
+     * However, all container objects within the returned ingestion frame are independent.  Data may be
+     * cleared from the original frame without affecting the copy.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * Modifying a data column, timestamp, or sampling clock within the original ingestion frame WILL ALSO
+     * modify that of the copy.
+     * </p>
+     * 
+     * @return  a shallow copy of the current ingestion frame
+     */
+    public IngestionFrame copy() {
+        
+        // The returned object
+        IngestionFrame  frmCopy = new IngestionFrame();
+        
+        // Set the timestamps
+        if (this.clkTms != null)
+            frmCopy.assignSamplingClock(this.clkTms);
+        if (this.vecTms != null)
+            frmCopy.assignTimestampList(new ArrayList<>(this.vecTms));
+        
+        // Set the data columns
+        frmCopy.addColumns(this.vecColData);
+        
+        // Add optional data
+        frmCopy.setFrameLabel(this.strLabelFrame);
+        frmCopy.setFrameTimestamp(this.insTmsFrame);
+        frmCopy.addAttributes(this.mapAttributes);
+        
+        return frmCopy;
+    }
+    
+    //
+    // Attributes and Data Query
+    //
+    
+    /**
+     * <p>
+     * Determines whether or not a sampling clock has been assigned for this ingestion frame.
+     * </p>
+     * 
+     * @return  <code>true</code> if a sampling clock has been assigned, <code>false</code> otherwise
+     */
+    public boolean  hasSamplingClock() {
+        return this.clkTms != null;
+    }
+    
+    /**
+     * <p>
+     * Determines whether or not a timestamp list has been assigned for this ingestion frame.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Either a sampling clock or a timestamp list must be assigned to an ingestion frame in order to 
+     * populate it with data.
+     * </p>
+     * 
+     * @return  <code>true</code> if a timestamp list has been assigned to the ingestion frame.
+     */
+    public boolean  hasTimestampList() {
+        return this.vecTms != null;
+    }
+    
+    /**
+     * <p>
+     * Determines whether or not the ingestion frame contains time-series data columns.
+     * </p>
+     * 
+     * @return  <code>true</code> if frame contains a non-empty collection of times-series data columns,
+     *          <code>false</code> if the collection is empty
+     */
+    public boolean hasData() {
+        return !this.vecColData.isEmpty();
+    }
+    
+    /**
+     * <p>
+     * Determines whether or not optional attributes have been assigned to the ingestion frame.
+     * </p>
+     * 
+     * @return  <code>true</code> if frame contains a non-empty collection of (name, value) attribute pairs,
+     *          <code>false</code> if the frame contains no attributes
+     */
+    public boolean hasAttributes() {
+        return !this.mapAttributes.isEmpty();
+    }
+    
+    
+    /**
+     * <p>
+     * Returns the optional ingestion frame label.
+     * </p>
+     * 
+     * @return the label for the ingestion frame itself
+     */
+    public String   getFrameLabel() {
+        return this.strLabelFrame;
+    }
+    
+    /**
+     * <p>
+     * Returns the optional ingestion frame timestamp.
+     * </p>
+     * 
+     * @return  timestamp for the ingestion frame itself
+     */
+    public Instant  getFrameTimestamp() {
+        return this.insTmsFrame;
+    }
+    
+    /**
+     * <p>
+     * Returns the collection of optional (name, value) attribute pairs for the ingestion frame.
+     * </p>
+     * 
+     * @return  map containing (name, value) attribute pairs as entries (can be empty)
+     */
+    public Map<String, String>  getAttributes() {
+        return this.mapAttributes;
+    }
+    
+    /**
+     * <p>
+     * Returns the sampling clock for this ingestion frame (if assigned).
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The method returns value <code>null</code> if no sampling clock was assigned for this frame.
+     * This can be the case when a timestamp list was assigned instead, or if no timestamps have been
+     * assigned (indicating error or incomplete population).
+     * </p>
+     * 
+     * @return  the sampling clock for all time-series data,
+     *          or <code>null</code> if no clock was assigned
+     */
+    public UniformSamplingClock getSamplingClock() {
+        return this.clkTms;
+    }
+    
+    /**
+     * <p>
+     * Returns the timestamp list for this ingestion frame (if assigned).
+     * </p>
+     * <h2>NOTES:</h2>
+     * The method returns value <code>null</code> if no timestamp list was assigned for this frame.
+     * This can be the case when a sampling clock list was assigned instead, or if no timestamps have been
+     * assigned (indicating error or incomplete population).
+     * </p>
+     * 
+     * @return the timestamp list for the ingestion frame,
+     *         or <code>null</code> if not assigned
+     */
+    public ArrayList<Instant>   getTimestampList() {
+        return this.vecTms;
+    }
+    
+    /**
+     * <p>
+     * Get the set of unique data column names for all time-series data columns within the ingestion frame.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Column names are not ordered.</li>
+     * <li>Column names are unique within an ingestion frame.</li>
+     * </ul>
+     * <p>
+     * 
+     * @return  set of names for all data columns within the ingestion frame
+     */
+    public Set<String>  getColumnNames() {
+        return this.mapNmToCol.keySet();
+    }
+    
+    /**
+     * <p>
+     * Returns the number of time-series data columns with the ingestion frame.
+     * </p>
+     * 
+     * @return  number of data columns currently within the ingestion frame 
+     * 
+     * @throws IllegalStateException        the ingestion frame has not been assigned data
+     */
+    public int  getColumnCount() {
+
+        // Check the frame
+        if (this.vecColData == null)
+            throw new IllegalStateException("IngestionFrame#getColumnCount() - Ingestion has not been initialized with data.");
+        
+        return this.vecColData.size();
+    }
+    
+    /**
+     * <p>
+     * Returns the number of rows in each time-series data column within the ingestion frame.
+     * </p>
+     * <p>
+     * Note this value can be zero if the head or tail has been taken.
+     * </p>
+     * 
+     * @return  the number of rows in each data column (i.e., the number of samples in each time-series)
+     * 
+     * @throws IllegalStateException the ingestion frame has not been assigned timestamps (either clock or list)
+     */
+    public int getRowCount() throws IllegalStateException {
+
+        // Check for sampling clock
+        if (this.clkTms != null)
+            return this.clkTms.getSampleCount();
+        
+        // Check for timestamp list
+        if (this.vecTms != null)
+            return this.vecTms.size();
+        
+        // Throw exception - no timestamps have been assigned
+        throw new IllegalStateException("IngestionFrame#getRowCount() - Frame timestamps have not been assigned.");
+    }
+    
+    /**
+     * <p>
+     * Returns the time-series data column at the given index within the ingestion frame.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Data column indices are arbitrary within an ingestion frame.  They are assigned internally by the frame
+     * when populating data.
+     * </p>
+     * 
+     * @param index index of data column (index &in; [0, {@link #getColumnCount()}])
+     * 
+     * @return  time-series data column at index 
+     * 
+     * @throws IllegalStateException        the ingestion frame has not been assigned data
+     * @throws IndexOutOfBoundsException    index is not within the range 0 &le; index &lt; {@link #getColumnCount()}
+     */
+    public IDataColumn<Object>  getDataColumn(int index) throws IllegalStateException, IndexOutOfBoundsException {
+        
+        // Check the frame
+        if (this.vecColData == null || this.vecColData.isEmpty())
+            throw new IllegalStateException("IngestionFrame#getDataColumn(int) - Ingestion frame contains no data.");
+        
+        return this.vecColData.get(index);
+    }
+    
+    /**
+     * <p>
+     * Returns the time-series data column with the given name.
+     * </p>
+     * @param strName   name of the desired data column
+     * 
+     * @return  time-series data column with the given name
+     * 
+     * @throws IllegalStateException    the ingestion frame has not been assigned data
+     * @throws IllegalArgumentException ingestion frame contains no data column with given name
+     */
+    public IDataColumn<Object>  getDataColumn(String strName) throws IllegalStateException, IllegalArgumentException {
+        
+        // Check the frame
+        if (this.vecColData == null || this.vecColData.isEmpty())
+            throw new IllegalStateException("IngestionFrame#getDataColumn(String) - Ingestion frame contains no data.");
+        
+        // Check argument 
+        if (!this.mapNmToCol.containsKey(strName))
+            throw new IllegalArgumentException("IngestionFrame#getDataColumn(String) - frame contains no data column with name " + strName);
+        
+        return this.mapNmToCol.get(strName);
+    }
+    
+    /**
+     * <p>
+     * Returns the entire collection of time-series data columns managed by the ingestion frame.
+     * </p>
+     * 
+     * @return  list of all time-series data columns within the frame
+     * 
+     * @throws IllegalStateException    the ingestion frame has not been assigned data
+     */
+    public final ArrayList<IDataColumn<Object>>   getDataColumns() throws IllegalStateException {
+        
+        // Check the frame
+        if (this.vecColData == null || this.vecColData.isEmpty())
+            throw new IllegalStateException("IngestionFrame#getDataColumns() - Ingestion frame contains no data.");
+        
+        return this.vecColData;
+    }
+    
     
     //
     // Support Methods
@@ -633,6 +1351,26 @@ public class IngestionFrame {
         setColData.stream().forEach(col -> mapTarget.put(col.getName(), col));
         
         return mapTarget;
+    }
+    
+    /**
+     * <p>
+     * Creates a new uniform sampling clock with identical parameter to the current clock, except for the 
+     * sample count which is given.
+     * </p>
+     * 
+     * @param cntSamples    number of samples within the returned clock
+     * 
+     * @return  a new <code>UniformSamplingClock</code> instance identical to the current except for given sample count
+     */
+    private UniformSamplingClock    createReducedSampleClock(int cntSamples) {
+        Instant     insStart = this.clkTms.getStartInstant();
+        long        lngPeriod = this.clkTms.getSamplePeriod();
+        ChronoUnit  cuPeriod = this.clkTms.getSamplePeriodUnits();
+        
+        UniformSamplingClock    clkReduced = UniformSamplingClock.from(insStart, cntSamples, lngPeriod, cuPeriod);
+        
+        return clkReduced;
     }
     
 }

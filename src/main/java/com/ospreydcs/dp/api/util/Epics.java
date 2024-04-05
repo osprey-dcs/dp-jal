@@ -31,10 +31,8 @@ package com.ospreydcs.dp.api.util;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
-import java.util.Vector;
 import java.util.stream.IntStream;
 
 import org.epics.nt.HasTimeStamp;
@@ -50,10 +48,12 @@ import org.epics.pvdata.pv.DoubleArrayData;
 import org.epics.pvdata.pv.FloatArrayData;
 import org.epics.pvdata.pv.IntArrayData;
 import org.epics.pvdata.pv.LongArrayData;
+import org.epics.pvdata.pv.PVBoolean;
 import org.epics.pvdata.pv.PVBooleanArray;
 import org.epics.pvdata.pv.PVByteArray;
 import org.epics.pvdata.pv.PVDoubleArray;
 import org.epics.pvdata.pv.PVFloatArray;
+import org.epics.pvdata.pv.PVInt;
 import org.epics.pvdata.pv.PVIntArray;
 import org.epics.pvdata.pv.PVLongArray;
 import org.epics.pvdata.pv.PVScalarArray;
@@ -73,7 +73,7 @@ import org.epics.pvdata.pv.StringArrayData;
 import org.epics.pvdata.pv.StructureArrayData;
 
 import com.google.protobuf.ByteString;
-import com.ospreydcs.dp.api.common.ArrayDimension;
+import com.ospreydcs.dp.api.model.ArrayDimension;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.table.StaticDataColumn;
@@ -183,7 +183,7 @@ public class Epics {
      * @throws IllegalArgumentException the argument is not EPICS NTTable compatible
      * @throws TypeNotPresentException an supported EPICS type was encountered in the PV structure data
      */
-    public static List<IDataColumn<Object>> extractTableColumns(PVStructure pvsTable) 
+    public static ArrayList<IDataColumn<Object>> extractTableColumns(PVStructure pvsTable) 
             throws IllegalArgumentException, TypeNotPresentException {
         
         // Wrap into an ntTable and exception check
@@ -192,7 +192,8 @@ public class Epics {
             throw new IllegalArgumentException("Epics#extractColumns(PVStructure) - argument was not compatible with NTTable");
 
         // The returned object
-        List<IDataColumn<Object>> lstCols = new LinkedList<IDataColumn<Object>>();
+        int                             szList = ntTable.getColumnNames().length;
+        ArrayList<IDataColumn<Object>>  lstCols = new ArrayList<>(szList);
 
         // For every column in the NTTable (by name)
         for (String strColNm : ntTable.getColumnNames()) {
@@ -478,7 +479,8 @@ public class Epics {
      * 
      * @throws IllegalArgumentException the argument was not <code>NTNDArray</code> compatible
      */
-    public static List<ArrayDimension> extractArrayDimensions(PVStructure pvsNdArray) throws IllegalArgumentException {
+    public static List<ArrayDimension> extractArrayDimensions(PVStructure pvsNdArray) 
+            throws IllegalArgumentException, MissingResourceException {
         
         // Wrap argument as an ntArray and exception check
         NTNDArray ntArray = NTNDArray.wrap(pvsNdArray);
@@ -495,7 +497,7 @@ public class Epics {
 
         List<ArrayDimension> lstDims = IntStream
                    .range(intOffset, pvsaDimFld.getLength())
-                   .mapToObj( i -> extractDimension(sadDims.data[i]))
+                   .mapToObj( i -> extractDimension(sadDims.data[i]))   // throws MissingResourceException
                    .toList();                  
         
         return lstDims;
@@ -516,14 +518,69 @@ public class Epics {
      * @param pvsDim PVStructure containing NTNDTable dimension information
      *  
      * @return metadata about the given dimension
+     * 
+     * @throws MissingResourceException an image parameter was missing (see message)
      */
-    private static ArrayDimension extractDimension(PVStructure pvsDim) {
-        int cntVals = pvsDim.getIntField(STR_NTND_DIMS_SIZE).get();
-        int indOffset = pvsDim.getIntField(STR_NTND_DIMS_OFFSET).get();
-        int szFull = pvsDim.getIntField(STR_NTND_DIMS_FULLSIZE).get();
-        int szBin = pvsDim.getIntField(STR_NTND_DIMS_BINNING).get();
-        boolean bolReversed = pvsDim.getBooleanField(STR_NTND_DIMS_REVERSE).get();
+    private static ArrayDimension extractDimension(PVStructure pvsDim) throws MissingResourceException {
+        
+        PVInt       pvintCntVals = pvsDim.getIntField(STR_NTND_DIMS_SIZE);
+        PVInt       pvintOffset = pvsDim.getIntField(STR_NTND_DIMS_OFFSET);
+        PVInt       pvintSzFull = pvsDim.getIntField(STR_NTND_DIMS_FULLSIZE);
+        PVInt       pvintSzBin = pvsDim.getIntField(STR_NTND_DIMS_BINNING);
+        PVBoolean   pvbolReversed = pvsDim.getBooleanField(STR_NTND_DIMS_REVERSE);
+        
+        // Check attribute availability
+        boolean bolMissingField = false;
+        String  strMsg = "Epics#extractDimension(PVStructure) - Argument was missing field(s) ";
+        String  strFlds = "";
+        
+        if (pvintCntVals == null) {
+            if (bolMissingField)
+                strFlds += ", ";
+            strFlds += STR_NTND_DIMS_SIZE;
+            bolMissingField = true;
+        }
+        if (pvintOffset == null) {
+            if (bolMissingField)
+                strFlds += ", ";
+            strFlds += STR_NTND_DIMS_OFFSET;
+            bolMissingField = true;
+        }
+        if (pvintSzFull == null) {
+            if (bolMissingField)
+                strFlds += ", ";
+            strFlds += STR_NTND_DIMS_FULLSIZE;
+            bolMissingField = true;
+        }
+        if (pvintSzBin == null) {
+            if (bolMissingField)
+                strFlds += ", ";
+            strFlds += STR_NTND_DIMS_BINNING;
+            bolMissingField = true;
+        }
+        if (pvbolReversed == null) {
+            if (bolMissingField)
+                strFlds += ", ";
+            strFlds += STR_NTND_DIMS_REVERSE;
+            bolMissingField = true;
+        }
+        
+        if (bolMissingField) 
+            throw new MissingResourceException(strMsg + strFlds, PVStructure.class.getName(), strFlds);
+        
+        // Convert EPICS types to Java types
+//        int cntVals = pvsDim.getIntField(STR_NTND_DIMS_SIZE).get();
+//        int indOffset = pvsDim.getIntField(STR_NTND_DIMS_OFFSET).get();
+//        int szFull = pvsDim.getIntField(STR_NTND_DIMS_FULLSIZE).get();
+//        int szBin = pvsDim.getIntField(STR_NTND_DIMS_BINNING).get();
+//        boolean bolReversed = pvsDim.getBooleanField(STR_NTND_DIMS_REVERSE).get();
+        int cntVals = pvintCntVals.get();
+        int indOffset = pvintOffset.get();
+        int szFull = pvintSzFull.get();
+        int szBin = pvintSzBin.get();
+        boolean bolReversed = pvbolReversed.get();
 
+        // Create dimension record and return
         return new ArrayDimension(cntVals, indOffset, szFull, szBin, bolReversed);
     }
     

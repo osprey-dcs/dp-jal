@@ -31,6 +31,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.MissingResourceException;
 
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
@@ -109,13 +112,128 @@ public class UniformSamplingClock implements Comparable<Instant> {
      * @return  new <code>UniformSamplingClock</code> instance initialized from the argument
      * 
      * @see ProtoMsg#toUniformSamplingClock(SamplingClock)
+     * 
+     * @deprecated Use <code>{@link ProtoMsg#toUniformSamplingClock(SamplingClock)}</code> instead.
      */
+    @Deprecated(since="April 5, 2024")
     public static UniformSamplingClock    from(SamplingClock msgClock) {
         Instant insStart = ProtoMsg.toInstant(msgClock.getStartTime());
         int     intCount = msgClock.getCount();
         long    lngPeriod = msgClock.getPeriodNanos();
         
         return new UniformSamplingClock(insStart, intCount, lngPeriod, ChronoUnit.NANOS);
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>UniformSamplingClock</code> instance using the given defining parameters.
+     * </p>
+     *  
+     * @param insStart  The starting instant of the sampling process 
+     * @param intCount  The number of samples
+     * @param lngPeriod The sampling period  
+     * @param cuPeriod  The sampling period time units
+     * 
+     * @return  a new sampling clock instance with the given parameters
+     */
+    public static UniformSamplingClock from(Instant insStart, int intCount, long lngPeriod, ChronoUnit cuPeriod) {
+        return new UniformSamplingClock(insStart, intCount, lngPeriod, cuPeriod);
+    }
+
+    /**
+     * <p>
+     * Attempts to create a new <code>UniformSamplingClock</code> instance from an ordered list of timestamps.
+     * </p>
+     * <p>
+     * This creator attempts to manifest a sampling clock instance that will produce the given argument with the
+     * <code>{@link #createTimestamps()}</code> method.  Thus, the argument is assumed to have uniformly 
+     * distributed, increasing sequence of timestamps in the order of sampling.  Additionally, to define the 
+     * sampling period the argument must have at least two entries.  If any of these conditions fail an exception
+     * is thrown.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The uniform sampling clock parameters are determined as follows:
+     *   <ol> 
+     *   <li>The start time for the clock is determined by the first entry.</li>
+     *   <li>The sampling period is determined from the first two entries (i.e., the difference).</li>
+     *   <li>The sample count is the size of the argument list.</li>
+     *   </ol>
+     * </li>
+     * <li>
+     * The following conditions on the argument must hold:
+     *   <ol>
+     *   <li>The argument must contain at least 2 entries or an exception is thrown.</li>  
+     *   <li>The argument must be ordered with the earliest timestamp first or an exception is thrown.</li>
+     *   <li>The argument timestamps must be equally spaced (by clock period) or an exception is thrown.</li>
+     *   </ol>
+     * </ul>
+     * </p>
+     * 
+     * @param vecTms    ordered list of timestamps assumed to be uniformly distributed
+     * 
+     * @return a sampling clock that will produce the given argument
+     * 
+     * @throws MissingResourceException the argument contains less than 2 elements
+     * @throws IllegalArgumentException the argument is not ordered correctly or has non-uniform distribute
+     * 
+     * @see #createTimestamps()
+     */
+    public static UniformSamplingClock  from(List<Instant> vecTms) throws MissingResourceException, IllegalArgumentException {
+        
+        // Check the size of the list (must be at least 2 entries to define a clock
+        if (vecTms.size() <= 2)
+            throw new MissingResourceException("UniformSamplingClock#from(List<Instant>) - argument must contain at least 2 elements.", List.class.getName(), "size()");
+
+        // Get the sampling period from the first 2 entries
+        Duration    durPeriod = Duration.between(vecTms.get(0), vecTms.get(1));
+        
+        // Check the ordering
+        if (durPeriod.isNegative())
+            throw new IllegalArgumentException("UniformSamplingClock#from(List<Instant>) - The argument ordering appears incorrect (earliest timestamp first)");
+        
+        // Check the argument for uniform sampling by looping through all timestamps
+        Integer         indCurr = 0;
+        Instant         insPrev = null;
+        List<Integer>   lstBadIndices = new LinkedList<>();
+        for (Instant insCurr : vecTms) {
+            
+            // Loop initialization 
+            if (insPrev == null) {
+                insPrev = insCurr;
+                indCurr++;
+                
+                continue;
+            }
+            
+            // Compare duration between current and previous timestamps with period - record if different
+            //   NOTE that this also checks ordering otherwise a negative duration is produced 
+            Duration durCurr = Duration.between(insPrev, insCurr);
+            
+            if (!durCurr.equals(durPeriod))
+                lstBadIndices.add(indCurr);
+            
+            insPrev = insCurr;
+            indCurr++;
+        }
+        
+        // Throw exception if non-uniform sampling
+        if (!lstBadIndices.isEmpty())
+            throw new IllegalArgumentException("UniformSamplingClock#from(List<Instant>) - The argument indicates non-uniform sampling at indices " + lstBadIndices);
+
+        
+        // Get the sampling clock parameters
+        Instant     insStart = vecTms.get(0);
+        int         cntSamples = vecTms.size();
+        long        lngPeriodNs = durPeriod.toNanos();
+        ChronoUnit  enmPeriodUnit = ChronoUnit.NANOS;
+        
+        // Create the sampling clock and return it
+        UniformSamplingClock    clk = new UniformSamplingClock(insStart, cntSamples, lngPeriodNs, enmPeriodUnit);
+        
+        return clk;
     }
     
     

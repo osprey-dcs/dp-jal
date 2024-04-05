@@ -41,12 +41,12 @@ import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.ospreydcs.dp.api.common.BufferedImage;
-import com.ospreydcs.dp.api.common.BufferedImage.Format;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
+import com.ospreydcs.dp.api.model.BufferedImage;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.PvMetaRecord;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
+import com.ospreydcs.dp.api.model.BufferedImage.Format;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
