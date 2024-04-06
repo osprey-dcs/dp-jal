@@ -390,6 +390,50 @@ public class UniformSamplingClock implements Comparable<Instant> {
         return vecTms;
     }
     
+    // 
+    // Object Overrides - Debugging
+    //
+    
+    /**
+     * @see @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object objClock) {
+        
+        // Check type and cast
+        if (objClock instanceof UniformSamplingClock clk)
+            ;
+        else
+            return false;
+        
+        // Check defining parameters
+        if (!this.insStart.equals(clk.insStart))
+            return false;
+        if (this.intCount != clk.intCount)
+            return false;
+        if (this.lngPeriod != clk.lngPeriod)
+            return false;
+        if (this.cuPeriod != clk.cuPeriod)
+            return false;
+     
+        return true;
+    }
+    
+    /**
+     * @see @see java.lang.Object#toString()
+     */
+    @Override
+    public String   toString() {
+        String  strText = this.getClass().getName() + ": (";
+        
+        strText += "Start time=" + this.insStart + ", ";
+        strText += "Sample count=" + this.intCount + ", ";
+        strText += "Period=" + this.lngPeriod + " " + this.cuPeriod + ", "; 
+        strText += "Duration=" + this.durPeriod + ")";
+        strText += "Domain=" + this.ivlDomain + ")"; 
+        
+        return strText;
+    }
     
     //
     // Comparable Interface

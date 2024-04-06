@@ -41,6 +41,7 @@ import org.epics.nt.NTTable;
 import org.epics.pvdata.pv.PVStructure;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
+import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
 import com.ospreydcs.dp.api.model.table.StaticDataColumn;
@@ -169,6 +170,87 @@ public class IngestionFrame {
         
         return frame;
     }
+    
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>IngestionFrame</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This creator returns an ingestion frame where the timestamps are identified implicitly with a 
+     * uniform sampling clock.
+     * </li>
+     * <br/>
+     * <li>
+     * The arguments <b>must be consistent</b> or an exception is thrown.  The following conditions must hold:
+     *   <ul>
+     *   <li>The size of each data column within the argument collection must be identical.</li>  
+     *   <li>The size of all data columns must be equal to the number of samples specified in the sampling clock.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * </p>
+     *
+     * @param clk       uniform sampling clock identifying timestamps for all data columns
+     * @param lstCols   data columns containing time-series data for unique data sources (identified by name)
+     * 
+     * @return  new <code>IngestionFrame</code> instance populated with the argument data
+     * 
+     * @throws IllegalArgumentException  the argument data was inconsistent (see detail message)
+     * 
+     * @see #IngestionFrame(UniformSamplingClock, ArrayList)
+     * @see #checkFrameConsistency()
+     */
+    public static final IngestionFrame from(UniformSamplingClock clk, ArrayList<IDataColumn<Object>> vecColData) 
+            throws IllegalArgumentException {
+        
+        return new IngestionFrame(clk, vecColData);
+    }
+    
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>IngestionFrame</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This creator returns an ingestion frame where the timestamps are identified explicitly with a 
+     * an ordered list of timestamp instants.   
+     * </li>
+     * <br/>
+     * <li>
+     * The arguments <b>must be consistent</b> or an exception is thrown.  The following conditions must hold:
+     *   <ul>
+     *   <li>The size of each data column within the argument collection must be identical.</li>  
+     *   <li>The size of all data columns must be equal to the size of the timestamp list.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * </p>
+     *
+     * @param vecTms    an ordered vector of timestamp instances, one for each data column row
+     * @param lstCols   data columns containing time-series data for unique data sources (identified by name)
+     * @param mapAttrs  a map of (name,value) pairs are used as attributes for the ingestion frame   
+     * 
+     * @return  new <code>IngestionFrame</code> instance populated with the argument data
+     * 
+     * @throws  IllegalArgumentException  the argument data was inconsistent (see detail message)
+     * 
+     * @see #IngestionFrame(ArrayList, ArrayList)
+     * @see #checkFrameConsistency()
+     */
+    public static final IngestionFrame from(ArrayList<Instant> vecTms, ArrayList<IDataColumn<Object>> vecColData) 
+            throws IllegalArgumentException {
+
+        return new IngestionFrame(vecTms, vecColData);
+    }
+    
+    //
+    // Constructors
+    //
     
     /**
      * <p>
@@ -1109,8 +1191,32 @@ public class IngestionFrame {
      * @return  <code>true</code> if frame contains a non-empty collection of times-series data columns,
      *          <code>false</code> if the collection is empty
      */
-    public boolean hasData() {
+    public boolean hasData() throws IllegalStateException {
+        if (this.vecColData == null)
+            return false;
+        
         return !this.vecColData.isEmpty();
+    }
+    
+    /**
+     * <p>
+     * Determines whether or not the ingestion frame contains a data column with the given name.
+     * </p>
+     * 
+     * @param strName   name of desired data column
+     * 
+     * @return  <code>true</code> if ingestion frame contains the data column,
+     *          <code>false</code> otherwise
+     *          
+     * @throws IllegalStateException    no data has been assigned to ingestion frame (uninitialized state)
+     */
+    public boolean hasDataColumn(String strName) throws IllegalStateException {
+        
+        // Check for data assignment
+        if (this.vecColData == null)
+            throw new IllegalStateException("IngestionFrame#hasDataColumn(String) - no data has been assigned.");
+        
+        return this.mapNmToCol.containsKey(strName);
     }
     
     /**
@@ -1219,13 +1325,13 @@ public class IngestionFrame {
      * 
      * @return  number of data columns currently within the ingestion frame 
      * 
-     * @throws IllegalStateException        the ingestion frame has not been assigned data
+     * throws IllegalStateException        the ingestion frame has not been assigned data
      */
-    public int  getColumnCount() {
+    public int  getColumnCount() /* throws IllegalStateException */ {
 
-        // Check the frame
-        if (this.vecColData == null)
-            throw new IllegalStateException("IngestionFrame#getColumnCount() - Ingestion has not been initialized with data.");
+//        // Check the frame
+//        if (this.vecColData == null)
+//            throw new IllegalStateException("IngestionFrame#getColumnCount() - Ingestion has not been initialized with data.");
         
         return this.vecColData.size();
     }
@@ -1322,6 +1428,115 @@ public class IngestionFrame {
             throw new IllegalStateException("IngestionFrame#getDataColumns() - Ingestion frame contains no data.");
         
         return this.vecColData;
+    }
+    
+    
+    //
+    // Object Overrides - Debugging
+    //
+    
+    /**
+     *
+     * @see @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object objFrame) {
+        
+        // Check type and cast
+        if (objFrame instanceof IngestionFrame frm)
+            ;
+        else
+            return false;
+        
+        // Check timestamps
+        if (this.clkTms!=null && !this.clkTms.equals(frm.clkTms))
+            return false;
+        if (this.vecTms!=null && !this.vecTms.equals(frm.vecTms))
+            return false;
+        
+        // Check time-series data types, values, and column names
+        for (IDataColumn<Object> colThis : this.vecColData) {
+            String              strName = colThis.getName();
+            IDataColumn<Object> colCmp = frm.getDataColumn(strName);
+            
+            DpSupportedType enmTypeThis = colThis.getType();
+            DpSupportedType enmTypeCmp = colCmp.getType();
+            if (enmTypeThis != enmTypeCmp)
+                return false;
+            
+            List<Object>    lstValsThis = colThis.getValues();
+            List<Object>    lstValsCmp = colCmp.getValues();
+            if (!lstValsThis.equals(lstValsCmp))
+                return false;
+        }
+        
+        // Check optional attributes
+        if (this.strLabelFrame!=null && !this.strLabelFrame.equals(frm.strLabelFrame))
+            return false;
+        if (this.insTmsFrame!=null && !this.insTmsFrame.equals(frm.insTmsFrame))
+            return false;
+        if (!this.mapAttributes.equals(frm.mapAttributes))
+            return false;
+        
+        // Everything checks
+        return true;
+    }
+    
+    /**
+     *
+     * @see @see java.lang.Object#toString()
+     */
+    @Override
+    public String   toString() {
+        
+        String  strText = this.getClass().getName() + ":\n";
+        strText += "  Label: " + this.strLabelFrame + "\n";
+        strText += "  Timestamp: " + this.insTmsFrame + "\n";
+        strText += "  Attributes: " + this.mapAttributes + "\n";
+        if (this.clkTms != null) 
+            strText += "  Sampling Clock: " + this.clkTms + "\n";
+
+        // Get the timestamps to display, or quite if not assigned
+        ArrayList<Instant>  vecRowTms; 
+        if (this.clkTms!=null)
+            vecRowTms = this.clkTms.createTimestamps();
+        
+        else if (this.vecTms!=null)
+            vecRowTms = this.vecTms;
+        
+        else {
+            strText += "  Timestamps were never assigned. \n";
+            
+            return strText;
+        }
+            
+        // Write out data in table format
+        // - Create and write table header
+        String  strTblHdr = "  timestamps";
+        for (IDataColumn<Object> col : this.vecColData) {
+            strTblHdr += "\t" + col.getName();
+        }
+        strText += strTblHdr + "\n";
+        
+        // - Write out table timestamps and value
+        int cntRows = this.getRowCount();
+        
+        for (int iRow=0; iRow<cntRows; iRow++) {
+            String  strRow = "  ";
+            Instant insTms = vecRowTms.get(iRow);
+            
+            strRow += insTms.getEpochSecond() + ":" + insTms.getNano();
+            
+            for (IDataColumn<Object> col : this.vecColData) {
+                Object  objVal = col.getValue(iRow);
+                
+                strRow += "\t" + objVal;
+            }
+            
+            strText += strRow + "\n";
+        }
+        
+        return strText;
     }
     
     
