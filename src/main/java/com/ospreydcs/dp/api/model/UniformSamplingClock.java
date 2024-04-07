@@ -135,8 +135,12 @@ public class UniformSamplingClock implements Comparable<Instant> {
      * @param cuPeriod  The sampling period time units
      * 
      * @return  a new sampling clock instance with the given parameters
+     * 
+     * @throws IllegalArgumentException intCount < 0 or lngPeriod <= 0
      */
-    public static UniformSamplingClock from(Instant insStart, int intCount, long lngPeriod, ChronoUnit cuPeriod) {
+    public static UniformSamplingClock from(Instant insStart, int intCount, long lngPeriod, ChronoUnit cuPeriod) 
+            throws IllegalArgumentException {
+
         return new UniformSamplingClock(insStart, intCount, lngPeriod, cuPeriod);
     }
 
@@ -250,8 +254,15 @@ public class UniformSamplingClock implements Comparable<Instant> {
      * @param intCount  The number of samples
      * @param lngPeriod The sampling period  
      * @param cuPeriod  The sampling period time units
+     * 
+     * @throws IllegalArgumentException intCount < 0 or lngPeriod <= 0
      */
     public UniformSamplingClock(Instant insStart, int intCount, long lngPeriod, ChronoUnit cuPeriod) {
+        
+        // Check Argument
+        if (intCount < 0 || lngPeriod <= 0)
+            throw new IllegalArgumentException("Sampling count < 0 and/or sample periods <= 0.");
+        
         this.insStart = insStart;
         this.intCount = intCount;
         this.lngPeriod = lngPeriod;
@@ -259,6 +270,13 @@ public class UniformSamplingClock implements Comparable<Instant> {
         
         // Compute consistent parameters
         this.durPeriod = Duration.of(lngPeriod, cuPeriod);
+        
+        // Special case - intCount == 0
+        if (intCount == 0) {
+            this.ivlDomain = TimeInterval.from(insStart, insStart);
+            
+            return;
+        }
         
         Duration durIvl = this.durPeriod.multipliedBy(intCount - 1);
         Instant insStop = this.insStart.plus(durIvl);
