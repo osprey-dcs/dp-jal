@@ -699,20 +699,6 @@ public class IngestionFrame {
             szCol = this.vecTms.size();
         
         // Check all arguments for proper column size
-//        // TODO - Remove
-//        for (IDataColumn<Object> col : setDataCols) {
-//            String  strName = col.getName();
-//            int     cntRows = col.getSize();
-//            
-//            List<Object> lstVals = col.getValues();
-//            DpSupportedType enmType = col.getType();
-//            
-//            if (cntRows != szCol)
-//                System.out.println("Column " + strName + " has size " + cntRows + " not equal to " + szCol);
-//            
-//            col.getClass();
-//        }
-//        
         List<String>    lstBadColNms = setDataCols
                 .stream()
                 .filter(col -> (col.getSize().intValue() != szCol) )  // filter for columns with incorrect size
@@ -1894,7 +1880,7 @@ public class IngestionFrame {
             
         // Write out data in table format
         // - Create and write table header
-        String  strTblHdr = "  timestamps";
+        String  strTblHdr = "  timestamps\t";
         for (IDataColumn<Object> col : this.vecColData) {
             strTblHdr += "\t" + col.getName();
         }
@@ -1911,7 +1897,9 @@ public class IngestionFrame {
             
             for (IDataColumn<Object> col : this.vecColData) {
                 Object  objVal = col.getValue(iRow);
+                String  strVal = String.format("%10s", objVal.toString());
                 
+//                strRow += "\t" + strVal;
                 strRow += "\t" + objVal;
             }
             

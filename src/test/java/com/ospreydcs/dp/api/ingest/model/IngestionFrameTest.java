@@ -27,13 +27,11 @@
  */
 package com.ospreydcs.dp.api.ingest.model;
 
-import static org.junit.Assert.*;
-import org.junit.Assert;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,6 +42,7 @@ import java.util.stream.IntStream;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -923,9 +922,6 @@ public class IngestionFrameTest {
     public final void testCopy() {
 
         // Parameters
-        final String    strLabel = "TEST_SOURCE_FRAME";
-        final Instant   insTms = Instant.now();
-        final int       cntAttrs = 10;
         final int       cntCols = 1000;
         final int       cntRows = 1000;
         
@@ -973,9 +969,6 @@ public class IngestionFrameTest {
     public final void testHasData() {
 
         // Parameters
-        final String    strLabel = "TEST_SOURCE_FRAME";
-        final Instant   insTms = Instant.now();
-        final int       cntAttrs = 10;
         final int       cntCols = 1000;
         final int       cntRows = 1000;
         
@@ -992,8 +985,6 @@ public class IngestionFrameTest {
     public final void testHasAttributes() {
 
         // Parameters
-        final String    strLabel = "TEST_SOURCE_FRAME";
-        final Instant   insTms = Instant.now();
         final int       cntAttrs = 10;
         final int       cntCols = 1000;
         final int       cntRows = 1000;
@@ -1041,8 +1032,6 @@ public class IngestionFrameTest {
     public final void testGetAttributes() {
 
         // Parameters
-        final String    strLabel = "TEST_SOURCE_FRAME";
-        final Instant   insTms = Instant.now();
         final int       cntAttrs = 10;
         final int       cntCols = 1000;
         final int       cntRows = 1000;
@@ -1090,12 +1079,8 @@ public class IngestionFrameTest {
     public final void testGetColumnNames() {
         
         // Parameters
-        final String    strLabel = "TEST_SOURCE_FRAME";
-        final Instant   insTms = Instant.now();
-        final int       cntAttrs = 10;
         final int       cntCols = 1000;
         final int       cntRows = 1000;
-        final Map<String, String> mapAttrs = this.createAttributes(cntAttrs);
         
         // Create test frame
         IngestionFrame      frame = this.createDoublesFrame(cntCols, cntRows);
@@ -1118,12 +1103,8 @@ public class IngestionFrameTest {
     public final void testGetColumnCount() {
 
         // Parameters
-        final String    strLabel = "TEST_SOURCE_FRAME";
-        final Instant   insTms = Instant.now();
-        final int       cntAttrs = 10;
         final int       cntCols = 1000;
         final int       cntRows = 1000;
-        final Map<String, String> mapAttrs = this.createAttributes(cntAttrs);
         
         // Create test frame
         IngestionFrame      frame = this.createDoublesFrame(cntCols, cntRows);
@@ -1138,12 +1119,8 @@ public class IngestionFrameTest {
     public final void testGetRowCount() {
 
         // Parameters
-        final String    strLabel = "TEST_SOURCE_FRAME";
-        final Instant   insTms = Instant.now();
-        final int       cntAttrs = 10;
         final int       cntCols = 1000;
         final int       cntRows = 1000;
-        final Map<String, String> mapAttrs = this.createAttributes(cntAttrs);
         
         // Create test frame
         IngestionFrame      frame = this.createDoublesFrame(cntCols, cntRows);
@@ -1156,7 +1133,22 @@ public class IngestionFrameTest {
      */
     @Test
     public final void testGetDataColumnInt() {
-        fail("Not yet implemented"); // TODO
+
+        // Parameters
+        final int       cntCols = 1000;
+        final int       cntRows = 1000;
+        
+        // Create test frame
+        IngestionFrame      frame = this.createDoublesFrame(cntCols, cntRows);
+        
+        for (int iCol=0; iCol<cntCols; iCol++) {
+            String  strColNm = STR_PV_PREFIX_DBLS + Integer.toString(iCol);
+            
+            IDataColumn<Object> col = frame.getDataColumn(iCol);
+            
+            Assert.assertEquals(cntRows, col.getSize().intValue());
+            Assert.assertEquals(strColNm, col.getName());
+        }
     }
 
     /**
@@ -1164,7 +1156,22 @@ public class IngestionFrameTest {
      */
     @Test
     public final void testGetDataColumnString() {
-        fail("Not yet implemented"); // TODO
+
+        // Parameters
+        final int       cntCols = 1000;
+        final int       cntRows = 1000;
+        
+        // Create test frame
+        IngestionFrame      frame = this.createDoublesFrame(cntCols, cntRows);
+        
+        for (int iCol=0; iCol<cntCols; iCol++) {
+            String  strColNm = STR_PV_PREFIX_DBLS + Integer.toString(iCol);
+            
+            IDataColumn<Object> col = frame.getDataColumn(strColNm);
+            
+            Assert.assertEquals(cntRows, col.getSize().intValue());
+            Assert.assertEquals(strColNm, col.getName());
+        }
     }
 
     /**
@@ -1172,7 +1179,26 @@ public class IngestionFrameTest {
      */
     @Test
     public final void testGetDataColumns() {
-        fail("Not yet implemented"); // TODO
+
+        // Parameters
+        final int       cntCols = 1000;
+        final int       cntRows = 1000;
+        
+        // Create test frame
+        IngestionFrame      frame = this.createDoublesFrame(cntCols, cntRows);
+
+        // Get all data columns and check
+        List<IDataColumn<Object>>   lstCols = frame.getDataColumns();
+        
+        Set<String>    setColNms = new TreeSet<>( frame.getColumnNames() );
+        
+        for (IDataColumn<Object> col : lstCols) {
+            Assert.assertEquals(cntRows, col.getSize().intValue());
+            
+            setColNms.remove(col.getName());
+        }
+        
+        Assert.assertTrue("IngestionFrame#getColumnNames() did not return the column: " + setColNms, setColNms.isEmpty());
     }
 
     /**
