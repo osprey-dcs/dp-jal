@@ -572,7 +572,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#allocationSize()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#allocationSizeFrame()}.
      */
     @Test
     public final void testAllocationSize() {
@@ -586,7 +586,7 @@ public class IngestionFrameTest {
         // Create test frame
         IngestionFrame  frame = this.createDoublesFrame(cntCols, cntRows);
 
-        long    lngSzSer = frame.allocationSize();
+        long    lngSzSer = frame.allocationSizeFrame();
         
         Assert.assertTrue(intSzMem > lngSzSer);
         

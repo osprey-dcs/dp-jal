@@ -315,7 +315,7 @@ public class UniformSamplingClock implements Comparable<Instant> {
      * sample period time units.
      * </p>
      * 
-     * @return  return the sample period for the clock
+     * @return  the sample period for the clock
      * 
      * @see #getSamplePeriodUnits()
      */
@@ -332,6 +332,22 @@ public class UniformSamplingClock implements Comparable<Instant> {
      */
     public ChronoUnit   getSamplePeriodUnits() {
         return this.cuPeriod;
+    }
+    
+    /**
+     * <p>
+     * Returns the sample period duration.
+     * </p>
+     * <p>
+     * This is a convenience method to recover the sample period as a Java 
+     * <code>{@link Duration}</code> object representing arbitrary time durations.
+     * Can be used to convert to arbitrary time units.
+     * </p>
+     * 
+     * @return  the sample period duration for the clock 
+     */
+    public Duration     getSamplePeriodDuration() {
+        return this.durPeriod;
     }
     
     /**

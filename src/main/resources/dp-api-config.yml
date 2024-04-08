@@ -84,12 +84,16 @@ ingest: # Data Platform Ingestion Service client API default configuration param
       active: false                 # use streaming parameters    : DP_API_INGEST_STREAM_ACTIVE
       type: FORWARD                  # preferred- DpGrpcStreamType : DP_API_INGEST_STREAM_TYPE
       buffer:              # data buffering and queueing parameters
-         active: false               # apply data buffering/queue  : DP_API_INGEST_STREAM_BUFFER_ACTIVE
+         active: true                # apply data buffering/queue  : DP_API_INGEST_STREAM_BUFFER_ACTIVE
          size: 100                   # buffer/queue size (messages): DP_API_INGEST_STREAM_BUFFER_SIZE    
          backPressure : true         # enable queue back pressure  : DP_API_INGEST_STREAM_BUFFER_BACKPRESSURE
       binning:             # data binning parameters
-         active: false               # use data binning            : DP_API_INGEST_STREAM_BINNING_ACTIVE
+         active: true                # use data binning            : DP_API_INGEST_STREAM_BINNING_ACTIVE
          maxSize: 4000000            # max bin size (bytes)        : DP_API_INGEST_STREAM_BINNING_MAX_SIZE
+      concurrency:         # multiple,concurrent gRPC stream parameters
+         active: true                # use multiple streams when possible : DP_API_INGEST_STREAM_CONCURRENCY_ACTIVE
+         pivotSize: 4000000          # currency activation size (bytes)   : DP_API_INGEST_STREAM_CONCURRENCY_PIVOT_SIZE
+         maxStreams: 3               # maximum number of streams to use   : DP_API_INGEST_STREAM_CONCURRENT_MAX_STREAMS
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency            : DP_API_INGEST_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_INGEST_CONCURRENCY_PIVOT_SIZE
@@ -133,6 +137,10 @@ query:      # Data Platform Query Service client API default configuration param
       binning:             # data binning parameters
          active: false               # use data binning            : DP_API_QUERY_STREAM_BINNING_ACTIVE
          maxSize: 4000000            # max bin size (bytes)        : DP_API_QUERY_STREAM_BINNING_MAX_SIZE
+      concurrency:         # multiple,concurrent gRPC stream parameters
+         active: false               # use multiple streams when possible : DP_API_QUERY_STREAM_CONCURRENCY_ACTIVE
+         pivotSize: 4000000          # currency activation size (bytes)   : DP_API_QUERY_STREAM_CONCURRENCY_PIVOT_SIZE
+         maxStreams: 3               # maximum number of streams to use   : DP_API_QUERY_STREAM_CONCURRENT_MAX_STREAMS
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency            : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE

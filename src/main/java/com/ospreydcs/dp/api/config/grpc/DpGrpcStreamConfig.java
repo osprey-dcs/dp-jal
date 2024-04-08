@@ -27,8 +27,11 @@
  */
 package com.ospreydcs.dp.api.config.grpc;
 
+import java.util.concurrent.TimeUnit;
+
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.api.config.query.DpDataResponseConfig.Multistream;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 
 /**
@@ -77,6 +80,10 @@ public class DpGrpcStreamConfig extends CfgStructure<DpGrpcStreamConfig> {
     @ACfgOverride.Struct(pathelem="BINNING")
     public DataBinning          binning;
     
+    /** gRPC multiple, concurrent data streams parameters */
+    @ACfgOverride.Struct(pathelem="CONCURRENCY")
+    public Concurrency          concurrency;
+    
     
     /**
      * Structure class containing parameters for gRPC stream data buffering.
@@ -124,6 +131,32 @@ public class DpGrpcStreamConfig extends CfgStructure<DpGrpcStreamConfig> {
         @ACfgOverride.Field(name="MAX_SIZE")
         public Integer      maxSize;
 
+    }
+    
+    /**
+     *  Structure class defining default configuration parameters for multiple, concurrent gRPC streams.  
+     */
+    public static class Concurrency extends CfgStructure<Concurrency> {
+
+        /** Default constructor required for base structure class */
+        public Concurrency() { super(Concurrency.class); }
+        
+        
+        //
+        // Configuration Fields
+        //
+        
+        /** use multiple gRPC data stream for request recovery */
+        @ACfgOverride.Field(name="ACTIVE")
+        public Boolean      active;
+        
+        /** Optional size parameter activating multiple concurrent streams */
+        @ACfgOverride.Field(name="PIVOT_SIZE")
+        public Long         pivotSize;
+        
+        /** Maximum number of gRPC data stream to use */
+        @ACfgOverride.Field(name="MAX_STREAMS")
+        public Integer      maxStreams;
     }
     
 }

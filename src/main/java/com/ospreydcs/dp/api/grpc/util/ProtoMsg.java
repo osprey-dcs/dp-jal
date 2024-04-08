@@ -30,6 +30,7 @@ package com.ospreydcs.dp.api.grpc.util;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.model.BufferedImage;
 import com.ospreydcs.dp.api.model.DpSupportedType;
@@ -50,6 +52,7 @@ import com.ospreydcs.dp.api.model.BufferedImage.Format;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
+import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.common.DataValue.ValueCase;
 import com.ospreydcs.dp.grpc.v1.common.DataValueType;
@@ -60,6 +63,7 @@ import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Structure;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
 
@@ -158,7 +162,91 @@ public final class ProtoMsg {
         
         return bldr.build();
     }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>SamplingClock</code> message with parameters
+     * equivalent to that of the argument.
+     * </p>
+     * 
+     * @param clk   uniform sampling clock Java object
+     * 
+     * @return  Protobuf <code>SamplingClock</code> message equivalent to argument
+     */
+    public static SamplingClock from(UniformSamplingClock clk) {
+        
+        // Extract argument parameters
+        Instant     insStart = clk.getStartInstant();
+        int         cntSamples = clk.getSampleCount();
+        long        lngPeriodNs = clk.getSamplePeriodDuration().toNanos();
+        
+        // Create the SamplingClock message from populated builder
+        SamplingClock msgClk = SamplingClock.newBuilder()
+                .setStartTime(ProtoMsg.from(insStart))
+                .setCount(cntSamples)
+                .setPeriodNanos(lngPeriodNs)
+                .build();
+        
+        return msgClk;
+    }
 
+    /**
+     * <p>
+     * Creates a new <code>IngestionDataFrame</code> Protobuf message populated with data
+     * from the given argument.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The returned object contains only the timestamp information and column data 
+     * (i.e., time-series data) from the argument.
+     * The <code>{@link IngestionFrame}</code> class has additional properties that are
+     * available for the <code>{@link IngestDataRequest}</code> message.
+     * </p>
+     * 
+     * @param frame client API library ingestion frame containing timestamps and time-series data
+     * 
+     * @return  a new <code>IngestionDataFrame</code> message populated with data from the argument
+     * 
+     * @throws IllegalStateException    the argument was not initialized or contains incomplete data
+     * @throws MissingResourceException the argument had no timestamp assignments
+     * @throws TypeNotPresentException  an unsupported data type was contained in the arugment data
+     * @throws ClassCastException       bad type cast or structured data within argument was not converted 
+     */
+    public static IngestDataRequest.IngestionDataFrame from(IngestionFrame frame) 
+            throws IllegalStateException, MissingResourceException, TypeNotPresentException, ClassCastException  {
+
+        // Extract the argument timestamp information (clock or list) and convert 
+        DataTimestamps msgDataTms = null;
+        if (frame.hasSamplingClock()) {
+            SamplingClock   msgClk = ProtoMsg.from(frame.getSamplingClock());
+            
+            msgDataTms = DataTimestamps.newBuilder().setSamplingClock(msgClk).build();
+        
+        } else if (frame.hasTimestampList()) {
+            TimestampList   msgTms = ProtoMsg.from(frame.getTimestampList());
+            
+            msgDataTms = DataTimestamps.newBuilder().setTimestampList(msgTms).build();
+        
+        } else 
+            throw new MissingResourceException("Ingestion frame was not assigned timestamps.", frame.getClass().getName(), "getSamplingClock(), getTimestampList()");
+        
+        // Extract the argument data and convert to Protobuf messages
+        List<DataColumn>    lstMsgCols = frame
+                .getDataColumns()   // throws IllegalStateException
+                .stream()
+                .<DataColumn>map( colFrm -> ProtoMsg.createDataColumn(colFrm.getName(), colFrm.getValues()) ) // throws exceptions
+                .toList();
+
+        
+        // Use Protobuf message builder to populate with argument data
+        IngestDataRequest.IngestionDataFrame msgFrame = IngestDataRequest.IngestionDataFrame.newBuilder()
+                .setDataTimestamps(msgDataTms)
+                .addAllDataColumns(lstMsgCols)
+                .build();
+        
+        return msgFrame;
+    }
+    
     /**
      * <p>
      * Creates and returns a new Protobuf <code>Image</code> message from the given buffered image.
@@ -215,7 +303,7 @@ public final class ProtoMsg {
      * @return a new <code>DataColumn</code> message populated with the given arguments
      * 
      * @throws TypeNotPresentException the object argument was not one of the supported types (see {@link #createDataValue(Object)})
-     * @throws ClassCastException attempted conversion of list to array to sorted map to structure failed
+     * @throws ClassCastException      type conversion failed, or structured data conversion failed
      * 
      * @see #toDatum(Object)
      */
@@ -296,7 +384,7 @@ public final class ProtoMsg {
      * @return <code>DataValue</code> message containing the given value
      * 
      * @throws TypeNotPresentException the argument was not one of the above types
-     * @throws ClassCastException attempted conversion of list to array to sorted map to structure failed
+     * @throws ClassCastException      type conversion failed, or structured data conversion failed
      * 
      * @see #toArray(List)
      * @see #toStructure(Map)
@@ -863,10 +951,10 @@ public final class ProtoMsg {
      * @throws  TypeNotPresentException unsupported data type encountered
      * @see #extractValue(DataValue)
      */
-    public static Vector<Object> extractValues(Array msgArray) throws TypeNotPresentException {
+    public static ArrayList<Object> extractValues(Array msgArray) throws TypeNotPresentException {
         List<DataValue> lstVals = msgArray.getDataValuesList();
         List<Object>    lstObjs = lstVals.stream().map(ProtoMsg::extractValue).toList();
-        Vector<Object>  vecObjs = new Vector<>(lstObjs);
+        ArrayList<Object>  vecObjs = new ArrayList<>(lstObjs);
         return vecObjs;
     }
     

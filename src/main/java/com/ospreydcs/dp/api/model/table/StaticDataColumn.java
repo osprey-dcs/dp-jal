@@ -106,6 +106,9 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
      *  
      * @return  a new data column populated with the given argument data with the specified type
      *
+     * @throws MissingResourceException the initializing data values container was empty 
+     * @throws IllegalArgumentException the specified data type is incompatible with generic parameter <code>T</code>
+     * 
      * @see #StaticDataColumn(String, DpSupportedType, ArrayList)
      */
     public static <T extends Object> StaticDataColumn<T> from(String strName, DpSupportedType enmType, ArrayList<T> vecValues) 

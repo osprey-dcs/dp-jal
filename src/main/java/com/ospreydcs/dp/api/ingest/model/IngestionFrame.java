@@ -49,6 +49,7 @@ import com.ospreydcs.dp.api.model.UniformSamplingClock;
 import com.ospreydcs.dp.api.model.table.StaticDataColumn;
 import com.ospreydcs.dp.api.util.Epics;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.api.util.JavaSize;
 
 /**
  * <p>
@@ -859,24 +860,40 @@ public class IngestionFrame {
  
             return ResultStatus.newFailure(strMsg);
         }
-            
+
+        
         // Create a list of names for all data columns having the incorrect size
-        List<String> lstBadColNms = this.vecColData
+        List<String> lstBadColSzs = this.vecColData
                 .stream()
                 .filter(col -> { return col.getSize() != cntRows; })
                 .<String>map(IDataColumn::getName)
                 .toList();
         
-        // If the list is empty everything is okay
-        if (lstBadColNms.isEmpty())
-            return ResultStatus.SUCCESS;
+        // If the list is not empty there are columns with incorrect sizes
+        if (!lstBadColSzs.isEmpty()) {
+            // Create the failure message and return failed status
+            String  strMsg = "The ingestion frame contained inconsistent sized data columns (size != " 
+                           + cntRows + "): " 
+                           + lstBadColSzs;
+            
+            return ResultStatus.newFailure(strMsg);
+        }
         
-        // Create the failure message and return failed status
-        String  strMsg = "The ingestion frame contained inconsistent sized data columns (size != " 
-                       + cntRows + "): " 
-                       + lstBadColNms;
+        // Check that all data values have compatible types
+        List<String> lstBadColTypes = new LinkedList<>();
+        for (IDataColumn<Object> col : this.vecColData) {
+            String          strName = col.getName();
+            DpSupportedType enmType = col.getType();
+            
+            if (!col.getValues().stream().allMatch(objVal -> enmType.isAssignableFrom(objVal)))
+                lstBadColTypes.add(strName);
+        }
         
-        return ResultStatus.newFailure(strMsg);
+        if (!lstBadColTypes.isEmpty()) 
+            return ResultStatus.newFailure("The ingestion frame contained data columns with inconsistent data types: " + lstBadColTypes); 
+     
+        // If we are here everything checks
+        return ResultStatus.SUCCESS;
     }
     
     /**
@@ -906,7 +923,7 @@ public class IngestionFrame {
      * 
      * @return  a conservative estimate of the memory allocation size for this frame (in bytes)
      */
-    public long allocationSize() {
+    public long allocationSizeFrame() {
         
         // Check for exceptional cases
         if (this.vecColData == null || this.vecColData.isEmpty())
@@ -922,6 +939,51 @@ public class IngestionFrame {
             szBytes += 2 * Long.BYTES * this.vecTms.size();
         
         return szBytes;
+    }
+    
+    /**
+     * <p>
+     * Computes and returns an estimate for the memory allocation size one row of this ingestion frame (in bytes).
+     * </p>
+     * <p>
+     * The estimate proceeds by collecting the data value for the first row using
+     * <code>{@link #getRowValues(int)}</code> then computing its serialized size using
+     * <code>{@link JavaSize#serialSizeof(java.io.Serializable)}</code>.
+     * If a timestamp list is used, then the allocation for a single timestamp is included.
+     * The estimate does not include allocation for the optional parameters.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned value is more appropriately identified as the <em>serialization size</em>.
+     * Allocation estimates are typically computed by serializing components to Java byte 
+     * streams.
+     * </li>
+     * <li>
+     * Concerning the above, the returned value typically <em>underestimates</em> the memory
+     * allocation size for the Java container and <em>overestimates</em> a Protocol Buffers
+     * serialization size.
+     * </li>
+     * </ul>
+     * </p> 
+     * 
+     * @return  a conservative estimate of the memory allocation size for one row of this frame (in bytes)
+     */
+    public long allocationSizeRow() {
+        
+        // Check for exceptional cases
+        if (this.vecColData == null || this.vecColData.isEmpty())
+            return 0L;
+
+        // Get the first row and compute its allocation size
+        ArrayList<Object>   lstRowVals = this.getRowValues(0);
+        long                szRow = JavaSize.serialSizeof(lstRowVals);
+
+        if (this.vecTms!=null)
+            szRow += 2 * JavaSize.SZ_Long;
+        
+        return szRow;
     }
     
     /**
@@ -1728,6 +1790,45 @@ public class IngestionFrame {
         
         // Throw exception - no timestamps have been assigned
         throw new IllegalStateException("IngestionFrame#getRowCount() - Frame timestamps have not been assigned.");
+    }
+    
+    /**
+     * <p>
+     * Collects and returns all the ingestion frame values for the given row index.
+     * </p>
+     * <p>
+     * The ordering of the data values within the returned list is consistent with the current 
+     * column indexing.  Note that the data types of the returned objects is dependent upon
+     * the corresponding column data types.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Data column indices are arbitrary within an ingestion frame.  They are assigned internally by the frame
+     * when populating data.  
+     * </p>
+     *  
+     * @param indRow    index of the ingestion frame row
+     * 
+     * @return  all the data column values at the given row index
+     * 
+     * @throws IllegalStateException        the ingestion frame has not been assigned data
+     * @throws IndexOutOfBoundsException    index is not within the range 0 &le; index &lt; {@link #getRowCount()}
+     */
+    public ArrayList<Object> getRowValues(int indRow) throws IllegalStateException, IndexOutOfBoundsException {
+        
+        // Check the frame
+        if (this.vecColData == null || this.vecColData.isEmpty())
+            throw new IllegalStateException("IngestionFrame#getRowValues(int) - Ingestion frame contains no data.");
+        
+        // Check the argument
+        if (indRow < 0 || indRow >= this.getRowCount())
+            throw new IndexOutOfBoundsException("IngestionFrame#getRowValues(int) - argument is < 0 or >= " + this.getRowCount());
+        
+        // Collect and return the ingestion frame row values
+        ArrayList<Object> lstVals = new ArrayList<>(this.getColumnCount());
+        this.vecColData.forEach(col -> lstVals.add(col.getValue(indRow)));
+        
+        return lstVals;
     }
     
     /**
