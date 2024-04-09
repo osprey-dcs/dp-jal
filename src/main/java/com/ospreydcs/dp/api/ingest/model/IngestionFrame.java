@@ -898,7 +898,94 @@ public class IngestionFrame {
     
     /**
      * <p>
-     * Computes and returns an estimate for the total memory allocation size for this ingestion frame (in bytes).
+     * Computes and returns an estimate for the memory allocation size for each row of 
+     * this ingestion frame (in bytes).
+     * </p>
+     * <p>
+     * The estimate proceeds by collecting the data value for the first row using
+     * <code>{@link #getRowValues(int)}</code> then computing its serialized size using
+     * <code>{@link JavaSize#serialSizeof(java.io.Serializable)}</code>.
+     * If a timestamp list is used, then the allocation for a single timestamp is included.
+     * The estimate does not include allocation for the optional parameters.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned value is more appropriately identified as the <em>serialization size</em>.
+     * Allocation estimates are typically computed by serializing components to Java byte 
+     * streams.
+     * </li>
+     * <li>
+     * Concerning the above, the returned value typically <em>underestimates</em> the memory
+     * allocation size for the Java container and <em>overestimates</em> a Protocol Buffers
+     * serialization size.
+     * </li>
+     * </ul>
+     * </p> 
+     * 
+     * @return  a conservative estimate of the memory allocation size for one row of this frame (in bytes)
+     */
+    public long allocationSizeRow() {
+        
+        // Check for exceptional cases
+        if (this.vecColData == null || this.vecColData.isEmpty())
+            return 0L;
+
+        // Get the first row and compute its allocation size
+        ArrayList<Object>   lstRowVals = this.getRowValues(0);
+        long                szRow = JavaSize.serialSizeof(lstRowVals);
+
+        if (this.vecTms!=null)
+            szRow += 2 * JavaSize.SZ_Long;
+        
+        return szRow;
+    }
+    
+    /**
+     * <p>
+     * Computes and returns an estimate for the memory allocation size for each column of 
+     * this ingestion frame (in bytes).
+     * </p>
+     * <p>
+     * The estimate proceeds by computing the allocate size for the first data column of 
+     * this ingestion frame using <code>{@link IDataColumn#allocationSize()}</code>.
+     * The estimate does not include allocation for the optional parameters.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned value is more appropriately identified as the <em>serialization size</em>.
+     * Allocation estimates are typically computed by serializing components to Java byte 
+     * streams.
+     * </li>
+     * <li>
+     * Concerning the above, the returned value typically <em>underestimates</em> the memory
+     * allocation size for the Java container and <em>overestimates</em> a Protocol Buffers
+     * serialization size.
+     * </li>
+     * </ul>
+     * </p> 
+     * 
+     * @return  a conservative estimate of the memory allocation size for one columnn of this frame (in bytes)
+     */
+    public long allocationSizeColumn() {
+        
+        // Check for exceptional cases
+        if (this.vecColData == null || this.vecColData.isEmpty())
+            return 0L;
+
+        // Get the first column and get its allocation size
+        IDataColumn<Object>     col = this.vecColData.get(0);
+        long                    szCol = col.allocationSize();
+        
+        return szCol;
+    }
+    /**
+     * <p>
+     * Computes and returns an estimate for the total memory allocation size for the entire 
+     * ingestion frame (in bytes).
      * </p>
      * <p>
      * The estimate proceeds by summing the allocation size for each times-series data contained in the frame.
@@ -941,50 +1028,6 @@ public class IngestionFrame {
         return szBytes;
     }
     
-    /**
-     * <p>
-     * Computes and returns an estimate for the memory allocation size one row of this ingestion frame (in bytes).
-     * </p>
-     * <p>
-     * The estimate proceeds by collecting the data value for the first row using
-     * <code>{@link #getRowValues(int)}</code> then computing its serialized size using
-     * <code>{@link JavaSize#serialSizeof(java.io.Serializable)}</code>.
-     * If a timestamp list is used, then the allocation for a single timestamp is included.
-     * The estimate does not include allocation for the optional parameters.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>
-     * The returned value is more appropriately identified as the <em>serialization size</em>.
-     * Allocation estimates are typically computed by serializing components to Java byte 
-     * streams.
-     * </li>
-     * <li>
-     * Concerning the above, the returned value typically <em>underestimates</em> the memory
-     * allocation size for the Java container and <em>overestimates</em> a Protocol Buffers
-     * serialization size.
-     * </li>
-     * </ul>
-     * </p> 
-     * 
-     * @return  a conservative estimate of the memory allocation size for one row of this frame (in bytes)
-     */
-    public long allocationSizeRow() {
-        
-        // Check for exceptional cases
-        if (this.vecColData == null || this.vecColData.isEmpty())
-            return 0L;
-
-        // Get the first row and compute its allocation size
-        ArrayList<Object>   lstRowVals = this.getRowValues(0);
-        long                szRow = JavaSize.serialSizeof(lstRowVals);
-
-        if (this.vecTms!=null)
-            szRow += 2 * JavaSize.SZ_Long;
-        
-        return szRow;
-    }
     
     /**
      * <p>

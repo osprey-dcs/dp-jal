@@ -141,7 +141,7 @@ import io.grpc.stub.StreamObserver;
  * Derived classes must override the following methods:
  * <ul>
  * <li><code>{@link #run()}</code> - creates and initializes the gRPC data stream.</li>
- * <li><code>{@link #requestProcessed(QueryResponse)}</code> - perform any data post processing 
+ * <li><code>{@link #requestTransmitted(QueryResponse)}</code> - perform any data post processing 
  *           or data stream operations.</li>
  * </ul>
  * Note that the <code>{@link #run()}</code> implementation must BOTH create and initiate the 
@@ -151,7 +151,7 @@ import io.grpc.stub.StreamObserver;
  * complete.
  * <br/> <br/>
  * Derived classes implementing a <em>bidirectional</em> stream from the Query Service must 
- * override the <code>{@link #requestProcessed(QueryResponse)}</code> method to sent a 
+ * override the <code>{@link #requestTransmitted(QueryResponse)}</code> method to sent a 
  * <code>CursorRequest</code> message to the Query Service in order to receive the next message.
  * Unidirectional streams need only implement an empty method if no post processing is required.
  * </p>  
@@ -832,7 +832,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
  * represent the backward stream handle (data sink for the Query Service). All processing
  * is done in the base class <code>{@link QueryResponseStreamProcessor}</code>.
  * No processing or streaming operations are performed in the 
- * <code>{@link #requestProcessed(QueryResponse)}</code> override.
+ * <code>{@link #requestTransmitted(QueryResponse)}</code> override.
  * </p>
  * <p>
  * This class implements the <code>{@link #run()}</code> base class requirement for independent
@@ -943,7 +943,7 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
      *
      * @param   msgRsp  response message that was just processed (unused)
      * 
-     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestTransmitted(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
     protected void requestProcessed(QueryDataResponse msgRsp) {
@@ -965,7 +965,7 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
  * All data processing is done in the base class 
  * <code>{@link QueryResponseStreamProcessor}</code>.
  * The forward streaming operations are performed in the 
- * <code>{@link #requestProcessed(QueryResponse)}</code> override. There a 
+ * <code>{@link #requestTransmitted(QueryResponse)}</code> override. There a 
  * <code>{@link QueryRequest</code> message containing a <code>{@link CursorOperation}</code> 
  * message is sent to the Query Service in order to signal acknowledgment for the next 
  * response message.
@@ -1105,7 +1105,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * 
      * @throws Exception    the <code>{@link #hndQueryService}</code> instance is <code>null<?coce>
      * 
-     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestTransmitted(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
     protected void requestProcessed(QueryDataResponse msgRsp) throws Exception {
