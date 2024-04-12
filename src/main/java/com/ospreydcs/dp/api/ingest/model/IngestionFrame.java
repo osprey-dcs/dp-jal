@@ -43,6 +43,7 @@ import org.epics.nt.NTTable;
 import org.epics.pvdata.pv.PVStructure;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
@@ -66,7 +67,26 @@ import com.ospreydcs.dp.api.util.JavaSize;
  * Rather than explicitly provide the table timestamps, a <em>sampling clock</em> can be assigned.  In this case
  * the sampling is assumed to be uniform with the sampling clock specifying the sampling period and start time 
  * instant.
+ * </p>
+ * <p>
+ * <h2>Optional Parameters</h2>
+ * An ingestion frame includes additional optional parameters than can be archived as metadata
+ * concerning the ingestion process.  Specifically, the ingestion frame can contain a frame label,
+ * a frame timestamp, and optional (name, value) attribute pairs.
  * </p> 
+ * <p> 
+ * <h2>Snapshots</h2>
+ * Ingestion frames support the mechanism for establishing snapshots.
+ * A <em>snapshot</em> is an abstraction offered to clients.  It allows clients to
+ * archive additional metadata associated with the data ingestion process that can be 
+ * queried against later.
+ * </p>
+ * <p>
+ * A snapshot is composed of one or more ingestion frames that are associated in some
+ * context.  For example, a snapshot may refer to all data collected from detectors 
+ * during a single experimental event.
+ * </p>
+ * 
  *
  * @author Christopher K. Allen
  * @since Mar 29, 2024
@@ -104,6 +124,13 @@ public class IngestionFrame {
     
     /** Optional collection of (name, value) attribute pairs for the data frame */
     private Map<String, String> mapAttributes = new HashMap<>();
+
+    
+    /** Optional snapshot domain */
+    private TimeInterval        domSnapshot = null;
+    
+    /** Optional snapshot UID */
+    private String              strSnapshotUid = null;
 
     
     //
@@ -735,13 +762,16 @@ public class IngestionFrame {
      * 
      * @param frmSource ingestion frame used as the source of optional properties 
      */
-    public void copyOptionalProperties(IngestionFrame frmSource) {
+    public void copyOptionalProperties(final IngestionFrame frmSource) {
         
-        // Assign any optional properties from source ingestion frame
+        // Assign any optional properties from source to this ingestion frame
         this.setFrameLabel(frmSource.strLabelFrame);
         this.setFrameTimestamp(frmSource.insTmsFrame);
         this.addAttributes(frmSource.mapAttributes);
         
+        // Assign snapshot properties from source to this ingestion frame
+        this.setSnapshotId(frmSource.strSnapshotUid);
+        this.setSnapshotDomain(frmSource.domSnapshot);
     }
     
     /**
@@ -751,7 +781,7 @@ public class IngestionFrame {
      * 
      * @param strLabel  label for ingestion frame itself
      */
-    public void setFrameLabel(String strLabel) {
+    public void setFrameLabel(final String strLabel) {
         this.strLabelFrame = strLabel;
     }
     
@@ -762,8 +792,50 @@ public class IngestionFrame {
      * 
      * @param insTmsFrame   timestamp for the ingestion frame itself
      */
-    public void setFrameTimestamp(Instant insTmsFrame) {
+    public void setFrameTimestamp(final Instant insTmsFrame) {
         this.insTmsFrame = insTmsFrame;
+    }
+    
+    /**
+     * <p>
+     * Set the optional snapshot unique identifier.
+     * </p>
+     * <p>
+     * The snapshot UID identifies all ingestion frames within the target snapshot.  
+     * This value should be set for every ingestion frame defining the snapshot.
+     * </p>
+     * 
+     * @param strSnapshotUid    unique identifier for the snapshot to which this frame belongs 
+     */
+    public void setSnapshotId(final String strSnapshotUid) {
+        this.strSnapshotUid = strSnapshotUid;
+    }
+    
+    /**
+     * <p>
+     * Set the optional snapshot domain.
+     * </p>
+     * <p>
+     * The snapshot domain assignment assignment should at least include all timestamps within 
+     * this ingestion frame.  It should include the time range of all ingestion frames composing
+     * the snapshot.
+     * </p>
+     * <p>
+     * <h2>Snapshots</h2>
+     * A <em>snapshot</em> is an abstraction offered to clients.  It allows clients to
+     * archive additional metadata associated with the data ingestion process that can be 
+     * queried against later.
+     * </p>
+     * <p>
+     * A snapshot is composed of one or more ingestion frames that are associated in some
+     * context.  For example, a snapshot may refer to all data collected from detectors 
+     * during a single experimental event.
+     * </p>
+     * 
+     * @param domSnapshot   time range of the snapshot to which this frame belongs 
+     */
+    public void setSnapshotDomain(final TimeInterval domSnapshot) {
+        this.domSnapshot = domSnapshot;
     }
     
     /**
@@ -1736,6 +1808,30 @@ public class IngestionFrame {
      */
     public Map<String, String>  getAttributes() {
         return this.mapAttributes;
+    }
+    
+    /**
+     * <p>
+     * Returns the unique identifier for the snapshot which this ingestion frame belongs.
+     * </p>
+     * 
+     * @return  snapshot UID for ingestion frame snapshot,
+     *          or <code>null</code> if it has not been set
+     */
+    public String   getSnapshotId() {
+        return this.strSnapshotUid;
+    }
+    
+    /**
+     * <p>
+     * Return the time domain for the entire snapshot which this ingestion frame belongs.
+     * </p>
+     * 
+     * @return  time range (start and stop times) for the overall snapshot,
+     *          or <code>null</code> if it has not been set
+     */
+    public TimeInterval getSnapshotDomain() {
+        return this.domSnapshot;
     }
     
     /**

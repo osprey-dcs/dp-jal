@@ -62,6 +62,29 @@ public final class ProtoTime {
     
     /**
      * <p>
+     * Returns a <code>Timestamp</code> message populated with time instant of invocation.
+     * </p>
+     * <p>
+     * Defers to the Java operation <code>{@link Instant#now()}</code> which retrieves the 
+     * time instant from the system clock.  The time instant is used to populate the returned
+     * timestamp message.
+     * </p>
+     * 
+     * @return  <code>Timestamp</code> message containing the current time instance
+     */
+    public static final Timestamp   now() {
+        Instant     insNow = Instant.now();
+        
+        Timestamp   msgTmsNow = Timestamp.newBuilder()
+                .setEpochSeconds(insNow.getEpochSecond())
+                .setNanoseconds(insNow.getNano())
+                .build();
+        
+        return msgTmsNow;
+    }
+    
+    /**
+     * <p>
      * Computes the sum of the <code>{@link Timestamp}</code> message and the given number of nanoseconds.
      * </p>
      * <p>

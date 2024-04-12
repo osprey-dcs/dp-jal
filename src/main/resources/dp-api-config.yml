@@ -81,8 +81,8 @@ archive:    # Data Platform data archive properties
    
 ingest: # Data Platform Ingestion Service client API default configuration parameters
    stream:       # General gRPC streaming parameter for Ingestion Service operations
-      active: false                 # use streaming parameters    : DP_API_INGEST_STREAM_ACTIVE
-      type: FORWARD                  # preferred- DpGrpcStreamType : DP_API_INGEST_STREAM_TYPE
+      active: true                 # use streaming parameters    : DP_API_INGEST_STREAM_ACTIVE
+      type: BIDIRECTIONAL           # preferred- DpGrpcStreamType : DP_API_INGEST_STREAM_TYPE
       buffer:              # data buffering and queueing parameters
          active: true                # apply data buffering/queue  : DP_API_INGEST_STREAM_BUFFER_ACTIVE
          size: 100                   # buffer/queue size (messages): DP_API_INGEST_STREAM_BUFFER_SIZE    
@@ -92,7 +92,7 @@ ingest: # Data Platform Ingestion Service client API default configuration param
          maxSize: 4000000            # max bin size (bytes)        : DP_API_INGEST_STREAM_BINNING_MAX_SIZE
       concurrency:         # multiple,concurrent gRPC stream parameters
          active: true                # use multiple streams when possible : DP_API_INGEST_STREAM_CONCURRENCY_ACTIVE
-         pivotSize: 4000000          # currency activation size (bytes)   : DP_API_INGEST_STREAM_CONCURRENCY_PIVOT_SIZE
+         pivotSize: 10               # currency activation size (frames)  : DP_API_INGEST_STREAM_CONCURRENCY_PIVOT_SIZE
          maxStreams: 3               # maximum number of streams to use   : DP_API_INGEST_STREAM_CONCURRENT_MAX_STREAMS
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency            : DP_API_INGEST_CONCURRENCY_ACTIVE

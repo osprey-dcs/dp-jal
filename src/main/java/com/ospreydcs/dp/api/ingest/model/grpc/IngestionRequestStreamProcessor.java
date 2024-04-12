@@ -27,6 +27,9 @@
  */
 package com.ospreydcs.dp.api.ingest.model.grpc;
 
+import java.security.ProviderException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -41,16 +44,65 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.model.AUnavailable;
 import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
 
-import io.grpc.StatusException;
 import io.grpc.stub.CallStreamObserver;
 import io.grpc.stub.StreamObserver;
 
 /**
+ * <p>
+ * <h1>Base class implementing Ingestion Service gRPC stream processor.</h1>
+ * </p>
+ * <p>
+ * Performs the basic operations required for establishing a gRPC data stream between with the
+ * Ingestion Service and transmitting <code>{@link IngestDataRequest}</code> messages.
+ * Subclasses implement the specific details depending upon whether the desired gRPC stream is
+ * unidirectional or bidirectional.  Note that these subclasses are internal  and cannot be 
+ * instantiated externally.
+ * The creators for <code>IngestionRequestStreamProcessor</code> provide concrete instances
+ * that clients can use for stream processing.
+ * </p>
+ * <p>
+ * <h2>Stream Processing</h2>
+ * The method <code>{@link #run()}</code> initiates the stream processing and does not return until
+ * processing is complete.  The method <code>{@link #isSuccess()}</code> returns whether or not
+ * the streaming operation was fully successful. The status of the stream processing is available 
+ * with method </code>{@link #getStatus()}</code> which will include a detailed error message
+ * if the processing was not successful.
+ * There are other "getter" methods for returning the state and properties of the stream processor 
+ * either during processing or at completion. 
+ * </p>
+ * <p>  
+ * The type of gRPC data stream used to transmit ingestion data is determined by the creator
+ * used to instantiate the processor.  Use 
+ * <code>{@link #newUniProcessor(DpIngestionServiceStub, IMessageSupplier)}</code> for a unidirectional
+ * data stream (currently unavailable) or 
+ * <code>{@link #newBidiProcessor(DpIngestionServiceStub, IMessageSupplier, Consumer)}</code> for a
+ * bidirectional data stream. 
+ * </p>
+ * <p>
+ * <h2>Independent Thread Execution</h2>
+ * The class implements the <code>{@link Runnable}</code> and <code>{@link Callable}</code> interfaces
+ * for executing the streaming operations on independent threads.  The <code>{@link #run()}</code>
+ * method of the <code>Runnable</code> interface is the entry into the stream processor execution.
+ * The <code>{@link #call()}</code> method of the <code>Callable</code> interface simply defers
+ * to the <code>run()</code> method then returns the status of the stream processing.
+ * </p>
+ * <p>
+ * <h2>Unidirectional gRPC Streams</h2>
+ * Unidirectional gRPC data streams are not currently supported by the Ingestion Service.
+ * Do not use creator <code>{@link #newUniProcessor(DpIngestionServiceStub, IMessageSupplier)}</code>.
+ * </p> 
+ * <p>
+ * <h2>Bidirectional gRPC Streams</h2>
+ * Bidirectional gRPC data streams require both a supplier of <code>IngestDataRequest</code> messages
+ * and a consumer of <code>IngestDataResponse</code> messages.  The bidirectional stream will
+ * transmit all data obtained from the supplier as fast as possible, then collect the responses as
+ * the arrive.  The bidirectional stream will not terminate (i.e., the <code>run()</code> method
+ * will not return) until the Ingestion Service has signaled that there are no more responses.
+ * </p> 
  *
  * @author Christopher K. Allen
  * @since Apr 9, 2024
@@ -58,6 +110,74 @@ import io.grpc.stub.StreamObserver;
  */
 public abstract class IngestionRequestStreamProcessor implements Runnable, Callable<Boolean> {
 
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a bidirectional gRPC data stream processor for the Ingestion Service.
+     * </p>
+     * <p>
+     * The gRPC data stream to the Ingestion Service is established when the stream upon 
+     * invocation of <code>{@link #run()}</code> or </code>{@link #call()}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * <s>
+     * In the current implementation we monitor Ingestion Service responses for ingestion exceptions.
+     * In the case of an ingestion exception we stop the streaming and shut everything down.
+     * This behavior may be overreaching and unwarranted.
+     * </s>
+     * </li>
+     * <br/>
+     * <li>
+     * An alternate implementation may wish to collect the identifiers of the rejected requests and
+     * pass it up to the base class as the result status message.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param stubAsync     the asynchronous communications stub to the Ingestion Service 
+     * @param fncDataSource the supplier of <code>IngestDataRequest</code> messages 
+     * @param fncDataSink   the consumer of <code>IngestDataResponse</code> messages
+     *  
+     * @return  new bidirectional ingestion stream processor ready for independent thread spawn
+     */
+    public static IngestionRequestStreamProcessor newBidiProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource, Consumer<IngestDataResponse> fncDataSink) {
+        
+        return new IngestionRequestBidiStreamProcessor(stubAsync, fncDataSource, fncDataSink);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new unidirectional ingestion stream processor for the Ingestion Service.
+     * </p>
+     * <p>
+     * <h2>NOT IMPLEMENTED</h2>
+     * The Ingestion Service current does NOT support single-stream ingestion and, therefore,
+     * this class will not function.  The <code>{@link #initiateGrpcStream()}</code> operation
+     * simply returns <code>null</code>.
+     * </p>
+     * <p>
+     * TODO 
+     * Implement single-stream ingestion with Ingestion Service.
+     * </p> 
+     * 
+     * @param stubAsync     the asynchronous gRPC communications stub to the Ingestion Service
+     * @param fncDataSource supplier of <code>IngestDataRequest</code> messages
+     * 
+     * @return  new unidirectional ingestion stream processor ready for independent thread spawn
+     */
+    @AUnavailable(status=STATUS.UNKNOWN, note="The Ingestion Service does NOT support unidirectional ingestion streams.")
+    public static IngestionRequestStreamProcessor newUniProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource) {
+    
+        return new IngestionRequestUniStreamProcessor(stubAsync, fncDataSource);
+    }
+    
     
     //
     // Application Resources
@@ -79,7 +199,7 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
     
     
     /** Is logging active */
-    private static final Boolean    BOL_LOGGING = CFG_INGEST.logging.active;
+    protected static final Boolean    BOL_LOGGING = CFG_INGEST.logging.active;
     
     
     //
@@ -87,7 +207,7 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
     //
     
     /** Class logger */
-    private static final Logger     LOGGER = LogManager.getLogger();
+    protected static final Logger     LOGGER = LogManager.getLogger();
     
     
     
@@ -131,7 +251,7 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
 //    private CountDownLatch  monStreamCompleted = new CountDownLatch(1);
     
     /** Was successful ? Were there any errors during streaming ? */
-    protected ResultStatus    recResult = null;
+    protected ResultStatus    recStatus = null;
     
     
     //
@@ -223,11 +343,11 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
      * </ul>
      * </p>
      * 
-     * @param msgRqst    the Ingestion Service request message that was just transmitted
+     * @param msgRqst    the Ingestion Service request message that was transmitted
      * 
-     * @throws Exception    general exception thrown by base class to indicate error
+     * @throws ProviderException    general exception thrown by subclass to indicate internal error
      */
-    abstract protected void  requestTransmitted(IngestDataRequest msgRqst) throws Exception;
+    abstract protected void  requestTransmitted(IngestDataRequest msgRqst) throws ProviderException;
     
     
     //
@@ -311,7 +431,7 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
      * conditions.  Methods 
      * <code>{@link #isStreamStarted()}</code>, 
      * <code>{@link #isCompleted()}</code>, and
-     * <code>{@link #getResult()}</code> 
+     * <code>{@link #getStatus()}</code> 
      * are available to determined the cause of the failure. 
      * </p>
      *   
@@ -319,16 +439,16 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
      * 
      * @see #isStreamStarted()
      * @see #isCompleted()
-     * @see #getResult()
+     * @see #getStatus()
      */
     public boolean isSuccess() {
         
         // Must first check if result has been assigned yet
-        if (this.recResult == null)
+        if (this.recStatus == null)
             return false;
         
         // If so return the success flag
-        return this.recResult.success();
+        return this.recStatus.success();
     }
     
     /**
@@ -388,7 +508,7 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
      * 
      * @see #isCompleted()
      * @see #isSuccess()
-     * @see #getResult()
+     * @see #getStatus()
      */
     public final int getResponseCount() {
         return this.cntResponses;
@@ -396,10 +516,10 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
     
     /**
      * <p>
-     * Returns the result of the streaming task, or <code>null</code> if incomplete.
+     * Returns the status of the streaming task upon completion, or <code>null</code> if incomplete.
      * </p>
      * <p>
-     * Returns the current value of the <code>{@link #recResult}</code> attribute.  If
+     * Returns the current value of the <code>{@link #recStatus}</code> attribute.  If
      * the stream has completed this record is available for inspection, otherwise a 
      * value <code>null</code> is returned indicated that the stream has not started or
      * has not completed.
@@ -414,8 +534,8 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
      * 
      * @see #isCompleted()
      */
-    public final ResultStatus   getResult() {
-        return this.recResult;
+    public final ResultStatus   getStatus() {
+        return this.recStatus;
     }
 
     
@@ -424,8 +544,17 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
     //
     
     /**
+     * <p>
+     * Begins ingestion data request stream processing.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method is a requirement of the <code>{@link Runnable}</code> interface for
+     * independent thread execution in Java. 
+     * </p>
      *
-     * @see @see java.lang.Runnable#run()
+     * @see java.lang.Runnable#run()
      */
     @Override
     public void run() {
@@ -434,22 +563,26 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
         this.hndForwardStream = this.initiateGrpcStream();
         this.bolStreamStarted = true;
 
-        // Enter message transmission loop
+        // Enter message transmission loop which includes exception handling
         try {
-            // Send all available data messages to Ingestion Service
-            while (this.fncDataSource.hasNext() && !this.bolStreamError) {
+            // Send all data messages to Ingestion Service while available and no errors
+            while (this.fncDataSource.isActive() && !this.bolStreamError) {
                 
-                // Get the next message to transmit
+                // Poll for the next message to transmit - throws IllegalStateException
                 IngestDataRequest   msgRqst = this.fncDataSource.poll(INT_TIMEOUT, TU_TIMEOUT);
 
+                // If timeout try again
                 if (msgRqst == null)
                     continue;
                 
-                this.hndForwardStream.onNext(msgRqst);
+                // Transmit data message request and notify subclasses
+                this.hndForwardStream.onNext(msgRqst);  // throws StatusRuntimeException
+                
                 this.cntRequests++;
+                this.requestTransmitted(msgRqst);       // throws ProviderException
             }
 
-        // gRPC threw unexpected runtime error while streaming
+        // Unexpected gRPC runtime error while streaming
         } catch (io.grpc.StatusRuntimeException e) {
             String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
                             + "gRPC threw runtime exception during streaming: " 
@@ -458,7 +591,7 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
             this.hndForwardStream.onError(e);
             
             this.bolStreamError = true;
-            this.recResult = ResultStatus.newFailure(strMsg, e);
+            this.recStatus = ResultStatus.newFailure(strMsg, e);
             
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);
@@ -472,11 +605,39 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
                             + e.getMessage();
 
             this.bolStreamError = true;
-            this.recResult = ResultStatus.newFailure(strMsg, e);
+            this.recStatus = ResultStatus.newFailure(strMsg, e);
             
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);
             
+            return;
+
+        // The supplier polling was interrupted while waiting
+        } catch (InterruptedException e) {
+            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                    + ": External error - Message supplier polling was interrupted: "
+                    + e.getMessage();
+
+            this.bolStreamError = true;
+            this.recStatus = ResultStatus.newFailure(strMsg, e);
+
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+
+            return;
+
+        // The child class objected when notified of message transmission
+        } catch (ProviderException e) {
+            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                    + ": Subclass exception upon request transmission notification: "
+                    + e.getMessage();
+
+            this.bolStreamError = true;
+            this.recStatus = ResultStatus.newFailure(strMsg, e);
+
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+
             return;
         }
             
@@ -487,7 +648,7 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
         // - Await the subclass completion
         this.hndForwardStream.onCompleted();
         this.bolStreamComplete = true;
-        this.recResult = this.awaitCompletion();
+        this.recStatus = this.awaitCompletion();
     }
     
     
@@ -496,15 +657,28 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
     //
     
     /**
-     * Defers to method <code>{@link #run()}</code> and return the status.
+     * <p>
+     * Begins ingestion data request stream processing.
+     * </p>
+     * <p>
+     * This method is provided to satisfy the <code>{@link Callable}</code> interface for
+     * independent thread execution in Java.  It is an alternate entry point for ingestion
+     * streaming execution.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method defers to method <code>{@link #run()}</code> and, when completed,
+     * returns the SUCCESS attribute of the status record generated during stream processing.
+     * </p>
      * 
      * @see java.util.concurrent.Callable#call()
+     * @see #run()
      */
     @Override
     public Boolean call() throws Exception {
         this.run();
         
-        return this.recResult.isSuccess();
+        return this.recStatus.isSuccess();
     }
 }
 
@@ -577,7 +751,7 @@ final class IngestionRequestUniStreamProcessor extends IngestionRequestStreamPro
      * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionRequestStreamProcessor#requestTransmitted(com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest)
      */
     @Override
-    protected void requestTransmitted(IngestDataRequest msgRqst) throws Exception {
+    protected void requestTransmitted(IngestDataRequest msgRqst) throws ProviderException {
         
     }
 
@@ -603,6 +777,21 @@ final class IngestionRequestUniStreamProcessor extends IngestionRequestStreamPro
  * reverse gRPC data stream receiving acknowledgments from the Ingestion Service and passing
  * them to the data sink supplied during construction.
  * </p>
+ * <p>
+ * <h2>NOTES:</h2>
+ * <ul>
+ * <li>
+ * In the current implementation we monitor Ingestion Service responses for ingestion exceptions.
+ * In the case of an ingestion exception we stop the streaming and shut everything down.
+ * This behavior may be overreaching and unwarranted.
+ * </li>
+ * <br/>
+ * <li>
+ * An alternate implementation may wish to collect the identifiers of the rejected requests and
+ * pass it up to the base class as the result status message.
+ * </li>
+ * </ul>
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Apr 9, 2024
@@ -616,18 +805,26 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
     //
     
     /** The asynchronous communications stub to the Ingestion Service */
-    private final DpIngestionServiceStub                stubAsync;
+    private final DpIngestionServiceStub        stubAsync;
     
     /** The consumer of <code>IngestDataResponse</code> messages */
-    private final Consumer<IngestDataResponse>          fncDataSink;
+    private final Consumer<IngestDataResponse>  fncDataSink;
 
+    
+    //
+    // Instance Resources
+    //
+    
+    /** Collection of responses that have indicated rejected request by the Ingestion Service */
+    private final List<IngestDataResponse>      lstBadRsps = new LinkedList<>();
+    
     
     //
     // State Variables and Conditions
     //
     
-    /** Has the gRPC data stream completed ? */
-    private CountDownLatch  monStreamCompleted = new CountDownLatch(1);
+    /** Has the backward gRPC data stream completed */
+    private CountDownLatch      monStreamCompleted = new CountDownLatch(1);
     
     
     /**
@@ -692,7 +889,7 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
      * <p>
      * <h2>NOTES</h2>
      * If the (thread) process is interrupted while waiting for the task to complete, the
-     * <code>{@link #recResult}</code> is set to failure and includes a description along with
+     * <code>{@link #recStatus}</code> is set to failure and includes a description along with
      * the causing exception.
      * </p>
      * 
@@ -705,76 +902,67 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
         try {
             this.monStreamCompleted.await();
             
-            return ResultStatus.SUCCESS;
+            // If an error occurred during streaming the status should be set - return it
+            if (super.bolStreamError && super.recStatus!=null)
+                return super.recStatus;
+            
+            // If bad requests were encountered report them in status message
+            if (!this.lstBadRsps.isEmpty()) {
+                String  strMsg = this.createRejectedRequestsMessage();
+                
+                if (BOL_LOGGING)
+                    LOGGER.warn(strMsg);
+                
+                return ResultStatus.newFailure(strMsg);
+            }
     
+            // If we are here everything worked without error
+            return ResultStatus.SUCCESS;
+            
         } catch (InterruptedException e) {
     
             // The wait was interrupted - interpret this an error (perhaps originating elsewhere)
-            return ResultStatus.newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " - interrupted while waiting for task completion", e);
+            return ResultStatus.newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " - interrupted while waiting for backward stream to complete", e);
         }
     }
 
+    /**
+     * <p>
+     * Accept notification of data message transmission.
+     * </p>
+     * <p>
+     * There is nothing to do here.
+     * </p>
+     * 
+     * @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionRequestStreamProcessor#requestTransmitted(com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest)
+     */
     @Override
-    protected void requestTransmitted(IngestDataRequest msgRqst) throws Exception {
-        // TODO Auto-generated method stub
-
+    protected void requestTransmitted(IngestDataRequest msgRqst) throws ProviderException {
     }
 
+    
     //
     // StreamObserver<IngestDataResponse> Interface
     //
 
+    /**
+     * <p>
+     * Processes the incoming ingestion response message from the backward stream.
+     * </p>
+     * <p>
+     * Calls the <code>{@link #processResponse(IngestDataResponse)}</code> support method
+     * which sends response to message consumer identified at construction, then
+     * increments the response counter.
+     * </p>
+     *
+     * @see io.grpc.stub.StreamObserver#onNext(java.lang.Object)
+     */
     @Override
     public void onNext(IngestDataResponse msgRsp) {
 
-        // Process the first response
-        if (!this.bolStreamStarted) {
-            this.bolStreamStarted = true;
-
-            // Check for rejected request
-            ResultStatus accepted = this.isRequestAccepted(msgRsp);
-
-            // If the request was rejected
-            // - save the rejected result record
-            // - release the stream completed monitor
-            // - return - the stream is over
-            if (accepted.isFailure()) {
-                this.recResult = accepted;
-
-                this.monStreamCompleted.countDown();
-                return;
-            }
-        }
-
-        // Process the query response message
-        ResultStatus    result = this.processResponse(msgRsp);
-
-        // Check for processing failed - if so...
-        // - save the failure result record
-        // - release the stream completed monitor 
-        // - return - the stream is over
-        if (result.isFailure()) {
-            this.recResult = result;
-
-            this.monStreamCompleted.countDown();
-            return;
-        }
-
-        // Increment the data pages counter
-        this.cntResponses++;
-
-        // Inform child class that request has been processed
-        //  - perform any post-precessing within child class
-        //  - send any acknowledgments to the Query Service
-        try {
-//            this.requestProcessed(msgRsp);
-
-        } catch (Exception e) {
-            this.recResult = ResultStatus.newFailure("Exception thrown during post-processing.", e);
-
-            this.monStreamCompleted.countDown();
-            return;
-        }
+        // Process the ingestion response message and increment counter
+        this.processResponse(msgRsp);
+        super.cntResponses++;
     }
 
     /**
@@ -786,11 +974,17 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
      * However, it can be called by the Query Service to signal an unanticipated exception.
      * In either event, the following actions ensue:
      * <ol>  
-     * <li>The result record <code>{@link #recResult}</code> is set to a failure with message and exception.</li>
+     * <li>An error message is sent to the class logger (if active).</li>
+     * <li>The stream error flag <code>{@link IngestionRequestStreamProcessor#bolStreamError}</code> is set <code>true</code>.
+     * <li>The result record <code>{@link #recStatus}</code> is set to a failure with message and exception.</li>
      * <li>The stream completed monitor <code>{@link #monStreamCompleted}</code> is released.</li>
      * </ol>
      * The data stream is officially terminated whenever this operation is called so all
      * data processing is terminated.
+     * </p>
+     * <p>
+     * TODO
+     * See that the returned result is not overwritten.
      * </p>
      *
      * @param   e   the terminating exception causing invocation, contains error message
@@ -799,7 +993,15 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
      */
     @Override
     public void onError(Throwable e) {
-        this.recResult = ResultStatus.newFailure("The gRPC stream was terminated during operation (see cause).", e);
+        String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+                        + "The gRPC stream was terminated during operation: "
+                        + e.getMessage();
+
+        if (BOL_LOGGING)
+            LOGGER.error(strMsg);
+        
+        super.bolStreamError = true;
+        super.recStatus = ResultStatus.newFailure(strMsg, e);
         this.monStreamCompleted.countDown();
     }
 
@@ -808,14 +1010,22 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
      * Handles the gRPC streaming completed notification.
      * </p>
      * <p>
-     * This operation is invoked by the Ingestion Service to signal that it received the 
-     * <code>onCompleted()</code> signal from the forward stream and the stream is no longer 
-     * active.  
+     * This operation is invoked by the Ingestion Service to signal that no more ingestion
+     * responses are available.  This occurs when the base class has transmitted all its
+     * data and has signaled an <code>{@link StreamObserver#onCompleted()}</code> operation
+     * (i.e., a "half-closed" stream event) on the forward stream.
+     * </p>
+     * <p>
      * The method performs the following actions:
      * <ol>  
-     * <li>The result record <code>{@link #recResult}</code> is set to SUCCESS.</li>
      * <li>The stream completed monitor <code>{@link #monStreamCompleted}</code> is released.</li>
      * </ol>
+     * Releasing the <code>{@link #monStreamCompleted}</code> latch unblocks the 
+     * <code>{@link #awaitCompletion()}</code> lock which then allows it to return the result 
+     * of the backward response streaming operation.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
      * The data stream is officially terminated whenever this operation is called and all
      * data processing should be complete.
      * </p>
@@ -824,8 +1034,6 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
      */
     @Override
     public void onCompleted() {
-
-        this.recResult = ResultStatus.SUCCESS;
         this.monStreamCompleted.countDown();
     }
 
@@ -834,51 +1042,51 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
     // Support Methods
     //
     
+//    /**
+//     * <p>
+//     * Determines whether or not the original data request was accepted by the Query Service.
+//     * </p>
+//     * <p>
+//     * This method should be called only once, with the argument being the first response
+//     * from the Query Service after stream initiation.  If the original data query
+//     * request was invalid or corrupt the Query Service streams back a single 
+//     * <code>QueryResponse</code> message containing a <code>ExceptionalResult</code> message
+//     * describing the rejection.
+//     * </p> 
+//     * <p>
+//     * The method Checks for a <code>ExceptionalResult</code> message within the query response 
+//     * argument.  If present then the original data request was rejected by the Query Service.
+//     * The details of the rejection are then extracted from the argument and returned in
+//     * a FAILED result record.  Otherwise (i.e., the request was accepted) the method 
+//     * returns the SUCCESS result record.
+//     * </p> 
+//     * 
+//     * @param msgRsp    the first response from the Query Service data stream
+//     * 
+//     * @return  the SUCCESS record if query was accepted, 
+//     *          otherwise a failure message containing a description of the rejection 
+//     */
+//    protected ResultStatus isRequestAccepted(IngestDataResponse msgRsp) {
+//
+//        // Check for RequestRejected message
+//        if (msgRsp.hasExceptionalResult()) {
+//            ExceptionalResult           msgException = msgRsp.getExceptionalResult();
+//            String                      strCause = msgException.getMessage();
+//            ExceptionalResult.ExceptionalResultStatus     enmCause = msgException.getExceptionalResultStatus();
+//
+//            String       strMsg = "The data request was rejected by Query Service: cause=" + enmCause + ", message=" + strCause;
+//            ResultStatus result = ResultStatus.newFailure(strMsg);
+//
+//            return result;
+//        }
+//
+//        // No rejection, return success
+//        return ResultStatus.SUCCESS;
+//    }
+//
     /**
      * <p>
-     * Determines whether or not the original data request was accepted by the Query Service.
-     * </p>
-     * <p>
-     * This method should be called only once, with the argument being the first response
-     * from the Query Service after stream initiation.  If the original data query
-     * request was invalid or corrupt the Query Service streams back a single 
-     * <code>QueryResponse</code> message containing a <code>ExceptionalResult</code> message
-     * describing the rejection.
-     * </p> 
-     * <p>
-     * The method Checks for a <code>ExceptionalResult</code> message within the query response 
-     * argument.  If present then the original data request was rejected by the Query Service.
-     * The details of the rejection are then extracted from the argument and returned in
-     * a FAILED result record.  Otherwise (i.e., the request was accepted) the method 
-     * returns the SUCCESS result record.
-     * </p> 
-     * 
-     * @param msgRsp    the first response from the Query Service data stream
-     * 
-     * @return  the SUCCESS record if query was accepted, 
-     *          otherwise a failure message containing a description of the rejection 
-     */
-    protected ResultStatus isRequestAccepted(IngestDataResponse msgRsp) {
-
-        // Check for RequestRejected message
-        if (msgRsp.hasExceptionalResult()) {
-            ExceptionalResult           msgException = msgRsp.getExceptionalResult();
-            String                      strCause = msgException.getMessage();
-            ExceptionalResult.ExceptionalResultStatus     enmCause = msgException.getExceptionalResultStatus();
-
-            String       strMsg = "The data request was rejected by Query Service: cause=" + enmCause + ", message=" + strCause;
-            ResultStatus result = ResultStatus.newFailure(strMsg);
-
-            return result;
-        }
-
-        // No rejection, return success
-        return ResultStatus.SUCCESS;
-    }
-
-    /**
-     * <p>
-     * Processes the data within the given Ingestion Service response message.
+     * Processes the ingestion response message.
      * </p>
      * <p>
      * For normal operation, a <code>AckResult</code> message is confirmed within the argument.
@@ -886,9 +1094,9 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
      * A SUCCESS result record is then returned indicating successful consumption of response data.
      * </p>
      * <p>
-     * If the argument contains an exception(i.e., rather than data) then the method
-     * extracts the status and accompanying message.  An error message is constructed
-     * and returned via a FAILED result record.
+     * The argument is passed to the message consumer identified at construction.
+     * If the argument contains an exception(i.e., rather than data) then the message
+     * is added to the list of bad responses.
      * </p>
      * 
      * @param msgRsp    an Ingestion Service response message containing acknowledgment or status error
@@ -896,24 +1104,41 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
      * @return  the SUCCESS record if acknowledgment was confirmed,
      *          otherwise a failure message containing the status error description 
      */
-    protected ResultStatus processResponse(IngestDataResponse msgRsp) {
+    private void processResponse(IngestDataResponse msgRsp) {
 
-        // Confirm acknowledgment and pass to message consumer
-        if (msgRsp.hasAckResult()) {
-            this.fncDataSink.accept(msgRsp);
+        // Check for exception then pass to message consumer
+        if (msgRsp.hasExceptionalResult()) {
 
-            return ResultStatus.SUCCESS;
+            this.lstBadRsps.add(msgRsp);
         }
-
-        // Response Error - extract the details and return them
-        ExceptionalResult   msgException = msgRsp.getExceptionalResult();
-        String              strStatus = msgException.getMessage();
-        ExceptionalResult.ExceptionalResultStatus enmStatus = msgException.getExceptionalResultStatus();
-
-        String          strMsg = "Ingestion Service reported response error: status=" + enmStatus + ", message= " + strStatus;
-        ResultStatus    recErr = ResultStatus.newFailure(strMsg);
-
-        return recErr;
+        
+        this.fncDataSink.accept(msgRsp);
     }
 
+    /**
+     * <p>
+     * Creates a status message in the case where requests where rejected by the Ingestion Service.
+     * </p>
+     * <p>
+     * Creates and returns a string describing the condition which contains a list of all the
+     * ingestion request IDs that have been rejected 
+     * (see <code>{@link IngestDataRequest#getClientRequestId()}</code>).
+     * </p>
+     * 
+     * @return  message describing the rejected ingestion requests condition
+     */
+    private String  createRejectedRequestsMessage() {
+        
+        // Collect the request IDs of rejected requests
+        List<String>    lstRqstIds = this.lstBadRsps
+                .stream()
+                .<String>map(IngestDataResponse::getClientRequestId)
+                .toList();
+        
+        // Create the status message and return it
+        String  strMsg = "Ingestion Service rejected IngestionDataRequest message(s) with ID(s) "
+                        + lstRqstIds;
+
+        return strMsg;
+    }
 }
