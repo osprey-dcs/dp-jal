@@ -158,5 +158,5 @@ public interface IMessageSupplier<T extends GeneratedMessageV3> {
      * @throws IllegalStateException called when the message supplier is not actively supplying messages
      * @throws InterruptedException  process interrupted while waiting for message availability
      */
-    public T    poll(int cntTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException;
+    public T    poll(long cntTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException;
 }

@@ -32,12 +32,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -141,8 +139,8 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
     private static final TimeUnit   TU_TIMEOUT_GENERAL = CFG_DEFAULT.timeout.unit;
     
     
-    /** Is logging active */
-    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
+//    /** Is logging active */
+//    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
 
     
     //
@@ -152,21 +150,11 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
     /** Are general concurrency active - used for ingestion frame decomposition */
     private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
     
-    /** Thresold in which to pivot to concurrent processing */
-    private static final Integer    INT_CONCURRENCY_PIVOT_SZ = CFG_DEFAULT.concurrency.pivotSize;
+//    /** Thresold in which to pivot to concurrent processing */
+//    private static final Integer    INT_CONCURRENCY_PIVOT_SZ = CFG_DEFAULT.concurrency.pivotSize;
     
     /** Maximum number of concurrent processing threads */
     private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.threadCount;
-    
-    
-    /** Use ingestion frame buffering from client to gRPC stream */
-    private static final Boolean    BOL_BUFFER_ACTIVE = CFG_DEFAULT.stream.buffer.active;
-    
-    /** Size of the ingestion frame queue buffer */
-    private static final Integer    INT_BUFFER_SIZE = CFG_DEFAULT.stream.buffer.size;
-    
-    /** Allow back pressure to client from queue buffer */
-    private static final Boolean    BOL_BUFFER_BACKPRESSURE = CFG_DEFAULT.stream.buffer.backPressure;
     
     
     /** Perform ingestion frame decomposition (i.e., "binning") */
@@ -174,6 +162,16 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
     
     /** Maximum size limit (in bytes) of decomposed ingestion frame */
     private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.stream.binning.maxSize;
+    
+    
+//    /** Use ingestion frame buffering from client to gRPC stream */
+//    private static final Boolean    BOL_BUFFER_ACTIVE = CFG_DEFAULT.stream.buffer.active;
+    
+    /** Size of the ingestion frame queue buffer */
+    private static final Integer    INT_BUFFER_SIZE = CFG_DEFAULT.stream.buffer.size;
+    
+    /** Allow back pressure to client from queue buffer */
+    private static final Boolean    BOL_BUFFER_BACKPRESSURE = CFG_DEFAULT.stream.buffer.backPressure;
     
     
     //
@@ -216,16 +214,16 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
     /** Exert back pressure on clients (from frame buffer) */
     private boolean bolBackPressure = BOL_BUFFER_BACKPRESSURE;
     
-    /** The capacity of the ingestion frame buffer (i.e., when back pressure is active) */ 
-    private int     intBufferSizeMax = INT_BUFFER_SIZE;
+    /** The capacity of the outgoing message queue (i.e., when back pressure is active) */ 
+    private int     intQueueCapacity = INT_BUFFER_SIZE;
     
     
     //
     // Instance Resources
     //
     
-    /** Blocking pool of ingestion frame decomposers (frame binners) */
-    private final BlockingQueue<FrameBinner>        poolBinners = new LinkedBlockingQueue<>(INT_CONCURRENCY_CNT_THREADS);
+//    /** Blocking pool of ingestion frame decomposers (frame binners) */
+//    private final BlockingQueue<FrameBinner>        poolBinners = new LinkedBlockingQueue<>(INT_CONCURRENCY_CNT_THREADS);
     
     /** The pool of frame decomposition threads */
     private final ExecutorService                   xtorDecompTasks = Executors.newCachedThreadPool();
@@ -257,8 +255,8 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
     /** The ingestion frame buffer "not full" lock condition */
     private final Condition                         cndFrmBufNotFull = lckFrmBuffer.newCondition();
     
-    /** Semaphore used to monitor request queue and exert back pressure to clients */
-    private final Semaphore                         semFrameQue = new Semaphore(INT_BUFFER_SIZE, true);
+//    /** Semaphore used to monitor request queue and exert back pressure to clients */
+//    private final Semaphore                         semFrameQue = new Semaphore(INT_BUFFER_SIZE, true);
     
     
     
@@ -292,17 +290,17 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
     public IngestDataRequestSupplier(int intProviderUid) {
         this.intProviderUid = intProviderUid;
         
-        // Create resources
-        if (BOL_CONCURRENCY_ACTIVE) {
-            for (int iBinner=0; iBinner<INT_CONCURRENCY_CNT_THREADS; iBinner++) {
-                FrameBinner binner = FrameBinner.from(LNG_BINNING_MAX_SIZE);
-                
-                this.poolBinners.add(binner);
-            }
-            
-        } else {
-            this.poolBinners.add(FrameBinner.from(LNG_BINNING_MAX_SIZE));
-        }
+//        // Create resources
+//        if (BOL_CONCURRENCY_ACTIVE) {
+//            for (int iBinner=0; iBinner<INT_CONCURRENCY_CNT_THREADS; iBinner++) {
+//                FrameBinner binner = FrameBinner.from(LNG_BINNING_MAX_SIZE);
+//                
+//                this.poolBinners.add(binner);
+//            }
+//            
+//        } else {
+//            this.poolBinners.add(FrameBinner.from(LNG_BINNING_MAX_SIZE));
+//        }
     }
 
     
@@ -473,13 +471,13 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
      * competing threads.
      * </p>
      * 
-     * @param intBufferSizeMax  capacity of frame buffer before back-pressure blocking
+     * @param intQueueCapacity  capacity of frame buffer before back-pressure blocking
      */
     synchronized 
     public void enableBackPressure(int intMaxBufferSize) {
 
         this.bolBackPressure = true;
-        this.intBufferSizeMax = intMaxBufferSize;
+        this.intQueueCapacity = intMaxBufferSize;
     }
     
     /**
@@ -593,11 +591,20 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
      * ingestion frames to be added.
      * </p>
      * <p>
-     * After calling
+     * After calling this method all independent processing tasks are allowed to finish 
+     * but no new ingestion frames will be accepted.  
+     * Consumers of messages can continue to poll for available messages until the supply
+     * is exhausted.
+     * </p>
+     * <p>
+     * This method will block until all currently executing processing tasks have finished.
+     * The queue of ingestion request messages may still contain unconsumed messages
+     * however. 
      * 
-     * @return
+     * @return <code>true</code> if the message supplier was shutdown,
+     *         <code>false</code> if the message supplier was not active
      * 
-     * @throws InterruptedException 
+     * @throws InterruptedException interrupted while waiting for processing threads to complete
      */
     synchronized
     public boolean shutdown() throws InterruptedException {
@@ -615,8 +622,18 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
         return true;
     }
     
+    /**
+     * <p>
+     * Performs a hard shutdown of the <code>IngestDataRequest</code> message supplier.
+     * </p>
+     * <p>
+     * All currently executing ingestion frame processing tasks are terminated and all
+     * queue buffers are cleared.  The outgoing message queue is also cleared.  
+     * The method returns immediately upon terminating all activity.
+     * </p>
+     */
     synchronized
-    public boolean shutdownNow() {
+    public void shutdownNow() {
         
         this.bolActive = false;
         
@@ -626,10 +643,33 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
         this.queFrameRaw.clear();
         this.queFramesPrcd.clear();
         this.queRequests.clear();
-        
-        return true;
     }
     
+    /**
+     * <p>
+     * Add the given list of ingestion frames for processing and conversion to ingest data 
+     * request messages.
+     * </p>
+     * <p>
+     * The given list is added to the queue buffer of raw data frames.  If automatic ingestion
+     * frame decomposition is enabled they are then decomposed by the decomposition tasks
+     * and transferred to the processed frame queue buffer, otherwise they are transferred
+     * directly.  All ingestion frames entering the processed frame buffer are then converted
+     * to <code>IngestDataRequest</code> messages where they are available through the 
+     * <code>{@link IMessageSupplier}</code> interface. 
+     * </p>
+     * <p>
+     * <h2>Back Pressure</h2>
+     * If the back-pressure feature is enable this method blocks whenever the outgoing message
+     * queue buffer is at capacity.  The method will not return until the consumer of 
+     * <code>IngestDataRequest</code> messages has taken the queue below capacity.
+     * </p>
+     * 
+     * @param lstFrames ordered list of ingestion frames for processing
+     * 
+     * @throws IllegalStateException    the message supplier is currently inactive
+     * @throws InterruptedException     interrupted while waiting for frame buffer ready
+     */
     synchronized
     public void addFrames(List<IngestionFrame> lstFrames) throws IllegalStateException, InterruptedException {
 
@@ -647,7 +687,7 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
         // Enforce back-pressure to the client if processed frame queue is full 
         this.lckFrmBuffer.lock();
         try {
-            if (this.queFramesPrcd.size() >= this.intBufferSizeMax)
+            if (this.queFramesPrcd.size() >= this.intQueueCapacity)
                 this.cndFrmBufNotFull.await();  // throws InterruptedException
 
             this.queFrameRaw.addAll(lstFrames);
@@ -691,7 +731,7 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer active.");
 
         // Return immediately if the queue is not at capacity
-        if (this.queFramesPrcd.size() < this.intBufferSizeMax)
+        if (this.queFramesPrcd.size() < this.intQueueCapacity)
             return;
         
         // Do this regardless of whether back pressure is active or not
@@ -709,29 +749,86 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
     // IMessageSupplier<IngestDataRequest> Interface
     //
     
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier#isActive()
+     */
     @Override
     public boolean isActive() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.bolActive;
     }
 
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier#take()
+     */
     @Override
-    public IngestDataRequest take() throws IllegalStateException {
-        // TODO Auto-generated method stub
-        return null;
+    public IngestDataRequest take() throws IllegalStateException, InterruptedException {
+        
+        // Check state
+        if (!this.bolActive && this.queRequests.isEmpty())
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is inactive and queue is empty.");
+        
+        try {
+            IngestDataRequest   msgRqst = this.queRequests.take();
+        
+            return msgRqst;
+            
+        } finally {
+            
+            // We need to signal any threads blocking on the queue capacity 
+            if (this.queRequests.size() < this.intQueueCapacity)
+                this.cndFrmBufNotFull.signalAll();
+        }
     }
 
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier#poll()
+     */
     @Override
     public IngestDataRequest poll() throws IllegalStateException {
-        // TODO Auto-generated method stub
-        return null;
+
+        // Check state
+        if (!this.bolActive && this.queRequests.isEmpty())
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is inactive and queue is empty.");
+        
+        try {
+            IngestDataRequest   msgRqst = this.queRequests.poll();
+            
+            return msgRqst;
+            
+        } finally {
+            
+            // We need to signal any threads blocking on the queue capacity 
+            if (this.queRequests.size() < this.intQueueCapacity)
+                this.cndFrmBufNotFull.signalAll();
+        }
     }
 
 
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
+     */
     @Override
-    public IngestDataRequest poll(int cntTimeout, TimeUnit tuTimeout) throws IllegalStateException {
-        // TODO Auto-generated method stub
-        return null;
+    public IngestDataRequest poll(long cntTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException {
+        
+        // Check state
+        if (!this.bolActive && this.queRequests.isEmpty())
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is inactive and queue is empty.");
+        
+        try {
+            IngestDataRequest   msgRqst = this.queRequests.poll(cntTimeout, tuTimeout);
+            
+            return msgRqst;
+            
+        } finally {
+            
+            // We need to signal any threads blocking on the queue capacity 
+            if (this.queRequests.size() < this.intQueueCapacity)
+                this.cndFrmBufNotFull.signalAll();
+        }
     }
 
     
@@ -773,6 +870,11 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
      * This method creates a thread task that continuously polls the raw ingestion frame buffer
      * for frames which it decomposes then offers to the processed frame buffer.
      * </p>
+     * <p>
+     * <h2>Decomposition</h2>
+     * Currently the returned tasks decompose the ingestion frames horizontally (by column)
+     * which is usually more efficient.
+     * </p> 
      * 
      * @return  a new <code>Callable</code> instance performing frame decompositions
      * 
@@ -796,6 +898,13 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
                 
                 if (frmRaw == null)
                     continue;
+                
+                // If there is no automatic decomposition simply all the frame to the processed queue
+                if (!this.bolDecompAuto) {
+                    this.queFramesPrcd.add(frmRaw);
+                    
+                    continue;
+                }
                 
                 // Process - Decompose the frame (horizontally)
                 List<IngestionFrame> lstFrmsPrcd = binner.decomposeHorizontally(frmRaw);
