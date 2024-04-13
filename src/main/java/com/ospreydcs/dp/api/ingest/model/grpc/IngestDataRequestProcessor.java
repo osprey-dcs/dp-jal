@@ -47,6 +47,7 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.FrameBinner;
+import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
@@ -233,7 +234,7 @@ public final class IngestDataRequestProcessor {
         this.connIngest = connIngest;
         this.intProviderId = intProviderId;
         
-        this.fncDataSource = new IngestDataRequestSupplier(intProviderId);
+        this.fncDataSource = new IngestionFrameProcessor(intProviderId);
     }
     
     

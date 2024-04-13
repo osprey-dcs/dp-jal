@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionRequestStreamProcessor.java
+ * File:	IngestDataRequestStream.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionRequestStreamProcessor
+ * Type: 	IngestDataRequestStream
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -61,7 +61,7 @@ import io.grpc.stub.StreamObserver;
  * Subclasses implement the specific details depending upon whether the desired gRPC stream is
  * unidirectional or bidirectional.  Note that these subclasses are internal  and cannot be 
  * instantiated externally.
- * The creators for <code>IngestionRequestStreamProcessor</code> provide concrete instances
+ * The creators for <code>IngestDataRequestStream</code> provide concrete instances
  * that clients can use for stream processing.
  * </p>
  * <p>
@@ -108,7 +108,7 @@ import io.grpc.stub.StreamObserver;
  * @since Apr 9, 2024
  *
  */
-public abstract class IngestionRequestStreamProcessor implements Runnable, Callable<Boolean> {
+public abstract class IngestDataRequestStream implements Runnable, Callable<Boolean> {
 
     
     //
@@ -147,7 +147,7 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
      *  
      * @return  new bidirectional ingestion stream processor ready for independent thread spawn
      */
-    public static IngestionRequestStreamProcessor newBidiProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource, Consumer<IngestDataResponse> fncDataSink) {
+    public static IngestDataRequestStream newBidiProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource, Consumer<IngestDataResponse> fncDataSink) {
         
         return new IngestionRequestBidiStreamProcessor(stubAsync, fncDataSource, fncDataSink);
     }
@@ -173,7 +173,7 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
      * @return  new unidirectional ingestion stream processor ready for independent thread spawn
      */
     @AUnavailable(status=STATUS.UNKNOWN, note="The Ingestion Service does NOT support unidirectional ingestion streams.")
-    public static IngestionRequestStreamProcessor newUniProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource) {
+    public static IngestDataRequestStream newUniProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource) {
     
         return new IngestionRequestUniStreamProcessor(stubAsync, fncDataSource);
     }
@@ -260,12 +260,12 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
     
     /**
      * <p>
-     * Constructs a new instance, initialized of <code>IngestionRequestStreamProcessor</code>.
+     * Constructs a new instance, initialized of <code>IngestDataRequestStream</code>.
      * </p>
      *
      * @param fncDataSource the supplier of <code>IngestDataRequest</code> messages 
      */
-    protected IngestionRequestStreamProcessor(IMessageSupplier<IngestDataRequest> fncDataSource) { 
+    protected IngestDataRequestStream(IMessageSupplier<IngestDataRequest> fncDataSource) { 
         this.fncDataSource = fncDataSource;
     }
 
@@ -702,7 +702,7 @@ public abstract class IngestionRequestStreamProcessor implements Runnable, Calla
  *
  */
 @AUnavailable(status=STATUS.UNKNOWN, note="Usefulness of single-stream ingestion is currently undetermined.")
-final class IngestionRequestUniStreamProcessor extends IngestionRequestStreamProcessor {
+final class IngestionRequestUniStreamProcessor extends IngestDataRequestStream {
 
     
     //
@@ -737,7 +737,7 @@ final class IngestionRequestUniStreamProcessor extends IngestionRequestStreamPro
      * 
      * @return  <code>null</code>
      *
-     * @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionRequestStreamProcessor#initiateGrpcStream()
+     * @see com.ospreydcs.dp.api.ingest.model.grpc.IngestDataRequestStream#initiateGrpcStream()
      */
     @AUnavailable(status=STATUS.UNKNOWN, note="A null value is always returned.")
     @Override
@@ -748,7 +748,7 @@ final class IngestionRequestUniStreamProcessor extends IngestionRequestStreamPro
 
     /**
      *
-     * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionRequestStreamProcessor#requestTransmitted(com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest)
+     * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IngestDataRequestStream#requestTransmitted(com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest)
      */
     @Override
     protected void requestTransmitted(IngestDataRequest msgRqst) throws ProviderException {
@@ -757,7 +757,7 @@ final class IngestionRequestUniStreamProcessor extends IngestionRequestStreamPro
 
     /**
      *
-     * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionRequestStreamProcessor#awaitCompletion()
+     * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IngestDataRequestStream#awaitCompletion()
      */
     @Override
     protected ResultStatus awaitCompletion() {
@@ -797,7 +797,7 @@ final class IngestionRequestUniStreamProcessor extends IngestionRequestStreamPro
  * @since Apr 9, 2024
  *
  */
-final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamProcessor implements StreamObserver<IngestDataResponse> {
+final class IngestionRequestBidiStreamProcessor extends IngestDataRequestStream implements StreamObserver<IngestDataResponse> {
 
     
     //
@@ -860,7 +860,7 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
      * returned.
      * </p>
      * 
-     * @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionRequestStreamProcessor#initiateGrpcStream()
+     * @see com.ospreydcs.dp.api.ingest.model.grpc.IngestDataRequestStream#initiateGrpcStream()
      */
     @Override
     protected CallStreamObserver<IngestDataRequest> initiateGrpcStream() {
@@ -934,7 +934,7 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
      * There is nothing to do here.
      * </p>
      * 
-     * @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionRequestStreamProcessor#requestTransmitted(com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest)
+     * @see com.ospreydcs.dp.api.ingest.model.grpc.IngestDataRequestStream#requestTransmitted(com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest)
      */
     @Override
     protected void requestTransmitted(IngestDataRequest msgRqst) throws ProviderException {
@@ -975,7 +975,7 @@ final class IngestionRequestBidiStreamProcessor extends IngestionRequestStreamPr
      * In either event, the following actions ensue:
      * <ol>  
      * <li>An error message is sent to the class logger (if active).</li>
-     * <li>The stream error flag <code>{@link IngestionRequestStreamProcessor#bolStreamError}</code> is set <code>true</code>.
+     * <li>The stream error flag <code>{@link IngestDataRequestStream#bolStreamError}</code> is set <code>true</code>.
      * <li>The result record <code>{@link #recStatus}</code> is set to a failure with message and exception.</li>
      * <li>The stream completed monitor <code>{@link #monStreamCompleted}</code> is released.</li>
      * </ol>

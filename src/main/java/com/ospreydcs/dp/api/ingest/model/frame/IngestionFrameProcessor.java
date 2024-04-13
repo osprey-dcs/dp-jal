@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestDataRequestSupplier.java
+ * File:	IngestionFrameProcessor.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestDataRequestSupplier
+ * Type: 	IngestionFrameProcessor
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest.model.grpc;
+package com.ospreydcs.dp.api.ingest.model.frame;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -46,14 +46,15 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.frame.FrameBinner;
+import com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.EventMetadata;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**
  * <p>
- * <h1>Supplier of <code>IngestDataRequest</code> messages from <code>IngestionFrame</code> instances.</h1>
+ * <h1>Processor of <code>IngestionFrame</code> instances and supplier of 
+ * <code>IngestDataRequest</code> messages from processed ingestion frames.</h1>
  * </p>
  * <p>
  * This class performs several functions, including ingetion frame buffering, ingestion frame
@@ -62,10 +63,48 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <code>IngestDataRequest</code> messages.
  * </p>
  * <p>
+ * <h2>Activation</h2>
+ * A <code>IngestionFrameProcessor</code> instance must be activated before attempting
+ * to add ingestion frames; use the method <code>{@link #activate()}</code>.  Likewise,
+ * an active processor should be shutdown when no longer needed; use methods
+ * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.
+ * </p>
+ * <p>
+ * <h2>Processing Options</h2>
+ * The <code>IngestionFrameProcessor</code> class has several processing options which
+ * should be set before activation.
+ * <ul>
+ * <li>
+ * <code>{@link #enableConcurrency(int)}</code> - Processes ingestion frames using
+ * multiple concurrent processing threads, otherwise all frame processing is done on 
+ * single execution threads.
+ * </li>
+ * <br/>
+ * <li>
+ * <code>{@link #enableFrameDecomposition(long)}</code> - All incoming ingestion frames
+ * are check for memory allocation size.  If a frame has allocation larger than the given
+ * size it is decomposed in a collection of equivalent, composite frame each meeting the
+ * size requirement. 
+ * </li>
+ * <br/>
+ * <li>
+ * <code>{@link #enableBackPressure(int)}</code> - The ability to add ingestion frames
+ * to an <code>IngestionFrameProcessor</code> can be blocked when using this option.
+ * Specifically, when the outgoing (processed) message queue reaches the given capacity
+ * the <code>IngestionFrameProcessor</code> will block when adding additional frames.
+ * The blocking continues until the outgoing message queue drops below capacity.
+ * In this fashion, clients will experience "back pressure" from consumers of 
+ * <code>IngestDataRequest</code> messages when they become backlogged.
+ * </li>
+ * </ul>
+ * The default settings for all the above options are taken from the client API configuration
+ * parameters. 
+ * </p> 
+ * <p>
  * <h2><code>IngestDataRequest<code> Message Blocking Supplier</h2>
  * Class instances function as a supplier of <code>{@link IngestDataRequest}</code> messages
  * which are created from <code>{@link IngestionFrame}</code> objects offered to the instance.
- * consumers of <code>IngestDataRequest</code> messages can poll a message supplier for messages,
+ * Consumers of <code>IngestDataRequest</code> messages can poll a message supplier for messages,
  * or wait for messages to become available.
  * </p> 
  * <p>
@@ -97,6 +136,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * The frame decomposition operations can be performed concurrently.  Specifically, if multiple
  * ingestion frames are offered at the same time each decomposition will be assigned a separate
  * execution thread (up to the concurrency limit).
+ * </p>
  * <p>
  * <h2>WARNINGS:</h2>
  * If automatic ingestion frame decomposition is turned of it is imperative that all
@@ -110,8 +150,72 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * @since Apr 10, 2024
  *
  */
-public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataRequest> {
+public class IngestionFrameProcessor implements IMessageSupplier<IngestDataRequest> {
 
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new instance of <code>IngestionFrameProcessor</code> ready for processing
+     * of ingestion frames.
+     * </p>
+     * <p>
+     * The data provider UID given as the argument is assigned to all 
+     * <code>IngestDataReuest</code> messages supplied by the returned instance.
+     * </p>
+     * <p>
+     * <h2>Activation</h2>
+     * A <code>IngestionFrameProcessor</code> instance must be activated before attempting
+     * to add ingestion frames; use the method <code>{@link #activate()}</code>.  Likewise,
+     * an active processor should be shutdown when no longer needed; use methods
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.
+     * </p>
+     * <p>
+     * <h2>Processing Options</h2>
+     * The <code>IngestionFrameProcessor</code> class has several processing options which
+     * should be set before activation.
+     * <h2>Processing Options</h2>
+     * The <code>IngestionFrameProcessor</code> class has several processing options which
+     * should be set before activation.
+     * <ul>
+     * <li>
+     * <code>{@link #enableConcurrency(int)}</code> - Processes ingestion frames using
+     * multiple concurrent processing threads, otherwise all frame processing is done on 
+     * single execution threads.
+     * </li>
+     * <br/>
+     * <li>
+     * <code>{@link #enableFrameDecomposition(long)}</code> - All incoming ingestion frames
+     * are check for memory allocation size.  If a frame has allocation larger than the given
+     * size it is decomposed in a collection of equivalent, composite frame each meeting the
+     * size requirement. 
+     * </li>
+     * <br/>
+     * <li>
+     * <code>{@link #enableBackPressure(int)}</code> - The ability to add ingestion frames
+     * to an <code>IngestionFrameProcessor</code> can be blocked when using this option.
+     * Specifically, when the outgoing (processed) message queue reaches the given capacity
+     * the <code>IngestionFrameProcessor</code> will block when adding additional frames.
+     * The blocking continues until the outgoing message queue drops below capacity.
+     * In this fashion, clients will experience "back pressure" from consumers of 
+     * <code>IngestDataRequest</code> messages when they become backlogged.
+     * </li>
+     * </ul>
+     * The default settings for all the above options are taken from the client API configuration
+     * parameters. 
+     * </p> 
+     * 
+     * @param intProviderId data provider unique identifier assigned to all <code>IngestDataRequest</code> messages
+     * 
+     * @return new <code>IngestionFrameProcessor</code> instance ready for processing
+     */
+    public static IngestionFrameProcessor from(int intProviderId) {
+        return new IngestionFrameProcessor(intProviderId);
+    }
+    
     
     //
     // Application Resources
@@ -278,7 +382,7 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestDataRequestSupplier</code>.
+     * Constructs a new instance of <code>IngestionFrameProcessor</code>.
      * </p>
      * <p>
      * Note that the data provider UID given here is used within all <code>IngestDataReuest</code>
@@ -287,7 +391,7 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
      *
      * @param intProviderUid    the data provider unique identifier
      */
-    public IngestDataRequestSupplier(int intProviderUid) {
+    public IngestionFrameProcessor(int intProviderUid) {
         this.intProviderUid = intProviderUid;
         
 //        // Create resources
@@ -647,6 +751,46 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
     
     /**
      * <p>
+     * Add the given ingestion frame for processing and conversion to ingest data 
+     * request message.
+     * </p>
+     * <p>
+     * The ingesiton frame is added to the queue buffer of raw data frames.  If automatic ingestion
+     * frame decomposition is enabled it is then decomposed by the decomposition tasks
+     * and transferred to the processed frame queue buffer, otherwise it is transferred
+     * directly.  All ingestion frames entering the processed frame buffer are then converted
+     * to <code>IngestDataRequest</code> messages where they are available through the 
+     * <code>{@link IMessageSupplier}</code> interface. 
+     * </p>
+     * <p>
+     * <h2>Back Pressure</h2>
+     * If the back-pressure feature is enable this method blocks whenever the outgoing message
+     * queue buffer is at capacity.  The method will not return until the consumer of 
+     * <code>IngestDataRequest</code> messages has taken the queue below capacity.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method is synchronized through <code>{@link #addFrames(List)}</code> to which it
+     * defers.
+     * </p>
+     * <p>
+     * <h2>WARNING:</code>
+     * If ingestion frame decomposition is enabled the argument frame can be destroyed
+     * if it has allocation larger than the given limit.  The offending frame is decomposed 
+     * into smaller frames until empty.
+     * </p>
+     * 
+     * @param frame ingestion frame added for processing
+     * 
+     * @throws IllegalStateException    the processor is currently inactive
+     * @throws InterruptedException     interrupted while waiting for message buffer ready
+     */
+    public void addFrame(IngestionFrame frame) throws IllegalStateException, InterruptedException {
+        this.addFrames(List.of(frame));
+    }
+    
+    /**
+     * <p>
      * Add the given list of ingestion frames for processing and conversion to ingest data 
      * request messages.
      * </p>
@@ -664,11 +808,17 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
      * queue buffer is at capacity.  The method will not return until the consumer of 
      * <code>IngestDataRequest</code> messages has taken the queue below capacity.
      * </p>
+     * <p>
+     * <h2>WARNING:</code>
+     * If ingestion frame decomposition is enabled the argument frames can potentially be destroyed
+     * if any frame has memory allocation larger than the given limit.  An offending frame is 
+     * decomposed into smaller frames until empty.
+     * </p>
      * 
      * @param lstFrames ordered list of ingestion frames for processing
      * 
-     * @throws IllegalStateException    the message supplier is currently inactive
-     * @throws InterruptedException     interrupted while waiting for frame buffer ready
+     * @throws IllegalStateException    the processor is currently inactive
+     * @throws InterruptedException     interrupted while waiting for message buffer ready
      */
     synchronized
     public void addFrames(List<IngestionFrame> lstFrames) throws IllegalStateException, InterruptedException {
@@ -996,7 +1146,7 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
      * <p>
      * <h2>Computation</h2>
      * The return value is computed by taking the hash code for the 
-     * <code>IngestDataRequestSupplier</code> class and incrementing it by the current value
+     * <code>IngestionFrameProcessor</code> class and incrementing it by the current value
      * of the class frame counter <code>{@link #cntFrames}</code> (which is then incremented).
      * The <code>long</code> value is then converted to a string value and returned.
      * </p>
@@ -1012,9 +1162,9 @@ public class IngestDataRequestSupplier implements IMessageSupplier<IngestDataReq
     private String  createNewRequestId() {
         long lngHash;
         synchronized (objClassLock) {
-            lngHash = IngestDataRequestSupplier.class.hashCode() + IngestDataRequestSupplier.cntFrames;
+            lngHash = IngestionFrameProcessor.class.hashCode() + IngestionFrameProcessor.cntFrames;
             
-            IngestDataRequestSupplier.cntFrames++;
+            IngestionFrameProcessor.cntFrames++;
         }
         
         String strClientId = Long.toString(lngHash);
