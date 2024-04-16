@@ -29,8 +29,12 @@ package com.ospreydcs.dp.api.ingest.model.frame;
 
 import static org.junit.Assert.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Exchanger;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -39,8 +43,16 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
+import com.ospreydcs.dp.api.model.IDataColumn;
+import com.ospreydcs.dp.api.model.UniformSamplingClock;
+import com.ospreydcs.dp.grpc.v1.common.DataColumn;
+import com.ospreydcs.dp.grpc.v1.common.DataValue;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest.IngestionDataFrame;
 
 /**
  * <p>
@@ -62,9 +74,22 @@ public class IngestionFrameProcessorTest {
     public static final int         INT_PROVIDER_ID = 1;
     
     
+    /** Concurrency - Number of concurrent threads - for concurrency testing */
+    public static final int         CNT_CONCURRENT_THREADS = 5;
+    
+    /** Frame Decomposition - Maximum ingestion frame memory allocation limit */
+    public static final long        LNG_BINNING_SIZE = 2000000;
+    
+    /** Back Pressure - Message queue buffer capacity */
+    public static final int         INT_BUFFER_CAPACITY = 10;
+    
+    
     //
     // Test Resources
     //
+    
+    /** A test ingestion frame */
+    private static final IngestionFrame         MSG_FRAME_SMALL = createDoubleFrames(1, 10, 10).get(0);
     
     /** A list of test data frames that are small */
     private static final List<IngestionFrame>   LST_FRAMES_SMALL = createDoubleFrames(10, 10, 10);
@@ -72,9 +97,12 @@ public class IngestionFrameProcessorTest {
     /** A list of test data frames that have moderate allocation */
     private static final List<IngestionFrame>   LST_FRAMES_MOD = createDoubleFrames(10, 100, 100);
     
+    /** A list of test data frames that have moderate allocation */
+    private static final List<IngestionFrame>   LST_FRAMES_LARGE = createDoubleFrames(10, 1000, 1000);
     
-    /** A processor used for general testing -  activated for each test case in default configuration */
-    private IngestionFrameProcessor processorTest;
+    
+    /** A processor available for general testing -  activated for each test case in default configuration */
+    private IngestionFrameProcessor processor;
     
     
     // 
@@ -100,8 +128,8 @@ public class IngestionFrameProcessorTest {
      */
     @Before
     public void setUp() throws Exception {
-        this.processorTest = IngestionFrameProcessor.from(INT_PROVIDER_ID);
-        this.processorTest.activate();
+        this.processor = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+        this.processor.activate();
     }
 
     /**
@@ -109,7 +137,7 @@ public class IngestionFrameProcessorTest {
      */
     @After
     public void tearDown() throws Exception {
-        this.processorTest.shutdown();
+        this.processor.shutdown();
     }
 
     
@@ -117,21 +145,40 @@ public class IngestionFrameProcessorTest {
     // Test Cases
     //
     
+    
+    /**
+     * Test method for {@link IngestionFrameProcessor#createRequest(IngestionFrame)}. 
+     */
+//    @Test
+//    public final void testCreateRequest() {
+//        
+//        IngestionFrame  frame = LST_FRAMES_SMALL.get(0);
+//        
+//        try {
+//            IngestDataRequest msgRqst = this.processor.createRequest(frame);
+//
+//            Assert.assertEquals(INT_PROVIDER_ID, msgRqst.getProviderId());
+//
+//        } catch (Exception e) {
+//            Assert.fail("createRequest(IngestionFrame) threw exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
+//        }
+//    }
+    
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#from(int)}.
      */
     @Test
     public final void testFrom() {
-        IngestionFrameProcessor     processor = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+        IngestionFrameProcessor     prcrFrom = IngestionFrameProcessor.from(INT_PROVIDER_ID);
         
         // Start it up 
-        boolean bolActivated = processor.activate();
+        boolean bolActivated = prcrFrom.activate();
         
         Assert.assertTrue(bolActivated);
         
         // Shut it down and wait
         try {
-            boolean bolShutdown = processor.shutdown();
+            boolean bolShutdown = prcrFrom.shutdown();
             
             Assert.assertTrue(bolShutdown);
             
@@ -139,7 +186,7 @@ public class IngestionFrameProcessorTest {
             Assert.fail("Processor throw InterruptedException while waiting for shutdown: " + e.getMessage());
         }
         
-        Assert.assertFalse(processor.isActive());
+        Assert.assertFalse(prcrFrom.isActive());
     }
 
     /**
@@ -147,17 +194,17 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testIngestionFrameProcessor() {
-        IngestionFrameProcessor     processor = new IngestionFrameProcessor(INT_PROVIDER_ID);
+        IngestionFrameProcessor     prcrCtor = new IngestionFrameProcessor(INT_PROVIDER_ID);
         
         // Start it up 
-        boolean bolActivated = processor.activate();
+        boolean bolActivated = prcrCtor.activate();
         
         Assert.assertTrue(bolActivated);
         
         // Shut it down hard 
-        processor.shutdownNow();
+        prcrCtor.shutdownNow();
         
-        Assert.assertFalse(processor.isActive());
+        Assert.assertFalse(prcrCtor.isActive());
     }
 
     /**
@@ -165,7 +212,19 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testEnableConcurrency() {
-        fail("Not yet implemented"); // TODO
+        
+        boolean bolConcurrency = this.processor.hasConcurrency();
+        
+        try {
+            this.processor.enableConcurrency(CNT_CONCURRENT_THREADS);
+            
+            Assert.fail("Attempting to enable concurrency while active should throw exception.");
+            
+        } catch (IllegalStateException e) {
+            Assert.assertTrue(this.processor.isActive());
+            Assert.assertEquals(bolConcurrency, this.processor.hasConcurrency());
+            
+        }
     }
 
     /**
@@ -173,7 +232,19 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testDisableConcurrency() {
-        fail("Not yet implemented"); // TODO
+        
+        boolean bolConcurrency = this.processor.hasConcurrency();
+
+        try {
+            this.processor.disableConcurrency();
+            
+            Assert.fail("Attempting to disable concurrency while active should throw exception.");
+            
+        } catch (IllegalStateException e) {
+            Assert.assertTrue(this.processor.isActive());
+            Assert.assertEquals(bolConcurrency, this.processor.hasConcurrency());
+            
+        }
     }
 
     /**
@@ -182,6 +253,22 @@ public class IngestionFrameProcessorTest {
     @Test
     public final void testEnableFrameDecomposition() {
         
+        boolean bolDecomp = this.processor.hasFrameDecomposition();
+        
+        if (bolDecomp) {
+            this.processor.disableFrameDecomposition();
+            Assert.assertFalse(this.processor.hasFrameDecomposition());
+            
+            this.processor.enableFrameDecomposition(LNG_BINNING_SIZE);
+            Assert.assertTrue(this.processor.hasFrameDecomposition());
+            
+        } else {
+            this.processor.enableFrameDecomposition(LNG_BINNING_SIZE);
+            Assert.assertTrue(this.processor.hasFrameDecomposition());
+            
+            this.processor.disableFrameDecomposition();
+            Assert.assertFalse(this.processor.hasFrameDecomposition());
+        }
     }
 
     /**
@@ -189,7 +276,23 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testDisableFrameDecomposition() {
-        fail("Not yet implemented"); // TODO
+        
+        boolean bolDecomp = this.processor.hasFrameDecomposition();
+        
+        if (bolDecomp) {
+            this.processor.disableFrameDecomposition();
+            Assert.assertFalse(this.processor.hasFrameDecomposition());
+            
+            this.processor.enableFrameDecomposition(LNG_BINNING_SIZE);
+            Assert.assertTrue(this.processor.hasFrameDecomposition());
+            
+        } else {
+            this.processor.enableFrameDecomposition(LNG_BINNING_SIZE);
+            Assert.assertTrue(this.processor.hasFrameDecomposition());
+            
+            this.processor.disableFrameDecomposition();
+            Assert.assertFalse(this.processor.hasFrameDecomposition());
+        }
     }
 
     /**
@@ -197,7 +300,23 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testEnableBackPressure() {
-        fail("Not yet implemented"); // TODO
+        
+        boolean bolBackPressure = this.processor.hasBackPressure();
+        
+        if (bolBackPressure) {
+            this.processor.disableBackPressure();
+            Assert.assertFalse(this.processor.hasBackPressure());
+            
+            this.processor.enableBackPressure(INT_BUFFER_CAPACITY);
+            Assert.assertTrue(this.processor.hasBackPressure());
+            
+        } else {
+            this.processor.enableBackPressure(INT_BUFFER_CAPACITY);
+            Assert.assertTrue(this.processor.hasBackPressure());
+            
+            this.processor.disableBackPressure();
+            Assert.assertFalse(this.processor.hasBackPressure());
+        }
     }
 
     /**
@@ -205,7 +324,23 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testDisableBackPressure() {
-        fail("Not yet implemented"); // TODO
+        
+        boolean bolBackPressure = this.processor.hasBackPressure();
+        
+        if (bolBackPressure) {
+            this.processor.disableBackPressure();
+            Assert.assertFalse(this.processor.hasBackPressure());
+            
+            this.processor.enableBackPressure(INT_BUFFER_CAPACITY);
+            Assert.assertTrue(this.processor.hasBackPressure());
+            
+        } else {
+            this.processor.enableBackPressure(INT_BUFFER_CAPACITY);
+            Assert.assertTrue(this.processor.hasBackPressure());
+            
+            this.processor.disableBackPressure();
+            Assert.assertFalse(this.processor.hasBackPressure());
+        }
     }
 
     /**
@@ -213,7 +348,20 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testActivate() {
-        fail("Not yet implemented"); // TODO
+        IngestionFrameProcessor prcrTest = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+        
+        Assert.assertFalse(prcrTest.isActive());
+        prcrTest.activate();
+        Assert.assertTrue(prcrTest.isActive());
+        
+        try {
+            prcrTest.shutdown();
+            
+            Assert.assertFalse(prcrTest.isActive());
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Processor threw InterruptedException while waiting for shutdown: " + e.getMessage());
+        }
     }
 
     /**
@@ -221,7 +369,20 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testShutdown() {
-        fail("Not yet implemented"); // TODO
+        IngestionFrameProcessor prcrTest = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+        
+        Assert.assertFalse(prcrTest.isActive());
+        prcrTest.activate();
+        Assert.assertTrue(prcrTest.isActive());
+        
+        try {
+            prcrTest.shutdown();
+            
+            Assert.assertFalse(prcrTest.isActive());
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Processor threw InterruptedException while waiting for shutdown: " + e.getMessage());
+        }
     }
 
     /**
@@ -229,7 +390,14 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testShutdownNow() {
-        fail("Not yet implemented"); // TODO
+        IngestionFrameProcessor prcrTest = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+        
+        Assert.assertFalse(prcrTest.isActive());
+        prcrTest.activate();
+        Assert.assertTrue(prcrTest.isActive());
+        
+        prcrTest.shutdownNow();
+        Assert.assertFalse(prcrTest.isActive());
     }
 
     /**
@@ -237,7 +405,36 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testAddFrame() {
-        fail("Not yet implemented"); // TODO
+        
+        // Parameters and resources
+        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
+        final int               cntFrames = lstFrames.size();
+        
+        // Add frames one at a time checking for exceptions
+        int     indFrames = 0;
+        for (IngestionFrame frame : LST_FRAMES_MOD) {
+            
+            try {
+                this.processor.addFrame(frame);
+                
+            } catch (IllegalStateException | InterruptedException e) {
+                Assert.fail("addFrame() threw " + e.getClass().getSimpleName() + " exception for frame #" + indFrames + " of " + cntFrames + ": " + e.getMessage());
+                
+            } finally {
+                indFrames++;
+            }
+        }
+        
+        try {
+            // Shutdown the processor - does not return until all frame are processed
+            this.processor.shutdown();
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Processor shutdown threw interrupted exception: " + e.getMessage());
+        }
+        
+        int szMsgQue = this.processor.getRequestQueueSize();
+        Assert.assertEquals(cntFrames, this.processor.getRequestQueueSize());
     }
 
     /**
@@ -245,7 +442,30 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testAddFrames() {
-        fail("Not yet implemented"); // TODO
+        
+        // Parameters and resources
+        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
+        final int               cntFrames = lstFrames.size();
+
+        // Add frames all at once
+        try {
+            this.processor.addFrames(lstFrames);
+            
+            Thread.sleep(20L);
+            
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
+        }
+        
+        try {
+            // Shutdown the processor - does not return until all frame are processed
+            this.processor.shutdown();
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Processor shutdown threw interrupted exception: " + e.getMessage());
+        }
+        
+        Assert.assertEquals(cntFrames, this.processor.getRequestQueueSize());
     }
 
     /**
@@ -253,15 +473,161 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testAwaitBackPressure() {
-        fail("Not yet implemented"); // TODO
+        
+        // Resources and Parameters
+        List<IngestionFrame>    lstFrames = LST_FRAMES_SMALL;
+        final int               cntFrames = lstFrames.size();
+        final int               intQueCapacity = cntFrames;// - 1;
+        final long              lngDelay = 100; // thread take delay - milliseconds
+        Runnable                tskTake = () -> {
+            try {
+                Thread.sleep(lngDelay);
+                this.processor.take();
+//                this.processor.take();
+                return;
+                
+            } catch (IllegalStateException | InterruptedException e) {
+                String  strMsg = "awaitBackPressure() thread take() exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
+                
+                System.err.println(strMsg);
+                Assert.fail(strMsg);
+            }
+        };
+        Thread                  thdTake = new Thread(tskTake);
+        
+        try {
+            this.processor.enableBackPressure(intQueCapacity);
+            this.processor.addFrames(lstFrames);
+            
+            // Give processor time to fill up message queue
+            Thread.sleep(lngDelay);
+            
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
+        }
+        
+        try {
+            Instant     insStart = Instant.now();
+            thdTake.start();
+            this.processor.awaitBackPressure();
+            Instant     insStop = Instant.now();
+            Duration    durWait = Duration.between(insStart, insStop);
+            
+            System.out.println("The IngestionFrameProcessor#awaitBackPressure() blocked for " + durWait.toString());
+            
+            thdTake.join();
+            Instant     insThreadStop = Instant.now();;
+            Duration    durThread = Duration.between(insStop, insThreadStop);
+            
+            System.out.println("The take() thread then completed after " + durThread.toString());
+        
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail("awaitBackPressure() threw " + e.getClass().getSimpleName() + " exception : " + e.getMessage());
+        }
     }
 
+    /**
+     * Test method for {@link IngestionFrameProcessor#awaitRequestQueueEmpty()} 
+     */
+    @Test
+    public final void testAwaitRequestQueueEmpty() {
+        
+        // Resources and Parameters
+        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
+        final int               cntFrames = lstFrames.size();
+        final long              lngDelay = 10; // milliseconds
+        
+        Thread thdConsumer  = new Thread( () -> {
+            int cntTakes = 0;
+            while (this.processor.isActive()) {
+//                System.out.println("  awaitRequestQueueEmpty() isActive() = " + this.processor.isActive());
+                try {
+                    IngestDataRequest msgRqst = this.processor.take();
+                    Thread.sleep(lngDelay);
+//                    System.out.println("  awaitRequestQueueEmpty() take() #" + cntTakes);
+//                    System.out.println("  msg==null = " + (msgRqst==null));
+                    cntTakes++;
+
+                } catch (IllegalStateException e) {
+                    String  strMsg = "awaitRequestQueueEmpty() thread take() exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
+
+                    System.err.println(strMsg);
+                    System.err.println("  isActive() = " + this.processor.isActive());
+                    Assert.fail(strMsg);
+                    
+                } catch (InterruptedException e) {
+                    System.out.println("  INTERRUPTED - awaitRequestQueueEmpty() thread after iteration " + cntTakes);
+                }
+            }
+//            System.out.println("  TERMINATED - awaitRequestQueueEmpty() thread after iteration " + cntTakes);
+        });
+        
+        try {
+            this.processor.addFrames(lstFrames);
+            
+            // Give processor time to fill up message queue
+            Thread.sleep(100);
+            
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
+        }
+        
+        try {
+            Instant     insStart = Instant.now();
+            thdConsumer.start();
+            this.processor.awaitRequestQueueEmpty();
+            Instant     insStop = Instant.now();
+            Duration    durWait = Duration.between(insStart, insStop);
+            
+            System.out.println("The IngestionFrameProcessor#awaitRequestQueueEmpty() blocked for " + durWait.toString());
+            
+            this.processor.shutdown();
+            thdConsumer.interrupt();
+            
+            Instant     insThreadStop = Instant.now();;
+            Duration    durThread = Duration.between(insStop, insThreadStop);
+            
+            System.out.println("The consumer() thread then completed after " + durThread.toString());
+        
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail("awaitBackPressure() threw " + e.getClass().getSimpleName() + " exception : " + e.getMessage());
+        }
+        
+    }
+    
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#isActive()}.
      */
     @Test
     public final void testIsActive() {
-        fail("Not yet implemented"); // TODO
+
+        // Parameters and resources
+        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
+        final int               cntFrames = lstFrames.size();
+
+        // Add frames all at once
+        try {
+            this.processor.addFrames(lstFrames);
+            
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
+        }
+        
+        try {
+            this.processor.shutdown();
+            
+            // Still message in buffer - should be active after soft shutdown
+            Assert.assertTrue(this.processor.isActive());
+            
+            // Clear the buffer then true again
+            while (this.processor.isActive())
+                this.processor.take();
+            
+            Assert.assertFalse(this.processor.isActive());
+            
+        } catch (InterruptedException e) {
+            Assert.fail("shutdown() threw Interrupted exception: " + e.getMessage());
+        }
     }
 
     /**
@@ -269,7 +635,51 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testTake() {
-        fail("Not yet implemented"); // TODO
+
+        // Parameters and resources
+        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
+        final int               cntFrames = lstFrames.size();
+
+        // Add frames all at once
+        try {
+            this.processor.addFrames(lstFrames);
+            
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
+        }
+        
+        try {
+            this.processor.shutdown();
+            
+            // Still message in buffer - should be active after soft shutdown
+            Assert.assertTrue(this.processor.isActive());
+            
+            // Clear the buffer then try again
+            while (this.processor.isActive())
+                this.processor.take();
+            
+            Assert.assertFalse(this.processor.isActive());
+            
+        } catch (InterruptedException e) {
+            Assert.fail("shutdown() threw Interrupted exception: " + e.getMessage());
+
+        } catch (IllegalStateException e) {
+            Assert.fail("shutdown() threw Interrupted exception: " + e.getMessage());
+        }
+        
+        try {
+            
+            // This should throw an IllegalStateException
+            this.processor.take();
+            
+            Assert.fail("Inactive processor take() should have thrown exception.");
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Inactive processed take() threw unexpected Interrupted exception: " + e.getMessage());
+
+        } catch (IllegalStateException e) {
+            // We should end here
+        }
     }
 
     /**
@@ -277,7 +687,45 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testPoll() {
-        fail("Not yet implemented"); // TODO
+
+        // Parameters and resources
+        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
+        final int               cntFrames = lstFrames.size();
+
+        // Add frames all at once
+        try {
+            this.processor.addFrames(lstFrames);
+            
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
+        }
+        
+        int                 cntMsgs = 0;
+        try {
+            this.processor.shutdown();
+            
+            // Still message in buffer - should be active after soft shutdown
+            Assert.assertTrue(this.processor.isActive());
+            
+            // Clear the buffer with polling until exception is thrown
+            IngestDataRequest   msgRqst = null;
+            do { 
+                msgRqst = this.processor.poll();
+                
+                cntMsgs++;
+            } while (msgRqst != null);
+            
+            Assert.fail("The last poll() should have thrown an exception.");
+            
+        } catch (InterruptedException e) {
+            Assert.fail("shutdown() threw Interrupted exception: " + e.getMessage());
+
+        } catch (IllegalStateException e) {
+            
+            Assert.assertFalse(this.processor.isActive());
+            Assert.assertEquals(cntFrames, cntMsgs);
+        }
+        
     }
 
     /**
@@ -285,7 +733,191 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testPollLongTimeUnit() {
-        fail("Not yet implemented"); // TODO
+
+        // Parameters and resources
+        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
+        final int               cntFrames = lstFrames.size();
+        final long              lngWait = 10;
+        final TimeUnit          tuWait = TimeUnit.MILLISECONDS;
+        final Exchanger<Integer> rsltPolls = new Exchanger<>();
+        final Exchanger<Integer> rsltMsgs = new Exchanger<>();
+        
+        Thread thdPoller = new Thread(() -> {
+            Integer cntPolls = 0;
+            Integer cntMsgs = 0;
+
+//            System.out.println("  Poller Thread: entering loop, isActive() = " + this.processor.isActive());
+            
+            while (this.processor.isActive()) {
+                try {
+                    IngestDataRequest msgRqst = this.processor.poll(lngWait, tuWait);
+                    cntPolls++;
+                    
+//                    System.out.println("  Poller Thread: cntPolls=" + cntPolls);
+                    
+                    if (msgRqst == null)
+                        continue;
+                    
+                    cntMsgs++;
+                    
+                } catch (IllegalStateException | InterruptedException e) {
+                    String  strMsg = "testPollLongTimeUnit polling thread - exception while polling " 
+                                    + e.getClass().getSimpleName() 
+                                    + ": " + e.getMessage();
+                    System.err.println(strMsg);
+                    Assert.fail(strMsg);
+                }
+            }
+            try {
+                rsltPolls.exchange(cntPolls);
+                rsltMsgs.exchange(cntMsgs);
+                
+            } catch (InterruptedException e) {
+                String  strMsg = "testPollLongTimeUnit polling thread - interrupted while exchanging results " 
+                                + ": " + e.getMessage();
+                System.err.println(strMsg);
+                Assert.fail(strMsg);
+            }
+        });
+        
+        // Start polling thread
+        thdPoller.start();
+        
+        // Sleep for while - make some failed polls
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            Assert.fail("Interrupted while waiting to begin adding frames");
+        }
+
+        // Add frames all at once
+        try {
+            this.processor.addFrames(lstFrames);
+            
+            // Do a soft shutdown
+            this.processor.shutdown();
+            
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
+        }
+        
+        // Get the results
+        try {
+            int cntPolls = rsltPolls.exchange(0);
+            int cntMsgs = rsltMsgs.exchange(0);
+            
+            System.out.println("testPollLongTimeUnit Results:");
+            System.out.println("  number of polls = " + cntPolls);
+            System.out.println("  number of messages acquired = " + cntMsgs);
+            System.out.println("  number of frames processed = " + cntFrames);
+            Assert.assertEquals(cntFrames, cntMsgs);
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Could not exchange results with poller thread?");
+        }
+    }
+    
+    /**
+     * Times ingestion frame processing
+     */
+    @Test
+    public final void testTimeProcessor() {
+        
+        //  Parameters and resources
+        final int                   cntRows = 1000;
+        final int                   cntCols = 2000;
+        final int                   cntFrames = 10;
+        List<IngestionFrame>        lstFrames = createDoubleFrames(cntFrames, cntCols, cntRows);
+        
+        final long                  lngFrmAlloc = lstFrames.get(0).allocationSizeFrame();
+        
+        // Note that the ingestion frames will be destroyed due to decomposition
+        try {
+            // Start timer, add frames, shutdown, stop timer
+            Instant     insStart = Instant.now();
+            this.processor.addFrames(lstFrames);
+            this.processor.shutdown();
+            Instant     insStop = Instant.now();
+            
+            // Compute results
+            Duration    durActive = Duration.between(insStart, insStop);
+            int         cntMsgs = this.processor.getRequestQueueSize();
+            int         intMsgAlloc = this.processor.take().getSerializedSize();
+            
+            // Report Results
+            System.out.println("testTimeProcessor:");
+            System.out.println("  frame allocation = " + lngFrmAlloc);
+            System.out.println("  frames processed = " + cntFrames);
+            System.out.println("  messages created = " + cntMsgs);
+            System.out.println("  message allocation = " + intMsgAlloc);
+            System.out.println("  time elapsed = " + durActive.toMillis() + "ms");
+            
+            // Check that all source frame were destroyed
+            boolean bolData = lstFrames.stream().allMatch(frm -> !frm.hasData());
+            boolean bolNoCols = lstFrames.stream().allMatch(frm -> frm.getColumnCount() == 0);
+//            boolean bolNoRows = lstFrames.stream().allMatch(frm -> frm.getRowCount() == 0);
+//            int indFrame = 0;
+//            for (IngestionFrame frm :  lstFrames) {
+//                System.out.println("Frame #" + indFrame);
+//                System.out.println("  columns = " + frm.getColumnCount());
+//                System.out.println("  rows = " + frm.getRowCount());
+//                indFrame++;
+//            }
+            Assert.assertTrue(bolData);;
+            Assert.assertTrue(bolNoCols);
+            
+        } catch (IllegalStateException e) {
+            Assert.fail("IllegalStateException: " + e.getMessage());
+            
+        } catch (InterruptedException e) {
+            Assert.fail("InterruptedException: " + e.getMessage());
+            
+        }
+    }
+    
+    /**
+     * Test the processing accuracy 
+     */
+    @Test
+    public final void testProcessorAccuracy() {
+        
+        // Parameters and resources
+        IngestionFrame      frame = MSG_FRAME_SMALL;
+        
+        try {
+            this.processor.addFrame(frame);
+            this.processor.shutdown();
+            
+            IngestDataRequest   msgRqst = this.processor.take();
+            
+            IngestionDataFrame  msgFrm = msgRqst.getIngestionDataFrame();
+            
+            // Compare clocks
+            SamplingClock  msgClk = msgFrm.getDataTimestamps().getSamplingClock();
+            UniformSamplingClock    clkMsg = ProtoMsg.toUniformSamplingClock(msgClk);
+            UniformSamplingClock    clkFrm = frame.getSamplingClock();
+            
+            Assert.assertEquals(clkFrm, clkMsg);
+            
+            // Compare data
+            List<DataColumn> lstMsgCols = msgFrm.getDataColumnsList();
+            for (DataColumn msgCol : lstMsgCols) {
+                String                  strName = msgCol.getName();
+                IDataColumn<Object>     frmCol = frame.getDataColumn(strName);
+                
+                Assert.assertNotNull(frmCol);
+                
+                List<DataValue> lstMsgColVals = msgCol.getDataValuesList();
+                List<Object>    lstMsgColObjs = ProtoMsg.extractValues(msgCol);
+                List<Object>    lstFrmColObjs = frmCol.getValues();
+                
+                Assert.assertEquals(lstFrmColObjs, lstMsgColObjs);
+            }
+            
+            
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail("addFrame() threw exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
     }
 
     
