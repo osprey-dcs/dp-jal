@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.ingest.model.frame;
 
-import static org.junit.Assert.*;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;

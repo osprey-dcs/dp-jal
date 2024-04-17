@@ -44,12 +44,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
-import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.common.EventMetadata;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**
@@ -145,13 +142,21 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * size limit or gRPC will throw a runtime exception when attempting to transmit the 
  * generated <code>IngestDataRequest</code> message.
  * </p>
+ * <p>
+ * <h2>NOTES:</h2>
+ * This class uses instances of <code>{@link IngestionFrameBinner}</code> for frame decomposition
+ * and instances of class <code>{@link IngestionFrameConverter}</code> for frame conversion
+ * to ingest data request messages.
+ * </p>
  * 
  *
  * @author Christopher K. Allen
  * @since Apr 10, 2024
  *
+ * @see IngestionFrameBinner
+ * @see IngestionFrameConverter
  */
-public class IngestionFrameProcessor implements IMessageSupplier<IngestDataRequest> {
+public final class IngestionFrameProcessor implements IMessageSupplier<IngestDataRequest> {
 
     
     //
@@ -283,11 +288,11 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     // Class Resources
     //
     
-    /** The locking object for synchronizing access to class resources */ 
-    private static final Object   objClassLock = new Object();
-    
-    /** The number of binned frames produced - used for request ID creation */
-    private static long cntFrames = 0L;
+//    /** The locking object for synchronizing access to class resources */ 
+//    private static final Object   objClassLock = new Object();
+//    
+//    /** The number of binned frames produced - used for request ID creation */
+//    private static long cntFrames = 0L;
 
     
     //
@@ -324,13 +329,27 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     
     
     //
+    // State Variables
+    //
+    
+    /** Is supplier active (not been shutdown) */
+    private boolean bolActive = false;
+    
+    /** Has the supplier been shutdown */
+    private boolean bolShudtdown = false;
+  
+    
+//    /** The number (and ID generator) of frame decomposition threads */
+//    private int     cntDecompThrds = 0;
+//    
+//    /** The number (and ID generator) of frame-to-message conversion tasks */
+//    private int     cntConvertThrds = 0;
+    
+    
+    //
     // Instance Resources
     //
     
-//    /** Blocking pool of ingestion frame decomposers (frame binners) */
-//    private final BlockingQueue<FrameBinner>        poolBinners = new LinkedBlockingQueue<>(INT_CONCURRENCY_CNT_THREADS);
-    
-
     /** Incoming ingestion frame buffer */
     private final BlockingQueue<IngestionFrame>     queFrameRaw = new LinkedBlockingQueue<>();
     
@@ -342,16 +361,16 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 
     
     /** The pool of frame decomposition threads */
-    private final ExecutorService                   xtorDecompTasks = Executors.newCachedThreadPool();
+    private final ExecutorService               xtorDecompTasks = Executors.newCachedThreadPool();
     
     /** The pool of frame-to-message conversion threads */
-    private final ExecutorService                   xtorConvertTasks = Executors.newCachedThreadPool();
+    private final ExecutorService               xtorConvertTasks = Executors.newCachedThreadPool();
     
-    /** Collection of future results from decomposition tasks */
-    private final Collection<Future<Boolean>>       setDecompFutures = new LinkedList<>();
+    /** Collection of future results from decomposition tasks - not used */
+    private final Collection<Future<Boolean>>   setDecompFutures = new LinkedList<>();
 
-    /** Collection of future results from frame-to-message conversion tasks */
-    private final Collection<Future<Boolean>>       setConvertFutures = new LinkedList<>();
+    /** Collection of future results from frame-to-message conversion tasks - not used */
+    private final Collection<Future<Boolean>>   setConvertFutures = new LinkedList<>();
 
     
     /** Pending processing operation counter - managed by processing threads */
@@ -368,28 +387,6 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     
     /** The message queue buffer empty lock condition */
     private final Condition         cndMsgQueEmpty = lckMsgQueEmpty.newCondition();
-    
-//    /** Semaphore used to monitor request queue and exert back pressure to clients */
-//    private final Semaphore                         semFrameQue = new Semaphore(INT_BUFFER_SIZE, true);
-    
-    
-    
-    //
-    // State Variables
-    //
-    
-    /** Is supplier active (not been shutdown) */
-    private boolean bolActive = false;
-    
-    /** Has the supplier been shutdown */
-    private boolean bolShudtdown = false;
-  
-    
-//    /** The number (and ID generator) of frame decomposition threads */
-//    private int     cntDecompThrds = 0;
-//    
-//    /** The number (and ID generator) of frame-to-message conversion tasks */
-//    private int     cntConvertThrds = 0;
     
     
     //
@@ -409,18 +406,6 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      */
     public IngestionFrameProcessor(int intProviderUid) {
         this.intProviderUid = intProviderUid;
-        
-//        // Create resources
-//        if (BOL_CONCURRENCY_ACTIVE) {
-//            for (int iBinner=0; iBinner<INT_CONCURRENCY_CNT_THREADS; iBinner++) {
-//                FrameBinner binner = FrameBinner.from(LNG_BINNING_MAX_SIZE);
-//                
-//                this.poolBinners.add(binner);
-//            }
-//            
-//        } else {
-//            this.poolBinners.add(FrameBinner.from(LNG_BINNING_MAX_SIZE));
-//        }
     }
 
     
@@ -447,13 +432,13 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </p>
      * <p>
      * <h2>WARNING:</h2>
-     * This configuration parameter can only be modified <em>before</em> the supplier is 
+     * This configuration parameter can only be modified <em>before</em> the processor is 
      * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
      * </p>
      * 
      * @param cntThreads    the maximum number of independent processing threads for concurrent operations
      * 
-     * @throws IllegalStateException    method called while supplier is active
+     * @throws IllegalStateException    method called while processor is active
      */
     synchronized 
     public void enableConcurrency(int cntThreads) throws IllegalStateException {
@@ -484,11 +469,11 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </p>
      * <p>
      * <h2>WARNING:</h2>
-     * This configuration parameter can only be modified <em>before</em> the supplier is 
+     * This configuration parameter can only be modified <em>before</em> the processor is 
      * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
      * </p>
      * 
-     * @throws IllegalStateException    method called while supplier is active
+     * @throws IllegalStateException    method called while processor is active
      */
     synchronized
     public void disableConcurrency() throws IllegalStateException {
@@ -528,7 +513,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </p>
      * <p>
      * <h2>WARNING:</h2>
-     * This maximum ingestion frame size can only be modified <em>before</em> the supplier is 
+     * This maximum ingestion frame size can only be modified <em>before</em> the processor is 
      * activated with <code>{@link #activate()}</code>. Calling this method post activation
      * will return ingestion frame composition to the bin size set before activation.
      * </p>
@@ -582,7 +567,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </li>
      * <br/>
      * <li>
-     * The maximum ingestion frame size can only be modified <em>before</em> the supplier is 
+     * The maximum ingestion frame size can only be modified <em>before</em> the processor is 
      * activated with <code>{@link #activate()}</code>.  This method will disable frame
      * decomposition if already active, but the maximum frame size cannot be changed post
      * activation.
@@ -591,7 +576,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * 
      */
     synchronized
-    public void disableFrameDecomposition() throws IllegalStateException {
+    public void disableFrameDecomposition() {
         this.bolDecompAuto = false;
     }
     
@@ -762,21 +747,22 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </p>
      * <p>
      * After invoking this method the message supplier instance is ready for ingestion frame
-     * processing and conversion.  Ingestion frames can be added to the supplier where they
+     * processing and conversion.  Ingestion frames can be added to the processor where they
      * are (optionally) decomposed and converted to <code>IngestDataRequest</code> messages.
      * Processed messages are then available to consumers of theses messages throught the
      * <code>{@link IMessageSupplier}</code> interface.
      * </p>
      * <h2>Operation</h2>
      * This method starts all ingestion frame processing tasks which are then continuously active
-     * throughout the lifetime of this instance.  Processing tasks execute independently in
+     * throughout the lifetime of this instance, or until explicitly shut down.  
+     * Processing tasks execute independently in
      * thread pools where they block until ingestion frames become available.
      * </p>
      * <p>
      * <h2>Shutdowns</h2>
-     * Proper operation requires that the supplier be shutdown where no longer needed (otherwise
+     * Proper operation requires that the processor be shutdown where no longer needed (otherwise
      * thread tasks run indefinitely).  Use either <code>{@link #shutdown()}</code> or 
-     * <code>{@link #shutdownNow()}</code> to shutdown the message supplier.
+     * <code>{@link #shutdownNow()}</code> to shutdown the processor.
      * </p>
      * <p>
      * <h2>Thread Safety</h2>
@@ -796,7 +782,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </ul>
      * </p>
      * 
-     * @return  <code>true</code> if the message supplier was successfully activated,
+     * @return  <code>true</code> if the ingestion frame processor was successfully activated,
      *          <code>false</code> if the message supplier was already active
      */
     synchronized
@@ -851,14 +837,18 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      */
     synchronized
     public boolean shutdown() throws InterruptedException {
+        
+        // Check state
         if (!this.bolActive)
             return false;
         
         this.bolActive = false;
 
+        // Shutdown all processor tasks 
         this.xtorDecompTasks.shutdown();
         this.xtorConvertTasks.shutdown();
         
+        // Wait for all pending tasks to complete
         this.xtorDecompTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
         this.xtorConvertTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
         
@@ -1069,7 +1059,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </ul>
      * </p> 
      * 
-     * @throws IllegalStateException    operation invoked while supplier inactive
+     * @throws IllegalStateException    operation invoked while processor inactive
      * @throws InterruptedException     operation interrupted while waiting for queue ready
      */
     public void awaitRequestQueueEmpty() throws IllegalStateException, InterruptedException {
@@ -1198,32 +1188,6 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     // Support Methods
     //
     
-//    private void enqueueFrame(IngestionFrame frame) throws InterruptedException {
-//    
-//        // If no back pressure
-//        if (!this.bolBackPressure) {
-//            this.queFramesPrcd.offer(frame);
-//
-//            return;
-//        }
-//        
-//        // Exert back pressure - block until acquiring a queue addition permit
-//        this.semFrameQue.acquire();
-//        this.queFramesPrcd.offer(frame);
-//    }
-//    
-//    private IngestionFrame takeFrame() throws InterruptedException {
-//        
-//        // This will block until an ingestion frame becomes available
-//        IngestionFrame frame = this.queFramesPrcd.take();
-//        
-//        // Add queue addition permit if we are exerting back pressure
-//        if (this.bolBackPressure)
-//            this.semFrameQue.release();
-//        
-//        return frame;
-//    }
-    
     /**
      * <p>
      * Signals all threads waiting on request message queue conditions.
@@ -1278,7 +1242,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * 
      * @return  a new <code>Callable</code> instance performing frame decompositions
      * 
-     * throws InterruptedException interrupted while waiting for an available FrameBinner instance 
+     * throws InterruptedException interrupted while waiting for an available IngestionFrameBinner instance 
      */
     private Callable<Boolean> createFrameDecompositionTask() /* throws InterruptedException */ {
     
@@ -1291,7 +1255,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 //            
             
             // Create a new frame binner processor for this thread
-            FrameBinner binner = FrameBinner.from(this.lngBinSizeMax);
+            IngestionFrameBinner binner = IngestionFrameBinner.from(this.lngBinSizeMax);
 
             // While active - Continuously process frames from raw frame buffer
             // - second OR conditional allows for soft shutdowns
@@ -1357,6 +1321,9 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         // Define the task operations as a lambda function
         Callable<Boolean>   task = () -> {
             
+            // Ingestion frame converter used for all message creation
+            IngestionFrameConverter converter = IngestionFrameConverter.from(this.intProviderUid);
+            
 //            // TODO - Remove
 //            // Debugging - Create ID
 //            final int   intThrdId = this.cntConvertThrds++;
@@ -1384,7 +1351,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 //                System.out.println("Conversion thread #" +intThrdId + " activated for 1 message converions.");
                 
                 // Convert the ingestion frame to an Ingestion Service data request message 
-                IngestDataRequest   msgRqst = this.createRequest(frmPrcd);
+                IngestDataRequest   msgRqst = converter.createRequest(frmPrcd);
                 
 //                // TODO - Remove
 //                System.out.println("  conversion thread #" +intThrdId + " created message - (msg==null)=" + (msgRqst==null));
@@ -1407,104 +1374,104 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         return task;
     }
     
-    /**
-     * <p>
-     * Converts the given ingestion frame to a new, equivalent <code>IngestDataRequest</code> message.
-     * </p>
-     * 
-     * @param frame source of all data used to populated returned message
-     * 
-     * @return  new <code>IngestDataRequest</code> message populated with argument data
-     */
-    private IngestDataRequest createRequest(IngestionFrame frame) {
-        
-        IngestDataRequest   msgRqst = IngestDataRequest.newBuilder()
-                .setProviderId(this.intProviderUid)
-                .setClientRequestId(this.createNewRequestId())
-                .setRequestTime(ProtoTime.now())
-                .addAllAttributes(ProtoMsg.createAttributes(frame.getAttributes()))
-                .setEventMetadata(this.createEventMetadata(frame))
-                .setIngestionDataFrame(ProtoMsg.from(frame))
-                .build();
-
-        return msgRqst;
-    }
-    
-    /**
-     * <p>
-     * Generates a new, unique client request identifier and returns it.
-     * </p>
-     * <p>
-     * The returns request identifier is "unique" within the lifetime of the current
-     * Java Virtual Machine (JVM).  Request identifiers can, potentially, be repeated for
-     * independent JVMs and should not be used to uniquely identify request beyond the
-     * current JVM execution.
-     * </p>
-     * <p>
-     * <h2>Computation</h2>
-     * The return value is computed by taking the hash code for the 
-     * <code>IngestionFrameProcessor</code> class and incrementing it by the current value
-     * of the class frame counter <code>{@link #cntFrames}</code> (which is then incremented).
-     * The <code>long</code> value is then converted to a string value and returned.
-     * </p>
-     * <p>
-     * <h2>Thread Safety</h2>
-     * This method is thread safe.  Computation of the UID is synchronized with the class
-     * lock instance <code>{@link #objClassLock}</code>.  This is necessary since the
-     * <code>{@link #cntFrames}</code> class instance must be modified atomically.
-     * </p>
-     *  
-     * @return  a new client request ID unique within the execution of the current JVM
-     */
-    private String  createNewRequestId() {
-        long lngHash;
-        synchronized (objClassLock) {
-            lngHash = IngestionFrameProcessor.class.hashCode() + IngestionFrameProcessor.cntFrames;
-            
-            IngestionFrameProcessor.cntFrames++;
-        }
-        
-        String strClientId = Long.toString(lngHash);
-        
-        return strClientId;
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>EventMetadata</code> message using the snapshot parameters
-     * within the given ingestion frame.
-     * </p>
-     * <p>
-     * The optional "snapshot" parameters from the given ingestion frame are used to populate the
-     * return message.  The returned message will <code>null</code> values for any snapshot parameters
-     * that have not been set.
-     * </p>
-     * 
-     * @param frame     source of event metadata parameters
-     * 
-     * @return          new <code>EventMetadata</code> message populated from the argument
-     */
-    private EventMetadata   createEventMetadata(IngestionFrame frame) {
-        
-//      EventMetadata   msgMetadata = EventMetadata.newBuilder()
-//      .setDescription(frame.getSnapshotId())
-//      .setStartTimestamp( ProtoMsg.from(frame.getSnapshotDomain().begin()) )
-//      .setStopTimestamp( ProtoMsg.from(frame.getSnapshotDomain().end()) )
-//      .build();
-
-        EventMetadata.Builder   bldrMsg = EventMetadata.newBuilder();
-        
-        if (frame.getSnapshotId() != null)
-            bldrMsg
-            .setDescription(frame.getSnapshotId());
-        
-        if (frame.getSnapshotDomain() != null) 
-            bldrMsg
-            .setStartTimestamp( ProtoMsg.from(frame.getSnapshotDomain().begin()) )
-            .setStopTimestamp( ProtoMsg.from(frame.getSnapshotDomain().end()) );
-        
-        EventMetadata   msgMetadata = bldrMsg.build();
-        
-        return msgMetadata;
-    }
+//    /**
+//     * <p>
+//     * Converts the given ingestion frame to a new, equivalent <code>IngestDataRequest</code> message.
+//     * </p>
+//     * 
+//     * @param frame source of all data used to populated returned message
+//     * 
+//     * @return  new <code>IngestDataRequest</code> message populated with argument data
+//     */
+//    private IngestDataRequest createRequest(IngestionFrame frame) {
+//        
+//        IngestDataRequest   msgRqst = IngestDataRequest.newBuilder()
+//                .setProviderId(this.intProviderUid)
+//                .setClientRequestId(this.createNewRequestId())
+//                .setRequestTime(ProtoTime.now())
+//                .addAllAttributes(ProtoMsg.createAttributes(frame.getAttributes()))
+//                .setEventMetadata(this.createEventMetadata(frame))
+//                .setIngestionDataFrame(ProtoMsg.from(frame))
+//                .build();
+//
+//        return msgRqst;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Generates a new, unique client request identifier and returns it.
+//     * </p>
+//     * <p>
+//     * The returns request identifier is "unique" within the lifetime of the current
+//     * Java Virtual Machine (JVM).  Request identifiers can, potentially, be repeated for
+//     * independent JVMs and should not be used to uniquely identify request beyond the
+//     * current JVM execution.
+//     * </p>
+//     * <p>
+//     * <h2>Computation</h2>
+//     * The return value is computed by taking the hash code for the 
+//     * <code>IngestionFrameProcessor</code> class and incrementing it by the current value
+//     * of the class frame counter <code>{@link #cntFrames}</code> (which is then incremented).
+//     * The <code>long</code> value is then converted to a string value and returned.
+//     * </p>
+//     * <p>
+//     * <h2>Thread Safety</h2>
+//     * This method is thread safe.  Computation of the UID is synchronized with the class
+//     * lock instance <code>{@link #objClassLock}</code>.  This is necessary since the
+//     * <code>{@link #cntFrames}</code> class instance must be modified atomically.
+//     * </p>
+//     *  
+//     * @return  a new client request ID unique within the execution of the current JVM
+//     */
+//    private String  createNewRequestId() {
+//        long lngHash;
+//        synchronized (objClassLock) {
+//            lngHash = IngestionFrameProcessor.class.hashCode() + IngestionFrameProcessor.cntFrames;
+//            
+//            IngestionFrameProcessor.cntFrames++;
+//        }
+//        
+//        String strClientId = Long.toString(lngHash);
+//        
+//        return strClientId;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Creates and returns a new <code>EventMetadata</code> message using the snapshot parameters
+//     * within the given ingestion frame.
+//     * </p>
+//     * <p>
+//     * The optional "snapshot" parameters from the given ingestion frame are used to populate the
+//     * return message.  The returned message will <code>null</code> values for any snapshot parameters
+//     * that have not been set.
+//     * </p>
+//     * 
+//     * @param frame     source of event metadata parameters
+//     * 
+//     * @return          new <code>EventMetadata</code> message populated from the argument
+//     */
+//    private EventMetadata   createEventMetadata(IngestionFrame frame) {
+//        
+////      EventMetadata   msgMetadata = EventMetadata.newBuilder()
+////      .setDescription(frame.getSnapshotId())
+////      .setStartTimestamp( ProtoMsg.from(frame.getSnapshotDomain().begin()) )
+////      .setStopTimestamp( ProtoMsg.from(frame.getSnapshotDomain().end()) )
+////      .build();
+//
+//        EventMetadata.Builder   bldrMsg = EventMetadata.newBuilder();
+//        
+//        if (frame.getSnapshotId() != null)
+//            bldrMsg
+//            .setDescription(frame.getSnapshotId());
+//        
+//        if (frame.getSnapshotDomain() != null) 
+//            bldrMsg
+//            .setStartTimestamp( ProtoMsg.from(frame.getSnapshotDomain().begin()) )
+//            .setStopTimestamp( ProtoMsg.from(frame.getSnapshotDomain().end()) );
+//        
+//        EventMetadata   msgMetadata = bldrMsg.build();
+//        
+//        return msgMetadata;
+//    }
 }

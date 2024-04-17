@@ -46,8 +46,10 @@ import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.model.BufferedImage;
 import com.ospreydcs.dp.api.model.DpSupportedType;
+import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.PvMetaRecord;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.model.BufferedImage.Format;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
@@ -56,6 +58,7 @@ import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.common.DataValue.ValueCase;
 import com.ospreydcs.dp.grpc.v1.common.DataValueType;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.common.Structure.Field;
 import com.ospreydcs.dp.grpc.v1.common.Image;
 import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
@@ -64,6 +67,8 @@ import com.ospreydcs.dp.grpc.v1.common.Structure;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse.AckResult;
 import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
 
@@ -810,6 +815,54 @@ public final class ProtoMsg {
         PvMetaRecord    recPvInfo = new PvMetaRecord(strName, enmType, apiClock, insFirst, insLast);
         
         return recPvInfo;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>IngestionResponse</code> record populated with the fields
+     * of the given argument.
+     * </p>
+     * 
+     * @param msgRsp    Ingestion Service ingest data response message
+     * 
+     * @return new <code>IngestionResponse</code> record equivalent to the argument
+     * 
+     * @throws MissingResourceException the argument contained neither an acknowledgment or an exception
+     */
+    public static IngestionResponse toIngestionResponse(IngestDataResponse msgRsp) throws MissingResourceException {
+        
+        // Extract message data
+        int     intProdiverId = msgRsp.getProviderId();
+        String  strRequestId = msgRsp.getClientRequestId();
+        Instant insTimestamp = ProtoMsg.toInstant(msgRsp.getResponseTime());
+        
+        // In case of acknowledgment
+        if (msgRsp.hasAckResult()) {
+            AckResult   msgAck = msgRsp.getAckResult();
+            
+            int     cntCols = msgAck.getNumColumns();
+            int     cntRows = msgAck.getNumRows();
+            
+            return IngestionResponse.from(intProdiverId, strRequestId, insTimestamp, cntCols, cntRows);
+        }
+        
+        // In case of exception
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
+            
+            String  strType = msgExcept.getExceptionalResultStatus().toString();
+            String  strDetail = msgExcept.getMessage();
+            
+            return IngestionResponse.from(intProdiverId, strRequestId, insTimestamp, strType, strDetail);
+        }
+        
+        // We should never get here
+        throw new MissingResourceException(
+                JavaRuntime.getQualifiedCallerNameSimple() 
+                    + " - message containing neither an acknowledgement or an exception.",
+                IngestDataResponse.class.getName(),
+                "getAckResult(), getExceptionalResult()"
+                );
     }
     
     

@@ -28,6 +28,7 @@
 package com.ospreydcs.dp.api.ingest.model.grpc;
 
 import java.security.ProviderException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -42,6 +43,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.model.AUnavailable;
+import com.ospreydcs.dp.api.model.ClientRequestId;
 import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
@@ -224,8 +226,11 @@ public abstract class IngestDataRequestStream implements Runnable, Callable<Bool
     //
     
     /** Interface handle to the forward gRPC data stream (i.e., ingestion stream) to the Ingestion Service */
-    private CallStreamObserver<IngestDataRequest>       hndForwardStream = null;
+    private CallStreamObserver<IngestDataRequest>   hndForwardStream = null;
 
+    /** Collection of all outgoing message client request IDs */
+    private final List<ClientRequestId>             lstClientIds = new LinkedList<>();
+    
     
     //
     // State Variables and Conditions
@@ -516,6 +521,27 @@ public abstract class IngestDataRequestStream implements Runnable, Callable<Bool
     
     /**
      * <p>
+     * Returns an ordered list of client request identifiers for all the <code>IngestDataRequest</code>
+     * messages transmitted to the Ingestion Service.
+     * </p>
+     * <p>
+     * The returned collection can be used to cross check with the Ingestion Service that all
+     * data for the given requests was successfully processed and archived.
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * The size of the returned collection should be that returned by 
+     * <code>{@link #getRequestCount()}</code>.
+     * </p>
+     *  
+     * @return  collection of request IDs for the ingest data request messages send to the Ingestion Service
+     */
+    public final List<ClientRequestId>  getRequestIds() {
+        return this.lstClientIds;
+    }
+    
+    /**
+     * <p>
      * Returns the status of the streaming task upon completion, or <code>null</code> if incomplete.
      * </p>
      * <p>
@@ -578,6 +604,7 @@ public abstract class IngestDataRequestStream implements Runnable, Callable<Bool
                 // Transmit data message request and notify subclasses
                 this.hndForwardStream.onNext(msgRqst);  // throws StatusRuntimeException
                 
+                this.lstClientIds.add(new ClientRequestId(msgRqst.getClientRequestId()));
                 this.cntRequests++;
                 this.requestTransmitted(msgRqst);       // throws ProviderException
             }
@@ -709,8 +736,8 @@ final class IngestionRequestUniStreamProcessor extends IngestDataRequestStream {
     // Defining Attributes
     //
     
-    /** The asynchronous communications stub to the Ingestion Service */
-    private final DpIngestionServiceStub                stubAsync;
+//    /** The asynchronous communications stub to the Ingestion Service */
+//    private final DpIngestionServiceStub                stubAsync;
     
     /**
      * <p>
@@ -724,7 +751,7 @@ final class IngestionRequestUniStreamProcessor extends IngestDataRequestStream {
     protected IngestionRequestUniStreamProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource) {
         super(fncDataSource);
         
-        this.stubAsync = stubAsync;
+//        this.stubAsync = stubAsync;
     }
 
     

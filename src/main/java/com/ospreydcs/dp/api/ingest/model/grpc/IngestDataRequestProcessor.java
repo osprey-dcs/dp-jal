@@ -30,13 +30,13 @@ package com.ospreydcs.dp.api.ingest.model.grpc;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,12 +45,15 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.frame.FrameBinner;
+import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameBinner;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
+import com.ospreydcs.dp.api.model.ClientRequestId;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
+import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
-import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
 
 /**
@@ -80,7 +83,7 @@ public final class IngestDataRequestProcessor {
         // Creator
         //
         
-//        public static BinnerThread from(final FrameBinner binner, IngestionFrame frame) {
+//        public static BinnerThread from(final IngestionFrameBinner binner, IngestionFrame frame) {
 //            return IngestDataRequestProcessor.this.new BinnerThread(binner, frame);
 //        }
         
@@ -89,12 +92,12 @@ public final class IngestDataRequestProcessor {
         //
         
         /** The active frame decomposition processing */
-        private final FrameBinner       binner;
+        private final IngestionFrameBinner       binner;
         
         /** The target ingestion frame to be decomposed */
         private final IngestionFrame    frame;
         
-        BinnerThread(final FrameBinner binner, IngestionFrame frame) {
+        BinnerThread(final IngestionFrameBinner binner, IngestionFrame frame) {
             this.binner = binner;
             this.frame = frame;
         }
@@ -165,6 +168,19 @@ public final class IngestDataRequestProcessor {
     
     /** Maximum size limit (in bytes) of decomposed ingestion frame */
     private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.stream.binning.maxSize;
+
+    
+    
+    /** General operation timeout limit */
+    private static final long       LNG_TIMEOUT_GENERAL = CFG_DEFAULT.timeout.limit;
+    
+    /** General operation timeout units */
+    private static final TimeUnit   TU_TIMEOUT_GENERAL = CFG_DEFAULT.timeout.unit;
+    
+    
+    
+    /** The default gRPC stream type */
+    private static final DpGrpcStreamType   ENM_STREAM_TYPE = CFG_DEFAULT.stream.type;
     
     
     /** Use multiple gRPC data stream to transmit ingestion frames */
@@ -192,8 +208,28 @@ public final class IngestDataRequestProcessor {
     /** The gRPC connection to the Ingestion Service */
     private final DpIngestionConnection     connIngest;
     
-    /** The data provider UID */
-    private final int                       intProviderId;
+    
+    //
+    // Configuration Parameters
+    //
+    
+    /** gRPC stream type */
+    private DpGrpcStreamType    enmStreamType = ENM_STREAM_TYPE;
+    
+            
+    /** Multiple gRPC data streams flag */
+    private boolean bolMultistream = BOL_MULTISTREAM_ACTIVE;
+    
+    /** The maximum number of gRPC data streams to use */
+    private int     cntStreamsMax = INT_MULTISTREAM_MAX;
+    
+    
+    // 
+    // State Variables
+    //
+    
+    /** Is processor active */
+    private boolean bolActive = false;
     
     
     //
@@ -204,25 +240,46 @@ public final class IngestDataRequestProcessor {
 //    private final Queue<IngestionFrame>             bufFrames = new LinkedList<>();
 //    
 //    /** Pool of ingestion frame decomposers (frame binners) */
-//    private final BlockingQueue<FrameBinner>        polBinners = new LinkedBlockingQueue<>(INT_CONCURRENCY_CNT_THREADS);
+//    private final BlockingQueue<IngestionFrameBinner>        polBinners = new LinkedBlockingQueue<>(INT_CONCURRENCY_CNT_THREADS);
 //    
 //    /** Outgoing ingestion request queue */
 //    private final BlockingQueue<IngestDataRequest>  queRequests = new LinkedBlockingQueue(INT_BUFFER_SIZE);
 //    
-    /** Collection of all incoming ingestion responses */
-    private final Collection<IngestDataResponse>    setResponses = new LinkedList<>();
+//    /** Collection of all outgoing message client request IDs */
+//    private final Collection<ClientRequestId>       setClientIds = new LinkedList<>();
+//    
+//    /** Source for incoming response messages */
+//    private final Consumer<IngestDataResponse>      fncDataSink = (rsp) -> { this.setResponses.add(rsp); };
     
     
-    /** Source of outgoing ingestion requests */
-    private final IMessageSupplier<IngestDataRequest>   fncDataSource;
+    /** The data provider UID */
+    private Integer                   intProviderId = null;
     
-    /** Source for incoming response messages */
-    private final Consumer<IngestDataResponse>          fncDataSink = (rsp) -> { this.setResponses.add(rsp); };
+    /** Ingestion frame processor and source of outgoing ingestion requests */
+    private IngestionFrameProcessor   fncDataSource = null;
+    
+    /** Collection of executing stream processing tasks  */
+    private Collection<IngestDataRequestStream> setStreamTasks = null;
     
     /** The pool of (multiple) gRPC streaming thread(s) for recovering requests */
-    private final ExecutorService           exeThreadPool = Executors.newFixedThreadPool(INT_MULTISTREAM_MAX);
+    private ExecutorService           xtorStreamTasks = null;
+
+    
+    /** Collection of future results from streaming tasks - not used */
+    private Collection<Future<Boolean>>         setStreamFutures = null;
+
+    /** Collection of all incoming ingestion responses - from bidirectional streaming tasks */
+    private Collection<IngestDataResponse>      setResponses = null; // = new LinkedList<>();
+    
+    /** Collection of all ingestion responses with exceptions */
+    private Collection<IngestDataResponse>      setBadResponses = null;
     
     
+    
+    
+    //
+    // Constructors
+    //
     
     /**
      * <p>
@@ -230,11 +287,420 @@ public final class IngestDataRequestProcessor {
      * </p>
      *
      */
-    public IngestDataRequestProcessor(DpIngestionConnection connIngest, int intProviderId) {
+    public IngestDataRequestProcessor(DpIngestionConnection connIngest /*, int intProviderId */) {
         this.connIngest = connIngest;
-        this.intProviderId = intProviderId;
+//        this.intProviderId = intProviderId;
         
-        this.fncDataSource = new IngestionFrameProcessor(intProviderId);
+//        this.fncDataSource = new IngestionFrameProcessor(intProviderId);
+    }
+    
+    
+    //
+    // Configuration
+    //
+    
+    /**
+     * <p>
+     * Sets the gRPC stream type used to transmit ingestion data to the Ingestion Service.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * At the time of this documentation only the bidirectional streaming operation is supported
+     * by the Ingestion Service (i.e., <code>{@link DpGrpcStreamType#BIDIRECTIONAL}</code>).  
+     * Attempting to use a unidirectional stream could result in a RPC failure at the 
+     * Ingestion Service.
+     * </p>
+     * <p>
+     * <h2>WARNINGS:</h2>
+     * <ul>
+     * <li>
+     * A unidirectional backward stream from the Ingestion Service has no context here.
+     * Attempting to set a backward gRPC stream (i.e., <code>{@link DpGrpcStreamType#BACKWARD}</code>) 
+     * will throw an exception.
+     * </li>
+     * <br/>
+     * <li>
+     * This configuration parameter can only be modified <em>before</em> the processor is 
+     * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
+     * </li>  
+     * </p>
+     * 
+     * @param enmStreamType gRPC stream type for data transmission
+     * 
+     * @throws IllegalStateException            method called while processor is active
+     * @throws UnsupportedOperationException    an unsupported stream type was provided
+     */
+    public void setStreamType(DpGrpcStreamType enmStreamType) throws IllegalStateException, UnsupportedOperationException {
+
+        // Check current state
+        if (this.bolActive)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+        
+        // Check the argument
+        if (enmStreamType == DpGrpcStreamType.BACKWARD)
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedCallerNameSimple() + " - " + enmStreamType + " not supported");
+        
+        this.enmStreamType = enmStreamType;
+    }
+    
+    /**
+     * <p>
+     * Enables the use of multiple gRPC stream for transmitting ingestion data.
+     * </p>
+     * <p>
+     * <h2>Multiple gRPC Streams</h2>
+     * Using multiple gRPC data streams can significantly improve transmission performance. 
+     * Although a single gRPC channel is used between this client and the Ingest Service,
+     * the channel allows the use of multiple, concurrent data streams between client and
+     * service.
+     * </p>
+     * <p>
+     * When enabling this feature class instances will create a thread pool of independent
+     * tasks each transmitting ingestion data to the Ingestion Service.  Each task will have
+     * an independent gRPC data stream for transmission.  Disabling the feature allows only
+     * one thread for data transmission using only a single gRPC data stream.
+     * </p>
+     * <p>
+     * The optimal number of gRPC data streams depends upon the client platform, the Ingestion
+     * Service, and the host network.  The number of streams should be considered a tuning parameter
+     * for each installation.  Using too many streams will burden the data transmission 
+     * with unnecessary gRPC overhead while using two few will backlog transmission on the client
+     * side.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This configuration parameter can only be modified <em>before</em> the processor is 
+     * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
+     * </p>
+     * 
+     * @param cntStreamsMax maximum number of allowable gRPC data streams (>0)
+     * 
+     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalArgumentException the argument was zero or negative
+     */
+    synchronized
+    public void enableMultipleStreams(int cntStreamsMax) throws IllegalStateException, IllegalArgumentException {
+
+        // Check current state
+        if (this.bolActive)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+        
+        // Check the argument
+        if (cntStreamsMax <= 0)
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedCallerNameSimple() + " - argument must be greater that zero. ");
+        
+        this.bolMultistream = true;
+        this.cntStreamsMax = cntStreamsMax;
+    }
+    
+    /**
+     * <p>
+     * Disable the use of multiple gRPC stream for transmitting ingestion data.
+     * </p>
+     * <p>
+     * <h2>Multiple gRPC Streams</h2>
+     * Using multiple gRPC data streams can significantly improve transmission performance. 
+     * Although a single gRPC channel is used between this client and the Ingest Service,
+     * the channel allows the use of multiple, concurrent data streams between client and
+     * service.
+     * </p>
+     * <p>
+     * When enabling this feature class instances will create a thread pool of independent
+     * tasks each transmitting ingestion data to the Ingestion Service.  Each task will have
+     * an independent gRPC data stream for transmission.  Disabling the feature allows only
+     * one thread for data transmission using only a single gRPC data stream.
+     * </p>
+     * <p>
+     * The optimal number of gRPC data streams depends upon the client platform, the Ingestion
+     * Service, and the host network.  The number of streams should be considered a tuning parameter
+     * for each installation.  Using too many streams will burden the data transmission 
+     * with unnecessary gRPC overhead while using two few will backlog transmission on the client
+     * side.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This configuration parameter can only be modified <em>before</em> the processor is 
+     * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
+     * </p>
+     * 
+     * @throws IllegalStateException    method called while processor is active
+     */
+    synchronized
+    public void disableMultipleStreams() throws IllegalStateException {
+
+        // Check current state
+        if (this.bolActive)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+        
+        this.bolMultistream = false;
+    }
+    
+    
+    // 
+    // State and Attribute Query
+    //
+    
+    /**
+     * <p>
+     * Returns whether or not the processor is currently active.
+     * </p>
+     * <p>
+     * The returned value indicates the current <em>state</em> of the this processor instance.
+     * <ul>
+     * <li>
+     * <code>true</code> - activated state: 
+     * A returned value of <code>true</code> indicates that the 
+     * <code>{@link #activate(int)}}</code> method has been called and the processor has
+     * not been shut down.  In this state the processor instance is able to accept, process
+     * and transmit ingestion data.
+     * </li>
+     * <br/>
+     * <li>
+     * <code>false</code> - inactive state:   
+     * A value <code>false</code> indicates that the processor was
+     * never activated, or was activated then shut down.  In either case the processor instance
+     * will not accept ingestion data.
+     * </li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * It is possible to activate and shut down a processor instance multiple times.
+     * In this respect, the returned value indicates the phase of this activation cycle.
+     * </p>
+     * 
+     * @return  <code>true</code> if the processor is ready for data transmission,
+     *          <code>false</code> the processor is shut down or has never been activated
+     */
+    public boolean isActive() {
+        return this.bolActive;
+    }
+
+    /**
+     * <p>
+     * Returns the number of <code>IngestDataRequest</code> messages transmitted to the 
+     * Ingestion Service so far.
+     * </p>
+     * <p>
+     * The returned value is the number of Protocol Buffers messages carrying ingestion
+     * data that have been transmitted to the Ingestion Service at the time of invocation.
+     * If called after invoking <code>{@link #shutdown()}</code> then the returned value
+     * is the total number of messages transmitted while active.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The value returned by this method is not necessary equal to the number of 
+     * <code>IngestionFrame</code> instances ingested.  If ingestion frame decomposition
+     * is active large ingestion frame exceeding the size limit which be decomposed into
+     * smaller ingestion frames before being converted into <code>IngestDataRequest</code>
+     * messages.
+     * </li>
+     * <br/>
+     * <li>
+     * This value is available after a shutdown operation has been called.  At that time
+     * the returned value is the total number of <code>IngestDataRequest</code> messages
+     * transmitted to the Ingestion Service during that activation cycle.
+     * </li> 
+     * </ul>
+     * </p>
+     *   
+     * @return  the number of <code>IngestDataRequest</code> messages transmitted so far
+     * 
+     * @throws IllegalStateException    processor was never activated
+     */
+    public int getRequestsCount() throws IllegalStateException {
+        
+        // Check if activated
+        if (this.setStreamTasks == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+
+        return this.setStreamTasks
+                .stream()
+                .mapToInt(IngestDataRequestStream::getRequestCount)
+                .sum();
+    }
+    
+    /**
+     * <p>
+     * Returns the number of <code>IngestDataResponse</code> messages received from the
+     * Ingestion Service so far.
+     * </p>
+     * <p>
+     * For a bidirectional gRPC data stream the Ingestion Service will send a response for
+     * every ingestion request it receives.  In that case, this method returns the number of 
+     * responses received so far, which (ideally) should be equal to the value returned by
+     * <code>{@link #getRequestsCount()}</code>.  For unidirectional gRPC streaming the
+     * Ingestion Service will return at most one response.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * At the time of this documentation the Ingestion Service only supports bidirectional
+     * gRPC data streams.
+     * </li>
+     * <br/>
+     * <li>
+     * This value is available after a shutdown operation has been called.  At that time
+     * the returned value is the total number of <code>IngestDataRequest</code> messages
+     * transmitted to the Ingestion Service during that activation cycle.
+     * </li> 
+     * </ul>
+     * </p>
+     * 
+     * @return  the number of <code>IngestDataResponse</code> messages received so far
+     * 
+     * @throws IllegalStateException    processor was never activated
+     */
+    public int getResponseCount() throws IllegalStateException {
+        
+        // Check if activated
+        if (this.setStreamTasks == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+
+        return this.setStreamTasks
+                .stream()
+                .mapToInt(IngestDataRequestStream::getResponseCount)
+                .sum();
+    }
+    
+    /**
+     * <p>
+     * Returns an immutable list of client request IDs within all the <code>IngestDataRequest</code>
+     * messages set during the current session.
+     * </p>
+     * <p>
+     * Every ingest data request message contains a "client request ID" that should provide the
+     * unique identifier for that request.  The Ingestion Service records the identifier for later
+     * query.  Additionally, when using bidirectional data streams the Ingestion Service will 
+     * provide either an acknowledgment of data received for that ingestion message, or an 
+     * exception.  See <code>{@link #getIngestionResponses()}</code> and 
+     * <code>{@link #getIngestionExceptions()}</code>.
+     * </p>  
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The size of this list should be the value returned by <code>{@link #getRequestsCount()}</code>.
+     * </li>
+     * <li>
+     * The ordering of this list does not necessarily reflect the order that ingestion frames
+     * were offered to the processor.  Processed ingestion request messages do not necessarily
+     * get transmitted in order.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @return  all client request IDs for messages transmitted to Ingestion Service.
+     * 
+     * @throws IllegalStateException    processor was never activated
+     * 
+     * @see #getIngestionResponses()
+     * @see #getIngestionExceptions()
+     */
+    public List<ClientRequestId>    getRequestIds() throws IllegalStateException {
+        
+        // Check if activated
+        if (this.setStreamTasks == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+
+        List<ClientRequestId>   lstIds = this.setStreamTasks
+                .stream()
+                .<ClientRequestId>flatMap(stream -> stream.getRequestIds().stream())
+                .toList();
+        
+        return lstIds;
+    }
+    
+    /**
+     * <p>
+     * Return a list of all the responses to the ingest data request messages.
+     * </p>
+     * <p>
+     * This method is only practical when using bidirectional gRPC data streams where the
+     * Ingestion Service sents a response corresponding to every ingestion request.
+     * For unidirectional gRPC data streams the Ingestion Service sends at most one
+     * reply.  
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The size of this list should be the value returned by <code>{@link #getResponseCount()}</code>.
+     * </li>
+     * <li>
+     * The ordering of this list does not necessarily reflect the order that ingestion frames
+     * were offered to the processor.  Processed ingestion request messages do not necessarily
+     * get transmitted in order.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @return  a list of all Ingestion Service responses to ingestion requests
+     * 
+     * @throws IllegalStateException    processor was never activated
+     */
+    public List<IngestionResponse>   getIngestionResponses() throws IllegalStateException {
+
+        // Check if activated
+        if (this.setStreamTasks == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+
+        return this.setResponses
+                .stream()
+                .<IngestionResponse>map(ProtoMsg::toIngestionResponse)
+                .toList();
+    }
+    
+    /**
+     * <p>
+     * Returns a list of all ingestion responses reporting an exception with the corresponding
+     * ingestion request.
+     * </p>
+     * <p>
+     * This method is only practical when using bidirectional gRPC data streams where the
+     * Ingestion Service sents a response corresponding to every ingestion request.
+     * For unidirectional gRPC data streams the Ingestion Service sends at most one
+     * reply.
+     * </p>
+     * <p>
+     * The processor monitors incoming responses from the Ingestion Service for exceptions.
+     * The returned list is the collection of all responses indicating an exception with
+     * its corresponding request, which may be identified by the client request ID.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Any ingestion request message identified in list (i.e., by client request ID) had
+     * some type of exception encountered immediately by the Ingestion Service.  The exception
+     * details are included in the response.
+     * </li>
+     * <li>
+     * If a client request ID does not appear in the returned list there is no guarantee that
+     * an error did not occur later in the Ingestion Service processing and archiving.
+     * One may query the Ingestion Service, via client request ID, for all client ingestion
+     * requests that failed archiving. 
+     * </li>
+     * </ul>
+     * </p>
+     *   
+     * @return  the collection of Ingestion Service responses reporting an exception
+     * 
+     * @throws IllegalStateException    processor was never activated
+     */
+    public List<IngestionResponse>    getIngestionExceptions() throws IllegalStateException {
+        
+        // Check if activated
+        if (this.setStreamTasks == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+
+        return this.setBadResponses
+                .stream()
+                .<IngestionResponse>map(ProtoMsg::toIngestionResponse)
+                .toList();
     }
     
     
@@ -242,12 +708,358 @@ public final class IngestDataRequestProcessor {
     // Operations
     //
     
+    /**
+     * <p>
+     * Activates the ingestion stream processor for the given data provider UID.
+     * </p>
+     * <p>
+     * Once this method returns all ingestion frame processing tasks and gRPC streaming
+     * tasks are active.  All <code>IngestionFrame</code> instances offered to the
+     * active stream processor will be assigned the given data provider UID.
+     * </p> 
+     * <p>
+     * After invoking this method the processor instance is ready for ingestion frame
+     * processing, message conversion, and transmission.  
+     * Ingestion frames can be added to the processor where they
+     * are (optionally) decomposed and converted to <code>IngestDataRequest</code> messages.
+     * Processed messages are then transmitted to the Ingestion Service via the gRPC streaming
+     * tasks.
+     * </p>
+     * <h2>Operation</h2>
+     * This method starts all ingestion frame processing and transmission tasks which are then 
+     * continuously active throughout the lifetime of this instance, or explicitly shut down.  
+     * Processing and streaming tasks execute independently in
+     * thread pools where they block until ingestion frames become available.
+     * </p>
+     * <p>
+     * <h2>Shutdowns</h2>
+     * Proper operation requires that the processor be shutdown where no longer needed (otherwise
+     * thread tasks run indefinitely).  Use either <code>{@link #shutdown()}</code> or 
+     * <code>{@link #shutdownNow()}</code> to shutdown the processor.
+     * </p>
+     * <p>
+     * <h2>Thread Safety</h2>
+     * This method is synchronized for thread safety.  The activation operation must be done
+     * atomically and by only one thread. (Additional invocations do nothing but return 
+     * <code>false</code>).
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method can be called repeatedly for different data providers (after proper shut down).
+     * </li>
+     * <li>
+     * A shutdown operation should always be invoked when the processor is no longer needed.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param intProviderId 
+     * 
+     * @return  <code>true</code> if the processor was successfully activated,
+     *          <code>false</code> if the processor was already active
+     * 
+     * @return
+     * @throws IllegalArgumentException
+     */
+    synchronized 
+    public boolean activate(int intProviderId) {
+        
+        // Check our state
+        if (this.bolActive)
+            return false;
+        
+        // Set activation flag before launching threads
+        this.bolActive = true;
+        
+        // Store the data provider UID
+        this.intProviderId = intProviderId;
+        
+        // Create the ingestion frame processor and activate it (all default parameters)
+        this.fncDataSource = IngestionFrameProcessor.from(intProviderId);
+        this.fncDataSource.activate();
+        
+        // Determine the number of streams
+        int cntStreams = 1;
+        if (this.bolMultistream) 
+            cntStreams = this.cntStreamsMax;
+        
+        // Create the thread pool executor
+        this.xtorStreamTasks = Executors.newFixedThreadPool(cntStreams);
+        this.setStreamFutures = new LinkedList<>();
+        this.setStreamTasks = new LinkedList<>();
+        this.setResponses = new LinkedList<>();
+        this.setBadResponses = new LinkedList<>();
+        
+        // Create the streaming tasks and submit them
+        for (int iStream=0; iStream<cntStreams; iStream++) {
+            IngestDataRequestStream tskStream = this.createIngestionStream();
+            
+            Future<Boolean> futStream = this.xtorStreamTasks.submit((Callable<Boolean>)tskStream);
+            this.setStreamFutures.add(futStream);
+            this.setStreamTasks.add(tskStream);
+        }
+        
+        return true;
+    }
     
+    /**
+     * <p>
+     * Performs an orderly shutdown of all ingestion frame processing and gRPC streaming operations.
+     * </p>
+     * <p>
+     * All ingestion frames that have already been submitting are allowed to process and transmit
+     * to the Ingestion Service.   However, no new ingestion frames will be accepted.
+     * This method will block until all pending data has been processed and transmitted. 
+     * </p>  
+     * 
+     * @return  <code>true</code> if everything was shutdown, 
+     *          <code>false</code> if processors was already shutdown
+     *          
+     * @throws InterruptedException process interrupted while waiting for pending operations to complete
+     */
+    synchronized
+    public boolean shutdown() throws InterruptedException {
+        
+        // Check state
+        if (!this.bolActive)
+            return false;
 
+        // Shutdown the ingestion frame processor then wait for request queue empty
+        this.fncDataSource.shutdown();                  // waits for all pending tasks  
+        this.fncDataSource.awaitRequestQueueEmpty();    // waits for stream task to consume requests
+        
+        // Shutdown all streaming tasks 
+        this.xtorStreamTasks.shutdown();
+        
+        // Wait for all pending tasks to complete
+        this.xtorStreamTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
+//        this.setStreamFutures.clear();
+        
+        this.bolActive = false;
+
+        return true;
+    }
+    
+    /**
+     * <p>
+     * Performs a hard shutdown of all ingestion frame processing and gRPC streaming operations.
+     * </p>
+     * <p>
+     * All current data processing and transmission is terminated immediately.  Any ingestion
+     * frame pending processing are cleared.  All pending ingest data requests are cleared.
+     * This method returns immediately.
+     * </p> 
+     * 
+     * @return  <code>true</code> if everything was shutdown, 
+     *          <code>false</code> if processors was already shutdown
+     */
+    synchronized
+    public boolean shutdownNow() {
+        
+        // Check state
+        if (!this.bolActive)
+            return false;
+
+        // Hard shutdown of ingestion frame processor
+        this.fncDataSource.shutdownNow();
+        
+        // Hard shutdown of all streaming tasks
+        this.xtorStreamTasks.shutdownNow();
+//        this.setStreamFutures.clear();
+        
+        this.bolActive = false;
+        
+        return true;
+    }
+    
+    /**
+     * <p>
+     * Allows clients to block until the request message queue empties.
+     * </p>
+     * <p>
+     * This method allows clients to wait for the <code>IngestDataRequest</code> buffer
+     * to fully empty.  Clients can add a fixed number of ingestion frames then measure 
+     * the time for frames to be processed and and consumed.  This activity may be useful
+     * when clients wish to due their own performance tuning.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method will return immediately if the message queue is empty.
+     * </li>
+     * <li>
+     * This method is thread safe and multiple clients can block on this method.
+     * </li>
+     * <li>
+     * All clients blocking on this method will unblock when the message buffer empties.
+     * </li>
+     * </ul>
+     * </p> 
+     * 
+     * @throws IllegalStateException    operation invoked while processor inactive
+     * @throws InterruptedException     operation interrupted while waiting for queue ready
+     */
+    public void awaitRequestQueueEmpty() throws IllegalStateException, InterruptedException {
+
+        // Check current state
+        if (this.bolActive)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor is not active.");
+        
+        this.fncDataSource.awaitRequestQueueEmpty();
+    }
+    
+    /**
+     * <p>
+     * Processes and transmits the ingestion frame data to the Ingestion Service.
+     * </p>
+     * <p>
+     * The ingestion frame is added to the processing queue where it will
+     * be (optionally) decomposed, converted to an <code>IngestDataRequest</code> message,
+     * then transmitted to the Ingestion Service on a gRPC data stream.
+     * This method blocks until the ingestion frame is enqueued in the processor queue.
+     * </p>
+     * <p>
+     * <h2>Back Pressure</h2>
+     * If the client back-pressure feature is enabled this method may block until a sufficient
+     * number of ingestion frames have been processed and transmitted.  An extended blocking
+     * indicates a back log with the Ingestion Service while is apparently being overwhelmed
+     * with ingestion requests.
+     * </p>
+     * <p>
+     * The processor maintains a queue of ingestion frames ready for processing and a queue 
+     * of processed messages ready for transmission.  If the message queue fills to capacity
+     * it will block the addition of more ingestion frames.
+     * </p>
+     * <p>
+     * Clients can wait for a request queue empty event using the method
+     * <code>{@link #awaitRequestQueueEmpty()}</code>.
+     * </p>
+     * 
+     * @param frame
+     * @throws IllegalStateException
+     * @throws InterruptedException
+     */
+    public void transmit(IngestionFrame frame) throws IllegalStateException, InterruptedException {
+
+        this.transmit(List.of(frame));
+    }
+    
+    /**
+     * <p>
+     * Processes and transmits all data of all ingestion frames within the argument
+     * to the Ingestion Service.
+     * </p>
+     * <p>
+     * The list of ingestion frames is added to the processing queue where they will
+     * be (optionally) decomposed, converted to <code>IngestDataRequest</code> messages,
+     * then transmitted to the Ingestion Service on a gRPC data stream.
+     * This method blocks until all ingestion frames are enqueued in the processor queue.
+     * </p>
+     * <p>
+     * <h2>Back Pressure</h2>
+     * If the client back-pressure feature is enabled this method may block until a sufficient
+     * number of ingestion frames have been processed and transmitted.  An extended blocking
+     * indicates a back log with the Ingestion Service while is apparently being overwhelmed
+     * with ingestion requests.
+     * </p>
+     * <p>
+     * The processor maintains a queue of ingestion frames ready for processing and a queue 
+     * of processed messages ready for transmission.  If the message queue fills to capacity
+     * it will block the addition of more ingestion frames.
+     * </p>
+     * <p>
+     * Clients can wait for a request queue empty event using the method
+     * <code>{@link #awaitRequestQueueEmpty()}</code>.
+     * </p>
+     * 
+     * @param lstFrames
+     * @throws IllegalStateException
+     * @throws InterruptedException
+     */
+    public void transmit(List<IngestionFrame> lstFrames) throws IllegalStateException, InterruptedException {
+        
+        // Check current state
+        if (this.bolActive)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+        
+        // Add ingestion frames to the ingestion frame processor - the rest is automatic
+        this.fncDataSource.addFrames(lstFrames);
+    }
+
+    
     //
     // Support Methods
     //
     
+    /**
+     * <p>
+     * Creates a new <code>IngestDataRequestStream</code> according to the current configuration.
+     * </p>
+     * <p>
+     * The returned instance is ready for thread execution or execution within an executor
+     * service, as it exposes both <code>Runnable</code> and <code>Callable</code>.
+     * </p>
+     * 
+     * @return a new <code>IngestDataRequestStream</code> instance ready for thread execution
+     * 
+     * @throws UnsupportedOperationException    an unsupported ingestion stream type was specified
+     */
+    private IngestDataRequestStream   createIngestionStream() throws UnsupportedOperationException {
+        
+        // The returned object
+        IngestDataRequestStream     stream;
+        
+        // Create the stream task based upon forward unidirectional stream type
+        if (this.enmStreamType == DpGrpcStreamType.FORWARD)
+            stream = IngestDataRequestStream.newUniProcessor(this.connIngest.getStubAsync(), this.fncDataSource);
+
+        // Create the stream task based upon bidirectional stream type
+        else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
+            
+            // Need a consumer of response messages
+            Consumer<IngestDataResponse>    fncDataSink = (msgRsp) -> { this.processResponse(msgRsp); };
+            
+            stream = IngestDataRequestStream.newBidiProcessor(this.connIngest.getStubAsync(), this.fncDataSource, fncDataSink);
+        }
+
+        else
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedCallerNameSimple() + " - attempted to use an unsupported stream type " + this.enmStreamType);
+
+        return stream;
+    }
+    
+    /**
+     * <p>
+     * Processes the ingestion response message.
+     * </p>
+     * <p>
+     * For normal operation, a <code>AckResult</code> message is confirmed within the argument.
+     * If confirmed the argument is then passed to the message consumer identified at construction.
+     * A SUCCESS result record is then returned indicating successful consumption of response data.
+     * </p>
+     * <p>
+     * The argument is passed to the message consumer identified at construction.
+     * If the argument contains an exception(i.e., rather than data) then the message
+     * is added to the list of bad responses.
+     * </p>
+     * 
+     * @param msgRsp    an Ingestion Service response message containing acknowledgment or status error
+     * 
+     */
+    private void processResponse(IngestDataResponse msgRsp) {
+
+        // Check for exception then pass to message consumer
+        if (msgRsp.hasExceptionalResult()) {
+
+            this.setBadResponses.add(msgRsp);
+        }
+        
+        this.setResponses.add(msgRsp);
+    }
+
     /**
      * <p>
      * Determines whether or not the original data request was accepted by the Query Service.
@@ -272,7 +1084,7 @@ public final class IngestDataRequestProcessor {
      * @return  the SUCCESS record if query was accepted, 
      *          otherwise a failure message containing a description of the rejection 
      */
-    protected ResultStatus isRequestAccepted(IngestDataResponse msgRsp) {
+    private ResultStatus isRequestAccepted(IngestDataResponse msgRsp) {
 
         // Check for RequestRejected message
         if (msgRsp.hasExceptionalResult()) {
@@ -290,44 +1102,44 @@ public final class IngestDataRequestProcessor {
         return ResultStatus.SUCCESS;
     }
 
-    /**
-     * <p>
-     * Processes the data within the given Ingestion Service response message.
-     * </p>
-     * <p>
-     * For normal operation, a <code>AckResult</code> message is confirmed within the argument.
-     * If confirmed the argument is then passed to the message consumer identified at construction.
-     * A SUCCESS result record is then returned indicating successful consumption of response data.
-     * </p>
-     * <p>
-     * If the argument contains an exception(i.e., rather than data) then the method
-     * extracts the status and accompanying message.  An error message is constructed
-     * and returned via a FAILED result record.
-     * </p>
-     * 
-     * @param msgRsp    an Ingestion Service response message containing acknowledgment or status error
-     * 
-     * @return  the SUCCESS record if acknowledgment was confirmed,
-     *          otherwise a failure message containing the status error description 
-     */
-    protected ResultStatus processResponse(IngestDataResponse msgRsp) {
-
-        // Confirm acknowledgment and pass to message consumer
-        if (msgRsp.hasAckResult()) {
-            this.fncDataSink.accept(msgRsp);
-
-            return ResultStatus.SUCCESS;
-        }
-
-        // Response Error - extract the details and return them
-        ExceptionalResult   msgException = msgRsp.getExceptionalResult();
-        String              strStatus = msgException.getMessage();
-        ExceptionalResult.ExceptionalResultStatus enmStatus = msgException.getExceptionalResultStatus();
-
-        String          strMsg = "Ingestion Service reported response error: status=" + enmStatus + ", message= " + strStatus;
-        ResultStatus    recErr = ResultStatus.newFailure(strMsg);
-
-        return recErr;
-    }
+//    /**
+//     * <p>
+//     * Processes the data within the given Ingestion Service response message.
+//     * </p>
+//     * <p>
+//     * For normal operation, a <code>AckResult</code> message is confirmed within the argument.
+//     * If confirmed the argument is then passed to the message consumer identified at construction.
+//     * A SUCCESS result record is then returned indicating successful consumption of response data.
+//     * </p>
+//     * <p>
+//     * If the argument contains an exception(i.e., rather than data) then the method
+//     * extracts the status and accompanying message.  An error message is constructed
+//     * and returned via a FAILED result record.
+//     * </p>
+//     * 
+//     * @param msgRsp    an Ingestion Service response message containing acknowledgment or status error
+//     * 
+//     * @return  the SUCCESS record if acknowledgment was confirmed,
+//     *          otherwise a failure message containing the status error description 
+//     */
+//    protected ResultStatus processResponse(IngestDataResponse msgRsp) {
+//
+//        // Confirm acknowledgment and pass to message consumer
+//        if (msgRsp.hasAckResult()) {
+//            this.fncDataSink.accept(msgRsp);
+//
+//            return ResultStatus.SUCCESS;
+//        }
+//
+//        // Response Error - extract the details and return them
+//        ExceptionalResult   msgException = msgRsp.getExceptionalResult();
+//        String              strStatus = msgException.getMessage();
+//        ExceptionalResult.ExceptionalResultStatus enmStatus = msgException.getExceptionalResultStatus();
+//
+//        String          strMsg = "Ingestion Service reported response error: status=" + enmStatus + ", message= " + strStatus;
+//        ResultStatus    recErr = ResultStatus.newFailure(strMsg);
+//
+//        return recErr;
+//    }
 
 }

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	FrameBinner.java
+ * File:	IngestionFrameBinner.java
  * Package: com.ospreydcs.dp.api.ingest.model.frame
- * Type: 	FrameBinner
+ * Type: 	IngestionFrameBinner
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -50,7 +50,7 @@ import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
  * @since Apr 8, 2024
  *
  */
-public class FrameBinner {
+public class IngestionFrameBinner {
 
     
     //
@@ -71,9 +71,6 @@ public class FrameBinner {
         //
         // Defining Attributes
         //
-        
-//        /** Target ingestion frame - i.e., frame to be binned */
-//        private final IngestionFrame frame; 
         
         /** Size (in bytes) of target ingestion frame */
         private final long           lngBinSizeMax;
@@ -115,7 +112,6 @@ public class FrameBinner {
          * @param lngBinSizeMax maximum size of ingestion frame allowable (in bytes) 
          */
         public BinParameters(IngestionFrame frame, long lngBinSizeMax) {
-//            this.frame = frame;
             this.lngBinSizeMax = lngBinSizeMax;
 
             this.lngFrameSize = frame.allocationSizeFrame();
@@ -189,17 +185,17 @@ public class FrameBinner {
     
     /**
      * <p>
-     * Creates a new instance of <code>FrameBinner</code> configured to the argument.
+     * Creates a new instance of <code>IngestionFrameBinner</code> configured to the argument.
      * </p>
      *
      * @param   cntBytesMax     maximum size of any binned ingestion frame (in bytes)
      * 
-     * @return  new <code>FrameBinner</code> instance produces bins no greater than the argument
+     * @return  new <code>IngestionFrameBinner</code> instance produces bins no greater than the argument
      * 
      * @throws IllegalArgumentException the argument was less than or equal to zero
      */
-    public static FrameBinner    from(long cntBytesMax) throws IllegalArgumentException {
-        return new FrameBinner(cntBytesMax);
+    public static IngestionFrameBinner    from(long cntBytesMax) throws IllegalArgumentException {
+        return new IngestionFrameBinner(cntBytesMax);
     }
     
     
@@ -209,14 +205,14 @@ public class FrameBinner {
     
     /**
      * <p>
-     * Constructs a new instance of <code>FrameBinner</code> according to the given bin size.
+     * Constructs a new instance of <code>IngestionFrameBinner</code> according to the given bin size.
      * </p>
      *
      * @param   cntBytesMax     maximum size of any binned ingestion frame (in bytes)
      * 
      * @throws IllegalArgumentException the argument was less than or equal to zero
      */
-    public FrameBinner(long cntBytesMax) throws IllegalArgumentException {
+    public IngestionFrameBinner(long cntBytesMax) throws IllegalArgumentException {
         
         // Check argument
         if (cntBytesMax <= 0) 
@@ -252,7 +248,7 @@ public class FrameBinner {
      * 
      * @param frame target frame for binning decomposition
      * 
-     * @return  the parameters used for target frame decomposition by this <code>FrameBinner</code>.
+     * @return  the parameters used for target frame decomposition by this <code>IngestionFrameBinner</code>.
      */
     public BinParameters    computeBinParameters(IngestionFrame frame) {
         return BinParameters.from(frame, this.cntBytesMax);
