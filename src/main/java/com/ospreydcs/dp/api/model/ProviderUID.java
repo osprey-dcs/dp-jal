@@ -50,5 +50,22 @@ package com.ospreydcs.dp.api.model;
  *
  */
 public final record ProviderUID(int uid) {
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new <code>ProviderUID</code> instance from the given integer-valued identifier.
+     * </p>
+     * 
+     * @param   uid     unique identifier for the data provider
+     * 
+     * @return new <code>ProviderUID</code> record with the given integer-value UID
+     */
+    public static ProviderUID   from (int uid) {
+        return new ProviderUID(uid);
+    }
 
 }

@@ -33,7 +33,11 @@ import java.time.Instant;
  * <p>
  * Record encapsulation of an <code>IngestDataResponse</code> message.
  * </p>
- * 
+ * <p>
+ * This record is essentially the client API equivalent of the Ingestion Service Protocol
+ * Buffers message <code>IngestDataResponse</code>.  To convert from the message response
+ * to this record see <code>{@link ProtoMsg#toIngestionResponse(IngestDataResponse)}</code>.
+ * </p>
  * 
  * @param   providerId      unique identifier of the data provider supplying the data message
  * @param   clientRequestId identifier within the ingestion request message in reference to response

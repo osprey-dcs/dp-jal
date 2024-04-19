@@ -56,7 +56,7 @@ import java.util.Map;
  * as desired, once for each attribute pair.
  * </p>
  * 
- * @param name       name of the Snapshot data provider
+ * @param name       name of the data provider
  * @param attributes collection of optional (name,value) attribute pairs associated with the provider
  *
  * @author Christopher K. Allen
@@ -65,6 +65,39 @@ import java.util.Map;
  */
 public final record ProviderRegistrar(String name, Map<String, String> attributes) {
     
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new record of <code>ProviderRegistrar</code> using only the required unique 
+     * provider name (no attributes).
+     * </p>
+     *
+     * @param name       name of the data provider
+     * @param attributes collection of optional (name,value) attribute pairs associated with the provider
+     * 
+     * @return  new <code>ProviderRegistrar</code> record populated with argument data
+     */
+    public static ProviderRegistrar from(String name) {
+        return new ProviderRegistrar(name);
+    }
+    
+    /**
+     * <p>
+     * Creates a new record of <code>ProviderRegistrar</code> using the canonical constructor.
+     * </p>
+     * 
+     * @param name       name of the data provider
+     * @param attributes collection of optional (name,value) attribute pairs associated with the provider
+     * 
+     * @return  new <code>ProviderRegistrar</code> record populated with argument data
+     */
+    public static ProviderRegistrar from(String name, Map<String, String> attributes) {
+        return new ProviderRegistrar(name, attributes);
+    }
+    
     
     //
     // Non-Canonical Constructor
@@ -72,7 +105,8 @@ public final record ProviderRegistrar(String name, Map<String, String> attribute
     
     /**
      * <p>
-     * Constructs a new instance of <code>ProviderRegistrar</code> using the required unique provider name.
+     * Constructs a new record of <code>ProviderRegistrar</code> using only the required unique 
+     * provider name (no attributes).
      * </p>
      *
      * @param name  the data provider unique name

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestDataRequestProcessor.java
+ * File:	IngestionStreamProcessor.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestDataRequestProcessor
+ * Type: 	IngestionStreamProcessor
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -34,9 +34,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,68 +47,186 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameBinner;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.api.model.ClientRequestId;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
 
 /**
+ * <p>
+ * Provides all processing and management capabilities to transmit <code>IngestionFrame</code>
+ * data to the Ingestion Service via gRPC data streams.
+ * </p>
+ * <p>
+ * Class instances perform all processing of client <code>IngestionFrame</code> ingestion data
+ * using a <code>{@link IngestionFrameProcessor}</code> resource.  There ingestion frames are
+ * (optionally) decomposed for gRPC message size requirements, then converted into 
+ * <code>{@link IngestDataRequest}</code> messages suitable for transmission to the Ingestion 
+ * Service.  
+ * </p>
+ * <p>
+ * Class instances transmit all processed client ingestion data using a collection of 
+ * <code>{@link IngestionStream}</code> instances - one for each active gRPC data stream.
+ * (If the multiple data streams feature is disabled only one stream will be active.)  
+ * The stream classes are executed on separate threads which compete for the 
+ * <code>IngestDataRequest</code> messages produced by the <code>IngestionFrameProcessor</code>.
+ * </p>
+ * <h2>Operation</h2>
+ * After creation instances of <code>IngestionStreamProcessor</code> must be activated using
+ * either the <code>{@link #activate(ProviderUID)}</code> or <code>{@link #activate(int)}</code> 
+ * method, which requires the data provider UID (either as a record or directly as an integer value)
+ * to be given to all outgoing <code>IngestDataRequest</code> messages.  
+ * When no longer required the processor should be shutdown using either 
+ * <code>{@link #shutdown()}</code>, which allows all processing and transmission to complete, 
+ * or <code>{@link #shutdownNow()}</code>, which performs a hard shutdown of the processor
+ * immediately terminating all processing and transmission tasks.  
+ * </p>
+ * <p>
+ * It is possible to cycle through repeated activations and shutdowns with a single 
+ * <code>IngestionStreamProcessos</code> instance.  For example, a processor can be activated
+ * for a specific data provider (with its UID) then shutdown and re-activated for a different
+ * data provider.
+ * </p>
+ * <p>
+ * <h3>Activation</h3>
+ * After activating the processor instance it is ready for ingestion frame
+ * processing, message conversion, and transmission.  
+ * Ingestion frames can be added to the processor where they
+ * are (optionally) decomposed and converted to <code>IngestDataRequest</code> messages.
+ * Processed messages are then transmitted to the Ingestion Service via the gRPC streaming
+ * tasks.
+ * </p>
+ * <p>
+ * Activation starts all ingestion frame processing and transmission tasks which are then 
+ * continuously active throughout the lifetime of this instance, or explicitly shut down.  
+ * Processing and streaming tasks execute independently in
+ * thread pools where they block until ingestion frames become available.
+ * </p>
+ * <p>
+ * <h2>Back Pressure</h2>
+ * If the client back-pressure feature is enabled the processor may block, until a sufficient
+ * number of ingestion frames have been processed and transmitted.  An extended blocking
+ * indicates a back log with the Ingestion Service while is apparently being overwhelmed
+ * with ingestion requests.
+ * </p>
+ * <p>
+ * The processor maintains a queue of ingestion frames ready for processing and a queue 
+ * of processed messages ready for transmission.  If the message queue fills to capacity
+ * it will block the addition of more ingestion frames.
+ * </p>
+ * <p>
+ * <h2>Multiple gRPC Streams</h2>
+ * Using multiple gRPC data streams can significantly improve transmission performance. 
+ * Although a single gRPC channel is used between this client and the Ingest Service,
+ * the channel allows the use of multiple, concurrent data streams between client and
+ * service.
+ * </p>
+ * <p>
+ * When enabling this feature class instances will create a thread pool of independent
+ * tasks each transmitting ingestion data to the Ingestion Service.  Each task will have
+ * an independent gRPC data stream for transmission.  Disabling the feature allows only
+ * one thread for data transmission using only a single gRPC data stream.
+ * </p>
+ * <p>
+ * The optimal number of gRPC data streams depends upon the client platform, the Ingestion
+ * Service, and the host network.  The number of streams should be considered a tuning parameter
+ * for each installation.  Using too many streams will burden the data transmission 
+ * with unnecessary gRPC overhead while using two few will backlog transmission on the client
+ * side.
+ * </p>
+ * <p>
+ * <h2>NOTES:</h2>
+ * At the time of this documentation only the bidirectional streaming operation is supported
+ * by the Ingestion Service (i.e., <code>{@link DpGrpcStreamType#BIDIRECTIONAL}</code>).  
+ * Attempting to use a unidirectional stream could result in a RPC failure at the 
+ * Ingestion Service.
+ * </p>
+ * 
  *
  * @author Christopher K. Allen
  * @since Apr 10, 2024
  *
  */
-public final class IngestDataRequestProcessor {
+public final class IngestionStreamProcessor {
 
-    //
-    // Internal Types
+    
+    // 
+    // Creators
     //
     
     /**
      * <p>
-     * Facilitates ingestion frame decomposition on independent execution thread.
+     * Constructs a new <code>IngestionStreamProcessor</code> ready for accepting
+     * client <code>IngestionFrame</code> instances to be processed and whose data is
+     * transmitted to the Ingestion Service.
+     * </p>  
+     * <p>
+     * Use method <code>{@link #activate(int)}</code> to begin ingesting client data, providing
+     * the method with the UID of the data provider UID supplying ingestion data.
+     * When data ingestion is over, or to switch to a different data provider, shut down the
+     * processor with either <code>{@link #shutdown()}</code> or 
+     * <code>{@link #shutdownNow()}</code>. 
      * </p>
-     * 
-     * @author Christopher K. Allen
-     * @since Apr 10, 2024
      *
+     * @param connIngest    a gRPC connection to the Ingestion Service
+     * 
+     * @return a new <code>IngestionStreamProcessor</code> ready for activation and data ingestion
      */
-    class BinnerThread implements Runnable {
-
-        // 
-        // Creator
-        //
-        
-//        public static BinnerThread from(final IngestionFrameBinner binner, IngestionFrame frame) {
-//            return IngestDataRequestProcessor.this.new BinnerThread(binner, frame);
-//        }
-        
-        //
-        // Initialization Targets
-        //
-        
-        /** The active frame decomposition processing */
-        private final IngestionFrameBinner       binner;
-        
-        /** The target ingestion frame to be decomposed */
-        private final IngestionFrame    frame;
-        
-        BinnerThread(final IngestionFrameBinner binner, IngestionFrame frame) {
-            this.binner = binner;
-            this.frame = frame;
-        }
-        
-        @Override
-        public void run() {
-            // TODO Auto-generated method stub
-            
-        }
-        
+    public static IngestionStreamProcessor from(DpIngestionConnection connIngest) {
+        return new IngestionStreamProcessor(connIngest);
     }
+    
+    
+    //
+    // Internal Types
+    //
+    
+//    /**
+//     * <p>
+//     * Facilitates ingestion frame decomposition on independent execution thread.
+//     * </p>
+//     * 
+//     * @author Christopher K. Allen
+//     * @since Apr 10, 2024
+//     *
+//     */
+//    private class BinnerThread implements Runnable {
+//
+//        // 
+//        // Creator
+//        //
+//        
+////        public static BinnerThread from(final IngestionFrameBinner binner, IngestionFrame frame) {
+////            return IngestionStreamProcessor.this.new BinnerThread(binner, frame);
+////        }
+//        
+//        //
+//        // Initialization Targets
+//        //
+//        
+//        /** The active frame decomposition processing */
+//        private final IngestionFrameBinner       binner;
+//        
+//        /** The target ingestion frame to be decomposed */
+//        private final IngestionFrame    frame;
+//        
+//        BinnerThread(final IngestionFrameBinner binner, IngestionFrame frame) {
+//            this.binner = binner;
+//            this.frame = frame;
+//        }
+//        
+//        @Override
+//        public void run() {
+//            // TODO Auto-generated method stub
+//            
+//        }
+//        
+//    }
     
     //
     // Application Resources
@@ -126,48 +244,48 @@ public final class IngestDataRequestProcessor {
     private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
 
     
-    /** Are general concurrency active - used for ingestion frame decomposition */
-    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
-    
-    /** Thresold in which to pivot to concurrent processing */
-    private static final Integer    INT_CONCURRENCY_PIVOT_SZ = CFG_DEFAULT.concurrency.pivotSize;
-    
-    /** Maximum number of concurrent processing threads */
-    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.threadCount;
-    
-    
-    /** Are general timeout active */
-    private static final Boolean    BOL_TIMEOUT_ACTIVE = CFG_DEFAULT.timeout.active;
-    
-    /** General timeout limit for operations */
-    private static final Long      LNG_TIMEOUT = CFG_DEFAULT.timeout.limit;
-    
-    /** General timeout time units */
-    private static final TimeUnit  TU_TIMEOUT = CFG_DEFAULT.timeout.unit;
-    
-    
-    /** Allow gRPC data streaming - this is ignored for all streaming operations */
-    private static final Boolean            BOL_STREAM_ACTIVE = CFG_DEFAULT.stream.active;
-    
-    /** The preferred gRPC stream type to Ingestion Service */
-    private static final DpGrpcStreamType   ENM_STREAM_PREF = CFG_DEFAULT.stream.type;
-    
-    
-    /** Use ingestion frame buffering from client to gRPC stream */
-    private static final Boolean    BOL_BUFFER_ACTIVE = CFG_DEFAULT.stream.buffer.active;
-    
-    /** Size of the ingestion frame queue buffer */
-    private static final Integer    INT_BUFFER_SIZE = CFG_DEFAULT.stream.buffer.size;
-    
-    /** Allow back pressure to client from queue buffer */
-    private static final Boolean    BOL_BUFFER_BACKPRESSURE = CFG_DEFAULT.stream.buffer.backPressure;
-    
-    
-    /** Perform ingestion frame decomposition (i.e., "binning") */
-    private static final Boolean    BOL_BINNING_ACTIVE = CFG_DEFAULT.stream.binning.active;
-    
-    /** Maximum size limit (in bytes) of decomposed ingestion frame */
-    private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.stream.binning.maxSize;
+//    /** Are general concurrency active - used for ingestion frame decomposition */
+//    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
+//    
+//    /** Thresold in which to pivot to concurrent processing */
+//    private static final Integer    INT_CONCURRENCY_PIVOT_SZ = CFG_DEFAULT.concurrency.pivotSize;
+//    
+//    /** Maximum number of concurrent processing threads */
+//    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.threadCount;
+//    
+//    
+//    /** Are general timeout active */
+//    private static final Boolean    BOL_TIMEOUT_ACTIVE = CFG_DEFAULT.timeout.active;
+//    
+//    /** General timeout limit for operations */
+//    private static final Long      LNG_TIMEOUT = CFG_DEFAULT.timeout.limit;
+//    
+//    /** General timeout time units */
+//    private static final TimeUnit  TU_TIMEOUT = CFG_DEFAULT.timeout.unit;
+//    
+//    
+//    /** Allow gRPC data streaming - this is ignored for all streaming operations */
+//    private static final Boolean            BOL_STREAM_ACTIVE = CFG_DEFAULT.stream.active;
+//    
+//    /** The preferred gRPC stream type to Ingestion Service */
+//    private static final DpGrpcStreamType   ENM_STREAM_PREF = CFG_DEFAULT.stream.type;
+//    
+//    
+//    /** Use ingestion frame buffering from client to gRPC stream */
+//    private static final Boolean    BOL_BUFFER_ACTIVE = CFG_DEFAULT.stream.buffer.active;
+//    
+//    /** Size of the ingestion frame queue buffer */
+//    private static final Integer    INT_BUFFER_SIZE = CFG_DEFAULT.stream.buffer.size;
+//    
+//    /** Allow back pressure to client from queue buffer */
+//    private static final Boolean    BOL_BUFFER_BACKPRESSURE = CFG_DEFAULT.stream.buffer.backPressure;
+//    
+//    
+//    /** Perform ingestion frame decomposition (i.e., "binning") */
+//    private static final Boolean    BOL_BINNING_ACTIVE = CFG_DEFAULT.stream.binning.active;
+//    
+//    /** Maximum size limit (in bytes) of decomposed ingestion frame */
+//    private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.stream.binning.maxSize;
 
     
     
@@ -186,8 +304,8 @@ public final class IngestDataRequestProcessor {
     /** Use multiple gRPC data stream to transmit ingestion frames */
     private static final Boolean    BOL_MULTISTREAM_ACTIVE = CFG_DEFAULT.stream.concurrency.active;
     
-    /** When the number of frames available exceeds this value multiple gRPC data streams are used */ 
-    private static final Long       LNG_MULTISTREAM_PIVOT = CFG_DEFAULT.stream.concurrency.pivotSize;
+//    /** When the number of frames available exceeds this value multiple gRPC data streams are used */ 
+//    private static final Long       LNG_MULTISTREAM_PIVOT = CFG_DEFAULT.stream.concurrency.pivotSize;
     
     /** The maximum number of gRPC data stream used to transmit ingestion data */
     private static final Integer    INT_MULTISTREAM_MAX = CFG_DEFAULT.stream.concurrency.maxStreams;
@@ -252,14 +370,14 @@ public final class IngestDataRequestProcessor {
 //    private final Consumer<IngestDataResponse>      fncDataSink = (rsp) -> { this.setResponses.add(rsp); };
     
     
-    /** The data provider UID */
-    private Integer                   intProviderId = null;
+//    /** The data provider UID */
+//    private Integer                   intProviderId = null;
     
     /** Ingestion frame processor and source of outgoing ingestion requests */
     private IngestionFrameProcessor   fncDataSource = null;
     
     /** Collection of executing stream processing tasks  */
-    private Collection<IngestDataRequestStream> setStreamTasks = null;
+    private Collection<IngestionStream> setStreamTasks = null;
     
     /** The pool of (multiple) gRPC streaming thread(s) for recovering requests */
     private ExecutorService           xtorStreamTasks = null;
@@ -283,11 +401,24 @@ public final class IngestDataRequestProcessor {
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestDataRequestProcessor</code>.
+     * Constructs a new instance of <code>IngestionStreamProcessor</code>.
+     * </p>
+     * <p>
+     * Constructs a new <code>IngestionStreamProcessor</code> ready for accepting
+     * client <code>IngestionFrame</code> instances to be processed and whose data is
+     * transmitted to the Ingestion Service.
+     * </p>  
+     * <p>
+     * Use method <code>{@link #activate(int)}</code> to begin ingesting client data, providing
+     * the method with the UID of the data provider UID supplying ingestion data.
+     * When data ingestion is over, or to switch to a different data provider, shut down the
+     * processor with either <code>{@link #shutdown()}</code> or 
+     * <code>{@link #shutdownNow()}</code>. 
      * </p>
      *
+     * @param connIngest    a gRPC connection to the Ingestion Service
      */
-    public IngestDataRequestProcessor(DpIngestionConnection connIngest /*, int intProviderId */) {
+    public IngestionStreamProcessor(DpIngestionConnection connIngest /*, int intProviderId */) {
         this.connIngest = connIngest;
 //        this.intProviderId = intProviderId;
         
@@ -475,6 +606,40 @@ public final class IngestDataRequestProcessor {
     public boolean isActive() {
         return this.bolActive;
     }
+    
+    /**
+     * <p>
+     * Returns the gRPC data stream type used for data transmission.
+     * </p>
+     * 
+     * @return  <code>{@link DpGrpcStreamType}</code> enumeration constant identifying gRPC stream
+     */
+    public DpGrpcStreamType getStreamType() {
+        return this.enmStreamType;
+    }
+    
+    /**
+     * <p>
+     * Returns the current size of the queue buffer containing <code>IngestDataRequest</code>
+     * messages waiting for transmission.
+     * </p>
+     * <p>
+     * Returns the current size of the ingest data request message queue buffer.  This is the
+     * number of <code>IngestDataRequest</code> messages that are currently queued up and waiting 
+     * on an available stream processor thread for transmission.
+     * </p> 
+     * 
+     * @return  number of <code>IngestDataRequest<code> messages in the request queue
+     * 
+     * @throws IllegalStateException    processor was never activated
+     */
+    public int getRequestQueueSize() throws IllegalStateException {
+        
+        if (this.fncDataSource == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+        
+        return this.fncDataSource.getRequestQueueSize();
+    }
 
     /**
      * <p>
@@ -510,15 +675,31 @@ public final class IngestDataRequestProcessor {
      * 
      * @throws IllegalStateException    processor was never activated
      */
-    public int getRequestsCount() throws IllegalStateException {
+    public int getRequestCount() throws IllegalStateException {
         
         // Check if activated
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
 
+//        int cntRequests = 0;
+//        for (IngestionStream stream : this.setStreamTasks) {
+//            cntRequests += stream.getRequestCount();
+//        }
+//        return cntRequests;
+//        
+//        List<Integer>   lstRqstCnts = this.setStreamTasks
+//                .stream()
+//                .<Integer>map(IngestionStream::getRequestCount)
+//                .toList();
+//        
+//        return this.setStreamTasks
+//                .stream()
+//                .<Integer>map(stream -> stream.getRequestCount())
+//                .reduce(0, Integer::sum);
+        
         return this.setStreamTasks
                 .stream()
-                .mapToInt(IngestDataRequestStream::getRequestCount)
+                .mapToInt(IngestionStream::getRequestCount)
                 .sum();
     }
     
@@ -531,7 +712,7 @@ public final class IngestDataRequestProcessor {
      * For a bidirectional gRPC data stream the Ingestion Service will send a response for
      * every ingestion request it receives.  In that case, this method returns the number of 
      * responses received so far, which (ideally) should be equal to the value returned by
-     * <code>{@link #getRequestsCount()}</code>.  For unidirectional gRPC streaming the
+     * <code>{@link #getRequestCount()}</code>.  For unidirectional gRPC streaming the
      * Ingestion Service will return at most one response.
      * </p>
      * <p>
@@ -562,7 +743,7 @@ public final class IngestDataRequestProcessor {
 
         return this.setStreamTasks
                 .stream()
-                .mapToInt(IngestDataRequestStream::getResponseCount)
+                .mapToInt(IngestionStream::getResponseCount)
                 .sum();
     }
     
@@ -583,7 +764,7 @@ public final class IngestDataRequestProcessor {
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The size of this list should be the value returned by <code>{@link #getRequestsCount()}</code>.
+     * The size of this list should be the value returned by <code>{@link #getRequestCount()}</code>.
      * </li>
      * <li>
      * The ordering of this list does not necessarily reflect the order that ingestion frames
@@ -713,6 +894,30 @@ public final class IngestDataRequestProcessor {
      * Activates the ingestion stream processor for the given data provider UID.
      * </p>
      * <p>
+     * This method extracts the integer-valued data provider UID from the argument
+     * and defers to <code>{@link #activate(int)}</code>.  See documentation for
+     * the <code>{@link #activate(int)}</code> method for full details.
+     * </p>
+     * 
+     * @param recProviderId the data provider UID used in all ingest data request messages 
+     * 
+     * @return  <code>true</code> if the processor was successfully activated,
+     *          <code>false</code> if the processor was already active
+     * 
+     * @throws RejectedExecutionException (internal) unable to start a streaming task
+     * 
+     * @see #activate(int)
+     */
+    synchronized 
+    public boolean activate(ProviderUID recProviderId) {
+        return this.activate(recProviderId.uid());
+    }
+    
+    /**
+     * <p>
+     * Activates the ingestion stream processor for the given data provider UID.
+     * </p>
+     * <p>
      * Once this method returns all ingestion frame processing tasks and gRPC streaming
      * tasks are active.  All <code>IngestionFrame</code> instances offered to the
      * active stream processor will be assigned the given data provider UID.
@@ -755,16 +960,15 @@ public final class IngestDataRequestProcessor {
      * </ul>
      * </p>
      * 
-     * @param intProviderId 
+     * @param intProviderId the data provider UID used in all ingest data request messages 
      * 
      * @return  <code>true</code> if the processor was successfully activated,
      *          <code>false</code> if the processor was already active
      * 
-     * @return
-     * @throws IllegalArgumentException
+     * @throws RejectedExecutionException (internal) unable to start a streaming task
      */
     synchronized 
-    public boolean activate(int intProviderId) {
+    public boolean activate(int intProviderId) throws RejectedExecutionException {
         
         // Check our state
         if (this.bolActive)
@@ -773,8 +977,8 @@ public final class IngestDataRequestProcessor {
         // Set activation flag before launching threads
         this.bolActive = true;
         
-        // Store the data provider UID
-        this.intProviderId = intProviderId;
+//        // Store the data provider UID
+//        this.intProviderId = intProviderId;
         
         // Create the ingestion frame processor and activate it (all default parameters)
         this.fncDataSource = IngestionFrameProcessor.from(intProviderId);
@@ -794,7 +998,7 @@ public final class IngestDataRequestProcessor {
         
         // Create the streaming tasks and submit them
         for (int iStream=0; iStream<cntStreams; iStream++) {
-            IngestDataRequestStream tskStream = this.createIngestionStream();
+            IngestionStream tskStream = this.createIngestionStream();
             
             Future<Boolean> futStream = this.xtorStreamTasks.submit((Callable<Boolean>)tskStream);
             this.setStreamFutures.add(futStream);
@@ -905,7 +1109,7 @@ public final class IngestDataRequestProcessor {
     public void awaitRequestQueueEmpty() throws IllegalStateException, InterruptedException {
 
         // Check current state
-        if (this.bolActive)
+        if (!this.bolActive)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor is not active.");
         
         this.fncDataSource.awaitRequestQueueEmpty();
@@ -982,7 +1186,7 @@ public final class IngestDataRequestProcessor {
     public void transmit(List<IngestionFrame> lstFrames) throws IllegalStateException, InterruptedException {
         
         // Check current state
-        if (this.bolActive)
+        if (!this.bolActive)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
         
         // Add ingestion frames to the ingestion frame processor - the rest is automatic
@@ -996,25 +1200,25 @@ public final class IngestDataRequestProcessor {
     
     /**
      * <p>
-     * Creates a new <code>IngestDataRequestStream</code> according to the current configuration.
+     * Creates a new <code>IngestionStream</code> according to the current configuration.
      * </p>
      * <p>
      * The returned instance is ready for thread execution or execution within an executor
      * service, as it exposes both <code>Runnable</code> and <code>Callable</code>.
      * </p>
      * 
-     * @return a new <code>IngestDataRequestStream</code> instance ready for thread execution
+     * @return a new <code>IngestionStream</code> instance ready for thread execution
      * 
      * @throws UnsupportedOperationException    an unsupported ingestion stream type was specified
      */
-    private IngestDataRequestStream   createIngestionStream() throws UnsupportedOperationException {
+    private IngestionStream   createIngestionStream() throws UnsupportedOperationException {
         
         // The returned object
-        IngestDataRequestStream     stream;
+        IngestionStream     stream;
         
         // Create the stream task based upon forward unidirectional stream type
         if (this.enmStreamType == DpGrpcStreamType.FORWARD)
-            stream = IngestDataRequestStream.newUniProcessor(this.connIngest.getStubAsync(), this.fncDataSource);
+            stream = IngestionStream.newUniProcessor(this.connIngest.getStubAsync(), this.fncDataSource);
 
         // Create the stream task based upon bidirectional stream type
         else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
@@ -1022,7 +1226,7 @@ public final class IngestDataRequestProcessor {
             // Need a consumer of response messages
             Consumer<IngestDataResponse>    fncDataSink = (msgRsp) -> { this.processResponse(msgRsp); };
             
-            stream = IngestDataRequestStream.newBidiProcessor(this.connIngest.getStubAsync(), this.fncDataSource, fncDataSink);
+            stream = IngestionStream.newBidiProcessor(this.connIngest.getStubAsync(), this.fncDataSource, fncDataSink);
         }
 
         else

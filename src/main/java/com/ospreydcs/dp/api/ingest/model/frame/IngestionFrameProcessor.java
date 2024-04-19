@@ -1065,14 +1065,14 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
     public void awaitRequestQueueEmpty() throws IllegalStateException, InterruptedException {
 
         // Check if active - if deactivated will wait forever.
-        if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer active.");
+//        if (!this.bolActive)
+//            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer active.");
 
         // Get the request message queue empty lock 
         this.lckMsgQueEmpty.lock();
         try {
-            // Return immediately if queue is empty and nothing is pending 
-            if (this.queMsgRequests.isEmpty() && !this.hasPendingMessages())
+            // Return immediately if all queues are empty and nothing is pending 
+            if (this.queMsgRequests.isEmpty() && this.queFramesPrcd.isEmpty() && this.queFrameRaw.isEmpty() && !this.hasPendingMessages())
                 return;
             
             else
@@ -1107,7 +1107,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * @see com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier#isActive()
      */
     @Override
-//    synchronized
+    synchronized
     public boolean isActive() {
         return this.bolActive || this.hasPendingMessages() || !this.queMsgRequests.isEmpty();
     }
