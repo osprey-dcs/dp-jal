@@ -240,10 +240,10 @@ public final class IngestionStreamProcessor {
     // Class Constants
     //
     
-    /** Is logging active */
-    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
-
-    
+//    /** Is logging active */
+//    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
+//
+//    
 //    /** Are general concurrency active - used for ingestion frame decomposition */
 //    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
 //    
@@ -374,7 +374,7 @@ public final class IngestionStreamProcessor {
 //    private Integer                   intProviderId = null;
     
     /** Ingestion frame processor and source of outgoing ingestion requests */
-    private IngestionFrameProcessor   fncDataSource = null;
+    private IngestionFrameProcessor   fncFrameProcessor = null;
     
     /** Collection of executing stream processing tasks  */
     private Collection<IngestionStream> setStreamTasks = null;
@@ -566,6 +566,65 @@ public final class IngestionStreamProcessor {
         this.bolMultistream = false;
     }
     
+    /**
+     * <p>
+     * Enables client back pressure from finite capacity ingestion queue buffer.
+     * </p>
+     * <p>
+     * This feature is available to tune the streaming of large numbers of ingestion frames;
+     * it allows back pressure from the Ingestion Service to be felt at the client side.
+     * The message processor class maintains a queue buffer of ingestion frames to be transmitted 
+     * in order to cope with transmission spikes from the client.  Enabling this option
+     * prevents clients from adding additional ingestion frames when this buffer is full.
+     * (A full buffer indicates a backlog of processing within the Ingestion Service.)
+     * </p>
+     * <p>
+     * <h2>Thread Safety</h2>
+     * This method is synchronized for thread safety.  Changing configuration parameters must
+     * be done atomically.  Thus, this configuration parameter 
+     * will not be changed until this method acquires the <code>this</code> lock from any other
+     * competing threads.
+     * </p>
+     * 
+     * @param intQueueCapacity  capacity of frame buffer before back-pressure blocking
+     */
+    synchronized 
+    public void enableBackPressure(int intQueueCapacity) {
+        
+        this.fncFrameProcessor.enableBackPressure(intQueueCapacity);
+    }
+    
+    /**
+     * <p>
+     * Disables client back pressure.
+     * </p>
+     * <p>
+     * The back-pressure feature is available to tune the streaming of large numbers of ingestion frames;
+     * it allows back pressure from the Ingestion Service to be felt at the client side.
+     * The message processor class maintains a queue buffer of ingestion frames to be transmitted 
+     * in order to cope with transmission spikes from the client.  Enabling this option
+     * prevents clients from adding additional ingestion frames when this buffer is full.
+     * (A full buffer indicates a backlog of processing within the Ingestion Service.)
+     * </p>
+     * <p>
+     * <h2>Effect</h2>
+     * Disabling client back pressure allows the incoming frame buffer to expand indefinitely.
+     * Clients can always add more ingestion frames regardless of any backlog in processing.
+     * </p>
+     * <p>
+     * <h2>Thread Safety</h2>
+     * This method is synchronized for thread safety.  Changing configuration parameters must
+     * be done atomically.  Thus, this configuration parameter 
+     * will not be changed until this method acquires the <code>this</code> lock from any other
+     * competing threads.
+     * </p>
+     * 
+     */
+    synchronized 
+    public void disableBackPressure() {
+        this.fncFrameProcessor.disableBackPressure();
+    }
+    
     
     // 
     // State and Attribute Query
@@ -635,10 +694,10 @@ public final class IngestionStreamProcessor {
      */
     public int getRequestQueueSize() throws IllegalStateException {
         
-        if (this.fncDataSource == null)
+        if (this.fncFrameProcessor == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
         
-        return this.fncDataSource.getRequestQueueSize();
+        return this.fncFrameProcessor.getRequestQueueSize();
     }
 
     /**
@@ -981,8 +1040,8 @@ public final class IngestionStreamProcessor {
 //        this.intProviderId = intProviderId;
         
         // Create the ingestion frame processor and activate it (all default parameters)
-        this.fncDataSource = IngestionFrameProcessor.from(intProviderId);
-        this.fncDataSource.activate();
+        this.fncFrameProcessor = IngestionFrameProcessor.from(intProviderId);
+        this.fncFrameProcessor.activate();
         
         // Determine the number of streams
         int cntStreams = 1;
@@ -1031,8 +1090,8 @@ public final class IngestionStreamProcessor {
             return false;
 
         // Shutdown the ingestion frame processor then wait for request queue empty
-        this.fncDataSource.shutdown();                  // waits for all pending tasks  
-        this.fncDataSource.awaitRequestQueueEmpty();    // waits for stream task to consume requests
+        this.fncFrameProcessor.shutdown();                  // waits for all pending tasks  
+        this.fncFrameProcessor.awaitRequestQueueEmpty();    // waits for stream task to consume requests
         
         // Shutdown all streaming tasks 
         this.xtorStreamTasks.shutdown();
@@ -1067,7 +1126,7 @@ public final class IngestionStreamProcessor {
             return false;
 
         // Hard shutdown of ingestion frame processor
-        this.fncDataSource.shutdownNow();
+        this.fncFrameProcessor.shutdownNow();
         
         // Hard shutdown of all streaming tasks
         this.xtorStreamTasks.shutdownNow();
@@ -1112,7 +1171,7 @@ public final class IngestionStreamProcessor {
         if (!this.bolActive)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor is not active.");
         
-        this.fncDataSource.awaitRequestQueueEmpty();
+        this.fncFrameProcessor.awaitRequestQueueEmpty();
     }
     
     /**
@@ -1142,9 +1201,10 @@ public final class IngestionStreamProcessor {
      * <code>{@link #awaitRequestQueueEmpty()}</code>.
      * </p>
      * 
-     * @param frame
-     * @throws IllegalStateException
-     * @throws InterruptedException
+     * @param frame ingestion frame to be processed and transmitted to Ingestion Service
+     * 
+     * @throws IllegalStateException    operation invoked while processor inactive
+     * @throws InterruptedException     interrupted while waiting for message buffer ready
      */
     public void transmit(IngestionFrame frame) throws IllegalStateException, InterruptedException {
 
@@ -1179,9 +1239,10 @@ public final class IngestionStreamProcessor {
      * <code>{@link #awaitRequestQueueEmpty()}</code>.
      * </p>
      * 
-     * @param lstFrames
-     * @throws IllegalStateException
-     * @throws InterruptedException
+     * @param lstFrames collection of ingestion frames to be processed and transmitted to Ingestion Service
+     * 
+     * @throws IllegalStateException    operation invoked while processor inactive
+     * @throws InterruptedException     interrupted while waiting for message buffer ready
      */
     public void transmit(List<IngestionFrame> lstFrames) throws IllegalStateException, InterruptedException {
         
@@ -1190,7 +1251,7 @@ public final class IngestionStreamProcessor {
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
         
         // Add ingestion frames to the ingestion frame processor - the rest is automatic
-        this.fncDataSource.addFrames(lstFrames);
+        this.fncFrameProcessor.addFrames(lstFrames);
     }
 
     
@@ -1218,7 +1279,7 @@ public final class IngestionStreamProcessor {
         
         // Create the stream task based upon forward unidirectional stream type
         if (this.enmStreamType == DpGrpcStreamType.FORWARD)
-            stream = IngestionStream.newUniProcessor(this.connIngest.getStubAsync(), this.fncDataSource);
+            stream = IngestionStream.newUniProcessor(this.connIngest.getStubAsync(), this.fncFrameProcessor);
 
         // Create the stream task based upon bidirectional stream type
         else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
@@ -1226,7 +1287,7 @@ public final class IngestionStreamProcessor {
             // Need a consumer of response messages
             Consumer<IngestDataResponse>    fncDataSink = (msgRsp) -> { this.processResponse(msgRsp); };
             
-            stream = IngestionStream.newBidiProcessor(this.connIngest.getStubAsync(), this.fncDataSource, fncDataSink);
+            stream = IngestionStream.newBidiProcessor(this.connIngest.getStubAsync(), this.fncFrameProcessor, fncDataSink);
         }
 
         else

@@ -37,38 +37,44 @@ import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.SortedMap;
-import java.util.Vector;
 import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.ospreydcs.dp.api.common.AAdvancedApi;
+import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
-import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.model.BufferedImage;
+import com.ospreydcs.dp.api.model.BufferedImage.Format;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.ProviderRegistrar;
+import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.model.PvMetaRecord;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.api.model.BufferedImage.Format;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.common.DataValue.ValueCase;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
 import com.ospreydcs.dp.grpc.v1.common.DataValueType;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
-import com.ospreydcs.dp.grpc.v1.common.Structure.Field;
 import com.ospreydcs.dp.grpc.v1.common.Image;
 import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Structure;
+import com.ospreydcs.dp.grpc.v1.common.Structure.Field;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
+import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderRequest;
+import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse.AckResult;
+import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse.RegistrationResult;
 import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
 
@@ -166,6 +172,34 @@ public final class ProtoMsg {
         bldr.addAllTimestamps(lstTms);
         
         return bldr.build();
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>RegisterProviderRequest</code> message from the the given 
+     * <code>ProviderRegistrar</code> record data.
+     * </p>
+     * <p>
+     * <code>RegisterProviderRequest</code> messages are specific to the Ingestion Service
+     * and are defined in <em>ingestion.proto</em>.  Data Providers must first register
+     * with the Ingestion Service before transmitting data.  This is done through the returned
+     * message which must contain a unique data source name at minimum.
+     * </p>
+     *  
+     * @param recRegistration   record containing data provider registration data 
+     * 
+     * @return  Ingestion Service message for data provider registration
+     */
+    public static RegisterProviderRequest   from(ProviderRegistrar recRegistration) {
+        
+        // Create the Protobuf request message from the argument 
+        RegisterProviderRequest     msgRqst = RegisterProviderRequest.newBuilder()
+                .setProviderName(recRegistration.name())
+                .addAllAttributes(ProtoMsg.createAttributes(recRegistration.attributes()))
+                .setRequestTime(ProtoMsg.from(Instant.now()))
+                .build();
+        
+        return msgRqst;
     }
     
     /**
@@ -704,6 +738,49 @@ public final class ProtoMsg {
         byte[] arrData = bsData.toByteArray();
         
         return BufferedImage.from(null, Instant.now(), enmFmt, null, arrData);
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>ProviderUID</code> record from the contents of the given
+     * <code>RegisterProviderResponse</code> message.
+     * </p>
+     * <p>
+     * The data provider registration is unique to the Ingestion Service and the 
+     * <code>RegisterProviderResponse</code> message is found in <em>ingestion.proto</em>.
+     * The message contains the results of a provider registration operation which this
+     * method converts to a client API library resource.
+     * </p>
+     * 
+     * @param msgRsp    data provider registration response from this Ingestion Service
+     * 
+     * @return  new <code>ProviderUID</code> record containing data provider's UID
+     * 
+     * @throws MissingResourceException message contained an exception, no provider UID
+     */
+    public static ProviderUID   toProviderUID(RegisterProviderResponse msgRsp) throws MissingResourceException {
+        
+        // Exception checking
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
+            ExceptionalResultStatus enmStatus = msgExcept.getExceptionalResultStatus();
+            String                  strDetails = msgExcept.getMessage();
+            
+            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                            + " - Provider registration failed: " 
+                            + " status=" + enmStatus
+                            + ", details=" + strDetails;
+            String  strClass = RegisterProviderResponse.class.getName();
+            String  strKey = "getRegistrationResult()";
+            
+            throw new MissingResourceException(strMsg, strClass, strKey);
+        }
+        
+        // Extract the provider UID and create return value
+        RegistrationResult  msgResult = msgRsp.getRegistrationResult();
+        int                 intUid = msgResult.getProviderId();
+        
+        return new ProviderUID(intUid);
     }
     
     /**

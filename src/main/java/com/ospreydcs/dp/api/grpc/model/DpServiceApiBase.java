@@ -129,7 +129,7 @@ public abstract class DpServiceApiBase<
      * @see @see com.ospreydcs.dp.api.grpc.model.IConnection#shutdownSoft()
      */
     @Override
-    public boolean shutdownSoft() {
+    public boolean shutdownSoft() throws InterruptedException {
         return this.grpcConn.shutdownSoft();
     }
 

@@ -110,8 +110,11 @@ public class DpQueryConnectionFactoryDeprecatedTest {
             conn.shutdownSoft();
             
         } catch (DpGrpcException e) {
-            fail("Threw execption: " + e.getMessage()); 
-            e.printStackTrace();
+            fail("Threw execption: " + e.getMessage());
+            
+        } catch (InterruptedException e) {
+            fail("Shutdown threw InterrtupedException: " + e.getMessage());
+            
         }
     }
 

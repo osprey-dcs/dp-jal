@@ -282,7 +282,7 @@ public class DpGrpcConnection<
      * @see #awaitTermination(long, TimeUnit)
      */
 //    @Override
-    public boolean shutdownSoft() {
+    public boolean shutdownSoft() throws InterruptedException {
 
         if (this.grpcChan.isShutdown())
             return false;

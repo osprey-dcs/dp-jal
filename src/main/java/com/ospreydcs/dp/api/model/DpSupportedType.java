@@ -31,7 +31,8 @@ import java.util.Map;
 import java.util.Vector;
 
 import com.google.protobuf.ByteString;
-import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
+import com.ospreydcs.dp.api.common.AUnavailable;
+import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
 
 /**
  * <p>

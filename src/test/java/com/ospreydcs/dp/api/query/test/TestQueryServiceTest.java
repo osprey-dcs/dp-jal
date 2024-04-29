@@ -54,7 +54,6 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
-import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
@@ -177,6 +176,10 @@ public class TestQueryServiceTest {
             
         } catch (DpGrpcException e) {
             Assert.fail("TestQueryService creation threw DpGrpcException: " + e.getMessage());
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Shutdown threw InterruptedException: " + e.getMessage());
+            
         }
     }
 
@@ -606,6 +609,9 @@ public class TestQueryServiceTest {
             
         } catch (DpGrpcException e) {
             Assert.fail("Threw DpGrpcException: " + e.getMessage());
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Shutdown threw InterruptedException: " + e.getMessage());
             
         }
     }

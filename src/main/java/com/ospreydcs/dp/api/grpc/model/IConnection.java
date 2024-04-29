@@ -63,9 +63,9 @@ public interface IConnection {
      * @return <code>true</code> if connection was successfully shutdown,
      *         <code>false</code> if an error occurred
      * 
-     * throws InterruptedException process was interrupted while waiting for channel to shut down
+     * @throws InterruptedException process was interrupted while waiting for channel to shut down
      */
-    public boolean shutdownSoft() /* throws InterruptedException */;
+    public boolean shutdownSoft() throws InterruptedException;
     
     /**
      * <p>

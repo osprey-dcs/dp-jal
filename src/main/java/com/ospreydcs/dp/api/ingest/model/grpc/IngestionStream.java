@@ -39,12 +39,12 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.AUnavailable;
 import com.ospreydcs.dp.api.common.ResultStatus;
+import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
-import com.ospreydcs.dp.api.model.AUnavailable;
 import com.ospreydcs.dp.api.model.ClientRequestId;
-import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;

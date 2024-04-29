@@ -32,14 +32,14 @@ import java.time.Instant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.AUnavailable;
+import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
+import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.model.AUnavailable;
-import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -58,11 +58,57 @@ import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse.RegistrationR
  * <h1>Data Platform Ingestion Service Application Programming Interface (API).</h1>
  * </p>
  * <p>
- * This class is the primary access point for Ingestion Service clients.  The class exposes all
- * the fundamental operations of the Ingestion Service without details of the underlying gRPC
- * interface.
+ * This class is an interface for Ingestion Service clients only requiring blocking, synchronous
+ * ingestion (i.e., unary RPC operations).  The class exposes all the unary operations of the 
+ * Ingestion Service without details of the underlying gRPC mechanism.
  * </p>
  * <p>
+ * This Ingestion Service interface is available for data providers with minimal requirements.
+ * Data providers intending to supply large amounts of data over extended durations should
+ * consider using <code>{@link DpIngestionStream}</code>.
+ * </p>
+ * <p>
+ * <h2>Data Ingestion</h2>
+ * Instances of <code>{@link IngestionFrame}</code> are the primary unit of ingestion.  Objects
+ * of <code>IngestionFrame</code> are ingested one at a time using single, unary, RPC operations.
+ * Here, ingestion frame may be subject to gRPC message size limitations.  If the memory allocation
+ * of an ingestion frame is too large the ingestion operation can be rejected.  For large
+ * ingestion frame use <code>{@link DpIngestionStream}</code>
+ * </p>
+ * <p>
+ * <h2>Provider Registration</h2>
+ * All data providers must first register with the Ingestion Service before supplying 
+ * <code>IngestionFrame</code> objects.  The Ingestion Service will then attribute all incoming
+ * data to the provider as part of maintaining full data provenance.  Data providers may also
+ * be identified when query the archived data.
+ * </p>  
+ * <p>
+ * A populated <code>{@link ProviderRegistrar}</code> containing the data provider's unique name
+ * must be supplied to the interface before any data ingestion.  The provider will be returned
+ * a <code>{@link ProviderUID}</code> record containing the data provider's unique identifier as
+ * assigned by the Ingestion Service.  If a data provider has previously registered with the 
+ * Ingestion Service it will be returned its original UID.
+ * </p>  
+ * <p>
+ * Within this interface provider registration must be done explicitly.
+ * The <code>ProviderRegistrar</code> record for the registration operation.  The data provider
+ * must identify itself with the returns <code>ProviderUID</code> record for each ingestion
+ * operation.
+ * </p>
+ * <p>
+ * <h2>Instance Creation</h2>
+ * In generation objects of <code>DpIngestionService</code> should be obtained from the connection
+ * factory <code>{@link DpIngestionServiceFactory}</code>.  However, there are creator and 
+ * constructor method available which require a <code>{@link DpIngestionConnection}</code>
+ * instance (which may be obtained from connection factory <code>DpIngestionConnectionFactory</code>.
+ * </p>
+ * <p>
+ * <h2>Instance Shutdown</h2>
+ * All instances of <code>DpIngestionService</code> should be shutdown when no longer needed.
+ * This will release all resources and increase overall performance.  See methods
+ * <code>{@link #shutdownSoft()}</code> and <code>{@link #shutdownNow()}</code>.
+ * </p>
+ * 
  *
  * @author Christopher K. Allen
  * @since Mar 28, 2024
@@ -84,7 +130,7 @@ public final class DpIngestionService extends
     //
     
     /** Logging active flag */
-    private static final boolean        BOL_LOGGING = CFG_DEFAULT.logging.active;
+    private static final boolean            BOL_LOGGING = CFG_DEFAULT.logging.active;
     
     
     //
@@ -101,7 +147,8 @@ public final class DpIngestionService extends
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>DpIngestionService</code> attached to the given connection.
+     * Creates and returns a new instance of <code>DpIngestionService</code> attached to the 
+     * given connection.
      * </p>
      * <p>
      * The argument should be obtained from the appropriate connection factory,
@@ -118,6 +165,8 @@ public final class DpIngestionService extends
      * @param connIngest  the gRPC channel connection to the desired DP Ingestion Service
      *  
      * @return new <code>DpIngestionService</code> interfaces attached to the argument
+     * 
+     * @see DpIngestionConnectionFactory
      */
     public static DpIngestionService from(DpIngestionConnection connIngest) {
         return new DpIngestionService(connIngest);
@@ -136,15 +185,20 @@ public final class DpIngestionService extends
      * The argument should be obtained from the appropriate connection factory,
      * specifically, <code>{@link DpIngestionConnectionFactory}</code>.
      * </p>
+     * <p>
+     * <h2>NOTE:</h2>
+     * The returned object should be shut down when no longer needed using 
+     * <code>{@link #shutdownSoft()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * This action is necessary to release unused gRPC resources and maintain 
+     * overall performance.  
+     * </p>
      * 
-     * @param connQuery  the gRPC channel connection to the desired DP Query Service 
+     * @param connIngest  the gRPC channel connection to the desired DP Ingestion Service
      * 
      * @see DpIngestionConnectionFactory
-     *
-     * @param conn
      */
-    public DpIngestionService(DpIngestionConnection conn) {
-        super(conn);
+    public DpIngestionService(DpIngestionConnection connIngest) {
+        super(connIngest);
     }
 
 

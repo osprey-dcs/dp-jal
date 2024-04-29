@@ -35,12 +35,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.ospreydcs.dp.api.common.AAdvancedApi;
+import com.ospreydcs.dp.api.common.AUnavailable;
 import com.ospreydcs.dp.api.common.TimeInterval;
+import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.model.AAdvancedApi;
-import com.ospreydcs.dp.api.model.AUnavailable;
-import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;

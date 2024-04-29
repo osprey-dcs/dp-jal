@@ -30,12 +30,10 @@ package com.ospreydcs.dp.api.query.model.grpc;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
-
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 
 import javax.naming.CannotProceedException;
-import javax.naming.OperationNotSupportedException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -47,6 +45,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.api.query.model.series.UniformSamplingBlockTest;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
@@ -357,6 +356,10 @@ public class QueryDataCorrelatorTest {
             Assert.fail("Unable to create test Query Service API: DpGrpcException thrown - " + e.getMessage());
             return;
             
+        } catch (InterruptedException e) {
+            Assert.fail("Shutdown operation interrupted: " + e.getMessage());
+            return;
+            
         }
         
         
@@ -432,6 +435,10 @@ public class QueryDataCorrelatorTest {
             
         } catch (DpGrpcException e) {
             Assert.fail("Unable to create test Query Service API: DpGrpcException thrown - " + e.getMessage());
+            return;
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Shutdown operation interrupted: " + e.getMessage());
             return;
             
         }

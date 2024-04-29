@@ -195,7 +195,7 @@ public final record TestQueryRecord (
      */
     public static boolean shutdownQueryServiceApi() {
         if (TestQueryRecord.qsTestArchive != null) {
-            TestQueryRecord.qsTestArchive.shutdown();
+            TestQueryRecord.qsTestArchive.shutdownNow();
             TestQueryRecord.qsTestArchive = null;
 
             return true;
