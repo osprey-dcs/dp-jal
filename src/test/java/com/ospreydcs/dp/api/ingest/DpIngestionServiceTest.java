@@ -27,14 +27,11 @@
  */
 package com.ospreydcs.dp.api.ingest;
 
-import static org.junit.Assert.fail;
-
 import java.util.Map;
-
-import org.junit.Assert;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -58,11 +55,12 @@ import com.ospreydcs.dp.api.model.ProviderUID;
  */
 public class DpIngestionServiceTest {
 
+    
     //
     // Application Resources
     //
     
-    /** The default Query Service configuration parameters */
+    /** The default Ingestion Service configuration parameters */
     private static final DpIngestionConfig          CFG_INGEST = DpApiConfig.getInstance().ingest;
     
     
@@ -84,7 +82,7 @@ public class DpIngestionServiceTest {
     // Test Resources
     //
     
-    /** The Ingestion Service API under test */
+    /** The Ingestion Service API under test - only instantiate one */
     private static DpIngestionService       apiIngest;
     
     

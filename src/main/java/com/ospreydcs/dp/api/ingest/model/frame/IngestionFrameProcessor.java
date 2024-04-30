@@ -1334,6 +1334,8 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
             while (this.bolActive || this.hasPendingMessages() || !this.queFramesPrcd.isEmpty()) {
 //            while (true) {
                 
+//                this.cntPending.incrementAndGet();
+                
                 // Poll for the next processed frame in the frame buffer
                 //  - this is thread safe according to Java BlockingQueue documentation
                 IngestionFrame  frmPrcd = this.queFramesPrcd.poll(INT_TIMEOUT_TASK_POLL, TU_TIMEOUT_TASK_POLL);
@@ -1368,7 +1370,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
 //            // TODO - Remove
 //            System.out.println("Terminating: conversion thread #" +intThrdId);
             
-            return !this.bolActive && this.queFramesPrcd.isEmpty();
+            return !this.bolActive && this.queFramesPrcd.isEmpty() && this.queFramesPrcd.isEmpty();
         };
         
         return task;

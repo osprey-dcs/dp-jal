@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.ingest.model.grpc;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -274,13 +275,13 @@ public final class IngestionStreamProcessor {
 //    /** Use ingestion frame buffering from client to gRPC stream */
 //    private static final Boolean    BOL_BUFFER_ACTIVE = CFG_DEFAULT.stream.buffer.active;
 //    
-//    /** Size of the ingestion frame queue buffer */
-//    private static final Integer    INT_BUFFER_SIZE = CFG_DEFAULT.stream.buffer.size;
-//    
-//    /** Allow back pressure to client from queue buffer */
-//    private static final Boolean    BOL_BUFFER_BACKPRESSURE = CFG_DEFAULT.stream.buffer.backPressure;
-//    
-//    
+    /** Size of the ingestion frame queue buffer */
+    private static final Integer    INT_BUFFER_SIZE = CFG_DEFAULT.stream.buffer.size;
+    
+    /** Allow back pressure to client from queue buffer */
+    private static final Boolean    BOL_BUFFER_BACKPRESSURE = CFG_DEFAULT.stream.buffer.backPressure;
+    
+    
 //    /** Perform ingestion frame decomposition (i.e., "binning") */
 //    private static final Boolean    BOL_BINNING_ACTIVE = CFG_DEFAULT.stream.binning.active;
 //    
@@ -334,6 +335,12 @@ public final class IngestionStreamProcessor {
     /** gRPC stream type */
     private DpGrpcStreamType    enmStreamType = ENM_STREAM_TYPE;
     
+    
+    /** Back pressure enabled flag */
+    private boolean bolBackPressure = BOL_BUFFER_BACKPRESSURE;
+    
+    /** Back pressure queue capacity */
+    private int     szQueueCapacity = INT_BUFFER_SIZE;
             
     /** Multiple gRPC data streams flag */
     private boolean bolMultistream = BOL_MULTISTREAM_ACTIVE;
@@ -514,7 +521,7 @@ public final class IngestionStreamProcessor {
 
         // Check current state
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurrency once activated.");
         
         // Check the argument
         if (cntStreamsMax <= 0)
@@ -561,7 +568,7 @@ public final class IngestionStreamProcessor {
 
         // Check current state
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurrency once activated.");
         
         this.bolMultistream = false;
     }
@@ -585,13 +592,29 @@ public final class IngestionStreamProcessor {
      * will not be changed until this method acquires the <code>this</code> lock from any other
      * competing threads.
      * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This configuration parameter can only be modified <em>before</em> the processor is 
+     * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
+     * </p>
      * 
      * @param intQueueCapacity  capacity of frame buffer before back-pressure blocking
+     * 
+     * @throws IllegalStateException    method called while processor is active
      */
     synchronized 
-    public void enableBackPressure(int intQueueCapacity) {
+    public void enableBackPressure(int intQueueCapacity) throws IllegalStateException, IllegalArgumentException {
+
+        // CHeck state
+        if (this.bolActive)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change back pressure once activated.");
         
-        this.fncFrameProcessor.enableBackPressure(intQueueCapacity);
+        // Check argument
+        if (intQueueCapacity <= 0)
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedCallerNameSimple() + " - argument must be greater that zero. ");
+            
+        this.bolBackPressure = true;
+        this.szQueueCapacity = intQueueCapacity;
     }
     
     /**
@@ -618,11 +641,22 @@ public final class IngestionStreamProcessor {
      * will not be changed until this method acquires the <code>this</code> lock from any other
      * competing threads.
      * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This configuration parameter can only be modified <em>before</em> the processor is 
+     * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
+     * </p>
      * 
+     * @throws IllegalStateException    method called while processor is active
      */
     synchronized 
-    public void disableBackPressure() {
-        this.fncFrameProcessor.disableBackPressure();
+    public void disableBackPressure() throws IllegalStateException {
+
+        // CHeck state
+        if (this.bolActive)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change back pressure once activated.");
+
+        this.bolBackPressure = false;
     }
     
     
@@ -888,10 +922,18 @@ public final class IngestionStreamProcessor {
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
 
-        return this.setResponses
-                .stream()
-                .<IngestionResponse>map(ProtoMsg::toIngestionResponse)
-                .toList();
+        List<IngestionResponse> lstRsps = new ArrayList<>(this.setResponses.size());
+        for (IngestDataResponse msgRsp : this.setResponses) {
+            IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
+            
+            lstRsps.add(recRsp);
+        }
+//        List<IngestionResponse> lstRsps = this.setResponses
+//                .stream()
+//                .<IngestionResponse>map(ProtoMsg::toIngestionResponse)
+//                .toList();
+        
+        return lstRsps;
     }
     
     /**
@@ -1039,8 +1081,10 @@ public final class IngestionStreamProcessor {
 //        // Store the data provider UID
 //        this.intProviderId = intProviderId;
         
-        // Create the ingestion frame processor and activate it (all default parameters)
+        // Create the ingestion frame processor and activate it (all other default parameters)
         this.fncFrameProcessor = IngestionFrameProcessor.from(intProviderId);
+        if (this.bolBackPressure)
+            this.fncFrameProcessor.enableBackPressure(this.szQueueCapacity);
         this.fncFrameProcessor.activate();
         
         // Determine the number of streams

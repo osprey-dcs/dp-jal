@@ -34,6 +34,8 @@ import java.util.concurrent.CompletionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.AAdvancedApi;
+import com.ospreydcs.dp.api.common.AAdvancedApi.STATUS;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
@@ -178,6 +180,9 @@ public class DpIngestionStream extends
     /** Class event logger */
     private static final Logger LOGGER = LogManager.getLogger();
     
+    /** Provider UID counter - temporary.  Used to fake the provider registration process. */
+    private static int  intProviderUidCounter = 1;
+    
     
     // 
     // Interface Resources
@@ -253,11 +258,21 @@ public class DpIngestionStream extends
      * will not be changed until this method acquires the <code>this</code> lock from any other
      * competing threads.
      * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This configuration parameter can only be modified <em>before</em> the stream is 
+     * opened with <code>{@link #openStream(ProviderRegistrar)}</code> , otherwise an 
+     * exception is throw.
+     * </p>
      * 
      * @param intQueueCapacity  capacity of queue buffer before back-pressure blocking
+     * 
+     * @throws IllegalStateException    invoked while stream is open
      */
     synchronized
-    public void enableBackPressure(int intQueueCapacity) {
+    public void enableBackPressure(int intQueueCapacity) throws IllegalStateException {
+        if (this.bolOpenStream)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - cannot change back pressure when open.");
         this.processor.enableBackPressure(intQueueCapacity);
     }
     
@@ -285,6 +300,14 @@ public class DpIngestionStream extends
      * will not be changed until this method acquires the <code>this</code> lock from any other
      * competing threads.
      * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This configuration parameter can only be modified <em>before</em> the stream is 
+     * opened with <code>{@link #openStream(ProviderRegistrar)}</code> , otherwise an 
+     * exception is throw.
+     * </p>
+     * 
+     * @throws IllegalStateException    invoked while stream is open
      */
     synchronized
     public void disableBackPressure() {
@@ -698,6 +721,17 @@ public class DpIngestionStream extends
         return lstRsps;
     }
 
+    /**
+     * <p>
+     * Determines whether or not the stream between the Ingestion Service is currently open.
+     * </p>
+     * 
+     * @return  <code>true</code> if open, <code>false</code> if closed.
+     */
+    public boolean isStreamOpen() {
+        return this.bolOpenStream;
+    }
+    
     
     //
     // Base Class Overrides
@@ -829,6 +863,10 @@ public class DpIngestionStream extends
      * exceptions are caught.  The response is checked for exceptions then returned as
      * a <code>ProviderUID</code> record if successful.
      * </p>  
+     * <p>
+     * <h2>Status</h2>
+     * The Ingestion Service has not yet implemented data provider registration.
+     * Thus, this method always returns a
      * 
      * @param recRegistration   data provider registration information (unique name)
      * 
@@ -836,47 +874,55 @@ public class DpIngestionStream extends
      * 
      * @throws DpIngestionException either a gRPC runtime exception occurred or registration failed
      */
+    @AAdvancedApi(status=STATUS.DEVELOPMENT, note="Provider registration is currently not implemented by Ingestion Service")
     private ProviderUID registerProvider(ProviderRegistrar recRegistration) throws DpIngestionException {
 
-        // Create the request message and response buffer
-        RegisterProviderRequest     msgRqst = ProtoMsg.from(recRegistration);
-        RegisterProviderResponse    msgRsp = null;
+        // Provider registration fake
+        ProviderUID     recUid = ProviderUID.from(intProviderUidCounter);
+        intProviderUidCounter++;
         
-        // Perform the registration request
-        try {
-            // Attempt blocking unary RPC call 
-            msgRsp = super.grpcConn.getStubBlock().registerProvider(msgRqst);
-            
-        } catch (io.grpc.StatusRuntimeException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
-                           + " - gRPC threw runtime exception attempting to register provider: "
-                           + "type=" + e.getClass().getName()
-                           + ", details=" + e.getMessage();
-            
-            if (BOL_LOGGING)
-                LOGGER.error(strMsg);
-            
-            throw new DpIngestionException(strMsg, e);
-        }
-     
-        // Unpack the results - checking for failed registration
-        ProviderUID recUid;
-        
-        try {
-            recUid = ProtoMsg.toProviderUID(msgRsp);
-            
-        } catch (MissingResourceException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
-                    + " - data provider registration failed: "
-                    + e.getMessage();
-
-            if (BOL_LOGGING)
-                LOGGER.error(strMsg);
-
-            throw new DpIngestionException(strMsg, e);
-        }
-        
-        // Everything worked - return the provider UID
         return recUid;
+        
+        // Future Implementation of Provider Registration
+//        // Create the request message and response buffer
+//        RegisterProviderRequest     msgRqst = ProtoMsg.from(recRegistration);
+//        RegisterProviderResponse    msgRsp = null;
+//        
+//        // Perform the registration request
+//        try {
+//            // Attempt blocking unary RPC call 
+//            msgRsp = super.grpcConn.getStubBlock().registerProvider(msgRqst);
+//            
+//        } catch (io.grpc.StatusRuntimeException e) {
+//            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+//                           + " - gRPC threw runtime exception attempting to register provider: "
+//                           + "type=" + e.getClass().getName()
+//                           + ", details=" + e.getMessage();
+//            
+//            if (BOL_LOGGING)
+//                LOGGER.error(strMsg);
+//            
+//            throw new DpIngestionException(strMsg, e);
+//        }
+//     
+//        // Unpack the results - checking for failed registration
+//        ProviderUID recUid;
+//        
+//        try {
+//            recUid = ProtoMsg.toProviderUID(msgRsp);
+//            
+//        } catch (MissingResourceException e) {
+//            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+//                    + " - data provider registration failed: "
+//                    + e.getMessage();
+//
+//            if (BOL_LOGGING)
+//                LOGGER.error(strMsg);
+//
+//            throw new DpIngestionException(strMsg, e);
+//        }
+//        
+//        // Everything worked - return the provider UID
+//        return recUid;
     }
 }
