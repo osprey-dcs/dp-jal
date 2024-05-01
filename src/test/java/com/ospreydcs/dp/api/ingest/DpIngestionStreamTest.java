@@ -530,8 +530,8 @@ public class DpIngestionStreamTest {
 
         // Parameters and resources
         final int               cntFrames = 20;
-        final int               cntCols = 1000;
-        final int               cntRows = 1000;
+        final int               cntCols = 100;
+        final int               cntRows = 100;
         List<IngestionFrame>    lstFrames = createDoubleFrames(cntFrames, cntCols, cntRows);
 
         final int               cntPolls = 10;

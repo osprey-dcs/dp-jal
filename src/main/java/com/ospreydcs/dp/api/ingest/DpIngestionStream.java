@@ -28,22 +28,18 @@
 package com.ospreydcs.dp.api.ingest;
 
 import java.util.List;
-import java.util.MissingResourceException;
-import java.util.concurrent.CompletionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.common.AAdvancedApi;
-import com.ospreydcs.dp.api.common.AAdvancedApi.STATUS;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
-import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor;
+import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
 import com.ospreydcs.dp.api.model.ClientRequestId;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
@@ -53,8 +49,6 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceFutureStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
-import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderRequest;
-import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
 
 /**
   * <p>
@@ -180,8 +174,8 @@ public class DpIngestionStream extends
     /** Class event logger */
     private static final Logger LOGGER = LogManager.getLogger();
     
-    /** Provider UID counter - temporary.  Used to fake the provider registration process. */
-    private static int  intProviderUidCounter = 1;
+//    /** Provider UID counter - temporary.  Used to fake the provider registration process. */
+//    private static int  intProviderUidCounter = 1;
     
     
     // 
@@ -354,7 +348,8 @@ public class DpIngestionStream extends
             return this.recProviderUid;
 
         // Register the data provider with the Ingestion Service (throws exception upon failure)
-        this.recProviderUid = this.registerProvider(recRegistration);
+//        this.recProviderUid = this.registerProvider(recRegistration);
+        this.recProviderUid = ProviderRegistrationService.registerProvider(super.grpcConn, recRegistration);
 
         // Start the ingestion stream processor
         this.processor.activate(this.recProviderUid);
@@ -852,77 +847,77 @@ public class DpIngestionStream extends
     // Support Methods
     //
     
-    /**
-     * <p>
-     * Performs the data provider registration task with the Ingestion Service.
-     * </p>
-     * <p>
-     * The argument is converted to a <code>RegisterProviderRequest</code> message and
-     * the <code>registerProvider()</code> operation is called directly on the blocking stub
-     * of the gRPC ingestion connection (this is a unary operation).  Any gRPC runtime
-     * exceptions are caught.  The response is checked for exceptions then returned as
-     * a <code>ProviderUID</code> record if successful.
-     * </p>  
-     * <p>
-     * <h2>Status</h2>
-     * The Ingestion Service has not yet implemented data provider registration.
-     * Thus, this method always returns a
-     * 
-     * @param recRegistration   data provider registration information (unique name)
-     * 
-     * @return  record containing unique identifier of the data provider with the Ingestion Service
-     * 
-     * @throws DpIngestionException either a gRPC runtime exception occurred or registration failed
-     */
-    @AAdvancedApi(status=STATUS.DEVELOPMENT, note="Provider registration is currently not implemented by Ingestion Service")
-    private ProviderUID registerProvider(ProviderRegistrar recRegistration) throws DpIngestionException {
-
-        // Provider registration fake
-        ProviderUID     recUid = ProviderUID.from(intProviderUidCounter);
-        intProviderUidCounter++;
-        
-        return recUid;
-        
-        // Future Implementation of Provider Registration
-//        // Create the request message and response buffer
-//        RegisterProviderRequest     msgRqst = ProtoMsg.from(recRegistration);
-//        RegisterProviderResponse    msgRsp = null;
-//        
-//        // Perform the registration request
-//        try {
-//            // Attempt blocking unary RPC call 
-//            msgRsp = super.grpcConn.getStubBlock().registerProvider(msgRqst);
-//            
-//        } catch (io.grpc.StatusRuntimeException e) {
-//            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
-//                           + " - gRPC threw runtime exception attempting to register provider: "
-//                           + "type=" + e.getClass().getName()
-//                           + ", details=" + e.getMessage();
-//            
-//            if (BOL_LOGGING)
-//                LOGGER.error(strMsg);
-//            
-//            throw new DpIngestionException(strMsg, e);
-//        }
-//     
-//        // Unpack the results - checking for failed registration
-//        ProviderUID recUid;
-//        
-//        try {
-//            recUid = ProtoMsg.toProviderUID(msgRsp);
-//            
-//        } catch (MissingResourceException e) {
-//            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
-//                    + " - data provider registration failed: "
-//                    + e.getMessage();
+//    /**
+//     * <p>
+//     * Performs the data provider registration task with the Ingestion Service.
+//     * </p>
+//     * <p>
+//     * The argument is converted to a <code>RegisterProviderRequest</code> message and
+//     * the <code>registerProvider()</code> operation is called directly on the blocking stub
+//     * of the gRPC ingestion connection (this is a unary operation).  Any gRPC runtime
+//     * exceptions are caught.  The response is checked for exceptions then returned as
+//     * a <code>ProviderUID</code> record if successful.
+//     * </p>  
+//     * <p>
+//     * <h2>Status</h2>
+//     * The Ingestion Service has not yet implemented data provider registration.
+//     * Thus, this method always returns a
+//     * 
+//     * @param recRegistration   data provider registration information (unique name)
+//     * 
+//     * @return  record containing unique identifier of the data provider with the Ingestion Service
+//     * 
+//     * @throws DpIngestionException either a gRPC runtime exception occurred or registration failed
+//     */
+//    @AAdvancedApi(status=STATUS.DEVELOPMENT, note="Provider registration is currently not implemented by Ingestion Service")
+//    private ProviderUID registerProvider(ProviderRegistrar recRegistration) throws DpIngestionException {
 //
-//            if (BOL_LOGGING)
-//                LOGGER.error(strMsg);
-//
-//            throw new DpIngestionException(strMsg, e);
-//        }
+//        // Provider registration fake
+//        ProviderUID     recUid = ProviderUID.from(intProviderUidCounter);
+//        intProviderUidCounter++;
 //        
-//        // Everything worked - return the provider UID
 //        return recUid;
-    }
+//        
+//        // Future Implementation of Provider Registration
+////        // Create the request message and response buffer
+////        RegisterProviderRequest     msgRqst = ProtoMsg.from(recRegistration);
+////        RegisterProviderResponse    msgRsp = null;
+////        
+////        // Perform the registration request
+////        try {
+////            // Attempt blocking unary RPC call 
+////            msgRsp = super.grpcConn.getStubBlock().registerProvider(msgRqst);
+////            
+////        } catch (io.grpc.StatusRuntimeException e) {
+////            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+////                           + " - gRPC threw runtime exception attempting to register provider: "
+////                           + "type=" + e.getClass().getName()
+////                           + ", details=" + e.getMessage();
+////            
+////            if (BOL_LOGGING)
+////                LOGGER.error(strMsg);
+////            
+////            throw new DpIngestionException(strMsg, e);
+////        }
+////     
+////        // Unpack the results - checking for failed registration
+////        ProviderUID recUid;
+////        
+////        try {
+////            recUid = ProtoMsg.toProviderUID(msgRsp);
+////            
+////        } catch (MissingResourceException e) {
+////            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+////                    + " - data provider registration failed: "
+////                    + e.getMessage();
+////
+////            if (BOL_LOGGING)
+////                LOGGER.error(strMsg);
+////
+////            throw new DpIngestionException(strMsg, e);
+////        }
+////        
+////        // Everything worked - return the provider UID
+////        return recUid;
+//    }
 }
