@@ -27,6 +27,8 @@
  */
 package com.ospreydcs.dp.api.ingest;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.After;
@@ -41,6 +43,9 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
+import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 
@@ -69,17 +74,35 @@ public class DpIngestionServiceTest {
     //
     
     /** Test Data Provider registration unique name */
-    private static final String                 STR_PROVIDER_NAME_1 = DpIngestionServiceTest.class.getName() + "TEST_PROVIDER_1";
+    private static final String                 STR_PROVIDER_NAME_1 = DpIngestionServiceTest.class.getName() + "_TEST_PROVIDER_1";
     
     /** Test Data Provider attributes */
     private static final Map<String, String>    MAP_PROVIDER_ATTRS_1 = Map.of(
-                                                    "Experiment", "UnitTest1",
+                                                    "Experiment", "JUnit unit test",
                                                     "Location", "Office",
                                                     "Platform", "Developer"
                                                 );
     
+    /** Test Data Provider registration information record */
+    private static final ProviderRegistrar      REC_PROVIDER_REG_1 = ProviderRegistrar.from(STR_PROVIDER_NAME_1, MAP_PROVIDER_ATTRS_1);
+
+    
     //
     // Test Resources
+    //
+    
+    /** A test ingestion frame */
+    private static final IngestionFrame         MSG_FRAME_SMALL = createDoubleFrames(1, 10, 10).get(0);
+    
+    /** A test ingestion frame */
+    private static final IngestionFrame         MSG_FRAME_MOD = createDoubleFrames(1, 100, 100).get(0);
+    
+    /** A test ingestion frame */
+    private static final IngestionFrame         MSG_FRAME_LARGE = createDoubleFrames(1, 1000, 1000).get(0);
+    
+    
+    //
+    // Test Subject
     //
     
     /** The Ingestion Service API under test - only instantiate one */
@@ -256,5 +279,127 @@ public class DpIngestionServiceTest {
             
         }
     }
+    
+    /**
+     * Test method for {@link DpIngestionService#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.model.IngestionFrame)
+     */
+    @Test
+    public final void testIngestProviderUidIngestionFrameSmall() {
+        
+        // Attempt provider registration
+        ProviderUID     recUID;
+        try {
+            recUID = apiIngest.registerProvider(REC_PROVIDER_REG_1);
+            
+            System.out.println("UID = " + recUID.uid() + " for provider registration " + REC_PROVIDER_REG_1);
+            
+        } catch (DpIngestionException e) {
+            Assert.fail("Data Provider registration failed with exception: " + e.getMessage());
+            return;
+        }
+        
+        // Attempt data ingestion
+        try {
+            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_SMALL);
+            
+            Assert.assertEquals(1, lstRsps.size());
+            
+        } catch (DpIngestionException e) {
+            
+            // Check if ingestData() is still unimplemented
+            if (e.getCause() instanceof io.grpc.StatusRuntimeException gRpcExcp) {
+                if (e.getMessage().contains("UNIMPLEMENTED")) {
+                    System.out.println("WARNING: The Ingestion Service ingestData() operation is still unimplemented");
+                    System.out.println("  Details: " + gRpcExcp.getMessage());
+                    
+                    return;
+                }
+            }
+            
+            Assert.fail("Data ingestion failed with exception: " + e.getMessage());
+        }
+    }
 
+
+    /**
+     * Test method for {@link DpIngestionService#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.model.IngestionFrame)
+     */
+    @Test
+    public final void testIngestProviderUidIngestionFrameLarge() {
+        
+        // Enable frame decomposition
+        
+        
+        // Attempt provider registration
+        ProviderUID     recUID;
+        try {
+            recUID = apiIngest.registerProvider(REC_PROVIDER_REG_1);
+            
+            System.out.println("UID = " + recUID.uid() + " for provider registration " + REC_PROVIDER_REG_1);
+            
+        } catch (DpIngestionException e) {
+            Assert.fail("Data Provider registration failed with exception: " + e.getMessage());
+            return;
+        }
+        
+        // Attempt data ingestion
+        try {
+            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_LARGE);
+            
+            Assert.assertEquals(1, lstRsps.size());
+            
+        } catch (DpIngestionException e) {
+            
+            // Check if ingestData() is still unimplemented
+            if (e.getCause() instanceof io.grpc.StatusRuntimeException gRpcExcp) {
+                if (e.getMessage().contains("UNIMPLEMENTED")) {
+                    System.out.println("WARNING: The Ingestion Service ingestData() operation is still unimplemented");
+                    System.out.println("  Details: " + gRpcExcp.getMessage());
+                    
+                    return;
+                }
+            }
+            
+            Assert.fail("Data ingestion failed with exception: " + e.getMessage());
+            
+        } finally {
+            
+            // Check that the ingestion frame was destroyed
+            Assert.assertEquals(0, MSG_FRAME_LARGE.getColumnCount());
+        }
+    }
+    
+    //
+    // Support Methods
+    //
+    
+    /**
+     * <p>
+     * Creates a collection of <code>IngestionFrame</code> instances used for testing.
+     * </p>
+     * <p>
+     * All returned ingestion frames are populated with double values and establish a 
+     * uniform sampling clock to identify timestamps.
+     * </p>
+     * 
+     * @param cntFrames the number of ingestion frames to create
+     * @param cntCols   the number of column in each frame
+     * @param cntRows   the number of rows in each frame
+     * 
+     * @return  a new collection of ingestion frames 
+     */
+    private static List<IngestionFrame> createDoubleFrames(int cntFrames, int cntCols, int cntRows) {
+        
+        // Returned object
+        ArrayList<IngestionFrame>   lstFrames = new ArrayList<>(cntFrames);
+        
+        // Create the frames
+        for (int iFrame=0; iFrame<cntFrames; iFrame++) {
+            IngestionFrame  frame = TestIngestionFrameGenerator.createDoublesFrameWithClock(cntCols, cntRows);
+            
+            lstFrames.add(frame);
+        }
+        
+        return lstFrames;
+    }
 }

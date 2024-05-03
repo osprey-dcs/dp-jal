@@ -27,7 +27,10 @@
  */
 package com.ospreydcs.dp.api.ingest;
 
-import java.time.Instant;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.concurrent.CompletionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,18 +43,20 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
+import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameBinner;
+import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameConverter;
+import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
+import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
-import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceFutureStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
-import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderRequest;
-import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
-import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse.RegistrationResult;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
 
 /**
  * <p>
@@ -130,7 +135,38 @@ public final class DpIngestionService extends
     //
     
     /** Logging active flag */
-    private static final boolean            BOL_LOGGING = CFG_DEFAULT.logging.active;
+    private static final boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
+
+    
+//    /** General operation timeout limit */
+//    private static final long       LNG_TIMEOUT_GENERAL = CFG_DEFAULT.timeout.limit;
+//    
+//    /** General operation timeout units */
+//    private static final TimeUnit   TU_TIMEOUT_GENERAL = CFG_DEFAULT.timeout.unit;
+//    
+    
+    //
+    // Class Constants - Default Values
+    //
+    
+//    /** Are general concurrency active - used for ingestion frame decomposition */
+//    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
+//    
+//    /** Thresold in which to pivot to concurrent processing */
+//    private static final Integer    INT_CONCURRENCY_PIVOT_SZ = CFG_DEFAULT.concurrency.pivotSize;
+//    
+//    /** Maximum number of concurrent processing threads */
+//    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.threadCount;
+    
+    
+//  /** Use ingestion frame buffering from client to gRPC stream */
+//  private static final Boolean    BOL_BUFFER_ACTIVE = CFG_DEFAULT.stream.buffer.active;
+  
+    /** Perform ingestion frame decomposition (i.e., "binning") */
+    private static final Boolean    BOL_BINNING_ACTIVE = CFG_DEFAULT.stream.binning.active;
+    
+    /** Maximum size limit (in bytes) of decomposed ingestion frame */
+    private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.stream.binning.maxSize;
     
     
     //
@@ -140,6 +176,28 @@ public final class DpIngestionService extends
     /** Class event logger */
     private static final Logger LOGGER = LogManager.getLogger();
     
+    
+    // 
+    // Instance  Resources
+    //
+    
+    /** The ingestion frame to Protobuf message converter tool */
+    private final IngestionFrameConverter   toolFrmToMsg = IngestionFrameConverter.from(0);
+    
+    /** The ingestion frame decomposition tool (created if used) */
+    private IngestionFrameBinner            toolFrmDecomposer = null;
+    
+    
+    //
+    // Configuration Parameters
+    //
+    
+    /** Ingestion frame decomposition (binning) enabled flag  */
+    private boolean bolDecompAuto = BOL_BINNING_ACTIVE;
+    
+    /** Ingestion frame decomposition maximum size */
+    private long    lngBinSizeMax = LNG_BINNING_MAX_SIZE;
+
     
     //
     // Creator
@@ -199,21 +257,120 @@ public final class DpIngestionService extends
      */
     public DpIngestionService(DpIngestionConnection connIngest) {
         super(connIngest);
+        
+        if (this.bolDecompAuto) 
+            this.toolFrmDecomposer = IngestionFrameBinner.from(this.lngBinSizeMax);
     }
 
 
     //
-    // IConnection Interface
+    // Configuration
     //
     
     /**
-     * @see @see com.ospreydcs.dp.api.grpc.model.IConnection#awaitTermination()
+     * <p>
+     * Enables automatic ingestion frame decomposition to the given maximum allocation size.
+     * </p>
+     * <p>
+     * Enables the automatic decomposition of ingestion frames (i.e., "frame binning").
+     * When frame decomposition is active any ingestion frame added to this supplier
+     * is decomposed so that the total memory allocation is less than the given size.
+     * </p>
+     * <p> 
+     * <h2>gRPC Message Sizes</h2>
+     * The gRPC framework limits the maximum size of any transmitted message.  The default
+     * size limitation is 2<sup>22</sup> = 4,194,304 bytes.  However, it is possible to 
+     * change this value which must be done both at the client and server ends.
+     * (The client API library has a configuration parameter for this value to change it
+     * at the client side.)   
+     * If the given value is larger than the current gRPC message size limitation (identified 
+     * in the client API configuration parameters) any gRPC transmission of supplied messages
+     * will likely yield a runtime exception.
+     * </p>
+     * <p>
+     * <h2>Thread Safety</h2>
+     * This method is synchronized for thread safety.  Changing configuration parameters must
+     * be done atomically.  Thus, this configuration parameter 
+     * will not be changed until this method acquires the <code>this</code> lock from any other
+     * competing threads.
+     * </p>
+     * <p>
+     * <h2>WARNINGS:</h2>
+     * <ul>
+     * <li>
+     * If automatic ingestion frame decomposition is disabled it is imperative that all
+     * offered ingestion frames have memory allocations less than the current gRPC message
+     * size limit or gRPC will throw a runtime exception.
+     * </li>
+     * <br/>
+     * <li>
+     * When an ingestion frame is decomposed the original frame is destroyed.  If automatic
+     * decomposition is enabled, recognize that the original ingestion frame 
+     * may no longer be viable after being offered for ingestion (it will be empty).
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param lngMaxBinSize maximum allowable size (in bytes) decomposed ingestion frames 
      */
-    @Override
-    public boolean awaitTermination() throws InterruptedException {
-        return super.grpcConn.awaitTermination();
-    }
+    synchronized 
+    public void enableFrameDecomposition(long lngMaxBinSize) {
 
+        this.bolDecompAuto = true;
+        this.lngBinSizeMax = lngMaxBinSize;
+        this.toolFrmDecomposer = IngestionFrameBinner.from(lngMaxBinSize);
+    }
+    
+    /**
+     * <p>
+     * Disables automatic ingestion frame decomposition.
+     * </p>
+     * <p>
+     * Disables the automatic decomposition of ingestion frames (i.e., "frame binning").
+     * When frame decomposition is active any ingestion frame added to this supplier
+     * is decomposed so that the total memory allocation is less than the given size.
+     * </p>
+     * <p> 
+     * <h2>gRPC Message Sizes</h2>
+     * The gRPC framework limits the maximum size of any transmitted message.  The default
+     * size limitation is 2<sup>22</sup> = 4,194,304 bytes.  However, it is possible to 
+     * change this value which must be done both at the client and server ends.
+     * (The client API library has a configuration parameter for this value to change it
+     * at the client side.)   
+     * If the given value is larger than the current gRPC message size limitation (identified 
+     * in the client API configuration parameters) any gRPC transmission of supplied messages
+     * will likely yield a runtime exception.
+     * </p>
+     * <p>
+     * <h2>Thread Safety</h2>
+     * This method is synchronized for thread safety.  Changing configuration parameters must
+     * be done atomically.  Thus, this configuration parameter 
+     * will not be changed until this method acquires the <code>this</code> lock from any other
+     * competing threads.
+     * </p>
+     * <p>
+     * <h2>WARNINGS:</h2>
+     * <ul>
+     * <li>
+     * If automatic ingestion frame decomposition is disabled it is imperative that all
+     * offered ingestion frames have memory allocations less than the current gRPC message
+     * size limit or gRPC will throw a runtime exception.
+     * </li>
+     * <br/>
+     * <li>
+     * When an ingestion frame is decomposed the original frame is destroyed.  If automatic
+     * decomposition is enabled, recognize that the original ingestion frame 
+     * may no longer be viable after being offered for ingestion (it will be empty).
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     */
+    synchronized
+    public void disableFrameDecomposition() {
+        this.bolDecompAuto = false;
+    }
+    
     
     //
     // Ingestion Service API
@@ -243,73 +400,255 @@ public final class DpIngestionService extends
      *         
      * @throws DpIngestionException     registration failure or general communications exception (see details)
      */
-    @AUnavailable(status=STATUS.ACCEPTED, note="Not fully implemented within the Ingestion Service")
+    @AUnavailable(status=STATUS.ACCEPTED, note="Operation is mocked - Not implemented within the Ingestion Service.")
     public ProviderUID  registerProvider(ProviderRegistrar recRegistration) throws DpIngestionException {
         
-        // Create the Protobuf request message from the argument 
-        RegisterProviderRequest     msgRqst = RegisterProviderRequest.newBuilder()
-                .setProviderName(recRegistration.name())
-                .addAllAttributes(ProtoMsg.createAttributes(recRegistration.attributes()))
-                .setRequestTime(ProtoMsg.from(Instant.now()))
-                .build();
+        return ProviderRegistrationService.registerProvider(super.grpcConn, recRegistration);
         
-        // Perform the registration request
-        RegisterProviderResponse    msgRsp;
+//        // Create the Protobuf request message from the argument 
+//        RegisterProviderRequest     msgRqst = RegisterProviderRequest.newBuilder()
+//                .setProviderName(recRegistration.name())
+//                .addAllAttributes(ProtoMsg.createAttributes(recRegistration.attributes()))
+//                .setRequestTime(ProtoMsg.from(Instant.now()))
+//                .build();
+//        
+//        // Perform the registration request
+//        RegisterProviderResponse    msgRsp;
+//        
+//        try {
+//            // Attempt blocking unary RPC call 
+//            msgRsp = super.grpcConn.getStubBlock().registerProvider(msgRqst);
+//            
+//        } catch (io.grpc.StatusRuntimeException e) {
+//            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+//                           + " - gRPC threw runtime exception attempting to register provider: "
+//                           + "type=" + e.getClass().getName()
+//                           + ", details=" + e.getMessage();
+//            
+//            if (BOL_LOGGING)
+//                LOGGER.error(strMsg);
+//            
+//            throw new DpIngestionException(strMsg, e);
+//        }
+//        
+//        // Exception checking
+//        if (msgRsp.hasExceptionalResult()) {
+//            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
+//            ExceptionalResultStatus enmStatus = msgExcept.getExceptionalResultStatus();
+//            String                  strDetails = msgExcept.getMessage();
+//            
+//            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+//                            + " - Provider registration failed: " 
+//                            + " status=" + enmStatus
+//                            + ", details=" + strDetails;
+//            
+//            // Log exception if logging
+//            if (BOL_LOGGING)
+//                LOGGER.error(strMsg);
+//            
+//            throw new DpIngestionException(strMsg);
+//        }
+//        
+//        // Extract the provider UID and create return value
+//        RegistrationResult  msgResult = msgRsp.getRegistrationResult();
+//        int                 intUid = msgResult.getProviderId();
+//        
+//        return new ProviderUID(intUid);
+    }
+    
+    /**
+     * <p>
+     * Blocking, synchronous, unary ingestion of the given ingestion frame.
+     * </p>
+     * <p>
+     * 
+     * @param recUid
+     * @param frame
+     * @return
+     * @throws DpIngestionException
+     */
+    public List<IngestionResponse> ingest(ProviderUID recUid, IngestionFrame frame) throws DpIngestionException {
         
-        try {
-            // Attempt blocking unary RPC call 
-            msgRsp = super.grpcConn.getStubBlock().registerProvider(msgRqst);
+        // Create list of frames to be ingested - depends on auto-decomposition
+        List<IngestionFrame>    lstFrames = this.decomposeFrame(frame); // throws DpIngestionException
+        
+        // Convert frames to messages and transmit, recovering responses
+        List<IngestionResponse> lstRsps = this.transmitFrames(recUid, lstFrames); // throws DpIngestionException
+
+        // Return responses
+        return lstRsps;
+    }
+    
+    
+    //
+    // IConnection Interface
+    //
+    
+    /**
+     * @see @see com.ospreydcs.dp.api.grpc.model.IConnection#awaitTermination()
+     */
+    @Override
+    public boolean awaitTermination() throws InterruptedException {
+        return super.grpcConn.awaitTermination();
+    }
+
+    
+    //
+    // Support Methods
+    //
+    
+    
+    /**
+     * <p>
+     * Decomposes large ingestion frames if automatic decomposition is enabled.
+     * </p>
+     * <p>
+     * Attempts to decompose the given ingestion frame horizontally (by columns).  If
+     * column size is too large to fit memory allocation limit an exception is throw.
+     * </p>
+     * <p>
+     * If automatic frame decomposition is disabled then the method simple returns a 
+     * list of one element, the given ingestion frame.
+     * </p>
+     * <p>
+     * <h2>WARNING</h2>
+     * If the frame is decomposed then the original ingestion frame is destroyed.
+     * </p>
+     * 
+     * @param frame     ingestion frame to be decomposed
+     * 
+     * @return          list of composite ingestion frames if decomposed, 
+     *                  otherwise original frame
+     *                   
+     * @throws DpIngestionException
+     */
+    private List<IngestionFrame>    decomposeFrame(IngestionFrame frame) throws DpIngestionException {
+
+        // Check if auto-decomposition is disabled
+        if (!this.bolDecompAuto) {
             
-        } catch (io.grpc.StatusRuntimeException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
-                           + " - gRPC threw runtime exception attempting to register provider: "
-                           + "type=" + e.getClass().getName()
-                           + ", details=" + e.getMessage();
+            return  List.of(frame);
+        }
+        
+        // Decompose the original ingestion frame if too large
+        try {
+            List<IngestionFrame>    lstFrames = this.toolFrmDecomposer.decomposeHorizontally(frame);
+            
+            return lstFrames;
+        
+            // The ingestion frame could not be decomposed - columns too large
+        } catch (IllegalArgumentException e) {
+            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                    + " - ingestion frame decomposition (by column) FAILED, columns are too large: "
+                    + e.getMessage();
+            
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new DpIngestionException(strMsg, e);
+            
+            // Ingestion frame decomposition error
+        } catch (CompletionException e) {
+            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                    + " - ingestion frame decomposition (by column) ERROR: "
+                    + e.getMessage();
             
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);
             
             throw new DpIngestionException(strMsg, e);
         }
-        
-        // Exception checking
-        if (msgRsp.hasExceptionalResult()) {
-            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
-            ExceptionalResultStatus enmStatus = msgExcept.getExceptionalResultStatus();
-            String                  strDetails = msgExcept.getMessage();
-            
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
-                            + " - Provider registration failed: " 
-                            + " status=" + enmStatus
-                            + ", details=" + strDetails;
-            
-            // Log exception if logging
-            if (BOL_LOGGING)
-                LOGGER.error(strMsg);
-            
-            throw new DpIngestionException(strMsg);
-        }
-        
-        // Extract the provider UID and create return value
-        RegistrationResult  msgResult = msgRsp.getRegistrationResult();
-        int                 intUid = msgResult.getProviderId();
-        
-        return new ProviderUID(intUid);
     }
-    
-    
-    //
-    // Support Methods
-    //
     
     /**
-     * Returns the <code>DpGrpcConnection</code> in super class cast to a
-     * <code>DpIngestionConnection</code> instance.
+     * <p>
+     * Transmits all given data to the Ingestion Service using unary RPC calls.
+     * </p>
+     * <p>
+     * Each ingestion frame within the argument is converted to a <code>IngestDataRequest</code>
+     * message using the given provider UID and an internally generated client request ID.
+     * The messages are transmitted serially, in order, using synchronous, unary gRPC calls
+     * on the blocking communications stub obtained from the super class.
+     * </p>
+     * <p>
+     * <h2>Exception Conditions</h2>
+     * There are 2 exceptions conditions.  
+     * <ol>
+     * <li><code>io.grpc.StatusRuntimeException</code> - thrown during the gRPC ingestion operation. 
+     *   Indicates a general, and unexpected, gRPC exception encountered during unary ingestion.
+     *   </li>
+     * <li><code>MissingResourceException</code> - thrown converting the <code>IngestDataResponse</code>
+     *   message to a client APi record.  Indicates that the Ingestion Service rejected the ingestion
+     *   request.
+     *   </li>
+     * </ol> 
+     * A <code>DpIngestionException</code> type exception is thrown in either case.  The original 
+     * exception is included as the cause parameter.
+     * </p>
      * 
-     * @return connection instances as a <code>DpIngestionConnection</code> object
+     * @param recUid    UID of the data provider supplying the ingestion frames
+     * @param lstFrames collection of ingestion frames to be converted and transmitted 
+     * 
+     * @return  ordered list of Ingestion Service ingest data responses
+     * 
+     * @throws DpIngestionException unexpected gRPC runtime exception or request was rejected (see details)
      */
-    private DpIngestionConnection getConnection() {
-        return super.grpcConn;
+    private List<IngestionResponse> transmitFrames(ProviderUID recUid, List<IngestionFrame> lstFrames) throws DpIngestionException {
+        
+        // Returned collection
+        List<IngestionResponse> lstRsps = new LinkedList<>();
+        
+        // For each ingestion frame transmit synchronously, in serial, using unary RPC
+        for (IngestionFrame frm : lstFrames) {
+
+            // Convert ingestion frame to ingest data message
+            IngestDataRequest   msgRqst = this.toolFrmToMsg.createRequest(frm, recUid.uid());
+            
+            try {
+                // Transmit data message and recover response - throws StatusRuntimeException
+                IngestDataResponse msgRsp = super.grpcConn.getStubBlock().ingestData(msgRqst);
+                
+                // Convert response to client API record - throws MissingResourceException if rejected
+                IngestionResponse  recRsp = ProtoMsg.toIngestionResponse(msgRsp);
+
+                // Add to returned list
+                lstRsps.add(recRsp);
+                
+                // Unexpected gRPC runtime exception during ingestion 
+            } catch (io.grpc.StatusRuntimeException e) {
+                String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+                        + " - gRPC runtime exception during unary ingestData() operation: "
+                        + e.getMessage();
+                
+                if (BOL_LOGGING)
+                    LOGGER.error(strMsg);
+                
+                throw new DpIngestionException(strMsg, e);
+                
+                // The Ingestion Service rejected the ingestion request
+            } catch (MissingResourceException e) {
+                String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+                        + " - Ingestion Service rejected unary ingestData() operation: "
+                        + e.getMessage();
+                
+                if (BOL_LOGGING)
+                    LOGGER.error(strMsg);
+                
+                throw new DpIngestionException(strMsg, e);
+            }
+        }
+        
+        return lstRsps;
     }
+    
+//    /**
+//     * Returns the <code>DpGrpcConnection</code> in super class cast to a
+//     * <code>DpIngestionConnection</code> instance.
+//     * 
+//     * @return connection instances as a <code>DpIngestionConnection</code> object
+//     */
+//    private DpIngestionConnection getConnection() {
+//        return super.grpcConn;
+//    }
     
 }
