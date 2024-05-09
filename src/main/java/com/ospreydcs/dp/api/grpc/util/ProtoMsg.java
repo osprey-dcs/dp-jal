@@ -77,6 +77,9 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse.AckResult;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse.RegistrationResult;
 import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse.ColumnTable;
+import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse.RowMapTable;
+import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse.RowMapTable.DataRow;
 
 /**
  * <p>
@@ -1242,6 +1245,7 @@ public final class ProtoMsg {
             case ARRAYVALUE -> ProtoMsg.extractValues(msgDataValue.getArrayValue());
             case STRUCTUREVALUE -> ProtoMsg.extractValues(msgDataValue.getStructureValue());
             case IMAGEVALUE -> ProtoMsg.toBufferedImage( msgDataValue.getImageValue() );
+            case TIMESTAMPVALUE -> ProtoMsg.toInstant(msgDataValue.getTimestampValue());
             case VALUE_NOT_SET -> null;
 //                throw new IllegalArgumentException("The data value was not set.");
             default ->
@@ -1338,6 +1342,8 @@ public final class ProtoMsg {
             obj = msgVal.getStructureValue();
         else if (clsVal.equals(Image.class))
             obj = msgVal.getImageValue();
+        else if (clsVal.equals(Instant.class))
+            obj = msgVal.getTimestampValue();
         else
             throw new TypeNotPresentException("Unsupported class type " + clsVal.getName(), null);
         
@@ -1366,27 +1372,62 @@ public final class ProtoMsg {
         if (msgTbl == null) 
             return "The DataTable is null";
         
+        // The output buffer
         StringBuffer    buf = new StringBuffer();
         
-        List<DataColumn>      lstData     = msgTbl.getDataColumnsList();
+        // For a column-oriented data table
+        if (msgTbl.hasColumnTable()) {
+            ColumnTable     msgColTbl = msgTbl.getColumnTable();
+            
+            List<DataColumn>      lstData     = msgColTbl.getDataColumnsList();
 
-        buf.append("ColumnsList: (size = " + lstData.size() + ") \n");
-        
-        for (DataColumn data : lstData) {
-            String      strName  = data.getName();
-            List<DataValue> lstDatum = data.getDataValuesList();
-            buf.append("  Data: Name=" + strName + ", getDataList.size()=" + lstDatum.size() + ", getDataList.get(0)=" + lstDatum.get(0));
+            buf.append("ColumnsList: (size = " + lstData.size() + ") \n");
 
-            DataValue datum    = data.getDataValues(0);
-            Map<FieldDescriptor, Object> mapFlds = datum.getAllFields();
-            buf.append("    DataValue = getDataList().get(0): \n");
-            buf.append("       Datum.getAllFields()= {" );
-            mapFlds.forEach( (k,v) -> buf.append("(FieldDescriptor=" + k.toString() + ", Value=" + v.toString() +")"));
-            buf.append("}\n");
+            for (DataColumn msgCol : lstData) {
+                String      strName  = msgCol.getName();
+                List<DataValue> lstDatum = msgCol.getDataValuesList();
+                buf.append("  Data: Name=" + strName + ", getDataList.size()=" + lstDatum.size() + ", getDataList.get(0)=" + lstDatum.get(0));
 
+                DataValue datum    = msgCol.getDataValues(0);
+                Map<FieldDescriptor, Object> mapFlds = datum.getAllFields();
+                buf.append("    DataValue = getDataList().get(0): \n");
+                buf.append("       Datum.getAllFields()= {" );
+                mapFlds.forEach( (k,v) -> buf.append("(FieldDescriptor=" + k.toString() + ", Value=" + v.toString() +")"));
+                buf.append("}\n");
+
+            }
+            
+            return buf.toString();
         }
         
-        return buf.toString();
+        // For a row-mapped data table
+        if (msgTbl.hasRowMapTable()) {
+            RowMapTable msgRowTbl = msgTbl.getRowMapTable();
+            
+            List<String>    lstColNms = msgRowTbl.getColumnNamesList();
+            List<DataRow>   lstMsgRows = msgRowTbl.getRowsList();
+            
+            buf.append("Column names (size = " + lstColNms.size() + "): " + lstColNms + "\n");
+            buf.append("RowList (size = " + lstMsgRows.size() + "); \n");
+            
+            for (DataRow msgRow : lstMsgRows) {
+                Map<String, DataValue> mapVals = msgRow.getColumnValuesMap();
+
+                buf.append("  ");
+                for (Map.Entry<String, DataValue> entry : mapVals.entrySet()) {
+                    String  strNm = entry.getKey();
+                    Object  objVal = ProtoMsg.extractValue(entry.getValue());
+                    
+                    buf.append(strNm + ":" + objVal.toString() + ", ");
+                }
+                buf.append("\n");
+            }
+            
+            return buf.toString();
+        }
+        
+        // The data table message contained no data
+        return "The DataTable contained neither ColumnTable message or RowMapMessage.";
     }
     
     

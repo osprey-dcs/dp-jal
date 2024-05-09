@@ -29,7 +29,7 @@ package com.ospreydcs.dp.api.ingest.model.grpc;
 
 import java.util.concurrent.TimeUnit;
 
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.GeneratedMessage;
 
 /**
  * <p>
@@ -57,7 +57,7 @@ import com.google.protobuf.GeneratedMessageV3;
  * @since Apr 9, 2024
  *
  */
-public interface IMessageSupplier<T extends GeneratedMessageV3> {
+public interface IMessageSupplier<T extends GeneratedMessage> {
 
     /**
      * <p>

@@ -30,6 +30,8 @@ package com.ospreydcs.dp.api.query;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.ospreydcs.dp.grpc.v1.query.PvNameList;
+import com.ospreydcs.dp.grpc.v1.query.PvNamePattern;
 import com.ospreydcs.dp.grpc.v1.query.QueryMetadataRequest;
 
 /**
@@ -183,13 +185,12 @@ public class DpMetadataRequest {
     public QueryMetadataRequest buildQueryRequest() {
 
         // Create request specification builder for either case
-        QueryMetadataRequest.QuerySpec.Builder    bldrSpec = QueryMetadataRequest.QuerySpec.newBuilder();
+        QueryMetadataRequest.Builder    bldrRqst = QueryMetadataRequest.newBuilder();
         
         // If this is a regular expression it takes precedence
         if (!this.strPvNameRegex.isEmpty()) {
             
-            bldrSpec.setPvNamePattern(QueryMetadataRequest.QuerySpec.PvNamePattern
-                    .newBuilder()
+            bldrRqst.setPvNamePattern(PvNamePattern.newBuilder()
                     .setPattern(this.strPvNameRegex)
                     .build()
                     );
@@ -197,7 +198,7 @@ public class DpMetadataRequest {
         // A list of PV names    
         } else {
             
-            bldrSpec.setPvNameList(QueryMetadataRequest.QuerySpec.PvNameList
+            bldrRqst.setPvNameList(PvNameList
                     .newBuilder()
                     .addAllPvNames(this.lstPvNames)
                     .build()
@@ -206,10 +207,7 @@ public class DpMetadataRequest {
         }
         
         // Create the metadata request message containing above query specification and return it
-        QueryMetadataRequest    msgRqst = QueryMetadataRequest
-                .newBuilder()
-                .setQuerySpec(bldrSpec.build())
-                .build();
+        QueryMetadataRequest    msgRqst = bldrRqst.build();
         
         return msgRqst;
     }

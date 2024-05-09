@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.model;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Vector;
 
@@ -76,6 +77,7 @@ import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
  *    <code>Array</code> -> <code>java.util.Vector&lt;Object&gt;</code>
  *    <code>Structure</code> -> <code>java.util.Map&lt;Object&gt;</code>
  *    <code>Image</code> -> <code>com.ospreydcs.dp.api.common.BufferedImage</code>
+ *    <code>Timestamp</code> -> <code>java.time.Instant</code>
  * </pre>
  * </code>
  * </p>
@@ -178,6 +180,13 @@ public enum DpSupportedType {
      */
     @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented within dp-services")
     STRUCTURE(Map.class),
+    
+    /**
+     * Timestamp of the form (Epoch seconds, nanoseconds offset).
+     * <p>
+     * <code>Timestamp</code> -> <code>java.time.Instant</code>
+     */
+    TIMESTAMP(Instant.class),
     
     /**
      * Enumeration for unsupported or unrecognized data types.

@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
@@ -57,15 +58,25 @@ public class TestIngestionFrameGenerator {
     // Class Constants
     //
     
-    /** Double-Valued Frames: Prefix used for data source (PV) names */
+    /** Ingestion frame label prefix */
+    private static final String         STR_FRM_LBL_PREFIX = TestIngestionFrameGenerator.class.getSimpleName() + "-Frame-";
+    
+    /** Ingestion frame snapshot ID prefix */
+    private static final String         STR_SNST_LBL_PREFIX = TestIngestionFrameGenerator.class.getSimpleName() + "-Snapshot-";
+    
+    
+    /** Double-Valued Frames: Default prefix used for data source (PV) names */
     public static final String          STR_PV_PREFIX_DBLS = "TEST_PV_DBL_";
+    
+    /** Double-Valued Frames: Default attribute count */
+    public static final int             INT_CNT_ATTRS_DBLS = 3;
     
     /** Double-Valued Frames: Data Platform supported type */
     public static final DpSupportedType ENM_TYPE_DBLS = DpSupportedType.DOUBLE;
 
     
-    /** Double-Valued Frames: Start time for sampling clock. */
-    public static final Instant         INS_START_DBLS = Instant.parse("2024-04-06T00:00:00.0Z");
+//    /** Double-Valued Frames: Start time for sampling clock. */
+//    public static final Instant         INS_START_DBLS = Instant.parse("2024-04-06T00:00:00.0Z");
     
     /** Double-Valued Frames: The sampling period used to defined the sampling clock */ 
     public static final long            LNG_PERIOD_DBLS = 1L;
@@ -81,9 +92,6 @@ public class TestIngestionFrameGenerator {
     // Class Resources
     //
     
-    /** The number of double-valued ingestion frames created so far */
-    private static long     cntFramesDbl = 0;
-    
     /** The numeric seed for each double-valued ingestion frame */
     private static double   dblFrameDblSeed = 0.0;
     
@@ -91,29 +99,119 @@ public class TestIngestionFrameGenerator {
     private static double   dBlRowDblIncr = DUR_PERIOD_DBLS.toMillis();
     
     
-    /** The ingestion frame start time seed value */
+    //
+    // Class State Variables
+    //
+    
+    /** The ingestion frame counter - incremented by frame label creation function */
+    private static int      cntFrames = 0;
+    
+    /** The snapshot ID counter - incremented by the snapshot ID creator function */
+    private static int      cntSnapshots = 0;
+    
+    /** The number of double-valued ingestion frames created so far */
+    private static long     cntFramesDbl = 0;
+    
+    /** The start time seed value - incremented by clock and timestamp list functions */
     private static Instant  insStartTmSeed = Instant.now();
     
     
     /**
      * <p>
-     * Constructs a new instance of <code>TestIngestionFrameGenerator</code>.
+     * Prevent instance of <code>TestIngestionFrameGenerator</code>.
      * </p>
      *
      */
-    public TestIngestionFrameGenerator() {
-        // TODO Auto-generated constructor stub
+    private TestIngestionFrameGenerator() {
     }
 
 
     //
-    // Support Methods
+    // Operations
     //
     
     /**
      * <p>
      * Create an ingestion frame with the given dimensions, populated with double-valued 
-     * simulated data, and using a uniform sampling clock.
+     * simulated data, and using a uniform sampling clock to identify frame timestamps.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method defers to <code>{@link #createDoublesFrameWithClock(String, int, int, boolean)}</code>
+     * using default parameters <code>{@link #STR_PV_PREFIX_DBLS}</code> and <code>false</code>.
+     * </p>
+     * 
+     * @param cntCols   width of the ingestion frame (number of columns)
+     * @param cntRows   length of the ingestion frame (number of rows)
+     * 
+     * @return  a new ingestion frame populated with artificial data
+     */
+    synchronized
+    public static IngestionFrame  createDoublesFrameWithClock(int cntCols, int cntRows) {
+
+        return createDoublesFrameWithClock(STR_PV_PREFIX_DBLS, cntCols, cntRows, false);
+        
+//        // The returned time-series data
+//        ArrayList<IDataColumn<Object>>  vecColData = new ArrayList<>(cntCols);
+//     
+//        // Create time-series data colums
+//        for (int iCol=0; iCol<cntCols; iCol++) {
+//            String              strColNm = STR_PV_PREFIX_DBLS + Integer.toString(iCol);
+//            Double              dblVal = TestIngestionFrameGenerator.dblFrameDblSeed + iCol;
+//            Double              dblRowIncr = TestIngestionFrameGenerator.dBlRowDblIncr;
+//
+//            // Create data column and add to collection 
+//            IDataColumn<Object> col = TestIngestionFrameGenerator.createDoubleColumn(strColNm, cntRows, dblVal, dblRowIncr);
+//            vecColData.add(col);
+//        }
+//        
+//        // Create sampling clock
+//        UniformSamplingClock    clock = TestIngestionFrameGenerator.createSamplingClock(cntRows, DUR_PERIOD_DBLS);
+//        
+//        // Create ingestion frame 
+//        IngestionFrame  frame = IngestionFrame.from(clock, vecColData);
+//        
+//        // Increment the frame counter and seeds
+//        TestIngestionFrameGenerator.dblFrameDblSeed += TestIngestionFrameGenerator.cntFramesDbl;
+//        TestIngestionFrameGenerator.cntFramesDbl++;
+//        TestIngestionFrameGenerator.cntFrames++;
+//        
+//        return frame;
+    }
+    
+    /**
+     * <p>
+     * Create an ingestion frame with the given dimensions, populated with double-valued 
+     * simulated data, and using a uniform sampling clock to identify frame timestamps.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method defers to <code>{@link #createDoublesFrameWithClock(String, int, int, boolean)}</code>
+     * using default parameters <code>{@link #STR_PV_PREFIX_DBLS}</code>.
+     * </p>
+     * 
+     * @param cntCols       width of the ingestion frame (number of columns)
+     * @param cntRows       length of the ingestion frame (number of rows)
+     * @param bolAddProps   supplies artificial frame properties if <code>true</code>
+     * 
+     * @return  a new ingestion frame populated with artificial data
+     */
+    synchronized
+    public static IngestionFrame  createDoublesFrameWithClock(int cntCols, int cntRows, boolean bolAddProps) {
+
+        return createDoublesFrameWithClock(STR_PV_PREFIX_DBLS, cntCols, cntRows, bolAddProps);
+    }
+    
+    /**
+     * <p>
+     * Create an ingestion frame with the given dimensions, populated with double-valued 
+     * simulated data, and using a uniform sampling clock to identify frame timestamps.
+     * </p>
+     * <p>
+     * The column names of the ingestion frame are created by suffixing the given column name prefix
+     * with the column number.  If the given <code>boolean</code> argument is true then the frame
+     * is also populated with artifical properties, such as a frame label, timestamp, attributes,
+     * and snapshot ID.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
@@ -125,17 +223,22 @@ public class TestIngestionFrameGenerator {
      * @param cntCols   width of the ingestion frame (number of columns)
      * @param cntRows   length of the ingestion frame (number of rows)
      * 
+     * @param strColPref    prefix given to all ingestion frame column names
+     * @param cntCols       width of the ingestion frame (number of columns)
+     * @param cntRows       length of the ingestion frame (number of rows)
+     * @param bolAddProps   supplies artificial frame properties if <code>true</code>
+     * 
      * @return  a new ingestion frame populated with artificial data
      */
-    synchronized
-    public static IngestionFrame  createDoublesFrameWithClock(int cntCols, int cntRows) {
+    synchronized 
+    public static IngestionFrame    createDoublesFrameWithClock(String strColPref, int cntCols, int cntRows, boolean bolAddProps) {
 
-        // The returned time-series data
+        // The container of time-series data
         ArrayList<IDataColumn<Object>>  vecColData = new ArrayList<>(cntCols);
      
-        // Create time-series data colums
+        // Create each time-series data columns
         for (int iCol=0; iCol<cntCols; iCol++) {
-            String              strColNm = STR_PV_PREFIX_DBLS + Integer.toString(iCol);
+            String              strColNm = strColPref + Integer.toString(iCol);
             Double              dblVal = TestIngestionFrameGenerator.dblFrameDblSeed + iCol;
             Double              dblRowIncr = TestIngestionFrameGenerator.dBlRowDblIncr;
 
@@ -149,8 +252,23 @@ public class TestIngestionFrameGenerator {
         
         // Create ingestion frame 
         IngestionFrame  frame = IngestionFrame.from(clock, vecColData);
+
+        // Add some random properties if instructed
+        if (bolAddProps) {
+            String              strLabel = createFrameLabel();
+            Instant             insTms = Instant.now();
+            Map<String, String> mapAttrs = createAttributes(INT_CNT_ATTRS_DBLS);
+            String              strSnstId = createSnapshotId();
+            TimeInterval        domSnst = frame.getSamplingClock().getTimeDomain();
+
+            frame.setFrameLabel(strLabel);
+            frame.addAttributes(mapAttrs);
+            frame.setFrameTimestamp(insTms);
+            frame.setSnapshotId(strSnstId);
+            frame.setSnapshotDomain(domSnst);
+        }
         
-        // Increment the frame counter and seeds
+        // State variables - Increment the frame counter and seeds
         TestIngestionFrameGenerator.dblFrameDblSeed += TestIngestionFrameGenerator.cntFramesDbl;
         TestIngestionFrameGenerator.cntFramesDbl++;
         
@@ -160,13 +278,12 @@ public class TestIngestionFrameGenerator {
     /**
      * <p>
      * Create an ingestion frame with the given dimensions, populated with double-valued 
-     * simulated data, and using a uniform sampling clock.
+     * simulated data, and using an explicit timestamp list to identify frame timestamps.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * This method increments frame counter <code>{@link #cntFramesDbl}</code> and seed value
-     * <code>{@link #dblFrameDblSeed}</code> which must be done atomically, thus, the
-     * explicit synchronization.
+     * This method defers to <code>{@link #createDoublesFrameWithTimestampList(String, int, int, boolean)}</code>
+     * using default paramters <code>{@link #STR_PV_PREFIX_DBLS}</code> and <code>false</code>.
      * </p>
      * 
      * @param cntCols   width of the ingestion frame (number of columns)
@@ -177,12 +294,93 @@ public class TestIngestionFrameGenerator {
     synchronized
     public static IngestionFrame  createDoublesFrameWithTimestampList(int cntCols, int cntRows) {
 
+        return createDoublesFrameWithTimestampList(STR_PV_PREFIX_DBLS, cntCols, cntRows, false);
+        
+//        // The returned time-series data
+//        ArrayList<IDataColumn<Object>>  vecColData = new ArrayList<>(cntCols);
+//     
+//        // Create time-series data colums
+//        for (int iCol=0; iCol<cntCols; iCol++) {
+//            String              strColNm = STR_PV_PREFIX_DBLS + Integer.toString(iCol);
+//            Double              dblVal = TestIngestionFrameGenerator.dblFrameDblSeed + iCol;
+//            Double              dblRowIncr = TestIngestionFrameGenerator.dBlRowDblIncr;
+//
+//            // Create data column and add to collection 
+//            IDataColumn<Object> col = TestIngestionFrameGenerator.createDoubleColumn(strColNm, cntRows, dblVal, dblRowIncr);
+//            vecColData.add(col);
+//        }
+//        
+//        // Create sampling clock
+//        ArrayList<Instant>  vecTms = TestIngestionFrameGenerator.createTimestampList(cntRows, DUR_PERIOD_DBLS);
+//        
+//        // Create ingestion frame 
+//        IngestionFrame  frame = IngestionFrame.from(vecTms, vecColData);
+//        
+//        // Increment the state variables - frame counters and seeds
+//        TestIngestionFrameGenerator.dblFrameDblSeed += TestIngestionFrameGenerator.cntFramesDbl;
+//        TestIngestionFrameGenerator.cntFramesDbl++;
+//        TestIngestionFrameGenerator.cntFrames++;
+//        
+//        return frame;
+    }
+
+    /**
+     * <p>
+     * Create an ingestion frame with the given dimensions, populated with double-valued 
+     * simulated data, and using an explicit timestamp list to identify frame timestamps.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method defers to <code>{@link #createDoublesFrameWithTimestampList(String, int, int, boolean)}</code>
+     * using default paramters <code>{@link #STR_PV_PREFIX_DBLS}</code>.
+     * </p>
+     * 
+     * @param cntCols       width of the ingestion frame (number of columns)
+     * @param cntRows       length of the ingestion frame (number of rows)
+     * @param bolAddProps   supplies artificial frame properties if <code>true</code>
+     * 
+     * @return  a new ingestion frame populated with artificial data
+     */
+    synchronized
+    public static IngestionFrame  createDoublesFrameWithTimestampList(int cntCols, int cntRows, boolean bolAddProps) {
+
+        return createDoublesFrameWithTimestampList(STR_PV_PREFIX_DBLS, cntCols, cntRows, false);
+    }
+    
+    /**
+     * <p>
+     * Create an ingestion frame with the given dimensions, populated with double-valued 
+     * simulated data, and using an explicit timestamp list to identify frame timestamps.
+     * </p>
+     * <p>
+     * The column names of the ingestion frame are created by suffixing the given column name prefix
+     * with the column number.  If the given <code>boolean</code> argument is true then the frame
+     * is also populated with artifical properties, such as a frame label, timestamp, attributes,
+     * and snapshot ID.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method increments frame counter <code>{@link #cntFramesDbl}</code> and seed value
+     * <code>{@link #dblFrameDblSeed}</code> which must be done atomically, thus, the
+     * explicit synchronization.
+     * </p>
+     * 
+     * @param strColPref    prefix given to all ingestion frame column names
+     * @param cntCols       width of the ingestion frame (number of columns)
+     * @param cntRows       length of the ingestion frame (number of rows)
+     * @param bolAddProps   supplies artificial frame properties if <code>true</code>
+     * 
+     * @return  a new ingestion frame populated with artificial data
+     */
+    synchronized
+    public static IngestionFrame  createDoublesFrameWithTimestampList(String strColPref, int cntCols, int cntRows, boolean bolAddProps) {
+
         // The returned time-series data
         ArrayList<IDataColumn<Object>>  vecColData = new ArrayList<>(cntCols);
      
         // Create time-series data colums
         for (int iCol=0; iCol<cntCols; iCol++) {
-            String              strColNm = STR_PV_PREFIX_DBLS + Integer.toString(iCol);
+            String              strColNm = strColPref + Integer.toString(iCol);
             Double              dblVal = TestIngestionFrameGenerator.dblFrameDblSeed + iCol;
             Double              dblRowIncr = TestIngestionFrameGenerator.dBlRowDblIncr;
 
@@ -197,13 +395,49 @@ public class TestIngestionFrameGenerator {
         // Create ingestion frame 
         IngestionFrame  frame = IngestionFrame.from(vecTms, vecColData);
         
-        // Increment the frame counter and seeds
+        // Add some random properties if instructed
+        if (bolAddProps) {
+            String              strLabel = createFrameLabel();
+            Instant             insTms = Instant.now();
+            Map<String, String> mapAttrs = createAttributes(INT_CNT_ATTRS_DBLS);
+            String              strSnstId = createSnapshotId();
+            TimeInterval        domSnst = TimeInterval.from(vecTms.get(0), vecTms.get(cntRows-1));
+
+            frame.setFrameLabel(strLabel);
+            frame.addAttributes(mapAttrs);
+            frame.setFrameTimestamp(insTms);
+            frame.setSnapshotId(strSnstId);
+            frame.setSnapshotDomain(domSnst);
+        }
+        
+        // Increment the state variables - frame counters and seeds
         TestIngestionFrameGenerator.dblFrameDblSeed += TestIngestionFrameGenerator.cntFramesDbl;
         TestIngestionFrameGenerator.cntFramesDbl++;
+        TestIngestionFrameGenerator.cntFrames++;
         
         return frame;
     }
 
+    /**
+     * <p>
+     * Creates an ingestion frame label using the default prefix <code>{@link #STR_FRM_LBL_PREFIX}</code>
+     * </p>
+     * <p>
+     * The default prefix is suffixed with the frame counter <code>{@link #cntFrames}</code> which is
+     * then incremented.  Thus, all frame labels should be unique within the during of the current
+     * Java VM.
+     * </p>
+     * 
+     * @return  a new label for an ingestion frame (unique within the current Java VM)
+     */
+    public static String createFrameLabel() {
+        
+        String strLabel = TestIngestionFrameGenerator.STR_FRM_LBL_PREFIX + TestIngestionFrameGenerator.cntFrames;
+        TestIngestionFrameGenerator.cntFrames++;
+   
+        return strLabel;
+    }
+    
     /**
      * <p>
      * Creates an arbitrary collection of ingestion frame attributes of the given size.
@@ -231,6 +465,25 @@ public class TestIngestionFrameGenerator {
         
         return mapAttrs;
     }
+    
+    /**
+     * <p>
+     * Creates a snapshot ID using the default prefix <code>{@link #STR_SNST_LBL_PREFIX}</code>.
+     * </p>
+     * <p>
+     * The default snapshot ID prefix is suffixed with the snapshot counter <code>{@link #cntSnapshots}</code>
+     * so that the returned ID is unique within the current Java VM.
+     * </p>
+     * 
+     * @return  a new snapshot ID for an ingestion frame (unique for the duration of the Java VM)
+     */
+    public static String    createSnapshotId() {
+        String  strSnstId = TestIngestionFrameGenerator.STR_SNST_LBL_PREFIX + TestIngestionFrameGenerator.cntSnapshots;
+        TestIngestionFrameGenerator.cntSnapshots++;
+        
+        return strSnstId;
+    }
+
     
     //
     // Support Methods
