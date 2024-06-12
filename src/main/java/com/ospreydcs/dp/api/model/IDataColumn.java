@@ -28,7 +28,6 @@
 package com.ospreydcs.dp.api.model;
 
 import java.util.List;
-import java.util.Vector;
 
 
 /**

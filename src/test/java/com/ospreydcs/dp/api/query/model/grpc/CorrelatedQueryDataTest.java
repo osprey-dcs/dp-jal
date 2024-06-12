@@ -40,7 +40,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
@@ -341,7 +341,7 @@ public class CorrelatedQueryDataTest {
         Assert.assertTrue("Too many bucket insertion acceptanes", lstInserted.size() < lstBuckets.size());
 
         // Apply the verifySourceUniqueness() operation
-        ResultRecord recUnique = cqdTest.verifySourceUniqueness();
+        ResultStatus recUnique = cqdTest.verifySourceUniqueness();
         
         if (recUnique.isFailure())
             Assert.fail(recUnique.message());
@@ -367,7 +367,7 @@ public class CorrelatedQueryDataTest {
         Assert.assertTrue("Too many bucket insertion acceptanes", lstInserted.size() < lstBuckets.size());
 
         // Apply the verifySourceSizes() operation
-        ResultRecord recSizes = cqdTest.verifySourceSizes();
+        ResultStatus recSizes = cqdTest.verifySourceSizes();
         
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());

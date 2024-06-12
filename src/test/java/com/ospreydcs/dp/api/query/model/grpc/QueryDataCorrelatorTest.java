@@ -30,12 +30,10 @@ package com.ospreydcs.dp.api.query.model.grpc;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
-
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 
 import javax.naming.CannotProceedException;
-import javax.naming.OperationNotSupportedException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -44,9 +42,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.api.query.model.series.UniformSamplingBlockTest;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
@@ -156,7 +155,7 @@ public class QueryDataCorrelatorTest {
         // Get the empty processed data set and try to verify
         SortedSet<CorrelatedQueryData>  setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         Assert.assertTrue("QueryDataCorrelator verified order of empty data set.", recOrder.isFailure());
     }
 
@@ -182,15 +181,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
     }
@@ -214,15 +213,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
 
@@ -249,15 +248,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
 
@@ -284,15 +283,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
     }
@@ -321,15 +320,15 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
     }
@@ -357,81 +356,8 @@ public class QueryDataCorrelatorTest {
             Assert.fail("Unable to create test Query Service API: DpGrpcException thrown - " + e.getMessage());
             return;
             
-        }
-        
-        
-        // Process the raw query responses with a new data correlator
-        QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
-//        prcrTest.setConcurrency(false);
-        
-        int cntr = 0;
-        for (QueryDataResponse msgRsp: lstMsgRsps) {
-            try {
-                prcrTest.addQueryResponse(msgRsp);
-                
-                cntr++;
-                System.out.println("Interted message " + Integer.valueOf(cntr).toString());
-                
-            } catch (ExecutionException e) {
-                Assert.fail("Processor reports query request was rejected: " + e.getMessage());
-                return;
-                
-            } catch (CannotProceedException e) {
-                Assert.fail("Processor reports query response error: " + e.getMessage());
-                return;
-                
-            } catch (IllegalArgumentException e) {
-                Assert.fail("Processor reports query data bucket did NOT contain sampling clock: " + e.getMessage());
-                return;
-
-            }
-        }
-        
-        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeCorrelatedSet() > 0);
-
-        // Extract data source names and print them out
-        Set<String> setDataSrcs = prcrTest.extractDataSourceNames();
-        
-        System.out.println("Data Source Names: " + setDataSrcs);
-        
-        
-        // Perform available verification checks
-        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
-        
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
-        if (recOrder.isFailure())
-            Assert.fail(recOrder.message());
-        
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
-        if (recSizes.isFailure())
-            Assert.fail(recSizes.message());
-        
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
-        if (recDomains.isFailure())
-            Assert.fail(recDomains.message());
-    }
-    
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
-     */
-//    @Test
-    public final void testInsertQueryDataHuge() {
-        
-        // First, get the test data from a test Query API
-        List<QueryDataResponse>     lstMsgRsps;
-        
-        try {
-            DpDataRequest       dpRqstHuge = TestDpDataRequestGenerator.createRequest(1000, 50L);
-            QueryDataRequest    msgRqstHuge = dpRqstHuge.buildQueryRequest();
-            
-            TestQueryService    apiQueryTest = TestQueryService.newService();
-            
-            lstMsgRsps = apiQueryTest.queryResponseStream(msgRqstHuge);
-        
-            apiQueryTest.shutdown();
-            
-        } catch (DpGrpcException e) {
-            Assert.fail("Unable to create test Query Service API: DpGrpcException thrown - " + e.getMessage());
+        } catch (InterruptedException e) {
+            Assert.fail("Shutdown operation interrupted: " + e.getMessage());
             return;
             
         }
@@ -475,15 +401,96 @@ public class QueryDataCorrelatorTest {
         // Perform available verification checks
         SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
         
-        ResultRecord    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
         if (recOrder.isFailure())
             Assert.fail(recOrder.message());
         
-        ResultRecord    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
         if (recSizes.isFailure())
             Assert.fail(recSizes.message());
         
-        ResultRecord    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
+        if (recDomains.isFailure())
+            Assert.fail(recDomains.message());
+    }
+    
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     */
+//    @Test
+    public final void testInsertQueryDataHuge() {
+        
+        // First, get the test data from a test Query API
+        List<QueryDataResponse>     lstMsgRsps;
+        
+        try {
+            DpDataRequest       dpRqstHuge = TestDpDataRequestGenerator.createRequest(1000, 50L);
+            QueryDataRequest    msgRqstHuge = dpRqstHuge.buildQueryRequest();
+            
+            TestQueryService    apiQueryTest = TestQueryService.newService();
+            
+            lstMsgRsps = apiQueryTest.queryResponseStream(msgRqstHuge);
+        
+            apiQueryTest.shutdown();
+            
+        } catch (DpGrpcException e) {
+            Assert.fail("Unable to create test Query Service API: DpGrpcException thrown - " + e.getMessage());
+            return;
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Shutdown operation interrupted: " + e.getMessage());
+            return;
+            
+        }
+        
+        
+        // Process the raw query responses with a new data correlator
+        QueryDataCorrelator  prcrTest = new QueryDataCorrelator();
+//        prcrTest.setConcurrency(false);
+        
+        int cntr = 0;
+        for (QueryDataResponse msgRsp: lstMsgRsps) {
+            try {
+                prcrTest.addQueryResponse(msgRsp);
+                
+                cntr++;
+                System.out.println("Interted message " + Integer.valueOf(cntr).toString());
+                
+            } catch (ExecutionException e) {
+                Assert.fail("Processor reports query request was rejected: " + e.getMessage());
+                return;
+                
+            } catch (CannotProceedException e) {
+                Assert.fail("Processor reports query response error: " + e.getMessage());
+                return;
+                
+            } catch (IllegalArgumentException e) {
+                Assert.fail("Processor reports query data bucket did NOT contain sampling clock: " + e.getMessage());
+                return;
+
+            }
+        }
+        
+        Assert.assertTrue("QueryDataCorrelator has no data.", prcrTest.sizeCorrelatedSet() > 0);
+
+        // Extract data source names and print them out
+        Set<String> setDataSrcs = prcrTest.extractDataSourceNames();
+        
+        System.out.println("Data Source Names: " + setDataSrcs);
+        
+        
+        // Perform available verification checks
+        SortedSet<CorrelatedQueryData>   setPrcdData = prcrTest.getCorrelatedSet();
+        
+        ResultStatus    recOrder = QueryDataCorrelator.verifyOrdering(setPrcdData);
+        if (recOrder.isFailure())
+            Assert.fail(recOrder.message());
+        
+        ResultStatus    recSizes = QueryDataCorrelator.verifyColumnSizes(setPrcdData);
+        if (recSizes.isFailure())
+            Assert.fail(recSizes.message());
+        
+        ResultStatus    recDomains = QueryDataCorrelator.verifyTimeDomains(setPrcdData);
         if (recDomains.isFailure())
             Assert.fail(recDomains.message());
     }

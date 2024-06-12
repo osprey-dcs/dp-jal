@@ -54,7 +54,7 @@ import io.grpc.stub.CallStreamObserver;
  * All data processing is done in the base class 
  * <code>{@link QueryResponseStreamProcessor}</code>.
  * The forward streaming operations are performed in the 
- * <code>{@link #requestProcessed(QueryResponse)}</code> override. There a 
+ * <code>{@link #requestTransmitted(QueryResponse)}</code> override. There a 
  * <code>{@link QueryRequest</code> message containing a <code>{@link CursorOperation}</code> 
  * message is sent to the Query Service in order to signal acknowledgment for the next 
  * response message.
@@ -195,7 +195,7 @@ public class QueryResponseStreamBidiProcessorDeprecated extends QueryResponseStr
      * 
      * @throws Exception    the <code>{@link #hndQueryService}</code> instance is <code>null<?coce>
      * 
-     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestTransmitted(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
     protected void requestProcessed(QueryDataResponse msgRsp) throws Exception {

@@ -317,9 +317,19 @@ public class TestQueryService {
     /**
      * Shuts down the connection to the Query Service.
      * The instance is no longer active.
+     * 
+     * @throws InterruptedException process interrupted while waiting for shutdown
      */
-    public void shutdown() {
+    public void shutdown() throws InterruptedException {
         this.connTestArchive.shutdownSoft();
+    }
+    
+    /**
+     * Hard shuts down of the connection to the Query Service.
+     * The instance is no longer active.
+     */
+    public void shutdownNow() {
+        this.connTestArchive.shutdownNow();
     }
     
 }

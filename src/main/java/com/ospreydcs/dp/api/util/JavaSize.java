@@ -33,7 +33,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.Instant;
 
-import com.ospreydcs.dp.api.common.BufferedImage;
+import com.ospreydcs.dp.api.model.BufferedImage;
 
 
 /**
@@ -50,9 +50,9 @@ public class JavaSize {
     //
     
     // Primitive type sizes (in bytes)
-    public static final long SZ_byte    = 1;
-    public static final long SZ_boolean = 1;
-    public static final long SZ_char    = 2;
+    public static final long SZ_byte    = 1; // Byte.BYTES
+    public static final long SZ_boolean = 1; // Boolean.BYTES
+    public static final long SZ_char    = 2; // etc.
     public static final long SZ_short   = 2;
     public static final long SZ_int     = 4;
     public static final long SZ_float   = 4;
@@ -81,22 +81,22 @@ public class JavaSize {
     public static final long SZ_STR_RSRVD = SZ_STR_HDR+SZ_STR_HASH+SZ_STR_REF+SZ_STR_LEN;
     
     // Wrapped primitive sizes (in bytes) - includes storage, header, and gap
-//    public static final long SZ_Byte      = 16;
-//    public static final long SZ_Boolean   = 16;
-//    public static final long SZ_Character = 16;
-//    public static final long SZ_Short     = 16;
-//    public static final long SZ_Integer   = 16;
-//    public static final long SZ_Float     = 16;
-//    public static final long SZ_Long      = 24;
-//    public static final long SZ_Double    = 24;
-    public static final long SZ_Byte      = Byte.BYTES;
+    public static final long SZ_Byte      = 16;
     public static final long SZ_Boolean   = 16;
-    public static final long SZ_Character = Character.BYTES;
-    public static final long SZ_Short     = Short.BYTES;
-    public static final long SZ_Integer   = Integer.BYTES;
-    public static final long SZ_Float     = Float.BYTES;
-    public static final long SZ_Long      = Long.BYTES;
-    public static final long SZ_Double    = Double.BYTES;
+    public static final long SZ_Character = 16;
+    public static final long SZ_Short     = 16;
+    public static final long SZ_Integer   = 16;
+    public static final long SZ_Float     = 16;
+    public static final long SZ_Long      = 24;
+    public static final long SZ_Double    = 24;
+//    public static final long SZ_Byte      = Byte.BYTES;
+//    public static final long SZ_Boolean   = 16;
+//    public static final long SZ_Character = Character.BYTES;
+//    public static final long SZ_Short     = Short.BYTES;
+//    public static final long SZ_Integer   = Integer.BYTES;
+//    public static final long SZ_Float     = Float.BYTES;
+//    public static final long SZ_Long      = Long.BYTES;
+//    public static final long SZ_Double    = Double.BYTES;
     
     // Miscellaneous objects
     public static final long SZ_Instant   = 24;
@@ -165,7 +165,7 @@ public class JavaSize {
         
         if (o instanceof String s) return stringSizeof(s);
         if (o instanceof Instant) return SZ_Instant;
-//        if (o instanceof Dimension) return SZ_ImageDimension;
+//        if (o instanceof ArrayDimension) return SZ_ImageDimension;
         if (o instanceof BufferedImage img) return imageSizeof(img);
         
         if (o instanceof Serializable s) return serialSizeof(s);

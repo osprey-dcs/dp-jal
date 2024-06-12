@@ -42,12 +42,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import javax.naming.CannotProceedException;
-import javax.naming.OperationNotSupportedException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.common.ResultRecord;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
@@ -55,7 +54,7 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpDataRequest.CompositeType;
 import com.ospreydcs.dp.api.query.model.DpQueryException;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
-import com.ospreydcs.dp.api.query.model.process.SamplingProcess;
+import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
@@ -84,7 +83,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <h2>Query Requests</h2>
  * Within the Query Service API library, data requests are represented by <code>{@link DpDataRequest}</code> 
  * objects.  These objects contain the defining parameters for a Query Service data request, then transform the 
- * client request into <code>{@QueryRequest}</code> Protobuf messages recognizable by the Query Service gRPC 
+ * client request into <code>{@QueryDataRequest}</code> Protobuf messages recognizable by the Query Service gRPC 
  * interface.
  * </p>
  * <p>
@@ -556,7 +555,7 @@ public class QueryResponseCorrelator {
         private int             cntMsgsProcessed = 0;
         
         /** The result of the thread task */
-        private ResultRecord    recResult = null;
+        private ResultStatus    recResult = null;
         
         
         //
@@ -604,7 +603,7 @@ public class QueryResponseCorrelator {
          * <li>
          * This is the proper way to terminate an active processing thread.  DO NOT use
          * the method <code>{@link Thread#interrupt()}</code> as it will leave a 
-         * <code>null</code> valued <code>{@link ResultRecord}</code> potentially corrupting
+         * <code>null</code> valued <code>{@link ResultStatus}</code> potentially corrupting
          * the normal (external) processing operations.
          * </li>
          * <br/>
@@ -620,7 +619,7 @@ public class QueryResponseCorrelator {
             
             Thread.currentThread().interrupt();
             
-            this.recResult = ResultRecord.newFailure("The data processing thread was terminted externally.");
+            this.recResult = ResultStatus.newFailure("The data processing thread was terminted externally.");
         }
         
         //
@@ -653,11 +652,11 @@ public class QueryResponseCorrelator {
         
         /**
          * <p>
-         * Returns the <code>{@link ResultRecord}</code> containing the status of this processing 
+         * Returns the <code>{@link ResultStatus}</code> containing the status of this processing 
          * task.
          * </p>
          * <p>
-         * The returned value will be <code>{@link ResultRecord#SUCCESS}</code> only if the 
+         * The returned value will be <code>{@link ResultStatus#SUCCESS}</code> only if the 
          * the processing thread has exited normally.  This value implies the following 
          * conditions:
          * <ul>
@@ -687,11 +686,11 @@ public class QueryResponseCorrelator {
          * </ul>
          * </p>
          * 
-         * @return  <code>{@link ResultRecord#SUCCESS}</code> if the thread has exited normally,
-         *          <code>{@link ResultRecord#isFailure()}</code> result if terminated,
+         * @return  <code>{@link ResultStatus#SUCCESS}</code> if the thread has exited normally,
+         *          <code>{@link ResultStatus#isFailure()}</code> result if terminated,
          *          <code>null</code> otherwise
          */
-        public ResultRecord getResult() {
+        public ResultStatus getResult() {
             return this.recResult;
         }
         
@@ -764,7 +763,7 @@ public class QueryResponseCorrelator {
 
                 } catch (InterruptedException e) {
                     if (this.cntMsgsMax != null && (this.cntMsgsProcessed >= this.cntMsgsMax)) {
-                        this.recResult = ResultRecord.SUCCESS;
+                        this.recResult = ResultStatus.SUCCESS;
                         
                         // TODO - remove
                         System.out.println("Interrupted but successful.");
@@ -775,7 +774,7 @@ public class QueryResponseCorrelator {
                     // TODO - remove
                     System.out.println("HA HA HA HA - Interrupted and FAILED.");
                     
-                    this.recResult = ResultRecord.newFailure("Process interrupted externally while waiting for the data buffer.", e);
+                    this.recResult = ResultStatus.newFailure("Process interrupted externally while waiting for the data buffer.", e);
 
                     return;
                 }
@@ -784,7 +783,7 @@ public class QueryResponseCorrelator {
             // TODO - remove
             System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + ": Exiting processing loop.");
             
-            this.recResult = ResultRecord.SUCCESS;
+            this.recResult = ResultStatus.SUCCESS;
         }
     }
     
@@ -1300,7 +1299,7 @@ public class QueryResponseCorrelator {
         }
     
         // Check for successful processing then return processed data
-        ResultRecord    recProcessed = thdDataProcessor.getResult();
+        ResultStatus    recProcessed = thdDataProcessor.getResult();
         if (recProcessed == null || recProcessed.isFailure()) {
             if (BOL_LOGGING)
                 LOGGER.error("{}: Data correlation processing FAILED - {}", JavaRuntime.getCallerName(), recProcessed.message());
@@ -1556,10 +1555,10 @@ public class QueryResponseCorrelator {
         
         if (!bolSuccess) {
             // Get a cause of the streaming error and create message
-            ResultRecord recResult = lstStrmTasks
+            ResultStatus recResult = lstStrmTasks
                                     .stream()
                                     .filter(p  -> p.getResult().isFailure())
-                                    .<ResultRecord>map(p -> p.getResult())
+                                    .<ResultStatus>map(p -> p.getResult())
                                     .findAny()
                                     .get();
             String strErr = recResult.message()+ ( (recResult.hasCause()) ? ", cause=" + recResult.cause() : "");
@@ -1626,7 +1625,7 @@ public class QueryResponseCorrelator {
 //            
 //            // Check for streaming error
 //            if (!taskStream.isSuccess()) {
-//                ResultRecord    recResult = taskStream.getResult();
+//                ResultStatus    recResult = taskStream.getResult();
 //                String          strMsg = JavaRuntime.getQualifiedCallerNameSimple()
 //                        + " - gRPC streaming error; message="
 //                        + recResult.message();
@@ -1669,7 +1668,7 @@ public class QueryResponseCorrelator {
 //
 //            // Check for streaming error
 //            if (!taskStream.isSuccess()) {
-//                ResultRecord    recResult = taskStream.getResult();
+//                ResultStatus    recResult = taskStream.getResult();
 //                String          strMsg = JavaRuntime.getQualifiedCallerNameSimple()
 //                        + " - gRPC streaming error; message="
 //                        + recResult.message();
@@ -1745,10 +1744,10 @@ public class QueryResponseCorrelator {
 //        if (!bolSuccess) {
 //            thdProcessor.terminate();
 //            
-//            ResultRecord recResult = lstStrmTasks
+//            ResultStatus recResult = lstStrmTasks
 //                                    .stream()
 //                                    .filter(p  -> p.getResult().isFailure())
-//                                    .<ResultRecord>map(p -> p.getResult())
+//                                    .<ResultStatus>map(p -> p.getResult())
 //                                    .findAny()
 //                                    .get();
 //            String strMsg = JavaRuntime.getQualifiedCallerNameSimple() 

@@ -30,6 +30,7 @@ package com.ospreydcs.dp.api.query.model.grpc;
 import java.util.SortedSet;
 import java.util.concurrent.Callable;
 
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
@@ -236,10 +237,17 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
         // Attempt bucket insertion for each <code>CorrelatedQueryData</code> instance and get result
         this.bolSuccess = this.setTarget
                 .stream()
-                .<Boolean>map(tar -> tar.insertBucketData(this.msgSubject))
-                .anyMatch( r -> r );
+                .anyMatch(cqd -> cqd.insertBucketData(this.msgSubject));
+//                .<Boolean>map(tar -> tar.insertBucketData(this.msgSubject))
+//                .anyMatch( r -> r );
         
         this.bolExecuted = true;
+        
+        // TODO - Remove
+        if (!this.bolSuccess) {
+            System.out.println("----------- " + JavaRuntime.getQualifiedCallerNameSimple() + "----------");
+            System.out.println("  A Bucket Insertion FAILED.");
+        }
     }
 
 }

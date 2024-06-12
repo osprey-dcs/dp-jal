@@ -34,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
 import com.ospreydcs.dp.api.config.grpc.DpConnectionsConfig;
+import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
@@ -159,15 +160,20 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
     
     /** Data Platform data archive parameters */
     @ACfgOverride.Struct(pathelem="ARCHIVE")
-    public DpArchiveConfig    archive;
+    public DpArchiveConfig      archive;
     
-    /** Data Platform default Query Service parameters */
+    /** Data Platform Ingestion Service API default parameters */
+    @ACfgOverride.Struct(pathelem="INGEST")
+    public DpIngestionConfig    ingest;
+    
+    /** Data Platform Query Service API default parameters */
     @ACfgOverride.Struct(pathelem="QUERY")
-    public DpQueryConfig      query;
+    public DpQueryConfig        query;
     
-    /** Data Platform services connection parameters */
+    /** Data Platform core services connection parameters */
     @ACfgOverride.Struct(pathelem="CONNECTION")
-    public DpConnectionsConfig connections;
+    public DpConnectionsConfig  connections;
+    
     
     /**
      * Structure containing Data Platform archive configuration parameters.

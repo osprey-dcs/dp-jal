@@ -31,7 +31,6 @@ import java.time.Duration;
 import java.time.Instant;
 
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 
@@ -60,6 +59,29 @@ public final class ProtoTime {
     //
     // Utility Methods
     //
+    
+    /**
+     * <p>
+     * Returns a <code>Timestamp</code> message populated with time instant of invocation.
+     * </p>
+     * <p>
+     * Defers to the Java operation <code>{@link Instant#now()}</code> which retrieves the 
+     * time instant from the system clock.  The time instant is used to populate the returned
+     * timestamp message.
+     * </p>
+     * 
+     * @return  <code>Timestamp</code> message containing the current time instance
+     */
+    public static final Timestamp   now() {
+        Instant     insNow = Instant.now();
+        
+        Timestamp   msgTmsNow = Timestamp.newBuilder()
+                .setEpochSeconds(insNow.getEpochSecond())
+                .setNanoseconds(insNow.getNano())
+                .build();
+        
+        return msgTmsNow;
+    }
     
     /**
      * <p>

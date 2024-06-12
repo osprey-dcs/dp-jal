@@ -29,33 +29,57 @@ package com.ospreydcs.dp.api.grpc.util;
 
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.SortedMap;
-import java.util.Vector;
 import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.ospreydcs.dp.api.common.BufferedImage;
-import com.ospreydcs.dp.api.common.BufferedImage.Format;
-import com.ospreydcs.dp.api.model.AAdvancedApi;
+import com.ospreydcs.dp.api.common.AAdvancedApi;
+import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.model.BufferedImage;
+import com.ospreydcs.dp.api.model.BufferedImage.Format;
 import com.ospreydcs.dp.api.model.DpSupportedType;
+import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.ProviderRegistrar;
+import com.ospreydcs.dp.api.model.ProviderUID;
+import com.ospreydcs.dp.api.model.PvMetaRecord;
+import com.ospreydcs.dp.api.model.UniformSamplingClock;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
+import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.common.DataValue.ValueCase;
-import com.ospreydcs.dp.grpc.v1.common.Structure.Field;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
+import com.ospreydcs.dp.grpc.v1.common.DataValueType;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.common.Image;
 import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Structure;
+import com.ospreydcs.dp.grpc.v1.common.Structure.Field;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
+import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderRequest;
+import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse.AckResult;
+import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse.RegistrationResult;
+import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse.ColumnTable;
+import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse.RowMapTable;
+import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse.RowMapTable.DataRow;
 
 /**
  * <p>
@@ -152,7 +176,119 @@ public final class ProtoMsg {
         
         return bldr.build();
     }
+    
+    /**
+     * <p>
+     * Creates a new <code>RegisterProviderRequest</code> message from the the given 
+     * <code>ProviderRegistrar</code> record data.
+     * </p>
+     * <p>
+     * <code>RegisterProviderRequest</code> messages are specific to the Ingestion Service
+     * and are defined in <em>ingestion.proto</em>.  Data Providers must first register
+     * with the Ingestion Service before transmitting data.  This is done through the returned
+     * message which must contain a unique data source name at minimum.
+     * </p>
+     *  
+     * @param recRegistration   record containing data provider registration data 
+     * 
+     * @return  Ingestion Service message for data provider registration
+     */
+    public static RegisterProviderRequest   from(ProviderRegistrar recRegistration) {
+        
+        // Create the Protobuf request message from the argument 
+        RegisterProviderRequest     msgRqst = RegisterProviderRequest.newBuilder()
+                .setProviderName(recRegistration.name())
+                .addAllAttributes(ProtoMsg.createAttributes(recRegistration.attributes()))
+                .setRequestTime(ProtoMsg.from(Instant.now()))
+                .build();
+        
+        return msgRqst;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>SamplingClock</code> message with parameters
+     * equivalent to that of the argument.
+     * </p>
+     * 
+     * @param clk   uniform sampling clock Java object
+     * 
+     * @return  Protobuf <code>SamplingClock</code> message equivalent to argument
+     */
+    public static SamplingClock from(UniformSamplingClock clk) {
+        
+        // Extract argument parameters
+        Instant     insStart = clk.getStartInstant();
+        int         cntSamples = clk.getSampleCount();
+        long        lngPeriodNs = clk.getSamplePeriodDuration().toNanos();
+        
+        // Create the SamplingClock message from populated builder
+        SamplingClock msgClk = SamplingClock.newBuilder()
+                .setStartTime(ProtoMsg.from(insStart))
+                .setCount(cntSamples)
+                .setPeriodNanos(lngPeriodNs)
+                .build();
+        
+        return msgClk;
+    }
 
+    /**
+     * <p>
+     * Creates a new <code>IngestionDataFrame</code> Protobuf message populated with data
+     * from the given argument.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The returned object contains only the timestamp information and column data 
+     * (i.e., time-series data) from the argument.
+     * The <code>{@link IngestionFrame}</code> class has additional properties that are
+     * available for the <code>{@link IngestDataRequest}</code> message.
+     * </p>
+     * 
+     * @param frame client API library ingestion frame containing timestamps and time-series data
+     * 
+     * @return  a new <code>IngestionDataFrame</code> message populated with data from the argument
+     * 
+     * @throws IllegalStateException    the argument was not initialized or contains incomplete data
+     * @throws MissingResourceException the argument had no timestamp assignments
+     * @throws TypeNotPresentException  an unsupported data type was contained in the arugment data
+     * @throws ClassCastException       bad type cast or structured data within argument was not converted 
+     */
+    public static IngestDataRequest.IngestionDataFrame from(IngestionFrame frame) 
+            throws IllegalStateException, MissingResourceException, TypeNotPresentException, ClassCastException  {
+
+        // Extract the argument timestamp information (clock or list) and convert 
+        DataTimestamps msgDataTms = null;
+        if (frame.hasSamplingClock()) {
+            SamplingClock   msgClk = ProtoMsg.from(frame.getSamplingClock());
+            
+            msgDataTms = DataTimestamps.newBuilder().setSamplingClock(msgClk).build();
+        
+        } else if (frame.hasTimestampList()) {
+            TimestampList   msgTms = ProtoMsg.from(frame.getTimestampList());
+            
+            msgDataTms = DataTimestamps.newBuilder().setTimestampList(msgTms).build();
+        
+        } else 
+            throw new MissingResourceException("Ingestion frame was not assigned timestamps.", frame.getClass().getName(), "getSamplingClock(), getTimestampList()");
+        
+        // Extract the argument data and convert to Protobuf messages
+        List<DataColumn>    lstMsgCols = frame
+                .getDataColumns()   // throws IllegalStateException
+                .stream()
+                .<DataColumn>map( colFrm -> ProtoMsg.createDataColumn(colFrm.getName(), colFrm.getValues()) ) // throws exceptions
+                .toList();
+
+        
+        // Use Protobuf message builder to populate with argument data
+        IngestDataRequest.IngestionDataFrame msgFrame = IngestDataRequest.IngestionDataFrame.newBuilder()
+                .setDataTimestamps(msgDataTms)
+                .addAllDataColumns(lstMsgCols)
+                .build();
+        
+        return msgFrame;
+    }
+    
     /**
      * <p>
      * Creates and returns a new Protobuf <code>Image</code> message from the given buffered image.
@@ -209,7 +345,7 @@ public final class ProtoMsg {
      * @return a new <code>DataColumn</code> message populated with the given arguments
      * 
      * @throws TypeNotPresentException the object argument was not one of the supported types (see {@link #createDataValue(Object)})
-     * @throws ClassCastException attempted conversion of list to array to sorted map to structure failed
+     * @throws ClassCastException      type conversion failed, or structured data conversion failed
      * 
      * @see #toDatum(Object)
      */
@@ -290,7 +426,7 @@ public final class ProtoMsg {
      * @return <code>DataValue</code> message containing the given value
      * 
      * @throws TypeNotPresentException the argument was not one of the above types
-     * @throws ClassCastException attempted conversion of list to array to sorted map to structure failed
+     * @throws ClassCastException      type conversion failed, or structured data conversion failed
      * 
      * @see #toArray(List)
      * @see #toStructure(Map)
@@ -484,6 +620,53 @@ public final class ProtoMsg {
     // Protobuf Messages to Java Objects
     //
     
+    
+    /**
+     * <p>
+     * Converts a <code>DataValueType</code> Protobuf enumeration to a <code>{@link DpSupportedType}</code> 
+     * enumeration.
+     * </p>
+     * <p>
+     * This mapping is NOT one-to-one (injective), but it is onto (surjective).  Specifically, there are more
+     * Protobuf primitive types than Java primitive types.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Unsigned Protobuf integral types get mapped to the Java unsigned equivalent.</li>
+     * <li>All Data Platform structured types are part of the <code>DpSupportedType</code> enumeration.</li>
+     * <li>In the case where the argument equals <code>{@link DataValueType#UNRECOGNIZED}</code> the returned 
+     *     value is <code>{@link DpSupportedType#UNSUPPORTED_TYPE}</code>.
+     * </ul>
+     * </p>
+     * 
+     * @param msgValueType  Protobuf supported data type enumeration
+     * @return              Data Platform API supported data type enumeration
+     * 
+     * @throws  TypeNotPresentException    the argument had an recognized type
+     * 
+     * @see DpSupportedType
+     */
+    public static DpSupportedType   toDpSupportedType(DataValueType msgValueType) throws TypeNotPresentException {
+        
+        return switch (msgValueType) {
+        case DATA_TYPE_STRING -> DpSupportedType.STRING;
+        case DATA_TYPE_BOOLEAN -> DpSupportedType.BOOLEAN;
+        case DATA_TYPE_UINT -> DpSupportedType.INTEGER;
+        case DATA_TYPE_ULONG -> DpSupportedType.LONG;
+        case DATA_TYPE_INT -> DpSupportedType.INTEGER;
+        case DATA_TYPE_LONG -> DpSupportedType.LONG;
+        case DATA_TYPE_FLOAT -> DpSupportedType.FLOAT;
+        case DATA_TYPE_DOUBLE -> DpSupportedType.DOUBLE;
+        case DATA_TYPE_BYTES -> DpSupportedType.BYTE_ARRAY;
+        case DATA_TYPE_ARRAY -> DpSupportedType.ARRAY;
+        case DATA_TYPE_STRUCT -> DpSupportedType.STRUCTURE;
+        case DATA_TYPE_IMAGE -> DpSupportedType.IMAGE;
+        case UNRECOGNIZED -> DpSupportedType.UNSUPPORTED_TYPE; // throw new UnsupportedOperationException("Unimplemented case: " + msgValueType);
+        default -> throw new IllegalArgumentException("Unexpected value: " + msgValueType);
+        };
+    }
+    
     /**
      * <p>
      * Converts the given <code>Timestamp</code> message to a Long Unix epoch value in nanoseconds.
@@ -558,6 +741,208 @@ public final class ProtoMsg {
         byte[] arrData = bsData.toByteArray();
         
         return BufferedImage.from(null, Instant.now(), enmFmt, null, arrData);
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>ProviderUID</code> record from the contents of the given
+     * <code>RegisterProviderResponse</code> message.
+     * </p>
+     * <p>
+     * The data provider registration is unique to the Ingestion Service and the 
+     * <code>RegisterProviderResponse</code> message is found in <em>ingestion.proto</em>.
+     * The message contains the results of a provider registration operation which this
+     * method converts to a client API library resource.
+     * </p>
+     * 
+     * @param msgRsp    data provider registration response from this Ingestion Service
+     * 
+     * @return  new <code>ProviderUID</code> record containing data provider's UID
+     * 
+     * @throws MissingResourceException message contained an exception, no provider UID
+     */
+    public static ProviderUID   toProviderUID(RegisterProviderResponse msgRsp) throws MissingResourceException {
+        
+        // Exception checking
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
+            ExceptionalResultStatus enmStatus = msgExcept.getExceptionalResultStatus();
+            String                  strDetails = msgExcept.getMessage();
+            
+            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                            + " - Provider registration failed: " 
+                            + " status=" + enmStatus
+                            + ", details=" + strDetails;
+            String  strClass = RegisterProviderResponse.class.getName();
+            String  strKey = "getRegistrationResult()";
+            
+            throw new MissingResourceException(strMsg, strClass, strKey);
+        }
+        
+        // Extract the provider UID and create return value
+        RegistrationResult  msgResult = msgRsp.getRegistrationResult();
+        int                 intUid = msgResult.getProviderId();
+        
+        return new ProviderUID(intUid);
+    }
+    
+    /**
+     * <p>
+     * Create a new, initialized instance of <code>UniformSamplingClock</code> from the given
+     * Protobuf message representing a uniform sampling interval.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The <code>{@link UniformSamplingClock}</code> class is essentially equivalent in defining
+     * attributes as the Protobuf <code>{@link SamplingClock}</code> message, however it is more
+     * general and offers other features such as timestamp generation.
+     * </p>
+     * 
+     * @param msgClock    Protobuf message representing a finite-duration uniform sampling clock
+     * 
+     * @return  new <code>UniformSamplingClock</code> instance initialized from the argument
+     */
+    public static UniformSamplingClock    toUniformSamplingClock(SamplingClock msgClock) {
+        Instant insStart = ProtoMsg.toInstant(msgClock.getStartTime());
+        int     intCount = msgClock.getCount();
+        long    lngPeriod = msgClock.getPeriodNanos();
+        
+        return new UniformSamplingClock(insStart, intCount, lngPeriod, ChronoUnit.NANOS);
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>{@link PvMetaRecord}</code> populated from the given Query Service metadata query 
+     * response message.
+     * </p>
+     * <p>
+     * Converts the given process variable metadata message into an API metadata record by extracting all 
+     * message fields and converting them into API resources. 
+     * </p>
+     * <p>
+     * <h2>TODO</h2>
+     * <ul>
+     * <li>
+     * <b>Data Type</b> - The data type in the <code>PvInfo</code> message is specified as a string and must be 
+     * converted to a corresponding <code>DpSupportedType</code> enumeration.  Here we assume the string value is 
+     * the name of the <code>{@link DataValueType}</code> enumeration in <code>common.proto</code>.  The current
+     * condition is brittle and a more robust solution should be implemented.
+     * </li>
+     * <br/>
+     * <li>
+     * <b>Data Type</b> - Currently everything is kluged because the Query Service returns a
+     * string with value <code>DOUBLE</code> (all types are double right now).  Thus, this is
+     * not even a constant name within enumeration <code>{@link DataValueType}</code>.  
+     * So the kluge is to append the string "DATA_TYPE_" to the returned value.
+     * </li>
+     * <br/>
+     * <li>
+     * <b>Non-Uniform Sampling</b> - If the process variable had explicit timestamps, rather than a sampling
+     * clock, only the <code>startTime</code> field of the <code>PvInfo</code> message is set.  This is not
+     * particularly robust and should be addressed in the future.  The method here responds by setting the
+     * <code>lastClock</code> record attribute to <code>null</code> 
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param msgPvInfo Query Service process variable metadata response message
+     * 
+     * @return  equivalent API process variable metadata record
+     * 
+     * @throws IllegalArgumentException data type name in the message was not a <code>DataValueType</code> enumeration
+     * @throws TypeNotPresentException  data type in message does not map to <code>DpSupportedType</code> 
+     */
+    public static PvMetaRecord  toPvMetaRecord(QueryMetadataResponse.MetadataResult.PvInfo msgPvInfo) 
+            throws IllegalArgumentException, TypeNotPresentException {
+        
+//        // Check the type value string
+//        String          strType = msgPvInfo.getLastBucketDataType();
+//        boolean         bolValidType = false;
+//        for (DataValueType msgType : DataValueType.values()) {
+//            if ( strType.equals(msgType.name()) ) {
+//                    bolValidType = true;
+//                    break;
+//            }
+//        }
+//        if (!bolValidType)
+//            throw new IllegalArgumentException("Last PV data type " + strType + " is NOT a DataValueType enumeration name.");
+        
+        // Extract the name and timestamps
+        String      strName = msgPvInfo.getPvName();
+        Instant     insFirst = ProtoMsg.toInstant(msgPvInfo.getFirstTimestamp());
+        Instant     insLast = ProtoMsg.toInstant(msgPvInfo.getLastTimestamp());
+
+        // Extract the type value
+        String          strType = msgPvInfo.getLastBucketDataType();
+        
+        // TODO - fix this kluge!
+        strType = "DATA_TYPE_" + strType;
+        // ------------------------
+        
+        DataValueType   msgType = DataValueType.valueOf(DataValueType.class, strType);  // throws IllegalArgumentException
+        DpSupportedType enmType = ProtoMsg.toDpSupportedType(msgType);                    // throws TypeNotPresentException
+
+        // Extract the sampling clock
+        SamplingClock           msgClock = msgPvInfo.getLastSamplingClock();
+        UniformSamplingClock    apiClock;
+        
+        if (msgClock.getCount() > 0)
+            apiClock = ProtoMsg.toUniformSamplingClock(msgClock);
+        else
+            apiClock = null;
+        
+        // Create metadata record
+        PvMetaRecord    recPvInfo = new PvMetaRecord(strName, enmType, apiClock, insFirst, insLast);
+        
+        return recPvInfo;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>IngestionResponse</code> record populated with the fields
+     * of the given argument.
+     * </p>
+     * 
+     * @param msgRsp    Ingestion Service ingest data response message
+     * 
+     * @return new <code>IngestionResponse</code> record equivalent to the argument
+     * 
+     * @throws MissingResourceException the argument contained neither an acknowledgment or an exception
+     */
+    public static IngestionResponse toIngestionResponse(IngestDataResponse msgRsp) throws MissingResourceException {
+        
+        // Extract message data
+        int     intProdiverId = msgRsp.getProviderId();
+        String  strRequestId = msgRsp.getClientRequestId();
+        Instant insTimestamp = ProtoMsg.toInstant(msgRsp.getResponseTime());
+        
+        // In case of acknowledgment
+        if (msgRsp.hasAckResult()) {
+            AckResult   msgAck = msgRsp.getAckResult();
+            
+            int     cntCols = msgAck.getNumColumns();
+            int     cntRows = msgAck.getNumRows();
+            
+            return IngestionResponse.from(intProdiverId, strRequestId, insTimestamp, cntCols, cntRows);
+        }
+        
+        // In case of exception
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
+            
+            String  strType = msgExcept.getExceptionalResultStatus().toString();
+            String  strDetail = msgExcept.getMessage();
+            
+            return IngestionResponse.from(intProdiverId, strRequestId, insTimestamp, strType, strDetail);
+        }
+        
+        // We should never get here
+        throw new MissingResourceException(
+                JavaRuntime.getQualifiedCallerNameSimple() 
+                    + " - message containing neither an acknowledgement or an exception.",
+                IngestDataResponse.class.getName(),
+                "getAckResult(), getExceptionalResult()"
+                );
     }
     
     
@@ -699,10 +1084,10 @@ public final class ProtoMsg {
      * @throws  TypeNotPresentException unsupported data type encountered
      * @see #extractValue(DataValue)
      */
-    public static Vector<Object> extractValues(Array msgArray) throws TypeNotPresentException {
+    public static ArrayList<Object> extractValues(Array msgArray) throws TypeNotPresentException {
         List<DataValue> lstVals = msgArray.getDataValuesList();
         List<Object>    lstObjs = lstVals.stream().map(ProtoMsg::extractValue).toList();
-        Vector<Object>  vecObjs = new Vector<>(lstObjs);
+        ArrayList<Object>  vecObjs = new ArrayList<>(lstObjs);
         return vecObjs;
     }
     
@@ -860,6 +1245,7 @@ public final class ProtoMsg {
             case ARRAYVALUE -> ProtoMsg.extractValues(msgDataValue.getArrayValue());
             case STRUCTUREVALUE -> ProtoMsg.extractValues(msgDataValue.getStructureValue());
             case IMAGEVALUE -> ProtoMsg.toBufferedImage( msgDataValue.getImageValue() );
+            case TIMESTAMPVALUE -> ProtoMsg.toInstant(msgDataValue.getTimestampValue());
             case VALUE_NOT_SET -> null;
 //                throw new IllegalArgumentException("The data value was not set.");
             default ->
@@ -956,6 +1342,8 @@ public final class ProtoMsg {
             obj = msgVal.getStructureValue();
         else if (clsVal.equals(Image.class))
             obj = msgVal.getImageValue();
+        else if (clsVal.equals(Instant.class))
+            obj = msgVal.getTimestampValue();
         else
             throw new TypeNotPresentException("Unsupported class type " + clsVal.getName(), null);
         
@@ -984,27 +1372,62 @@ public final class ProtoMsg {
         if (msgTbl == null) 
             return "The DataTable is null";
         
+        // The output buffer
         StringBuffer    buf = new StringBuffer();
         
-        List<DataColumn>      lstData     = msgTbl.getDataColumnsList();
+        // For a column-oriented data table
+        if (msgTbl.hasColumnTable()) {
+            ColumnTable     msgColTbl = msgTbl.getColumnTable();
+            
+            List<DataColumn>      lstData     = msgColTbl.getDataColumnsList();
 
-        buf.append("ColumnsList: (size = " + lstData.size() + ") \n");
-        
-        for (DataColumn data : lstData) {
-            String      strName  = data.getName();
-            List<DataValue> lstDatum = data.getDataValuesList();
-            buf.append("  Data: Name=" + strName + ", getDataList.size()=" + lstDatum.size() + ", getDataList.get(0)=" + lstDatum.get(0));
+            buf.append("ColumnsList: (size = " + lstData.size() + ") \n");
 
-            DataValue datum    = data.getDataValues(0);
-            Map<FieldDescriptor, Object> mapFlds = datum.getAllFields();
-            buf.append("    DataValue = getDataList().get(0): \n");
-            buf.append("       Datum.getAllFields()= {" );
-            mapFlds.forEach( (k,v) -> buf.append("(FieldDescriptor=" + k.toString() + ", Value=" + v.toString() +")"));
-            buf.append("}\n");
+            for (DataColumn msgCol : lstData) {
+                String      strName  = msgCol.getName();
+                List<DataValue> lstDatum = msgCol.getDataValuesList();
+                buf.append("  Data: Name=" + strName + ", getDataList.size()=" + lstDatum.size() + ", getDataList.get(0)=" + lstDatum.get(0));
 
+                DataValue datum    = msgCol.getDataValues(0);
+                Map<FieldDescriptor, Object> mapFlds = datum.getAllFields();
+                buf.append("    DataValue = getDataList().get(0): \n");
+                buf.append("       Datum.getAllFields()= {" );
+                mapFlds.forEach( (k,v) -> buf.append("(FieldDescriptor=" + k.toString() + ", Value=" + v.toString() +")"));
+                buf.append("}\n");
+
+            }
+            
+            return buf.toString();
         }
         
-        return buf.toString();
+        // For a row-mapped data table
+        if (msgTbl.hasRowMapTable()) {
+            RowMapTable msgRowTbl = msgTbl.getRowMapTable();
+            
+            List<String>    lstColNms = msgRowTbl.getColumnNamesList();
+            List<DataRow>   lstMsgRows = msgRowTbl.getRowsList();
+            
+            buf.append("Column names (size = " + lstColNms.size() + "): " + lstColNms + "\n");
+            buf.append("RowList (size = " + lstMsgRows.size() + "); \n");
+            
+            for (DataRow msgRow : lstMsgRows) {
+                Map<String, DataValue> mapVals = msgRow.getColumnValuesMap();
+
+                buf.append("  ");
+                for (Map.Entry<String, DataValue> entry : mapVals.entrySet()) {
+                    String  strNm = entry.getKey();
+                    Object  objVal = ProtoMsg.extractValue(entry.getValue());
+                    
+                    buf.append(strNm + ":" + objVal.toString() + ", ");
+                }
+                buf.append("\n");
+            }
+            
+            return buf.toString();
+        }
+        
+        // The data table message contained no data
+        return "The DataTable contained neither ColumnTable message or RowMapMessage.";
     }
     
     

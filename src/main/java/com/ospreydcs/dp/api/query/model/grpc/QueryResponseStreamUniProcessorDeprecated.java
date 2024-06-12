@@ -45,7 +45,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * represent the backward stream handle (data sink for the Query Service). All processing
  * is done in the base class <code>{@link QueryResponseStreamProcessor}</code>.
  * No processing or streaming operations are performed in the 
- * <code>{@link #requestProcessed(QueryResponse)}</code> override.
+ * <code>{@link #requestTransmitted(QueryResponse)}</code> override.
  * </p>
  * <p>
  * This class implements the <code>{@link #run()}</code> base class requirement for independent
@@ -158,7 +158,7 @@ public final class QueryResponseStreamUniProcessorDeprecated extends QueryRespon
      *
      * @param   msgRsp  response message that was just processed (unused)
      * 
-     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestProcessed(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestTransmitted(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
     protected void requestProcessed(QueryDataResponse msgRsp) {
