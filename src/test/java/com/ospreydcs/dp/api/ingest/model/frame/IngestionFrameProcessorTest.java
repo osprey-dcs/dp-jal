@@ -42,7 +42,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
@@ -399,7 +399,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#addFrame(com.ospreydcs.dp.api.ingest.model.IngestionFrame)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#addFrame(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
      */
     @Test
     public final void testAddFrame() {

@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.model;
 
+import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -67,8 +68,16 @@ import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
  *
  * @see #from(SamplingClock)
  */
-public class UniformSamplingClock implements Comparable<Instant> { 
+public class UniformSamplingClock implements Comparable<Instant>, Serializable { 
 
+    //
+    // Class Constants
+    //
+    
+    /** The class serialization UID */ 
+    private static final long serialVersionUID = -5072057926184917173L;
+
+    
     //
     // Defining Attributes
     //

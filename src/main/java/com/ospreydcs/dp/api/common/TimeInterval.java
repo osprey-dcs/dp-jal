@@ -12,6 +12,7 @@
  */
 package com.ospreydcs.dp.api.common;
 
+import java.io.Serializable;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
@@ -44,8 +45,11 @@ import java.util.Comparator;
  * @see java.time.Instant
  * @see java.time.Duration
  */
-public record TimeInterval(Instant begin, Instant end) {
+public record TimeInterval(Instant begin, Instant end) implements Serializable {
 
+    
+    
+    
     //
     // Class Resources
     //

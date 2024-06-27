@@ -43,7 +43,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.ospreydcs.dp.api.common.AAdvancedApi;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
-import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.model.BufferedImage;
 import com.ospreydcs.dp.api.model.BufferedImage.Format;
 import com.ospreydcs.dp.api.model.DpSupportedType;

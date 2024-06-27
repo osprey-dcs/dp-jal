@@ -25,8 +25,9 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest.model;
+package com.ospreydcs.dp.api.ingest;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -92,7 +93,14 @@ import com.ospreydcs.dp.api.util.JavaSize;
  * @since Mar 29, 2024
  *
  */
-public class IngestionFrame {
+public class IngestionFrame implements Serializable {
+
+    //
+    // Class Constants
+    //
+    
+    /** Serialization UID for interface <code>Serializable</code> */
+    private static final long serialVersionUID = -7002454987009867231L;
 
     
     //

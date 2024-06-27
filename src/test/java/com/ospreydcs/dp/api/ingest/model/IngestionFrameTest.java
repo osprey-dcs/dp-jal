@@ -47,6 +47,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
@@ -170,7 +171,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#IngestionFrame()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#IngestionFrame()}.
      */
     @Test
     public final void testIngestionFrame() {
@@ -202,7 +203,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#IngestionFrame(com.ospreydcs.dp.api.model.UniformSamplingClock, java.util.ArrayList)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#IngestionFrame(com.ospreydcs.dp.api.model.UniformSamplingClock, java.util.ArrayList)}.
      */
     @Test
     public final void testIngestionFrameUniformSamplingClockArrayListOfIDataColumnOfObject() {
@@ -238,7 +239,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#IngestionFrame(com.ospreydcs.dp.api.model.UniformSamplingClock, java.util.ArrayList, java.util.Map)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#IngestionFrame(com.ospreydcs.dp.api.model.UniformSamplingClock, java.util.ArrayList, java.util.Map)}.
      */
     @Test
     public final void testIngestionFrameUniformSamplingClockArrayListOfIDataColumnOfObjectMapOfStringString() {
@@ -282,7 +283,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#IngestionFrame(java.util.ArrayList, java.util.ArrayList)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#IngestionFrame(java.util.ArrayList, java.util.ArrayList)}.
      */
     @Test
     public final void testIngestionFrameArrayListOfInstantArrayListOfIDataColumnOfObject() {
@@ -320,7 +321,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#IngestionFrame(java.util.ArrayList, java.util.ArrayList, java.util.Map)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#IngestionFrame(java.util.ArrayList, java.util.ArrayList, java.util.Map)}.
      */
     @Test
     public final void testIngestionFrameArrayListOfInstantArrayListOfIDataColumnOfObjectMapOfStringString() {
@@ -364,7 +365,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#assignSamplingClock(com.ospreydcs.dp.api.model.UniformSamplingClock)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#assignSamplingClock(com.ospreydcs.dp.api.model.UniformSamplingClock)}.
      */
     @Test
     public final void testAssignSamplingClock() {
@@ -383,7 +384,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#assignTimestampList(java.util.ArrayList)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#assignTimestampList(java.util.ArrayList)}.
      */
     @Test
     public final void testAssignTimestampList() {
@@ -402,7 +403,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#addColumn(com.ospreydcs.dp.api.model.IDataColumn)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#addColumn(com.ospreydcs.dp.api.model.IDataColumn)}.
      */
     @Test
     public final void testAddColumn() {
@@ -438,7 +439,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#addColumns(java.util.Collection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#addColumns(java.util.Collection)}.
      */
     @Test
     public final void testAddColumns() {
@@ -491,7 +492,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#setFrameLabel(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#setFrameLabel(java.lang.String)}.
      */
     @Test
     public final void testSetFrameLabel() {
@@ -506,7 +507,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#setFrameTimestamp(java.time.Instant)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#setFrameTimestamp(java.time.Instant)}.
      */
     @Test
     public final void testSetFrameTimestamp() {
@@ -521,7 +522,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#addAttribute(java.lang.String, java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#addAttribute(java.lang.String, java.lang.String)}.
      */
     @Test
     public final void testAddAttribute() {
@@ -540,7 +541,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#addAttributes(java.util.Map)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#addAttributes(java.util.Map)}.
      */
     @Test
     public final void testAddAttributes() {
@@ -556,7 +557,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#checkFrameConsistency()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#checkFrameConsistency()}.
      */
     @Test
     public final void testCheckFrameConsistency() {
@@ -572,7 +573,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#allocationSizeFrame()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#allocationSizeFrame()}.
      */
     @Test
     public final void testAllocationSize() {
@@ -596,7 +597,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#removeRowsAtHead(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#removeRowsAtHead(int)}.
      */
     @Test
     public final void testRemoveHead() {
@@ -656,7 +657,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#removeRowsAtTail(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#removeRowsAtTail(int)}.
      */
     @Test
     public final void testRemoveTail() {
@@ -716,7 +717,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#removeColumnsByName(Collection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#removeColumnsByName(Collection)}.
      */
     @Test
     public final void testRemoveColumnsByName() {
@@ -787,7 +788,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#removeColumnsByIndex(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#removeColumnsByIndex(int)}.
      */
     @Test
     public final void testRemoveColumnsByIndexFromInt() {
@@ -851,7 +852,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#removeColumnsByIndex(Collection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#removeColumnsByIndex(Collection)}.
      */
     @Test
     public final void testRemoveColumnsByIndexFromCollection() {
@@ -916,7 +917,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#copy()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#copy()}.
      */
     @Test
     public final void testCopy() {
@@ -935,7 +936,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#hasSamplingClock()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#hasSamplingClock()}.
      */
     @Test
     public final void testHasSamplingClock() {
@@ -949,7 +950,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#hasTimestampList()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#hasTimestampList()}.
      */
     @Test
     public final void testHasTimestampList() {
@@ -963,7 +964,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#hasData()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#hasData()}.
      */
     @Test
     public final void testHasData() {
@@ -979,7 +980,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#hasAttributes()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#hasAttributes()}.
      */
     @Test
     public final void testHasAttributes() {
@@ -998,7 +999,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getFrameLabel()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getFrameLabel()}.
      */
     @Test
     public final void testGetFrameLabel() {
@@ -1012,7 +1013,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getFrameTimestamp()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getFrameTimestamp()}.
      */
     @Test
     public final void testGetFrameTimestamp() {
@@ -1026,7 +1027,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getAttributes()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getAttributes()}.
      */
     @Test
     public final void testGetAttributes() {
@@ -1045,7 +1046,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getSamplingClock()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getSamplingClock()}.
      */
     @Test
     public final void testGetSamplingClock() {
@@ -1059,7 +1060,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getTimestampList()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getTimestampList()}.
      */
     @Test
     public final void testGetTimestampList() {
@@ -1073,7 +1074,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getColumnNames()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getColumnNames()}.
      */
     @Test
     public final void testGetColumnNames() {
@@ -1097,7 +1098,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getColumnCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getColumnCount()}.
      */
     @Test
     public final void testGetColumnCount() {
@@ -1113,7 +1114,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getRowCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getRowCount()}.
      */
     @Test
     public final void testGetRowCount() {
@@ -1129,7 +1130,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getDataColumn(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getDataColumn(int)}.
      */
     @Test
     public final void testGetDataColumnInt() {
@@ -1152,7 +1153,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getDataColumn(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getDataColumn(java.lang.String)}.
      */
     @Test
     public final void testGetDataColumnString() {
@@ -1175,7 +1176,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.IngestionFrame#getDataColumns()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#getDataColumns()}.
      */
     @Test
     public final void testGetDataColumns() {

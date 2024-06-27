@@ -28,6 +28,7 @@
 package com.ospreydcs.dp.api.model;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
@@ -74,7 +75,7 @@ import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
  *    <code>double</code> -> <code>java.lang.Double</code>
  *    <code>string</code> -> <code>Java.lang.String</code> 
  *    <code>bytes</code> -> <code>com.google.Protobuf.ByteString</code>
- *    <code>Array</code> -> <code>java.util.Vector&lt;Object&gt;</code>
+ *    <code>Array</code> -> <code>java.util.List&lt;Object&gt;</code>
  *    <code>Structure</code> -> <code>java.util.Map&lt;Object&gt;</code>
  *    <code>Image</code> -> <code>com.ospreydcs.dp.api.common.BufferedImage</code>
  *    <code>Timestamp</code> -> <code>java.time.Instant</code>
@@ -171,7 +172,7 @@ public enum DpSupportedType {
      * <code>Array</code> -> <code>java.util.Vector&lt;Object&gt;</code>
      */
     @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented withiin dp-services")
-    ARRAY(Vector.class),
+    ARRAY(List.class),
     
     /**
      * Data structure type (contains fields of <code>Structure.Field</code> messages).

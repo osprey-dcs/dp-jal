@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.model;
 
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -57,7 +58,7 @@ import java.util.List;
  * @since Oct 2, 2022
  *
  */
-public interface IDataColumn<T extends Object> {
+public interface IDataColumn<T extends Object> extends Iterable<T> {
 
     
     //
@@ -307,6 +308,13 @@ public interface IDataColumn<T extends Object> {
         return (List<T>) lstVals;
     };
     
+    /**
+     *
+     * @see @see java.lang.Iterable#iterator()
+     */
+    default public Iterator<T>  iterator() {
+        return this.getValuesTyped().iterator();
+    }
     
 //    //
 //    // Data Modification

@@ -43,7 +43,6 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
@@ -281,7 +280,7 @@ public class DpIngestionServiceTest {
     }
     
     /**
-     * Test method for {@link DpIngestionService#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.model.IngestionFrame)
+     * Test method for {@link DpIngestionService#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.IngestionFrame)
      */
     @Test
     public final void testIngestProviderUidIngestionFrameSmall() {
@@ -322,7 +321,7 @@ public class DpIngestionServiceTest {
 
 
     /**
-     * Test method for {@link DpIngestionService#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.model.IngestionFrame)
+     * Test method for {@link DpIngestionService#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.IngestionFrame)
      */
     @Test
     public final void testIngestProviderUidIngestionFrameLarge() {

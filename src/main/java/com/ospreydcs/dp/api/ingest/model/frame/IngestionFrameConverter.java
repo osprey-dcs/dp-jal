@@ -31,7 +31,7 @@ import java.util.MissingResourceException;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
-import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.grpc.v1.common.EventMetadata;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
