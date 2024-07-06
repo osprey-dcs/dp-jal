@@ -401,7 +401,7 @@ public class DpIngestionStream extends
      * 
      * @return  list of responses from the Ingestion Service to data ingestion messages
      * 
-     * @throws IllegalStateException    attempted to close an opened stream
+     * @throws IllegalStateException    attempted to close an unopened stream
      * @throws InterruptedException     internal processor interrupted while waiting for pending tasks
      */
     synchronized
