@@ -336,14 +336,14 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
     private boolean bolActive = false;
     
     /** Has the supplier been shutdown */
-    private boolean bolShudtdown = false;
+    private boolean bolShutdown = false;
   
     
-//    /** The number (and ID generator) of frame decomposition threads */
+//    /** DEBUG - The number (and ID generator) of frame decomposition threads */
 //    private int     cntDecompThrds = 0;
 //    
-//    /** The number (and ID generator) of frame-to-message conversion tasks */
-//    private int     cntConvertThrds = 0;
+    /** DEBUG - The number (and ID generator) of frame-to-message conversion tasks */
+    private int     cntConvertThrds = 0;
     
     
     //
@@ -351,7 +351,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
     //
     
     /** Incoming ingestion frame buffer */
-    private final BlockingQueue<IngestionFrame>     queFrameRaw = new LinkedBlockingQueue<>();
+    private final BlockingQueue<IngestionFrame>     queFramesRaw = new LinkedBlockingQueue<>();
     
     /** Processed (e.g., decomposed) frame queue ready for frame-to-message conversion */ 
     private final BlockingQueue<IngestionFrame>     queFramesPrcd = new LinkedBlockingQueue<>();
@@ -366,10 +366,10 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
     /** The pool of frame-to-message conversion threads */
     private final ExecutorService               xtorConvertTasks = Executors.newCachedThreadPool();
     
-    /** Collection of future results from decomposition tasks - not used */
+    /** Collection of future results from decomposition tasks - used in shutdown */
     private final Collection<Future<Boolean>>   setDecompFutures = new LinkedList<>();
 
-    /** Collection of future results from frame-to-message conversion tasks - not used */
+    /** Collection of future results from frame-to-message conversion tasks - used in shutdown */
     private final Collection<Future<Boolean>>   setConvertFutures = new LinkedList<>();
 
     
@@ -657,6 +657,21 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
     
     /**
      * <p>
+     * Returns the number of concurrent processing threads.
+     * </p>
+     * <p>
+     * The concurrency count value returned is for both the ingestion frame decomposition tasks and the 
+     * tasks that convert ingestion frames to gRPC messages for transport to the Ingestion Service.
+     * </p>
+     * 
+     * @return  the number of thread tasks of each type (decomposition and message conversion)
+     */
+    public int  getConcurrencyCount() {
+        return this.cntConcurrencyThrds;
+    }
+    
+    /**
+     * <p>
      * Determine whether or not ingestion frame decomposition option is enabled.
      * </p>
      * 
@@ -733,7 +748,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * @return  <code>true</code> if a shutdown operation has been invoked, <code>false</code> otherwise
      */
     public boolean hasShutdown() {
-        return this.bolShudtdown;
+        return this.bolShutdown;
     }
     
     
@@ -803,7 +818,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
         // Create all the thread tasks and submit them to their corresponding thread executor pool
         for (int iTask=0; iTask<cntTasks; iTask++) {
             Callable<Boolean>   tskDecomp = this.createFrameDecompositionTask();
-            Callable<Boolean>   tskConvert = this.createFrameToMessageTask();
+            Callable<Boolean>   tskConvert = this.createFrameConvertToMessageTask();
 
             Future<Boolean>     futDecomp = this.xtorDecompTasks.submit(tskDecomp);
             Future<Boolean>     futConvert = this.xtorConvertTasks.submit(tskConvert);
@@ -831,7 +846,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * however. 
      * 
      * @return <code>true</code> if the message supplier was shutdown,
-     *         <code>false</code> if the message supplier was not active
+     *         <code>false</code> if the message supplier was not active or shutdown operation failed
      * 
      * @throws InterruptedException interrupted while waiting for processing threads to complete
      */
@@ -842,19 +857,25 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
         if (!this.bolActive)
             return false;
         
+        // This will terminate thread task loops when queues are empty
         this.bolActive = false;
 
         // Shutdown all processor tasks 
         this.xtorDecompTasks.shutdown();
         this.xtorConvertTasks.shutdown();
+
+        this.setDecompFutures.forEach(future -> future.cancel(false));
+        this.setConvertFutures.forEach(future -> future.cancel(false));
         
         // Wait for all pending tasks to complete
-        this.xtorDecompTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
-        this.xtorConvertTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
+        boolean bolShutdownDecomp = this.xtorDecompTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
+        boolean bolShutdownConvert = this.xtorConvertTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
         
-        this.bolShudtdown = true;
+        boolean bolResult = bolShutdownDecomp && bolShutdownConvert;
         
-        return true;
+        this.bolShutdown = true;
+        
+        return bolResult;
     }
     
     /**
@@ -874,12 +895,15 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
         
         this.xtorDecompTasks.shutdownNow();
         this.xtorConvertTasks.shutdownNow();
+
+        this.setDecompFutures.forEach(future -> future.cancel(true));
+        this.setConvertFutures.forEach(future -> future.cancel(true));
         
-        this.queFrameRaw.clear();
+        this.queFramesRaw.clear();
         this.queFramesPrcd.clear();
         this.queMsgRequests.clear();
         
-        this.bolShudtdown = true;
+        this.bolShutdown = true;
     }
     
     /**
@@ -963,7 +987,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
         
         // If no back-presssure enforcement just add all frames to raw frame buffer and return
         if (!this.bolBackPressure) {
-            this.queFrameRaw.addAll(lstFrames);
+            this.queFramesRaw.addAll(lstFrames);
             
             return;
         }
@@ -974,7 +998,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
             if (this.queFramesPrcd.size() >= this.intQueueCapacity)
                 this.cndMsgQueReady.await();  // throws InterruptedException
 
-            this.queFrameRaw.addAll(lstFrames);
+            this.queFramesRaw.addAll(lstFrames);
 
         } finally {
             this.lckMsgQueReady.unlock();
@@ -1072,7 +1096,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
         this.lckMsgQueEmpty.lock();
         try {
             // Return immediately if all queues are empty and nothing is pending 
-            if (this.queMsgRequests.isEmpty() && this.queFramesPrcd.isEmpty() && this.queFrameRaw.isEmpty() && !this.hasPendingMessages())
+            if (this.queMsgRequests.isEmpty() && this.queFramesPrcd.isEmpty() && this.queFramesRaw.isEmpty() && !this.hasPendingMessages())
                 return;
             
             else
@@ -1259,11 +1283,12 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
 
             // While active - Continuously process frames from raw frame buffer
             // - second OR conditional allows for soft shutdowns
-            while (this.bolActive || this.hasPendingMessages() || !this.queFrameRaw.isEmpty()) {
+//            while (this.bolActive || this.hasPendingMessages() || !this.queFramesRaw.isEmpty()) {
+            while (this.bolActive || !this.queFramesRaw.isEmpty()) {
                 
                 // Retrieve an unprocessed frame from the queue - blocking until available
                 //  - this is thread safe according to Java BlockingQueue documentation
-                IngestionFrame frmRaw = this.queFrameRaw.poll(INT_TIMEOUT_TASK_POLL, TU_TIMEOUT_TASK_POLL);
+                IngestionFrame frmRaw = this.queFramesRaw.poll(INT_TIMEOUT_TASK_POLL, TU_TIMEOUT_TASK_POLL);
                 
                 if (frmRaw == null)
                     continue;
@@ -1298,7 +1323,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
 //            System.out.println("Terminating: binner thread #" +intThrdId);
             
             // Everything was successful if the raw frame buffer is empty
-            return !this.bolActive && this.queFrameRaw.isEmpty();
+            return !this.bolActive && this.queFramesRaw.isEmpty();
         };
         
         return task;
@@ -1316,7 +1341,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * 
      * @return  a new <code>Callable</code> instance converting ingestion frames to request messages
      */
-    private Callable<Boolean>   createFrameToMessageTask() {
+    private Callable<Boolean>   createFrameConvertToMessageTask() {
         
         // Define the task operations as a lambda function
         Callable<Boolean>   task = () -> {
@@ -1324,14 +1349,15 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
             // Ingestion frame converter used for all message creation
             IngestionFrameConverter converter = IngestionFrameConverter.from(this.intProviderUid);
             
-//            // TODO - Remove
-//            // Debugging - Create ID
-//            final int   intThrdId = this.cntConvertThrds++;
+            // TODO - Remove
+            // Debugging - Create ID
+            final int   intThrdId = this.cntConvertThrds++;
             
             
-            // While active - Continuously convert frames in processed frame buffer
+            // While active - Continuously convert frames in processed frame buffer to gRPC messages 
             // - second OR conditional allows for soft shutdowns
-            while (this.bolActive || this.hasPendingMessages() || !this.queFramesPrcd.isEmpty()) {
+//            while (this.bolActive || this.hasPendingMessages() || !this.queFramesPrcd.isEmpty()) {
+            while (this.bolActive || !this.queFramesPrcd.isEmpty()) {
 //            while (true) {
                 
 //                this.cntPending.incrementAndGet();
@@ -1342,7 +1368,11 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
 //                IngestionFrame  frmPrcd = this.queFramesPrcd.take();
                 
 //                // TODO - Remove
-//                System.out.println("Conversion thread #" +intThrdId + " unblocked, frame==null is " + (frmPrcd==null));
+//                System.err.println("Conversion thread #" + intThrdId + " unblocked, frame==null is " 
+//                        + (frmPrcd==null) + ", bolActive=" + this.bolActive 
+//                        + ", this.hasPendingMessages() = " + this.hasPendingMessages()
+//                        + ", this.queFramesPrcd.size() = " + this.queFramesPrcd.size()
+//                        + ", this.queFramesPrcd.isEmpty() = " + this.queFramesPrcd.isEmpty());
                 
                 if (frmPrcd == null)
                     continue;
@@ -1367,10 +1397,10 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
                 this.cntPending.decrementAndGet();
             }
             
-//            // TODO - Remove
-//            System.out.println("Terminating: conversion thread #" +intThrdId);
+            // TODO - Remove
+            System.err.println("Terminating: conversion thread #" +intThrdId);
             
-            return !this.bolActive && this.queFramesPrcd.isEmpty() && this.queFramesPrcd.isEmpty();
+            return !this.bolActive && this.queFramesRaw.isEmpty() && this.queFramesPrcd.isEmpty();
         };
         
         return task;

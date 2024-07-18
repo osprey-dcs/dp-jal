@@ -229,7 +229,7 @@ public class DpIngestionStream extends
     
     
     //
-    // Ingestion Service API
+    // Configuration
     //
 
     /**
@@ -306,6 +306,11 @@ public class DpIngestionStream extends
     public void disableBackPressure() {
         this.processor.disableBackPressure();
     }
+    
+    
+    //
+    // Operations
+    //
     
     /**
      * <p>
@@ -566,30 +571,6 @@ public class DpIngestionStream extends
     
     /**
      * <p>
-     * Returns the current size of the queue buffer containing outgoing data ingestion 
-     * messages waiting for transmission. 
-     * </p>
-     * <p>
-     * Returns the current size of the ingest data request message queue buffer used by the
-     * internal gRPC stream processor.  This value can be used to estimate transmission
-     * performance by the client by timing the consumption of queued data ingestion messages.
-     * </p>
-     * <p>
-     * Technically, the value returned is the number of 
-     * <code>IngestDataRequest</code> messages that are currently queued up and waiting 
-     * on an available stream processor thread for transmission.
-     * </p> 
-     * 
-     * @return  number of <code>IngestDataRequest<code> messages in the request queue
-     * 
-     * @throws IllegalStateException    stream was never opened and processor never activated
-     */
-    public int  getOutgoingQueueSize() throws IllegalStateException {
-        return this.processor.getRequestQueueSize();
-    }
-    
-    /**
-     * <p>
      * Allows clients to block until the queue buffer containing the outgoing data ingestion
      * messages empties.
      * </p>
@@ -622,6 +603,34 @@ public class DpIngestionStream extends
         this.processor.awaitRequestQueueEmpty();
     }
     
+    
+    //
+    // State and Data Query
+    //
+    
+    /**
+     * <p>
+     * Returns the current size of the queue buffer containing outgoing data ingestion 
+     * messages waiting for transmission. 
+     * </p>
+     * <p>
+     * Returns the current size of the ingest data request message queue buffer used by the
+     * internal gRPC stream processor.  This value can be used to estimate transmission
+     * performance by the client by timing the consumption of queued data ingestion messages.
+     * </p>
+     * <p>
+     * Technically, the value returned is the number of 
+     * <code>IngestDataRequest</code> messages that are currently queued up and waiting 
+     * on an available stream processor thread for transmission.
+     * </p> 
+     * 
+     * @return  number of <code>IngestDataRequest<code> messages in the request queue
+     * 
+     * @throws IllegalStateException    stream was never opened and processor never activated
+     */
+    public int  getOutgoingQueueSize() throws IllegalStateException {
+        return this.processor.getRequestQueueSize();
+    }
     
     /**
      * <p>
@@ -724,6 +733,29 @@ public class DpIngestionStream extends
      */
     public boolean isStreamOpen() {
         return this.bolOpenStream;
+    }
+    
+    /**
+     * <p>
+     * Returns the Data Provider UID for the Data Provider registration that was used to open this data stream.
+     * </p>
+     * <p>
+     * If the data stream to the Ingestion Service was opened then subsequently closed, the Provider UID last used
+     * to open the stream is returned.
+     * </p>
+     * 
+     * @return  the UID of the data provider which opened the data stream to the Ingestion Service
+     * 
+     * @throws IllegalStateException    the data stream was never opened
+     */
+    public ProviderUID  getProviderUid() throws IllegalStateException {
+        
+        // Check state
+        if (this.recProviderUid == null) {
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Stream to Ingestion Service was never opened.");
+        }
+        
+        return this.recProviderUid;
     }
     
     
@@ -833,6 +865,12 @@ public class DpIngestionStream extends
     //
 
     /**
+     * <p>
+     * <h2>NOTES</h2>
+     * <ul>
+     * <li>Apparently - Do NOT call this method after a hard close with <code>{@link #closeStreamNow()}</code>.</li>
+     * </ul>
+     * </p>
      *
      * @see @see com.ospreydcs.dp.api.grpc.model.IConnection#awaitTermination()
      */

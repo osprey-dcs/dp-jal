@@ -44,5 +44,22 @@ package com.ospreydcs.dp.api.model;
  *
  */
 public record ClientRequestId(String requestId) {
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new <code>ClientRequestId</code> record instance initialized with the given argument.
+     * </p>
+     * 
+     * @param strRequestId  client request ID used for record
+     * 
+     * @return  new record initialized with the given argument
+     */
+    public static ClientRequestId   from(String strRequestId) {
+        return new ClientRequestId(strRequestId);
+    }
 
 }

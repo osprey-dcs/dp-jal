@@ -381,18 +381,18 @@ public final class IngestionStreamProcessor {
 //    private Integer                   intProviderId = null;
     
     /** Ingestion frame processor and source of outgoing ingestion requests */
-    private IngestionFrameProcessor   fncFrameProcessor = null;
+    private IngestionFrameProcessor     fncFrameProcessor = null;
     
     /** Collection of executing stream processing tasks  */
     private Collection<IngestionStream> setStreamTasks = null;
     
     /** The pool of (multiple) gRPC streaming thread(s) for recovering requests */
-    private ExecutorService           xtorStreamTasks = null;
+    private ExecutorService             xtorStreamTasks = null;
+    
+    /** Collection of future results from streaming tasks - used for shutdowns */
+    private Collection<Future<Boolean>> setStreamFutures = null;
 
     
-    /** Collection of future results from streaming tasks - not used */
-    private Collection<Future<Boolean>>         setStreamFutures = null;
-
     /** Collection of all incoming ingestion responses - from bidirectional streaming tasks */
     private Collection<IngestDataResponse>      setResponses = null; // = new LinkedList<>();
     
@@ -666,6 +666,62 @@ public final class IngestionStreamProcessor {
     
     /**
      * <p>
+     * Determines whether or not multiple gRPC data streams are used to transport data to the Ingestion Service.
+     * </p>
+     *  
+     * @return  <code>true</code> if multi-streaming is active, <code>false</code> otherwise (only a single stream is used)
+     */
+    public boolean  hasMultiStream() {
+        return this.bolMultistream;
+    }
+    
+    /**
+     * <p>
+     * Returns the maximum number of concurrent gRPC data streams used to transmit data to the Ingestion Service.
+     * </p>
+     * <p>
+     * If multi-streaming is active this is the number of concurrent data stream used by the processor to 
+     * transport data to the Ingestion Service over gRPC.  If multi-streaming is disabled this value should be
+     * ignored.
+     * </p>
+     *  
+     * @return
+     * 
+     * @see #hasMultiStream()
+     */
+    public int      getMaxDatastreams() {
+        return this.cntStreamsMax;
+    }
+    
+    /**
+     * <p>
+     * Returns the number of independent threads used for ingestion frame processing.
+     * </p>
+     * <p>
+     * Returns the number of threads for both ingestion frame decomposition (if used) and the conversion
+     * of ingestion frames to gRPC messages.  Both these tasks are performed on independent threads.
+     * </p>
+     * 
+     * @return  number of concurrent ingestion frame processing tasks
+     * 
+     * @throws IllegalStateException    the processor was never activated
+     */
+    public int      getProcessorThreadCount() throws IllegalStateException {
+
+        if (this.fncFrameProcessor == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+        
+        // There are equal number of threads for both ingestion frame decomposition and frame to gRPC message conversion
+        int     cntThds = this.fncFrameProcessor.getConcurrencyCount();
+        
+        if ( this.fncFrameProcessor.hasFrameDecomposition() )
+            cntThds *= 2;
+        
+        return cntThds;
+    }
+    
+    /**
+     * <p>
      * Returns whether or not the processor is currently active.
      * </p>
      * <p>
@@ -728,6 +784,7 @@ public final class IngestionStreamProcessor {
      */
     public int getRequestQueueSize() throws IllegalStateException {
         
+        // Check state
         if (this.fncFrameProcessor == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
         
@@ -1122,7 +1179,7 @@ public final class IngestionStreamProcessor {
      * </p>  
      * 
      * @return  <code>true</code> if everything was shutdown, 
-     *          <code>false</code> if processors was already shutdown
+     *          <code>false</code> if processors was already shutdown or an error occurred during operation
      *          
      * @throws InterruptedException process interrupted while waiting for pending operations to complete
      */
@@ -1139,14 +1196,16 @@ public final class IngestionStreamProcessor {
         
         // Shutdown all streaming tasks 
         this.xtorStreamTasks.shutdown();
+        this.setStreamTasks.forEach(task -> task.terminate());
+        this.setStreamFutures.forEach(future -> future.cancel(false));
         
-        // Wait for all pending tasks to complete
-        this.xtorStreamTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
+        // Wait for all pending streaming tasks to complete - all should be complete at this point
+        boolean bolResult = this.xtorStreamTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
 //        this.setStreamFutures.clear();
         
         this.bolActive = false;
 
-        return true;
+        return bolResult;
     }
     
     /**
@@ -1174,6 +1233,9 @@ public final class IngestionStreamProcessor {
         
         // Hard shutdown of all streaming tasks
         this.xtorStreamTasks.shutdownNow();
+        
+        this.setStreamTasks.forEach(task -> task.terminate());
+        this.setStreamFutures.forEach(future -> future.cancel(true));
 //        this.setStreamFutures.clear();
         
         this.bolActive = false;
@@ -1391,8 +1453,11 @@ public final class IngestionStreamProcessor {
      * @param msgRsp    the first response from the Query Service data stream
      * 
      * @return  the SUCCESS record if query was accepted, 
-     *          otherwise a failure message containing a description of the rejection 
+     *          otherwise a failure message containing a description of the rejection
+     *          
+     * @deprecated This method requires the RequestStatus API for the Ingestion Service
      */
+    @Deprecated
     private ResultStatus isRequestAccepted(IngestDataResponse msgRsp) {
 
         // Check for RequestRejected message

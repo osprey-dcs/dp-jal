@@ -28,7 +28,6 @@
 package com.ospreydcs.dp.api.ingest.model.grpc;
 
 import java.security.ProviderException;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -40,8 +39,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.common.AUnavailable;
-import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.model.ClientRequestId;
@@ -564,6 +563,40 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
         return this.recStatus;
     }
 
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Terminates a data stream if currently active.
+     * </p>
+     * <p>
+     * This method terminates an active data stream thread by setting the <code>{@link #bolStreamError}</code>
+     * to <code>true</code>.  This action causes the processing loop within <code>{@link #run()}</code> to exit.
+     * The gRPC stream is then terminated with an <code>{@link StreamObserver#onError(Throwable)}</code> invocation.
+     * 
+     * @return  <code>true</code> if the data stream task was successfully terminated,
+     *          <code>false</code> otherwise (e.g., the stream was never started or has already completed)
+     */
+    public boolean  terminate() {
+        
+        if (!this.bolStreamStarted || this.bolStreamComplete || this.bolStreamError)
+            return false;
+        
+        // Create the error message, status, and exception
+        String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() + " - Data stream terminated by client";
+        Throwable   expGrpc = new Throwable(strMsg);
+        
+        this.recStatus = ResultStatus.newFailure(strMsg);
+        
+        // Set the error flag (exiting processing loop) and terminate the gRPC data stream
+        this.bolStreamError = true;
+        this.hndForwardStream.onError(expGrpc);
+        
+        return true;
+    }
+    
     
     //
     // Runnable Interface
@@ -609,7 +642,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
 //                // TODO - Remove
 //                System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + "transmitted message with client ID "+ strClientId);
 
-                this.lstClientIds.add(new ClientRequestId(strClientId));
+                this.lstClientIds.add(ClientRequestId.from(strClientId));
                 this.cntRequests++;
                 this.requestTransmitted(msgRqst);       // throws ProviderException
             }
@@ -636,6 +669,8 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
                             + ": Internal error - Message supplier polled when empty: "
                             + e.getMessage();
 
+            this.hndForwardStream.onError(e);
+            
             this.bolStreamError = true;
             this.recStatus = ResultStatus.newFailure(strMsg, e);
             
@@ -650,6 +685,8 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
                     + ": External error - Message supplier polling was interrupted: "
                     + e.getMessage();
 
+            this.hndForwardStream.onError(e);
+            
             this.bolStreamError = true;
             this.recStatus = ResultStatus.newFailure(strMsg, e);
 
@@ -664,6 +701,8 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
                     + ": Subclass exception upon request transmission notification: "
                     + e.getMessage();
 
+            this.hndForwardStream.onError(e);
+            
             this.bolStreamError = true;
             this.recStatus = ResultStatus.newFailure(strMsg, e);
 
@@ -674,13 +713,15 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
         }
             
         
-        // Completed normally 
+        // Check if completed normally 
         // - Terminate the data stream 
         // - Set state variables
         // - Await the subclass completion
-        this.hndForwardStream.onCompleted();
-        this.bolStreamComplete = true;
-        this.recStatus = this.awaitCompletion();
+        if (!this.bolStreamError) {
+            this.hndForwardStream.onCompleted();
+            this.bolStreamComplete = true;
+            this.recStatus = this.awaitCompletion();
+        }
     }
     
     

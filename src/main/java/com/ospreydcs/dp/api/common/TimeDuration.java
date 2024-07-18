@@ -47,6 +47,43 @@ import java.util.concurrent.TimeUnit;
  */
 public class TimeDuration {
     
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new, initialized <code>TimeDuration</code> instance with the given properties.
+     * </p>
+     * 
+     * @param amount    time duration amount
+     * @param enmUnits  time duration units as <code>ChronoUnit</code> enumeration constant
+     * 
+     * @return  new <code>TimeDuration</code> instance with the given length of time
+     */
+    public static TimeDuration  from(long amount, ChronoUnit enmUnits) {
+        return new TimeDuration(amount, enmUnits);
+    }
+    
+    /**
+     * <p>
+     * Creates a new, initialized <code>TimeDuration</code> instance with the given properties.
+     * </p>
+     * 
+     * @param amount    time duration amount
+     * @param enmUnits  time duration units as <code>TimeUnit</code> enumeration constant
+     * 
+     * @return  new <code>TimeDuration</code> instance with the given length of time
+     */
+    public static TimeDuration  from(long amount, TimeUnit enmUnits) {
+        return new TimeDuration(amount, enmUnits);
+    }
+    
+    
+    //
+    // Attributes
+    //
+    
     /** The time duration quantity */
     private final long          lngAmount;
     
@@ -58,6 +95,11 @@ public class TimeDuration {
     
     /** The equivalent <code>Duration</code> instance */
     private final Duration      duration;
+    
+    
+    //
+    // Construtors
+    //
     
     /**
      * <p>
@@ -86,6 +128,11 @@ public class TimeDuration {
         this(amount, tuUnits.toChronoUnit());
     }
 
+    
+    //
+    // Attribute Query
+    //
+    
     /**
      * <p>
      * Return the time duration amount as specified at construction.

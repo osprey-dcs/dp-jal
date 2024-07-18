@@ -208,6 +208,9 @@ public abstract class DpServiceApiFactoryBase<
      * See {@link DpGrpcConnectionFactory#connect(String, int)} for details.
      * </p>
      * 
+     * @param strUrl    server URL for desired service 
+     * @param intPort   service port hosting desired service
+     *  
      * @return new <code>{@link ServiceApi}</code> instance with given parameters
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)

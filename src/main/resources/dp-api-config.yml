@@ -97,10 +97,10 @@ ingest: # Data Platform Ingestion Service client API default configuration param
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency            : DP_API_INGEST_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_INGEST_CONCURRENCY_PIVOT_SIZE
-      threadCount: 7                 # worker thread count        : DP_API_INGEST_CONCURRENCY_THREAD_COUNT
+      threadCount: 3                 # worker thread count        : DP_API_INGEST_CONCURRENCY_THREAD_COUNT
    timeout:      # General query timeout properties (e.g., used for ingestion response wait timeout)
       active: true                   # apply timeout condition    : DP_API_INGEST_TIMEOUT_ACTIVE
-      limit: 30                      # request timeout limit      : DP_API_INGEST_TIMEOUT_LIMIT
+      limit: 10                      # request timeout limit      : DP_API_INGEST_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_INGEST_TIMEOUT_UNIT
    logging:      # General Query Service logging services
       active: true                   # is logging active              : DP_API_INGEST_LOGGING_ACTIVE
