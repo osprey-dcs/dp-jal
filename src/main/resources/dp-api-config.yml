@@ -102,7 +102,7 @@ ingest: # Data Platform Ingestion Service client API default configuration param
       active: true                   # apply timeout condition    : DP_API_INGEST_TIMEOUT_ACTIVE
       limit: 10                      # request timeout limit      : DP_API_INGEST_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_INGEST_TIMEOUT_UNIT
-   logging:      # General Query Service logging services
+   logging:      # General Ingestion Service logging services
       active: true                   # is logging active              : DP_API_INGEST_LOGGING_ACTIVE
       level: DEBUG                   # logger output level if active  : DP_API_INGEST_LOGGING_LEVEL
 

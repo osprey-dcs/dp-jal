@@ -43,6 +43,7 @@ import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
 import com.ospreydcs.dp.api.model.ClientRequestId;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
@@ -143,14 +144,14 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
      * </p>
      * 
      * @param stubAsync     the asynchronous communications stub to the Ingestion Service 
-     * @param fncDataSource the supplier of <code>IngestDataRequest</code> messages 
-     * @param fncDataSink   the consumer of <code>IngestDataResponse</code> messages
+     * @param fncRqstSrc    the supplier of <code>IngestDataRequest</code> messages 
+     * @param fncRspSink   the consumer of <code>IngestDataResponse</code> messages
      *  
      * @return  new bidirectional ingestion stream processor ready for independent thread spawn
      */
-    public static IngestionStream newBidiProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource, Consumer<IngestDataResponse> fncDataSink) {
+    public static IngestionStream newBidiProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncRqstSrc, Consumer<IngestDataResponse> fncRspSink) {
         
-        return new IngestionBidiStream(stubAsync, fncDataSource, fncDataSink);
+        return new IngestionBidiStream(stubAsync, fncRqstSrc, fncRspSink);
     }
     
     /**
@@ -169,14 +170,14 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
      * </p> 
      * 
      * @param stubAsync     the asynchronous gRPC communications stub to the Ingestion Service
-     * @param fncDataSource supplier of <code>IngestDataRequest</code> messages
+     * @param fncRqstSrc    supplier of <code>IngestDataRequest</code> messages
      * 
      * @return  new unidirectional ingestion stream processor ready for independent thread spawn
      */
     @AUnavailable(status=STATUS.UNKNOWN, note="The Ingestion Service does NOT support unidirectional ingestion streams.")
-    public static IngestionStream newUniProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource) {
+    public static IngestionStream newUniProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncRqstSrc) {
     
-        return new IngestionUniStream(stubAsync, fncDataSource);
+        return new IngestionUniStream(stubAsync, fncRqstSrc);
     }
     
     
@@ -585,7 +586,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
             return false;
         
         // Create the error message, status, and exception
-        String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() + " - Data stream terminated by client";
+        String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() + " - Data stream terminated by client.";
         Throwable   expGrpc = new Throwable(strMsg);
         
         this.recStatus = ResultStatus.newFailure(strMsg);
@@ -618,6 +619,9 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     @Override
     public void run() {
         
+        // TODO - Remove
+        LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Started thread, about to enter processing loop.");
+        
         // Initiate the gRPC data stream
         this.hndForwardStream = this.initiateGrpcStream();
         this.bolStreamStarted = true;
@@ -634,13 +638,16 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
                 if (msgRqst == null)
                     continue;
                 
+                // TODO - Remove
+                LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Attempting to send ingestion request message with client ID "+ msgRqst.getClientRequestId());
+
                 // Transmit data message request and notify subclasses
                 this.hndForwardStream.onNext(msgRqst);  // throws StatusRuntimeException
                 
                 String strClientId = msgRqst.getClientRequestId();
                 
-//                // TODO - Remove
-//                System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + "transmitted message with client ID "+ strClientId);
+                // TODO - Remove
+                LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Transmitted message with client ID "+ strClientId);
 
                 this.lstClientIds.add(ClientRequestId.from(strClientId));
                 this.cntRequests++;
@@ -718,9 +725,16 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
         // - Set state variables
         // - Await the subclass completion
         if (!this.bolStreamError) {
+            
+            // TODO - Remove
+            LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - terminating without stream error.");
+                    
             this.hndForwardStream.onCompleted();
             this.bolStreamComplete = true;
             this.recStatus = this.awaitCompletion();
+            
+            // TODO - Remove
+            LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - terminatation finished.");
         }
     }
     
@@ -791,11 +805,11 @@ final class IngestionUniStream extends IngestionStream {
      * </p>
      *
      * @param stubAsync     the asynchronous communications stub to the Ingestion Service 
-     * @param fncDataSource the supplier of <code>IngestDataRequest</code> messages 
+     * @param fncRqstSource the supplier of <code>IngestDataRequest</code> messages 
      */
     @AUnavailable(status=STATUS.UNKNOWN, note="Do not create instances of this class.")
-    protected IngestionUniStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource) {
-        super(fncDataSource);
+    protected IngestionUniStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncRqstSource) {
+        super(fncRqstSource);
         
 //        this.stubAsync = stubAsync;
     }
@@ -825,7 +839,8 @@ final class IngestionUniStream extends IngestionStream {
      */
     @Override
     protected void requestTransmitted(IngestDataRequest msgRqst) throws ProviderException {
-        
+     
+        // Nothing to do here
     }
 
     /**
@@ -835,6 +850,10 @@ final class IngestionUniStream extends IngestionStream {
     @Override
     protected ResultStatus awaitCompletion() {
         
+//        if (this.recStatus == null)
+//            this.recStatus = ResultStatus.SUCCESS;
+//        
+//        return this.recStatus;
         return ResultStatus.SUCCESS;
     }
     
@@ -881,7 +900,7 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
     private final DpIngestionServiceStub        stubAsync;
     
     /** The consumer of <code>IngestDataResponse</code> messages */
-    private final Consumer<IngestDataResponse>  fncDataSink;
+    private final Consumer<IngestDataResponse>  fncRspSink;
 
     
     //
@@ -906,14 +925,14 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
      * </p>
      *
      * @param stubAsync     the asynchronous communications stub to the Ingestion Service 
-     * @param fncDataSource the supplier of <code>IngestDataRequest</code> messages 
-     * @param fncDataSink   the consumer of <code>IngestDataResponse</code> messages 
+     * @param fncRqstSource the supplier of <code>IngestDataRequest</code> messages 
+     * @param fncRspSink    the consumer of <code>IngestDataResponse</code> messages 
      */
-    protected IngestionBidiStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource, Consumer<IngestDataResponse> fncDataSink) {
-        super(fncDataSource);
+    protected IngestionBidiStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncRqstSource, Consumer<IngestDataResponse> fncRspSink) {
+        super(fncRqstSource);
 
         this.stubAsync = stubAsync;
-        this.fncDataSink = fncDataSink;
+        this.fncRspSink = fncRspSink;
     }
 
     
@@ -1067,7 +1086,7 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
     @Override
     public void onError(Throwable e) {
         String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
-                        + "The gRPC stream was terminated during operation: "
+                        + "The gRPC stream was terminated during operation with cause: "
                         + e.getMessage();
 
         if (BOL_LOGGING)
@@ -1185,7 +1204,7 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
             this.lstBadRsps.add(msgRsp);
         }
         
-        this.fncDataSink.accept(msgRsp);
+        this.fncRspSink.accept(msgRsp);
     }
 
     /**

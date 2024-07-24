@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest.model.grpc;
+package com.ospreydcs.dp.api.ingest.model;
 
 import java.util.concurrent.TimeUnit;
 
@@ -105,12 +105,12 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * This is NOT a blocking operation if a message is not immediately available a <code>null</code>
+     * This is NOT a blocking operation. If a message is not immediately available a <code>null</code>
      * value will be returned.
      * </li>
      * <br/>
      * <li>
-     * Calling this method when <code>{@link #isActive()} returns <code>false</code> should throw
+     * Calling this method when <code>{@link #isActive()}</code> returns <code>false</code> should throw
      * an exception.
      * </li>
      * </ul>
@@ -126,24 +126,24 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
     /**
      * <p>
      * Returns the next available Protobuf message from the message supplier blocking until the
-     * given timeout limit until one becomes available.
+     * one becomes available, or the given timeout limit is reached.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * This is a blocking operation if a message is not immediately available (although 
-     * <code>{@link #isActive()}</code> may have returned <code>true</code>, the message may not yet 
-     * be available).  
+     * This is a blocking operation.  If a message is not immediately available one may be pending.
+     * Specifically, although <code>{@link #isActive()}</code> may have returned <code>true</code>, the message 
+     * may not yet be available.  
      * </li>
      * <br/>
      * <li>
-     * If no message becomes available within the timeout limit the method returns a <code>null>/code>
+     * If no message becomes available within the timeout limit the method returns a <code>null</code>
      * value (which should be checked).
      * </li>
      * <br/>
      * <li>
-     * Calling this method when <code>{@link #hashNext()} returns <code>false</code> should throw
+     * Calling this method when <code>{@link #hashNext()}</code> returns <code>false</code> should throw
      * an exception.
      * </li>
      * </ul>

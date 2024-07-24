@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -42,10 +43,13 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier;
+import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -249,8 +253,8 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
     private static final TimeUnit   TU_TIMEOUT_GENERAL = CFG_DEFAULT.timeout.unit;
     
     
-//    /** Is logging active */
-//    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
+    /** Is logging active */
+    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
 
     
     //
@@ -287,6 +291,9 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
     //
     // Class Resources
     //
+    
+    /** The class event logger */
+    private static final Logger     LOGGER = LogManager.getLogger();
     
 //    /** The locking object for synchronizing access to class resources */ 
 //    private static final Object   objClassLock = new Object();
@@ -339,9 +346,9 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
     private boolean bolShutdown = false;
   
     
-//    /** DEBUG - The number (and ID generator) of frame decomposition threads */
-//    private int     cntDecompThrds = 0;
-//    
+    /** DEBUG - The number (and ID generator) of frame decomposition threads */
+    private int     cntDecompThrds = 0;
+    
     /** DEBUG - The number (and ID generator) of frame-to-message conversion tasks */
     private int     cntConvertThrds = 0;
     
@@ -1128,7 +1135,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * @return <code>true</code> if there are currently request messages available or pending
      *         <code>false</code> otherwise
      *
-     * @see com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier#isActive()
+     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#isActive()
      */
     @Override
     synchronized
@@ -1138,13 +1145,13 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier#take()
+     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#take()
      */
     @Override
 //    synchronized
     public IngestDataRequest take() throws IllegalStateException, InterruptedException {
         
-        // Check state
+        // Check states
         if (!this.bolActive && !this.hasPendingMessages() && this.queMsgRequests.isEmpty())
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is inactive and queue is empty.");
         
@@ -1162,7 +1169,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier#poll()
+     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#poll()
      */
     @Override
     public IngestDataRequest poll() throws IllegalStateException {
@@ -1186,7 +1193,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.grpc.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
+     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
      */
     @Override
     public IngestDataRequest poll(long cntTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException {
@@ -1273,18 +1280,18 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
         // Define the task operations as a lambda function
         Callable<Boolean>    task = () -> {
             
-//            // TODO - Remove
-//            // Debugging - Create ID
-//            final int   intThrdId = this.cntDecompThrds++;
-//            
+            // TODO - Remove
+            // Debugging - Create ID
+            final int   intThrdId = this.cntDecompThrds++;
+            
             
             // Create a new frame binner processor for this thread
             IngestionFrameBinner binner = IngestionFrameBinner.from(this.lngBinSizeMax);
 
             // While active - Continuously process frames from raw frame buffer
             // - second OR conditional allows for soft shutdowns
-//            while (this.bolActive || this.hasPendingMessages() || !this.queFramesRaw.isEmpty()) {
-            while (this.bolActive || !this.queFramesRaw.isEmpty()) {
+            while (this.bolActive || this.hasPendingMessages() || !this.queFramesRaw.isEmpty()) {
+//            while (this.bolActive || !this.queFramesRaw.isEmpty()) {
                 
                 // Retrieve an unprocessed frame from the queue - blocking until available
                 //  - this is thread safe according to Java BlockingQueue documentation
@@ -1292,6 +1299,9 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
                 
                 if (frmRaw == null)
                     continue;
+                
+                // TODO - Remove
+                LOGGER.debug("Frame binner thread #" +intThrdId + " activated for raw ingestion frame processing.");
                 
                 this.cntPending.incrementAndGet();
                 
@@ -1303,16 +1313,33 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
                     continue;
                 }
                 
-//                // TODO - Remove
-//                System.out.println("Frame binner thread #" +intThrdId + " activated for decomposition.");
+                // TODO - Remove
+                LOGGER.debug("Frame binner thread #" +intThrdId + " activated for decomposition.");
                 
-                // Process - Decompose the frame (horizontally)
-                List<IngestionFrame> lstFrmsPrcd = binner.decomposeHorizontally(frmRaw);
+                // Process: First attempt to decompose the frame horizontally - this is the cheapest
+                List<IngestionFrame>    lstFrmsPrcd;
+                try {
+                    lstFrmsPrcd = binner.decomposeHorizontally(frmRaw);
+                    
+                } catch (IllegalArgumentException | CompletionException e1) {
+                    
+                    // If failed: try to decompose the frame vertically - this is expensive
+                    try {
+                        lstFrmsPrcd = binner.decomposeVertically(frmRaw);
+                        
+                    } catch (IllegalArgumentException | CompletionException e2) {
+                        
+                        // If failed again: There is nothing more to do  
+                        throw e2;
+                    }
+                }
 
                 // Enqueue all the decomposed frames in the processed frames buffer
                 lstFrmsPrcd.forEach(f -> this.queFramesPrcd.offer(f));
 
 //                // TODO - Remove
+                LOGGER.debug("Frame binner thread {} offered {} frames to processed queue now with size {}.", intThrdId, lstFrmsPrcd.size(), this.queFramesPrcd.size());
+                        
 //                System.out.println("  binner thread #" +intThrdId + " decomposed raw frame into " + lstFrmsPrcd.size() + " binned frames.");
 //                System.out.println("    processed frame queue size = " + this.queFramesPrcd.size());
                 
@@ -1356,8 +1383,8 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
             
             // While active - Continuously convert frames in processed frame buffer to gRPC messages 
             // - second OR conditional allows for soft shutdowns
-//            while (this.bolActive || this.hasPendingMessages() || !this.queFramesPrcd.isEmpty()) {
-            while (this.bolActive || !this.queFramesPrcd.isEmpty()) {
+            while (this.bolActive || this.hasPendingMessages() || !this.queFramesPrcd.isEmpty()) {
+//            while (this.bolActive || !this.queFramesPrcd.isEmpty()) {
 //            while (true) {
                 
 //                this.cntPending.incrementAndGet();
@@ -1379,26 +1406,27 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
                 
                 this.cntPending.incrementAndGet();
                 
-//                // TODO - Remove
-//                System.out.println("Conversion thread #" +intThrdId + " activated for 1 message converions.");
+                // TODO - Remove
+                LOGGER.debug("Conversion thread #" +intThrdId + " activated for 1 message conversion.");
                 
                 // Convert the ingestion frame to an Ingestion Service data request message 
                 IngestDataRequest   msgRqst = converter.createRequest(frmPrcd);
                 
-//                // TODO - Remove
-//                System.out.println("  conversion thread #" +intThrdId + " created message - (msg==null)=" + (msgRqst==null));
+                // TODO - Remove
+                LOGGER.debug("  conversion thread #" +intThrdId + " created message - (msg==null)=" + (msgRqst==null));
                 
                 // Add ingestion request message to outgoing queue
                 this.queMsgRequests.offer(msgRqst);
 
-//                // TODO - Remove
-//                System.out.println("  conversion thread #" +intThrdId + " queued 1 message - queue size = " + this.messageQueueSize());
+                // TODO - Remove
+                LOGGER.debug("  conversion thread #" +intThrdId + " queued 1 message - queue size = " + this.getRequestQueueSize());
                 
                 this.cntPending.decrementAndGet();
             }
             
             // TODO - Remove
             System.err.println("Terminating: conversion thread #" +intThrdId);
+            LOGGER.debug("Terminating: conversion thread #" +intThrdId);
             
             return !this.bolActive && this.queFramesRaw.isEmpty() && this.queFramesPrcd.isEmpty();
         };
