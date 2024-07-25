@@ -629,7 +629,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
         // Enter message transmission loop which includes exception handling
         try {
             // Send all data messages to Ingestion Service while available and no errors
-            while (this.fncDataSource.isActive() && !this.bolStreamError) {
+            while (this.fncDataSource.isSupplying() && !this.bolStreamError) {
                 
                 // Poll for the next message to transmit - throws IllegalStateException
                 IngestDataRequest   msgRqst = this.fncDataSource.poll(INT_TIMEOUT, TU_TIMEOUT);

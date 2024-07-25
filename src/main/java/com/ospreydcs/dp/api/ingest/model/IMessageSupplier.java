@@ -33,8 +33,13 @@ import com.google.protobuf.GeneratedMessage;
 
 /**
  * <p>
- * Interface defining the operations of a Protocol Buffers blocking message supplier.
+ * Interface defining the operations of a blocking Protocol Buffers message supplier.
  * </p>
+ * <p>
+ * Classes implementing this interface are assumed to provide implicit throttling of gRPC messages
+ * at the consumer side.  Specifically, the supplier implementation may refuse to release messages
+ * unless an internal condition is meet (i.e., a buffer is below capacity).
+ * </p> 
  * <p>
  * <h2>Message Suppliers</h2>
  * Protobuf message suppliers (i.e., classes implementing this interface) typically have a 
@@ -46,7 +51,7 @@ import com.google.protobuf.GeneratedMessage;
  * <p>
  * <h2>Message Consumers</h2>
  * Consumers of Protobuf messages (i.e., clients of this interface) can determine if there exists 
- * available messages by invoking the <code>{@link #isActive()}</code> operation.  
+ * available messages by invoking the <code>{@link #isSupplying()}</code> operation.  
  * Optionally, the consumer can call
  * the <code>{@link #take()}</code> operation until an exception is thrown.
  * </p>  
@@ -66,7 +71,7 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
      * 
      * @return  <code>true</code> if there are more messages to consume, <code>false, otherwise
      */
-    public boolean  isActive();
+    public boolean  isSupplying();
     
     /**
      * <p>
@@ -77,13 +82,13 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * This is a blocking operation.  Although <code>{@link #isActive()}</code> may have returned
+     * This is a blocking operation.  Although <code>{@link #isSupplying()}</code> may have returned
      * <code>true</code>, the message may not yet be available.  In that case the operation will
      * block indefinitely until the next message becomes available.
      * </li>
      * <br/>
      * <li>
-     * Calling this method when <code>{@link #isActive()} returns <code>false</code> should throw
+     * Calling this method when <code>{@link #isSupplying()} returns <code>false</code> should throw
      * an exception.
      * </li>
      * </ul>
@@ -110,7 +115,7 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
      * </li>
      * <br/>
      * <li>
-     * Calling this method when <code>{@link #isActive()}</code> returns <code>false</code> should throw
+     * Calling this method when <code>{@link #isSupplying()}</code> returns <code>false</code> should throw
      * an exception.
      * </li>
      * </ul>
@@ -133,7 +138,7 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
      * <ul>
      * <li>
      * This is a blocking operation.  If a message is not immediately available one may be pending.
-     * Specifically, although <code>{@link #isActive()}</code> may have returned <code>true</code>, the message 
+     * Specifically, although <code>{@link #isSupplying()}</code> may have returned <code>true</code>, the message 
      * may not yet be available.  
      * </li>
      * <br/>

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionFrameProcessor.java
+ * File:	IngestionFrameProcessorDep.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionFrameProcessor
+ * Type: 	IngestionFrameProcessorDep
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -66,14 +66,14 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * </p>
  * <p>
  * <h2>Activation</h2>
- * A <code>IngestionFrameProcessor</code> instance must be activated before attempting
+ * A <code>IngestionFrameProcessorDep</code> instance must be activated before attempting
  * to add ingestion frames; use the method <code>{@link #activate()}</code>.  Likewise,
  * an active processor should be shutdown when no longer needed; use methods
  * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.
  * </p>
  * <p>
  * <h2>Processing Options</h2>
- * The <code>IngestionFrameProcessor</code> class has several processing options which
+ * The <code>IngestionFrameProcessorDep</code> class has several processing options which
  * should be set before activation.
  * <ul>
  * <li>
@@ -91,9 +91,9 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <br/>
  * <li>
  * <code>{@link #enableBackPressure(int)}</code> - The ability to add ingestion frames
- * to an <code>IngestionFrameProcessor</code> can be blocked when using this option.
+ * to an <code>IngestionFrameProcessorDep</code> can be blocked when using this option.
  * Specifically, when the outgoing (processed) message queue reaches the given capacity
- * the <code>IngestionFrameProcessor</code> will block when adding additional frames.
+ * the <code>IngestionFrameProcessorDep</code> will block when adding additional frames.
  * The blocking continues until the outgoing message queue drops below capacity.
  * In this fashion, clients will experience "back pressure" from consumers of 
  * <code>IngestDataRequest</code> messages when they become backlogged.
@@ -159,8 +159,11 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  *
  * @see IngestionFrameBinner
  * @see IngestionFrameConverter
+ * 
+ * @deprecated  Ingestion frame processing was refactored and this class was decomposed into multiple (less complicated) classes
  */
-public final class IngestionFrameProcessor implements IMessageSupplier<IngestDataRequest> {
+@Deprecated(since="July 25, 2024", forRemoval=true)
+public final class IngestionFrameProcessorDep implements IMessageSupplier<IngestDataRequest> {
 
     
     //
@@ -169,7 +172,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
     
     /**
      * <p>
-     * Creates a new instance of <code>IngestionFrameProcessor</code> ready for processing
+     * Creates a new instance of <code>IngestionFrameProcessorDep</code> ready for processing
      * of ingestion frames.
      * </p>
      * <p>
@@ -178,17 +181,17 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * </p>
      * <p>
      * <h2>Activation</h2>
-     * A <code>IngestionFrameProcessor</code> instance must be activated before attempting
+     * A <code>IngestionFrameProcessorDep</code> instance must be activated before attempting
      * to add ingestion frames; use the method <code>{@link #activate()}</code>.  Likewise,
      * an active processor should be shutdown when no longer needed; use methods
      * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.
      * </p>
      * <p>
      * <h2>Processing Options</h2>
-     * The <code>IngestionFrameProcessor</code> class has several processing options which
+     * The <code>IngestionFrameProcessorDep</code> class has several processing options which
      * should be set before activation.
      * <h2>Processing Options</h2>
-     * The <code>IngestionFrameProcessor</code> class has several processing options which
+     * The <code>IngestionFrameProcessorDep</code> class has several processing options which
      * should be set before activation.
      * <ul>
      * <li>
@@ -206,9 +209,9 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * <br/>
      * <li>
      * <code>{@link #enableBackPressure(int)}</code> - The ability to add ingestion frames
-     * to an <code>IngestionFrameProcessor</code> can be blocked when using this option.
+     * to an <code>IngestionFrameProcessorDep</code> can be blocked when using this option.
      * Specifically, when the outgoing (processed) message queue reaches the given capacity
-     * the <code>IngestionFrameProcessor</code> will block when adding additional frames.
+     * the <code>IngestionFrameProcessorDep</code> will block when adding additional frames.
      * The blocking continues until the outgoing message queue drops below capacity.
      * In this fashion, clients will experience "back pressure" from consumers of 
      * <code>IngestDataRequest</code> messages when they become backlogged.
@@ -220,10 +223,10 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * 
      * @param intProviderId data provider unique identifier assigned to all <code>IngestDataRequest</code> messages
      * 
-     * @return new <code>IngestionFrameProcessor</code> instance ready for processing
+     * @return new <code>IngestionFrameProcessorDep</code> instance ready for processing
      */
-    public static IngestionFrameProcessor from(int intProviderId) {
-        return new IngestionFrameProcessor(intProviderId);
+    public static IngestionFrameProcessorDep from(int intProviderId) {
+        return new IngestionFrameProcessorDep(intProviderId);
     }
     
     
@@ -402,7 +405,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionFrameProcessor</code>.
+     * Constructs a new instance of <code>IngestionFrameProcessorDep</code>.
      * </p>
      * <p>
      * Note that the data provider UID given here is used within all <code>IngestDataReuest</code>
@@ -411,7 +414,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      *
      * @param intProviderUid    the data provider unique identifier
      */
-    public IngestionFrameProcessor(int intProviderUid) {
+    public IngestionFrameProcessorDep(int intProviderUid) {
         this.intProviderUid = intProviderUid;
     }
 
@@ -723,7 +726,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * </p>
      * <p>
      * <h2>Thread Tasks</h2>
-     * <code>IngestionFrameProcessor</code> instances maintain pools of processing threads.
+     * <code>IngestionFrameProcessorDep</code> instances maintain pools of processing threads.
      * Thread tasks take ownership of resources offered by clients and, thus, these resource 
      * may not appear in any of their respective queue buffers until the thread task has 
      * completed is processing.  This method allows clients to determine if there are
@@ -747,7 +750,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * This method is NOT the complement of <code>{@link IMessageSupplier#isActive()}</code>.
+     * This method is NOT the complement of <code>{@link IMessageSupplier#isSupplying()}</code>.
      * Note that if  <code>{@link #shutdown()}</code> has been called there may still be messages
      * in the request queue.
      * </p>
@@ -1135,11 +1138,11 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
      * @return <code>true</code> if there are currently request messages available or pending
      *         <code>false</code> otherwise
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#isActive()
+     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#isSupplying()
      */
     @Override
     synchronized
-    public boolean isActive() {
+    public boolean isSupplying() {
         return this.bolActive || this.hasPendingMessages() || !this.queMsgRequests.isEmpty();
     }
 
@@ -1470,7 +1473,7 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
 //     * <p>
 //     * <h2>Computation</h2>
 //     * The return value is computed by taking the hash code for the 
-//     * <code>IngestionFrameProcessor</code> class and incrementing it by the current value
+//     * <code>IngestionFrameProcessorDep</code> class and incrementing it by the current value
 //     * of the class frame counter <code>{@link #cntFrames}</code> (which is then incremented).
 //     * The <code>long</code> value is then converted to a string value and returned.
 //     * </p>
@@ -1486,9 +1489,9 @@ public final class IngestionFrameProcessor implements IMessageSupplier<IngestDat
 //    private String  createNewRequestId() {
 //        long lngHash;
 //        synchronized (objClassLock) {
-//            lngHash = IngestionFrameProcessor.class.hashCode() + IngestionFrameProcessor.cntFrames;
+//            lngHash = IngestionFrameProcessorDep.class.hashCode() + IngestionFrameProcessorDep.cntFrames;
 //            
-//            IngestionFrameProcessor.cntFrames++;
+//            IngestionFrameProcessorDep.cntFrames++;
 //        }
 //        
 //        String strClientId = Long.toString(lngHash);

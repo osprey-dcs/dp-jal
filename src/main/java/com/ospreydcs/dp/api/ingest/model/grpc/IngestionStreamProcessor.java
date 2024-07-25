@@ -48,7 +48,7 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
+import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep;
 import com.ospreydcs.dp.api.model.ClientRequestId;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
@@ -65,7 +65,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * </p>
  * <p>
  * Class instances perform all processing of client <code>IngestionFrame</code> ingestion data
- * using a <code>{@link IngestionFrameProcessor}</code> resource.  There ingestion frames are
+ * using a <code>{@link IngestionFrameProcessorDep}</code> resource.  There ingestion frames are
  * (optionally) decomposed for gRPC message size requirements, then converted into 
  * <code>{@link IngestDataRequest}</code> messages suitable for transmission to the Ingestion 
  * Service.  
@@ -75,7 +75,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * <code>{@link IngestionStream}</code> instances - one for each active gRPC data stream.
  * (If the multiple data streams feature is disabled only one stream will be active.)  
  * The stream classes are executed on separate threads which compete for the 
- * <code>IngestDataRequest</code> messages produced by the <code>IngestionFrameProcessor</code>.
+ * <code>IngestDataRequest</code> messages produced by the <code>IngestionFrameProcessorDep</code>.
  * </p>
  * <h2>Operation</h2>
  * After creation instances of <code>IngestionStreamProcessor</code> must be activated using
@@ -381,7 +381,7 @@ public final class IngestionStreamProcessor {
 //    private Integer                   intProviderId = null;
     
     /** Ingestion frame processor and source of outgoing ingestion requests */
-    private IngestionFrameProcessor     fncFrameProcessor = null;
+    private IngestionFrameProcessorDep     fncFrameProcessor = null;
     
     /** Collection of executing stream processing tasks  */
     private Collection<IngestionStream> setStreamTasks = null;
@@ -429,7 +429,7 @@ public final class IngestionStreamProcessor {
         this.connIngest = connIngest;
 //        this.intProviderId = intProviderId;
         
-//        this.fncDataSource = new IngestionFrameProcessor(intProviderId);
+//        this.fncDataSource = new IngestionFrameProcessorDep(intProviderId);
     }
     
     
@@ -1139,7 +1139,7 @@ public final class IngestionStreamProcessor {
 //        this.intProviderId = intProviderId;
         
         // Create the ingestion frame processor and activate it (all other default parameters)
-        this.fncFrameProcessor = IngestionFrameProcessor.from(intProviderId);
+        this.fncFrameProcessor = IngestionFrameProcessorDep.from(intProviderId);
         if (this.bolBackPressure)
             this.fncFrameProcessor.enableBackPressure(this.szQueueCapacity);
         this.fncFrameProcessor.activate();

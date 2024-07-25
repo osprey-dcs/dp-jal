@@ -47,6 +47,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
+import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
 import com.ospreydcs.dp.api.model.table.StaticDataColumn;
 import com.ospreydcs.dp.api.util.Epics;
@@ -123,6 +124,10 @@ public class IngestionFrame implements Serializable {
     /** Map of column names to column index - for column index lookup */
     private Map<String, Integer>                mapNmToInd = new HashMap<>();
 
+    
+    /** The data provider name */
+    private ProviderUID         recProviderUid = null;
+    
     
     /** Optional name for ingestion frame */
     private String              strLabelFrame = null;
@@ -780,6 +785,17 @@ public class IngestionFrame implements Serializable {
         // Assign snapshot properties from source to this ingestion frame
         this.setSnapshotId(frmSource.strSnapshotUid);
         this.setSnapshotDomain(frmSource.domSnapshot);
+    }
+    
+    /**
+     * <p>
+     * Sets the Data Provider UID for the ingestion frame.
+     * </p>
+     * 
+     * @param recProviderUid    UID record for provider producing this frame
+     */
+    public void setProviderUid(ProviderUID recProviderUid) {
+        this.recProviderUid = recProviderUid;
     }
     
     /**
@@ -1784,7 +1800,16 @@ public class IngestionFrame implements Serializable {
         return !this.mapAttributes.isEmpty();
     }
     
-    
+    /**
+     * <p>
+     * Returns the Data Provider UID for this ingestion frame.
+     * </p>
+     * 
+     * @return  UID for the Data Provider that produced this ingestion frame
+     */
+    public ProviderUID  getProviderUid() {
+        return this.recProviderUid;
+    }
     /**
      * <p>
      * Returns the optional ingestion frame label.

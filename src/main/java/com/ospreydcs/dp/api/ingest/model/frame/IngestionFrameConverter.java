@@ -62,7 +62,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * frame will be converted to an equally large, single ingestion data request message.  
  * That is, the ingestion frame is converted regardless of any gRPC message size transmission 
  * limitation.  If ingestion frame sizes are comparable to the gRPC message size limitation
- * see <code>{@link IngestionFrameProcessor}</code>.  Ingestion frame larger than the current
+ * see <code>{@link IngestionFrameProcessorDep}</code>.  Ingestion frame larger than the current
  * gRPC message size limitation should be processed before offering to this class.
  * </p>
  * <p>
@@ -292,7 +292,7 @@ public final class IngestionFrameConverter {
      * <p>
      * <h2>Computation</h2>
      * The return value is computed by taking the hash code for the 
-     * <code>IngestionFrameProcessor</code> class and incrementing it by the current value
+     * <code>IngestionFrameProcessorDep</code> class and incrementing it by the current value
      * of the class frame counter <code>{@link #cntFrames}</code> (which is then incremented).
      * The <code>long</code> value is then converted to a string value and returned.
      * </p>

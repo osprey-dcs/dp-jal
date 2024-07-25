@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionFrameProcessorTest.java
+ * File:	IngestionFrameProcessorDepTest.java
  * Package: com.ospreydcs.dp.api.ingest.model.frame
- * Type: 	IngestionFrameProcessorTest
+ * Type: 	IngestionFrameProcessorDepTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -54,14 +54,14 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest.IngestionDataFrame;
 
 /**
  * <p>
- * JUnit test cases for class <code>IngestionFrameProcessor</code>.
+ * JUnit test cases for class <code>IngestionFrameProcessorDep</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Apr 13, 2024
  *
  */
-public class IngestionFrameProcessorTest {
+public class IngestionFrameProcessorDepTest {
 
     
     //
@@ -100,7 +100,7 @@ public class IngestionFrameProcessorTest {
     
     
     /** A processor available for general testing -  activated for each test case in default configuration */
-    private IngestionFrameProcessor processor;
+    private IngestionFrameProcessorDep processor;
     
     
     // 
@@ -126,7 +126,7 @@ public class IngestionFrameProcessorTest {
      */
     @Before
     public void setUp() throws Exception {
-        this.processor = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+        this.processor = IngestionFrameProcessorDep.from(INT_PROVIDER_ID);
         this.processor.activate();
     }
 
@@ -145,7 +145,7 @@ public class IngestionFrameProcessorTest {
     
     
     /**
-     * Test method for {@link IngestionFrameProcessor#createRequest(IngestionFrame)}. 
+     * Test method for {@link IngestionFrameProcessorDep#createRequest(IngestionFrame)}. 
      */
 //    @Test
 //    public final void testCreateRequest() {
@@ -163,11 +163,11 @@ public class IngestionFrameProcessorTest {
 //    }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#from(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#from(int)}.
      */
     @Test
     public final void testFrom() {
-        IngestionFrameProcessor     prcrFrom = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+        IngestionFrameProcessorDep     prcrFrom = IngestionFrameProcessorDep.from(INT_PROVIDER_ID);
         
         // Start it up 
         boolean bolActivated = prcrFrom.activate();
@@ -184,15 +184,15 @@ public class IngestionFrameProcessorTest {
             Assert.fail("Processor throw InterruptedException while waiting for shutdown: " + e.getMessage());
         }
         
-        Assert.assertFalse(prcrFrom.isActive());
+        Assert.assertFalse(prcrFrom.isSupplying());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#IngestionFrameProcessor(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#IngestionFrameProcessor(int)}.
      */
     @Test
     public final void testIngestionFrameProcessor() {
-        IngestionFrameProcessor     prcrCtor = new IngestionFrameProcessor(INT_PROVIDER_ID);
+        IngestionFrameProcessorDep     prcrCtor = new IngestionFrameProcessorDep(INT_PROVIDER_ID);
         
         // Start it up 
         boolean bolActivated = prcrCtor.activate();
@@ -202,11 +202,11 @@ public class IngestionFrameProcessorTest {
         // Shut it down hard 
         prcrCtor.shutdownNow();
         
-        Assert.assertFalse(prcrCtor.isActive());
+        Assert.assertFalse(prcrCtor.isSupplying());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#enableConcurrency(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#enableConcurrency(int)}.
      */
     @Test
     public final void testEnableConcurrency() {
@@ -219,14 +219,14 @@ public class IngestionFrameProcessorTest {
             Assert.fail("Attempting to enable concurrency while active should throw exception.");
             
         } catch (IllegalStateException e) {
-            Assert.assertTrue(this.processor.isActive());
+            Assert.assertTrue(this.processor.isSupplying());
             Assert.assertEquals(bolConcurrency, this.processor.hasConcurrency());
             
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#disableConcurrency()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#disableConcurrency()}.
      */
     @Test
     public final void testDisableConcurrency() {
@@ -239,14 +239,14 @@ public class IngestionFrameProcessorTest {
             Assert.fail("Attempting to disable concurrency while active should throw exception.");
             
         } catch (IllegalStateException e) {
-            Assert.assertTrue(this.processor.isActive());
+            Assert.assertTrue(this.processor.isSupplying());
             Assert.assertEquals(bolConcurrency, this.processor.hasConcurrency());
             
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#enableFrameDecomposition(long)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#enableFrameDecomposition(long)}.
      */
     @Test
     public final void testEnableFrameDecomposition() {
@@ -270,7 +270,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#disableFrameDecomposition()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#disableFrameDecomposition()}.
      */
     @Test
     public final void testDisableFrameDecomposition() {
@@ -294,7 +294,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#enableBackPressure(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#enableBackPressure(int)}.
      */
     @Test
     public final void testEnableBackPressure() {
@@ -318,7 +318,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#disableBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#disableBackPressure()}.
      */
     @Test
     public final void testDisableBackPressure() {
@@ -342,20 +342,20 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#activate()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#activate()}.
      */
     @Test
     public final void testActivate() {
-        IngestionFrameProcessor prcrTest = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(INT_PROVIDER_ID);
         
-        Assert.assertFalse(prcrTest.isActive());
+        Assert.assertFalse(prcrTest.isSupplying());
         prcrTest.activate();
-        Assert.assertTrue(prcrTest.isActive());
+        Assert.assertTrue(prcrTest.isSupplying());
         
         try {
             prcrTest.shutdown();
             
-            Assert.assertFalse(prcrTest.isActive());
+            Assert.assertFalse(prcrTest.isSupplying());
             
         } catch (InterruptedException e) {
             Assert.fail("Processor threw InterruptedException while waiting for shutdown: " + e.getMessage());
@@ -363,20 +363,20 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#shutdown()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#shutdown()}.
      */
     @Test
     public final void testShutdown() {
-        IngestionFrameProcessor prcrTest = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(INT_PROVIDER_ID);
         
-        Assert.assertFalse(prcrTest.isActive());
+        Assert.assertFalse(prcrTest.isSupplying());
         prcrTest.activate();
-        Assert.assertTrue(prcrTest.isActive());
+        Assert.assertTrue(prcrTest.isSupplying());
         
         try {
             prcrTest.shutdown();
             
-            Assert.assertFalse(prcrTest.isActive());
+            Assert.assertFalse(prcrTest.isSupplying());
             
         } catch (InterruptedException e) {
             Assert.fail("Processor threw InterruptedException while waiting for shutdown: " + e.getMessage());
@@ -384,22 +384,22 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#shutdownNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#shutdownNow()}.
      */
     @Test
     public final void testShutdownNow() {
-        IngestionFrameProcessor prcrTest = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(INT_PROVIDER_ID);
         
-        Assert.assertFalse(prcrTest.isActive());
+        Assert.assertFalse(prcrTest.isSupplying());
         prcrTest.activate();
-        Assert.assertTrue(prcrTest.isActive());
+        Assert.assertTrue(prcrTest.isSupplying());
         
         prcrTest.shutdownNow();
-        Assert.assertFalse(prcrTest.isActive());
+        Assert.assertFalse(prcrTest.isSupplying());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#addFrame(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#addFrame(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
      */
     @Test
     public final void testAddFrame() {
@@ -436,7 +436,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#addFrames(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#addFrames(java.util.List)}.
      */
     @Test
     public final void testAddFrames() {
@@ -467,7 +467,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#awaitBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#awaitBackPressure()}.
      */
     @Test
     public final void testAwaitBackPressure() {
@@ -511,7 +511,7 @@ public class IngestionFrameProcessorTest {
             Instant     insStop = Instant.now();
             Duration    durWait = Duration.between(insStart, insStop);
             
-            System.out.println("The IngestionFrameProcessor#awaitBackPressure() blocked for " + durWait.toString());
+            System.out.println("The IngestionFrameProcessorDep#awaitBackPressure() blocked for " + durWait.toString());
             
             thdTake.join();
             Instant     insThreadStop = Instant.now();;
@@ -525,7 +525,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link IngestionFrameProcessor#awaitRequestQueueEmpty()} 
+     * Test method for {@link IngestionFrameProcessorDep#awaitRequestQueueEmpty()} 
      */
     @Test
     public final void testAwaitRequestQueueEmpty() {
@@ -537,7 +537,7 @@ public class IngestionFrameProcessorTest {
         
         Thread thdConsumer  = new Thread( () -> {
             int cntTakes = 0;
-            while (this.processor.isActive()) {
+            while (this.processor.isSupplying()) {
 //                System.out.println("  awaitRequestQueueEmpty() isActive() = " + this.processor.isActive());
                 try {
                     IngestDataRequest msgRqst = this.processor.take();
@@ -550,7 +550,7 @@ public class IngestionFrameProcessorTest {
                     String  strMsg = "awaitRequestQueueEmpty() thread take() exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
 
                     System.err.println(strMsg);
-                    System.err.println("  isActive() = " + this.processor.isActive());
+                    System.err.println("  isActive() = " + this.processor.isSupplying());
                     Assert.fail(strMsg);
                     
                 } catch (InterruptedException e) {
@@ -577,7 +577,7 @@ public class IngestionFrameProcessorTest {
             Instant     insStop = Instant.now();
             Duration    durWait = Duration.between(insStart, insStop);
             
-            System.out.println("The IngestionFrameProcessor#awaitRequestQueueEmpty() blocked for " + durWait.toString());
+            System.out.println("The IngestionFrameProcessorDep#awaitRequestQueueEmpty() blocked for " + durWait.toString());
             
             this.processor.shutdown();
             thdConsumer.interrupt();
@@ -594,7 +594,7 @@ public class IngestionFrameProcessorTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#isActive()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#isSupplying()}.
      */
     @Test
     public final void testIsActive() {
@@ -615,13 +615,13 @@ public class IngestionFrameProcessorTest {
             this.processor.shutdown();
             
             // Still message in buffer - should be active after soft shutdown
-            Assert.assertTrue(this.processor.isActive());
+            Assert.assertTrue(this.processor.isSupplying());
             
             // Clear the buffer then true again
-            while (this.processor.isActive())
+            while (this.processor.isSupplying())
                 this.processor.take();
             
-            Assert.assertFalse(this.processor.isActive());
+            Assert.assertFalse(this.processor.isSupplying());
             
         } catch (InterruptedException e) {
             Assert.fail("shutdown() threw Interrupted exception: " + e.getMessage());
@@ -629,7 +629,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#take()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#take()}.
      */
     @Test
     public final void testTake() {
@@ -650,13 +650,13 @@ public class IngestionFrameProcessorTest {
             this.processor.shutdown();
             
             // Still message in buffer - should be active after soft shutdown
-            Assert.assertTrue(this.processor.isActive());
+            Assert.assertTrue(this.processor.isSupplying());
             
             // Clear the buffer then try again
-            while (this.processor.isActive())
+            while (this.processor.isSupplying())
                 this.processor.take();
             
-            Assert.assertFalse(this.processor.isActive());
+            Assert.assertFalse(this.processor.isSupplying());
             
         } catch (InterruptedException e) {
             Assert.fail("shutdown() threw Interrupted exception: " + e.getMessage());
@@ -681,7 +681,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#poll()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#poll()}.
      */
     @Test
     public final void testPoll() {
@@ -703,7 +703,7 @@ public class IngestionFrameProcessorTest {
             this.processor.shutdown();
             
             // Still message in buffer - should be active after soft shutdown
-            Assert.assertTrue(this.processor.isActive());
+            Assert.assertTrue(this.processor.isSupplying());
             
             // Clear the buffer with polling until exception is thrown
             IngestDataRequest   msgRqst = null;
@@ -720,14 +720,14 @@ public class IngestionFrameProcessorTest {
 
         } catch (IllegalStateException e) {
             
-            Assert.assertFalse(this.processor.isActive());
+            Assert.assertFalse(this.processor.isSupplying());
             Assert.assertEquals(cntFrames, cntMsgs);
         }
         
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#poll(long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#poll(long, java.util.concurrent.TimeUnit)}.
      */
     @Test
     public final void testPollLongTimeUnit() {
@@ -746,7 +746,7 @@ public class IngestionFrameProcessorTest {
 
 //            System.out.println("  Poller Thread: entering loop, isActive() = " + this.processor.isActive());
             
-            while (this.processor.isActive()) {
+            while (this.processor.isSupplying()) {
                 try {
                     IngestDataRequest msgRqst = this.processor.poll(lngWait, tuWait);
                     cntPolls++;

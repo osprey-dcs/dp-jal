@@ -677,10 +677,10 @@ public class IngestionThrottleBuffer implements IMessageSupplier<IngestDataReque
      * @return <code>true</code> if there are currently request messages available or pending
      *         <code>false</code> otherwise
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#isActive()
+     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#isSupplying()
      */
     @Override
-    public boolean isActive() {
+    public boolean isSupplying() {
         return this.bolActive || !this.queMsgRequests.isEmpty();
     }
 

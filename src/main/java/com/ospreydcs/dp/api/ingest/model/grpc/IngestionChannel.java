@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionStreamPool.java
+ * File:	IngestionChannel.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionStreamPool
+ * Type: 	IngestionChannel
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -48,7 +48,6 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.api.model.ClientRequestId;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
@@ -60,7 +59,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
 /**
  * <p>
  * Implements a cooperating collection of <code>IngestionStream</code> instances used for concurrent data
- * transmission to the Ingestion Service.
+ * transmission to the Ingestion Service via a gRPC channel.
  * </p>
  * <p>
  * Class instances transmit processed client ingestion data using a collection of 
@@ -71,7 +70,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * (If the multiple data streams feature is disabled only one stream will be active.)  
  * </p>
  * <h2>Operation</h2>
- * After creation instances of <code>IngestionStreamPool</code> must be activated using
+ * After creation instances of <code>IngestionChannel</code> must be activated using
  * either the <code>{@link #activate(ProviderUID)}</code> or <code>{@link #activate(int)}</code> 
  * method, which requires the data provider UID (either as a record or directly as an integer value)
  * to be given to all outgoing <code>IngestDataRequest</code> messages.  
@@ -82,7 +81,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * </p>
  * <p>
  * It is possible to cycle through repeated activations and shutdowns with a single 
- * <code>IngestionStreamPool</code> instance.  For example, an instance can be activated
+ * <code>IngestionChannel</code> instance.  For example, an instance can be activated
  * for a specific data provider (with its UID) then shutdown and re-activated for a different
  * data provider.
  * </p>
@@ -130,7 +129,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * @since Jul 22, 2024
  *
  */
-public class IngestionStreamPool {
+public class IngestionChannel {
 
     
     //
@@ -139,7 +138,7 @@ public class IngestionStreamPool {
     
     /**
      * <p>
-     * Constructs a new <code>IngestionStreamPool</code> instance ready for activation.
+     * Constructs a new <code>IngestionChannel</code> instance ready for activation.
      * </p>
      * <p>
      * Instance clients must supply the source of the processed ingestion data, specifically, the source
@@ -160,8 +159,8 @@ public class IngestionStreamPool {
      * 
      * @return
      */
-    public static IngestionStreamPool from(IMessageSupplier<IngestDataRequest> srcRqstMsgs, DpIngestionConnection connIngest) {
-        return new IngestionStreamPool(srcRqstMsgs, connIngest);
+    public static IngestionChannel from(IMessageSupplier<IngestDataRequest> srcRqstMsgs, DpIngestionConnection connIngest) {
+        return new IngestionChannel(srcRqstMsgs, connIngest);
     }
     
     //
@@ -269,14 +268,14 @@ public class IngestionStreamPool {
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionStreamPool</code> using the given message source and connection to the
+     * Constructs a new instance of <code>IngestionChannel</code> using the given message source and connection to the
      * Ingestion Service.
      * </p>
      *
      * @param srcRqstMsgs   the supplier of incoming, processed <code>IngestDataRequest</code> messages 
      * @param connIngest    Java API encapsulated gRPC connection to the Ingestion Service
      */
-    public IngestionStreamPool(IMessageSupplier<IngestDataRequest> srcRqstMsgs, DpIngestionConnection connIngest) {
+    public IngestionChannel(IMessageSupplier<IngestDataRequest> srcRqstMsgs, DpIngestionConnection connIngest) {
         this.srcRqstMsgs = srcRqstMsgs;
         this.connIngest = connIngest;
     }
@@ -839,7 +838,7 @@ public class IngestionStreamPool {
             return false;
 
         // Check message supplier state - not active?
-        if (!this.srcRqstMsgs.isActive())
+        if (!this.srcRqstMsgs.isSupplying())
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - IMessageSupplier instance is not active.");
         
         // Set activation flag before launching threads
@@ -878,7 +877,7 @@ public class IngestionStreamPool {
      * </p>
      * <p>
      * All ingestion data transmission will continue until the <code>IMessageSupplier&lt;IngestDataRequest&gt;</code>
-     * (provided at construction) becomes inactive (i.e., <code>{@link IMessageSupplier#isActive()}</code> returns 
+     * (provided at construction) becomes inactive (i.e., <code>{@link IMessageSupplier#isSupplying()}</code> returns 
      * <code>false</code>).
      * That is, transmission continues until all ingestion request messages within that supplier are exhausted.  
      * To shutdown transmission immediately without regard to any pending ingestion 
