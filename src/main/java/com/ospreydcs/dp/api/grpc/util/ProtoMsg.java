@@ -249,13 +249,12 @@ public final class ProtoMsg {
      * 
      * @return  a new <code>IngestionDataFrame</code> message populated with data from the argument
      * 
-     * @throws IllegalStateException    the argument was not initialized or contains incomplete data
      * @throws MissingResourceException the argument had no timestamp assignments
      * @throws TypeNotPresentException  an unsupported data type was contained in the arugment data
      * @throws ClassCastException       bad type cast or structured data within argument was not converted 
      */
     public static IngestDataRequest.IngestionDataFrame from(IngestionFrame frame) 
-            throws IllegalStateException, MissingResourceException, TypeNotPresentException, ClassCastException  {
+            throws MissingResourceException, TypeNotPresentException, ClassCastException  {
 
         // Extract the argument timestamp information (clock or list) and convert 
         DataTimestamps msgDataTms = null;

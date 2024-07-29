@@ -181,7 +181,7 @@ public final class DpIngestionService extends
     //
     
     /** The ingestion frame to Protobuf message converter tool */
-    private final IngestionFrameConverter   toolFrmToMsg = IngestionFrameConverter.from(0);
+    private final IngestionFrameConverter   toolFrmToMsg = IngestionFrameConverter.create();
     
     /** The ingestion frame decomposition tool (created if used) */
     private IngestionFrameBinner            toolFrmDecomposer = null;
@@ -601,7 +601,7 @@ public final class DpIngestionService extends
         for (IngestionFrame frm : lstFrames) {
 
             // Convert ingestion frame to ingest data message
-            IngestDataRequest   msgRqst = this.toolFrmToMsg.createRequest(frm, recUid.uid());
+            IngestDataRequest   msgRqst = this.toolFrmToMsg.createRequest(frm, recUid);
             
             try {
                 // Transmit data message and recover response - throws StatusRuntimeException

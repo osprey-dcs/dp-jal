@@ -27,11 +27,14 @@
  */
 package com.ospreydcs.dp.api.ingest.model.frame;
 
+import java.security.ProviderException;
 import java.util.MissingResourceException;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
+import com.ospreydcs.dp.api.model.ProviderUID;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.EventMetadata;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -89,13 +92,24 @@ public final class IngestionFrameConverter {
      * Creates and returns a new instance of <code>IngestionFrameConverter</code> ready for
      * converting ingestion frames to Ingestion Service ingest data request messages.
      * </p>
-     *  
-     * @param intProviderId     the default data-provider UID used when none is provided
      * 
      * @return  new ingestion frame converter ready for use
      */
-    public static IngestionFrameConverter from(int intProviderId) {
-        return new IngestionFrameConverter(intProviderId);
+    public static IngestionFrameConverter   create() {
+        return new IngestionFrameConverter();
+    }
+    /**
+     * <p>
+     * Creates and returns a new instance of <code>IngestionFrameConverter</code> ready for
+     * converting ingestion frames to Ingestion Service ingest data request messages.
+     * </p>
+     *  
+     * @param recProviderId     the default data-provider UID used when none is provided or available within frame
+     * 
+     * @return  new ingestion frame converter ready for use
+     */
+    public static IngestionFrameConverter create(ProviderUID recProviderId) {
+        return new IngestionFrameConverter(recProviderId);
     }
     
     
@@ -114,8 +128,8 @@ public final class IngestionFrameConverter {
     // Defining Attributes
     //
     
-    /** The default data provider unique identifier - used when one is not provided */
-    private final int       intProviderUidDef;
+    /** The default data provider unique identifier - used when one is not provided or available within the frame */
+    private final ProviderUID       recProviderUidDef;
     
 
     //
@@ -128,8 +142,19 @@ public final class IngestionFrameConverter {
      * </p>
      *
      */
-    public IngestionFrameConverter(int intDefProviderId) {
-        this.intProviderUidDef = intDefProviderId;
+    public IngestionFrameConverter() {
+        this.recProviderUidDef = null;
+    }
+    
+    /**
+     * <p>
+     * Constructs a new instance of <code>IngestionFrameConverter</code> with a default provider UID.
+     * </p>
+     *
+     * @param recDefProviderId  default Data Provider UID to use when none is provided
+     */
+    public IngestionFrameConverter(ProviderUID recDefProviderId) {
+        this.recProviderUidDef = recDefProviderId;
     }
     
     
@@ -143,15 +168,21 @@ public final class IngestionFrameConverter {
      * with the given argument data.
      * </p>
      * <p>
-     * Uses the default provider UID obtained at construction then defers to
-     * <code>{@link #createRequest(IngestionFrame, int)}</code>.
+     * The method attempt to recover the Data Provider UID by first inspecting the given argument
+     * with <code>{@link IngestionFrame#getProviderUid()}</code>.  If a <code>null</code> value is
+     * returned then the default value provided at construction is checked.  If no default value
+     * was provided then an exception is thrown.
+     * </p>
+     * <p>
+     * Once the Data Provider UID is obtained then the method defers to
+     * <code>{@link #createRequest(IngestionFrame, ProviderUID)}</code>.
      * </p>
      * 
-     * @param frmDataSource source of all data used to populated returned message
+     * @param frame source of all data used to populated returned message
      * 
      * @return  new <code>IngestDataRequest</code> message populated with argument data
      * 
-     * @throws IllegalStateException    the argument was not initialized or contains incomplete data
+     * @throws ProviderException        Data Provider UID available (within the frame or default defined)
      * @throws MissingResourceException the argument had no timestamp assignments
      * @throws TypeNotPresentException  an unsupported data type was contained in the arugment data
      * @throws ClassCastException       bad type cast or structured data within argument was not converted
@@ -159,10 +190,26 @@ public final class IngestionFrameConverter {
      * @see #createRequest(IngestionFrame, int)
      */
     public IngestDataRequest    createRequest(IngestionFrame frame) 
-            throws IllegalStateException, MissingResourceException, TypeNotPresentException, ClassCastException  {
+            throws ProviderException, MissingResourceException, TypeNotPresentException, ClassCastException  {
      
+        // Recover the provider UID
+        ProviderUID     recProviderUid;
+        
+        //  1st Look in the ingestion frame
+        if (frame.getProviderUid() != null)
+            recProviderUid = frame.getProviderUid();
+        
+        //  2nd look for a default value (set at construction)
+        else if (this.recProviderUidDef != null)
+            recProviderUid = this.recProviderUidDef;
+        
+        //  3rd bail out
+        else 
+            throw new ProviderException(JavaRuntime.getQualifiedCallerNameSimple() + " - no Data Provider UID was available.");
+        
+        
         // Create the message and return it
-        IngestDataRequest    msgRqst = this.createRequest(frame, this.intProviderUidDef);
+        IngestDataRequest    msgRqst = this.createRequest(frame, recProviderUid);
         
         return msgRqst;
     }
@@ -178,26 +225,25 @@ public final class IngestionFrameConverter {
      * <code>{@link #createRequest(IngestionFrame, int, String)}</code>.
      * </p> 
      * 
-     * @param frmDataSource source of all data used to populated returned message
-     * @param intProviderId the data provider UID used in the returned message
+     * @param frame     source of all data used to populated returned message
+     * @param recPrvUid the data provider UID used in the returned message
      * 
      * @return  new <code>IngestDataRequest</code> message populated with argument data
      * 
-     * @throws IllegalStateException    the argument was not initialized or contains incomplete data
      * @throws MissingResourceException the argument had no timestamp assignments
      * @throws TypeNotPresentException  an unsupported data type was contained in the arugment data
      * @throws ClassCastException       bad type cast or structured data within argument was not converted
      * 
      * @see #createRequest(IngestionFrame, int, String)
      */
-    public IngestDataRequest    createRequest(IngestionFrame frmDataSource, int intProviderId) 
+    public IngestDataRequest    createRequest(IngestionFrame frame, ProviderUID recPrvUid) 
             throws IllegalStateException, MissingResourceException, TypeNotPresentException, ClassCastException  {
 
         // Create a new request ID
         String  strRqstId = IngestionFrameConverter.newClientRequestId();
 
         // Create the message and return it
-        IngestDataRequest    msgRqst = this.createRequest(frmDataSource, intProviderId, strRqstId);
+        IngestDataRequest    msgRqst = this.createRequest(frame, recPrvUid, strRqstId);
         
         return msgRqst;
     }
@@ -213,29 +259,28 @@ public final class IngestionFrameConverter {
      * method when converted frame data to message data.
      * </p>
      * 
-     * @param frmDataSource source of all data used to populated returned message
-     * @param intProviderId the data provider UID used in the returned message
-     * @param strRqstId     the client request ID used in the returned message
+     * @param frame     source of all data used to populated returned message
+     * @param recPrvUid the data provider UID used in the returned message
+     * @param strRqstId the client request ID used in the returned message
      * 
      * @return  new <code>IngestDataRequest</code> message populated with argument data
      * 
-     * @throws IllegalStateException    the argument was not initialized or contains incomplete data
      * @throws MissingResourceException the argument had no timestamp assignments
      * @throws TypeNotPresentException  an unsupported data type was contained in the arugment data
      * @throws ClassCastException       bad type cast or structured data within argument was not converted
      * 
      * @see ProtoMsg#from(IngestionFrame)
      */
-    public IngestDataRequest createRequest(IngestionFrame frmDataSource, int intProviderId, String strRqstId) 
-            throws IllegalStateException, MissingResourceException, TypeNotPresentException, ClassCastException  {
+    public IngestDataRequest createRequest(IngestionFrame frame, ProviderUID recPrvUid, String strRqstId) 
+            throws ProviderException, MissingResourceException, TypeNotPresentException, ClassCastException  {
         
         IngestDataRequest   msgRqst = IngestDataRequest.newBuilder()
-                .setProviderId(intProviderId)
+                .setProviderId(recPrvUid.uid())
                 .setClientRequestId(strRqstId)
                 .setRequestTime(ProtoTime.now())
-                .addAllAttributes(ProtoMsg.createAttributes(frmDataSource.getAttributes()))
-                .setEventMetadata(IngestionFrameConverter.extractEventMetadata(frmDataSource))
-                .setIngestionDataFrame(ProtoMsg.from(frmDataSource))
+                .addAllAttributes(ProtoMsg.createAttributes(frame.getAttributes()))
+                .setEventMetadata(IngestionFrameConverter.extractEventMetadata(frame))
+                .setIngestionDataFrame(ProtoMsg.from(frame))
                 .build();
 
         return msgRqst;

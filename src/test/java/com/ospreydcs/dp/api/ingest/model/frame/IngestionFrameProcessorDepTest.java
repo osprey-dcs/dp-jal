@@ -45,6 +45,7 @@ import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
 import com.ospreydcs.dp.api.model.IDataColumn;
+import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
@@ -69,7 +70,10 @@ public class IngestionFrameProcessorDepTest {
     //
     
     /** The data provider UID used for all <code>IngestDataRequest</code> messages. */
-    public static final int         INT_PROVIDER_ID = 1;
+    public static final int         INT_PROVIDER_UID = 1;
+    
+    /** The data provider UID record used for all <code>IngestDataRequest</code> messages */
+    public static final ProviderUID REC_PROVIDER_UID = ProviderUID.from(INT_PROVIDER_UID);
     
     
     /** Concurrency - Number of concurrent threads - for concurrency testing */
@@ -126,7 +130,7 @@ public class IngestionFrameProcessorDepTest {
      */
     @Before
     public void setUp() throws Exception {
-        this.processor = IngestionFrameProcessorDep.from(INT_PROVIDER_ID);
+        this.processor = IngestionFrameProcessorDep.from(REC_PROVIDER_UID);
         this.processor.activate();
     }
 
@@ -155,7 +159,7 @@ public class IngestionFrameProcessorDepTest {
 //        try {
 //            IngestDataRequest msgRqst = this.processor.createRequest(frame);
 //
-//            Assert.assertEquals(INT_PROVIDER_ID, msgRqst.getProviderId());
+//            Assert.assertEquals(INT_PROVIDER_UID, msgRqst.getProviderId());
 //
 //        } catch (Exception e) {
 //            Assert.fail("createRequest(IngestionFrame) threw exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
@@ -167,7 +171,7 @@ public class IngestionFrameProcessorDepTest {
      */
     @Test
     public final void testFrom() {
-        IngestionFrameProcessorDep     prcrFrom = IngestionFrameProcessorDep.from(INT_PROVIDER_ID);
+        IngestionFrameProcessorDep     prcrFrom = IngestionFrameProcessorDep.from(REC_PROVIDER_UID);
         
         // Start it up 
         boolean bolActivated = prcrFrom.activate();
@@ -192,7 +196,7 @@ public class IngestionFrameProcessorDepTest {
      */
     @Test
     public final void testIngestionFrameProcessor() {
-        IngestionFrameProcessorDep     prcrCtor = new IngestionFrameProcessorDep(INT_PROVIDER_ID);
+        IngestionFrameProcessorDep     prcrCtor = new IngestionFrameProcessorDep(REC_PROVIDER_UID);
         
         // Start it up 
         boolean bolActivated = prcrCtor.activate();
@@ -346,7 +350,7 @@ public class IngestionFrameProcessorDepTest {
      */
     @Test
     public final void testActivate() {
-        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(INT_PROVIDER_ID);
+        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(REC_PROVIDER_UID);
         
         Assert.assertFalse(prcrTest.isSupplying());
         prcrTest.activate();
@@ -367,7 +371,7 @@ public class IngestionFrameProcessorDepTest {
      */
     @Test
     public final void testShutdown() {
-        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(INT_PROVIDER_ID);
+        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(REC_PROVIDER_UID);
         
         Assert.assertFalse(prcrTest.isSupplying());
         prcrTest.activate();
@@ -388,7 +392,7 @@ public class IngestionFrameProcessorDepTest {
      */
     @Test
     public final void testShutdownNow() {
-        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(INT_PROVIDER_ID);
+        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(REC_PROVIDER_UID);
         
         Assert.assertFalse(prcrTest.isSupplying());
         prcrTest.activate();

@@ -312,7 +312,9 @@ public class IngestionFrameBinner {
         long    szCol = frmSource.allocationSizeColumn();
         
         if (szCol > paramsBin.getBinSize())
-            throw new IllegalArgumentException("Ingestion frame column allocation size is greater than maximum bin size.");
+            throw new IllegalArgumentException("Ingestion frame " 
+                    + frmSource.getFrameLabel() 
+                    + ": column allocation size is greater than maximum bin size.");
             
         // Compute the number of columns to satisfy bin requirements
         int     cntColsFrame = frmSource.getColumnCount();
@@ -329,7 +331,9 @@ public class IngestionFrameBinner {
         
         // Check that original frame is now empty
         if (frmSource.hasData())
-            throw new CompletionException("Internal error - original ingestion frame was not fully consumed.", new Throwable());
+            throw new CompletionException("Internal error for ingestion frame " 
+                    + frmSource.getFrameLabel() + ": was not fully consumed.", 
+                    new Throwable("Incomplete decomposition"));
 
         return lstBins;
     }
@@ -391,7 +395,9 @@ public class IngestionFrameBinner {
         long    szRow = frmSource.allocationSizeRow();
         
         if (szRow > paramsBin.getBinSize())
-            throw new IllegalArgumentException("Ingestion frame row allocation size is greater than maximum bin size.");
+            throw new IllegalArgumentException("Ingestion frame : " 
+                    + frmSource.getFrameLabel() 
+                    + " row allocation size is greater than maximum bin size.");
             
         // Compute the number of rows to satisfy bin requirements
         int     cntRowsFrame = frmSource.getRowCount();
@@ -408,7 +414,9 @@ public class IngestionFrameBinner {
         
         // Check that original frame is now empty
         if (frmSource.hasData())
-            throw new CompletionException("Internal error - original ingestion frame was not fully consumed.", new Throwable());
+            throw new CompletionException("Internal error for ingestion frame " 
+                        + frmSource.getFrameLabel() + ": was not fully consumed.", 
+                        new Throwable("Incomplete decomposition"));
 
         return lstBins;
     }

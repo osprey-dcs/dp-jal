@@ -50,6 +50,7 @@ import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
+import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -221,12 +222,12 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
      * parameters. 
      * </p> 
      * 
-     * @param intProviderId data provider unique identifier assigned to all <code>IngestDataRequest</code> messages
+     * @param recProviderUid data provider unique identifier assigned to all <code>IngestDataRequest</code> messages
      * 
      * @return new <code>IngestionFrameProcessorDep</code> instance ready for processing
      */
-    public static IngestionFrameProcessorDep from(int intProviderId) {
-        return new IngestionFrameProcessorDep(intProviderId);
+    public static IngestionFrameProcessorDep from(ProviderUID recProviderUid) {
+        return new IngestionFrameProcessorDep(recProviderUid);
     }
     
     
@@ -310,7 +311,7 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
     //
     
     /** The data provider unique identifier for all <code>IngestDataRequest</code> messages supplied */
-    private final int       intProviderUid;
+    private final ProviderUID   recProviderUid;
     
     
     //
@@ -412,10 +413,10 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
      * messages supplied by this instance.
      * </p>
      *
-     * @param intProviderUid    the data provider unique identifier
+     * @param recProviderUid    the data provider unique identifier
      */
-    public IngestionFrameProcessorDep(int intProviderUid) {
-        this.intProviderUid = intProviderUid;
+    public IngestionFrameProcessorDep(ProviderUID recProviderUid) {
+        this.recProviderUid = recProviderUid;
     }
 
     
@@ -1333,6 +1334,8 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
                     } catch (IllegalArgumentException | CompletionException e2) {
                         
                         // If failed again: There is nothing more to do  
+                        if (BOL_LOGGING)
+                            LOGGER.error("Frame decomposition failed for frame {} with exception {} = {}.", frmRaw.getFrameLabel(), e2.getClass().getName(), e2.getMessage());
                         throw e2;
                     }
                 }
@@ -1377,7 +1380,7 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
         Callable<Boolean>   task = () -> {
             
             // Ingestion frame converter used for all message creation
-            IngestionFrameConverter converter = IngestionFrameConverter.from(this.intProviderUid);
+            IngestionFrameConverter converter = IngestionFrameConverter.create(this.recProviderUid);
             
             // TODO - Remove
             // Debugging - Create ID

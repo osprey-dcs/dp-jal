@@ -151,8 +151,10 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  *
  * @author Christopher K. Allen
  * @since Apr 10, 2024
- *
+ * 
+ * @deprecated This class was replaced by several classes offering the same collective operation (i.e., a better design) 
  */
+@Deprecated
 public final class IngestionStreamProcessor {
 
     
@@ -1047,29 +1049,29 @@ public final class IngestionStreamProcessor {
     // Operations
     //
     
-    /**
-     * <p>
-     * Activates the ingestion stream processor for the given data provider UID.
-     * </p>
-     * <p>
-     * This method extracts the integer-valued data provider UID from the argument
-     * and defers to <code>{@link #activate(int)}</code>.  See documentation for
-     * the <code>{@link #activate(int)}</code> method for full details.
-     * </p>
-     * 
-     * @param recProviderId the data provider UID used in all ingest data request messages 
-     * 
-     * @return  <code>true</code> if the processor was successfully activated,
-     *          <code>false</code> if the processor was already active
-     * 
-     * @throws RejectedExecutionException (internal) unable to start a streaming task
-     * 
-     * @see #activate(int)
-     */
-    synchronized 
-    public boolean activate(ProviderUID recProviderId) {
-        return this.activate(recProviderId.uid());
-    }
+//    /**
+//     * <p>
+//     * Activates the ingestion stream processor for the given data provider UID.
+//     * </p>
+//     * <p>
+//     * This method extracts the integer-valued data provider UID from the argument
+//     * and defers to <code>{@link #activate(int)}</code>.  See documentation for
+//     * the <code>{@link #activate(int)}</code> method for full details.
+//     * </p>
+//     * 
+//     * @param recProviderId the data provider UID used in all ingest data request messages 
+//     * 
+//     * @return  <code>true</code> if the processor was successfully activated,
+//     *          <code>false</code> if the processor was already active
+//     * 
+//     * @throws RejectedExecutionException (internal) unable to start a streaming task
+//     * 
+//     * @see #activate(int)
+//     */
+//    synchronized 
+//    public boolean activate(ProviderUID recProviderId) {
+//        return this.activate(recProviderId.uid());
+//    }
     
     /**
      * <p>
@@ -1118,7 +1120,7 @@ public final class IngestionStreamProcessor {
      * </ul>
      * </p>
      * 
-     * @param intProviderId the data provider UID used in all ingest data request messages 
+     * @param recProviderId the data provider UID used in all ingest data request messages 
      * 
      * @return  <code>true</code> if the processor was successfully activated,
      *          <code>false</code> if the processor was already active
@@ -1126,7 +1128,7 @@ public final class IngestionStreamProcessor {
      * @throws RejectedExecutionException (internal) unable to start a streaming task
      */
     synchronized 
-    public boolean activate(int intProviderId) throws RejectedExecutionException {
+    public boolean activate(ProviderUID recProviderId) throws RejectedExecutionException {
         
         // Check our state
         if (this.bolActive)
@@ -1139,7 +1141,7 @@ public final class IngestionStreamProcessor {
 //        this.intProviderId = intProviderId;
         
         // Create the ingestion frame processor and activate it (all other default parameters)
-        this.fncFrameProcessor = IngestionFrameProcessorDep.from(intProviderId);
+        this.fncFrameProcessor = IngestionFrameProcessorDep.from(recProviderId);
         if (this.bolBackPressure)
             this.fncFrameProcessor.enableBackPressure(this.szQueueCapacity);
         this.fncFrameProcessor.activate();

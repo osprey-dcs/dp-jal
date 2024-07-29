@@ -132,7 +132,108 @@ public class TestIngestionFrameGenerator {
     
     /**
      * <p>
-     * Create an ingestion frame with the given dimensions, populated with double-valued 
+     * Create a "payload" of ingestion data according to the table ingestion frame given parameters.
+     * </p>
+     * <p>
+     * The method calls <code>{@link #createDoublesFrameWithClock(int, int)}</code>
+     * repeatedly with the provided parameters until the payload capacity is reached.
+     * </p>
+     *  
+     * @param cntFrames     number of frame within returned collection
+     * @param cntCols       width of the ingestion frame (number of columns)
+     * @param cntRows       length of the ingestion frame (number of rows)
+     * 
+     * @return  payload of new ingestion frames populated with artificial data
+     * 
+     * @see #createDoublesFrameWithClock(int, int)
+     */
+    synchronized
+    public static List<IngestionFrame>  createDoublesPayloadWithClock(int cntFrames, int cntCols, int cntRows) {
+        
+        // The returned collection
+        List<IngestionFrame>    lstFrames = new ArrayList<>(cntFrames);
+        
+        // Create each frame and add to collection
+        for (int iFrame=0; iFrame<cntFrames; iFrame++) {
+            IngestionFrame  frame = TestIngestionFrameGenerator.createDoublesFrameWithClock(cntCols, cntRows);
+            
+            lstFrames.add(frame);
+        }
+        
+        return lstFrames;
+    }
+    
+    /**
+     * <p>
+     * Create a "payload" of ingestion data according to the table ingestion frame given parameters.
+     * </p>
+     * <p>
+     * The method calls <code>{@link #createDoublesFrameWithClock(int, int, boolean)}</code>
+     * repeatedly with the provided parameters until the payload capacity is reached.
+     * </p>
+     *  
+     * @param cntFrames     number of frame within returned collection
+     * @param cntCols       width of the ingestion frame (number of columns)
+     * @param cntRows       length of the ingestion frame (number of rows)
+     * @param bolAddProps   supplies artificial frame properties if <code>true</code>
+     * 
+     * @return  payload of new ingestion frames populated with artificial data
+     * 
+     * @see #createDoublesFrameWithClock(int, int, boolean)
+     */
+    synchronized
+    public static List<IngestionFrame> createDoublesPayloadWithClock(int cntFrames, int cntCols, int cntRows, boolean bolAddProps) {
+        
+        // The returned collection
+        List<IngestionFrame>    lstFrames = new ArrayList<>(cntFrames);
+        
+        // Create each frame and add to collection
+        for (int iFrame=0; iFrame<cntFrames; iFrame++) {
+            IngestionFrame  frame = TestIngestionFrameGenerator.createDoublesFrameWithClock(cntCols, cntRows, bolAddProps);
+            
+            lstFrames.add(frame);
+        }
+        
+        return lstFrames;
+    }
+    
+    /**
+     * <p>
+     * Create a "payload" of ingestion data according to the table ingestion frame given parameters.
+     * </p>
+     * <p>
+     * The method calls <code>{@link #createDoublesFrameWithClock(String, int, int, boolean)}</code>
+     * repeatedly with the provided parameters until the payload capacity is reached.
+     * </p>
+     *  
+     * @param cntFrames     number of frame within returned collection
+     * @param strColPref    prefix given to all ingestion frame column names
+     * @param cntCols       width of the ingestion frame (number of columns)
+     * @param cntRows       length of the ingestion frame (number of rows)
+     * @param bolAddProps   supplies artificial frame properties if <code>true</code>
+     * 
+     * @return  payload of new ingestion frames populated with artificial data
+     * 
+     * @see #createDoublesFrameWithClock(String, int, int, boolean)
+     */
+    synchronized 
+    public static List<IngestionFrame>  createDoublePayloadWithClock(int cntFrames, String strPrefix, int cntCols, int cntRows, boolean bolAddProps) {
+        
+        // The returned collection
+        List<IngestionFrame>    lstFrames = new ArrayList<>(cntFrames);
+        
+        // Create each frame and add to collection
+        for (int iFrame=0; iFrame<cntFrames; iFrame++) {
+            IngestionFrame  frame = TestIngestionFrameGenerator.createDoublesFrameWithClock(strPrefix, cntCols, cntRows, bolAddProps);
+            
+            lstFrames.add(frame);
+        }
+        
+        return lstFrames;
+    }
+    /**
+     * <p>
+     * Create a table ingestion frame with the given dimensions, populated with double-valued 
      * simulated data, and using a uniform sampling clock to identify frame timestamps.
      * </p>
      * <p>
@@ -181,7 +282,7 @@ public class TestIngestionFrameGenerator {
     
     /**
      * <p>
-     * Create an ingestion frame with the given dimensions, populated with double-valued 
+     * Create a table ingestion frame with the given dimensions, populated with double-valued 
      * simulated data, and using a uniform sampling clock to identify frame timestamps.
      * </p>
      * <p>
@@ -204,7 +305,7 @@ public class TestIngestionFrameGenerator {
     
     /**
      * <p>
-     * Create an ingestion frame with the given dimensions, populated with double-valued 
+     * Create a table ingestion frame with the given dimensions, populated with double-valued 
      * simulated data, and using a uniform sampling clock to identify frame timestamps.
      * </p>
      * <p>
@@ -219,9 +320,6 @@ public class TestIngestionFrameGenerator {
      * <code>{@link #dblFrameDblSeed}</code> which must be done atomically, thus, the
      * explicit synchronization.
      * </p>
-     * 
-     * @param cntCols   width of the ingestion frame (number of columns)
-     * @param cntRows   length of the ingestion frame (number of rows)
      * 
      * @param strColPref    prefix given to all ingestion frame column names
      * @param cntCols       width of the ingestion frame (number of columns)
@@ -277,7 +375,7 @@ public class TestIngestionFrameGenerator {
 
     /**
      * <p>
-     * Create an ingestion frame with the given dimensions, populated with double-valued 
+     * Create a table ingestion frame with the given dimensions, populated with double-valued 
      * simulated data, and using an explicit timestamp list to identify frame timestamps.
      * </p>
      * <p>
@@ -326,7 +424,7 @@ public class TestIngestionFrameGenerator {
 
     /**
      * <p>
-     * Create an ingestion frame with the given dimensions, populated with double-valued 
+     * Create a table ingestion frame with the given dimensions, populated with double-valued 
      * simulated data, and using an explicit timestamp list to identify frame timestamps.
      * </p>
      * <p>
@@ -349,7 +447,7 @@ public class TestIngestionFrameGenerator {
     
     /**
      * <p>
-     * Create an ingestion frame with the given dimensions, populated with double-valued 
+     * Create a table ingestion frame with the given dimensions, populated with double-valued 
      * simulated data, and using an explicit timestamp list to identify frame timestamps.
      * </p>
      * <p>

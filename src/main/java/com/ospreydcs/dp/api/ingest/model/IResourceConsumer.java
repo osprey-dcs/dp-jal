@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IFrameConsumer.java
+ * File:	IResourceConsumer.java
  * Package: com.ospreydcs.dp.api.ingest.model
- * Type: 	IFrameConsumer
+ * Type: 	IResourceConsumer
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -36,7 +36,7 @@ import com.ospreydcs.dp.api.ingest.IngestionFrame;
 
 /**
  * <p>
- * Interface exposing the operations of a blocking <code>IngestionFrame</code> consumer.
+ * Interface exposing the operations of a blocking <code>T</code> resource type consumer.
  * </p>
  * <p>
  * Classes implementing this interface are assumed to provide implicit throttling at the supplier
@@ -44,16 +44,18 @@ import com.ospreydcs.dp.api.ingest.IngestionFrame;
  * prevented from offering a frame to the consumer if a particular condition is not met (e.g., a buffer
  * is at capacity).
  * </p>
+ * 
+ * @param   <T>     resource type being consumed
  *
  * @author Christopher K. Allen
  * @since Jul 25, 2024
  *
  */
-public interface IFrameConsumer extends Consumer<IngestionFrame> {
+public interface IResourceConsumer<T> {
 
     /**
      * <p>
-     * Determine whether or not the consumer is currently accepting <code>IngestionFrame</code> instances.
+     * Determine whether or not the consumer is currently accepting <code>T</code> type resource instances.
      * </p>
      * <p>
      * If the value <code>true</code> is returned then the method <code>{@link #offer(IngestionFrame)}</code>
@@ -67,7 +69,7 @@ public interface IFrameConsumer extends Consumer<IngestionFrame> {
     
     /**
      * <p>
-     * Offers the given list of ingestion frames to the consumer with the possibility of blocking.
+     * Offers the given list of resource to the consumer with the possibility of blocking.
      * </p>
      * <p>
      * This operation is intended to offer the capability of blocking if the consumer is not in
@@ -75,15 +77,15 @@ public interface IFrameConsumer extends Consumer<IngestionFrame> {
      * queue is at capacity the consumer may choose to block until queue space becomes available.
      * </p>
      *  
-     * @param lstFrames     list of ingestion frames to be consumed
+     * @param lstRscs     list of resources to be consumed
      * 
-     * @throws InterruptedException the process was interrupted while waiting for frame to be accepted
+     * @throws InterruptedException the process was interrupted while waiting for resources to be accepted
      */
-    public void offer(List<IngestionFrame> lstFrames) throws InterruptedException;
+    public void offer(List<T> lstRscs) throws InterruptedException;
     
     /**
      * <p>
-     * Offers the given list of ingestion frames to the consumer with the possibility of blocking until the given timeout.
+     * Offers the given list of resources to the consumer with the possibility of blocking until the given timeout.
      * </p>
      * <p>
      * This operation is intended to offer the capability of blocking if the consumer is not in
@@ -93,15 +95,15 @@ public interface IFrameConsumer extends Consumer<IngestionFrame> {
      * a given timeout limit is specified after which the operation fails return a value <code>false</code>
      * </p>
      * 
-     * @param lstFrames     list of ingestion frames to be consumed
+     * @param lstRsrcs      list of resources to be consumed
      * @param lngTimeout    timeout limit to wait for consumer acceptance
      * @param tuTimeout     timeout units to wait for consumer acceptance
      * 
-     * @return  <code>true</code> if frame was accepted by consumer, <code>false</code> if timeout occurred
+     * @return  <code>true</code> if resource was accepted by consumer, <code>false</code> if timeout occurred
      * 
-     * @throws InterruptedException the process was interrupted while waiting for frame to be accepted
+     * @throws InterruptedException the process was interrupted while waiting for resources to be accepted
      */
-    public boolean  offer(List<IngestionFrame> lstFrames, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException;
+    public boolean  offer(List<T> lstRsrcs, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException;
 
     
     //
@@ -110,50 +112,51 @@ public interface IFrameConsumer extends Consumer<IngestionFrame> {
     
     /**
      * <p>
-     * Default convenience operation for offering a single <code>IngestionFrame</code> instance.
+     * Default convenience operation for offering a single <code>T</code> type resource instance.
      * </p>
      * <p>
      * The argument is converted to a single-element list then deferred to <code>{@link #offer(List)}</code>.
      * </p>
      * 
-     * @param frame         ingestion frame to be consumed
+     * @param rsrc         resource instance to be consumed
      * 
-     * @throws InterruptedException the process was interrupted while waiting for frame to be accepted
+     * @throws InterruptedException the process was interrupted while waiting for resource to be accepted
      * 
      * @see {@link #offer(List)}
      */
-    default void offer(IngestionFrame frame) throws InterruptedException {
-        this.offer(List.of(frame));
+    default void offer(T rsrc) throws InterruptedException {
+        this.offer(List.of(rsrc));
     }
     
     /**
      * <p>
-     * Default convenience operation for offering a single <code>IngestionFrame</code> instance with timeout limit.
+     * Default convenience operation for offering a single <code>T</code> type resource instance with timeout limit.
      * </p>
      * <p>
      * The argument is converted to a single-element list then deferred to <code>{@link #offer(List, long, TimeUnit)}</code>.
      * </p>
      * 
-     * @param frame         ingestion frame to be consumed
+     * @param rsrc          resource instance to be consumed
      * 
      * @param lngTimeout    timeout limit to wait for consumer acceptance
      * @param tuTimeout     timeout units to wait for consumer acceptance
      * 
      * @return  <code>true</code> if frame was accepted by consumer, <code>false</code> if timeout occurred
      * 
-     * @throws InterruptedException the process was interrupted while waiting for frame to be accepted
+     * @throws InterruptedException the process was interrupted while waiting for resource to be accepted
      */
-    default boolean offer(IngestionFrame frame, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException {
-        return this.offer(List.of(frame), lngTimeout, tuTimeout);
+    default boolean offer(T rsrc, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException {
+        return this.offer(List.of(rsrc), lngTimeout, tuTimeout);
     }
     
     /**
      * <p>
-     * Default convenience operation allowing ingestion frame supplier to pre-process frames before acceptance.
+     * Default convenience operation allowing resource supplier to pre-process resource before acceptance.
      * </p>
      * <p>
-     * This method is intended for fast pre-processing of ingestion frames, primarily the setting of properties,
-     * attributes, and identifiers.  For example, the operation could set the timestamp of the ingestion
+     * This method is intended for fast pre-processing of resources before acceptance, primarily the setting of properties,
+     * attributes, and identifiers.  
+     * For example, in the case of <code>T = IngestionFrame</code> the operation could set the provider UID of the ingestion
      * frame before it is given to the consumer.  In that case the <code>UnaryOperator</code> argument can be
      * defined as the following lambda function:
      * <pre>
@@ -166,39 +169,40 @@ public interface IFrameConsumer extends Consumer<IngestionFrame> {
      * where the variable <code>recUid</code> is known at the time of frame consumption.
      * </p>
      * <p>
-     * Once the given ingestion frames are processed they are then offered to the consumer by deferring to
+     * Once the given resources are processed they are then offered to the consumer by deferring to
      * the operation <code>{@link #offer(List)}</code>.  All behavior henceforth follows from that 
      * operation.
      * </p> 
      *  
-     * @param fncProcess    the pre-processing operation to be performed on all frames before submission 
-     * @param lstFrames     list of ingestion frames to be processed then consumed
+     * @param fncProcess    the pre-processing operation to be performed on all resources before submission 
+     * @param lstRsrcs      list of resource instances to be processed then consumed
      * 
-     * @throws InterruptedException the process was interrupted while waiting for frame to be accepted
+     * @throws InterruptedException the process was interrupted while waiting for resources to be accepted
      * 
      * @see #offer(List)
      */
-    default public void processThenOffer(UnaryOperator<IngestionFrame> fncProcess, List<IngestionFrame> lstFrames) 
+    default public void processThenOffer(UnaryOperator<T> fncProcess, List<T> lstRsrcs) 
             throws InterruptedException {
 
-        // Pre-process all frames in the given list with the given processing function
-        List<IngestionFrame>    lstPrcdFrms = lstFrames
+        // Pre-process all resources in the given list with the given processing function
+        List<T> lstPrcdFrms = lstRsrcs
                 .stream()
-                .<IngestionFrame>map(frame -> fncProcess.apply(frame))
+                .<T>map(frame -> fncProcess.apply(frame))
                 .toList();
         
-        // Offer processed frames to consumer
+        // Offer processed resources to consumer
         this.offer(lstPrcdFrms);
     }
     
     /**
      * <p>
-     * Default convenience operation allowing ingestion frame supplier to pre-process frames before acceptance and
-     * providing a timeout limit for frame acceptance.
+     * Default convenience operation allowing resource supplier to pre-process resources before acceptance and
+     * providing a timeout limit for acceptance.
      * </p>
      * <p>
-     * This method is intended for fast pre-processing of ingestion frames, primarily the setting of properties,
-     * attributes, and identifiers.  For example, the operation could set the timestamp of the ingestion
+     * This method is intended for fast pre-processing of resources, primarily the setting of properties,
+     * attributes, and identifiers.  
+     * For example, in the <code>T = IngestionFrame</code> the operation could set the provider UID of the ingestion
      * frame before it is given to the consumer.  In that case the <code>UnaryOperator</code> argument can be
      * defined as the following lambda function:
      * <pre>
@@ -217,71 +221,67 @@ public interface IFrameConsumer extends Consumer<IngestionFrame> {
      * </p> 
      * 
      * @param fncProcess    the pre-processing operation to be performed on all frames before submission 
-     * @param lstFrames     list of ingestion frames to be processed then consumed
+     * @param lstRscs       list of resource instances to be processed then consumed
      * @param lngTimeout    timeout limit to wait for consumer acceptance
      * @param tuTimeout     timeout units to wait for consumer acceptance
      * 
      * @return  <code>true</code> if frame was accepted by consumer, <code>false</code> if timeout occurred
      * 
-     * @throws InterruptedException the process was interrupted while waiting for frame to be accepted
+     * @throws InterruptedException the process was interrupted while waiting for resources to be accepted
      * 
      * @see #offer(IngestionFrame, long, TimeUnit)
      */
-    default public boolean processThenOffer(
-            UnaryOperator<IngestionFrame> fncProcess, 
-            List<IngestionFrame> lstFrames, 
-            long lngTimeout, 
-            TimeUnit tuTimeout) 
+    default public boolean processThenOffer(UnaryOperator<T> fncProcess, List<T> lstRscs, long lngTimeout, TimeUnit tuTimeout) 
                     throws InterruptedException {
         
-        
-        // Pre-process all frames in the given list with the given processing function
-        List<IngestionFrame>    lstPrcdFrms = lstFrames
+        // Pre-process all resources in the given list with the given processing function
+        List<T> lstPrcdFrms = lstRscs
                 .stream()
-                .<IngestionFrame>map(frame -> fncProcess.apply(frame))
+                .<T>map(frame -> fncProcess.apply(frame))
                 .toList();
         
-        // Offer processed frames to consumer
+        // Offer processed resources to consumer
         return this.offer(lstPrcdFrms, lngTimeout, tuTimeout);
     }
     
     /**
      * <p>
-     * Default convenience operation allowing a consumer to pre-process a single frame before acceptance.
+     * Default convenience operation allowing a consumer to pre-process a single resource instance before acceptance.
      * </p>
      * <p>
      * The argument is converted to a single-element list then deferred to <code>{@link #processThenoffer(List)}</code>.
      * </p>
      * 
      * @param fncProcess    the pre-processing operation to be performed on all frames before submission 
-     * @param frame         ingestion frame to be processed and consumed
+     * @param rsrc          resource instance to be processed and consumed
      * 
-     * @throws InterruptedException the process was interrupted while waiting for frame to be accepted
+     * @throws InterruptedException the process was interrupted while waiting for resource to be accepted
      */
-    default void processThenOffer(UnaryOperator<IngestionFrame> fncProcess, IngestionFrame frame) throws InterruptedException {
-        this.processThenOffer(fncProcess, List.of(frame));
+    default void processThenOffer(UnaryOperator<T> fncProcess, T rsrc) throws InterruptedException {
+        this.processThenOffer(fncProcess, List.of(rsrc));
     }
     
     /**
      * <p>
-     * Default convenience operation allowing a consumer to pre-process a single frame before acceptance with timeout.
+     * Default convenience operation allowing a consumer to pre-process a single resource instance before acceptance 
+     * with timeout.
      * </p>
      * <p>
      * The argument is converted to a single-element list then deferred to <code>{@link #processThenoffer(List, long, TimeUnit)}</code>.
      * </p>
      * 
      * @param fncProcess    the pre-processing operation to be performed on all frames before submission 
-     * @param frame         ingestion frame to be processed and consumed
+     * @param rsrc          resource instance to be processed and consumed
      * @param lngTimeout    timeout limit to wait for consumer acceptance
      * @param tuTimeout     timeout units to wait for consumer acceptance
      * 
      * @return  <code>true</code> if frame was accepted by consumer, <code>false</code> if timeout occurred
      * 
-     * @throws InterruptedException the process was interrupted while waiting for frame to be accepted
+     * @throws InterruptedException the process was interrupted while waiting for resource to be accepted
      * 
      * @see #processThenOffer(UnaryOperator, List, long, TimeUnit)
      */
-    default boolean processThenOffer(UnaryOperator<IngestionFrame> fncProcess, IngestionFrame frame, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException {
-        return this.processThenOffer(fncProcess, List.of(frame), lngTimeout, tuTimeout);
+    default boolean processThenOffer(UnaryOperator<T> fncProcess, T rsrc, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException {
+        return this.processThenOffer(fncProcess, List.of(rsrc), lngTimeout, tuTimeout);
     }
 }

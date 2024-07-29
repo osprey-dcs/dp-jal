@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionThrottleBuffer.java
+ * File:	IngestionRequestBuffer.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionThrottleBuffer
+ * Type: 	IngestionRequestBuffer
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -60,7 +60,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * @since Jul 23, 2024
  *
  */
-public class IngestionThrottleBuffer implements IMessageSupplier<IngestDataRequest> {
+public class IngestionRequestBuffer implements IMessageSupplier<IngestDataRequest> {
 
     
     //
@@ -69,41 +69,41 @@ public class IngestionThrottleBuffer implements IMessageSupplier<IngestDataReque
 
     /**
      * <p>
-     * Creates a new instance of <code>IngestionThrottleBuffer</code> with all default parameters.
+     * Creates a new instance of <code>IngestionRequestBuffer</code> with all default parameters.
      * </p>
      * 
-     * @return  new <code>IngestionThrottleBuffer</code> instance ready for activation
+     * @return  new <code>IngestionRequestBuffer</code> instance ready for activation
      */
-    public static IngestionThrottleBuffer create() {
-        return new IngestionThrottleBuffer();
+    public static IngestionRequestBuffer create() {
+        return new IngestionRequestBuffer();
     }
     
     /**
      * <p>
-     * Creates a new instance of <code>IngestionThrottleBuffer</code> with the given queue buffer capacity and default
+     * Creates a new instance of <code>IngestionRequestBuffer</code> with the given queue buffer capacity and default
      * back pressure enforcement.
      * </p>
      * 
      * @param szQueCapacity     capacity of the ingestion data request message queue buffer
      * 
-     * @return  new <code>IngestionThrottleBuffer</code> instance ready for activation
+     * @return  new <code>IngestionRequestBuffer</code> instance ready for activation
      */
-    public static IngestionThrottleBuffer create(int szQueueCapacity) {
-        return new IngestionThrottleBuffer(szQueueCapacity);
+    public static IngestionRequestBuffer create(int szQueueCapacity) {
+        return new IngestionRequestBuffer(szQueueCapacity);
     }
     
     /**
      * <p>
-     * Creates a new instance of <code>IngestionThrottleBuffer</code> with the given parameters.
+     * Creates a new instance of <code>IngestionRequestBuffer</code> with the given parameters.
      * </p>
      * 
      * @param szQueCapacity     capacity of the ingestion data request message queue buffer
      * @param bolBackPressure   enforce back pressure (implicit throttling) at <code>{@link #enqueue(List)}</code>
      * 
-     * @return  new <code>IngestionThrottleBuffer</code> instance ready for activation
+     * @return  new <code>IngestionRequestBuffer</code> instance ready for activation
      */
-    public static IngestionThrottleBuffer create(int szQueueCapacity, boolean bolBackPressure) {
-        return new IngestionThrottleBuffer(szQueueCapacity, bolBackPressure);
+    public static IngestionRequestBuffer create(int szQueueCapacity, boolean bolBackPressure) {
+        return new IngestionRequestBuffer(szQueueCapacity, bolBackPressure);
     }
     
     
@@ -188,7 +188,7 @@ public class IngestionThrottleBuffer implements IMessageSupplier<IngestDataReque
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionThrottleBuffer</code>.
+     * Constructs a new instance of <code>IngestionRequestBuffer</code>.
      * </p>
      * <p>
      * Ingestion data request message queue buffer capacity and back-pressure enforcement is taken 
@@ -196,13 +196,13 @@ public class IngestionThrottleBuffer implements IMessageSupplier<IngestDataReque
      * </p>
      *
      */
-    public IngestionThrottleBuffer() {
+    public IngestionRequestBuffer() {
         this(INT_BUFFER_SIZE, BOL_BUFFER_BACKPRESSURE);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionThrottleBuffer</code> with the given queue buffer capacity.
+     * Constructs a new instance of <code>IngestionRequestBuffer</code> with the given queue buffer capacity.
      * </p>
      * <p>
      * Back-pressure enforcement is taken from the default values of the API library configuration
@@ -210,19 +210,19 @@ public class IngestionThrottleBuffer implements IMessageSupplier<IngestDataReque
      *
      * @param szQueCapacity     capacity of the ingestion data request message queue buffer
      */
-    public IngestionThrottleBuffer(int szQueCapacity) {
+    public IngestionRequestBuffer(int szQueCapacity) {
         this(szQueCapacity, BOL_BUFFER_BACKPRESSURE);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionThrottleBuffer</code> initialized with the given configuration.
+     * Constructs a new instance of <code>IngestionRequestBuffer</code> initialized with the given configuration.
      * </p>
      *
      * @param szQueCapacity     capacity of the ingestion data request message queue buffer
      * @param bolBackPressure   enforce back pressure (implicit throttling) at <code>{@link #enqueue(List)}</code>
      */
-    public IngestionThrottleBuffer(int szQueCapacity, boolean bolBackPressure) {
+    public IngestionRequestBuffer(int szQueCapacity, boolean bolBackPressure) {
         this.szQueueCapacity = szQueCapacity;
         this.bolBackPressure = bolBackPressure;
     }
@@ -240,7 +240,7 @@ public class IngestionThrottleBuffer implements IMessageSupplier<IngestDataReque
      * The queue capacity is the critical parameter for ingestion throttling, either implicit threw
      * back-pressure blocking at <code>{@link #enqueue(List)}</code> or explicit throttling with
      * <code>{@link #awaitQueueCapacity()}</code>.  If the request message count within the queue
-     * exceed the given value the throttling is activated.  In that case this <code>IngestionThrottleBuffer</code> instance
+     * exceed the given value the throttling is activated.  In that case this <code>IngestionRequestBuffer</code> instance
      * blocks at <code>{@link #enqueue(List)}</code> if back-pressure is enabled, and 
      * <code>{@link #awaitQueueCapacity()}</code> blocks regardless of back-pressure settings.
      * </p>
@@ -345,7 +345,7 @@ public class IngestionThrottleBuffer implements IMessageSupplier<IngestDataReque
     
     /**
      * <p>
-     * Activates the <code>IngestionThrottleBuffer</code> message queue buffer.
+     * Activates the <code>IngestionRequestBuffer</code> message queue buffer.
      * </p>
      * <p>
      * After invoking this method the message supplier instance is ready for ingestion data request
