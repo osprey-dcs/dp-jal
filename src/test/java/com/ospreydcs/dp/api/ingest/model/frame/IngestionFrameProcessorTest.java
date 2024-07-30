@@ -617,7 +617,7 @@ public class IngestionFrameProcessorTest {
                 
                 // Check the request queue size
                 if (processor.getRequestQueueSize() == 0)
-                    Assert.assertTrue(processor.hasPendingMessages());
+                    Assert.assertTrue(processor.hasPendingTasks());
                 
             } while (cntMsgs < cntFrames);
             Instant insComplete = Instant.now();
@@ -691,7 +691,7 @@ public class IngestionFrameProcessorTest {
 //                if (processor.getRequestQueueSize() == 0)
 //                    Assert.assertTrue(processor.hasPendingMessages());
                 
-            } while (processor.getRequestQueueSize() > 0 || processor.hasPendingMessages()); // method under test
+            } while (processor.getRequestQueueSize() > 0 || processor.hasPendingTasks()); // method under test
             Instant insComplete = Instant.now();
             
             Duration durProcess = Duration.between(insSubmit, insComplete);
