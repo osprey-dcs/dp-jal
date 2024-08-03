@@ -299,8 +299,10 @@ public class IngestionFrameBinner {
      * 
      * @throws IllegalArgumentException argument column size is too large, column allocation too large for decomposition
      * @throws CompletionException      serious internal error - argument not fully decomposed
+     * @throws IllegalStateException    the ingestion frame has not been initialized
+     * @throws IndexOutOfBoundsException attempt to access frame column out of bounds
      */
-    public List<IngestionFrame> decomposeHorizontally(IngestionFrame frmSource) throws IllegalArgumentException, CompletionException {
+    public List<IngestionFrame> decomposeHorizontally(IngestionFrame frmSource) throws IllegalArgumentException, CompletionException, IllegalStateException, IndexOutOfBoundsException {
         
         BinParameters paramsBin = this.computeBinParameters(frmSource);
         
@@ -317,14 +319,27 @@ public class IngestionFrameBinner {
                     + ": column allocation size is greater than maximum bin size.");
             
         // Compute the number of columns to satisfy bin requirements
-        int     cntColsFrame = frmSource.getColumnCount();
-        int     cntColsBin = cntColsFrame / paramsBin.getBinCount();
-        cntColsBin += (cntColsFrame % paramsBin.getBinCount() > 0) ? 1 : 0;
+        int     cntColsPerFrame = frmSource.getColumnCount();
+        int     cntColsPerBin = cntColsPerFrame / paramsBin.getBinCount();
+        cntColsPerBin += (cntColsPerFrame % paramsBin.getBinCount() > 0) ? 1 : 0;
         
         // Create the bins
         List<IngestionFrame>    lstBins = new LinkedList<>();
-        for (int iBin=0; iBin<paramsBin.getBinCount(); iBin++) {
-            IngestionFrame  frmBin = frmSource.removeColumnsByIndex(cntColsBin);
+//        for (int iBin=0; iBin<paramsBin.getBinCount(); iBin++) {
+//            IngestionFrame  frmBin = frmSource.removeColumnsByIndex(cntColsBin); // throws exception
+//            
+//            lstBins.add(frmBin);
+//        }
+        while (frmSource.getColumnCount() > cntColsPerBin) {
+            IngestionFrame  frmBin = frmSource.removeColumnsByIndex(cntColsPerBin);    // throws exceptions
+            
+            lstBins.add(frmBin);
+        }
+        
+        // Add any remaining columns
+        if (frmSource.hasData()) {
+            int             cntColsRemain = frmSource.getColumnCount();
+            IngestionFrame  frmBin = frmSource.removeColumnsByIndex(cntColsRemain);
             
             lstBins.add(frmBin);
         }
@@ -400,14 +415,26 @@ public class IngestionFrameBinner {
                     + " row allocation size is greater than maximum bin size.");
             
         // Compute the number of rows to satisfy bin requirements
-        int     cntRowsFrame = frmSource.getRowCount();
-        int     cntRowsPerBin = cntRowsFrame / paramsBin.getBinCount();
-        cntRowsPerBin += (cntRowsFrame % paramsBin.getBinCount() > 0) ? 1 : 0;
+        int     cntRowsPerFrame = frmSource.getRowCount();
+        int     cntRowsPerBin = cntRowsPerFrame / paramsBin.getBinCount();
+        cntRowsPerBin += (cntRowsPerFrame % paramsBin.getBinCount() > 0) ? 1 : 0;
         
         // Create the bins
         List<IngestionFrame>    lstBins = new LinkedList<>();
-        for (int iBin=0; iBin<paramsBin.getBinCount(); iBin++) {
+//        for (int iBin=0; iBin<paramsBin.getBinCount(); iBin++) {
+//            IngestionFrame  frmBin = frmSource.removeRowsAtHead(cntRowsPerBin);
+//            
+//            lstBins.add(frmBin);
+//        }
+        while (frmSource.getRowCount() > cntRowsPerBin) {
             IngestionFrame  frmBin = frmSource.removeRowsAtHead(cntRowsPerBin);
+            
+            lstBins.add(frmBin);
+        }
+        
+        // Check for remaining data 
+        if (frmSource.getRowCount() > 0) {
+            IngestionFrame frmBin = frmSource.removeRowsAtHead(cntRowsPerBin);
             
             lstBins.add(frmBin);
         }

@@ -1,0 +1,20 @@
+TEST: testTakeMultiThread3Decomp4M
+  Concurrency         : true
+    Thread count      : 3
+  Frame decomposition : true
+    Max frame size    : 4000000
+  Payload - IngestionFrame instances 
+    Number of frames         : 15
+    Columns per frame        : 1000
+    Rows per frame           : 1000
+    Avg. allocation (bytes)  : 14428890
+    Total allocation (bytes) : 216433350
+  Evaluation Activity
+    Polling attempts        : 60
+    Messages produced       : 60
+    Avg. allocation (bytes) : 2755030
+    Total bytes produced    : 165301854
+    Time processing         : PT0.440757S
+    Time for shutdown       : PT0.016107S
+    Time processor active   : PT0.457786S
+    Time for total test     : PT2.895139S

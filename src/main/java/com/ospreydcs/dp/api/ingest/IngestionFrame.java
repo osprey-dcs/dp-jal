@@ -97,56 +97,6 @@ import com.ospreydcs.dp.api.util.JavaSize;
 public class IngestionFrame implements Serializable {
 
     //
-    // Class Constants
-    //
-    
-    /** Serialization UID for interface <code>Serializable</code> */
-    private static final long serialVersionUID = -7002454987009867231L;
-
-    
-    //
-    // Instance Resources
-    //
-    
-    /** Vector of column data timestamps for each data column of time-series data */
-    private ArrayList<Instant>      vecTms = null;
-    
-    /** Alternate sampling clock for data columns of time series data */
-    private UniformSamplingClock    clkTms = null;
-
-    
-    /** Array of column data for the table - for fast column index lookup */
-    private ArrayList<IDataColumn<Object>>      vecColData = null;
-    
-    /** Map of column names to the column data - for column name lookup  */
-    private Map<String, IDataColumn<Object>>    mapNmToCol = new HashMap<>();
-    
-    /** Map of column names to column index - for column index lookup */
-    private Map<String, Integer>                mapNmToInd = new HashMap<>();
-
-    
-    /** The data provider name */
-    private ProviderUID         recProviderUid = null;
-    
-    
-    /** Optional name for ingestion frame */
-    private String              strLabelFrame = null;
-    
-    /** Optional timestamp for ingestion frame itself */
-    private Instant             insTmsFrame = null;
-    
-    /** Optional collection of (name, value) attribute pairs for the data frame */
-    private Map<String, String> mapAttributes = new HashMap<>();
-
-    
-    /** Optional snapshot domain */
-    private TimeInterval        domSnapshot = null;
-    
-    /** Optional snapshot UID */
-    private String              strSnapshotUid = null;
-
-    
-    //
     // Creators
     //
     
@@ -320,6 +270,64 @@ public class IngestionFrame implements Serializable {
         return new IngestionFrame();
     }
     
+    
+    //
+    // Class Constants
+    //
+    
+    /** Serialization UID for interface <code>Serializable</code> */
+    private static final long serialVersionUID = -7002454987009867231L;
+
+    
+    //
+    // Defining Parameters
+    //
+    
+    /** Vector of column data timestamps for each data column of time-series data */
+    private ArrayList<Instant>      vecTms = null;
+    
+    /** Alternate sampling clock for data columns of time series data */
+    private UniformSamplingClock    clkTms = null;
+    
+    /** Array of column data for the table - for fast column index lookup */
+    private ArrayList<IDataColumn<Object>>      vecColData = null;
+
+    
+    //
+    // Optional Parameters
+    //
+    
+    /** The data provider name */
+    private ProviderUID         recProviderUid = null;
+    
+    
+    /** Optional name for ingestion frame */
+    private String              strLabelFrame = null;
+    
+    /** Optional timestamp for ingestion frame itself */
+    private Instant             insTmsFrame = null;
+    
+    /** Optional collection of (name, value) attribute pairs for the data frame */
+    private Map<String, String> mapAttributes = new HashMap<>();
+
+    
+    /** Optional snapshot domain */
+    private TimeInterval        domSnapshot = null;
+    
+    /** Optional snapshot UID */
+    private String              strSnapshotUid = null;
+
+    
+    //
+    // Instance Resources 
+    //
+    
+    /** Map of column names to the column data - for column name lookup  */
+    private Map<String, IDataColumn<Object>>    mapNmToCol = new HashMap<>();
+    
+    /** Map of column names to column index - for column index lookup */
+    private Map<String, Integer>                mapNmToInd = new HashMap<>();
+
     
     //
     // Constructors
@@ -778,6 +786,7 @@ public class IngestionFrame implements Serializable {
     public void copyOptionalProperties(final IngestionFrame frmSource) {
         
         // Assign any optional properties from source to this ingestion frame
+        this.setProviderUid(frmSource.recProviderUid);
         this.setFrameLabel(frmSource.strLabelFrame);
         this.setFrameTimestamp(frmSource.insTmsFrame);
         this.addAttributes(frmSource.mapAttributes);
@@ -1150,10 +1159,18 @@ public class IngestionFrame implements Serializable {
      * </p>
      * <p>
      * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
      * The internal ordering of the data columns within the ingestion frame is not guaranteed.
      * Generally, however, if the frame used an initializing creator or constructor the ordering
      * is given by the column ordering there.  Additionally, columns added post construction generally
      * maintain their ordering.
+     * </li>
+     * <br/>
+     * <li>
+     * <s>If the argument is greater than the number of data columns then the original frame is returned.</s>
+     * If the argument is greater than the number of data columns then an exception is thrown.
+     * </ul>
      * </p>
      * <p>
      * <h2>WARNING:</h2>
@@ -1162,17 +1179,12 @@ public class IngestionFrame implements Serializable {
      * is a copy of the original frame and the current frame is empty.
      * </p> 
      * 
-     * @param colIndices unordered collection of frame column indexes to be removed from this frame 
+     * @param cntCols   number of data column to be removed from this ingestion frame
      * 
      * @return  new ingestion frame with the given columns (by indexes) with all other attributes identical
      * 
      * @throws IllegalStateException    the data frame has not been initialized and/or populated
      * @throws IndexOutOfBoundsException the argument contains at least one index out of bounds
-     * 
-     * @param cntCols
-     * @return
-     * @throws IllegalStateException
-     * @throws IndexOutOfBoundsException
      */
     public IngestionFrame removeColumnsByIndex(int cntCols) throws IllegalStateException, IndexOutOfBoundsException {
         

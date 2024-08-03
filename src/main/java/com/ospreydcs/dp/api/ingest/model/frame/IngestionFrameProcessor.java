@@ -1406,13 +1406,13 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                 try {
                     lstFrmsPrcd = binner.decomposeHorizontally(frmRaw);
                     
-                } catch (IllegalArgumentException | CompletionException e1) {
+                } catch (Exception e1) {
                     
                     // If failed: try to decompose the frame vertically - this is expensive
                     try {
                         lstFrmsPrcd = binner.decomposeVertically(frmRaw);
                         
-                    } catch (IllegalArgumentException | CompletionException e2) {
+                    } catch (Exception e2) {
                         
                         // If failed again: Record exception, decrement pending counter, and continue
 //                        if (BOL_LOGGING)
@@ -1439,6 +1439,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
             
 //            // TODO - Remove
 //            System.out.println("Terminating: binner thread #" +intThrdId);
+            LOGGER.debug("Terminating: binner thread #" +intThrdId);
             
             // Everything was successful if the raw frame buffer is empty
             return !this.bolActive && this.setFramesFailedDecomp.isEmpty() && this.queFramesRaw.isEmpty();

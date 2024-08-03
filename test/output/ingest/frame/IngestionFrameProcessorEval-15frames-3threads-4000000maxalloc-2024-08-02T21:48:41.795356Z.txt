@@ -1,0 +1,26 @@
+TEST: testTakeMultiThread3Decomp4M
+  Concurrency         : true
+    Thread count      : 3
+  Frame decomposition : true
+    Max frame size    : 4000000
+  Payload - IngestionFrame instances 
+    Number of frames         : 15
+    Columns per frame        : 1000
+    Rows per frame           : 1000
+    Avg. allocation (bytes)  : 14428890
+    Total allocation (bytes) : 216433350
+  Evaluation Activity
+    Polling attempts        : 60
+    Messages produced       : 60
+    Avg. allocation (bytes) : 2755030
+    Total bytes produced    : 165301830
+    Time processing         : PT0.462827S
+    Time for shutdown       : PT0.016549S
+    Time processor active   : PT0.480351S
+    Time for total test     : PT2.74608S
+  Full Processing Rate (with activation and shutdown)
+    Payload (frontend): 450.5733307518877 Mbps
+    Message  (backend): 344.1271695072978 Mbps
+  Raw Processing Rate (w/out activation and shutdown (Mbps)
+    Payload (frontend): 467.6333705682685 Mbps
+    Message  (backend): 357.1568426215411 Mbps
