@@ -96,7 +96,7 @@ public class IngestionMessageBuffer implements IMessageSupplier<IngestDataReques
      * back pressure enforcement.
      * </p>
      * 
-     * @param szQueCapacity     capacity of the ingestion data request message queue buffer
+     * @param szQueueCapacity     capacity of the ingestion data request message queue buffer
      * 
      * @return  new <code>IngestionMessageBuffer</code> instance ready for activation
      */
@@ -109,7 +109,7 @@ public class IngestionMessageBuffer implements IMessageSupplier<IngestDataReques
      * Creates a new instance of <code>IngestionMessageBuffer</code> with the given parameters.
      * </p>
      * 
-     * @param szQueCapacity     capacity of the ingestion data request message queue buffer
+     * @param szQueueCapacity     capacity of the ingestion data request message queue buffer
      * @param bolBackPressure   enforce back pressure (implicit throttling) at <code>{@link #enqueue(List)}</code>
      * 
      * @return  new <code>IngestionMessageBuffer</code> instance ready for activation
@@ -361,6 +361,21 @@ public class IngestionMessageBuffer implements IMessageSupplier<IngestDataReques
      */
     public int  getQueueCapacity() {
         return this.szQueueCapacity;
+    }
+    
+    /**
+     * <p>
+     * Returns the current size of the queue buffer.
+     * </p>
+     * <p>
+     * Returns the number of request messages in the queue buffer at the time of invocation.  Note that this
+     * is inherently a dynamic quantity.
+     * </p>
+     *  
+     * @return  number of request messages currently in the queue
+     */
+    public int  getQueueSize() {
+        return this.queMsgRequests.size();
     }
 
     

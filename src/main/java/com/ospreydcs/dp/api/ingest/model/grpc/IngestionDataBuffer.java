@@ -339,6 +339,21 @@ public class IngestionDataBuffer implements IMessageSupplier<IngestDataRequest> 
         return this.szQueueCapacity;
     }
 
+    /**
+     * <p>
+     * Returns the current size of the queue buffer.
+     * </p>
+     * <p>
+     * Returns the number of request messages in the queue buffer at the time of invocation.  Note that this
+     * is inherently a dynamic quantity.
+     * </p>
+     *  
+     * @return  number of request messages currently in the queue
+     */
+    public int  getQueueSize() {
+        return this.queMsgRequests.size();
+    }
+
     
     //
     // Operations
