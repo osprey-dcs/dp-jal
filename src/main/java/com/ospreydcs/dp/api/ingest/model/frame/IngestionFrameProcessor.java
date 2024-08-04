@@ -207,7 +207,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     // Class Constants
     //
     
-    // TODO - Investigate polling and timeouts
+    // TODO - Investigate polling and timeouts - CKA 8/4/2024 15 milliseconds seems reasonable 
     /** Timeout limit to wait for thread task polling operations */
     private static final int       INT_TIMEOUT_TASK_POLL = 15;
     
@@ -294,12 +294,14 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     /** Has the supplier been shutdown */
     private boolean bolShutdown = false;
   
-    
-    /** DEBUG - The number (and ID generator) of frame decomposition threads */
-    private int     cntDecompThrds = 0;
-    
-    /** DEBUG - The number (and ID generator) of frame-to-message conversion tasks */
-    private int     cntConvertThrds = 0;
+
+//    // TODO - Remove
+//    /** DEBUG - The number (and ID generator) of frame decomposition threads */
+//    private int     cntDecompThrds = 0;
+//    
+//    // TODO - Remove
+//    /** DEBUG - The number (and ID generator) of frame-to-message conversion tasks */
+//    private int     cntConvertThrds = 0;
     
     
     //
@@ -1364,9 +1366,9 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         // Define the task operations as a lambda function
         Callable<Boolean>    task = () -> {
             
-            // TODO - Remove
-            // Debugging - Create ID
-            final int   intThrdId = this.cntDecompThrds++;
+//            // TODO - Remove
+//            // Debugging - Create ID
+//            final int   intThrdId = this.cntDecompThrds++;
             
             // Create a new frame binner processor for this thread
             IngestionFrameBinner binner = IngestionFrameBinner.from(this.lngBinSizeMax);
@@ -1387,8 +1389,8 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                 
                 this.cntPendingTasks.incrementAndGet();
                 
-                // TODO - Remove
-                LOGGER.debug("Frame binner thread #" +intThrdId + " activated for raw ingestion frame processing.");
+//                // TODO - Remove
+//                LOGGER.debug("Frame binner thread #" +intThrdId + " activated for raw ingestion frame processing.");
                 
                 // If there is no automatic decomposition simply all the frame to the processed queue
                 if (!this.bolDecompAuto) {
@@ -1398,8 +1400,8 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                     continue;
                 }
                 
-                // TODO - Remove
-                LOGGER.debug("Frame binner thread #" +intThrdId + " activated for decomposition.");
+//                // TODO - Remove
+//                LOGGER.debug("Frame binner thread #" +intThrdId + " activated for decomposition.");
                 
                 // Process: First attempt to decompose the frame horizontally - this is the cheapest
                 List<IngestionFrame>    lstFrmsPrcd;
@@ -1429,7 +1431,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                 lstFrmsPrcd.forEach(f -> this.queFramesPrcd.offer(f));
 
 //                // TODO - Remove
-                LOGGER.debug("Frame binner thread {} offered {} frames to processed queue now with size {}.", intThrdId, lstFrmsPrcd.size(), this.queFramesPrcd.size());
+//                LOGGER.debug("Frame binner thread {} offered {} frames to processed queue now with size {}.", intThrdId, lstFrmsPrcd.size(), this.queFramesPrcd.size());
                         
 //                System.out.println("  binner thread #" +intThrdId + " decomposed raw frame into " + lstFrmsPrcd.size() + " binned frames.");
 //                System.out.println("    processed frame queue size = " + this.queFramesPrcd.size());
@@ -1438,8 +1440,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
             }
             
 //            // TODO - Remove
-//            System.out.println("Terminating: binner thread #" +intThrdId);
-            LOGGER.debug("Terminating: binner thread #" +intThrdId);
+//            LOGGER.debug("Terminating: binner thread #" +intThrdId);
             
             // Everything was successful if the raw frame buffer is empty
             return !this.bolActive && this.setFramesFailedDecomp.isEmpty() && this.queFramesRaw.isEmpty();
@@ -1465,19 +1466,18 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         // Define the task operations as a lambda function
         Callable<Boolean>   task = () -> {
             
-            // TODO - Remove
-            // Debugging - Create ID
-            final int   intThrdId = this.cntConvertThrds++;
+//            // TODO - Remove
+//            // Debugging - Create ID
+//            final int   intThrdId = this.cntConvertThrds++;
             
             
             // Ingestion frame converter used for all message creation
             IngestionFrameConverter converter = IngestionFrameConverter.create(this.recProviderUid);
             
             // While active - Continuously convert frames in processed frame buffer to gRPC messages 
-            // - second OR conditional allows for soft shutdowns
+            // - second OR conditionals allows for soft shutdowns
             while (this.bolActive || this.hasPendingTasks() || !this.queFramesPrcd.isEmpty()) {
 //            while (this.bolActive || !this.queFramesPrcd.isEmpty()) {
-//            while (true) {
                 
 //                this.cntPending.incrementAndGet();
                 
@@ -1499,15 +1499,15 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                 
                 this.cntPendingTasks.incrementAndGet();
                 
-                // TODO - Remove
-                LOGGER.debug("Conversion thread #" +intThrdId + " activated for 1 message conversion.");
+//                // TODO - Remove
+//                LOGGER.debug("Conversion thread #" +intThrdId + " activated for 1 message conversion.");
                 
                 // Convert the ingestion frame to an Ingestion Service data request message
                 try {
                     IngestDataRequest   msgRqst = converter.createRequest(frmPrcd);
 
-                    // TODO - Remove
-                    LOGGER.debug("  conversion thread #" +intThrdId + " created message - (msg==null)=" + (msgRqst==null));
+//                    // TODO - Remove
+//                    LOGGER.debug("  conversion thread #" +intThrdId + " created message - (msg==null)=" + (msgRqst==null));
 
                     // Add ingestion request message to outgoing queue
                     this.queMsgRequests.offer(msgRqst);
@@ -1520,15 +1520,14 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                     continue;
                 }
                 
-                // TODO - Remove
-                LOGGER.debug("  conversion thread #" +intThrdId + " queued 1 message - queue size = " + this.getRequestQueueSize());
+//                // TODO - Remove
+//                LOGGER.debug("  conversion thread #" +intThrdId + " queued 1 message - queue size = " + this.getRequestQueueSize());
                 
                 this.cntPendingTasks.decrementAndGet();
             }
             
-            // TODO - Remove
-//            System.err.println("Terminating: conversion thread #" +intThrdId);
-            LOGGER.debug("Terminating: conversion thread #" +intThrdId);
+//            // TODO - Remove
+//            LOGGER.debug("Terminating: conversion thread #" +intThrdId);
             
             return !this.bolActive && this.queFramesRaw.isEmpty() && this.queFramesPrcd.isEmpty();
         };
