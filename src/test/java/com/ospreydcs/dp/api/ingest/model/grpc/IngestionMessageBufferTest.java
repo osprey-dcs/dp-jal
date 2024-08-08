@@ -482,7 +482,7 @@ public class IngestionMessageBufferTest {
             Assert.fail("Failed to enqueue message list.");
         }
         
-        BufferConsumerTask        tskCons = new BufferConsumerTask(buffer, BufferConsumerTask.BufferOperation.TAKE);
+        MessageConsumerTask        tskCons = new MessageConsumerTask(buffer, MessageConsumerTask.BufferOperation.TAKE);
 
         Instant     insStart = Instant.now();
         Future<?>   futCons = XTOR_PERD_TASKS.scheduleAtFixedRate(tskCons, LNG_PERD_CONS_TASK, LNG_PERD_CONS_TASK, TU_PERD_CONS_TASK);
@@ -611,8 +611,8 @@ public class IngestionMessageBufferTest {
         Assert.assertTrue(buffer.isSupplying());
         Assert.assertEquals(0, buffer.getQueueSize());
 
-        BufferSupplierTask    tskProd = new BufferSupplierTask(lstMsgs, buffer);
-        BufferConsumerTask    tskCons = new BufferConsumerTask(buffer, BufferConsumerTask.BufferOperation.TAKE);
+        MessageSupplierTask    tskProd = new MessageSupplierTask(lstMsgs, buffer);
+        MessageConsumerTask    tskCons = new MessageConsumerTask(buffer, MessageConsumerTask.BufferOperation.TAKE);
         Runnable        tskBuffUpdt = this.createBufferUpdateTask(buffer, System.out);
         Runnable        tskConsUpdt = this.createConsumerUpdateTask(tskCons, System.out);
 
@@ -675,7 +675,7 @@ public class IngestionMessageBufferTest {
         Assert.assertTrue(buffer.isSupplying());
         Assert.assertEquals(0, buffer.getQueueSize());
 
-        BufferSupplierTask        tskProd = new BufferSupplierTask(lstMsgs, buffer);
+        MessageSupplierTask        tskProd = new MessageSupplierTask(lstMsgs, buffer);
         Callable<Integer>   callCons = this.createGreedyConsumerPoll(buffer);
         
         FutureTask<Integer> tskCons = new FutureTask<>(callCons);
@@ -727,7 +727,7 @@ public class IngestionMessageBufferTest {
         Assert.assertTrue(buffer.isSupplying());
         Assert.assertEquals(0, buffer.getQueueSize());
 
-        BufferSupplierTask        tskProd = new BufferSupplierTask(lstMsgs, buffer);
+        MessageSupplierTask        tskProd = new MessageSupplierTask(lstMsgs, buffer);
         Callable<Integer>   callCons = this.createGreedyConsumerPoll(buffer, lngPoll, tuPoll);
         
         FutureTask<Integer> tskCons = new FutureTask<>(callCons);
@@ -824,7 +824,7 @@ public class IngestionMessageBufferTest {
      * 
      * @return  a new consumer update task
      */
-    private Runnable    createConsumerUpdateTask(BufferConsumerTask consumer, PrintStream ps) {
+    private Runnable    createConsumerUpdateTask(MessageConsumerTask consumer, PrintStream ps) {
         
         Runnable task = () -> {
             

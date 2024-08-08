@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    BufferConsumerTask.java
+ * File:    MessageConsumerTask.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type:    BufferConsumerTask
+ * Type:    MessageConsumerTask
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -58,7 +58,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * @since Aug 7, 2024
  *
  */
-public final class BufferConsumerTask implements Runnable, Callable<Integer> {
+public final class MessageConsumerTask implements Runnable, Callable<Integer> {
 
     //
     // Internal Types
@@ -88,7 +88,7 @@ public final class BufferConsumerTask implements Runnable, Callable<Integer> {
     private final IMessageSupplier<IngestDataRequest>   bufSource;
     
     /** Consumption operation used to retrieve ingest data request message */
-    private final BufferConsumerTask.BufferOperation    enmOperation;
+    private final MessageConsumerTask.BufferOperation    enmOperation;
     
     
     //
@@ -126,13 +126,13 @@ public final class BufferConsumerTask implements Runnable, Callable<Integer> {
     
     /**
      * <p>
-     * Constructs a new instance of <code>BufferConsumerTask</code>.
+     * Constructs a new instance of <code>MessageConsumerTask</code>.
      * </p>
      *
      * @param bufSource     the source of the ingest data message
      * @param enmOperation  the buffer operation used to retrieve messages
      */
-    public BufferConsumerTask(IMessageSupplier<IngestDataRequest> bufSource, BufferConsumerTask.BufferOperation enmOperation) {
+    public MessageConsumerTask(IMessageSupplier<IngestDataRequest> bufSource, MessageConsumerTask.BufferOperation enmOperation) {
         this.bufSource = bufSource;
         this.enmOperation = enmOperation;
     }

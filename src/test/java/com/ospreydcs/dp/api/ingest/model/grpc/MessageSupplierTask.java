@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    BufferSupplierTask.java
+ * File:    MessageSupplierTask.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type:    BufferSupplierTask
+ * Type:    MessageSupplierTask
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -36,7 +36,8 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**
  * <p>
- * Producer task that supplies <code>IngestDataRequest</code> messages to a <code>IngestionMessageBuffer</code>.
+ * Producer task that supplies <code>IngestDataRequest</code> messages to a 
+ * <code>IResourceConsumer&lt;IngestDataRequest&gt;</code> implementation.
  * </p>
  * <p>
  * The task is meant to be run periodically within an executor service.
@@ -55,7 +56,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * @since Aug 7, 2024
  *
  */
-public final class BufferSupplierTask implements Runnable, Callable<Integer> {
+public final class MessageSupplierTask implements Runnable, Callable<Integer> {
 
     
     //
@@ -104,13 +105,13 @@ public final class BufferSupplierTask implements Runnable, Callable<Integer> {
     
     /**
      * <p>
-     * Constructs a new instance of <code>BufferSupplierTask</code> initialized with the given parameters.
+     * Constructs a new instance of <code>MessageSupplierTask</code> initialized with the given parameters.
      * </p>
      *
      * @param lstMsgs   payload of message to be supplied to the buffer
      * @param bufTarget target buffer to receive message payload
      */
-    public BufferSupplierTask(List<IngestDataRequest> lstMsgs, IResourceConsumer<IngestDataRequest> bufTarget) {
+    public MessageSupplierTask(List<IngestDataRequest> lstMsgs, IResourceConsumer<IngestDataRequest> bufTarget) {
         this.lstMsgsPayload = lstMsgs;
         this.bufTarget = bufTarget;
         

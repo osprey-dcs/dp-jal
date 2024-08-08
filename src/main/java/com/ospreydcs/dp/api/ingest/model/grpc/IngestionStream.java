@@ -619,8 +619,8 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     @Override
     public void run() {
         
-        // TODO - Remove
-        LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Started thread, about to enter processing loop.");
+//        // TODO - Remove
+//        LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Started thread, about to enter processing loop.");
         
         // Initiate the gRPC data stream
         this.hndForwardStream = this.initiateGrpcStream();
@@ -638,16 +638,16 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
                 if (msgRqst == null)
                     continue;
                 
-                // TODO - Remove
-                LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Attempting to send ingestion request message with client ID "+ msgRqst.getClientRequestId());
+//                // TODO - Remove
+//                LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Attempting to send ingestion request message with client ID "+ msgRqst.getClientRequestId());
 
                 // Transmit data message request and notify subclasses
                 this.hndForwardStream.onNext(msgRqst);  // throws StatusRuntimeException
                 
                 String strClientId = msgRqst.getClientRequestId();
                 
-                // TODO - Remove
-                LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Transmitted message with client ID "+ strClientId);
+//                // TODO - Remove
+//                LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Transmitted message with client ID "+ strClientId);
 
                 this.lstClientIds.add(ClientRequestId.from(strClientId));
                 this.cntRequests++;
@@ -726,15 +726,15 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
         // - Await the subclass completion
         if (!this.bolStreamError) {
             
-            // TODO - Remove
-            LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - terminating without stream error.");
+//            // TODO - Remove
+//            LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - terminating without stream error.");
                     
             this.hndForwardStream.onCompleted();
             this.bolStreamComplete = true;
             this.recStatus = this.awaitCompletion();
             
-            // TODO - Remove
-            LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - terminatation finished.");
+//            // TODO - Remove
+//            LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - terminatation finished.");
         }
     }
     

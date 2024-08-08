@@ -204,7 +204,7 @@ public class IngestionChannel {
     //
     
     /** Class event logger instance */
-    protected static final Logger     LOGGER = LogManager.getLogger();
+    private static final Logger     LOGGER = LogManager.getLogger();
     
     
     //
