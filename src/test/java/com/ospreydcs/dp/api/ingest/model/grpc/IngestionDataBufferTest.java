@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionMessageBufferTest.java
+ * File:	IngestionDataBufferTest.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionMessageBufferTest
+ * Type: 	IngestionDataBufferTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -20,12 +20,14 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Aug 4, 2024
+ * @since Aug 6, 2024
  *
  * TODO:
  * - None
  */
 package com.ospreydcs.dp.api.ingest.model.grpc;
+
+import static org.junit.Assert.*;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -47,26 +49,22 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
+import com.ospreydcs.dp.api.ingest.model.IResourceConsumer;
 import com.ospreydcs.dp.api.ingest.test.TestIngestDataRequestGenerator;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**
  * <p>
- * JUnit test cases for class <code>IngestionMessageBuffer</code>.
+ * JUnit test cases for class <code>IngestionDataBuffer</code>.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Aug 4, 2024
+ * @since Aug 6, 2024
  *
  */
-public class IngestionMessageBufferTest {
+public class IngestionDataBufferTest {
 
-    
-    //
-    // Class Types
-    //
-    
     //
     // Class Constants
     //
@@ -100,11 +98,14 @@ public class IngestionMessageBufferTest {
     // Test Resources
     //
     
-    /** Collection of data request messages available for all tests */
+    /** Collection of data request messages available as payload for all tests */
     private static final List<IngestDataRequest>    LST_MSGS_RQST = TestIngestDataRequestGenerator.createDoublesMessagesWithClock();
     
     /** The number of messages within the test message payload */
     private static final int                        CNT_PAYLOAD = LST_MSGS_RQST.size();
+    
+    /** The total memory allocation of the test message payload */
+    private static final long                       SZ_PAYLOAD_ALLOC = LST_MSGS_RQST.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
     
     
     /** Periodic task executor service */
@@ -143,34 +144,34 @@ public class IngestionMessageBufferTest {
     @After
     public void tearDown() throws Exception {
     }
-
+    
     
     //
     // Test Cases
     //
-    
+
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#create()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#IngestionDataBuffer()}.
      */
     @Test
-    public final void testCreate() {
+    public final void testIngestionDataBuffer() {
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create();
+        IngestionDataBuffer  buffer = new IngestionDataBuffer();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#create(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#IngestionDataBuffer(long)}.
      */
     @Test
-    public final void testCreateInt() {
+    public final void testIngestionDataBufferLong() {
         
         // Parameters
         final   int     szCapacity = 101;     
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create(szCapacity);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity);
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertEquals(szCapacity, buffer.getQueueCapacity());
@@ -178,16 +179,16 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#create(int, boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#IngestionDataBuffer(long, boolean)}.
      */
     @Test
-    public final void testCreateIntBoolean() {
+    public final void testIngestionDataBufferLongBoolean() {
         
         // Parameters
         final int       szCapacity = 101;
         final boolean   bolBackPressure = false;
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create(szCapacity, bolBackPressure);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertEquals(szCapacity, buffer.getQueueCapacity());
@@ -196,53 +197,7 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#IngestionMessageBuffer()}.
-     */
-    @Test
-    public final void testIngestionMessageBuffer() {
-        
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer();
-        
-        Assert.assertNotEquals(null, buffer);
-        Assert.assertFalse(buffer.isSupplying());
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#IngestionMessageBuffer(int)}.
-     */
-    @Test
-    public final void testIngestionMessageBufferInt() {
-        
-        // Parameters
-        final   int     szCapacity = 101;     
-        
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity);
-        
-        Assert.assertNotEquals(null, buffer);
-        Assert.assertEquals(szCapacity, buffer.getQueueCapacity());
-        Assert.assertFalse(buffer.isSupplying());
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#IngestionMessageBuffer(int, boolean)}.
-     */
-    @Test
-    public final void testIngestionMessageBufferIntBoolean() {
-        
-        // Parameters
-        final int       szCapacity = 101;
-        final boolean   bolBackPressure = false;
-        
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
-        
-        Assert.assertNotEquals(null, buffer);
-        Assert.assertEquals(szCapacity, buffer.getQueueCapacity());
-        Assert.assertEquals(bolBackPressure, buffer.hasBackPressure());
-        Assert.assertFalse(buffer.isSupplying());
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#setQueueCapcity(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#setQueueCapcity(long)}.
      */
     @Test
     public final void testSetQueueCapcity() {
@@ -250,7 +205,7 @@ public class IngestionMessageBufferTest {
         // Parameters
         final int       szCapacity = 42;
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create();
+        IngestionDataBuffer  buffer = IngestionDataBuffer.create();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
@@ -261,12 +216,12 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#enableBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#enableBackPressure()}.
      */
     @Test
     public final void testEnableBackPressure() {
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create();
+        IngestionDataBuffer  buffer = IngestionDataBuffer.create();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
@@ -279,12 +234,12 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#disableBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#disableBackPressure()}.
      */
     @Test
     public final void testDisableBackPressure() {
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create();
+        IngestionDataBuffer  buffer = IngestionDataBuffer.create();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
@@ -297,23 +252,31 @@ public class IngestionMessageBufferTest {
     }
 
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#hasBackPressure()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#hasBackPressure()}.
 //     */
 //    @Test
 //    public final void testHasBackPressure() {
-//        Assert.fail("Not yet implemented"); // TODO
+//        fail("Not yet implemented"); // TODO
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#getQueueCapacity()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#getQueueCapacity()}.
 //     */
 //    @Test
 //    public final void testGetQueueCapacity() {
-//        Assert.fail("Not yet implemented"); // TODO
+//        fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#getQueueSize()}.
+//     */
+//    @Test
+//    public final void testGetQueueSize() {
+//        fail("Not yet implemented"); // TODO
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#activate()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#activate()}.
      */
     @Test
     public final void testActivate() {
@@ -322,16 +285,17 @@ public class IngestionMessageBufferTest {
         final int       szCapacity = 101;
         final boolean   bolBackPressure = false;
         
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
         buffer.activate();
         Assert.assertTrue(buffer.isSupplying());
+        Assert.assertEquals(0, buffer.getQueueSize());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#shutdown()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#shutdown()}.
      */
     @Test
     public final void testShutdown() {
@@ -340,7 +304,7 @@ public class IngestionMessageBufferTest {
         final int       szCapacity = 101;
         final boolean   bolBackPressure = false;
         
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -358,7 +322,7 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#shutdownNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#shutdownNow()}.
      */
     @Test
     public final void testShutdownNow() {
@@ -367,13 +331,13 @@ public class IngestionMessageBufferTest {
         final int       szCapacity = 101;
         final boolean   bolBackPressure = false;
         
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
         buffer.activate();
         Assert.assertTrue(buffer.isSupplying());
-
+        
         try {
             Assert.assertEquals(0, buffer.getQueueSize());
             buffer.offer(LST_MSGS_RQST);
@@ -383,13 +347,14 @@ public class IngestionMessageBufferTest {
         } catch (IllegalStateException | InterruptedException e) {
             Assert.fail("buffer enqueue() threw exception: " + e.getMessage());
         }
-        
+
         buffer.shutdownNow();
         Assert.assertFalse(buffer.isSupplying());
+        Assert.assertEquals(0, buffer.getQueueSize());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#offer(com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#offer(IngestDataRequest)}.
      */
     @Test
     public final void testEnqueueIngestDataRequest() {
@@ -398,7 +363,10 @@ public class IngestionMessageBufferTest {
         final int       szCapacity = 101;
         final boolean   bolBackPressure = false;
         
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
+        final IngestDataRequest msgRqst = LST_MSGS_RQST.get(0);
+        final long              lngMsgAlloc = msgRqst.getSerializedSize();
+                
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -406,11 +374,10 @@ public class IngestionMessageBufferTest {
         Assert.assertTrue(buffer.isSupplying());
         Assert.assertEquals(0, buffer.getQueueSize());
         
-        IngestDataRequest   msgRqst = LST_MSGS_RQST.get(0);
-        
         try {
             buffer.offer(msgRqst);
             Assert.assertEquals(1, buffer.getQueueSize());
+            Assert.assertEquals(lngMsgAlloc, buffer.getQueueAllocation());
             
             buffer.shutdownNow();
             Assert.assertEquals(0, buffer.getQueueSize());
@@ -422,7 +389,7 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#offer(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#offer(List)}.
      */
     @Test
     public final void testEnqueueListOfIngestDataRequest() {
@@ -430,11 +397,12 @@ public class IngestionMessageBufferTest {
         // Parameters
         final List<IngestDataRequest>   lstMsgs = LST_MSGS_RQST;
         final int       cntMsgs =       lstMsgs.size();
+        final long      szPayload =     SZ_PAYLOAD_ALLOC;
         
-        final int       szCapacity = cntMsgs/2;
+        final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = true;
         
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -445,9 +413,11 @@ public class IngestionMessageBufferTest {
         try {
             buffer.offer(lstMsgs);
             Assert.assertEquals(cntMsgs, buffer.getQueueSize());
+            Assert.assertEquals(szPayload, buffer.getQueueAllocation());
             
             buffer.shutdownNow();
             Assert.assertEquals(0, buffer.getQueueSize());
+            Assert.assertEquals(0, buffer.getQueueAllocation());
             Assert.assertFalse(buffer.isSupplying());
             
         } catch (IllegalStateException | InterruptedException e) {
@@ -456,7 +426,7 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#awaitQueueReady()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#awaitQueueReady()}.
      */
     @Test
     public final void testAwaitQueueReady() {
@@ -464,20 +434,23 @@ public class IngestionMessageBufferTest {
         // Parameters
         final List<IngestDataRequest>   lstMsgs = LST_MSGS_RQST;
         final int       cntMsgs =       lstMsgs.size();
+        final long      szPayload =     SZ_PAYLOAD_ALLOC;
         
-        final int       szCapacity = cntMsgs/2;
+        final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = false;
         
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
         buffer.activate();
         Assert.assertTrue(buffer.isSupplying());
         Assert.assertEquals(0, buffer.getQueueSize());
+        Assert.assertEquals(0, buffer.getQueueAllocation());
 
         try {
             buffer.offer(lstMsgs);
+            
         } catch (IllegalStateException | InterruptedException e) {
             Assert.fail("Failed to enqueue message list.");
         }
@@ -528,18 +501,19 @@ public class IngestionMessageBufferTest {
         System.out.println("    completed : " + tskCons.hasCompleted());
         System.out.println("    error     : " + tskCons.hasError());
         System.out.println("    messages  : " + tskCons.getConsumedMessageCount());
+        System.out.println("    allocation: " + tskCons.getConsumedMessageAlloc());
     }
 
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#awaitQueueEmpty()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#awaitQueueEmpty()}.
 //     */
 //    @Test
 //    public final void testAwaitQueueEmpty() {
-//        Assert.fail("Not yet implemented"); // TODO
+//        fail("Not yet implemented"); // TODO
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#isSupplying()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#isSupplying()}.
      */
     @Test
     public final void testIsSupplying() {
@@ -547,11 +521,12 @@ public class IngestionMessageBufferTest {
         // Parameters
         final List<IngestDataRequest>   lstMsgs = LST_MSGS_RQST;
         final int       cntMsgs =       lstMsgs.size();
+        final long      szPayload =     SZ_PAYLOAD_ALLOC;
         
-        final int       szCapacity = cntMsgs/2;
+        final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = false;
         
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -587,7 +562,7 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#take()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#take()}.
      */
     @Test
     public final void testTake() {
@@ -595,15 +570,16 @@ public class IngestionMessageBufferTest {
         // Parameters
         final List<IngestDataRequest>   lstMsgs = LST_MSGS_RQST;
         final int       cntMsgs =       lstMsgs.size();
+        final long      szPayload =     SZ_PAYLOAD_ALLOC;
         
-        final int       szCapacity = cntMsgs/2;
+        final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = true;
         
         final int       intWait = 10;
         final long      lngUpdate = 1;
         final TimeUnit  tuUpdate = TimeUnit.SECONDS;
         
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -653,7 +629,7 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#poll()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#poll()}.
      */
     @Test
     public final void testPoll() {
@@ -661,13 +637,14 @@ public class IngestionMessageBufferTest {
         // Parameters
         final List<IngestDataRequest>   lstMsgs = LST_MSGS_RQST;
         final int       cntMsgs =       lstMsgs.size();
+        final long      szPayload =     SZ_PAYLOAD_ALLOC;
 //        final long      lngPoll = 10;
 //        final TimeUnit  tuPoll = TimeUnit.MILLISECONDS;
         
-        final int       szCapacity = cntMsgs/2;
+        final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = true;
         
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -675,7 +652,7 @@ public class IngestionMessageBufferTest {
         Assert.assertTrue(buffer.isSupplying());
         Assert.assertEquals(0, buffer.getQueueSize());
 
-        BufferSupplierTask        tskProd = new BufferSupplierTask(lstMsgs, buffer);
+        BufferSupplierTask  tskProd = new BufferSupplierTask(lstMsgs, buffer);
         Callable<Integer>   callCons = this.createGreedyConsumerPoll(buffer);
         
         FutureTask<Integer> tskCons = new FutureTask<>(callCons);
@@ -705,7 +682,7 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMessageBuffer#poll(long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#poll(long, TimeUnit)}.
      */
     @Test
     public final void testPollLongTimeUnit() {
@@ -713,13 +690,14 @@ public class IngestionMessageBufferTest {
         // Parameters
         final List<IngestDataRequest>   lstMsgs = LST_MSGS_RQST;
         final int       cntMsgs =       lstMsgs.size();
+        final long      szPayload =     SZ_PAYLOAD_ALLOC;
         final long      lngPoll = 10;
         final TimeUnit  tuPoll = TimeUnit.MILLISECONDS;
         
-        final int       szCapacity = cntMsgs/2;
+        final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = true;
         
-        IngestionMessageBuffer  buffer = new IngestionMessageBuffer(szCapacity, bolBackPressure);
+        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -755,7 +733,7 @@ public class IngestionMessageBufferTest {
             Assert.fail("Exception attempting to recover future result: " + e.getMessage());
         }
     }
-    
+
     
     //
     // Support Methods
@@ -763,12 +741,12 @@ public class IngestionMessageBufferTest {
     
     /**
      * <p>
-     * Creates a <code>IngestionMessageBuffer</code> monitoring task that.
+     * Creates a <code>IngestionDataBuffer</code> monitoring task that.
      * </p>
      * <p>
      * The returned task does not complete until the given buffer stops supplying ingest data request 
      * messages.  The task continues (indefinitely) polling the buffer using 
-     * <code>{@link IngestionMessageBuffer#isSupplying()</code> method until it returns <code>false</code>.
+     * <code>{@link IngestionDataBuffer#isSupplying()</code> method until it returns <code>false</code>.
      * </p>
      * 
      * @param buffer        buffer being monitored
@@ -776,7 +754,7 @@ public class IngestionMessageBufferTest {
      * 
      * @return  task that executes until buffer stops supplying
      */
-    private Runnable    createBufferMonitorTask(IngestionMessageBuffer buffer, long lngWaitTime) {
+    private Runnable    createBufferMonitorTask(IMessageSupplier<IngestDataRequest> buffer, long lngWaitTime) {
         
         Runnable task = () -> {
             
@@ -804,7 +782,7 @@ public class IngestionMessageBufferTest {
      * 
      * @return  a new buffer update task
      */
-    private Runnable    createBufferUpdateTask(IngestionMessageBuffer buffer, PrintStream ps) {
+    private Runnable    createBufferUpdateTask(IngestionDataBuffer buffer, PrintStream ps) {
         
         Runnable    task = () -> {
             ps.println("Buffer: isSupplying = " + buffer.isSupplying());
@@ -852,7 +830,7 @@ public class IngestionMessageBufferTest {
      * @return  supplier task for the given payload iterator and target message buffer
      */
     @SuppressWarnings("unused")
-    private Callable<Integer>   createSupplier(Iterator<IngestDataRequest> itrMsgs, IngestionMessageBuffer buffer) {
+    private Callable<Integer>   createSupplier(Iterator<IngestDataRequest> itrMsgs, IResourceConsumer<IngestDataRequest> buffer) {
         
         Callable<Integer>   task = () -> {
             
@@ -880,7 +858,7 @@ public class IngestionMessageBufferTest {
      * terminate until the the buffer stops supplying.
      * </p>
      * <p>
-     * The consumer task uses the <code>{@link IngestionMessageBuffer#take()}</code> blocking method for
+     * The consumer task uses the <code>{@link IngestionDataBuffer#take()}</code> blocking method for
      * message retrieval.
      * </p> 
      * <p>
@@ -891,7 +869,7 @@ public class IngestionMessageBufferTest {
      * 
      * @return  the consumer task for the given message buffer
      */
-    private Callable<Integer>   createGreedyConsumerTake(IngestionMessageBuffer buffer) {
+    private Callable<Integer>   createGreedyConsumerTake(IMessageSupplier<IngestDataRequest> buffer) {
         
         Callable<Integer>   task = () -> {
             
@@ -920,53 +898,7 @@ public class IngestionMessageBufferTest {
      * terminate until the the buffer stops supplying.
      * </p>
      * <p>
-     * The consumer task uses the <code>{@link IngestionMessageBuffer#poll(long, TimeUnit)}</code> blocking method for
-     * message retrieval.
-     * </p> 
-     * <p>
-     * The returned <code>Callable&lt;Integer&gt;</code> task returns the number of polling attempts. 
-     * </p>
-     * 
-     * @param buffer        the message buffer supplying request messages
-     * @param lngTimeout    timeout limit for polling operation
-     * @param tuTimeout     timeout units for polling operation
-     * 
-     * @return  the consumer task for the given message buffer
-     */
-    @SuppressWarnings("unused")
-    private Callable<Integer>   createGreedyConsumerPoll(IMessageSupplier<IngestDataRequest> buffer, long lngTimeout, TimeUnit tuTimeout) {
-        
-        Callable<Integer>   task = () -> {
-            
-            // The number of ingest data messages consumed
-            int cntMsgs = 0;
-            int cntPolls = 0;
-            
-            while (buffer.isSupplying()) {
-                IngestDataRequest   msgRqst = buffer.poll(lngTimeout, tuTimeout);
-                
-                cntPolls++;
-                
-                if (msgRqst != null)
-                    cntMsgs++;
-            }
-            
-            return cntPolls;
-        };
-        
-        return task;
-    }
-
-    /**
-     * <p>
-     * Creates a "greedy" <code>IngestDataRequest</code> consumer task for the given message buffer.
-     * </p>
-     * <p>
-     * Consumer retrieves ingest data request messages as soon as they are available.  It does not 
-     * terminate until the the buffer stops supplying.
-     * </p>
-     * <p>
-     * The consumer task uses the <code>{@link IngestionMessageBuffer#poll()}</code> non-blocking method for
+     * The consumer task uses the <code>{@link IngestionDataBuffer#poll()}</code> non-blocking method for
      * message retrieval.
      * </p> 
      * <p>
@@ -1002,4 +934,50 @@ public class IngestionMessageBufferTest {
         return task;
     }
 
+    /**
+     * <p>
+     * Creates a "greedy" <code>IngestDataRequest</code> consumer task for the given message buffer.
+     * </p>
+     * <p>
+     * Consumer retrieves ingest data request messages as soon as they are available.  It does not 
+     * terminate until the the buffer stops supplying.
+     * </p>
+     * <p>
+     * The consumer task uses the <code>{@link IngestionDataBuffer#poll(long, TimeUnit)}</code> blocking method for
+     * message retrieval.
+     * </p> 
+     * <p>
+     * The returned <code>Callable&lt;Integer&gt;</code> task returns the number of polling attempts. 
+     * </p>
+     * 
+     * @param buffer        the message buffer supplying request messages
+     * @param lngTimeout    timeout limit for polling operation
+     * @param tuTimeout     timeout units for polling operation
+     * 
+     * @return  the consumer task for the given message buffer
+     */
+    private Callable<Integer>   createGreedyConsumerPoll(IMessageSupplier<IngestDataRequest> buffer, long lngTimeout, TimeUnit tuTimeout) {
+        
+        Callable<Integer>   task = () -> {
+            
+            // The number of ingest data messages consumed
+            int cntMsgs = 0;
+            int cntPolls = 0;
+            
+            while (buffer.isSupplying()) {
+                IngestDataRequest   msgRqst = buffer.poll(lngTimeout, tuTimeout);
+                
+                cntPolls++;
+                
+                if (msgRqst != null)
+                    cntMsgs++;
+            }
+            
+            return cntPolls;
+        };
+        
+        return task;
+    }
+
+    
 }

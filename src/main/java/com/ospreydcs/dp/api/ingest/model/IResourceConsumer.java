@@ -28,19 +28,19 @@
 package com.ospreydcs.dp.api.ingest.model;
 
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 
 /**
  * <p>
- * Interface exposing the operations of a blocking <code>T</code> resource type consumer.
+ * Interface exposing the operations of a blocking <code>T</code> resource consumer.
  * </p>
  * <p>
  * Classes implementing this interface are assumed to provide implicit throttling at the supplier
- * side of <code>IngestionFrame</code> processing.  Specifically, an ingestion frame supplier can be
+ * side of <code>T</code> processing.  For example, an ingestion frame producer can be
  * prevented from offering a frame to the consumer if a particular condition is not met (e.g., a buffer
  * is at capacity).
  * </p>
@@ -53,6 +53,45 @@ import com.ospreydcs.dp.api.ingest.IngestionFrame;
  */
 public interface IResourceConsumer<T> {
 
+    /**
+     * <p>
+     * Activates the conumer of <code>T</code> resources.
+     * </p>
+     * <p>
+     * After invoking this method the consumer instance is ready for resource acceptance and
+     * processing.  The method <code>{@link #isAccepting()}</code> should return <code>true</code>
+     * after returning.
+     * </p>
+     * <h2>Operation</h2>
+     * This method starts all resource acceptance and processing which are continuously active
+     * until explicitly shut down.  
+     * </p>
+     * <p>
+     * <h2>Shutdowns</h2>
+     * Typically for proper operation consumers requires a shutdown operation when no longer needed.  
+     * Use either <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code> to shutdown the 
+     * consumer.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Often consumers can be cycled through activations and shutdowns. 
+     * </li>
+     * <li>
+     * A shutdown operation should always be invoked when the consumer is no longer needed.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @return  <code>true</code> if the consumer was successfully activated,
+     *          <code>false</code> if the consumer was already active
+     *          
+     * @throws RejectedExecutionException   processing tasks could not be scheduled for execution
+     * @return
+     */
+    public boolean  activate();
+    
     /**
      * <p>
      * Determine whether or not the consumer is currently accepting <code>T</code> type resource instances.
@@ -79,9 +118,10 @@ public interface IResourceConsumer<T> {
      *  
      * @param lstRscs     list of resources to be consumed
      * 
-     * @throws InterruptedException the process was interrupted while waiting for resources to be accepted
+     * @throws IllegalStateException    consumer is not accepting resources 
+     * @throws InterruptedException     the process was interrupted while waiting for resources to be accepted
      */
-    public void offer(List<T> lstRscs) throws InterruptedException;
+    public void offer(List<T> lstRscs) throws IllegalStateException, InterruptedException;
     
     /**
      * <p>
@@ -101,10 +141,52 @@ public interface IResourceConsumer<T> {
      * 
      * @return  <code>true</code> if resource was accepted by consumer, <code>false</code> if timeout occurred
      * 
+     * @throws IllegalStateException    consumer is not accepting resources 
      * @throws InterruptedException the process was interrupted while waiting for resources to be accepted
      */
-    public boolean  offer(List<T> lstRsrcs, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException;
+    public boolean  offer(List<T> lstRsrcs, long lngTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException;
 
+    /**
+     * <p>
+     * Performs an orderly shut down of the resource consumer.
+     * </p>
+     * <p>
+     * This method is available for producers of <code>T</code> resources to signal a "completion" event
+     * and that no more resources will be offered.
+     * After invoking this method all internal consumption processing tasks are allowed to finish 
+     * but no new <code>T</code> resources will be accepted.  
+     * </p>
+     * <p>
+     * This method will block until all currently executing processing tasks have finished.
+     * The queue of ingestion request messages may still contain available messages
+     * however. 
+     * 
+     * @return <code>true</code> if the message supplier was shutdown,
+     *         <code>false</code> if the message supplier was not active or shutdown operation failed to complete
+     * <p>
+     * To force a hard shutdown of the resource consumer where all internal processing is immediately terminated 
+     * and any remaining (uncompleted) products are discarded use method <code>#shutdownNow()</code>.  
+     * </p>
+     * 
+     * @return <code>true</code> if the consumer was successfully shutdown,
+     *         <code>false</code> if the consumer was not active or shutdown operation failed
+     * 
+     * @throws InterruptedException interrupted while waiting for processing threads to complete
+     */
+    public boolean  shutdown() throws InterruptedException;
+    
+    /**
+     * <p>
+     * Performs a hard shutdown of the resource consumer.
+     * </p>
+     * <p>
+     * All currently executing processing tasks are terminated and all
+     * internal resources are cleared.  (Any outgoing resources are also cleared.)  
+     * The method returns immediately upon terminating all activity.
+     * </p>
+     */
+    public void shutdownNow();
+    
     
     //
     // Default Methods

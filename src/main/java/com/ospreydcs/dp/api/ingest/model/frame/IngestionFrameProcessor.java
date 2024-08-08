@@ -184,6 +184,19 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * Ingestion frame buffering now occurs only for concurrent processing.  If concurrency (mult-threading) is
  * disabled then all processing is done on the main thread.
  * </p>
+ * <p>
+ * <h2>TODO</h2>
+ * Perhaps support the <code>IResourceConsumer&lt;IngestionFrame&gt;</code> interface.
+ * <ul>
+ * <li>
+ * Argument against this support: Follows from the fact that the interface assumes potential back-pressure 
+ * blocking at the consumer side, which this class does not implement.
+ * </li>
+ * <li>
+ * Argument for this support: The class already implements most methods of the interface.
+ * </li>
+ * </ul>
+ * </p>
  * 
  *
  * @author Christopher K. Allen
@@ -962,9 +975,10 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * This method will block until all currently executing processing tasks have finished.
      * The queue of ingestion request messages may still contain available messages
      * however. 
+     * </p>
      * 
-     * @return <code>true</code> if the message supplier was shutdown,
-     *         <code>false</code> if the message supplier was not active or shutdown operation failed to complete
+     * @return <code>true</code> if the frame processor was shutdown,
+     *         <code>false</code> if the processor was not active or shutdown operation failed to complete
      * 
      * @throws InterruptedException interrupted while waiting for processing threads to complete
      */
