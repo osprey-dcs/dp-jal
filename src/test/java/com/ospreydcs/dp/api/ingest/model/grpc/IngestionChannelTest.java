@@ -69,29 +69,29 @@ public class IngestionChannelTest {
     // Class Constants
     //
     
-    /** Fixed thread pool (periodic task executor) maximum size */
-    public static final int         CNT_MAX_PERD_TASKS = 5;
-    
-    
-    /** Message supplier task execution period */
-    public static final long        LNG_PERD_PROD_TASK = 25;
-    
-    /** Message supplier task execution period time units */
-    public static final TimeUnit    TU_PERD_PROD_TASK = TimeUnit.MILLISECONDS;
-    
-    
-    /** Message consumer task execution period */
-    public static final long        LNG_PERD_CONS_TASK = 50;
-    
-    /** Message consumer task execution period units */
-    public static final TimeUnit    TU_PERD_CONS_TASK = TimeUnit.MILLISECONDS; 
-            
-    
-    /** General Polling Timeout limit */
-    public static final long        LNG_POLL_TIMEOUT = 25;
-    
-    /** General polling timeout unit */
-    public static final TimeUnit    TU_POLL_TIMEOUT = TimeUnit.MILLISECONDS;
+//    /** Fixed thread pool (periodic task executor) maximum size */
+//    public static final int         CNT_MAX_PERD_TASKS = 5;
+//    
+//    
+//    /** Message supplier task execution period */
+//    public static final long        LNG_PERD_PROD_TASK = 25;
+//    
+//    /** Message supplier task execution period time units */
+//    public static final TimeUnit    TU_PERD_PROD_TASK = TimeUnit.MILLISECONDS;
+//    
+//    
+//    /** Message consumer task execution period */
+//    public static final long        LNG_PERD_CONS_TASK = 50;
+//    
+//    /** Message consumer task execution period units */
+//    public static final TimeUnit    TU_PERD_CONS_TASK = TimeUnit.MILLISECONDS; 
+//            
+//    
+//    /** General Polling Timeout limit */
+//    public static final long        LNG_POLL_TIMEOUT = 25;
+//    
+//    /** General polling timeout unit */
+//    public static final TimeUnit    TU_POLL_TIMEOUT = TimeUnit.MILLISECONDS;
     
     
     //
@@ -116,8 +116,8 @@ public class IngestionChannelTest {
     private static final IngestionMessageBuffer     BUF_MSGS = new IngestionMessageBuffer();
     
     
-    /** Periodic task executor service */
-    private static final ScheduledExecutorService   XTOR_PERD_TASKS = Executors.newScheduledThreadPool(CNT_MAX_PERD_TASKS);
+//    /** Periodic task executor service */
+//    private static final ScheduledExecutorService   XTOR_PERD_TASKS = Executors.newScheduledThreadPool(CNT_MAX_PERD_TASKS);
     
     
     //

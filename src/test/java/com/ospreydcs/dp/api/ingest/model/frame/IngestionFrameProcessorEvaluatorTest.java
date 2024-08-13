@@ -129,6 +129,14 @@ public class IngestionFrameProcessorEvaluatorTest {
     public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_4_DECMP_1M = 
             IngestionFrameProcessorEvalConfig.from(CNT_FRAMES, CNT_COLS, CNT_ROWS, true, 4, true, 1_000_000L, LNG_TIMEOUT, TU_TIMEOUT);
     
+    /** IngestionFrameProcessorEvaluation Test configuration */
+    public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_5_DECMP_1M = 
+            IngestionFrameProcessorEvalConfig.from(CNT_FRAMES, CNT_COLS, CNT_ROWS, true, 5, true, 1_000_000L, LNG_TIMEOUT, TU_TIMEOUT);
+    
+    /** IngestionFrameProcessorEvaluation Test configuration */
+    public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_6_DECMP_1M = 
+            IngestionFrameProcessorEvalConfig.from(CNT_FRAMES, CNT_COLS, CNT_ROWS, true, 6, true, 1_000_000L, LNG_TIMEOUT, TU_TIMEOUT);
+    
     
     /** IngestionFrameProcessorEvaluation Test configuration */
     public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_1_DECMP_2M = 
@@ -159,6 +167,14 @@ public class IngestionFrameProcessorEvaluatorTest {
     public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_4_DECMP_4M = 
             IngestionFrameProcessorEvalConfig.from(CNT_FRAMES, CNT_COLS, CNT_ROWS, true, 4, true, 4 * 1_000_000L, LNG_TIMEOUT, TU_TIMEOUT);
     
+    /** IngestionFrameProcessorEvaluation Test configuration */
+    public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_5_DECMP_4M = 
+            IngestionFrameProcessorEvalConfig.from(CNT_FRAMES, CNT_COLS, CNT_ROWS, true, 5, true, 4 * 1_000_000L, LNG_TIMEOUT, TU_TIMEOUT);
+    
+    /** IngestionFrameProcessorEvaluation Test configuration */
+    public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_6_DECMP_4M = 
+            IngestionFrameProcessorEvalConfig.from(CNT_FRAMES, CNT_COLS, CNT_ROWS, true, 6, true, 4 * 1_000_000L, LNG_TIMEOUT, TU_TIMEOUT);
+    
     
     /** IngestionFrameProcessorEvaluation Test configuration */
     public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_1_DECMP_400K = 
@@ -176,6 +192,14 @@ public class IngestionFrameProcessorEvaluatorTest {
     public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_4_DECMP_400K = 
             IngestionFrameProcessorEvalConfig.from(CNT_FRAMES, CNT_COLS, CNT_ROWS, true, 4, true, 4 * 1_000_00L, LNG_TIMEOUT, TU_TIMEOUT);
     
+    /** IngestionFrameProcessorEvaluation Test configuration */
+    public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_5_DECMP_400K = 
+            IngestionFrameProcessorEvalConfig.from(CNT_FRAMES, CNT_COLS, CNT_ROWS, true, 5, true, 4 * 1_000_00L, LNG_TIMEOUT, TU_TIMEOUT);
+    
+    /** IngestionFrameProcessorEvaluation Test configuration */
+    public static final IngestionFrameProcessorEvalConfig   CFG_MTHRD_6_DECMP_400K = 
+            IngestionFrameProcessorEvalConfig.from(CNT_FRAMES, CNT_COLS, CNT_ROWS, true, 6, true, 4 * 1_000_00L, LNG_TIMEOUT, TU_TIMEOUT);
+    
     
     
     //
@@ -188,16 +212,20 @@ public class IngestionFrameProcessorEvaluatorTest {
             CFG_MTHRD_1_DECMP_400K,
             CFG_MTHRD_2_DECMP_400K,
             CFG_MTHRD_3_DECMP_400K,
-            CFG_MTHRD_4_DECMP_400K
+            CFG_MTHRD_4_DECMP_400K,
+            CFG_MTHRD_5_DECMP_400K,
+            CFG_MTHRD_6_DECMP_400K
             );
     
     /** Suite of IngestionFrameProcessorEvaluation test configurations */
     public static final List<IngestionFrameProcessorEvalConfig> LST_CFG_1M = List.of(
-            CFG_MTHRD_FALSE_DECMP_4M,
+            CFG_MTHRD_FALSE_DECMP_1M,
             CFG_MTHRD_1_DECMP_1M,
             CFG_MTHRD_2_DECMP_1M,
             CFG_MTHRD_3_DECMP_1M,
-            CFG_MTHRD_4_DECMP_1M
+            CFG_MTHRD_4_DECMP_1M,
+            CFG_MTHRD_5_DECMP_1M,
+            CFG_MTHRD_6_DECMP_1M
             );
     
     /** Suite of IngestionFrameProcessorEvaluation test configurations */
@@ -206,7 +234,9 @@ public class IngestionFrameProcessorEvaluatorTest {
             CFG_MTHRD_1_DECMP_4M,
             CFG_MTHRD_2_DECMP_4M,
             CFG_MTHRD_3_DECMP_4M,
-            CFG_MTHRD_4_DECMP_4M
+            CFG_MTHRD_4_DECMP_4M,
+            CFG_MTHRD_5_DECMP_4M,
+            CFG_MTHRD_6_DECMP_4M
             );
     
     
@@ -328,6 +358,20 @@ public class IngestionFrameProcessorEvaluatorTest {
 
         try {
             this.runSuite(LST_CFG_400K);
+            
+        } catch (Exception e) {
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), e.getCause().getMessage(), e));
+        }
+    }
+    
+    /**
+     * Configuration suite performance evaluation for <code>IngestionFrameProcessor</code>.
+     */
+    @Test
+    public final void testSuite1MDecmp() {
+
+        try {
+            this.runSuite(LST_CFG_1M);
             
         } catch (Exception e) {
             Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), e.getCause().getMessage(), e));

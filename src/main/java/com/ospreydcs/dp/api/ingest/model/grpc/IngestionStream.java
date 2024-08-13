@@ -733,8 +733,9 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
             this.bolStreamComplete = true;
             this.recStatus = this.awaitCompletion();
             
-//            // TODO - Remove
-//            LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - terminatation finished.");
+            // TODO - Remove
+            if (BOL_LOGGING)
+                LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - stream finished with " + this.cntRequests + " message transmissions.");
         }
     }
     

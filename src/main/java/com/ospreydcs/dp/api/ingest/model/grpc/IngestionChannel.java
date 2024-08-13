@@ -157,7 +157,7 @@ public class IngestionChannel {
      * @param srcRqstMsgs   the supplier of incoming, processed <code>IngestDataRequest</code> messages 
      * @param connIngest    Java API encapsulated gRPC connection to the Ingestion Service
      * 
-     * @return
+     * @return  a new <code>IngestionChannel</code> instance ready for activation (and additional configuration)
      */
     public static IngestionChannel from(IMessageSupplier<IngestDataRequest> srcRqstMsgs, DpIngestionConnection connIngest) {
         return new IngestionChannel(srcRqstMsgs, connIngest);
