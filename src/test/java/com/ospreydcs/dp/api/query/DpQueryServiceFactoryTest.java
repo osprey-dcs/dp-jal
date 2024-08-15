@@ -101,7 +101,7 @@ public class DpQueryServiceFactoryTest {
         try {
             DpQueryService qsApi = fac.connect();
             
-            bolResult = qsApi.shutdownSoft();
+            bolResult = qsApi.shutdown();
             
             Assert.assertTrue("Service API shutdown reported failure", bolResult);
             
@@ -128,7 +128,7 @@ public class DpQueryServiceFactoryTest {
         try {
             DpQueryService qs = DpQueryServiceFactory.FACTORY.connect();
             
-            bolResult = qs.shutdownSoft();
+            bolResult = qs.shutdown();
             
             Assert.assertTrue("Service API shutdown reported failure", bolResult);
             
@@ -155,7 +155,7 @@ public class DpQueryServiceFactoryTest {
         try {
             DpQueryService qs = DpQueryServiceFactory.FACTORY.connect(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
             
-            bolResult = qs.shutdownSoft();
+            bolResult = qs.shutdown();
             
             Assert.assertTrue("Service API shutdown reported failure", bolResult);
             
@@ -188,7 +188,7 @@ public class DpQueryServiceFactoryTest {
                     CFG_DEFAULT.channel.grpc.timeoutUnit
                     );
             
-            bolResult = qs.shutdownSoft();
+            bolResult = qs.shutdown();
             
             Assert.assertTrue("Service API shutdown reported failure", bolResult);
             
@@ -225,7 +225,7 @@ public class DpQueryServiceFactoryTest {
                     CFG_DEFAULT.channel.grpc.timeoutUnit
                     );
             
-            bolResult = qs.shutdownSoft();
+            bolResult = qs.shutdown();
             
             Assert.assertTrue("Service API shutdown reported failure", bolResult);
             

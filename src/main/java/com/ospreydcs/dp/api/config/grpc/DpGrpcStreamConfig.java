@@ -27,11 +27,8 @@
  */
 package com.ospreydcs.dp.api.config.grpc;
 
-import java.util.concurrent.TimeUnit;
-
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.config.query.DpDataResponseConfig.Multistream;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 
 /**
@@ -76,9 +73,9 @@ public class DpGrpcStreamConfig extends CfgStructure<DpGrpcStreamConfig> {
     @ACfgOverride.Struct(pathelem="BUFFER")
     public DataBuffer           buffer;
     
-    /** gRPC stream data binning parameters */
-    @ACfgOverride.Struct(pathelem="BINNING")
-    public DataBinning          binning;
+//    /** gRPC stream data binning parameters */
+//    @ACfgOverride.Struct(pathelem="BINNING")
+//    public DataBinning          binning;
     
     /** gRPC multiple, concurrent data streams parameters */
     @ACfgOverride.Struct(pathelem="CONCURRENCY")
@@ -93,6 +90,7 @@ public class DpGrpcStreamConfig extends CfgStructure<DpGrpcStreamConfig> {
         /** Default constructor required for base class */
         public DataBuffer() { super(DataBuffer.class);  }
         
+        
         // 
         // Configuration Parameters
         //
@@ -101,9 +99,13 @@ public class DpGrpcStreamConfig extends CfgStructure<DpGrpcStreamConfig> {
         @ACfgOverride.Field(name="ACTIVE")
         public Boolean      active;
         
-        /** Size for fixed-length queue buffer (e.g., a blocking queue for back pressure) */
+        /** Size (number of elements) for fixed-capacity queue buffer (e.g., a blocking queue for back pressure) */
         @ACfgOverride.Field(name="SIZE")
         public Integer      size;
+        
+        /** Maximum memory allocation for a fixed-capacity queue buffer (e.g., back-pressure throttling) */
+        @ACfgOverride.Field(name="ALLOCATION")
+        public Long         allocation;
 
         /** Enable the existence of "back pressure" within gRPC streams */
         @ACfgOverride.Field(name="BACKPRESSURE")

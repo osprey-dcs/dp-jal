@@ -77,3 +77,6 @@
  *
  */
 package com.ospreydcs.dp.api.ingest;
+
+import com.ospreydcs.dp.api.ingest.impl.DpIngestionService;
+import com.ospreydcs.dp.api.ingest.impl.DpIngestionStream;

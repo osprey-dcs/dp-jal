@@ -471,7 +471,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#awaitBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#awaitQueueReady()}.
      */
     @Test
     public final void testAwaitBackPressure() {
@@ -511,7 +511,7 @@ public class IngestionFrameProcessorDepTest {
         try {
             Instant     insStart = Instant.now();
             thdTake.start();
-            this.processor.awaitBackPressure();
+            this.processor.awaitQueueReady();
             Instant     insStop = Instant.now();
             Duration    durWait = Duration.between(insStart, insStop);
             

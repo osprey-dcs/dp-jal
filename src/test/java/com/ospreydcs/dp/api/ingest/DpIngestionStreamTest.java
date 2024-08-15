@@ -47,6 +47,8 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.api.ingest.impl.DpIngestionStream;
+import com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamFactory;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
 import com.ospreydcs.dp.api.model.ClientRequestId;
 import com.ospreydcs.dp.api.model.IngestionResponse;
@@ -143,7 +145,7 @@ public class DpIngestionStreamTest {
     public static void tearDownAfterClass() throws Exception {
         if (apiIngest.isStreamOpen())
             apiIngest.closeStream();
-        apiIngest.shutdownSoft();
+        apiIngest.shutdown();
         apiIngest.awaitTermination();
     }
 
@@ -167,7 +169,7 @@ public class DpIngestionStreamTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#shutdownSoft()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#shutdown()}.
      */
     @Test
     public final void testShutdownSoft() {
@@ -177,7 +179,7 @@ public class DpIngestionStreamTest {
             DpIngestionStream   apiTest = DpIngestionStreamFactory.FACTORY.connect();
             
             // Now shut it down
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             
             // Check for shutdown
             Assert.assertTrue(apiTest.isShutdown());
@@ -191,7 +193,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#shutdownNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#shutdownNow()}.
      */
     @Test
     public final void testShutdownNow() {
@@ -213,7 +215,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#awaitTermination()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#awaitTermination()}.
      */
     @Test
     public final void testAwaitTermination() {
@@ -224,7 +226,7 @@ public class DpIngestionStreamTest {
             
             // Now shut it down
             Instant     insShutdown = Instant.now();
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             
             // Check for shutdown
             Assert.assertTrue(apiTest.isShutdown());
@@ -248,7 +250,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#from(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#from(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
      */
     @Test
     public final void testFrom() {
@@ -259,7 +261,7 @@ public class DpIngestionStreamTest {
             DpIngestionStream       apiTest = DpIngestionStream.from(connIngest);
             
             // Shutdown API connection and test
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             Assert.assertTrue("Ingestion API reported NOT shutdown after shutdown operation", apiTest.isShutdown());
             
             apiTest.awaitTermination();
@@ -275,7 +277,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#DpIngestionStream(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#DpIngestionStream(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
      */
     @Test
     public final void testDpIngestionStream() {
@@ -286,7 +288,7 @@ public class DpIngestionStreamTest {
             DpIngestionStream       apiTest = new DpIngestionStream(connIngest);
             
             // Shutdown API connection and test
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             Assert.assertTrue("Ingestion API reported NOT shutdown after shutdown operation", apiTest.isShutdown());
             
             apiTest.awaitTermination();
@@ -302,7 +304,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#enableBackPressure(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#enableBackPressure(int)}.
      */
     @Test
     public final void testEnableBackPressure() {
@@ -338,7 +340,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#disableBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#disableBackPressure()}.
      */
     @Test
     public final void testDisableBackPressure() {
@@ -374,7 +376,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#openStream(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#openStream(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
      */
     @Test
     public final void testOpenStream() {
@@ -400,7 +402,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#closeStream()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#closeStream()}.
      */
     @Test
     public final void testCloseStream() {
@@ -424,7 +426,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#closeStreamNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#closeStreamNow()}.
      */
     @Test
     public final void testCloseStreamNow() {
@@ -442,7 +444,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#ingest(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#ingest(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
      */
     @Test
     public final void testIngestIngestionFrame() {
@@ -482,7 +484,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#ingest(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#ingest(java.util.List)}.
      */
     @Test
     public final void testIngestListOfIngestionFrame() {
@@ -522,7 +524,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#getOutgoingQueueSize()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#getQueueSize()}.
      */
     @Test
     public final void testGetOutgoingQueueSize() {
@@ -553,7 +555,7 @@ public class DpIngestionStreamTest {
             apiIngest.ingest(lstFrames);
             
             for (int iPoll=0; iPoll<cntPolls; iPoll++) {
-                arrQueSize[iPoll] = apiIngest.getOutgoingQueueSize();
+                arrQueSize[iPoll] = apiIngest.getQueueSize();
                 
                 Thread.sleep(lngPollWaitMs);
             }
@@ -588,7 +590,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#awaitOutgoingQueueEmpty()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#awaitQueueEmpty()}.
      */
     @Test
     public final void testAwaitOutgoingQueueEmpty() {
@@ -619,7 +621,7 @@ public class DpIngestionStreamTest {
             Thread.sleep(lngWaitMs);
             
             Instant     insStart = Instant.now();
-            apiIngest.awaitOutgoingQueueEmpty();
+            apiIngest.awaitQueueEmpty();
             Instant     insStop = Instant.now();
             Duration    durWait = Duration.between(insStart, insStop);
             
@@ -627,7 +629,7 @@ public class DpIngestionStreamTest {
             System.out.println("Outgoing queue emtpy wait after submitting 10 moderate frames:");
             System.out.println("  wait time = " + durWait);
 
-            Assert.assertEquals(0, apiIngest.getOutgoingQueueSize());
+            Assert.assertEquals(0, apiIngest.getQueueSize());
             
         } catch (DpIngestionException e) {
             Assert.fail("ingest() threw DpIngestionException: " + e.getMessage());
@@ -650,7 +652,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#getClientRequestIds()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#getClientRequestIds()}.
      */
     @Test
     public final void testGetClientRequestIds() {
@@ -699,7 +701,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#getIngestionExceptions()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStream#getIngestionExceptions()}.
      */
     @Test
     public final void testGetIngestionExceptions() {

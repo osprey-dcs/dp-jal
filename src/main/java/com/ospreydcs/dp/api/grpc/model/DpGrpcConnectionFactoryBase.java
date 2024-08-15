@@ -137,7 +137,7 @@ import io.grpc.TlsChannelCredentials;
  * <h2>WARNING:</h2>
  * All created <code>DpGrpcConnection</code> derived objects should be shut down when no longer 
  * needed using
- * <code>{@link #shutdownSoft()} or 
+ * <code>{@link #shutdown()} or 
  * <code>{@link #shutdownNow()}</code>.  
  * Otherwise gRPC resources are not released and performance degrades.
  * </p>

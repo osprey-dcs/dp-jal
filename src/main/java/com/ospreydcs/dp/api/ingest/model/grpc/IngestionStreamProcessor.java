@@ -1247,6 +1247,43 @@ public final class IngestionStreamProcessor {
     
     /**
      * <p>
+     * Allows clients to block until the request message queue is ready (below capacity).
+     * </p>
+     * <p>
+     * This method allows clients to wait for the <code>IngestDataRequest</code> buffer
+     * to drop below its capacity limitation.  Allows clients do manage their own blocking
+     * at the ingestion side rather than used the build in back-pressure mechanism. 
+     * This activity may be useful when clients wish to due their own performance tuning.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method will return immediately if the message queue is below capacity.
+     * </li>
+     * <li>
+     * This method is thread safe and multiple clients can block on this method.
+     * </li>
+     * <li>
+     * All clients blocking on this method will unblock when the message buffer falls below capacity.
+     * </li>
+     * </ul>
+     * </p> 
+     * 
+     * @throws IllegalStateException    operation invoked while processor inactive
+     * @throws InterruptedException     operation interrupted while waiting for queue ready
+     */
+    public void awaitRequestQueueReady() throws IllegalStateException, InterruptedException {
+        
+        // Check current state
+        if (!this.bolActive)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor is not active.");
+        
+        this.fncFrameProcessor.awaitQueueReady();
+    }
+    
+    /**
+     * <p>
      * Allows clients to block until the request message queue empties.
      * </p>
      * <p>

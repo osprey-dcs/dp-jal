@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest;
+package com.ospreydcs.dp.api.ingest.impl;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
@@ -39,6 +39,13 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
 
 /**
+ * <p>
+ * Connection factory for <code>DpIngestionStream</code> instances supporting the <code>IIngestionStream</code> interface.
+ * </p>
+ * <p>
+ * <h2>NOTES:</h2>
+ * The <code>DpIngestionStream</code> implementation is currently being deprecated.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Apr 27, 2024

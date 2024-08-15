@@ -64,7 +64,7 @@ import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
  * <p>
  * <h2>WARNING:</h2>
  * All derived Data Platform service API interfaces should be shut down when no longer needed using
- * <code>{@link #shutdownSoft()} or <code>{@link #shutdownNow()}</code>.  Otherwise gRPC resources are not
+ * <code>{@link #shutdown()} or <code>{@link #shutdownNow()}</code>.  Otherwise gRPC resources are not
  * released and performance degrades.
  * </p> 
  *

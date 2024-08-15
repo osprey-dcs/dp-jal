@@ -43,6 +43,8 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.api.ingest.impl.DpIngestionService;
+import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceFactory;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
@@ -125,7 +127,7 @@ public class DpIngestionServiceTest {
      */
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        apiIngest.shutdownSoft();
+        apiIngest.shutdown();
         apiIngest.awaitTermination();
     }
 
@@ -149,7 +151,7 @@ public class DpIngestionServiceTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionService#from(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionService#from(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
      */
     @Test
     public final void testFrom() {
@@ -160,7 +162,7 @@ public class DpIngestionServiceTest {
             DpIngestionService      apiTest = DpIngestionService.from(connIngest);
             
             // Shutdown API connection and test
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             Assert.assertTrue("Ingestion API reported NOT shutdown after shutdown operation", apiTest.isShutdown());
             
             apiTest.awaitTermination();
@@ -176,7 +178,7 @@ public class DpIngestionServiceTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionService#awaitTermination()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionService#awaitTermination()}.
      */
     @Test
     public final void testAwaitTermination() {
@@ -186,7 +188,7 @@ public class DpIngestionServiceTest {
             // Create new Ingestion Service API, then shut it down
             DpIngestionService      apiTest = DpIngestionServiceFactory.FACTORY.connect();
             
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             Assert.assertTrue("Test Ingestion Service API reported NOT shutdown after shutdownSoft() operation.", apiTest.isShutdown());
             
             apiTest.awaitTermination();
@@ -258,7 +260,7 @@ public class DpIngestionServiceTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionService#registerProvider(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionService#registerProvider(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
      */
     @Test
     public final void testRegisterProvider() {
@@ -299,7 +301,8 @@ public class DpIngestionServiceTest {
         
         // Attempt data ingestion
         try {
-            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_SMALL);
+//            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_SMALL);
+            List<IngestionResponse> lstRsps = apiIngest.ingest(MSG_FRAME_SMALL);
             
             Assert.assertEquals(1, lstRsps.size());
             
@@ -343,7 +346,8 @@ public class DpIngestionServiceTest {
         
         // Attempt data ingestion
         try {
-            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_LARGE);
+//            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_LARGE);
+            List<IngestionResponse> lstRsps = apiIngest.ingest(MSG_FRAME_LARGE);
             
             Assert.assertEquals(1, lstRsps.size());
             

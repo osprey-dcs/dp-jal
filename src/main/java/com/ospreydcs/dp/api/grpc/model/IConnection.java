@@ -65,7 +65,7 @@ public interface IConnection {
      * 
      * @throws InterruptedException process was interrupted while waiting for channel to shut down
      */
-    public boolean shutdownSoft() throws InterruptedException;
+    public boolean shutdown() throws InterruptedException;
     
     /**
      * <p>
@@ -95,7 +95,7 @@ public interface IConnection {
      * channel fully terminates.
      * </p>
      * <p>
-     * It is assumed that either a {@link #shutdownSoft()} or {@link #shutdownNow()} operation
+     * It is assumed that either a {@link #shutdown()} or {@link #shutdownNow()} operation
      * was previously invoked, otherwise the method immediately returns a <code>false</code> value.
      * After returning a <code>true</code> value all gRPC operations have completed, the underlying 
      * gRPC channel has terminated, and all gRPC resource have been released.
@@ -142,7 +142,7 @@ public interface IConnection {
      * <h2>NOTES:</h2>
      * The returned value may depend upon the type of shutdown that was issued.
      * <ul>
-     * <li>If a soft shutdown was initiated ({@link #shutdownSoft()} the returned value
+     * <li>If a soft shutdown was initiated ({@link #shutdown()} the returned value
      *     will be <code>false</code> until all request processes have terminated.
      *     </li>
      * 

@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest;
+package com.ospreydcs.dp.api.ingest.impl;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -43,6 +43,9 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
+import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.IIngestionService;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameBinner;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameConverter;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
@@ -110,7 +113,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * <h2>Instance Shutdown</h2>
  * All instances of <code>DpIngestionService</code> should be shutdown when no longer needed.
  * This will release all resources and increase overall performance.  See methods
- * <code>{@link #shutdownSoft()}</code> and <code>{@link #shutdownNow()}</code>.
+ * <code>{@link #shutdown()}</code> and <code>{@link #shutdownNow()}</code>.
  * </p>
  * 
  *
@@ -119,7 +122,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  *
  */
 public final class DpIngestionService extends
-        DpServiceApiBase<DpIngestionService, DpIngestionConnection, DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> {
+        DpServiceApiBase<DpIngestionService, DpIngestionConnection, DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> implements IIngestionService {
 
     //
     // Application Resources
@@ -162,10 +165,10 @@ public final class DpIngestionService extends
 //  private static final Boolean    BOL_BUFFER_ACTIVE = CFG_DEFAULT.stream.buffer.active;
   
     /** Perform ingestion frame decomposition (i.e., "binning") */
-    private static final Boolean    BOL_BINNING_ACTIVE = CFG_DEFAULT.stream.binning.active;
+    private static final Boolean    BOL_BINNING_ACTIVE = CFG_DEFAULT.decompose.active;
     
     /** Maximum size limit (in bytes) of decomposed ingestion frame */
-    private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.stream.binning.maxSize;
+    private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.decompose.maxSize;
     
     
     //
@@ -197,6 +200,9 @@ public final class DpIngestionService extends
     /** Ingestion frame decomposition maximum size */
     private long    lngBinSizeMax = LNG_BINNING_MAX_SIZE;
 
+    /** Data Provider UID record obtained from registration */
+    private ProviderUID     recProviderUid = null;
+    
     
     //
     // Creator
@@ -214,7 +220,7 @@ public final class DpIngestionService extends
      * <p>
      * <h2>NOTE:</h2>
      * The returned object should be shut down when no longer needed using 
-     * <code>{@link #shutdownSoft()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
      * This action is necessary to release unused gRPC resources and maintain 
      * overall performance.  
      * </p>
@@ -245,7 +251,7 @@ public final class DpIngestionService extends
      * <p>
      * <h2>NOTE:</h2>
      * The returned object should be shut down when no longer needed using 
-     * <code>{@link #shutdownSoft()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
      * This action is necessary to release unused gRPC resources and maintain 
      * overall performance.  
      * </p>
@@ -399,10 +405,13 @@ public final class DpIngestionService extends
      *         
      * @throws DpIngestionException     registration failure or general communications exception (see details)
      */
+    @Override
     @AUnavailable(status=STATUS.ACCEPTED, note="Operation is mocked - Not implemented within the Ingestion Service.")
     public ProviderUID  registerProvider(ProviderRegistrar recRegistration) throws DpIngestionException {
         
-        return ProviderRegistrationService.registerProvider(super.grpcConn, recRegistration);
+        this.recProviderUid = ProviderRegistrationService.registerProvider(super.grpcConn, recRegistration);
+
+        return this.recProviderUid;
         
 //        // Create the Protobuf request message from the argument 
 //        RegisterProviderRequest     msgRqst = RegisterProviderRequest.newBuilder()
@@ -460,19 +469,42 @@ public final class DpIngestionService extends
      * Blocking, synchronous, unary ingestion of the given ingestion frame.
      * </p>
      * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Clients must first register with the Ingestion Service before invoking this method otherwise
+     * an exception is thrown.
+     * </li>
+     * <li>
+     * A list of Ingestion Service response is returned in order to accommodate all cases.
+     *   <ul>
+     *   <li>Frame Decomposition: If the frame has allocation larger than the maximum it is decomposed into composite 
+     *       frames each receiving a response upon transmission.</li>
+     *   <li>No Decomposition: If the frame has allocation less than the maximum limit a single response is
+     *       contained in the list.</li>
+     *   </ul>
+     * </li>
+     * </p>
      * 
-     * @param recUid
-     * @param frame
-     * @return
-     * @throws DpIngestionException
+     * @param frame ingestion frame containing data for transmission to the Ingestion Service
+     * 
+     * @return  collection of Ingestion Service responses to data within ingestion frame
+     * 
+     * @throws IllegalStateException    unregistered Data Provider
+     * @throws DpIngestionException general ingestion exception (see detail and cause)
      */
-    public List<IngestionResponse> ingest(ProviderUID recUid, IngestionFrame frame) throws DpIngestionException {
+    @Override
+    public List<IngestionResponse> ingest(IngestionFrame frame) throws IllegalStateException, DpIngestionException {
+        
+        // Check registration
+        if (this.recProviderUid == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Data Provider was not registered.");
         
         // Create list of frames to be ingested - depends on auto-decomposition
         List<IngestionFrame>    lstFrames = this.decomposeFrame(frame); // throws DpIngestionException
         
         // Convert frames to messages and transmit, recovering responses
-        List<IngestionResponse> lstRsps = this.transmitFrames(recUid, lstFrames); // throws DpIngestionException
+        List<IngestionResponse> lstRsps = this.transmitFrames(this.recProviderUid, lstFrames); // throws DpIngestionException
 
         // Return responses
         return lstRsps;

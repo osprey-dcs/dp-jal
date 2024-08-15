@@ -209,6 +209,99 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 
     
     //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Create and return a new <code>IngestionFrameProcessor</code> instance with default configuration.
+     * </p>
+     * <p>
+     * The configuration parameters are taken from the API library configuration.  The Data Provider UID
+     * should either be assigned using <code>{@link #setProviderUid(ProviderUID)}</code> or its values
+     * should be contained in the incoming <code>IngestionFrame</code> instances, otherwise the produced
+     * <code>IngestDataRequest</code> messages face rejection by the Ingestion Service.
+     * </p>
+     * <p>
+     * <h2>Operation</h2>
+     * <ul>
+     * <li>
+     * The returned process must be activated (i.e., with the <code>{@link #activate()}</code> method) before
+     * ingestion frames can be processed with the <code>{@link #submit(IngestionFrame)}</code> or 
+     * <code>{@link #submit(List)}</code> methods.
+     * </li>
+     * <br/>
+     * <li>  
+     * The processed <code>IngestDataRequest</code> messages are available through the supported 
+     * <code>{@link IMessageSupplier&lt;IngestDataRequest&gt;}</code> interface.
+     * </li>
+     * <br/>
+     * <li>
+     * When no longer processing use either the <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>
+     * methods to shutdown the processor cause the <code>{@link #isSupplying()}</code> method to return
+     * <code>false</code> whenever the output buffer is exhausted.
+     * </li>
+     * <br/>
+     * <li>
+     * The processor can be reactivated after shutdown.  That is. a single instance supported multiple activation
+     * and shutdown cycles.
+     * </li> 
+     * </ul>
+     * </p>
+     *    
+     * @return  new <code>IngestionFrameProcessor</code> instance ready for activation
+     */
+    public static IngestionFrameProcessor   create() {
+        return new IngestionFrameProcessor();
+    }
+    
+    /**
+     * <p>
+     * Create and return a new <code>IngestionFrameProcessor</code> instance with default configuration
+     * and given Data Provider UID.
+     * </p>
+     * <p>
+     * The configuration parameters are taken from the API library configuration.  The given Data Provider UID
+     * is assigned to all <code>IngestDataRequest</code> messages produced by the returned processor unless
+     * otherwise assigned (e.g., using <code>{@link #setProviderUid(ProviderUID)}</code>).
+     * </p>
+     * <p>
+     * <h2>Operation</h2>
+     * <ul>
+     * <li>
+     * The returned process must be activated (i.e., with the <code>{@link #activate()}</code> method) before
+     * ingestion frames can be processed with the <code>{@link #submit(IngestionFrame)}</code> or 
+     * <code>{@link #submit(List)}</code> methods.
+     * </li>
+     * <br/>
+     * <li>  
+     * The processed <code>IngestDataRequest</code> messages are available through the supported 
+     * <code>{@link IMessageSupplier&lt;IngestDataRequest&gt;}</code> interface.
+     * </li>
+     * <br/>
+     * <li>
+     * When no longer processing use either the <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>
+     * methods to shutdown the processor cause the <code>{@link #isSupplying()}</code> method to return
+     * <code>false</code> whenever the output buffer is exhausted.
+     * </li>
+     * <br/>
+     * <li>
+     * The processor can be reactivated after shutdown.  That is. a single instance supported multiple activation
+     * and shutdown cycles.
+     * </li> 
+     * </ul>
+     * </p>
+     *    
+     * @param recProviderUid    Data Provider UID to be assigned to all produced ingest data messages
+     * 
+     * @return  new <code>IngestionFrameProcessor</code> instance ready for activation
+     */
+    public static IngestionFrameProcessor   create(ProviderUID recProviderUid) {
+        return new IngestionFrameProcessor(recProviderUid);
+    }
+    
+    
+    //
     // Application Resources
     //
     
@@ -251,10 +344,10 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     
     
     /** Perform ingestion frame decomposition (i.e., "binning") */
-    private static final Boolean    BOL_BINNING_ACTIVE = CFG_DEFAULT.stream.binning.active;
+    private static final Boolean    BOL_DECOMP_ACTIVE = CFG_DEFAULT.decompose.active;
     
     /** Maximum size limit (in bytes) of decomposed ingestion frame */
-    private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.stream.binning.maxSize;
+    private static final Integer    LNG_DECOMP_MAX_ALLOC = CFG_DEFAULT.decompose.maxSize;
     
     
 //    /** Size of the ingestion frame queue buffer */
@@ -291,10 +384,10 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     
     
     /** Ingestion frame decomposition (binning) enabled flag  */
-    private boolean bolDecompAuto = BOL_BINNING_ACTIVE;
+    private boolean bolDecompAuto = BOL_DECOMP_ACTIVE;
     
     /** Ingestion frame decomposition maximum size */
-    private long    lngBinSizeMax = LNG_BINNING_MAX_SIZE;
+    private long    szMaxFrmAlloc = LNG_DECOMP_MAX_ALLOC;
     
     
     //
@@ -510,16 +603,16 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </s>
      * </p>
      * 
-     * @param lngMaxFrmSize maximum allowable size (in bytes) of decomposed ingestion frames 
+     * @param szMaxFrmAlloc maximum allowable size (in bytes) of decomposed ingestion frames 
      */
     synchronized 
-    public void setFrameDecomposition(long lngMaxFrmSize) {
+    public void setFrameDecomposition(long szMaxFrmAlloc) {
 
         //        if (this.bolActive)
         //            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
 
         this.bolDecompAuto = true;
-        this.lngBinSizeMax = lngMaxFrmSize;
+        this.szMaxFrmAlloc = szMaxFrmAlloc;
     }
 
     /**
@@ -667,7 +760,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * @return  maximum allowable ingestion frame size when automatic decomposition is enabled
      */
     public long getMaxFrameSize() {
-        return this.lngBinSizeMax;
+        return this.szMaxFrmAlloc;
     }
     
     /**
@@ -927,7 +1020,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         
         // If no multi-threaded concurrency
         if (!this.bolConcurrency) {
-            this.prcrMsgBinner = IngestionFrameBinner.from(this.lngBinSizeMax);
+            this.prcrMsgBinner = IngestionFrameBinner.from(this.szMaxFrmAlloc);
             this.prcMsgConverter = IngestionFrameConverter.create(this.recProviderUid);
             
             return true;
@@ -1385,7 +1478,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 //            final int   intThrdId = this.cntDecompThrds++;
             
             // Create a new frame binner processor for this thread
-            IngestionFrameBinner binner = IngestionFrameBinner.from(this.lngBinSizeMax);
+            IngestionFrameBinner binner = IngestionFrameBinner.from(this.szMaxFrmAlloc);
 
             // While active - Continuously process frames from raw frame buffer
             // - remaining OR conditional(s) allow for soft shutdowns

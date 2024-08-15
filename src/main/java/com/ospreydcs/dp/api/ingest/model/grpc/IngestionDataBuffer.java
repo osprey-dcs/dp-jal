@@ -147,14 +147,15 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
     private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
 
     
-    /** Size of the ingestion frame queue buffer - used to create default maximum capacity allocation */
-    private static final Integer    INT_BUFFER_SIZE = CFG_DEFAULT.stream.buffer.size;
-    
-    /** Size of the maximum allowable ingestion frame - used to create default maximum capacity allocation */
-    private static final Integer    INT_MAX_FRAME_SIZE = CFG_DEFAULT.stream.binning.maxSize;
+//    /** Size of the ingestion frame queue buffer - used to create default maximum capacity allocation */
+//    private static final Integer    INT_BUFFER_SIZE = CFG_DEFAULT.stream.buffer.size;
+//    
+//    /** Size of the maximum allowable ingestion frame - used to create default maximum capacity allocation */
+//    private static final Integer    INT_MAX_FRAME_SIZE = CFG_DEFAULT.decompose.maxSize;
     
     /** Default maximum memory allocation */
-    private static final Long       LNG_MAX_ALLOC = (long) (INT_BUFFER_SIZE * INT_MAX_FRAME_SIZE);
+//    private static final Long       LNG_MAX_ALLOC = (long) (INT_BUFFER_SIZE * INT_MAX_FRAME_SIZE);
+    private static final Long       LNG_MAX_ALLOC = CFG_DEFAULT.stream.buffer.allocation;
     
     
     /** Allow back pressure to client from queue buffer */
@@ -241,7 +242,7 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
      * @see #BOL_BUFFER_BACKPRESSURE
      */
     public IngestionDataBuffer() {
-        // TODO Auto-generated constructor stub
+        this(LNG_MAX_ALLOC);
     }
     
     /**

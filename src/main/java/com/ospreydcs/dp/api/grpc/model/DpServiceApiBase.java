@@ -65,7 +65,7 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * <h2>WARNING:</h2>
  * All derived Data Platform service API interfaces should be shut down when no longer needed using
- * <code>{@link #shutdownSoft()} or <code>{@link #shutdownNow()}</code>.  Otherwise gRPC resources are not
+ * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  Otherwise gRPC resources are not
  * released and performance degrades.
  * </p> 
  *
@@ -129,7 +129,7 @@ public abstract class DpServiceApiBase<
      * @see @see com.ospreydcs.dp.api.grpc.model.IConnection#shutdownSoft()
      */
     @Override
-    public boolean shutdownSoft() throws InterruptedException {
+    public boolean shutdown() throws InterruptedException {
         return this.grpcConn.shutdownSoft();
     }
 

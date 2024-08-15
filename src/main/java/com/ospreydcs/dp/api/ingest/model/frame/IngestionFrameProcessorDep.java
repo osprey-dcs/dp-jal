@@ -276,10 +276,10 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
     
     
     /** Perform ingestion frame decomposition (i.e., "binning") */
-    private static final Boolean    BOL_BINNING_ACTIVE = CFG_DEFAULT.stream.binning.active;
+    private static final Boolean    BOL_BINNING_ACTIVE = CFG_DEFAULT.decompose.active;
     
     /** Maximum size limit (in bytes) of decomposed ingestion frame */
-    private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.stream.binning.maxSize;
+    private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.decompose.maxSize;
     
     
 //    /** Use ingestion frame buffering from client to gRPC stream */
@@ -1047,7 +1047,7 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
      * @throws IllegalStateException    operation invoked while supplier inactive
      * @throws InterruptedException     operation interrupted while waiting for queue ready
      */
-    public void awaitBackPressure() throws IllegalStateException, InterruptedException {
+    public void awaitQueueReady() throws IllegalStateException, InterruptedException {
         
         // Check if active - if deactivated will wait forever.
         if (!this.bolActive)

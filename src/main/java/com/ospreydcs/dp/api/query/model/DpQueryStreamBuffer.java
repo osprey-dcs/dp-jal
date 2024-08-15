@@ -611,7 +611,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * @throws IllegalStateException    gRPC stream has not been started (see {@link #start()})
      * @throws InterruptedException     an interruption occurred while waiting for response
      *  
-     * @see #shutdownSoft()
+     * @see #shutdown()
      * @see #shutdownNow()
      */
     public void awaitStreamCompleted() throws IllegalStateException, InterruptedException {
@@ -655,7 +655,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * @throws TimeoutException         timeout for the response expired
      * @throws InterruptedException     an interruption occurred while waiting for response
      *  
-     * @see #shutdownSoft()
+     * @see #shutdown()
      * @see #shutdownNow()
      */
     public void awaitStreamCompleted(long lngTimeout, TimeUnit tuTimeout) throws IllegalStateException, TimeoutException, InterruptedException {
