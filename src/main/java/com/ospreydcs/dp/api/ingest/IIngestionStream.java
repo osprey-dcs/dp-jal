@@ -3,15 +3,91 @@ package com.ospreydcs.dp.api.ingest;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.model.ClientRequestId;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 
+/**
+ * <p>
+ * <h1>Interface containing required operations for data ingestion by gRPC data streaming.</h1>
+ * </p> 
+ * <p>
+ * <h2>Connection Factory</h2>
+ * Under normal circumstances implementations of <code>IIngestionStream</code> are obtained from a connection factory.
+ * As such the internal configuration of the implementation is determined by the default configuration specified in
+ * the API library configuration (i.e., <code>DpApiConfig</code>).
+ * </p>
+ * <p>
+ * <h2>Operation</h2>
+ * <ol>
+ * <li>
+ * Open Stream - The <code>{@link #openStream(ProviderRegistrar)}</code> operation activates the 3 primary components and 
+ * creates and activates the auxiliary transfer component.  The interface is ready for ingestion.  
+ * </li>  
+ * <br/>
+ * <li>
+ * Data Ingestion - After the <code>{@link #openStream(ProviderRegistrar)}</code> operation the interface will now accept 
+ * ingestion data through the <code>{@link #ingest(IngestionFrame)}</code> or <code>{@link #ingest(List)}</code> operations.
+ * If enabled, ingestion throttling, or "back pressure", from a back-logged Ingestion Service will be felt at these methods 
+ * (i.e., they will block).
+ *   <ul>
+ *   <li>Optionally, clients can use the <code>{@link #awaitQueueReady()}</code> method to block on the back pressure
+ *       condition if ingestion throttling is disabled.</li>
+ *   <li>Clients can also use the <code>{@link #awaitQueueEmpty()}</code> method to block until the staging buffer is
+ *       completely empty.</li>
+ *   </ul>
+ * The ingestion throttling feature is available in the <code>DpApiConfig</code> library 
+ * configuration and with the <code>{@link #enableBackPressure()}</code> and <code>{@link #disableBackPressure()}</code>
+ * configuration methods specific to this class.
+ * </li> 
+ * <br/>
+ * <li>
+ * Close Stream - Under normal operation the data stream should be closed when no longer supplying ingestion data.
+ *   <ul>  
+ *   <li>The <code>{@link #closeStream()}</code> operation performs an orderly
+ *        shut down of all components allowing all processing to continue until completion.</li>
+ *   <li>The <code>{@link #closeStreamNow()}</code> shuts down all components immediately terminating all processing and 
+ *       discarding any intermediate resources.</li>
+ *   </ul>
+ * Once a stream is closed it will refuse to accept additional ingestion data.
+ * </li>
+ * <br/>
+ * <li>
+ * Open/Ingest/Close Cycling - After a stream closure it can again be reopened (perhaps with different configuration and provider).
+ * The above cycle can be repeated as often as desired so long as a shutdown operation has not been issued.
+ * </li>
+ * <br/>
+ * <li>
+ * Interface Shutdown - Before discarding the interface it should be shut down.  That is, once all data ingestion is complete
+ * and the stream closed a <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code> operation should be
+ * invoked.  These operations terminate the connection between the client and the Ingestion Service and release all
+ * gRPC resources.
+ *   <ul>
+ *   <li><code>{@link #shutdown()}</code> - Performs an orderly shutdown of the gRPC connection allowing all processes
+ *       to fully complete.  Additionally, if the stream has not been first closed it first issues a 
+ *       <code>{@link #closeStream()}</code> operation to close the stream.
+ *       This is a blocking operation.</li>
+ *   <li><code>{@link #shutdownNow()}</code> - Performs a hard shutdown of all operations, interface and gRPC.  All
+ *       processes are immediately terminated and intermediate resources discarded.  If the stream has not been closed
+ *       a <code>{@link #closeStreamNow()}</code> operation is first invoked.
+ *       This is a non-blocking operation.</li>
+ *   </ul>
+ * Once shut down the interface can no longer be used and must be discarded.  Shut down operations may return before
+ * all gRPC resources are release.  If needed, use <code>{@link #awaitTermination()}</code> or 
+ * <code>{@link #awaitTermination(long, TimeUnit)}</code> to block until gRPC is fully terminated.
+ * </li>
+ * </ol>
+ * </p>
+ *  
+ * @author Christopher K. Allen
+ * @since Aug 16, 2024
+ *
+ */
 public interface IIngestionStream extends IConnection {
 
     /**

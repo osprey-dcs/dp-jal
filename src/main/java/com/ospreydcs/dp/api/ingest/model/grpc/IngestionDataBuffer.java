@@ -300,8 +300,8 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
      * @param szQueueCapacity  maximum memory allocation capacity of message buffer before back-pressure blocking
      */
     synchronized
-    public void setQueueCapcity(long szQueCapacity) {
-        this.szQueueCapacity = szQueCapacity;
+    public void setQueueCapcity(long szQueueCapacity) {
+        this.szQueueCapacity = szQueueCapacity;
     }
     
     /**

@@ -29,7 +29,6 @@ package com.ospreydcs.dp.api.ingest.impl;
 
 import java.util.List;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
@@ -44,8 +43,6 @@ import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.ingest.model.IResourceConsumer;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannel;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer;
@@ -64,20 +61,150 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**
  * <p>
- * Implementation of the <code>IIngestionStream</code> interface.
+ * <h1>Implementation of the <code>IIngestionStream</code> interface</h1>.
  * </p>
+ * <p>
+ * So far the most recent and preferred implementation of the <code>{@link IIngestionStream}</code> interface.
+ * </p>
+ * <p>
+ * <h2>Operation</h2>
+ * <ol>
+ * <li>
+ * Open Stream - The <code>{@link #openStream(ProviderRegistrar)}</code> operation activates the 3 primary components and 
+ * creates and activates the auxiliary transfer component.  The interface is ready for ingestion.  
+ * </li>  
+ * <br/>
+ * <li>
+ * Data Ingestion - After the <code>{@link #openStream(ProviderRegistrar)}</code> operation the interface will now accept 
+ * ingestion data through the <code>{@link #ingest(IngestionFrame)}</code> or <code>{@link #ingest(List)}</code> operations.
+ * If enabled, ingestion throttling, or "back pressure", from a back-logged Ingestion Service will be felt at these methods 
+ * (i.e., they will block).
+ *   <ul>
+ *   <li>Optionally, clients can use the <code>{@link #awaitQueueReady()}</code> method to block on the back pressure
+ *       condition if ingestion throttling is disabled.</li>
+ *   <li>Clients can also use the <code>{@link #awaitQueueEmpty()}</code> method to block until the staging buffer is
+ *       completely empty.</li>
+ *   </ul>
+ * The ingestion throttling feature is available in the <code>DpApiConfig</code> library 
+ * configuration and with the <code>{@link #enableBackPressure()}</code> and <code>{@link #disableBackPressure()}</code>
+ * configuration methods specific to this class.
+ * </li> 
+ * <br/>
+ * <li>
+ * Close Stream - Under normal operation the data stream should be closed when no longer supplying ingestion data.
+ *   <ul>  
+ *   <li>The <code>{@link #closeStream()}</code> operation performs an orderly
+ *        shut down of all components allowing all processing to continue until completion.</li>
+ *   <li>The <code>{@link #closeStreamNow()}</code> shuts down all components immediately terminating all processing and 
+ *       discarding any intermediate resources.</li>
+ *   </ul>
+ * Once a stream is closed it will refuse to accept additional ingestion data.
+ * </li>
+ * <br/>
+ * <li>
+ * Open/Ingest/Close Cycling - After a stream closure it can again be reopened (perhaps with different configuration and provider).
+ * The above cycle can be repeated as often as desired so long as a shutdown operation has not been issued.
+ * </li>
+ * <br/>
+ * <li>
+ * Interface Shutdown - Before discarding the interface it should be shut down.  That is, once all data ingestion is complete
+ * and the stream closed a <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code> operation should be
+ * invoked.  These operations terminate the connection between the client and the Ingestion Service releasing all
+ * gRPC resources.
+ *   <ul>
+ *   <li><code>{@link #shutdown()}</code> - Performs an orderly shutdown of the gRPC connection allowing all processes
+ *       to fully complete.  Additionally, if the stream has not been first closed it first issues a 
+ *       <code>{@link #closeStream()}</code> operation to close the stream.
+ *       This is a blocking operation.</li>
+ *   <li><code>{@link #shutdownNow()}</code> - Performs a hard shutdown of all operations, interface and gRPC.  All
+ *       processes are immediately terminated and intermediate resources discarded.  If the stream has not been closed
+ *       a <code>{@link #closeStreamNow()}</code> operation is first invoked.
+ *       This is a non-blocking operation.</li>
+ *   </ul>
+ * Once shut down the interface can no longer be used and must be discarded.  Shut down operations may return before
+ * all gRPC resources are release.  If needed, use <code>{@link #awaitTermination()}</code> or 
+ * <code>{@link #awaitTermination(long, TimeUnit)}</code> to block until gRPC is fully terminated. 
+ * </li>
+ * </ol>
+ * </p> 
+ * <p>
+ * <h2>Design</h2>
+ * The implementation is based upon 3 primary components an 1 auxiliary component:
+ * <ol>
+ * <li><code>IngestionFrameProcessor</code> - Front-end processing of <code>IngestionFrame</code> instances.
+ *   <ul>
+ *   <li>Automatic decomposition <code>IngestionFrame</code> instances to accommodate maximum gRPC message size.</li>
+ *   <li>Conversions of decomposed frames into equivalent <code>IngestDataRequest</code> gRPC messages for transmission.</li>
+ *   </ul>
+ * </li>
+ * 
+ * <li><code>IngestionDataBuffer</code> - Staging buffer used for queuing <code>IngestDataRequest</code> messages before transmission.
+ *   <ul>
+ *   <li>Note <code>IngestionDataBuffer</code> and <code>IngestionMessageBuffer</code> types are essentially interchangeable.
+ *     <ul>
+ *     <li><code>IngestionDataBuffer</code> has allocation-limited buffer option (i.e., memory allocation limited).</li>
+ *     <li><code>IngestionMessageBuffer</code> has element-limited buffer option (i.e., message count limited).</li>
+ *     <li>Both can also be used as infinite-capacity buffers.</li>
+ *     </ul>
+ *   </li>   
+ *   <li>Staging buffer is used to provide optional ingestion throttling, or "back pressure", from Ingestion Service.
+ *     <ul>
+ *     <li>Ingestion throttling is seen externally as a finite-capacity buffer controlling ingestion.</li> 
+ *     <li>That is, seen as though Ingestion Service is back-logged forcing buffer to capacity.</li>
+ *     <li>The actual mechanism is more complex and can be enabled and disabled at will.</li>
+ *     <li>The current use of <code>IngestionDataBuffer</code> creates allocation-based ingestion throttling when enabled.</li>
+ *     </ul>
+ *   </li>
+ *   </ul>
+ * </li>
+ * 
+ * <li><code>IngestionChannel</code> - Back-end transmission of staged <code>IngestDataRquestion</code> messages.
+ *   <ul>
+ *   <li>Maintains (multiple, concurrent) gRPC data stream(s) to DP Ingestion Service as independent thread tasks.</li>
+ *   <li>Continuously transmits <code>IngestDataRequest</code> messages from staging buffer until buffer indicates exhaustion.</li>
+ *   <li>Collects statics concerning transmission and Ingestion Service responses.
+ *   </ul>
+ * </li>
+ * </ol>
+ * In addition there is an auxiliary component operating as an independent background thread task that is launched upon 
+ * the stream open operation.
+ * <ol>
+ * <li>
+ * Message Transfer Task - Transfers <code>IngestDataRequest</code> from <code>IngestionFrameProcessor</code> to staging buffer.
+ *   <ul>
+ *   <li>Independent thread created during <code>{@link #openStream(ProviderRegistrar)}</code> operation.</li>
+ *   <li>Continuously polls <code>IngestionFrameProcessor</code> for messages then transfers them to staging buffer.</li> 
+ *   <li>Terminates normally after processor shuts down during a <code>{@link #closeStream()}</code> operation.</li>
+ *   </ul>
+ * </li>
+ * </ol>
+ * </p>
+ * <p>
+ * <h2>Configuration</h2>
+ * The class provides multiple methods for client-configuration of the <code>{@link IIngestionStream}</code> interface.
+ * The class <code>DpIngestionStreamImpl</code> is constructed with default configuration taken from the client library 
+ * configuration (i.e., <code>{@link DpApiConfig}</code>).  These methods are available to change the default 
+ * configuration, primarily for unit testing.
+ * </p>
+ * <p>
+ * Under normal operation instances of <code>DpIngestionStreamImpl</code> are obtained from a connection factory which
+ * only exposes the <code>IIngestionStream</code> interface.  Thus, the instances obtained are in the default configuration.
+ * For access to the configuration methods when instances are obtained from the connection factory clients must cast the 
+ * obtained interface to the <code>DpIngestionStreamImpl</code> type.  Typically this practice is discouraged and
+ * should be performed primarily for testing.
+ * </p>
+ *  
  *
  * @author Christopher K. Allen
  * @since Aug 14, 2024
  *
  */
-public class DpIngestionStreamImpl extends
-DpServiceApiBase<DpIngestionStreamImpl, 
-DpIngestionConnection, 
-DpIngestionServiceGrpc, 
-DpIngestionServiceBlockingStub, 
-DpIngestionServiceFutureStub, 
-DpIngestionServiceStub> implements IIngestionStream {
+public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImpl, 
+                                                            DpIngestionConnection, 
+                                                            DpIngestionServiceGrpc, 
+                                                            DpIngestionServiceBlockingStub, 
+                                                            DpIngestionServiceFutureStub, 
+                                                            DpIngestionServiceStub> implements IIngestionStream {
 
 
     //
@@ -88,62 +215,62 @@ DpIngestionServiceStub> implements IIngestionStream {
     private static final DpIngestionConfig  CFG_DEFAULT = DpApiConfig.getInstance().ingest;
 
 
-    //
-    // Class Types
-    //
-    
-    private static class DataTransferThread implements Runnable {
-
-        //
-        // Class Constants
-        //
-        
-        private static final long       LNG_TIMEOUT = 15;
-        
-        private static final TimeUnit   TU_TIMEOUT = TimeUnit.MILLISECONDS;
-        
-        //
-        // Transfer Targets
-        //
-        
-        private final IMessageSupplier<IngestDataRequest>   dataSource;
-        
-        private final IResourceConsumer<IngestDataRequest>  dataSink;
-
-        
-        //
-        // State Variables
-        //
-        
-        private boolean bolComplete = false;
-        
-        
-        private DataTransferThread(IMessageSupplier<IngestDataRequest> dataSource, IResourceConsumer<IngestDataRequest> dataSink) {
-            this.dataSource = dataSource;
-            this.dataSink = dataSink;
-        }
-        
-        @Override
-        public void run() {
-            
-            while (this.dataSource.isSupplying()) {
-                try {
-                    IngestDataRequest   msgRqst = this.dataSource.poll(LNG_TIMEOUT, TU_TIMEOUT);
-                    
-                    this.dataSink.offer(msgRqst);
-                    
-                } catch (IllegalStateException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-            
-        }
-        
-    }
+//    //
+//    // Class Types
+//    //
+//    
+//    private static class DataTransferThread implements Runnable {
+//
+//        //
+//        // Class Constants
+//        //
+//        
+//        private static final long       LNG_TIMEOUT = 15;
+//        
+//        private static final TimeUnit   TU_TIMEOUT = TimeUnit.MILLISECONDS;
+//        
+//        //
+//        // Transfer Targets
+//        //
+//        
+//        private final IMessageSupplier<IngestDataRequest>   dataSource;
+//        
+//        private final IResourceConsumer<IngestDataRequest>  dataSink;
+//
+//        
+//        //
+//        // State Variables
+//        //
+//        
+//        private boolean bolComplete = false;
+//        
+//        
+//        private DataTransferThread(IMessageSupplier<IngestDataRequest> dataSource, IResourceConsumer<IngestDataRequest> dataSink) {
+//            this.dataSource = dataSource;
+//            this.dataSink = dataSink;
+//        }
+//        
+//        @Override
+//        public void run() {
+//            
+//            while (this.dataSource.isSupplying()) {
+//                try {
+//                    IngestDataRequest   msgRqst = this.dataSource.poll(LNG_TIMEOUT, TU_TIMEOUT);
+//                    
+//                    this.dataSink.offer(msgRqst);
+//                    
+//                } catch (IllegalStateException e) {
+//                    // TODO Auto-generated catch block
+//                    e.printStackTrace();
+//                } catch (InterruptedException e) {
+//                    // TODO Auto-generated catch block
+//                    e.printStackTrace();
+//                }
+//            }
+//            
+//        }
+//        
+//    }
     
     
     //
@@ -164,29 +291,29 @@ DpIngestionServiceStub> implements IIngestionStream {
     private static final TimeUnit   TU_TIMEOUT_WAIT = CFG_DEFAULT.timeout.unit;
     
     
-    /** Staging buffer polling timeout limit (must poll to avoid thread lock) */
+    /** Staging buffer polling timeout limit used by transfer thread task (must poll to avoid thread lock) */
     private static final long       LNG_TIMEOUT_POLL = 15;
     
-    /** Staging buffer polling timeout limit (must poll to avoid thread lock) */
+    /** Staging buffer polling timeout limit used by transfer thread task (must poll to avoid thread lock) */
     private static final TimeUnit   TU_TIMEOUT_POLL = TimeUnit.MILLISECONDS;
 
 
-    //
-    // Class Constants - Frame Decomposition Default Values
-    //
-
-    /** Are general concurrency active - used for ingestion frame decomposition */
-    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
-    
-    /** Maximum number of concurrent processing threads */
-    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.threadCount;
-    
-    
-    /** Perform ingestion frame decomposition (i.e., "binning") */
-    private static final Boolean    BOL_DECOMP_ACTIVE = CFG_DEFAULT.decompose.active;
-    
-    /** Maximum size limit (in bytes) of decomposed ingestion frame */
-    private static final Integer    LNG_DECOMP_MAX_ALLOC = CFG_DEFAULT.decompose.maxSize;
+//    //
+//    // Class Constants - Frame Decomposition Default Values
+//    //
+//
+//    /** Are general concurrency active - used for ingestion frame decomposition */
+//    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
+//    
+//    /** Maximum number of concurrent processing threads */
+//    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.threadCount;
+//    
+//    
+//    /** Perform ingestion frame decomposition (i.e., "binning") */
+//    private static final Boolean    BOL_DECOMP_ACTIVE = CFG_DEFAULT.decompose.active;
+//    
+//    /** Maximum size limit (in bytes) of decomposed ingestion frame */
+//    private static final Integer    LNG_DECOMP_MAX_ALLOC = CFG_DEFAULT.decompose.maxSize;
     
     
     //
@@ -196,12 +323,12 @@ DpIngestionServiceStub> implements IIngestionStream {
     /** Allow ingestion throttling from staging buffer to client */
     private static final Boolean    BOL_STAGING_BACKPRESSURE = CFG_DEFAULT.stream.buffer.backPressure;
 
-    /** Default staging capacity - maximum number of <code>IngestDataRequest</code> messages */
-    private static final int        INT_STAGING_MAX_MSGS = CFG_DEFAULT.stream.buffer.size;
-
-    /** Default staging capacity - maximum memory allocation */
-    private static final Long       LNG_STAGING_MAX_ALLOC = CFG_DEFAULT.stream.buffer.allocation;
-    
+//    /** Default staging capacity - maximum number of <code>IngestDataRequest</code> messages */
+//    private static final int        INT_STAGING_MAX_MSGS = CFG_DEFAULT.stream.buffer.size;
+//
+//    /** Default staging capacity - maximum memory allocation */
+//    private static final Long       LNG_STAGING_MAX_ALLOC = CFG_DEFAULT.stream.buffer.allocation;
+//    
     
     //
     // Class Resources
@@ -225,8 +352,8 @@ DpIngestionServiceStub> implements IIngestionStream {
     private final IngestionChannel          chanIngest; // = IngestionChannel.from(this.buffStaging, super.grpcConn);
     
     
-    /** The processor to staging buffer task (independent thread) - created when stream opened */
-    private Thread      thdXferTask = null;
+    /** The processor-to-staging-buffer message transfer task (independent thread) - created when stream opened */
+    private Thread      thdMsgXferTask = null;
     
     
     //
@@ -268,13 +395,13 @@ DpIngestionServiceStub> implements IIngestionStream {
     private boolean         bolStreamError = false;
     
     
-    /** The number of ingest data messages transmitted */
-    private int             cntMsgsXmit = 0;
+    /** Transfer thread: The number of ingest data messages staged for transmission */
+    private int             cntMsgsStaged = 0;
     
-    /** The total data transmitted (in bytes) */
-    private long            szDataXmit = 0;
+    /** Transfer thread: The total data staged for transmission (in bytes) */
+    private long            szDataStaged = 0;
     
-    /** Status result of staging buffer transfer operations */
+    /** Transfer thread: Status result of staging buffer transfer operations */
     private ResultStatus    recXferStatus = null;
     
     
@@ -304,7 +431,7 @@ DpIngestionServiceStub> implements IIngestionStream {
      * 
      * @see DpIngestionConnectionFactory
      */
-    protected DpIngestionStreamImpl(DpIngestionConnection connIngest) {
+    DpIngestionStreamImpl(DpIngestionConnection connIngest) {
         super(connIngest);
         
         this.prcrFrames = IngestionFrameProcessor.create();
@@ -889,9 +1016,9 @@ DpIngestionServiceStub> implements IIngestionStream {
         this.chanIngest.activate();
 
         // Create the processor to staging buffer task and start
-        Runnable    tskTranfer = this.createTransferTask();
-        this.thdXferTask = new Thread(tskTranfer);
-        this.thdXferTask.start();
+        Runnable    tskTranfer = this.createMessageTransferTask();
+        this.thdMsgXferTask = new Thread(tskTranfer);
+        this.thdMsgXferTask.start();
         
         // Set the open stream flag - Stream is ready
         this.bolStreamOpen = true;
@@ -974,7 +1101,7 @@ DpIngestionServiceStub> implements IIngestionStream {
         this.prcrFrames.shutdown();     // prevents any further ingestion, blocks until complete
         
         // Wait for all data to be transferred to staging buffer
-        this.thdXferTask.join();        // throws interrupted exception
+        this.thdMsgXferTask.join();        // throws interrupted exception
         
         // Check for error in transfers
         if (this.recXferStatus.isFailure()) {
@@ -1019,7 +1146,7 @@ DpIngestionServiceStub> implements IIngestionStream {
         
         // Shut down all internal processes immediately
         this.prcrFrames.shutdownNow();
-        this.thdXferTask.interrupt();
+        this.thdMsgXferTask.interrupt();
         this.buffStaging.shutdownNow();
         this.chanIngest.shutdownNow();
         
@@ -1144,7 +1271,7 @@ DpIngestionServiceStub> implements IIngestionStream {
     
     /**
      * <p>
-     * Creates a new frame processor to staging buffer ingest request message transfer task.
+     * Creates a new frame-processor-to-staging-buffer ingest request message transfer task.
      * </p>
      * <p>
      * The returned task instance continuously transfers <code>IngestDataRequest</code> messages from the
@@ -1171,7 +1298,7 @@ DpIngestionServiceStub> implements IIngestionStream {
      * @see #TU_TIMEOUT_POLL
      */
     @SuppressWarnings("unused")
-    private Runnable    createTransferTask() {
+    private Runnable    createMessageTransferTask() {
         
         Runnable    task = () -> {
             
@@ -1206,8 +1333,8 @@ DpIngestionServiceStub> implements IIngestionStream {
                 try {
                     
                     this.buffStaging.offer(msgRqst);
-                    this.cntMsgsXmit++;
-                    this.szDataXmit += msgRqst.getSerializedSize();
+                    this.cntMsgsStaged++;
+                    this.szDataStaged += msgRqst.getSerializedSize();
                     
                 } catch (IllegalStateException e) {
                     String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() +
