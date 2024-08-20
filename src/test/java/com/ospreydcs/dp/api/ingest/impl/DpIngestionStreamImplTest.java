@@ -31,6 +31,7 @@ import static org.junit.Assert.*;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
@@ -151,7 +152,7 @@ public class DpIngestionStreamImplTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#DpIngestionStreamImpl(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
      */
-//    @Test
+    @Test
     public final void testDpIngestionStreamImpl() {
 
         // Open the connection to the Ingestion Service
@@ -229,7 +230,7 @@ public class DpIngestionStreamImplTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#shutdownNow()}.
      */
-//    @Test
+    @Test
     public final void testShutdownNow() {
 
         // Open the connection to the Ingestion Service
@@ -721,8 +722,11 @@ public class DpIngestionStreamImplTest {
         // Get the transmission results
         ProviderUID             recPrvrUid = istream.getProviderUid();
         List<ClientRequestUID>  lstRqstUids = istream.getClientRequestIds();
+        int                     cntXmissions = istream.getTransmissionCount();
         List<IngestionResponse> lstRsps = istream.getIngestionResponses();
-        List<IngestionResponse> lstExcps = istream.getIngestionExceptions();
+        List<IngestionResponse> lstXmitExcps = istream.getIngestionExceptions();
+        Collection<Exception>   setFrmDecompExcp = istream.getFailedFrameDecompositions();
+        Collection<Exception>   setFrmCnvrtExcp = istream.getFailedFrameConversions();
         
         // Shut down the interface
         try {
@@ -755,10 +759,13 @@ public class DpIngestionStreamImplTest {
         System.out.println("  Shutdown time                   : " + Duration.between(insClosed, insShutdown));
         System.out.println("  Termination time                : " + Duration.between(insShutdown, insTerminated));
         System.out.println("  Total API active time           : " + Duration.between(insStart, insTerminated));
-        System.out.println("  Messages transmitted            : " + lstRsps.size());
+        System.out.println("  Messages transmitted            : " + cntXmissions);
+        System.out.println("  Responses received              : " + lstRsps.size());
         System.out.println("  Data Provider UID               : " + recPrvrUid);
         System.out.println("  Client request UIDs             : " + lstRqstUids);
-        System.out.println("  Exceptional responses           : " + lstExcps);
+        System.out.println("  Exceptional responses           : " + lstXmitExcps);
+        System.out.println("  Failed frame decompsitions      : " + setFrmDecompExcp);
+        System.out.println("  Failed frame conversions        : " + setFrmCnvrtExcp);
         System.out.println("  All Ingestion Service responses : " + lstRsps);
     }
 
@@ -858,7 +865,8 @@ public class DpIngestionStreamImplTest {
             List<IngestionResponse> lstRsps = istream.closeStream();
             Instant     insClosed = Instant.now();
             
-            System.out.println("  Messages transmitted       : " + lstRsps.size());
+            System.out.println("  Messages transmitted       : " + istream.getTransmissionCount());
+            System.out.println("  Responses received         : " + lstRsps.size());
             System.out.println("  Total time stream open     : " + Duration.between(insStart, insClosed));
 
             Assert.assertFalse(istream.isStreamOpen());
@@ -987,7 +995,8 @@ public class DpIngestionStreamImplTest {
             List<IngestionResponse> lstRsps = istream.closeStream();
             Instant     insClosed = Instant.now();
             
-            System.out.println("  Messages transmitted       : " + lstRsps.size());
+            System.out.println("  Messages transmitted       : " + istream.getTransmissionCount());
+            System.out.println("  Responses received         : " + lstRsps.size());
             System.out.println("  Total time stream open     : " + Duration.between(insStart, insClosed));
 
             Assert.assertFalse(istream.isStreamOpen());
@@ -1089,7 +1098,8 @@ public class DpIngestionStreamImplTest {
             System.out.println("  Payload allocation (bytes) : " + szPayload);
             System.out.println("  Staging capacity (bytes)   : " + szCapacity);
             System.out.println("  Close stream wait time     : " + durClose);
-            System.out.println("  Messages transmitted       : " + lstRsps.size());
+            System.out.println("  Messages transmitted       : " + istream.getTransmissionCount());
+            System.out.println("  Responses received         : " + lstRsps.size());
             
             Assert.assertFalse(istream.isStreamOpen());
 //            Assert.assertEquals(1, lstRsps.size());
@@ -1142,7 +1152,7 @@ public class DpIngestionStreamImplTest {
         final long  szPayload = lstFrms1.stream().mapToLong(IngestionFrame::allocationSizeFrame).sum();
         final long  szCapacity = szPayload/3;
         final int   cntThreads = 3;
-        final int   intWait = 300;
+        final int   intWait = 500;
         
         
         // Open the connection to the Ingestion Service
@@ -1184,7 +1194,7 @@ public class DpIngestionStreamImplTest {
             
         }
         
-        // Pause
+        // Pause - hoping for a partial transmission
         try {
             Thread.sleep(intWait);
             
@@ -1195,6 +1205,8 @@ public class DpIngestionStreamImplTest {
         }
 
         // Close the interface stream
+        LOGGER.debug("Issuing a hard close operation after pausing {} milliseconds: queue size = {}, messages transmitted = {}", intWait, istream.getQueueSize(), istream.getTransmissionCount());
+        
         Instant insStart = Instant.now();
         boolean bolClosed = istream.closeStreamNow();
         Instant insClosed = Instant.now();
@@ -1204,14 +1216,19 @@ public class DpIngestionStreamImplTest {
         List<IngestionResponse> lstRsps = istream.getIngestionResponses();
         List<IngestionResponse> lstExcps = istream.getIngestionExceptions();
         List<ClientRequestUID>  lstRqstUids = istream.getClientRequestIds();
+        Collection<Exception>   setFrmDecmpExcp = istream.getFailedFrameDecompositions();
+        Collection<Exception>   setFrmCnvrtExcp = istream.getFailedFrameConversions();
 
         System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + "Results");
         System.out.println("  Payload allocation (bytes) : " + szPayload);
         System.out.println("  Staging capacity (bytes)   : " + szCapacity);
         System.out.println("  Hard Close stream time     : " + durClose);
-        System.out.println("  Messages transmitted       : " + lstRsps.size());
+        System.out.println("  Messages transmitted       : " + istream.getTransmissionCount());
+        System.out.println("  Responses received         : " + lstRsps.size());
         System.out.println("  Transmission exceptions    : " + lstExcps.size());
         System.out.println("  Client Request UIDs        : " + lstRqstUids.size());
+        System.out.println("  Frame decompsition errors  : " + setFrmDecmpExcp);
+        System.out.println("  Frame conversion errors    : " + setFrmCnvrtExcp);
 
         Assert.assertFalse(istream.isStreamOpen());
         Assert.assertTrue(bolClosed);

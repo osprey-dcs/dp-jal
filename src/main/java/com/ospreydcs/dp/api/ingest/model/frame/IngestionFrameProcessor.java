@@ -459,8 +459,8 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     private Collection<Future<Boolean>>   setConvertFutures; // = new LinkedList<>();
     
     
-    /** Pending processing operation counter - managed by processing threads */
-    private final AtomicInteger     cntPendingTasks = new AtomicInteger(0);
+    /** Pending resource counter - number of processing resource owned by by processing threads (not appearing in any queue) */
+    private final AtomicInteger         cntRrcsPending = new AtomicInteger(0);
     
     
 //    /** The message queue buffer back pressure lock */
@@ -797,29 +797,44 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     
     /**
      * <p>
-     * Determine whether or not there are pending tasks that may have resources not yet available
-     * at time of invocation.
+     * Determine whether or not there are pending tasks in the processing pipeline 
+     * (i.e., that may have resources not yet available at time of invocation).
      * </p>
      * <p>
      * Allows clients to check if there are pending processing tasks that have not offered
-     * their results to one of the intermediate queue buffers, or the final, outgoing queue buffer.  
+     * their results to the final, outgoing queue buffer.  
      * For example, if the method </code>{@link #getRequestQueueSize()}</code> reports zero but there 
      * are tasks with pending results, the request queue will eventually increase.
+     * </p>
+     * <p>
+     * <h2>Intermediate Processing Queues</h2>
+     * There are multiple processing queues for intermediate results.  As <code>IngestionFrame</code> instances
+     * are processed the intermediate results are moved between these queue by the processing threads.
+     * This method always returns <code>true</code> if any intermediate queue is non-empty.
      * </p>
      * <p>
      * <h2>Thread Tasks</h2>
      * <code>IngestionFrameProcessor</code> instances maintain pools of processing threads.
      * Thread tasks take ownership of resources offered by clients and, thus, these resource 
      * may not appear in any of their respective intermediate queue buffers until the thread task has 
-     * completed is processing.  This method allows clients to determine if there are
-     * currently client resources undergoing processing. 
+     * completed is processing.  This method always returns <code>true</code> if this condition exists 
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method may return <code>false</code> while the <code>{@link #isSupplying()}</code> method returns
+     * <code>true</code> (e.g., after a call to <code>{@link #shutdown()}</code> where no more ingestion is possible).  
+     * This signals that there are no resources in the processing pipeline but the
+     * outgoing message buffer is non-empty and still capable of supplying messages.
      * </p>
      *   
-     * @return  <code>true</code> if there are currently pending processing tasks, 
+     * @return  <code>true</code> if there are currently pending processing tasks in the processing pipeline, 
      *          <code>false</code> otherwise
      */
     public boolean hasPendingTasks() {
-        return this.cntPendingTasks.getAcquire() > 0;
+        boolean bolPending = !this.queFramesRaw.isEmpty() | !this.queFramesPrcd.isEmpty() | (this.cntRrcsPending.get() > 0);
+                
+        return bolPending;
+//        return this.cntPendingTasks.getAcquire() > 0;
     }
     
     /**
@@ -855,8 +870,8 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         
         // For multi-threaded processed we need to check everything
         return this.hasPendingTasks() 
-                || !this.queFramesRaw.isEmpty() 
-                || !this.queFramesPrcd.isEmpty() 
+//                || !this.queFramesRaw.isEmpty() 
+//                || !this.queFramesPrcd.isEmpty() 
                 || !this.queMsgRequests.isEmpty();
     }
     
@@ -1139,7 +1154,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
             this.xtorDecompTasks.shutdownNow();
             this.xtorConvertTasks.shutdownNow();
 
-            this.cntPendingTasks.set(0);
+            this.cntRrcsPending.set(0);
 
             this.setDecompFutures.forEach(future -> future.cancel(true));
             this.setConvertFutures.forEach(future -> future.cancel(true));
@@ -1297,8 +1312,8 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     public boolean isSupplying() {
         return this.bolActive 
                 || this.hasPendingTasks() 
-                || !this.queFramesRaw.isEmpty() 
-                || !this.queFramesPrcd.isEmpty() 
+//                || !this.queFramesRaw.isEmpty() 
+//                || !this.queFramesPrcd.isEmpty() 
                 || !this.queMsgRequests.isEmpty();
     }
 
@@ -1486,7 +1501,8 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 
             // While active - Continuously process frames from raw frame buffer
             // - remaining OR conditional(s) allow for soft shutdowns
-            while (this.bolActive || this.hasPendingTasks() || !this.queFramesRaw.isEmpty()) {
+            while (this.bolActive || this.hasPendingTasks()) {
+//            while (this.bolActive || this.hasPendingTasks() || !this.queFramesRaw.isEmpty()) {
 //            while (this.bolActive || !this.queFramesRaw.isEmpty()) {
                 
                 // TODO - Change this to take() and implement accordingly - thread interruption
@@ -1498,7 +1514,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                 if (frmRaw == null)
                     continue;
                 
-                this.cntPendingTasks.incrementAndGet();
+                this.cntRrcsPending.incrementAndGet();
                 
 //                // TODO - Remove 
 //                LOGGER.debug("Obtained frame {} from queFramesRaw with size = {}.", frmRaw.getFrameLabel(), this.queFramesRaw.size());
@@ -1510,7 +1526,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                 if (!this.bolDecompAuto) {
                     this.queFramesPrcd.offer(frmRaw);
                 
-                    this.cntPendingTasks.decrementAndGet();
+                    this.cntRrcsPending.decrementAndGet();
                     continue;
                 }
                 
@@ -1542,7 +1558,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 //
 //                        this.setFramesFailedDecomp.add(e2);
                         this.registerDecompException(frmRaw, e2);
-                        this.cntPendingTasks.decrementAndGet();
+                        this.cntRrcsPending.decrementAndGet();
                         continue;
                     }
                 }
@@ -1558,7 +1574,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 //                System.out.println("  binner thread #" +intThrdId + " decomposed raw frame into " + lstFrmsPrcd.size() + " binned frames.");
 //                System.out.println("    processed frame queue size = " + this.queFramesPrcd.size());
                 
-                this.cntPendingTasks.decrementAndGet();
+                this.cntRrcsPending.decrementAndGet();
             }
             
 //            // TODO - Remove
@@ -1598,7 +1614,8 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
             
             // While active - Continuously convert frames in processed frame buffer to gRPC messages 
             // - second OR conditionals allows for soft shutdowns
-            while (this.bolActive || this.hasPendingTasks() || !this.queFramesPrcd.isEmpty()) {
+            while (this.bolActive || this.hasPendingTasks()) {
+//            while (this.bolActive || this.hasPendingTasks() || !this.queFramesPrcd.isEmpty()) {
 //            while (this.bolActive || !this.queFramesPrcd.isEmpty()) {
                 
 //                this.cntPending.incrementAndGet();
@@ -1619,7 +1636,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                 if (frmPrcd == null)
                     continue;
                 
-                this.cntPendingTasks.incrementAndGet();
+                this.cntRrcsPending.incrementAndGet();
                 
 //                // TODO - Remove
 //                LOGGER.debug("Conversion thread #" +intThrdId + " activated for 1 message conversion.");
@@ -1638,14 +1655,14 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                     
                     // Acknowledge the conversion failure and continue to the next frame
                     this.registerConvertException(frmPrcd, e);
-                    this.cntPendingTasks.decrementAndGet();
+                    this.cntRrcsPending.decrementAndGet();
                     continue;
                 }
                 
 //                // TODO - Remove
 //                LOGGER.debug("  conversion thread #" +intThrdId + " queued 1 message - queue size = " + this.getRequestQueueSize());
                 
-                this.cntPendingTasks.decrementAndGet();
+                this.cntRrcsPending.decrementAndGet();
             }
             
 //            // TODO - Remove

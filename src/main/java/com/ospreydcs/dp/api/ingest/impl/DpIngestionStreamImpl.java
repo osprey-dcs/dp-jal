@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.ingest.impl;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.concurrent.CompletionException;
@@ -47,6 +48,7 @@ import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannel;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer;
+import com.ospreydcs.dp.api.ingest.model.grpc.IngestionStream;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
 import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
@@ -912,6 +914,51 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     
     /**
      * <p>
+     * Returns the number of <code>IngestDataRequest</code> messages transmitted to the 
+     * Ingestion Service so far.
+     * </p>
+     * <p>
+     * The returned value is the number of Protocol Buffers messages carrying ingestion
+     * data that have been transmitted to the Ingestion Service at the time of invocation.
+     * If called after invoking <code>{@link #shutdown()}</code> then the returned value
+     * is the total number of messages transmitted while active.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The value returned by this method is not necessary equal to the number of 
+     * <code>IngestionFrame</code> instances offered to upstream processing.  
+     * If ingestion frame decomposition
+     * is active large ingestion frame exceeding the size limit which be decomposed into
+     * smaller ingestion frames before being converted into <code>IngestDataRequest</code>
+     * messages.
+     * </li>
+     * <br/>
+     * <li>
+     * This value is available after a shutdown operation has been called.  At that time
+     * the returned value is the total number of <code>IngestDataRequest</code> messages
+     * transmitted to the Ingestion Service during that activation cycle.
+     * </li> 
+     * <br/>
+     * <li>
+     * If the <code>active()</code> method is called after a shutdown the returned value 
+     * resets.
+     * </li>
+     * </ul>
+     * </p>
+     *   
+     * @return  the number of <code>IngestDataRequest</code> messages transmitted so far
+     * 
+     * @throws IllegalStateException    processor was never activated
+     */
+    public int getTransmissionCount() throws IllegalStateException {
+
+        return this.chanIngest.getRequestCount();
+    }
+    
+    /**
+     * <p>
      * Returns an immutable list of "client request IDs" within all the data ingestion messages
      * sent to the Ingestion Service during the current open stream session.
      * </p>
@@ -1043,6 +1090,49 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
         return lstRsps;
     }
 
+    /**
+     * <p>
+     * Returns the collection of decomposition exceptions for ingestion frames that failed decomposition so far.
+     * </p>
+     * <p>
+     * A non-empty collection represents a failure in the processing stream.  Note that
+     * the processing continues but the given collection was not processed and the data
+     * was never available at the <code>IMessageSupplier</code> interface.
+     * </p>
+     * <p>
+     * Clients can invoke this method to check for errors post shutdown.  Alternatively,
+     * the method make be invoked during operation to check for recorded errors so far
+     * in the ingestion frame processing stream.
+     * </p>
+     * 
+     * @return  the collection of exceptions for frames which could not be decomposed
+     */
+    public final Collection<Exception> getFailedFrameDecompositions() {
+        return this.prcrFrames.getFailedDecompositions();
+    }
+    
+    /**
+     * <p>
+     * Returns the collection of frame-to-message exceptions for frames that failed frame-to-message conversion so far.
+     * </p>
+     * <p>
+     * A non-empty collection represents a failure in the processing stream.  Note that
+     * the processing continues but the given collection was not processed and the data
+     * was never available at the <code>IMessageSupplier</code> interface.
+     * </p>
+     * <p>
+     * Clients can invoke this method to check for errors post shutdown.  Alternatively,
+     * the method make be invoked during operation to check for recorded errors so far
+     * in the ingestion frame processing stream.
+     * </p>
+     * 
+     * @return  the collection of exceptions for frames which could not be converted to gRPC messages
+     */
+    public final Collection<Exception> getFailedFrameConversions() {
+        return this.prcrFrames.getFailedConversions();
+    }
+    
+    
     
     //
     // IIngestionStream Interface
