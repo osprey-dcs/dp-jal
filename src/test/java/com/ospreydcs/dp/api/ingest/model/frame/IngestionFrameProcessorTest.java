@@ -616,7 +616,7 @@ public class IngestionFrameProcessorTest {
                     cntMsgs++;
                 
                 // Check the request queue size
-                if (processor.getRequestQueueSize() == 0)
+                if (processor.getRequestQueueSize() == 0 && (cntMsgs < cntFrames))
                     Assert.assertTrue(processor.hasPendingTasks());
                 
             } while (cntMsgs < cntFrames);

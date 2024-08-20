@@ -343,7 +343,7 @@ public final class ProviderRegistrationService {
         } catch (io.grpc.StatusRuntimeException e) {
 
             if (BOL_LOGGING)
-                LOGGER.warn("Ingestion Service provider registration appears unimplemented, mocking registration. io.grpc.StatusRuntimeException = {}" + e.getMessage());
+                LOGGER.warn("Ingestion Service provider registration appears unimplemented, mocking registration: io.grpc.StatusRuntimeException = {}", e.getMessage());
 
             ProviderRegistrationService.bolRegistrationImplemented = false;
             
@@ -351,7 +351,7 @@ public final class ProviderRegistrationService {
         } catch (MissingResourceException e) {
             
             if (BOL_LOGGING)
-                LOGGER.warn("Ingestion Service provider registration appears implemented but test registration FAILED. MissingResourceException = {}" + e.getMessage());
+                LOGGER.warn("Ingestion Service provider registration appears implemented but test registration FAILED: MissingResourceException = {}", e.getMessage());
 
             ProviderRegistrationService.bolRegistrationImplemented = true;
         }

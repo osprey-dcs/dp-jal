@@ -28,6 +28,7 @@
 package com.ospreydcs.dp.api.ingest.impl;
 
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
@@ -47,7 +48,7 @@ import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannel;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
-import com.ospreydcs.dp.api.model.ClientRequestId;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
@@ -58,6 +59,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceFutureStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
 
 /**
  * <p>
@@ -483,7 +485,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * 
      * @throws IllegalStateException    method called while processor is active
      */
-    public void setFrameDecompConcurrency(int cntThreads) throws IllegalStateException {
+    public void setFrameProcessingConcurrency(int cntThreads) throws IllegalStateException {
         
         if (this.bolStreamOpen)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once stream opened.");
@@ -614,13 +616,13 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * </p>
      * <p>
      * <h2>WARNING:</h2>
-     * This configuration parameter can only be modified <em>before</em> the processor is 
-     * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
+     * This configuration parameter can only be modified <em>before</em> the stream is 
+     * opened with <code>openStream()</code> , otherwise an exception is throw.
      * </p>
      * 
      * @throws IllegalStateException    method called while processor is active
      */
-    public void disableDecompConcurrency() throws IllegalStateException {
+    public void disableFrameProcessingConcurrency() throws IllegalStateException {
 
         if (this.bolStreamOpen)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once stream opened.");
@@ -895,6 +897,21 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     
     /**
      * <p>
+     * Returns the current memory allocation of outgoing data messages within the staging buffer.
+     * </p>
+     * <p>
+     * Returns the memory allocation (in bytes) of all the request messages within the stagin buffer at the time
+     * of invocation.  Note that this quantity is inherently a dynamic quantity.
+     * </p>
+     * 
+     * @return  memory allocation of all request data messages within the staging buffer (in bytes)
+     */
+    public long getQueueAllocation() {
+        return this.buffStaging.getQueueAllocation();
+    }
+    
+    /**
+     * <p>
      * Returns an immutable list of "client request IDs" within all the data ingestion messages
      * sent to the Ingestion Service during the current open stream session.
      * </p>
@@ -932,12 +949,53 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * 
      * @throws IllegalStateException    the stream was not opened and processor was never activated
      */
-    public List<ClientRequestId> getClientRequestIds() throws IllegalStateException {
+    public List<ClientRequestUID> getClientRequestIds() throws IllegalStateException {
         
         // Get the client request IDs from the internal processor
-        List<ClientRequestId>   lstIds = this.chanIngest.getRequestIds();
+        List<ClientRequestUID>   lstIds = this.chanIngest.getRequestIds();
         
         return lstIds;
+    }
+    
+    /**
+     * <p>
+     * Return a list of all the responses to the ingest data request messages.
+     * </p>
+     * <p>
+     * This method is only practical when using bidirectional gRPC data streams where the
+     * Ingestion Service sents a response corresponding to every ingestion request.
+     * For unidirectional gRPC data streams the Ingestion Service sends at most one
+     * reply.  
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The size of this list should be the value returned by <code>{@link #getResponseCount()}</code>.
+     * </li>
+     * <li>
+     * The ordering of this list does not necessarily reflect the order that ingestion frames
+     * were offered to the processor.  Processed ingestion request messages do not necessarily
+     * get transmitted in order.
+     * </li>
+     * <li>
+     * This method returns a collection of <code>{@link IngestionResponse}</code> records native to the API
+     * library, rather than <code>{@link IngestDataResponse}</code> Protocol Buffers messages.  This action
+     * is simply for convenience. 
+     * </ul>
+     * </p>
+     * 
+     * @return  a list of all Ingestion Service responses to all transmitted ingestion requests
+     * 
+     * @throws IllegalStateException    stream was was never opened 
+     * @throws MissingResourceException a IngestDataResponse message could not be converted to API record
+     */
+    public List<IngestionResponse>  getIngestionResponses() throws IllegalStateException, MissingResourceException {
+        
+        // Get the ingestion responses from the ingestion channel
+        List<IngestionResponse> lstRsps = this.chanIngest.getIngestionResponses();
+        
+        return lstRsps;
     }
 
     /**
@@ -1038,8 +1096,11 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Stream is not open.");
         
         // Check if no back pressure
-        if (!this.bolBackPressure)
+        if (!this.bolBackPressure) {
             this.prcrFrames.submit(frame);      // throws exception if inactive
+        
+            return;
+        }
         
         // Enforce back pressure from staging buffer
         this.buffStaging.awaitQueueReady();     // throws interrupted exception
@@ -1059,8 +1120,11 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Stream is not open.");
         
         // If no back pressure submit immediately
-        if (!this.bolBackPressure)
+        if (!this.bolBackPressure) {
             this.prcrFrames.submit(lstFrames);  // throws exception if inactive
+            
+            return;
+        }
         
         // Enforce back pressure from staging buffer
         this.buffStaging.awaitQueueReady();     // throws interrupted exception
@@ -1082,7 +1146,20 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      */
     @Override
     public void awaitQueueEmpty() throws IllegalStateException, InterruptedException {
-        this.buffStaging.awaitQueueEmpty();
+        
+//        boolean bolFirst = true;
+        
+        // Continue to staging buffer wait so long as frame processor is active
+        while (this.prcrFrames.hasNext()) {
+            
+//            if (!bolFirst) {
+//                if (BOL_LOGGING)
+//                    LOGGER.info("Frame processor still active restarting awaitQueueEmpty() on staging buffer.");
+//            }
+            
+            this.buffStaging.awaitQueueEmpty();
+//            bolFirst = false;
+        }
     }
 
     /**
@@ -1123,12 +1200,10 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
         
         // Shutdown the ingestion channel
         this.chanIngest.shutdown();     // blocks until complete
+        List<IngestionResponse> lstRsps = this.chanIngest.getIngestionResponses();
         
         // All internal resources are shutdown - close stream is complete
         this.bolStreamOpen = false;
-        
-        // Retrieve ingestion responses and return
-        List<IngestionResponse> lstRsps = this.chanIngest.getIngestionResponses();
         
         return lstRsps;
     }
@@ -1169,7 +1244,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 //     * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#getClientRequestIds()
 //     */
 //    @Override
-//    public List<ClientRequestId> getClientRequestIds() throws IllegalStateException {
+//    public List<ClientRequestUID> getClientRequestIds() throws IllegalStateException {
 //        // TODO Auto-generated method stub
 //        return null;
 //    }
@@ -1335,6 +1410,10 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
                     this.buffStaging.offer(msgRqst);
                     this.cntMsgsStaged++;
                     this.szDataStaged += msgRqst.getSerializedSize();
+                    
+//                    // TODO - Remove
+//                    if (BOL_LOGGING)
+//                        LOGGER.debug("Transferred message to staging buffer: transfer count = {}, buffer size = {}.", this.cntMsgsStaged, this.buffStaging.getQueueSize());
                     
                 } catch (IllegalStateException e) {
                     String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() +

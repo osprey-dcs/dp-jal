@@ -76,6 +76,14 @@
 #
 #
 
+#platform:
+#   UID: Osprey-Dev
+#   arch: arm64
+#   OS: macOS
+#   cores: 10
+#   location: office
+#   description: development platform
+
 archive:    # Data Platform data archive properties
    inception: 2023-09-01T00:00:00.0Z # ealiest archive timestamp      : DP_API_ARCHIVE_INCEPTION
    

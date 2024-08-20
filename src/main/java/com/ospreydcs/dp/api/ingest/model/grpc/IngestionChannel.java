@@ -43,12 +43,14 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.AAdvancedApi;
+import com.ospreydcs.dp.api.common.AAdvancedApi.STATUS;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.model.ClientRequestId;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderUID;
@@ -183,6 +185,7 @@ public class IngestionChannel {
     
     
     /** Event logging active flag */
+    @SuppressWarnings("unused")
     private static final boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
     
     
@@ -204,6 +207,7 @@ public class IngestionChannel {
     //
     
     /** Class event logger instance */
+    @SuppressWarnings("unused")
     private static final Logger     LOGGER = LogManager.getLogger();
     
     
@@ -240,17 +244,20 @@ public class IngestionChannel {
     private ExecutorService             xtorStreamTasks = null;
     
     /** Collection of executing stream processing tasks  */
-    private Collection<IngestionStream> setStreamTasks = null;
+    private final Collection<IngestionStream> setStreamTasks = new LinkedList<>();
     
     /** Collection of future results from streaming tasks - used for shutdowns */
-    private Collection<Future<Boolean>> setStreamFutures = null;
+    private final Collection<Future<Boolean>> setStreamFutures = new LinkedList<>();
 
     
     /** Collection of all incoming ingestion responses - from bidirectional streaming tasks */
-    private Collection<IngestDataResponse>      setResponses = null; // = new LinkedList<>();
+//    private Collection<IngestDataResponse>      setResponses = null; // = new LinkedList<>();
+//    private final Collection<IngestDataResponse>      setResponses = new LinkedList<>();
+    private final Collection<IngestionResponse> setRspRecs = new LinkedList<>();
     
     /** Collection of all ingestion responses with exceptions */
-    private Collection<IngestDataResponse>      setBadResponses = null;
+//    private Collection<IngestDataResponse>      setBadResponses = null;
+    private final Collection<IngestionResponse> setRspRecsBad = new LinkedList<>();
     
     
     // 
@@ -562,16 +569,16 @@ public class IngestionChannel {
      * @see #getIngestionResponses()
      * @see #getIngestionExceptions()
      */
-    public List<ClientRequestId>    getRequestIds() throws IllegalStateException {
+    public List<ClientRequestUID>    getRequestIds() throws IllegalStateException {
         
         // Check if activated
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
 
         // Collect all the client IDs recorded within each ingestion stream
-        List<ClientRequestId>   lstIds = this.setStreamTasks
+        List<ClientRequestUID>   lstIds = this.setStreamTasks
                 .stream()
-                .<ClientRequestId>flatMap(stream -> stream.getRequestIds().stream())
+                .<ClientRequestUID>flatMap(stream -> stream.getRequestIds().stream())
                 .toList();
         
         return lstIds;
@@ -651,31 +658,47 @@ public class IngestionChannel {
      * 
      * @return  a list of all Ingestion Service responses to all transmitted ingestion requests
      * 
-     * @throws IllegalStateException    processor was never activated
+     * @throws IllegalStateException    channel was never activated
      * @throws MissingResourceException a IngestDataResponse message could not be converted to API record
      */
+//    @AAdvancedApi(status=STATUS.TESTED_ALPHA, note="This implementation is unstable! - NullPointerException: Cannot read field 'next' because 'this.next' is null.")
     public List<IngestionResponse>   getIngestionResponses() throws IllegalStateException, MissingResourceException {
 
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - channel was never activated.");
 
         // Iterate through the collection of IngestDataResponse messages converting them to API record instance
-        List<IngestionResponse> lstRsps = new ArrayList<>(this.setResponses.size());
-        for (IngestDataResponse msgRsp : this.setResponses) {
-            IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
-            
-            lstRsps.add(recRsp);
-        }
+        List<IngestionResponse> lstRsps = new ArrayList<>(this.setRspRecs);
         
-        // Iterate through the collection of IngestDataResponse messages converting them to API record instance
-        //  Not sure why this is unstable
+        return lstRsps;
+        
+//        // TODO -Remove
+//        if (BOL_LOGGING)
+//            LOGGER.debug("Response collection size = {} before collecting.", this.setResponses.size());
+//        
+//        int     cntMsgs = 0;
+//        for (IngestDataResponse msgRsp : this.setResponses) {
+//            IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
+//            
+//            lstRsps.add(recRsp);
+//            
+//            LOGGER.debug("Response message #{}", cntMsgs);
+//            cntMsgs++;
+//        }
+//        
+//        // TODO -Remove
+//        if (BOL_LOGGING)
+//            LOGGER.debug("Response collection size = {} after collecting.", this.setResponses.size());
+//        
+//        lstRsps.addAll(this.setRspRecs);
+//        
+//        // Iterate through the collection of IngestDataResponse messages converting them to API record instance
+//        //  Not sure why this is unstable
 //        List<IngestionResponse> lstRsps = this.setResponses
 //                .stream()
 //                .<IngestionResponse>map(ProtoMsg::toIngestionResponse)
 //                .toList();
-        
-        return lstRsps;
     }
     
     /**
@@ -721,11 +744,17 @@ public class IngestionChannel {
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - instance was never activated.");
 
-        // Iterate through the list of known exceptional responses and convert them to IngestionResponse records
-        return this.setBadResponses
-                .stream()
-                .<IngestionResponse>map(ProtoMsg::toIngestionResponse)
-                .toList();
+        // Returned value
+        ArrayList<IngestionResponse>    lstRsps = new ArrayList<>(this.setRspRecsBad);
+        
+        return lstRsps;
+        
+//        // Iterate through the list of known exceptional responses and convert them to IngestionResponse records
+//        return this.setBadResponses
+//                .stream()
+//                .<IngestionResponse>map(ProtoMsg::toIngestionResponse)
+//                .toList();
+        
     }
     
     
@@ -851,12 +880,17 @@ public class IngestionChannel {
         
         // Create the thread pool executor and container for thread futures (used in shutdown)
         this.xtorStreamTasks = Executors.newFixedThreadPool(cntStreams);
-        this.setStreamFutures = new LinkedList<>();
+//      this.setStreamFutures = new LinkedList<>();
+        this.setStreamFutures.clear();
         
         // Create new containers for streaming tasks and streaming responses
-        this.setStreamTasks = new LinkedList<>();
-        this.setResponses = new LinkedList<>();
-        this.setBadResponses = new LinkedList<>();
+//        this.setStreamTasks = new LinkedList<>();
+        this.setStreamTasks.clear();
+//        this.setResponses = new LinkedList<>();
+//        this.setResponses.clear();
+        this.setRspRecs.clear();
+        this.setRspRecsBad.clear();
+//        this.setBadResponses = new LinkedList<>();
         
         // Create the streaming tasks and submit them
         for (int iStream=0; iStream<cntStreams; iStream++) {
@@ -903,11 +937,13 @@ public class IngestionChannel {
 
         // Shutdown all streaming tasks 
         this.xtorStreamTasks.shutdown();
-//        this.setStreamTasks.forEach(task -> task.terminate());
-        this.setStreamFutures.forEach(future -> future.cancel(false));
-        
+
         // Wait for all pending streaming tasks to complete - all should be complete at this point
         boolean bolResult = this.xtorStreamTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
+        
+        // Just in case - terminate any threads still active (timeout occurred)
+//      this.setStreamTasks.forEach(task -> task.terminate());
+        this.setStreamFutures.forEach(future -> future.cancel(false));
         
         this.bolActive = false;
 
@@ -979,7 +1015,14 @@ public class IngestionChannel {
         else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
             
             // Create consumer of response messages as lambda function calling processResponse()
-            Consumer<IngestDataResponse>    fncRspSink = (msgRsp) -> { this.processResponse(msgRsp); };
+//            Consumer<IngestDataResponse>    fncRspSink = (msgRsp) -> { this.processResponse(msgRsp); };
+            Consumer<IngestDataResponse>    fncRspSink = (msgRsp) -> { 
+                IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
+                
+                this.setRspRecs.add(recRsp);
+                if (msgRsp.hasExceptionalResult())
+                    this.setRspRecsBad.add(recRsp);
+                };
             
             stream = IngestionStream.newBidiProcessor(this.connIngest.getStubAsync(), this.srcRqstMsgs, fncRspSink);
         }
@@ -1011,14 +1054,15 @@ public class IngestionChannel {
      * @param msgRsp    an Ingestion Service response message containing acknowledgment or status error
      */
     private void processResponse(IngestDataResponse msgRsp) {
-
+        IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
+        
+        this.setRspRecs.add(recRsp);
+        
         // Check for exception then pass to message consumer
         if (msgRsp.hasExceptionalResult()) {
 
-            this.setBadResponses.add(msgRsp);
+            this.setRspRecsBad.add(recRsp);
         }
-        
-        this.setResponses.add(msgRsp);
     }
 
 

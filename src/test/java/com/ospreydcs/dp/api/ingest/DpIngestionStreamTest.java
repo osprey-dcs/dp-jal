@@ -50,7 +50,7 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.ingest.impl.DpIngestionStream;
 import com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamFactory;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.ClientRequestId;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
@@ -696,7 +696,7 @@ public class DpIngestionStreamTest {
         }
         
         // Get the client request IDs and compare
-        List<ClientRequestId>   lstRqstIds = apiIngest.getClientRequestIds();
+        List<ClientRequestUID>   lstRqstIds = apiIngest.getClientRequestIds();
         Assert.assertEquals(cntFrames, lstRqstIds.size());
     }
 

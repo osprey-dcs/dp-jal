@@ -1099,13 +1099,13 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         this.xtorDecompTasks.shutdown();
         this.xtorConvertTasks.shutdown();
 
-        // Request a soft cancel of each currently executing threads
-        this.setDecompFutures.forEach(future -> future.cancel(false));
-        this.setConvertFutures.forEach(future -> future.cancel(false));
-        
         // Wait for all pending thread tasks to complete
         boolean bolShutdownDecomp = this.xtorDecompTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
         boolean bolShutdownConvert = this.xtorConvertTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
+        
+        // Just in case - Request a soft cancel of each currently executing threads (if timeout occurred)
+        this.setDecompFutures.forEach(future -> future.cancel(false));
+        this.setConvertFutures.forEach(future -> future.cancel(false));
         
         boolean bolResult = bolShutdownDecomp && bolShutdownConvert;
         
@@ -1295,7 +1295,11 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      */
     @Override
     public boolean isSupplying() {
-        return this.bolActive || this.hasPendingTasks() || !this.queMsgRequests.isEmpty();
+        return this.bolActive 
+                || this.hasPendingTasks() 
+                || !this.queFramesRaw.isEmpty() 
+                || !this.queFramesPrcd.isEmpty() 
+                || !this.queMsgRequests.isEmpty();
     }
 
     /**
@@ -1496,6 +1500,9 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                 
                 this.cntPendingTasks.incrementAndGet();
                 
+//                // TODO - Remove 
+//                LOGGER.debug("Obtained frame {} from queFramesRaw with size = {}.", frmRaw.getFrameLabel(), this.queFramesRaw.size());
+                
 //                // TODO - Remove
 //                LOGGER.debug("Frame binner thread #" +intThrdId + " activated for raw ingestion frame processing.");
                 
@@ -1515,11 +1522,17 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
                 try {
                     lstFrmsPrcd = binner.decomposeHorizontally(frmRaw);
                     
+//                    // TODO - Remove
+//                    LOGGER.debug("Frame {} decomposed horizontally.", frmRaw.getFrameLabel());
+                    
                 } catch (Exception e1) {
                     
                     // If failed: try to decompose the frame vertically - this is expensive
                     try {
                         lstFrmsPrcd = binner.decomposeVertically(frmRaw);
+                        
+//                        // TODO - Remove
+//                        LOGGER.debug("Frame {} decomposed vertically.", frmRaw.getFrameLabel());
                         
                     } catch (Exception e2) {
                         
@@ -1539,6 +1552,8 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 
 //                // TODO - Remove
 //                LOGGER.debug("Frame binner thread {} offered {} frames to processed queue now with size {}.", intThrdId, lstFrmsPrcd.size(), this.queFramesPrcd.size());
+//                // TODO - Remove
+//                LOGGER.debug("Binner thread offered {} frames: raw queue size = {}, processed size {}, conversion size = {}.", lstFrmsPrcd.size(), this.queFramesRaw.size(), this.queFramesPrcd.size(), this.queMsgRequests.size());
                         
 //                System.out.println("  binner thread #" +intThrdId + " decomposed raw frame into " + lstFrmsPrcd.size() + " binned frames.");
 //                System.out.println("    processed frame queue size = " + this.queFramesPrcd.size());

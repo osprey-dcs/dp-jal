@@ -45,6 +45,7 @@ import org.epics.pvdata.pv.PVStructure;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.ProviderUID;
@@ -297,8 +298,11 @@ public class IngestionFrame implements Serializable {
     // Optional Parameters
     //
     
-    /** The data provider name */
+    /** The data provider UID (unique name) */
     private ProviderUID         recProviderUid = null;
+    
+    /** The client request unique identifier */
+    private ClientRequestUID     recClientUid = null;
     
     
     /** Optional name for ingestion frame */
@@ -354,6 +358,7 @@ public class IngestionFrame implements Serializable {
      * </p> 
      */
     public IngestionFrame() {
+        this.recClientUid = ClientRequestUID.random();
         this.vecColData = new ArrayList<>();
     }
     
@@ -387,6 +392,8 @@ public class IngestionFrame implements Serializable {
      * @see #checkFrameConsistency()
      */
     public IngestionFrame(UniformSamplingClock clk, ArrayList<IDataColumn<Object>> lstCols) throws IllegalArgumentException {
+        this.recClientUid = ClientRequestUID.random();
+
         this.clkTms = clk;
         this.vecColData = lstCols;
         this.mapNmToCol = this.createNmToColMap(lstCols);
@@ -431,6 +438,8 @@ public class IngestionFrame implements Serializable {
      */
     public IngestionFrame(UniformSamplingClock clk, ArrayList<IDataColumn<Object>> lstCols, Map<String, String> mapAttrs) 
             throws IllegalArgumentException {
+        this.recClientUid = ClientRequestUID.random();
+
         this.clkTms = clk;
         this.vecColData = lstCols;
         this.mapAttributes.putAll(mapAttrs);
@@ -511,6 +520,8 @@ public class IngestionFrame implements Serializable {
      */
     public IngestionFrame(ArrayList<Instant> vecTms, ArrayList<IDataColumn<Object>> lstCols, Map<String, String> mapAttrs) 
             throws IllegalArgumentException {
+
+        this.recClientUid = ClientRequestUID.random();
      
         this.vecTms = vecTms;
         this.vecColData = lstCols;
@@ -787,6 +798,7 @@ public class IngestionFrame implements Serializable {
         
         // Assign any optional properties from source to this ingestion frame
         this.setProviderUid(frmSource.recProviderUid);
+        this.setClientRequestUid(frmSource.recClientUid);
         this.setFrameLabel(frmSource.strLabelFrame);
         this.setFrameTimestamp(frmSource.insTmsFrame);
         this.addAttributes(frmSource.mapAttributes);
@@ -805,6 +817,28 @@ public class IngestionFrame implements Serializable {
      */
     public void setProviderUid(ProviderUID recProviderUid) {
         this.recProviderUid = recProviderUid;
+    }
+    
+    /**
+     * <p>
+     * Sets the client request UID for the ingestion frame.
+     * </p>
+     * <p>
+     * Under normal operation the request UID is set during construction of the ingestion frame
+     * and does not need to be modified.  However, this method is available for ingestion frame
+     * decomposition when frame with memory allocation larger than maximum are decomposed into
+     * composite frames meeting the limit.  Each new frame requires a new request UID.   
+     * </p>
+     * <h2>WARNING</h2>
+     * The given argument must be universally unique within the request space of the Ingestion Service.
+     * All client ingest data requests must contain a unique identifier for later determination of 
+     * successful ingestion.  Be extremely careful when setting client request UIDs.  
+     * </p> 
+     * 
+     * @param recRequestUid new universally unique request ID 
+     */
+    public void setClientRequestUid(ClientRequestUID recRequestUid) {
+        this.recClientUid = recRequestUid;
     }
     
     /**
@@ -1822,6 +1856,18 @@ public class IngestionFrame implements Serializable {
     public ProviderUID  getProviderUid() {
         return this.recProviderUid;
     }
+    
+    /**
+     * <p>
+     * Returns the universally unique data ingestion request identifier for the ingestion frame.
+     * </p>
+     *  
+     * @return  request UUID for the ingestion frame 
+     */
+    public ClientRequestUID getClientRequestUid() {
+        return this.recClientUid;
+    }
+    
     /**
      * <p>
      * Returns the optional ingestion frame label.

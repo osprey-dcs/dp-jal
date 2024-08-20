@@ -44,7 +44,7 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.ClientRequestId;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
@@ -385,10 +385,10 @@ public class IngestionStreamProcessorTest {
         }
 
         try {
-            List<ClientRequestId>   lstIds = this.processor.getRequestIds();
+            List<ClientRequestUID>   lstIds = this.processor.getRequestIds();
             Assert.assertEquals(cntFrames, lstIds.size());
             
-            List<String>    lstStrIds = lstIds.stream().<String>map(ClientRequestId::requestId).toList();
+            List<String>    lstStrIds = lstIds.stream().<String>map(ClientRequestUID::requestId).toList();
             System.out.println("Client request IDs: " + lstStrIds);
             
         } catch (IllegalStateException e) {

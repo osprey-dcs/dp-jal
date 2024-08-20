@@ -44,7 +44,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.model.ClientRequestId;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
@@ -229,7 +229,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     private CallStreamObserver<IngestDataRequest>   hndForwardStream = null;
 
     /** Collection of all outgoing message client request IDs */
-    private final List<ClientRequestId>             lstClientIds = new LinkedList<>();
+    private final List<ClientRequestUID>             lstClientIds = new LinkedList<>();
     
     
     //
@@ -536,7 +536,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
      *  
      * @return  collection of request IDs for the ingest data request messages send to the Ingestion Service
      */
-    public final List<ClientRequestId>  getRequestIds() {
+    public final List<ClientRequestUID>  getRequestIds() {
         return this.lstClientIds;
     }
     
@@ -649,7 +649,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
 //                // TODO - Remove
 //                LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Transmitted message with client ID "+ strClientId);
 
-                this.lstClientIds.add(ClientRequestId.from(strClientId));
+                this.lstClientIds.add(ClientRequestUID.from(strClientId));
                 this.cntRequests++;
                 this.requestTransmitted(msgRqst);       // throws ProviderException
             }

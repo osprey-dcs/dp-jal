@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 
 /**
  * <p>
@@ -350,6 +351,9 @@ public class IngestionFrameBinner {
                     + frmSource.getFrameLabel() + ": was not fully consumed.", 
                     new Throwable("Incomplete decomposition"));
 
+        // Assign unique client request IDs to each composite frame
+        this.assignClientRequestUids(frmSource, lstBins);
+        
         return lstBins;
     }
     
@@ -445,6 +449,57 @@ public class IngestionFrameBinner {
                         + frmSource.getFrameLabel() + ": was not fully consumed.", 
                         new Throwable("Incomplete decomposition"));
 
+        // Assign unique client request IDs to each composite frame
+        this.assignClientRequestUids(frmSource, lstBins);
+        
         return lstBins;
+    }
+    
+    //
+    // Support Methods
+    //
+    
+    /**
+     * <p>
+     * Creates new client request UIDs for the binned ingestion frames from the source frame request UID.
+     * </p>
+     * <p>
+     * The new <code>ClientRequestUID</code> values for each binned ingestion frame within the argument
+     * are created simply by appending the index of the frame (i.e., within the list) to the request UID of the
+     * source frame. Upon return the collection of binned frames will contain the new ingest data request UIDs.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * It is unknown if this action is required, or even desirable.  I don not know if the client request UIDs
+     * are required to be unique for proper Ingestion Service operation. 
+     * <ul>
+     * <li>
+     * If so, then this operation is necessary.
+     * </li>
+     * <li>
+     * If not, then the Ingestion Service would record the success/failure of an ingestion operation using a non-
+     * unique UID.  Retrieving the results for a given client UID would return multiple instances.  This could
+     * actually be desirable if a composite frame of a decomposed frame failed ingestion - it would have the
+     * client request UID of the original frame, alerting the client that the original frame had, at least, a
+     * partial failure.
+     * </li>
+     * </ul>
+     * </p> 
+     * 
+     * @param frmSrc    the original (source) ingestion frame
+     * @param lstBins   the decomposed composite ingestion frames
+     */
+    private void    assignClientRequestUids(IngestionFrame frmSrc, List<IngestionFrame> lstBins) {
+        
+        // Initialize loop
+        ClientRequestUID    uidMain = frmSrc.getClientRequestUid();
+        Integer             indFrmBinned = 0;
+        for (IngestionFrame frmBinned : lstBins) {
+            String              strSuffix = "-" + indFrmBinned.toString();
+            ClientRequestUID    uidFrmBinned = ClientRequestUID.from(uidMain, strSuffix);
+            
+            frmBinned.setClientRequestUid(uidFrmBinned);
+            indFrmBinned++;
+        }
     }
 }

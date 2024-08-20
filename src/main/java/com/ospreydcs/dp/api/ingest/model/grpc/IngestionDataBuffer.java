@@ -416,7 +416,7 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
      * </p>
      * <p>
      * Returns the memory allocation (in bytes) of all the request messages within the data buffer at the time
-     * of allocation.  Note that this quantity is inherently a dynamic quantity.
+     * of invocation.  Note that this quantity is inherently a dynamic quantity.
      * </p>
      * 
      * @return  memory allocation of all request data messages within the queue buffer (in bytes)

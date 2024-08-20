@@ -29,10 +29,12 @@ package com.ospreydcs.dp.api.ingest.model.frame;
 
 import java.security.ProviderException;
 import java.util.MissingResourceException;
+import java.util.UUID;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.EventMetadata;
@@ -114,11 +116,19 @@ public final class IngestionFrameConverter {
     
     
     //
+    // Class Constants
+    //
+    
+    /** The name used for the name-based UUID client request identifier for each message (required by Ingestion Service) */
+    public static final String      STR_UUID_NAME = "JavaClientApiLibrary-IngestionFrameConverter";
+    
+    
+    //
     // Class Resources
     //
     
-    /** The locking object for synchronizing access to class resources */ 
-    private static final Object     objClassLock = new Object();
+//    /** The locking object for synchronizing access to class resources */ 
+//    private static final Object     objClassLock = new Object();
     
     /** The number of ingestion frames converted - used for request ID creation */
     private static long             cntFrames = 0L;
@@ -240,10 +250,13 @@ public final class IngestionFrameConverter {
             throws IllegalStateException, MissingResourceException, TypeNotPresentException, ClassCastException  {
 
         // Create a new request ID
-        String  strRqstId = IngestionFrameConverter.newClientRequestId();
+        ClientRequestUID  recRqstUid = frame.getClientRequestUid();
+        if (recRqstUid == null)
+            recRqstUid = ClientRequestUID.random();
+            
 
         // Create the message and return it
-        IngestDataRequest    msgRqst = this.createRequest(frame, recPrvUid, strRqstId);
+        IngestDataRequest    msgRqst = this.createRequest(frame, recPrvUid, recRqstUid);
         
         return msgRqst;
     }
@@ -261,7 +274,7 @@ public final class IngestionFrameConverter {
      * 
      * @param frame     source of all data used to populated returned message
      * @param recPrvUid the data provider UID used in the returned message
-     * @param strRqstId the client request ID used in the returned message
+     * @param recRqstId the client request ID used in the returned message
      * 
      * @return  new <code>IngestDataRequest</code> message populated with argument data
      * 
@@ -271,12 +284,12 @@ public final class IngestionFrameConverter {
      * 
      * @see ProtoMsg#from(IngestionFrame)
      */
-    public IngestDataRequest createRequest(IngestionFrame frame, ProviderUID recPrvUid, String strRqstId) 
+    public IngestDataRequest createRequest(IngestionFrame frame, ProviderUID recPrvUid, ClientRequestUID recRqstId) 
             throws ProviderException, MissingResourceException, TypeNotPresentException, ClassCastException  {
         
         IngestDataRequest   msgRqst = IngestDataRequest.newBuilder()
                 .setProviderId(recPrvUid.uid())
-                .setClientRequestId(strRqstId)
+                .setClientRequestId(recRqstId.requestId())
                 .setRequestTime(ProtoTime.now())
                 .addAllAttributes(ProtoMsg.createAttributes(frame.getAttributes()))
                 .setEventMetadata(IngestionFrameConverter.extractEventMetadata(frame))
@@ -324,47 +337,56 @@ public final class IngestionFrameConverter {
         return msgMetadata;
     }
 
-    /**
-     * <p>
-     * Generates a new, unique client request identifier and returns it.
-     * </p>
-     * <p>
-     * The returns request identifier is "unique" within the lifetime of the current
-     * Java Virtual Machine (JVM).  Request identifiers can, potentially, be repeated for
-     * independent JVMs and should not be used to uniquely identify request beyond the
-     * current JVM execution.
-     * </p>
-     * <p>
-     * <h2>Computation</h2>
-     * The return value is computed by taking the hash code for the 
-     * <code>IngestionFrameProcessorDep</code> class and incrementing it by the current value
-     * of the class frame counter <code>{@link #cntFrames}</code> (which is then incremented).
-     * The <code>long</code> value is then converted to a string value and returned.
-     * </p>
-     * <p>
-     * <h2>Thread Safety</h2>
-     * This method is thread safe.  Computation of the UID is synchronized with the class
-     * lock instance <code>{@link #objClassLock}</code>.  This is necessary since the
-     * <code>{@link #cntFrames}</code> class instance must be modified atomically.
-     * </p>
-     *  
-     * @return  a new client request ID unique within the execution of the current JVM
-     */
-    private static String  newClientRequestId() {
-        
-        // hash code used as client ID seed
-        long lngHash;
-        
-        synchronized (objClassLock) {
-            lngHash = IngestionFrameConverter.class.hashCode(); 
-            lngHash += IngestionFrameConverter.cntFrames;
-            
-            IngestionFrameConverter.cntFrames++;
-        }
-        
-        String strClientId = Long.toString(lngHash);
-        
-        return strClientId;
-    }
+//    /**
+//     * <p>
+//     * Generates a new, unique client request identifier and returns it.
+//     * </p>
+//     * <p>
+//     * <s>The returns request identifier is "unique" within the lifetime of the current
+//     * Java Virtual Machine (JVM).  Request identifiers can, potentially, be repeated for
+//     * independent JVMs and should not be used to uniquely identify request beyond the
+//     * current JVM execution.</s>
+//     * </p>
+//     * <p>
+//     * The Ingestion Service will accept only Universally Unique IDs for the client request
+//     * identifier.  This implementation is now using the Java <code>{@link UUID}</code> 
+//     * UUID generation tool.
+//     * </p>
+//     * <p>
+//     * <h2>Computation</h2>
+//     * The return value is computed by taking the hash code for the 
+//     * <code>IngestionFrameProcessorDep</code> class and incrementing it by the current value
+//     * of the class frame counter <code>{@link #cntFrames}</code> (which is then incremented).
+//     * The <code>long</code> value is then converted to a string value and returned.
+//     * </p>
+//     * <p>
+//     * <h2>Thread Safety</h2>
+//     * This method is thread safe.  Computation of the UID is synchronized with the class
+//     * lock instance <code>{@link #objClassLock}</code>.  This is necessary since the
+//     * <code>{@link #cntFrames}</code> class instance must be modified atomically.
+//     * </p>
+//     *  
+//     * @return  a new client request ID unique within the execution of the current JVM
+//     */
+//    private static ClientRequestUID newClientRequestId() {
+//
+//        UUID    uuidRqst = UUID.randomUUID();
+//        
+//        String  strClientId = uuidRqst.toString();
+//        
+//        // hash code used as client ID seed
+//        long lngHash;
+//        
+//        synchronized (objClassLock) {
+//            lngHash = IngestionFrameConverter.class.hashCode(); 
+//            lngHash += IngestionFrameConverter.cntFrames;
+//            
+//            IngestionFrameConverter.cntFrames++;
+//        }
+//        
+//        String strClientId = Long.toString(lngHash);
+//        
+//        return uuidRqst;
+//    }
     
 }

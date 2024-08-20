@@ -378,7 +378,7 @@ public interface IIngestionStream extends IConnection {
 //     * 
 //     * @throws IllegalStateException    the stream was not opened and processor was never activated
 //     */
-//    List<ClientRequestId> getClientRequestIds() throws IllegalStateException;
+//    List<ClientRequestUID> getClientRequestIds() throws IllegalStateException;
 //
     /**
      * <p>
@@ -428,7 +428,7 @@ public interface IIngestionStream extends IConnection {
      * Although this method blocks until the stream is closed (if necessary) not all gRPC
      * resources may be fully released upon return. Use <code>{@link IConnection#awaitTermination()}</code>
      * or <code>{@link IConnection#awaitTermination(long, java.util.concurrent.TimeUnit)</code> to
-     * block if required.  The method <code>{@link IConnection#isTerminated()</code> to determine
+     * block if required.  The method <code>{@link IConnection#isTerminated()}</code> to determine
      * if the gRPC system has fully terminated.
      * </p>
      * <p>

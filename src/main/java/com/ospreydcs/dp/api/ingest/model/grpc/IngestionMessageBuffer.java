@@ -378,6 +378,29 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
     public int  getQueueSize() {
         return this.queMsgRequests.size();
     }
+    
+    /**
+     * <p>
+     * Returns the total memory allocation of all request messages within the queue buffer.
+     * </p>
+     * <p>
+     * Returns the total allocation currently carried within the queue buffer in bytes.  The value is
+     * computed dynamically using the <code>{@link IngestDataRequest#getSerializedSize()</code> method
+     * of all messages currently within the buffer.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This can be a computationally expensive process as a running allocation count is not maintained with
+     * the buffer instance (as with the <code>IngestionDataBuffer</code> type).  Use with discretion.
+     * </p>
+     * 
+     * @return  the computed total memory allocation of all messages currently within the buffer
+     */
+    public long getQueueAllocation() {
+        long    szAlloc = this.queMsgRequests.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
+        
+        return szAlloc;
+    }
 
     
     //

@@ -49,7 +49,7 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep;
-import com.ospreydcs.dp.api.model.ClientRequestId;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderUID;
@@ -154,7 +154,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * 
  * @deprecated This class was replaced by several classes offering the same collective operation (i.e., a better design) 
  */
-@Deprecated
+@Deprecated(since="Aug, 2024", forRemoval=true)
 public final class IngestionStreamProcessor {
 
     
@@ -373,7 +373,7 @@ public final class IngestionStreamProcessor {
 //    private final BlockingQueue<IngestDataRequest>  queRequests = new LinkedBlockingQueue(INT_BUFFER_SIZE);
 //    
 //    /** Collection of all outgoing message client request IDs */
-//    private final Collection<ClientRequestId>       setClientIds = new LinkedList<>();
+//    private final Collection<ClientRequestUID>       setClientIds = new LinkedList<>();
 //    
 //    /** Source for incoming response messages */
 //    private final Consumer<IngestDataResponse>      fncDataSink = (rsp) -> { this.setResponses.add(rsp); };
@@ -933,15 +933,15 @@ public final class IngestionStreamProcessor {
      * @see #getIngestionResponses()
      * @see #getIngestionExceptions()
      */
-    public List<ClientRequestId>    getRequestIds() throws IllegalStateException {
+    public List<ClientRequestUID>    getRequestIds() throws IllegalStateException {
         
         // Check if activated
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
 
-        List<ClientRequestId>   lstIds = this.setStreamTasks
+        List<ClientRequestUID>   lstIds = this.setStreamTasks
                 .stream()
-                .<ClientRequestId>flatMap(stream -> stream.getRequestIds().stream())
+                .<ClientRequestUID>flatMap(stream -> stream.getRequestIds().stream())
                 .toList();
         
         return lstIds;
