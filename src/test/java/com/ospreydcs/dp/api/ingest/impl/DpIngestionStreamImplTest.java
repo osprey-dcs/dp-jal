@@ -27,7 +27,6 @@
  */
 package com.ospreydcs.dp.api.ingest.impl;
 
-import static org.junit.Assert.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -36,11 +35,11 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Assert;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -151,6 +150,16 @@ public class DpIngestionStreamImplTest {
     
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#DpIngestionStreamImpl(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * <p>
+     * Includes
+     * <br/>
+     * {@link DpIngestionStreamImpl#openStream(ProviderRegistrar)}
+     * <br/>
+     * {@link DpIngestionStreamImpl#closeStream()}
+     * <br/>
+     * {@link DpIngestionStreamImpl#shutdown()}
+     * <br/>
+     * {@link DpIngestionStreamImpl#awaitTermination()}
      */
     @Test
     public final void testDpIngestionStreamImpl() {
@@ -219,14 +228,6 @@ public class DpIngestionStreamImplTest {
         }
     }
 
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#shutdown()}.
-//     */
-//    @Test
-//    public final void testShutdown() {
-//        fail("Not yet implemented"); // TODO
-//    }
-
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#shutdownNow()}.
      */
@@ -260,6 +261,12 @@ public class DpIngestionStreamImplTest {
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#awaitTermination(long, java.util.concurrent.TimeUnit)}.
+     * <p>
+     * Includes
+     * <br/>
+     * {@link DpIngestionStreamImpl#isShutdown()}
+     * <br/>
+     * {@link DpIngestionStreamImpl#isTerminated()}
      */
     @Test
     public final void testAwaitTerminationLongTimeUnit() {
@@ -347,24 +354,12 @@ public class DpIngestionStreamImplTest {
         System.out.println("  Total test time      : " + Duration.between(insStart, insTerminated));
     }
 
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#isShutdown()}.
-//     */
-//    @Test
-//    public final void testIsShutdown() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#isTerminated()}.
-//     */
-//    @Test
-//    public final void testIsTerminated() {
-//        fail("Not yet implemented"); // TODO
-//    }
-
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#setFrameProcessingConcurrency(int)}.
+     * <p>
+     * Includes
+     * <br/>
+     * {@link DpIngestionStreamImpl#disableFrameProcessingConcurrency()}
      */
     @Test
     public final void testSetFrameProcessingConcurrency() {
@@ -383,6 +378,10 @@ public class DpIngestionStreamImplTest {
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#setFrameDecomposition(long)}.
+     * <p>
+     * Includes
+     * <br/>
+     * {@link DpIngestionStreamImpl#disableFrameDecomposition()}
      */
     @Test
     public final void testSetFrameDecomposition() {
@@ -393,22 +392,6 @@ public class DpIngestionStreamImplTest {
         INGEST_TEST.disableFrameDecomposition();
         INGEST_TEST.setFrameDecomposition(szFrameAlloc);
     }
-
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#disableFrameDecomposition()}.
-//     */
-//    @Test
-//    public final void testDisableFrameDecomposition() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#disableDecompConcurrency()}.
-//     */
-//    @Test
-//    public final void testDisableDecompConcurrency() {
-//        fail("Not yet implemented"); // TODO
-//    }
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#setStagingCapcity(long)}.
@@ -424,20 +407,15 @@ public class DpIngestionStreamImplTest {
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#enableBackPressure()}.
+     * <p>
+     * Includes
+     * {@link DpIngestionStreamImpl#disableBackPressure()}
      */
     @Test
     public final void testEnableBackPressure() {
         INGEST_TEST.disableBackPressure();
         INGEST_TEST.enableBackPressure();
     }
-
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#disableBackPressure()}.
-//     */
-//    @Test
-//    public final void testDisableBackPressure() {
-//        fail("Not yet implemented"); // TODO
-//    }
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#setStreamType(com.ospreydcs.dp.api.model.DpGrpcStreamType)}.
@@ -473,6 +451,9 @@ public class DpIngestionStreamImplTest {
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#setMultipleStreams(int)}.
+     * <p>
+     * Includes
+     * {@link DpIngestionStreamImpl#disableMultipleStreams()}
      */
     @Test
     public final void testSetMultipleStreams() {
@@ -497,13 +478,6 @@ public class DpIngestionStreamImplTest {
         }
     }
 
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#disableMultipleStreams()}.
-//     */
-//    @Test
-//    public final void testDisableMultipleStreams() {
-//        fail("Not yet implemented"); // TODO
-//    }
 //
 //    /**
 //     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#getProviderUid()}.
@@ -548,7 +522,7 @@ public class DpIngestionStreamImplTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#ingest(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
      */
-//    @Test
+    @Test
     public final void testIngestIngestionFrame() {
         
         // Parameters
@@ -772,7 +746,7 @@ public class DpIngestionStreamImplTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#awaitQueueReady()}.
      */
-//    @Test
+    @Test
     public final void testAwaitQueueReady() {
         
         // Parameters
@@ -1032,7 +1006,7 @@ public class DpIngestionStreamImplTest {
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#closeStream()}.
      */
-//    @Test
+    @Test
     public final void testCloseStream() {
         
         // Parameters

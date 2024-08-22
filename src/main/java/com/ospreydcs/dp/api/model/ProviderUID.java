@@ -39,7 +39,7 @@ package com.ospreydcs.dp.api.model;
  * original UID is returned.
  * </p>
  * <p>
- * Instances of <code>ProviderUID</code> are created by the <code>DpIngestionService</code> client interface
+ * Instances of <code>ProviderUID</code> are created by the <code>DpIngestionServiceImpl</code> client interface
  * at passed to client data providers upon registration.
  * </p>
  * 

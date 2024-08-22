@@ -854,7 +854,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     
 
     //
-    // Operations
+    // State Inquiry
     //
     
     /**

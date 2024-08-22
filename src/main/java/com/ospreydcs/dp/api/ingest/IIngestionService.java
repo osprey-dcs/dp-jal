@@ -3,11 +3,12 @@ package com.ospreydcs.dp.api.ingest;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.ospreydcs.dp.api.grpc.model.IConnection;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 
-public interface IIngestionService {
+public interface IIngestionService extends IConnection {
 
     /**
      * <p>
@@ -39,6 +40,13 @@ public interface IIngestionService {
      * <p>
      * Blocking, synchronous, unary ingestion of the given ingestion frame.
      * </p>
+     * This is the primary, and only, data ingestion operation of the <code>IIngestionService</code> interface.
+     * The argument is converted to <code>IngestDataRequest</code> message(s) then transmitted to the Ingestion
+     * Service one message at a time using a single,blocking RPC operation.  This is inherently a safe and robust
+     * operation but at the cost of performance.  It is appropriate for small to moderate data transmission.
+     * Clients requiring large data transmission or continuous and sustained transmission should consider the
+     * <code>IIngestionStream</code> interface.  
+     * </p> 
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
@@ -47,14 +55,22 @@ public interface IIngestionService {
      * an exception is thrown.
      * </li>
      * <li>
-     * A list of Ingestion Service response is returned in order to accommodate all cases.
+     * A list of Ingestion Service response is returned in order to accommodate all the following cases.
      *   <ul>
      *   <li>Frame Decomposition: If the frame has allocation larger than the maximum it is decomposed into composite 
-     *       frames each receiving a response upon transmission.</li>
+     *       frames.  Each composite frame is converted into a message that receives a response upon transmission.
+     *       The returned list will contain an Ingestion Service response for each composite message.
+     *   </li>
      *   <li>No Decomposition: If the frame has allocation less than the maximum limit a single response is
-     *       contained in the list.</li>
+     *       contained in the list.
+     *   </li>
+     *   <li>
+     *   If automatic frame-decomposition is disabled and the offered frame results in a gRPC message larger than
+     *   the current gRPC message size limit an exception will be thrown (i.e., nothing is returned).
+     *   </li>
      *   </ul>
      * </li>
+     * </ul>
      * </p>
      * 
      * @param frame ingestion frame containing data for transmission to the Ingestion Service
