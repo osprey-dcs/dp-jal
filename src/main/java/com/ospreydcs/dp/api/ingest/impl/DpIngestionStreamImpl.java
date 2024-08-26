@@ -210,6 +210,39 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
                                                             DpIngestionServiceFutureStub, 
                                                             DpIngestionServiceStub> implements IIngestionStream {
 
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new instance of <code>DpIngestionStreamImpl</code> attached to the given Ingestion Service connection.
+     * </p>
+     * <p>
+     * This method is intended for use by <code>IIngestionStream</code> connection factories but
+     * can be also used externally with an appropriate <code>DpIngestionConnection</code>.
+     * <p>
+     * The argument should be obtained from the appropriate connection factory,
+     * specifically, <code>{@link DpIngestionConnectionFactory}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTE:</h2>
+     * The returned object should be shut down when no longer needed using 
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * This action is necessary to release unused gRPC resources and maintain 
+     * overall performance.  
+     * </p>
+     * 
+     * @param connIngest  the gRPC channel connection to the desired DP Ingestion Service
+     * 
+     * @return  a new <code>DpIngestionStreamImpl</code> instance connected and ready for data ingestion
+     * 
+     * @see DpIngestionConnectionFactory
+     * @see DpIngestionStreamFactory 
+     */
+    public static DpIngestionStreamImpl from(DpIngestionConnection connIngest) {
+        return new DpIngestionStreamImpl(connIngest);
+    }
 
     //
     // Application Resources
@@ -402,8 +435,8 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     /** Transfer thread: The number of ingest data messages staged for transmission */
     private int             cntMsgsStaged = 0;
     
-    /** Transfer thread: The total data staged for transmission (in bytes) */
-    private long            szDataStaged = 0;
+//    /** Transfer thread: The total data staged for transmission (in bytes) */
+//    private long            szDataStaged = 0; // this value requires significant CPU activity within transfer thread 
     
     /** Transfer thread: Status result of staging buffer transfer operations */
     private ResultStatus    recXferStatus = null;
@@ -910,6 +943,28 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      */
     public long getQueueAllocation() {
         return this.buffStaging.getQueueAllocation();
+    }
+    
+    /**
+     * <p>
+     * Returns the total number of gRPC messages transferred to the staging buffer.
+     * </p>
+     * <p>
+     * The value returned is the total number of <code>IngestDataReqest</code> transferred to the staging buffer
+     * during the lifetime of this interface.  It is the resultant number of data messages from the ingestion
+     * frame processing that have passed to the staging buffer so far. 
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2> 
+     * The returned value does not indicate the number of messages transmitted to the Ingestion Service.  For
+     * example, some messages may still be awaiting transmission within the staging buffer.  Use
+     * <code>{@link #getTransmissionCount()}</code> to obtain the number of messages transmitted so far.
+     * </p>
+     * 
+     * @return
+     */
+    public int getTotalMessagesStaged() {
+        return this.cntMsgsStaged;
     }
     
     /**
@@ -1499,7 +1554,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
                     
                     this.buffStaging.offer(msgRqst);
                     this.cntMsgsStaged++;
-                    this.szDataStaged += msgRqst.getSerializedSize();
+//                    this.szDataStaged += msgRqst.getSerializedSize();
                     
 //                    // TODO - Remove
 //                    if (BOL_LOGGING)

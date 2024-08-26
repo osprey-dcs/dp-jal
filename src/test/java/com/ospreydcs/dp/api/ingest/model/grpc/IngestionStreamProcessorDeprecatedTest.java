@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionStreamProcessorTest.java
+ * File:	IngestionStreamProcessorDeprecatedTest.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionStreamProcessorTest
+ * Type: 	IngestionStreamProcessorDeprecatedTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -55,14 +55,16 @@ import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
 
 /**
  * <p>
- * JUnit test cases for class <code>IngestionStreamProcessor</code>.
+ * JUnit test cases for class <code>IngestionStreamProcessorDeprecated</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Apr 18, 2024
  *
+ * @deprecated IngestionStreamProcessorDeprecated is not used and scheduled for removal
  */
-public class IngestionStreamProcessorTest {
+@Deprecated(since="Aug 26, 2024", forRemoval=true)
+public class IngestionStreamProcessorDeprecatedTest {
 
     
     //
@@ -78,7 +80,7 @@ public class IngestionStreamProcessorTest {
     
     
     /** Data Provider unique name */
-    private static final String             STR_PROVIDER_NAME = IngestionStreamProcessorTest.class.getSimpleName();
+    private static final String             STR_PROVIDER_NAME = IngestionStreamProcessorDeprecatedTest.class.getSimpleName();
     
     /** Data provider registration record */
     private static final ProviderRegistrar  REC_PROVIDER_REGISTRAR = ProviderRegistrar.from(STR_PROVIDER_NAME);;
@@ -112,8 +114,8 @@ public class IngestionStreamProcessorTest {
     private static ProviderUID              REC_PROVIDER_UID;
 
     
-    /** A <code>IngestionStreamProcessor</code> instance available for testing */ 
-    private IngestionStreamProcessor        processor;
+    /** A <code>IngestionStreamProcessorDep</code> instance available for testing */ 
+    private IngestionStreamProcessorDep        processor;
     
     
     //
@@ -179,7 +181,7 @@ public class IngestionStreamProcessorTest {
      */
     @Before
     public void setUp() throws Exception {
-        processor = IngestionStreamProcessor.from(CONN_INGEST);
+        processor = IngestionStreamProcessorDep.from(CONN_INGEST);
         processor.activate(REC_PROVIDER_UID);
     }
 
@@ -197,11 +199,11 @@ public class IngestionStreamProcessorTest {
     //
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#IngestionStreamProcessor(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#IngestionStreamProcessor(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
      */
     @Test
     public final void testIngestionStreamProcessor() {
-        IngestionStreamProcessor processor   = IngestionStreamProcessor.from(CONN_INGEST);
+        IngestionStreamProcessorDep processor   = IngestionStreamProcessorDep.from(CONN_INGEST);
         
         Assert.assertFalse(processor.isActive());
         
@@ -220,7 +222,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#setStreamType(com.ospreydcs.dp.api.model.DpGrpcStreamType)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#setStreamType(com.ospreydcs.dp.api.model.DpGrpcStreamType)}.
      */
     @Test
     public final void testSetStreamType() {
@@ -266,7 +268,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#enableMultipleStreams(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#enableMultipleStreams(int)}.
      */
     @Test
     public final void testEnableMultipleStreams() {
@@ -295,7 +297,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#disableMultipleStreams()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#disableMultipleStreams()}.
      */
     @Test
     public final void testDisableMultipleStreams() {
@@ -323,7 +325,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#isActive()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#isActive()}.
      */
     @Test
     public final void testIsActive() {
@@ -340,7 +342,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#getRequestCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#getRequestCount()}.
      */
     @Test
     public final void testGetRequestsCount() {
@@ -348,7 +350,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#getResponseCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#getResponseCount()}.
      */
     @Test
     public final void testGetResponseCount() {
@@ -356,7 +358,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#getRequestIds()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#getRequestIds()}.
      */
     @Test
     public final void testGetRequestIds() {
@@ -397,7 +399,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#getIngestionResponses()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#getIngestionResponses()}.
      */
     @Test
     public final void testGetIngestionResponses() {
@@ -442,7 +444,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#getIngestionExceptions()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#getIngestionExceptions()}.
      */
     @Test
     public final void testGetIngestionExceptions() {
@@ -485,11 +487,11 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#activate(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#activate(int)}.
      */
     @Test
     public final void testActivate() {
-        IngestionStreamProcessor processor   = IngestionStreamProcessor.from(CONN_INGEST);
+        IngestionStreamProcessorDep processor   = IngestionStreamProcessorDep.from(CONN_INGEST);
         
         Assert.assertFalse(processor.isActive());
         
@@ -508,11 +510,11 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#shutdown()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#shutdown()}.
      */
     @Test
     public final void testShutdown() {
-        IngestionStreamProcessor processor   = IngestionStreamProcessor.from(CONN_INGEST);
+        IngestionStreamProcessorDep processor   = IngestionStreamProcessorDep.from(CONN_INGEST);
         
         Assert.assertFalse(processor.isActive());
         
@@ -531,11 +533,11 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#shutdownNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#shutdownNow()}.
      */
     @Test
     public final void testShutdownNow() {
-        IngestionStreamProcessor processor   = IngestionStreamProcessor.from(CONN_INGEST);
+        IngestionStreamProcessorDep processor   = IngestionStreamProcessorDep.from(CONN_INGEST);
         
         Assert.assertFalse(processor.isActive());
         
@@ -548,7 +550,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#awaitRequestQueueEmpty()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#awaitRequestQueueEmpty()}.
      */
     @Test
     public final void testAwaitRequestQueueEmpty() {
@@ -587,7 +589,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#transmit(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#transmit(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
      */
     @Test
     public final void testTransmitIngestionFrame() {
@@ -614,7 +616,7 @@ public class IngestionStreamProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor#transmit(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#transmit(java.util.List)}.
      */
     @Test
     public final void testTransmitListOfIngestionFrame() {

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionStreamProcessor.java
+ * File:	IngestionStreamProcessorDep.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionStreamProcessor
+ * Type: 	IngestionStreamProcessorDep
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -48,7 +48,7 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep;
+import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated;
 import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
@@ -65,7 +65,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * </p>
  * <p>
  * Class instances perform all processing of client <code>IngestionFrame</code> ingestion data
- * using a <code>{@link IngestionFrameProcessorDep}</code> resource.  There ingestion frames are
+ * using a <code>{@link IngestionFrameProcessorDeprecated}</code> resource.  There ingestion frames are
  * (optionally) decomposed for gRPC message size requirements, then converted into 
  * <code>{@link IngestDataRequest}</code> messages suitable for transmission to the Ingestion 
  * Service.  
@@ -75,10 +75,10 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * <code>{@link IngestionStream}</code> instances - one for each active gRPC data stream.
  * (If the multiple data streams feature is disabled only one stream will be active.)  
  * The stream classes are executed on separate threads which compete for the 
- * <code>IngestDataRequest</code> messages produced by the <code>IngestionFrameProcessorDep</code>.
+ * <code>IngestDataRequest</code> messages produced by the <code>IngestionFrameProcessorDeprecated</code>.
  * </p>
  * <h2>Operation</h2>
- * After creation instances of <code>IngestionStreamProcessor</code> must be activated using
+ * After creation instances of <code>IngestionStreamProcessorDep</code> must be activated using
  * either the <code>{@link #activate(ProviderUID)}</code> or <code>{@link #activate(int)}</code> 
  * method, which requires the data provider UID (either as a record or directly as an integer value)
  * to be given to all outgoing <code>IngestDataRequest</code> messages.  
@@ -155,7 +155,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * @deprecated This class was replaced by several classes offering the same collective operation (i.e., a better design) 
  */
 @Deprecated(since="Aug, 2024", forRemoval=true)
-public final class IngestionStreamProcessor {
+public final class IngestionStreamProcessorDep {
 
     
     // 
@@ -164,7 +164,7 @@ public final class IngestionStreamProcessor {
     
     /**
      * <p>
-     * Constructs a new <code>IngestionStreamProcessor</code> ready for accepting
+     * Constructs a new <code>IngestionStreamProcessorDep</code> ready for accepting
      * client <code>IngestionFrame</code> instances to be processed and whose data is
      * transmitted to the Ingestion Service.
      * </p>  
@@ -178,10 +178,10 @@ public final class IngestionStreamProcessor {
      *
      * @param connIngest    a gRPC connection to the Ingestion Service
      * 
-     * @return a new <code>IngestionStreamProcessor</code> ready for activation and data ingestion
+     * @return a new <code>IngestionStreamProcessorDep</code> ready for activation and data ingestion
      */
-    public static IngestionStreamProcessor from(DpIngestionConnection connIngest) {
-        return new IngestionStreamProcessor(connIngest);
+    public static IngestionStreamProcessorDep from(DpIngestionConnection connIngest) {
+        return new IngestionStreamProcessorDep(connIngest);
     }
     
     
@@ -205,7 +205,7 @@ public final class IngestionStreamProcessor {
 //        //
 //        
 ////        public static BinnerThread from(final IngestionFrameBinner binner, IngestionFrame frame) {
-////            return IngestionStreamProcessor.this.new BinnerThread(binner, frame);
+////            return IngestionStreamProcessorDep.this.new BinnerThread(binner, frame);
 ////        }
 //        
 //        //
@@ -383,7 +383,7 @@ public final class IngestionStreamProcessor {
 //    private Integer                   intProviderId = null;
     
     /** Ingestion frame processor and source of outgoing ingestion requests */
-    private IngestionFrameProcessorDep     fncFrameProcessor = null;
+    private IngestionFrameProcessorDeprecated     fncFrameProcessor = null;
     
     /** Collection of executing stream processing tasks  */
     private Collection<IngestionStream> setStreamTasks = null;
@@ -410,10 +410,10 @@ public final class IngestionStreamProcessor {
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionStreamProcessor</code>.
+     * Constructs a new instance of <code>IngestionStreamProcessorDep</code>.
      * </p>
      * <p>
-     * Constructs a new <code>IngestionStreamProcessor</code> ready for accepting
+     * Constructs a new <code>IngestionStreamProcessorDep</code> ready for accepting
      * client <code>IngestionFrame</code> instances to be processed and whose data is
      * transmitted to the Ingestion Service.
      * </p>  
@@ -427,11 +427,11 @@ public final class IngestionStreamProcessor {
      *
      * @param connIngest    a gRPC connection to the Ingestion Service
      */
-    public IngestionStreamProcessor(DpIngestionConnection connIngest /*, int intProviderId */) {
+    public IngestionStreamProcessorDep(DpIngestionConnection connIngest /*, int intProviderId */) {
         this.connIngest = connIngest;
 //        this.intProviderId = intProviderId;
         
-//        this.fncDataSource = new IngestionFrameProcessorDep(intProviderId);
+//        this.fncDataSource = new IngestionFrameProcessorDeprecated(intProviderId);
     }
     
     
@@ -1141,7 +1141,7 @@ public final class IngestionStreamProcessor {
 //        this.intProviderId = intProviderId;
         
         // Create the ingestion frame processor and activate it (all other default parameters)
-        this.fncFrameProcessor = IngestionFrameProcessorDep.from(recProviderId);
+        this.fncFrameProcessor = IngestionFrameProcessorDeprecated.from(recProviderId);
         if (this.bolBackPressure)
             this.fncFrameProcessor.enableBackPressure(this.szQueueCapacity);
         this.fncFrameProcessor.activate();

@@ -46,7 +46,7 @@
  *   <li>All data ingestion is performed synchronously using blocking operations.</li>
  *   </ul> 
  * </li>
- * <li><code>{@link DpIngestionStream}</code>: 
+ * <li><code>{@link DpIngestionStreamDeprecated}</code>: 
  *   Advanced interaction with the Ingestion Service where the underlying
  *   data transmission mechanism is supported by gRPC data streams.  (In fact, multiple, concurrent
  *   data stream may be used depending upon the client API library configuration.)  This interface
@@ -79,4 +79,4 @@
 package com.ospreydcs.dp.api.ingest;
 
 import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl;
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionStream;
+import com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated;

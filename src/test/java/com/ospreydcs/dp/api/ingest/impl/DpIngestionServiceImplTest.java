@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest;
+package com.ospreydcs.dp.api.ingest.impl;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -47,6 +47,9 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl;
+import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.IIngestionService;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceFactory;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
 import com.ospreydcs.dp.api.model.IngestionResponse;
@@ -111,7 +114,8 @@ public class DpIngestionServiceImplTest {
     //
     
     /** The Ingestion Service API under test - only instantiate one */
-    private static DpIngestionServiceImpl       apiIngest;
+//    private static DpIngestionServiceImpl       apiIngest;
+    private static IIngestionService            apiIngest;
     
     
     //
@@ -123,10 +127,10 @@ public class DpIngestionServiceImplTest {
      */
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        DpIngestionConnection   connIngest = DpIngestionConnectionFactory.FACTORY.connect();
-        apiIngest = new DpIngestionServiceImpl(connIngest);
+//        DpIngestionConnection   connIngest = DpIngestionConnectionFactory.FACTORY.connect();
+//        apiIngest = new DpIngestionServiceImpl(connIngest);
         
-//        apiIngest = DpIngestionServiceFactory.FACTORY.connect();
+        apiIngest = DpIngestionServiceFactory.FACTORY.connect();
     }
 
     /**
@@ -193,7 +197,7 @@ public class DpIngestionServiceImplTest {
         try {
 
             // Create new Ingestion Service API, then shut it down
-            DpIngestionServiceImpl      apiTest = DpIngestionServiceFactory.FACTORY.connect();
+            IIngestionService      apiTest = DpIngestionServiceFactory.FACTORY.connect();
             
             apiTest.shutdown();
             Assert.assertTrue("Test Ingestion Service API reported NOT shutdown after shutdownSoft() operation.", apiTest.isShutdown());
@@ -218,7 +222,7 @@ public class DpIngestionServiceImplTest {
 
         try {
             // Create new Ingestion Service API, then shut it down hard
-            DpIngestionServiceImpl      apiTest = DpIngestionServiceFactory.FACTORY.connect();
+            IIngestionService      apiTest = DpIngestionServiceFactory.FACTORY.connect();
             
             apiTest.shutdownNow();
             Assert.assertTrue("Test Ingestion Service API reported NOT shutdown after shutdownNow() operation.", apiTest.isShutdown());

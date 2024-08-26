@@ -33,6 +33,7 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase;
+import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceFutureStub;
@@ -40,19 +41,24 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
 
 /**
  * <p>
- * Connection factory for <code>DpIngestionStream</code> instances supporting the <code>IIngestionStream</code> interface.
+ * Connection factory for <code>DpIngestionStreamDeprecated</code> instances supporting the <code>IIngestionStream</code> interface.
  * </p>
  * <p>
  * <h2>NOTES:</h2>
- * The <code>DpIngestionStream</code> implementation is currently being deprecated.
+ * The <code>DpIngestionStreamDeprecated</code> implementation is currently being deprecated.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Apr 27, 2024
- *
  */
+//@Deprecated(since="Aug 22, 2024", forRemoval=true)
 public class DpIngestionStreamFactory extends
-        DpServiceApiFactoryBase<DpIngestionStream, DpIngestionConnection, DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> {
+        DpServiceApiFactoryBase<IIngestionStream, 
+                                DpIngestionConnection, 
+                                DpIngestionServiceGrpc, 
+                                DpIngestionServiceBlockingStub, 
+                                DpIngestionServiceFutureStub, 
+                                DpIngestionServiceStub> {
 
     //
     // Application Resources
@@ -130,7 +136,6 @@ public class DpIngestionStreamFactory extends
     //
     // DpServiceApiFactoryBase Abstract Methods
     //
-    
 
     /**
      *
@@ -149,10 +154,10 @@ public class DpIngestionStreamFactory extends
      * @see @see com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#apiFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
      */
     @Override
-    protected DpIngestionStream apiFrom(DpIngestionConnection conn) throws DpGrpcException {
-        DpIngestionStream       isApi = DpIngestionStream.from(conn);
+    protected IIngestionStream apiFrom(DpIngestionConnection conn) throws DpGrpcException {
+        IIngestionStream    apiIngest = DpIngestionStreamImpl.from(conn);
         
-        return isApi;
+        return apiIngest;
     }
 
 }

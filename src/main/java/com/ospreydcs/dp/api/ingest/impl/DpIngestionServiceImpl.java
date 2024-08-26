@@ -80,7 +80,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * of <code>IngestionFrame</code> are ingested one at a time using single, unary, RPC operations.
  * Here, ingestion frame may be subject to gRPC message size limitations.  If the memory allocation
  * of an ingestion frame is too large the ingestion operation can be rejected.  For large
- * ingestion frame use <code>{@link DpIngestionStream}</code>
+ * ingestion frame use <code>{@link DpIngestionStreamDeprecated}</code>
  * </p>
  * <p>
  * <h2>Provider Registration</h2>

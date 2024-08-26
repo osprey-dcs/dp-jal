@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionStream.java
+ * File:	DpIngestionStreamDeprecated.java
  * Package: com.ospreydcs.dp.api.ingest
- * Type: 	DpIngestionStream
+ * Type: 	DpIngestionStreamDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -40,7 +40,7 @@ import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor;
+import com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
 import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
@@ -98,19 +98,19 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
  * Only one data stream can be open at any instance.  However, a single interface data stream
  * may use multiple gRPC data stream to transmit ingestion data (gRPC channels can support multiple
  * gRPC data stream).  If clients require multiple, concurrent data stream they should create a 
- * <code>DpIngestionStream</code> instance for each stream.  Note that each instance will 
+ * <code>DpIngestionStreamDeprecated</code> instance for each stream.  Note that each instance will 
  * manage its own gRPC channel object.
  * </p>
  * <p>
  * <h2>Instance Creation</h2>
- * In generation object of <code>DpIngestionStream</code> should be obtained from the connection
+ * In generation object of <code>DpIngestionStreamDeprecated</code> should be obtained from the connection
  * factory <code>{@link DpIngestionStreamFactory}</code>.  However, there are creator and 
  * constructor method available which require a <code>{@link DpIngestionConnection}</code>
  * instance (which may be obtained from connection factory <code>DpIngestionConnectionFactory</code>.
  * </p>
  * <p>
  * <h2>Instance Shutdown</h2>
- * All instances of <code>DpIngestionStream</code> should be shutdown when no longer needed.
+ * All instances of <code>DpIngestionStreamDeprecated</code> should be shutdown when no longer needed.
  * This will release all resources and increase overall performance.  See methods
  * <code>{@link #shutdown()}</code> and <code>{@link #shutdownNow()}</code>.
  * </p>
@@ -121,8 +121,8 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
  * @deprecated Replaced by DpIngestionStreamImpl
  */
 @Deprecated(since="Aug 20, 2024")
-public class DpIngestionStream extends
-        DpServiceApiBase<DpIngestionStream, DpIngestionConnection, DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> implements IIngestionStream {
+public class DpIngestionStreamDeprecated extends
+        DpServiceApiBase<DpIngestionStreamDeprecated, DpIngestionConnection, DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> implements IIngestionStream {
 
 
     //
@@ -131,7 +131,7 @@ public class DpIngestionStream extends
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>DpIngestionStream</code> attached to the 
+     * Creates and returns a new instance of <code>DpIngestionStreamDeprecated</code> attached to the 
      * given Ingestion Service connection.
      * </p>
      * <p>
@@ -148,10 +148,10 @@ public class DpIngestionStream extends
      * 
      * @param connIngest  the gRPC channel connection to the desired DP Ingestion Service
      *  
-     * @return new <code>DpIngestionStream</code> interfaces attached to the argument
+     * @return new <code>DpIngestionStreamDeprecated</code> interfaces attached to the argument
      */
-    public static DpIngestionStream from(DpIngestionConnection connIngest) {
-        return new DpIngestionStream(connIngest);
+    public static DpIngestionStreamDeprecated from(DpIngestionConnection connIngest) {
+        return new DpIngestionStreamDeprecated(connIngest);
     }
 
     
@@ -187,7 +187,7 @@ public class DpIngestionStream extends
     //
     
     /** The processor of all incoming ingestion data (only need one) */
-    private final IngestionStreamProcessor  processor;
+    private final IngestionStreamProcessorDep  processor;
     
     
     //
@@ -207,7 +207,7 @@ public class DpIngestionStream extends
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionStream</code> attached to the given
+     * Constructs a new instance of <code>DpIngestionStreamDeprecated</code> attached to the given
      * Ingestion Service connection.
      * </p>
      * <p>
@@ -226,10 +226,10 @@ public class DpIngestionStream extends
      * 
      * @see DpIngestionConnectionFactory
      */
-    public DpIngestionStream(DpIngestionConnection connIngest) {
+    public DpIngestionStreamDeprecated(DpIngestionConnection connIngest) {
         super(connIngest);
         
-        this.processor = IngestionStreamProcessor.from(connIngest);
+        this.processor = IngestionStreamProcessorDep.from(connIngest);
     }
     
     

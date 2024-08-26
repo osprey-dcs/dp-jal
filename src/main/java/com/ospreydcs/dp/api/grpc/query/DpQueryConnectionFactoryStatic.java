@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryConnectionFactoryDeprecated.java
+ * File:	DpQueryConnectionFactoryStatic.java
  * Package: com.ospreydcs.dp.api.grpc.query
- * Type: 	DpQueryConnectionFactoryDeprecated
+ * Type: 	DpQueryConnectionFactoryStatic
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -55,11 +55,9 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  *
  *
  * @see DpGrpcConnectionFactory
- * 
- * @deprecated Please use <code>{@link DpQueryConnectionFactory}</code> instead.
  */
-@Deprecated(since="Jan 15, 2024", forRemoval=true)
-public final class DpQueryConnectionFactoryDeprecated {
+//@Deprecated(since="Jan 15, 2024", forRemoval=true)
+public final class DpQueryConnectionFactoryStatic {
     
     
     //
@@ -251,10 +249,10 @@ public final class DpQueryConnectionFactoryDeprecated {
     
     /**
      * <p>
-     * Prevents creation of <code>DpQueryConnectionFactoryDeprecated</code> instances.
+     * Prevents creation of <code>DpQueryConnectionFactoryStatic</code> instances.
      * </p>
      */
-    private DpQueryConnectionFactoryDeprecated(DpGrpcConnectionConfig cfgDefault) {
+    private DpQueryConnectionFactoryStatic(DpGrpcConnectionConfig cfgDefault) {
 //        super(DpQueryServiceGrpc.class, cfgDefault)
     }
 

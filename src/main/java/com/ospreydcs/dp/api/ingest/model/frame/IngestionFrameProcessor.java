@@ -33,7 +33,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -63,6 +62,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * This class performs several functions, including basic ingestion frame buffering, ingestion frame
  * decomposition, and conversion of ingestion frames to <code>IngestDataRequest</code> messages.
  * The ultimate use for class instances is as a supplier of <code>IngestDataRequest</code> messages.
+ * Instance of this class are used by <code>DpIngestionStreamImpl</code>.
  * </p>
  * <p>
  * <h2>Activation</h2>

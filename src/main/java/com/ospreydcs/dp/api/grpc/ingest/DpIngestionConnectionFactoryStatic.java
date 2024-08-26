@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionConnectionFactoryDeprecated.java
+ * File:	DpIngestionConnectionFactoryStatic.java
  * Package: com.ospreydcs.dp.api.grpc.ingest
- * Type: 	DpIngestionConnectionFactoryDeprecated
+ * Type: 	DpIngestionConnectionFactoryStatic
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -54,11 +54,9 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
  * @since Dec 28, 2023
  *
  * @see DpGrpcConnectionFactory
- * 
- * @deprecated  Please use DpIngestionConnectionFactory instead.
  */
-@Deprecated(since="Jan 15, 2024", forRemoval=true)
-public final class DpIngestionConnectionFactoryDeprecated{
+//@Deprecated(since="Jan 15, 2024", forRemoval=true)
+public final class DpIngestionConnectionFactoryStatic{
 
     
     //    
@@ -293,10 +291,10 @@ public final class DpIngestionConnectionFactoryDeprecated{
    
    /**
     * <p>
-    * Prevents creation of <code>DpIngestionConnectionFactoryDeprecated</code> instances.
+    * Prevents creation of <code>DpIngestionConnectionFactoryStatic</code> instances.
     * </p>
     */
-   private DpIngestionConnectionFactoryDeprecated() {
+   private DpIngestionConnectionFactoryStatic() {
    }
 
 }

@@ -35,6 +35,7 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase;
+import com.ospreydcs.dp.api.ingest.IIngestionService;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceFutureStub;
@@ -81,8 +82,14 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
  * @see DpServiceApiFactoryBase
  * @see DpGprcConnectionConfig
  */
+//@Deprecated(since="Aug 22, 2024", forRemoval=true)
 public final class DpIngestionServiceFactory extends
-        DpServiceApiFactoryBase<DpIngestionServiceImpl, DpIngestionConnection, DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> {
+        DpServiceApiFactoryBase<IIngestionService, 
+                                DpIngestionConnection, 
+                                DpIngestionServiceGrpc, 
+                                DpIngestionServiceBlockingStub, 
+                                DpIngestionServiceFutureStub, 
+                                DpIngestionServiceStub> {
 
 
     //
@@ -180,10 +187,10 @@ public final class DpIngestionServiceFactory extends
      * @see @see com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#apiFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
      */
     @Override
-    protected DpIngestionServiceImpl apiFrom(DpIngestionConnection conn) throws DpGrpcException {
-        DpIngestionServiceImpl      isApi = DpIngestionServiceImpl.from(conn);
+    protected IIngestionService apiFrom(DpIngestionConnection conn) throws DpGrpcException {
+        DpIngestionServiceImpl      apiIngest = DpIngestionServiceImpl.from(conn);
         
-        return isApi;
+        return apiIngest;
     }
 
 }

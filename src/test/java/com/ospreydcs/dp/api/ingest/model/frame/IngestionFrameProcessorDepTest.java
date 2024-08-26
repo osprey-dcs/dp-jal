@@ -55,7 +55,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest.IngestionDataFrame;
 
 /**
  * <p>
- * JUnit test cases for class <code>IngestionFrameProcessorDep</code>.
+ * JUnit test cases for class <code>IngestionFrameProcessorDeprecated</code>.
  * </p>
  *
  * @author Christopher K. Allen
@@ -104,7 +104,7 @@ public class IngestionFrameProcessorDepTest {
     
     
     /** A processor available for general testing -  activated for each test case in default configuration */
-    private IngestionFrameProcessorDep processor;
+    private IngestionFrameProcessorDeprecated processor;
     
     
     // 
@@ -130,7 +130,7 @@ public class IngestionFrameProcessorDepTest {
      */
     @Before
     public void setUp() throws Exception {
-        this.processor = IngestionFrameProcessorDep.from(REC_PROVIDER_UID);
+        this.processor = IngestionFrameProcessorDeprecated.from(REC_PROVIDER_UID);
         this.processor.activate();
     }
 
@@ -149,7 +149,7 @@ public class IngestionFrameProcessorDepTest {
     
     
     /**
-     * Test method for {@link IngestionFrameProcessorDep#createRequest(IngestionFrame)}. 
+     * Test method for {@link IngestionFrameProcessorDeprecated#createRequest(IngestionFrame)}. 
      */
 //    @Test
 //    public final void testCreateRequest() {
@@ -167,11 +167,11 @@ public class IngestionFrameProcessorDepTest {
 //    }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#from(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#from(int)}.
      */
     @Test
     public final void testFrom() {
-        IngestionFrameProcessorDep     prcrFrom = IngestionFrameProcessorDep.from(REC_PROVIDER_UID);
+        IngestionFrameProcessorDeprecated     prcrFrom = IngestionFrameProcessorDeprecated.from(REC_PROVIDER_UID);
         
         // Start it up 
         boolean bolActivated = prcrFrom.activate();
@@ -192,11 +192,11 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#IngestionFrameProcessor(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#IngestionFrameProcessor(int)}.
      */
     @Test
     public final void testIngestionFrameProcessor() {
-        IngestionFrameProcessorDep     prcrCtor = new IngestionFrameProcessorDep(REC_PROVIDER_UID);
+        IngestionFrameProcessorDeprecated     prcrCtor = new IngestionFrameProcessorDeprecated(REC_PROVIDER_UID);
         
         // Start it up 
         boolean bolActivated = prcrCtor.activate();
@@ -210,7 +210,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#enableConcurrency(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#enableConcurrency(int)}.
      */
     @Test
     public final void testEnableConcurrency() {
@@ -230,7 +230,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#disableConcurrency()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#disableConcurrency()}.
      */
     @Test
     public final void testDisableConcurrency() {
@@ -250,7 +250,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#enableFrameDecomposition(long)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#enableFrameDecomposition(long)}.
      */
     @Test
     public final void testEnableFrameDecomposition() {
@@ -274,7 +274,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#disableFrameDecomposition()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#disableFrameDecomposition()}.
      */
     @Test
     public final void testDisableFrameDecomposition() {
@@ -298,7 +298,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#enableBackPressure(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#enableBackPressure(int)}.
      */
     @Test
     public final void testEnableBackPressure() {
@@ -322,7 +322,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#disableBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#disableBackPressure()}.
      */
     @Test
     public final void testDisableBackPressure() {
@@ -346,11 +346,11 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#activate()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#activate()}.
      */
     @Test
     public final void testActivate() {
-        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(REC_PROVIDER_UID);
+        IngestionFrameProcessorDeprecated prcrTest = IngestionFrameProcessorDeprecated.from(REC_PROVIDER_UID);
         
         Assert.assertFalse(prcrTest.isSupplying());
         prcrTest.activate();
@@ -367,11 +367,11 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#shutdown()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#shutdown()}.
      */
     @Test
     public final void testShutdown() {
-        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(REC_PROVIDER_UID);
+        IngestionFrameProcessorDeprecated prcrTest = IngestionFrameProcessorDeprecated.from(REC_PROVIDER_UID);
         
         Assert.assertFalse(prcrTest.isSupplying());
         prcrTest.activate();
@@ -388,11 +388,11 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#shutdownNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#shutdownNow()}.
      */
     @Test
     public final void testShutdownNow() {
-        IngestionFrameProcessorDep prcrTest = IngestionFrameProcessorDep.from(REC_PROVIDER_UID);
+        IngestionFrameProcessorDeprecated prcrTest = IngestionFrameProcessorDeprecated.from(REC_PROVIDER_UID);
         
         Assert.assertFalse(prcrTest.isSupplying());
         prcrTest.activate();
@@ -403,7 +403,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#addFrame(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#addFrame(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
      */
     @Test
     public final void testAddFrame() {
@@ -440,7 +440,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#addFrames(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#addFrames(java.util.List)}.
      */
     @Test
     public final void testAddFrames() {
@@ -471,7 +471,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#awaitQueueReady()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#awaitQueueReady()}.
      */
     @Test
     public final void testAwaitBackPressure() {
@@ -515,7 +515,7 @@ public class IngestionFrameProcessorDepTest {
             Instant     insStop = Instant.now();
             Duration    durWait = Duration.between(insStart, insStop);
             
-            System.out.println("The IngestionFrameProcessorDep#awaitBackPressure() blocked for " + durWait.toString());
+            System.out.println("The IngestionFrameProcessorDeprecated#awaitBackPressure() blocked for " + durWait.toString());
             
             thdTake.join();
             Instant     insThreadStop = Instant.now();;
@@ -529,7 +529,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link IngestionFrameProcessorDep#awaitRequestQueueEmpty()} 
+     * Test method for {@link IngestionFrameProcessorDeprecated#awaitRequestQueueEmpty()} 
      */
     @Test
     public final void testAwaitRequestQueueEmpty() {
@@ -581,7 +581,7 @@ public class IngestionFrameProcessorDepTest {
             Instant     insStop = Instant.now();
             Duration    durWait = Duration.between(insStart, insStop);
             
-            System.out.println("The IngestionFrameProcessorDep#awaitRequestQueueEmpty() blocked for " + durWait.toString());
+            System.out.println("The IngestionFrameProcessorDeprecated#awaitRequestQueueEmpty() blocked for " + durWait.toString());
             
             this.processor.shutdown();
             thdConsumer.interrupt();
@@ -598,7 +598,7 @@ public class IngestionFrameProcessorDepTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#isSupplying()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#isSupplying()}.
      */
     @Test
     public final void testIsActive() {
@@ -633,7 +633,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#take()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#take()}.
      */
     @Test
     public final void testTake() {
@@ -685,7 +685,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#poll()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#poll()}.
      */
     @Test
     public final void testPoll() {
@@ -731,7 +731,7 @@ public class IngestionFrameProcessorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDep#poll(long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated#poll(long, java.util.concurrent.TimeUnit)}.
      */
     @Test
     public final void testPollLongTimeUnit() {

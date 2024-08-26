@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionFrameProcessorDep.java
+ * File:	IngestionFrameProcessorDeprecated.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionFrameProcessorDep
+ * Type: 	IngestionFrameProcessorDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -67,14 +67,14 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * </p>
  * <p>
  * <h2>Activation</h2>
- * A <code>IngestionFrameProcessorDep</code> instance must be activated before attempting
+ * A <code>IngestionFrameProcessorDeprecated</code> instance must be activated before attempting
  * to add ingestion frames; use the method <code>{@link #activate()}</code>.  Likewise,
  * an active processor should be shutdown when no longer needed; use methods
  * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.
  * </p>
  * <p>
  * <h2>Processing Options</h2>
- * The <code>IngestionFrameProcessorDep</code> class has several processing options which
+ * The <code>IngestionFrameProcessorDeprecated</code> class has several processing options which
  * should be set before activation.
  * <ul>
  * <li>
@@ -92,9 +92,9 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <br/>
  * <li>
  * <code>{@link #enableBackPressure(int)}</code> - The ability to add ingestion frames
- * to an <code>IngestionFrameProcessorDep</code> can be blocked when using this option.
+ * to an <code>IngestionFrameProcessorDeprecated</code> can be blocked when using this option.
  * Specifically, when the outgoing (processed) message queue reaches the given capacity
- * the <code>IngestionFrameProcessorDep</code> will block when adding additional frames.
+ * the <code>IngestionFrameProcessorDeprecated</code> will block when adding additional frames.
  * The blocking continues until the outgoing message queue drops below capacity.
  * In this fashion, clients will experience "back pressure" from consumers of 
  * <code>IngestDataRequest</code> messages when they become backlogged.
@@ -164,7 +164,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * @deprecated  Ingestion frame processing was refactored and this class was decomposed into multiple (less complicated) classes
  */
 @Deprecated(since="July 25, 2024", forRemoval=true)
-public final class IngestionFrameProcessorDep implements IMessageSupplier<IngestDataRequest> {
+public final class IngestionFrameProcessorDeprecated implements IMessageSupplier<IngestDataRequest> {
 
     
     //
@@ -173,7 +173,7 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
     
     /**
      * <p>
-     * Creates a new instance of <code>IngestionFrameProcessorDep</code> ready for processing
+     * Creates a new instance of <code>IngestionFrameProcessorDeprecated</code> ready for processing
      * of ingestion frames.
      * </p>
      * <p>
@@ -182,17 +182,17 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
      * </p>
      * <p>
      * <h2>Activation</h2>
-     * A <code>IngestionFrameProcessorDep</code> instance must be activated before attempting
+     * A <code>IngestionFrameProcessorDeprecated</code> instance must be activated before attempting
      * to add ingestion frames; use the method <code>{@link #activate()}</code>.  Likewise,
      * an active processor should be shutdown when no longer needed; use methods
      * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.
      * </p>
      * <p>
      * <h2>Processing Options</h2>
-     * The <code>IngestionFrameProcessorDep</code> class has several processing options which
+     * The <code>IngestionFrameProcessorDeprecated</code> class has several processing options which
      * should be set before activation.
      * <h2>Processing Options</h2>
-     * The <code>IngestionFrameProcessorDep</code> class has several processing options which
+     * The <code>IngestionFrameProcessorDeprecated</code> class has several processing options which
      * should be set before activation.
      * <ul>
      * <li>
@@ -210,9 +210,9 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
      * <br/>
      * <li>
      * <code>{@link #enableBackPressure(int)}</code> - The ability to add ingestion frames
-     * to an <code>IngestionFrameProcessorDep</code> can be blocked when using this option.
+     * to an <code>IngestionFrameProcessorDeprecated</code> can be blocked when using this option.
      * Specifically, when the outgoing (processed) message queue reaches the given capacity
-     * the <code>IngestionFrameProcessorDep</code> will block when adding additional frames.
+     * the <code>IngestionFrameProcessorDeprecated</code> will block when adding additional frames.
      * The blocking continues until the outgoing message queue drops below capacity.
      * In this fashion, clients will experience "back pressure" from consumers of 
      * <code>IngestDataRequest</code> messages when they become backlogged.
@@ -224,10 +224,10 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
      * 
      * @param recProviderUid data provider unique identifier assigned to all <code>IngestDataRequest</code> messages
      * 
-     * @return new <code>IngestionFrameProcessorDep</code> instance ready for processing
+     * @return new <code>IngestionFrameProcessorDeprecated</code> instance ready for processing
      */
-    public static IngestionFrameProcessorDep from(ProviderUID recProviderUid) {
-        return new IngestionFrameProcessorDep(recProviderUid);
+    public static IngestionFrameProcessorDeprecated from(ProviderUID recProviderUid) {
+        return new IngestionFrameProcessorDeprecated(recProviderUid);
     }
     
     
@@ -406,7 +406,7 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionFrameProcessorDep</code>.
+     * Constructs a new instance of <code>IngestionFrameProcessorDeprecated</code>.
      * </p>
      * <p>
      * Note that the data provider UID given here is used within all <code>IngestDataReuest</code>
@@ -415,7 +415,7 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
      *
      * @param recProviderUid    the data provider unique identifier
      */
-    public IngestionFrameProcessorDep(ProviderUID recProviderUid) {
+    public IngestionFrameProcessorDeprecated(ProviderUID recProviderUid) {
         this.recProviderUid = recProviderUid;
     }
 
@@ -727,7 +727,7 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
      * </p>
      * <p>
      * <h2>Thread Tasks</h2>
-     * <code>IngestionFrameProcessorDep</code> instances maintain pools of processing threads.
+     * <code>IngestionFrameProcessorDeprecated</code> instances maintain pools of processing threads.
      * Thread tasks take ownership of resources offered by clients and, thus, these resource 
      * may not appear in any of their respective queue buffers until the thread task has 
      * completed is processing.  This method allows clients to determine if there are
@@ -1476,7 +1476,7 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
 //     * <p>
 //     * <h2>Computation</h2>
 //     * The return value is computed by taking the hash code for the 
-//     * <code>IngestionFrameProcessorDep</code> class and incrementing it by the current value
+//     * <code>IngestionFrameProcessorDeprecated</code> class and incrementing it by the current value
 //     * of the class frame counter <code>{@link #cntFrames}</code> (which is then incremented).
 //     * The <code>long</code> value is then converted to a string value and returned.
 //     * </p>
@@ -1492,9 +1492,9 @@ public final class IngestionFrameProcessorDep implements IMessageSupplier<Ingest
 //    private String  createNewRequestId() {
 //        long lngHash;
 //        synchronized (objClassLock) {
-//            lngHash = IngestionFrameProcessorDep.class.hashCode() + IngestionFrameProcessorDep.cntFrames;
+//            lngHash = IngestionFrameProcessorDeprecated.class.hashCode() + IngestionFrameProcessorDeprecated.cntFrames;
 //            
-//            IngestionFrameProcessorDep.cntFrames++;
+//            IngestionFrameProcessorDeprecated.cntFrames++;
 //        }
 //        
 //        String strClientId = Long.toString(lngHash);
