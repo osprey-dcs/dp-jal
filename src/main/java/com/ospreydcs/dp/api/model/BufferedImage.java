@@ -487,7 +487,7 @@ public class BufferedImage implements Serializable {
      * 
      * @param strName new image name 
      */
-    public void setStrName(String strName) {
+    public void setName(String strName) {
         this.strName = strName;
     }
 
@@ -507,7 +507,7 @@ public class BufferedImage implements Serializable {
      * 
      * @param fmtImage new image format identifier 
      */
-    public void setTypImage(Format fmtImage) {
+    public void setFormat(Format fmtImage) {
         this.fmtImage = fmtImage;
     }
 

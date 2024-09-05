@@ -98,7 +98,7 @@ public class TimeDuration {
     
     
     //
-    // Construtors
+    // Constructors
     //
     
     /**
