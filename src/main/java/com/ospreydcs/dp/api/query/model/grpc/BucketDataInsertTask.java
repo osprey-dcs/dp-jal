@@ -245,7 +245,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
         
         // TODO - Remove
         if (!this.bolSuccess) {
-            System.out.println("----------- " + JavaRuntime.getQualifiedCallerNameSimple() + "----------");
+            System.out.println("----------- " + JavaRuntime.getQualifiedMethodNameSimple() + "----------");
             System.out.println("  A Bucket Insertion FAILED.");
         }
     }

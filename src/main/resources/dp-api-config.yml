@@ -76,20 +76,32 @@
 #
 #
 
+#platform:
+#   UID: Osprey-Dev
+#   arch: arm64
+#   OS: macOS
+#   cores: 10
+#   location: office
+#   description: development platform
+
 archive:    # Data Platform data archive properties
    inception: 2023-09-01T00:00:00.0Z # ealiest archive timestamp      : DP_API_ARCHIVE_INCEPTION
    
 ingest: # Data Platform Ingestion Service client API default configuration parameters
+   decompose:    # IngestionFrame decomposition parameters
+      active: true                # use data binning            : DP_API_INGEST_DECOMPOSE_ACTIVE
+      maxSize: 4000000            # max bin size (bytes)        : DP_API_INGEST_DECOMPOSE_MAX_SIZE
    stream:       # General gRPC streaming parameter for Ingestion Service operations
       active: true                 # use streaming parameters    : DP_API_INGEST_STREAM_ACTIVE
       type: BIDIRECTIONAL           # preferred- DpGrpcStreamType : DP_API_INGEST_STREAM_TYPE
-      buffer:              # data buffering and queueing parameters
+      buffer:              # data buffering and queueing parameters (transmission staging)
          active: true                # apply data buffering/queue  : DP_API_INGEST_STREAM_BUFFER_ACTIVE
-         size: 100                   # buffer/queue size (messages): DP_API_INGEST_STREAM_BUFFER_SIZE    
-         backPressure : true         # enable queue back pressure  : DP_API_INGEST_STREAM_BUFFER_BACKPRESSURE
-      binning:             # data binning parameters
-         active: true                # use data binning            : DP_API_INGEST_STREAM_BINNING_ACTIVE
-         maxSize: 4000000            # max bin size (bytes)        : DP_API_INGEST_STREAM_BINNING_MAX_SIZE
+         size: 100                   # buffer/queue size (messages): DP_API_INGEST_STREAM_BUFFER_SIZE
+         allocation: 400000000       # max buffer allocation (bytes): DP_API_INGEST_STREAM_BUFFER_ALLOCATION   
+         backPressure : true         # enable ingestion throttling : DP_API_INGEST_STREAM_BUFFER_BACKPRESSURE
+#      binning:             # data binning parameters
+#         active: true                # use data binning            : DP_API_INGEST_STREAM_BINNING_ACTIVE
+#         maxSize: 4000000            # max bin size (bytes)        : DP_API_INGEST_STREAM_BINNING_MAX_SIZE
       concurrency:         # multiple,concurrent gRPC stream parameters
          active: true                # use multiple streams when possible : DP_API_INGEST_STREAM_CONCURRENCY_ACTIVE
          pivotSize: 10               # currency activation size (frames)  : DP_API_INGEST_STREAM_CONCURRENCY_PIVOT_SIZE
@@ -97,12 +109,12 @@ ingest: # Data Platform Ingestion Service client API default configuration param
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency            : DP_API_INGEST_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_INGEST_CONCURRENCY_PIVOT_SIZE
-      threadCount: 7                 # worker thread count        : DP_API_INGEST_CONCURRENCY_THREAD_COUNT
+      threadCount: 3                 # worker thread count        : DP_API_INGEST_CONCURRENCY_THREAD_COUNT
    timeout:      # General query timeout properties (e.g., used for ingestion response wait timeout)
       active: true                   # apply timeout condition    : DP_API_INGEST_TIMEOUT_ACTIVE
-      limit: 30                      # request timeout limit      : DP_API_INGEST_TIMEOUT_LIMIT
+      limit: 10                      # request timeout limit      : DP_API_INGEST_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_INGEST_TIMEOUT_UNIT
-   logging:      # General Query Service logging services
+   logging:      # General Ingestion Service logging services
       active: true                   # is logging active              : DP_API_INGEST_LOGGING_ACTIVE
       level: DEBUG                   # logger output level if active  : DP_API_INGEST_LOGGING_LEVEL
 
@@ -133,10 +145,11 @@ query:      # Data Platform Query Service client API default configuration param
       buffer:              # data buffering and queueing parameters
          active: false               # apply data buffering/queue  : DP_API_QUERY_STREAM_BUFFER_ACTIVE
          size: 100                   # buffer/queue size (messages): DP_API_QUERY_STREAM_BUFFER_SIZE    
-         backPressure : true         # enable queue back pressure  : DP_API_QUERY_STREAM_BUFFER_BACKPRESSURE
-      binning:             # data binning parameters
-         active: false               # use data binning            : DP_API_QUERY_STREAM_BINNING_ACTIVE
-         maxSize: 4000000            # max bin size (bytes)        : DP_API_QUERY_STREAM_BINNING_MAX_SIZE
+         allocation: 400000000       # max buffer allocation (bytes): DP_API_INGEST_STREAM_BUFFER_ALLOCATION   
+         backPressure : true         # enable query throttling      : DP_API_QUERY_STREAM_BUFFER_BACKPRESSURE
+#      binning:             # data binning parameters
+#         active: false               # use data binning            : DP_API_QUERY_STREAM_BINNING_ACTIVE
+#         maxSize: 4000000            # max bin size (bytes)        : DP_API_QUERY_STREAM_BINNING_MAX_SIZE
       concurrency:         # multiple,concurrent gRPC stream parameters
          active: false               # use multiple streams when possible : DP_API_QUERY_STREAM_CONCURRENCY_ACTIVE
          pivotSize: 4000000          # currency activation size (bytes)   : DP_API_QUERY_STREAM_CONCURRENCY_PIVOT_SIZE

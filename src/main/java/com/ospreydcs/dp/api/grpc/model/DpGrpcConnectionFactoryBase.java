@@ -137,7 +137,7 @@ import io.grpc.TlsChannelCredentials;
  * <h2>WARNING:</h2>
  * All created <code>DpGrpcConnection</code> derived objects should be shut down when no longer 
  * needed using
- * <code>{@link #shutdownSoft()} or 
+ * <code>{@link #shutdown()} or 
  * <code>{@link #shutdownNow()}</code>.  
  * Otherwise gRPC resources are not released and performance degrades.
  * </p>
@@ -442,10 +442,17 @@ public abstract class DpGrpcConnectionFactoryBase<
      * to the supported <em>Data Platform</em> service identified by <code>ServiceGrpc</code>.
      * </p>
      * <p>
-     * Transport security can be disabled with the <code>bolPlainText</code> argument set to 
-     * <code>false</code>.  Otherwise TLS security is enforced using the default system configuration.
-     * </p>
-     * No default parameters are used.
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Note that Transport Layer Security (TLS) is inherently disabled with the <code>bolPlainText</code> 
+     * argument set to <code>true</code>.  Otherwise TLS security is enforced using the argument 
+     * <code>bolTlsActive</code>.
+     * </li>
+     * <li>
+     * No default parameters connection are used.
+     * </li>
+     * </ul>
      * </p>
      * 
      * @param strHost       network URL of the desired service

@@ -25,8 +25,9 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest.model;
+package com.ospreydcs.dp.api.ingest;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -44,8 +45,10 @@ import org.epics.pvdata.pv.PVStructure;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
+import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.model.UniformSamplingClock;
 import com.ospreydcs.dp.api.model.table.StaticDataColumn;
 import com.ospreydcs.dp.api.util.Epics;
@@ -92,47 +95,8 @@ import com.ospreydcs.dp.api.util.JavaSize;
  * @since Mar 29, 2024
  *
  */
-public class IngestionFrame {
+public class IngestionFrame implements Serializable {
 
-    
-    //
-    // Instance Resources
-    //
-    
-    /** Vector of column data timestamps for each data column of time-series data */
-    private ArrayList<Instant>      vecTms = null;
-    
-    /** Alternate sampling clock for data columns of time series data */
-    private UniformSamplingClock    clkTms = null;
-
-    
-    /** Array of column data for the table - for fast column index lookup */
-    private ArrayList<IDataColumn<Object>>      vecColData = null;
-    
-    /** Map of column names to the column data - for column name lookup  */
-    private Map<String, IDataColumn<Object>>    mapNmToCol = new HashMap<>();
-    
-    /** Map of column names to column index - for column index lookup */
-    private Map<String, Integer>                mapNmToInd = new HashMap<>();
-
-    
-    /** Optional name for ingestion frame */
-    private String              strLabelFrame = null;
-    
-    /** Optional timestamp for ingestion frame itself */
-    private Instant             insTmsFrame = null;
-    
-    /** Optional collection of (name, value) attribute pairs for the data frame */
-    private Map<String, String> mapAttributes = new HashMap<>();
-
-    
-    /** Optional snapshot domain */
-    private TimeInterval        domSnapshot = null;
-    
-    /** Optional snapshot UID */
-    private String              strSnapshotUid = null;
-
-    
     //
     // Creators
     //
@@ -309,6 +273,67 @@ public class IngestionFrame {
     
     
     //
+    // Class Constants
+    //
+    
+    /** Serialization UID for interface <code>Serializable</code> */
+    private static final long serialVersionUID = -7002454987009867231L;
+
+    
+    //
+    // Defining Parameters
+    //
+    
+    /** Vector of column data timestamps for each data column of time-series data */
+    private ArrayList<Instant>      vecTms = null;
+    
+    /** Alternate sampling clock for data columns of time series data */
+    private UniformSamplingClock    clkTms = null;
+    
+    /** Array of column data for the table - for fast column index lookup */
+    private ArrayList<IDataColumn<Object>>      vecColData = null;
+
+    
+    //
+    // Optional Parameters
+    //
+    
+    /** The data provider UID (unique name) */
+    private ProviderUID         recProviderUid = null;
+    
+    /** The client request unique identifier */
+    private ClientRequestUID     recClientUid = null;
+    
+    
+    /** Optional name for ingestion frame */
+    private String              strLabelFrame = null;
+    
+    /** Optional timestamp for ingestion frame itself */
+    private Instant             insTmsFrame = null;
+    
+    /** Optional collection of (name, value) attribute pairs for the data frame */
+    private Map<String, String> mapAttributes = new HashMap<>();
+
+    
+    /** Optional snapshot domain */
+    private TimeInterval        domSnapshot = null;
+    
+    /** Optional snapshot UID */
+    private String              strSnapshotUid = null;
+
+    
+    //
+    // Instance Resources 
+    //
+    
+    /** Map of column names to the column data - for column name lookup  */
+    private Map<String, IDataColumn<Object>>    mapNmToCol = new HashMap<>();
+    
+    /** Map of column names to column index - for column index lookup */
+    private Map<String, Integer>                mapNmToInd = new HashMap<>();
+
+    
+    //
     // Constructors
     //
     
@@ -333,6 +358,7 @@ public class IngestionFrame {
      * </p> 
      */
     public IngestionFrame() {
+        this.recClientUid = ClientRequestUID.random();
         this.vecColData = new ArrayList<>();
     }
     
@@ -366,6 +392,8 @@ public class IngestionFrame {
      * @see #checkFrameConsistency()
      */
     public IngestionFrame(UniformSamplingClock clk, ArrayList<IDataColumn<Object>> lstCols) throws IllegalArgumentException {
+        this.recClientUid = ClientRequestUID.random();
+
         this.clkTms = clk;
         this.vecColData = lstCols;
         this.mapNmToCol = this.createNmToColMap(lstCols);
@@ -410,6 +438,8 @@ public class IngestionFrame {
      */
     public IngestionFrame(UniformSamplingClock clk, ArrayList<IDataColumn<Object>> lstCols, Map<String, String> mapAttrs) 
             throws IllegalArgumentException {
+        this.recClientUid = ClientRequestUID.random();
+
         this.clkTms = clk;
         this.vecColData = lstCols;
         this.mapAttributes.putAll(mapAttrs);
@@ -490,6 +520,8 @@ public class IngestionFrame {
      */
     public IngestionFrame(ArrayList<Instant> vecTms, ArrayList<IDataColumn<Object>> lstCols, Map<String, String> mapAttrs) 
             throws IllegalArgumentException {
+
+        this.recClientUid = ClientRequestUID.random();
      
         this.vecTms = vecTms;
         this.vecColData = lstCols;
@@ -765,6 +797,8 @@ public class IngestionFrame {
     public void copyOptionalProperties(final IngestionFrame frmSource) {
         
         // Assign any optional properties from source to this ingestion frame
+        this.setProviderUid(frmSource.recProviderUid);
+        this.setClientRequestUid(frmSource.recClientUid);
         this.setFrameLabel(frmSource.strLabelFrame);
         this.setFrameTimestamp(frmSource.insTmsFrame);
         this.addAttributes(frmSource.mapAttributes);
@@ -772,6 +806,39 @@ public class IngestionFrame {
         // Assign snapshot properties from source to this ingestion frame
         this.setSnapshotId(frmSource.strSnapshotUid);
         this.setSnapshotDomain(frmSource.domSnapshot);
+    }
+    
+    /**
+     * <p>
+     * Sets the Data Provider UID for the ingestion frame.
+     * </p>
+     * 
+     * @param recProviderUid    UID record for provider producing this frame
+     */
+    public void setProviderUid(ProviderUID recProviderUid) {
+        this.recProviderUid = recProviderUid;
+    }
+    
+    /**
+     * <p>
+     * Sets the client request UID for the ingestion frame.
+     * </p>
+     * <p>
+     * Under normal operation the request UID is set during construction of the ingestion frame
+     * and does not need to be modified.  However, this method is available for ingestion frame
+     * decomposition when frame with memory allocation larger than maximum are decomposed into
+     * composite frames meeting the limit.  Each new frame requires a new request UID.   
+     * </p>
+     * <h2>WARNING</h2>
+     * The given argument must be universally unique within the request space of the Ingestion Service.
+     * All client ingest data requests must contain a unique identifier for later determination of 
+     * successful ingestion.  Be extremely careful when setting client request UIDs.  
+     * </p> 
+     * 
+     * @param recRequestUid new universally unique request ID 
+     */
+    public void setClientRequestUid(ClientRequestUID recRequestUid) {
+        this.recClientUid = recRequestUid;
     }
     
     /**
@@ -919,7 +986,7 @@ public class IngestionFrame {
         else if (this.vecTms != null)
             cntRows = this.vecTms.size();
         else {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                                + " - Neither a sampling clock or list of timestamps was set for the ingestion frame."; 
             
             return ResultStatus.newFailure(strMsg);
@@ -927,7 +994,7 @@ public class IngestionFrame {
         
         // Check that data columns were established
         if (this.vecColData == null || this.vecColData.isEmpty()) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - The ingestion frame has no data columns."; 
  
             return ResultStatus.newFailure(strMsg);
@@ -1126,10 +1193,18 @@ public class IngestionFrame {
      * </p>
      * <p>
      * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
      * The internal ordering of the data columns within the ingestion frame is not guaranteed.
      * Generally, however, if the frame used an initializing creator or constructor the ordering
      * is given by the column ordering there.  Additionally, columns added post construction generally
      * maintain their ordering.
+     * </li>
+     * <br/>
+     * <li>
+     * <s>If the argument is greater than the number of data columns then the original frame is returned.</s>
+     * If the argument is greater than the number of data columns then an exception is thrown.
+     * </ul>
      * </p>
      * <p>
      * <h2>WARNING:</h2>
@@ -1138,17 +1213,12 @@ public class IngestionFrame {
      * is a copy of the original frame and the current frame is empty.
      * </p> 
      * 
-     * @param colIndices unordered collection of frame column indexes to be removed from this frame 
+     * @param cntCols   number of data column to be removed from this ingestion frame
      * 
      * @return  new ingestion frame with the given columns (by indexes) with all other attributes identical
      * 
      * @throws IllegalStateException    the data frame has not been initialized and/or populated
      * @throws IndexOutOfBoundsException the argument contains at least one index out of bounds
-     * 
-     * @param cntCols
-     * @return
-     * @throws IllegalStateException
-     * @throws IndexOutOfBoundsException
      */
     public IngestionFrame removeColumnsByIndex(int cntCols) throws IllegalStateException, IndexOutOfBoundsException {
         
@@ -1776,6 +1846,27 @@ public class IngestionFrame {
         return !this.mapAttributes.isEmpty();
     }
     
+    /**
+     * <p>
+     * Returns the Data Provider UID for this ingestion frame.
+     * </p>
+     * 
+     * @return  UID for the Data Provider that produced this ingestion frame
+     */
+    public ProviderUID  getProviderUid() {
+        return this.recProviderUid;
+    }
+    
+    /**
+     * <p>
+     * Returns the universally unique data ingestion request identifier for the ingestion frame.
+     * </p>
+     *  
+     * @return  request UUID for the ingestion frame 
+     */
+    public ClientRequestUID getClientRequestUid() {
+        return this.recClientUid;
+    }
     
     /**
      * <p>

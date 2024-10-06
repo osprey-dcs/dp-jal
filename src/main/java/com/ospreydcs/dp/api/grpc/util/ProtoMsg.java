@@ -43,7 +43,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.ospreydcs.dp.api.common.AAdvancedApi;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
-import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.model.BufferedImage;
 import com.ospreydcs.dp.api.model.BufferedImage.Format;
 import com.ospreydcs.dp.api.model.DpSupportedType;
@@ -249,13 +249,12 @@ public final class ProtoMsg {
      * 
      * @return  a new <code>IngestionDataFrame</code> message populated with data from the argument
      * 
-     * @throws IllegalStateException    the argument was not initialized or contains incomplete data
      * @throws MissingResourceException the argument had no timestamp assignments
      * @throws TypeNotPresentException  an unsupported data type was contained in the arugment data
      * @throws ClassCastException       bad type cast or structured data within argument was not converted 
      */
     public static IngestDataRequest.IngestionDataFrame from(IngestionFrame frame) 
-            throws IllegalStateException, MissingResourceException, TypeNotPresentException, ClassCastException  {
+            throws MissingResourceException, TypeNotPresentException, ClassCastException  {
 
         // Extract the argument timestamp information (clock or list) and convert 
         DataTimestamps msgDataTms = null;
@@ -769,7 +768,7 @@ public final class ProtoMsg {
             ExceptionalResultStatus enmStatus = msgExcept.getExceptionalResultStatus();
             String                  strDetails = msgExcept.getMessage();
             
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                             + " - Provider registration failed: " 
                             + " status=" + enmStatus
                             + ", details=" + strDetails;
@@ -938,7 +937,7 @@ public final class ProtoMsg {
         
         // We should never get here
         throw new MissingResourceException(
-                JavaRuntime.getQualifiedCallerNameSimple() 
+                JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - message containing neither an acknowledgement or an exception.",
                 IngestDataResponse.class.getName(),
                 "getAckResult(), getExceptionalResult()"

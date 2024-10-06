@@ -781,7 +781,7 @@ public class QueryResponseCorrelator {
             }
 
             // TODO - remove
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + ": Exiting processing loop.");
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + ": Exiting processing loop.");
             
             this.recResult = ResultStatus.SUCCESS;
         }
@@ -1070,13 +1070,13 @@ public class QueryResponseCorrelator {
             
         } catch (ExecutionException e) {
             if (BOL_LOGGING)
-                LOGGER.error("{}: Query request was rejected by Query Service - {}", JavaRuntime.getCallerName(), e.getMessage());
+                LOGGER.error("{}: Query request was rejected by Query Service - {}", JavaRuntime.getMethodName(), e.getMessage());
             
             throw new DpQueryException(e);
             
         } catch (CannotProceedException e) {
             if (BOL_LOGGING)
-                LOGGER.error("{}: Query response contained error - {}", JavaRuntime.getCallerName(), e.getMessage());
+                LOGGER.error("{}: Query response contained error - {}", JavaRuntime.getMethodName(), e.getMessage());
             
             throw new DpQueryException(e);
         }
@@ -1266,7 +1266,7 @@ public class QueryResponseCorrelator {
             thdDataProcessor.terminate();
             
             if (BOL_LOGGING)
-                LOGGER.error("{}: TimeoutException while streaming requst results - {}", JavaRuntime.getCallerName(), e.getMessage());
+                LOGGER.error("{}: TimeoutException while streaming requst results - {}", JavaRuntime.getMethodName(), e.getMessage());
             
             throw new DpQueryException(e);
 
@@ -1274,7 +1274,7 @@ public class QueryResponseCorrelator {
             thdDataProcessor.terminate();
         
             if (BOL_LOGGING)
-                LOGGER.error("{}: ExecutionException while streaming request results - {}", JavaRuntime.getCallerName(), e.getMessage());
+                LOGGER.error("{}: ExecutionException while streaming request results - {}", JavaRuntime.getMethodName(), e.getMessage());
             
             throw new DpQueryException(e);
         }
@@ -1293,7 +1293,7 @@ public class QueryResponseCorrelator {
             
         } catch (InterruptedException e) {
             if (BOL_LOGGING)
-                LOGGER.error("{}: InterruptedException while processing request data - {}", JavaRuntime.getCallerName(), e.getMessage());
+                LOGGER.error("{}: InterruptedException while processing request data - {}", JavaRuntime.getMethodName(), e.getMessage());
             
             throw new DpQueryException(e);
         }
@@ -1302,7 +1302,7 @@ public class QueryResponseCorrelator {
         ResultStatus    recProcessed = thdDataProcessor.getResult();
         if (recProcessed == null || recProcessed.isFailure()) {
             if (BOL_LOGGING)
-                LOGGER.error("{}: Data correlation processing FAILED - {}", JavaRuntime.getCallerName(), recProcessed.message());
+                LOGGER.error("{}: Data correlation processing FAILED - {}", JavaRuntime.getMethodName(), recProcessed.message());
 
             throw new DpQueryException("Data correlation processing FAILED: " + recProcessed.message());
         }

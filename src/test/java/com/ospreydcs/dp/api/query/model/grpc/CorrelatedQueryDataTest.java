@@ -119,7 +119,7 @@ public class CorrelatedQueryDataTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData#from(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData#create(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testFrom() {

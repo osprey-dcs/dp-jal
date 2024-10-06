@@ -158,7 +158,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * <h2>Shutdowns</h2>
  * Always shutdown the interface when no long needed.  This action releases all internal resources
  * required of this interface ensuring maximum performance.  Shutdown operations are provided by
- * the methods <code>{@link #shutdownSoft()}</code> and <code>{@link #shutdownNow()}</code>.
+ * the methods <code>{@link #shutdown()}</code> and <code>{@link #shutdownNow()}</code>.
  * The methods <code>{@link #awaitTermination()}</code> and 
  * <code>{@link #awaitTermination(long, java.util.concurrent.TimeUnit)}</code> are available
  * to block until shutdown is complete (this step is not required).
@@ -260,7 +260,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
      * <p>
      * <h2>NOTE:</h2>
      * The returned object should be shut down when no longer needed using 
-     * <code>{@link #shutdownSoft()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
      * This action is necessary to release unused gRPC resources and maintain 
      * overall performance.  
      * </p>
@@ -354,7 +354,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
             ExceptionalResultStatus enmExcept = msgExcept.getExceptionalResultStatus();
             String                  strExcept = msgExcept.getMessage();
             
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                                + " - Query Service reported an exception: status=" + enmExcept
                                + ", message=" + strExcept;
             
@@ -377,7 +377,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
         return lstRecs;
         
         } catch (IllegalArgumentException | TypeNotPresentException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                            + " - Could not convert response to PvMetaRecord: "
                            + "exception=" + e.getClass().getSimpleName()
                            + ", message=" + e.getMessage();
@@ -458,7 +458,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
             
         } catch (CompletionException | CannotProceedException | IllegalArgumentException | ExecutionException e) {
             if (BOL_LOGGING) 
-                LOGGER.error("{} - Exception while correlating response: {}, {}}", JavaRuntime.getCallerName(), e.getClass().getSimpleName(), e.getMessage());
+                LOGGER.error("{} - Exception while correlating response: {}, {}}", JavaRuntime.getMethodName(), e.getClass().getSimpleName(), e.getMessage());
 
             throw new DpQueryException("Exception while correlating response: " + e.getClass() + ", " + e.getMessage(), e);
         }
@@ -515,7 +515,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
             return table;
         
         } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | RangeException | TypeNotPresentException | CompletionException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                            + " - Failed to create SamplingProcess, exception thrown: type="
                            + e.getClass().getSimpleName()
                            + ", message=" + e.getMessage();
@@ -577,7 +577,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
             return table;
         
         } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | RangeException | TypeNotPresentException | CompletionException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                            + " - Failed to create SamplingProcess, exception thrown: type="
                            + e.getClass().getSimpleName()
                            + ", message=" + e.getMessage();

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionService.java
+ * File:	DpIngestionServiceImpl.java
  * Package: com.ospreydcs.dp.api.ingest
- * Type: 	DpIngestionService
+ * Type: 	DpIngestionServiceImpl
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest;
+package com.ospreydcs.dp.api.ingest.impl;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -43,7 +43,9 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.IIngestionService;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameBinner;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameConverter;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
@@ -60,17 +62,17 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
 
 /**
  * <p>
- * <h1>Data Platform Ingestion Service Application Programming Interface (API).</h1>
+ * <h1>Implementation of the <code>IIngestionService</code> Interface API to the DP Ingestion Service.</h1>
  * </p>
  * <p>
- * This class is an interface for Ingestion Service clients only requiring blocking, synchronous
- * ingestion (i.e., unary RPC operations).  The class exposes all the unary operations of the 
+ * This class supports the <code>IIngestionService</code> interface for Ingestion Service clients only requiring 
+ * blocking, synchronous ingestion (i.e., unary RPC operations).  The class exposes all the unary operations of the 
  * Ingestion Service without details of the underlying gRPC mechanism.
  * </p>
  * <p>
  * This Ingestion Service interface is available for data providers with minimal requirements.
  * Data providers intending to supply large amounts of data over extended durations should
- * consider using <code>{@link DpIngestionStream}</code>.
+ * consider using <code>{@link IIngestionStream}</code>.
  * </p>
  * <p>
  * <h2>Data Ingestion</h2>
@@ -78,7 +80,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * of <code>IngestionFrame</code> are ingested one at a time using single, unary, RPC operations.
  * Here, ingestion frame may be subject to gRPC message size limitations.  If the memory allocation
  * of an ingestion frame is too large the ingestion operation can be rejected.  For large
- * ingestion frame use <code>{@link DpIngestionStream}</code>
+ * ingestion frame use <code>{@link DpIngestionStreamDeprecated}</code>
  * </p>
  * <p>
  * <h2>Provider Registration</h2>
@@ -102,26 +104,69 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * </p>
  * <p>
  * <h2>Instance Creation</h2>
- * In generation objects of <code>DpIngestionService</code> should be obtained from the connection
+ * In generation objects of <code>DpIngestionServiceImpl</code> should be obtained from the connection
  * factory <code>{@link DpIngestionServiceFactory}</code>.  However, there are creator and 
  * constructor method available which require a <code>{@link DpIngestionConnection}</code>
  * instance (which may be obtained from connection factory <code>DpIngestionConnectionFactory</code>.
  * </p>
  * <p>
  * <h2>Instance Shutdown</h2>
- * All instances of <code>DpIngestionService</code> should be shutdown when no longer needed.
+ * All instances of <code>DpIngestionServiceImpl</code> should be shutdown when no longer needed.
  * This will release all resources and increase overall performance.  See methods
- * <code>{@link #shutdownSoft()}</code> and <code>{@link #shutdownNow()}</code>.
+ * <code>{@link #shutdown()}</code> and <code>{@link #shutdownNow()}</code>.
  * </p>
- * 
+ * <p>
+ * <h2>Configuration</h2>
+ * The <code>DpIngestionServiceImpl</code> class provides methods for interface configuration, which are
+ * not available through the <code>IIgestionService</code> interface.  (<code>IIngestionService</code>
+ * interfaces are obtained from connection factories pre-configured.)  These methods are available
+ * for unit testing and performance tuning.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Mar 28, 2024
  *
  */
-public final class DpIngestionService extends
-        DpServiceApiBase<DpIngestionService, DpIngestionConnection, DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> {
+public final class DpIngestionServiceImpl extends
+        DpServiceApiBase<DpIngestionServiceImpl, 
+                         DpIngestionConnection, 
+                         DpIngestionServiceGrpc, 
+                         DpIngestionServiceBlockingStub, 
+                         DpIngestionServiceFutureStub, 
+                         DpIngestionServiceStub> implements IIngestionService {
 
+    //
+    // Creator
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new instance of <code>DpIngestionServiceImpl</code> attached to the 
+     * given connection.
+     * </p>
+     * <p>
+     * The argument should be obtained from the appropriate connection factory,
+     * specifically, <code>{@link DpIngestionConnectionFactory}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTE:</h2>
+     * The returned object should be shut down when no longer needed using 
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * This action is necessary to release unused gRPC resources and maintain 
+     * overall performance.  
+     * </p>
+     * 
+     * @param connIngest  the gRPC channel connection to the desired DP Ingestion Service
+     *  
+     * @return new <code>DpIngestionServiceImpl</code> interfaces attached to the argument
+     * 
+     * @see DpIngestionConnectionFactory
+     */
+    public static DpIngestionServiceImpl from(DpIngestionConnection connIngest) {
+        return new DpIngestionServiceImpl(connIngest);
+    }
+    
+    
     //
     // Application Resources
     //
@@ -149,24 +194,11 @@ public final class DpIngestionService extends
     // Class Constants - Default Values
     //
     
-//    /** Are general concurrency active - used for ingestion frame decomposition */
-//    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
-//    
-//    /** Thresold in which to pivot to concurrent processing */
-//    private static final Integer    INT_CONCURRENCY_PIVOT_SZ = CFG_DEFAULT.concurrency.pivotSize;
-//    
-//    /** Maximum number of concurrent processing threads */
-//    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.threadCount;
-    
-    
-//  /** Use ingestion frame buffering from client to gRPC stream */
-//  private static final Boolean    BOL_BUFFER_ACTIVE = CFG_DEFAULT.stream.buffer.active;
-  
     /** Perform ingestion frame decomposition (i.e., "binning") */
-    private static final Boolean    BOL_BINNING_ACTIVE = CFG_DEFAULT.stream.binning.active;
+    private static final Boolean    BOL_DECOMP_ACTIVE = CFG_DEFAULT.decompose.active;
     
     /** Maximum size limit (in bytes) of decomposed ingestion frame */
-    private static final Integer    LNG_BINNING_MAX_SIZE = CFG_DEFAULT.stream.binning.maxSize;
+    private static final Integer    LNG_DECOMP_MAX_SIZE = CFG_DEFAULT.decompose.maxSize;
     
     
     //
@@ -174,18 +206,7 @@ public final class DpIngestionService extends
     //
     
     /** Class event logger */
-    private static final Logger LOGGER = LogManager.getLogger();
-    
-    
-    // 
-    // Instance  Resources
-    //
-    
-    /** The ingestion frame to Protobuf message converter tool */
-    private final IngestionFrameConverter   toolFrmToMsg = IngestionFrameConverter.from(0);
-    
-    /** The ingestion frame decomposition tool (created if used) */
-    private IngestionFrameBinner            toolFrmDecomposer = null;
+    private static final Logger     LOGGER = LogManager.getLogger();
     
     
     //
@@ -193,43 +214,33 @@ public final class DpIngestionService extends
     //
     
     /** Ingestion frame decomposition (binning) enabled flag  */
-    private boolean bolDecompAuto = BOL_BINNING_ACTIVE;
+    private boolean         bolDecompAuto = BOL_DECOMP_ACTIVE;
     
     /** Ingestion frame decomposition maximum size */
-    private long    lngBinSizeMax = LNG_BINNING_MAX_SIZE;
+    private long            lngFrmSizeMax = LNG_DECOMP_MAX_SIZE;
 
     
-    //
-    // Creator
+    // 
+    // Instance  Resources
     //
     
-    /**
-     * <p>
-     * Creates and returns a new instance of <code>DpIngestionService</code> attached to the 
-     * given connection.
-     * </p>
-     * <p>
-     * The argument should be obtained from the appropriate connection factory,
-     * specifically, <code>{@link DpIngestionConnectionFactory}</code>.
-     * </p>
-     * <p>
-     * <h2>NOTE:</h2>
-     * The returned object should be shut down when no longer needed using 
-     * <code>{@link #shutdownSoft()}</code> or <code>{@link #shutdownNow()}</code>.  
-     * This action is necessary to release unused gRPC resources and maintain 
-     * overall performance.  
-     * </p>
-     * 
-     * @param connIngest  the gRPC channel connection to the desired DP Ingestion Service
-     *  
-     * @return new <code>DpIngestionService</code> interfaces attached to the argument
-     * 
-     * @see DpIngestionConnectionFactory
-     */
-    public static DpIngestionService from(DpIngestionConnection connIngest) {
-        return new DpIngestionService(connIngest);
-    }
+    /** The ingestion frame decomposition tool - only created if used */
+    private IngestionFrameBinner            prcrFrmDecomp = null;
     
+    /** The ingestion frame to Protobuf message converter tool */
+    private final IngestionFrameConverter   prcrFrmCnvrtr = IngestionFrameConverter.create();
+    
+    
+    //
+    // State Variables
+    //
+    
+    /** Data Provider UID record obtained from registration */
+    private ProviderUID     recProviderUid = null;
+    
+    /** The number of data messages transmitted to the Ingestion Service so far */
+    private int             cntMsgXmissions = 0;
+
     
     //
     // Constructor
@@ -237,7 +248,7 @@ public final class DpIngestionService extends
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionService</code>.
+     * Constructs a new instance of <code>DpIngestionServiceImpl</code>.
      * </p>
      * <p>
      * The argument should be obtained from the appropriate connection factory,
@@ -246,7 +257,7 @@ public final class DpIngestionService extends
      * <p>
      * <h2>NOTE:</h2>
      * The returned object should be shut down when no longer needed using 
-     * <code>{@link #shutdownSoft()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
      * This action is necessary to release unused gRPC resources and maintain 
      * overall performance.  
      * </p>
@@ -255,11 +266,11 @@ public final class DpIngestionService extends
      * 
      * @see DpIngestionConnectionFactory
      */
-    public DpIngestionService(DpIngestionConnection connIngest) {
+    public DpIngestionServiceImpl(DpIngestionConnection connIngest) {
         super(connIngest);
         
         if (this.bolDecompAuto) 
-            this.toolFrmDecomposer = IngestionFrameBinner.from(this.lngBinSizeMax);
+            this.prcrFrmDecomp = IngestionFrameBinner.from(this.lngFrmSizeMax);
     }
 
 
@@ -317,8 +328,8 @@ public final class DpIngestionService extends
     public void enableFrameDecomposition(long lngMaxBinSize) {
 
         this.bolDecompAuto = true;
-        this.lngBinSizeMax = lngMaxBinSize;
-        this.toolFrmDecomposer = IngestionFrameBinner.from(lngMaxBinSize);
+        this.lngFrmSizeMax = lngMaxBinSize;
+        this.prcrFrmDecomp = IngestionFrameBinner.from(lngMaxBinSize);
     }
     
     /**
@@ -373,7 +384,75 @@ public final class DpIngestionService extends
     
     
     //
-    // Ingestion Service API
+    // State Inquiry
+    //
+    
+    /**
+     * <p>
+     * Returns the Data Provider UID for the Data Provider registration that was used to open this data stream.
+     * </p>
+     * <p>
+     * If the data stream to the Ingestion Service was opened then subsequently closed, the Provider UID last used
+     * to open the stream is returned.
+     * </p>
+     * 
+     * @return  the UID of the data provider which opened the data stream to the Ingestion Service
+     * 
+     * @throws IllegalStateException    the data stream was never opened
+     */
+    public ProviderUID getProviderUid() throws IllegalStateException {
+        
+        return this.recProviderUid;
+    }
+    
+    /**
+     * <p>
+     * Returns the number of <code>IngestDataRequest</code> messages transmitted to the 
+     * Ingestion Service so far.
+     * </p>
+     * <p>
+     * The returned value is the number of Protocol Buffers messages carrying ingestion
+     * data that have been transmitted to the Ingestion Service at the time of invocation.
+     * If called after invoking <code>{@link #shutdown()}</code> then the returned value
+     * is the total number of messages transmitted while active.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The value returned by this method is not necessary equal to the number of 
+     * <code>IngestionFrame</code> instances offered to upstream processing.  
+     * If ingestion frame decomposition
+     * is active large ingestion frame exceeding the size limit which be decomposed into
+     * smaller ingestion frames before being converted into <code>IngestDataRequest</code>
+     * messages.
+     * </li>
+     * <br/>
+     * <li>
+     * This value is available after a shutdown operation has been called.  At that time
+     * the returned value is the total number of <code>IngestDataRequest</code> messages
+     * transmitted to the Ingestion Service during that activation cycle.
+     * </li> 
+     * <br/>
+     * <li>
+     * If the <code>active()</code> method is called after a shutdown the returned value 
+     * resets.
+     * </li>
+     * </ul>
+     * </p>
+     *   
+     * @return  the number of <code>IngestDataRequest</code> messages transmitted so far
+     * 
+     * @throws IllegalStateException    processor was never activated
+     */
+    public int getTransmissionCount() throws IllegalStateException {
+
+        return this.cntMsgXmissions;
+    }
+    
+    
+    //
+    // IIngestionService Interface
     //
     
     /**
@@ -400,80 +479,71 @@ public final class DpIngestionService extends
      *         
      * @throws DpIngestionException     registration failure or general communications exception (see details)
      */
-    @AUnavailable(status=STATUS.ACCEPTED, note="Operation is mocked - Not implemented within the Ingestion Service.")
+    @Override
+    @AUnavailable(status=STATUS.ACCEPTED, note="Operation is mocked - Not implemented within the Ingestion Service until version 1.5.")
     public ProviderUID  registerProvider(ProviderRegistrar recRegistration) throws DpIngestionException {
         
-        return ProviderRegistrationService.registerProvider(super.grpcConn, recRegistration);
-        
-//        // Create the Protobuf request message from the argument 
-//        RegisterProviderRequest     msgRqst = RegisterProviderRequest.newBuilder()
-//                .setProviderName(recRegistration.name())
-//                .addAllAttributes(ProtoMsg.createAttributes(recRegistration.attributes()))
-//                .setRequestTime(ProtoMsg.from(Instant.now()))
-//                .build();
-//        
-//        // Perform the registration request
-//        RegisterProviderResponse    msgRsp;
-//        
-//        try {
-//            // Attempt blocking unary RPC call 
-//            msgRsp = super.grpcConn.getStubBlock().registerProvider(msgRqst);
-//            
-//        } catch (io.grpc.StatusRuntimeException e) {
-//            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
-//                           + " - gRPC threw runtime exception attempting to register provider: "
-//                           + "type=" + e.getClass().getName()
-//                           + ", details=" + e.getMessage();
-//            
-//            if (BOL_LOGGING)
-//                LOGGER.error(strMsg);
-//            
-//            throw new DpIngestionException(strMsg, e);
-//        }
-//        
-//        // Exception checking
-//        if (msgRsp.hasExceptionalResult()) {
-//            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
-//            ExceptionalResultStatus enmStatus = msgExcept.getExceptionalResultStatus();
-//            String                  strDetails = msgExcept.getMessage();
-//            
-//            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
-//                            + " - Provider registration failed: " 
-//                            + " status=" + enmStatus
-//                            + ", details=" + strDetails;
-//            
-//            // Log exception if logging
-//            if (BOL_LOGGING)
-//                LOGGER.error(strMsg);
-//            
-//            throw new DpIngestionException(strMsg);
-//        }
-//        
-//        // Extract the provider UID and create return value
-//        RegistrationResult  msgResult = msgRsp.getRegistrationResult();
-//        int                 intUid = msgResult.getProviderId();
-//        
-//        return new ProviderUID(intUid);
+        this.recProviderUid = ProviderRegistrationService.registerProvider(super.grpcConn, recRegistration);
+
+        return this.recProviderUid;
     }
     
     /**
      * <p>
      * Blocking, synchronous, unary ingestion of the given ingestion frame.
      * </p>
+     * This is the primary, and only, data ingestion operation of the <code>IIngestionService</code> interface.
+     * The argument is converted to <code>IngestDataRequest</code> message(s) then transmitted to the Ingestion
+     * Service one message at a time using a single,blocking RPC operation.  This is inherently a safe and robust
+     * operation but at the cost of performance.  It is appropriate for small to moderate data transmission.
+     * Clients requiring large data transmission or continuous and sustained transmission should consider the
+     * <code>IIngestionStream</code> interface.  
+     * </p> 
      * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Clients must first register with the Ingestion Service before invoking this method otherwise
+     * an exception is thrown.
+     * </li>
+     * <li>
+     * A list of Ingestion Service response is returned in order to accommodate all the following cases.
+     *   <ul>
+     *   <li>Frame Decomposition: If the frame has allocation larger than the maximum it is decomposed into composite 
+     *       frames.  Each composite frame is converted into a message that receives a response upon transmission.
+     *       The returned list will contain an Ingestion Service response for each composite message.
+     *   </li>
+     *   <li>No Decomposition: If the frame has allocation less than the maximum limit a single response is
+     *       contained in the list.
+     *   </li>
+     *   <li>
+     *   If automatic frame-decomposition is disabled and the offered frame results in a gRPC message larger than
+     *   the current gRPC message size limit an exception will be thrown (i.e., nothing is returned).
+     *   </li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * </p>
      * 
-     * @param recUid
-     * @param frame
-     * @return
-     * @throws DpIngestionException
+     * @param frame ingestion frame containing data for transmission to the Ingestion Service
+     * 
+     * @return  collection of Ingestion Service responses to data within ingestion frame
+     * 
+     * @throws IllegalStateException    unregistered Data Provider
+     * @throws DpIngestionException     general ingestion exception (see detail and cause)
      */
-    public List<IngestionResponse> ingest(ProviderUID recUid, IngestionFrame frame) throws DpIngestionException {
+    @Override
+    public List<IngestionResponse> ingest(IngestionFrame frame) throws IllegalStateException, DpIngestionException {
+        
+        // Check registration
+        if (this.recProviderUid == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Data Provider was not registered.");
         
         // Create list of frames to be ingested - depends on auto-decomposition
         List<IngestionFrame>    lstFrames = this.decomposeFrame(frame); // throws DpIngestionException
         
         // Convert frames to messages and transmit, recovering responses
-        List<IngestionResponse> lstRsps = this.transmitFrames(recUid, lstFrames); // throws DpIngestionException
+        List<IngestionResponse> lstRsps = this.transmitFrames(this.recProviderUid, lstFrames); // throws DpIngestionException
 
         // Return responses
         return lstRsps;
@@ -496,7 +566,6 @@ public final class DpIngestionService extends
     //
     // Support Methods
     //
-    
     
     /**
      * <p>
@@ -532,13 +601,13 @@ public final class DpIngestionService extends
         
         // Decompose the original ingestion frame if too large
         try {
-            List<IngestionFrame>    lstFrames = this.toolFrmDecomposer.decomposeHorizontally(frame);
+            List<IngestionFrame>    lstFrames = this.prcrFrmDecomp.decomposeHorizontally(frame);
             
             return lstFrames;
         
             // The ingestion frame could not be decomposed - columns too large
         } catch (IllegalArgumentException e) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - ingestion frame decomposition (by column) FAILED, columns are too large: "
                     + e.getMessage();
             
@@ -549,7 +618,7 @@ public final class DpIngestionService extends
             
             // Ingestion frame decomposition error
         } catch (CompletionException e) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - ingestion frame decomposition (by column) ERROR: "
                     + e.getMessage();
             
@@ -602,7 +671,7 @@ public final class DpIngestionService extends
         for (IngestionFrame frm : lstFrames) {
 
             // Convert ingestion frame to ingest data message
-            IngestDataRequest   msgRqst = this.toolFrmToMsg.createRequest(frm, recUid.uid());
+            IngestDataRequest   msgRqst = this.prcrFrmCnvrtr.createRequest(frm, recUid);
             
             try {
                 // Transmit data message and recover response - throws StatusRuntimeException
@@ -613,10 +682,11 @@ public final class DpIngestionService extends
 
                 // Add to returned list
                 lstRsps.add(recRsp);
+                this.cntMsgXmissions++;
                 
                 // Unexpected gRPC runtime exception during ingestion 
             } catch (io.grpc.StatusRuntimeException e) {
-                String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+                String      strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                         + " - gRPC runtime exception during unary ingestData() operation: "
                         + e.getMessage();
                 
@@ -627,7 +697,7 @@ public final class DpIngestionService extends
                 
                 // The Ingestion Service rejected the ingestion request
             } catch (MissingResourceException e) {
-                String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+                String      strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                         + " - Ingestion Service rejected unary ingestData() operation: "
                         + e.getMessage();
                 
@@ -640,15 +710,5 @@ public final class DpIngestionService extends
         
         return lstRsps;
     }
-    
-//    /**
-//     * Returns the <code>DpGrpcConnection</code> in super class cast to a
-//     * <code>DpIngestionConnection</code> instance.
-//     * 
-//     * @return connection instances as a <code>DpIngestionConnection</code> object
-//     */
-//    private DpIngestionConnection getConnection() {
-//        return super.grpcConn;
-//    }
     
 }

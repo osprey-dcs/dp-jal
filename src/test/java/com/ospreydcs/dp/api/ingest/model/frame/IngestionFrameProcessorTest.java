@@ -20,90 +20,60 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Apr 13, 2024
+ * @since Jul 29, 2024
  *
  * TODO:
  * - None
  */
 package com.ospreydcs.dp.api.ingest.model.frame;
 
+import org.junit.Assert;
+
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Exchanger;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.IDataColumn;
-import com.ospreydcs.dp.api.model.UniformSamplingClock;
-import com.ospreydcs.dp.grpc.v1.common.DataColumn;
-import com.ospreydcs.dp.grpc.v1.common.DataValue;
-import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
+import com.ospreydcs.dp.api.model.ProviderUID;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
-import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest.IngestionDataFrame;
 
 /**
  * <p>
- * JUnit test cases for class <code>IngestionFrameProcessor</code>.
+ * JUnit test cases for class <code>{@link IngestionFrameProcessor}</code>.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Apr 13, 2024
+ * @since Jul 29, 2024
  *
  */
 public class IngestionFrameProcessorTest {
+    
+    
+    //
+    // Class Constants
+    //
+    
+    /** Default Data Provider UID used for testing */
+    public static final ProviderUID     REC_PRV_UID = ProviderUID.from(1);
 
     
-    //
-    // Test Constants
-    //
+    /** Timeout limit for polling operations */
+    public static final long            LNG_TIMEOUT = 20;
     
-    /** The data provider UID used for all <code>IngestDataRequest</code> messages. */
-    public static final int         INT_PROVIDER_ID = 1;
-    
-    
-    /** Concurrency - Number of concurrent threads - for concurrency testing */
-    public static final int         CNT_CONCURRENT_THREADS = 5;
-    
-    /** Frame Decomposition - Maximum ingestion frame memory allocation limit */
-    public static final long        LNG_BINNING_SIZE = 2000000;
-    
-    /** Back Pressure - Message queue buffer capacity */
-    public static final int         INT_BUFFER_CAPACITY = 10;
+    /** Timeout unit for polling operations */
+    public static final TimeUnit        TU_TIMEOUT = TimeUnit.MILLISECONDS;
     
     
     //
-    // Test Resources
-    //
-    
-    /** A test ingestion frame */
-    private static final IngestionFrame         MSG_FRAME_SMALL = createDoubleFrames(1, 10, 10).get(0);
-    
-    /** A list of test data frames that are small */
-    private static final List<IngestionFrame>   LST_FRAMES_SMALL = createDoubleFrames(10, 10, 10);
-    
-    /** A list of test data frames that have moderate allocation */
-    private static final List<IngestionFrame>   LST_FRAMES_MOD = createDoubleFrames(10, 100, 100);
-    
-    /** A list of test data frames that have moderate allocation */
-    private static final List<IngestionFrame>   LST_FRAMES_LARGE = createDoubleFrames(10, 1000, 1000);
-    
-    
-    /** A processor available for general testing -  activated for each test case in default configuration */
-    private IngestionFrameProcessor processor;
-    
-    
-    // 
     // Test Fixture
     //
     
@@ -126,8 +96,6 @@ public class IngestionFrameProcessorTest {
      */
     @Before
     public void setUp() throws Exception {
-        this.processor = IngestionFrameProcessor.from(INT_PROVIDER_ID);
-        this.processor.activate();
     }
 
     /**
@@ -135,138 +103,100 @@ public class IngestionFrameProcessorTest {
      */
     @After
     public void tearDown() throws Exception {
-        this.processor.shutdown();
     }
-
     
-    // 
+    
+    //
     // Test Cases
     //
-    
-    
-    /**
-     * Test method for {@link IngestionFrameProcessor#createRequest(IngestionFrame)}. 
-     */
-//    @Test
-//    public final void testCreateRequest() {
-//        
-//        IngestionFrame  frame = LST_FRAMES_SMALL.get(0);
-//        
-//        try {
-//            IngestDataRequest msgRqst = this.processor.createRequest(frame);
-//
-//            Assert.assertEquals(INT_PROVIDER_ID, msgRqst.getProviderId());
-//
-//        } catch (Exception e) {
-//            Assert.fail("createRequest(IngestionFrame) threw exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
-//        }
-//    }
-    
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#from(int)}.
-     */
-    @Test
-    public final void testFrom() {
-        IngestionFrameProcessor     prcrFrom = IngestionFrameProcessor.from(INT_PROVIDER_ID);
-        
-        // Start it up 
-        boolean bolActivated = prcrFrom.activate();
-        
-        Assert.assertTrue(bolActivated);
-        
-        // Shut it down and wait
-        try {
-            boolean bolShutdown = prcrFrom.shutdown();
-            
-            Assert.assertTrue(bolShutdown);
-            
-        } catch (InterruptedException e) {
-            Assert.fail("Processor throw InterruptedException while waiting for shutdown: " + e.getMessage());
-        }
-        
-        Assert.assertFalse(prcrFrom.isActive());
-    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#IngestionFrameProcessor(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#IngestionFrameProcessor()}.
      */
     @Test
     public final void testIngestionFrameProcessor() {
-        IngestionFrameProcessor     prcrCtor = new IngestionFrameProcessor(INT_PROVIDER_ID);
         
-        // Start it up 
-        boolean bolActivated = prcrCtor.activate();
+        IngestionFrameProcessor processor = new IngestionFrameProcessor();
         
-        Assert.assertTrue(bolActivated);
-        
-        // Shut it down hard 
-        prcrCtor.shutdownNow();
-        
-        Assert.assertFalse(prcrCtor.isActive());
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(null, processor.getProviderUid());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#enableConcurrency(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#IngestionFrameProcessor(com.ospreydcs.dp.api.model.ProviderUID)}.
      */
     @Test
-    public final void testEnableConcurrency() {
+    public final void testIngestionFrameProcessorProviderUID() {
         
-        boolean bolConcurrency = this.processor.hasConcurrency();
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
         
-        try {
-            this.processor.enableConcurrency(CNT_CONCURRENT_THREADS);
-            
-            Assert.fail("Attempting to enable concurrency while active should throw exception.");
-            
-        } catch (IllegalStateException e) {
-            Assert.assertTrue(this.processor.isActive());
-            Assert.assertEquals(bolConcurrency, this.processor.hasConcurrency());
-            
-        }
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#disableConcurrency()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#setProviderUid(com.ospreydcs.dp.api.model.ProviderUID)}.
      */
     @Test
-    public final void testDisableConcurrency() {
+    public final void testSetProviderUid() {
         
-        boolean bolConcurrency = this.processor.hasConcurrency();
-
-        try {
-            this.processor.disableConcurrency();
-            
-            Assert.fail("Attempting to disable concurrency while active should throw exception.");
-            
-        } catch (IllegalStateException e) {
-            Assert.assertTrue(this.processor.isActive());
-            Assert.assertEquals(bolConcurrency, this.processor.hasConcurrency());
-            
-        }
+        IngestionFrameProcessor processor = new IngestionFrameProcessor();
+        
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(null, processor.getProviderUid());
+        
+        processor.setProviderUid(REC_PRV_UID);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#enableFrameDecomposition(long)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#setConcurrency(int)}.
      */
     @Test
-    public final void testEnableFrameDecomposition() {
+    public final void testSetConcurrency() {
         
-        boolean bolDecomp = this.processor.hasFrameDecomposition();
+        // Parameters
+        final int       cntThreads = 4;
         
-        if (bolDecomp) {
-            this.processor.disableFrameDecomposition();
-            Assert.assertFalse(this.processor.hasFrameDecomposition());
-            
-            this.processor.enableFrameDecomposition(LNG_BINNING_SIZE);
-            Assert.assertTrue(this.processor.hasFrameDecomposition());
-            
-        } else {
-            this.processor.enableFrameDecomposition(LNG_BINNING_SIZE);
-            Assert.assertTrue(this.processor.hasFrameDecomposition());
-            
-            this.processor.disableFrameDecomposition();
-            Assert.assertFalse(this.processor.hasFrameDecomposition());
-        }
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
+        
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
+        
+        int cntThrdsDef = processor.getConcurrencyCount();
+        
+        processor.setConcurrency(cntThreads);
+        Assert.assertEquals(cntThreads, processor.getConcurrencyCount());
+        
+        int cntThrdsNew = processor.getConcurrencyCount();
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + ": Default thread count=" + cntThrdsDef + ", new thread count=" + cntThrdsNew);
+        
+        processor.disableConcurrency();
+        Assert.assertFalse(processor.hasConcurrency());
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#setFrameDecomposition(long)}.
+     */
+    @Test
+    public final void testSetFrameDecomposition() {
+        
+        // Parameters
+        final long      szFrameMax = 5 * 1_000_000;
+        
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
+        
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
+        
+        Assert.assertNotEquals(szFrameMax, processor.getMaxFrameSize());
+        
+        processor.setFrameDecomposition(szFrameMax);
+        Assert.assertTrue(processor.hasFrameDecomposition());
+        Assert.assertEquals(szFrameMax, processor.getMaxFrameSize());
+
+        processor.disableFrameDecomposition();
+        Assert.assertFalse(processor.hasFrameDecomposition());
     }
 
     /**
@@ -274,647 +204,521 @@ public class IngestionFrameProcessorTest {
      */
     @Test
     public final void testDisableFrameDecomposition() {
+
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
         
-        boolean bolDecomp = this.processor.hasFrameDecomposition();
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
         
-        if (bolDecomp) {
-            this.processor.disableFrameDecomposition();
-            Assert.assertFalse(this.processor.hasFrameDecomposition());
-            
-            this.processor.enableFrameDecomposition(LNG_BINNING_SIZE);
-            Assert.assertTrue(this.processor.hasFrameDecomposition());
-            
-        } else {
-            this.processor.enableFrameDecomposition(LNG_BINNING_SIZE);
-            Assert.assertTrue(this.processor.hasFrameDecomposition());
-            
-            this.processor.disableFrameDecomposition();
-            Assert.assertFalse(this.processor.hasFrameDecomposition());
-        }
+        Assert.assertNotEquals(0, processor.getMaxFrameSize());
+        
+        processor.disableFrameDecomposition();
+        Assert.assertFalse(processor.hasFrameDecomposition());
     }
 
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#enableBackPressure(int)}.
-     */
-    @Test
-    public final void testEnableBackPressure() {
-        
-        boolean bolBackPressure = this.processor.hasBackPressure();
-        
-        if (bolBackPressure) {
-            this.processor.disableBackPressure();
-            Assert.assertFalse(this.processor.hasBackPressure());
-            
-            this.processor.enableBackPressure(INT_BUFFER_CAPACITY);
-            Assert.assertTrue(this.processor.hasBackPressure());
-            
-        } else {
-            this.processor.enableBackPressure(INT_BUFFER_CAPACITY);
-            Assert.assertTrue(this.processor.hasBackPressure());
-            
-            this.processor.disableBackPressure();
-            Assert.assertFalse(this.processor.hasBackPressure());
-        }
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#disableBackPressure()}.
-     */
-    @Test
-    public final void testDisableBackPressure() {
-        
-        boolean bolBackPressure = this.processor.hasBackPressure();
-        
-        if (bolBackPressure) {
-            this.processor.disableBackPressure();
-            Assert.assertFalse(this.processor.hasBackPressure());
-            
-            this.processor.enableBackPressure(INT_BUFFER_CAPACITY);
-            Assert.assertTrue(this.processor.hasBackPressure());
-            
-        } else {
-            this.processor.enableBackPressure(INT_BUFFER_CAPACITY);
-            Assert.assertTrue(this.processor.hasBackPressure());
-            
-            this.processor.disableBackPressure();
-            Assert.assertFalse(this.processor.hasBackPressure());
-        }
-    }
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#disableConcurrency()}.
+//     */
+//    @Test
+//    public final void testDisableConcurrency() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#hasConcurrency()}.
+//     */
+//    @Test
+//    public final void testHasConcurrency() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#hasFrameDecomposition()}.
+//     */
+//    @Test
+//    public final void testHasFrameDecomposition() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#getConcurrencyCount()}.
+//     */
+//    @Test
+//    public final void testGetConcurrencyCount() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#getFailedDecompositions()}.
+//     */
+//    @Test
+//    public final void testGetFailedDecompositions() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#getFailedConversions()}.
+//     */
+//    @Test
+//    public final void testGetFailedConversions() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#hasProcessingFailure()}.
+//     */
+//    @Test
+//    public final void testHasProcessingFailure() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#hasPendingMessages()}.
+//     */
+//    @Test
+//    public final void testHasPendingMessages() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#hasShutdown()}.
+//     */
+//    @Test
+//    public final void testHasShutdown() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#activate()}.
      */
     @Test
     public final void testActivate() {
-        IngestionFrameProcessor prcrTest = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
         
-        Assert.assertFalse(prcrTest.isActive());
-        prcrTest.activate();
-        Assert.assertTrue(prcrTest.isActive());
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
+
+        Assert.assertFalse(processor.isSupplying());
+        processor.activate();
+        Assert.assertTrue(processor.isSupplying());
         
         try {
-            prcrTest.shutdown();
+            boolean bolResult = processor.shutdown();
             
-            Assert.assertFalse(prcrTest.isActive());
+            Assert.assertTrue(bolResult);
+            Assert.assertFalse(processor.isSupplying());
             
         } catch (InterruptedException e) {
-            Assert.fail("Processor threw InterruptedException while waiting for shutdown: " + e.getMessage());
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
         }
     }
 
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#shutdown()}.
-     */
-    @Test
-    public final void testShutdown() {
-        IngestionFrameProcessor prcrTest = IngestionFrameProcessor.from(INT_PROVIDER_ID);
-        
-        Assert.assertFalse(prcrTest.isActive());
-        prcrTest.activate();
-        Assert.assertTrue(prcrTest.isActive());
-        
-        try {
-            prcrTest.shutdown();
-            
-            Assert.assertFalse(prcrTest.isActive());
-            
-        } catch (InterruptedException e) {
-            Assert.fail("Processor threw InterruptedException while waiting for shutdown: " + e.getMessage());
-        }
-    }
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#shutdown()}.
+//     */
+//    @Test
+//    public final void testShutdown() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#shutdownNow()}.
      */
     @Test
     public final void testShutdownNow() {
-        IngestionFrameProcessor prcrTest = IngestionFrameProcessor.from(INT_PROVIDER_ID);
+
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
         
-        Assert.assertFalse(prcrTest.isActive());
-        prcrTest.activate();
-        Assert.assertTrue(prcrTest.isActive());
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
+
+        Assert.assertFalse(processor.isSupplying());
+        processor.activate();
+        Assert.assertTrue(processor.isSupplying());
         
-        prcrTest.shutdownNow();
-        Assert.assertFalse(prcrTest.isActive());
+        Assert.assertTrue(processor.isSupplying());
+        processor.shutdownNow();
+        Assert.assertFalse(processor.isSupplying());
+        Assert.assertTrue(processor.hasShutdown());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#addFrame(com.ospreydcs.dp.api.ingest.model.IngestionFrame)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#submit(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
      */
     @Test
-    public final void testAddFrame() {
+    public final void testSubmitIngestionFrameMultiThread() {
         
-        // Parameters and resources
-        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
-        final int               cntFrames = lstFrames.size();
+        // Parameters
+        final int       cntCols = 100;
+        final int       cntRows = 100;
         
-        // Add frames one at a time checking for exceptions
-        int     indFrames = 0;
-        for (IngestionFrame frame : LST_FRAMES_MOD) {
+        final IngestionFrame    frame = TestIngestionFrameGenerator.createDoublesFrameWithClock(cntCols, cntRows);
+        
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
+        
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
+
+        processor.activate();
+        Assert.assertTrue(processor.isSupplying());
+        Assert.assertEquals(0, processor.getRequestQueueSize());
+        
+        Instant     insSubmit = Instant.now();
+        processor.submit(frame);
+        
+        IngestDataRequest msgRqst = processor.poll();
+        Assert.assertEquals(null, msgRqst);
+        
+        try {
+            msgRqst = processor.take();
+            Instant insTake = Instant.now();
+            
+            Duration durProcess = Duration.between(insSubmit, insTake);
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Single frame processing duration: " + durProcess);
+            
+            Assert.assertNotEquals(null, msgRqst);
+            
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "take()", e));
+            
+        } finally {
             
             try {
-                this.processor.addFrame(frame);
+                Assert.assertTrue(processor.isSupplying());
+                processor.shutdown();
+                Assert.assertFalse(processor.isSupplying());
+                Assert.assertTrue(processor.hasShutdown());
                 
-            } catch (IllegalStateException | InterruptedException e) {
-                Assert.fail("addFrame() threw " + e.getClass().getSimpleName() + " exception for frame #" + indFrames + " of " + cntFrames + ": " + e.getMessage());
-                
-            } finally {
-                indFrames++;
+            } catch (InterruptedException e) {
+                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
             }
         }
-        
-        try {
-            // Shutdown the processor - does not return until all frame are processed
-            this.processor.shutdown();
-            
-        } catch (InterruptedException e) {
-            Assert.fail("Processor shutdown threw interrupted exception: " + e.getMessage());
-        }
-        
-        int szMsgQue = this.processor.getRequestQueueSize();
-        Assert.assertEquals(cntFrames, this.processor.getRequestQueueSize());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#addFrames(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#submit(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
      */
     @Test
-    public final void testAddFrames() {
+    public final void testSubmitIngestionFrameSingleThread() {
         
-        // Parameters and resources
-        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
-        final int               cntFrames = lstFrames.size();
-
-        // Add frames all at once
+        // Parameters
+        final int       cntCols = 100;
+        final int       cntRows = 100;
+        
+        final IngestionFrame    frame = TestIngestionFrameGenerator.createDoublesFrameWithClock(cntCols, cntRows);
+        
+        final long      szFrame = frame.allocationSizeFrame();
+        
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
+        
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
+        
+        processor.disableConcurrency();
+        processor.activate();
+        Assert.assertFalse(processor.hasConcurrency());
+        Assert.assertTrue(processor.isSupplying());
+        Assert.assertEquals(0, processor.getRequestQueueSize());
+        
+        Instant     insSubmit = Instant.now();
+        processor.submit(frame);
+        
+        IngestDataRequest msgRqst = processor.poll();
+        Instant insTake = Instant.now();
+        
+        Duration durProcess = Duration.between(insSubmit, insTake);
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Single frame processing duration: " + durProcess);
+        
+        Assert.assertNotEquals(null, msgRqst);
         try {
-            this.processor.addFrames(lstFrames);
+            Assert.assertTrue(processor.isSupplying());
+            processor.shutdown();
+            Assert.assertFalse(processor.isSupplying());
+            Assert.assertTrue(processor.hasShutdown());
+
+        } catch (InterruptedException e) {
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#submit(java.util.List)}.
+     */
+    @Test
+    public final void testSubmitListOfIngestionFrameMultiThread() {
+        
+        // Parameters
+        final int       cntFrames = 10;
+        final int       cntCols = 100;
+        final int       cntRows = 100;
+        
+        final List<IngestionFrame>    lstFrames = TestIngestionFrameGenerator.createDoublesPayloadWithClock(cntFrames, cntCols, cntRows);
+        
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
+        
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
+
+        processor.activate();
+        Assert.assertTrue(processor.isSupplying());
+        Assert.assertEquals(0, processor.getRequestQueueSize());
+        
+        Instant     insSubmit = Instant.now();
+        processor.submit(lstFrames);
+        
+        IngestDataRequest msgRqst = processor.poll();
+        Assert.assertEquals(null, msgRqst);
+        
+        try {
+            for (int iMsg=0; iMsg<cntFrames; iMsg++) {
+                msgRqst = processor.take();
+                Assert.assertNotEquals(null, msgRqst);
+            }
+            Instant insTake = Instant.now();
             
-            Thread.sleep(20L);
+            Duration durProcess = Duration.between(insSubmit, insTake);
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - multi-frame processing duration: " + durProcess);
+
+            // Frames are smaller than decomposition - queue should be exhausted
+            msgRqst = processor.poll();
+            Assert.assertEquals(null, msgRqst);
+            
+            // Check for processing failures
+            Assert.assertFalse(processor.hasProcessingFailure());
             
         } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
-        }
-        
-        try {
-            // Shutdown the processor - does not return until all frame are processed
-            this.processor.shutdown();
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "take()", e));
             
-        } catch (InterruptedException e) {
-            Assert.fail("Processor shutdown threw interrupted exception: " + e.getMessage());
-        }
-        
-        Assert.assertEquals(cntFrames, this.processor.getRequestQueueSize());
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#awaitBackPressure()}.
-     */
-    @Test
-    public final void testAwaitBackPressure() {
-        
-        // Resources and Parameters
-        List<IngestionFrame>    lstFrames = LST_FRAMES_SMALL;
-        final int               cntFrames = lstFrames.size();
-        final int               intQueCapacity = cntFrames;// - 1;
-        final long              lngDelay = 100; // thread take delay - milliseconds
-        Runnable                tskTake = () -> {
+        } finally {
+            
             try {
-                Thread.sleep(lngDelay);
-                this.processor.take();
-//                this.processor.take();
-                return;
+                Assert.assertTrue(processor.isSupplying());
+                processor.shutdown();
+                Assert.assertFalse(processor.isSupplying());
+                Assert.assertTrue(processor.hasShutdown());
                 
-            } catch (IllegalStateException | InterruptedException e) {
-                String  strMsg = "awaitBackPressure() thread take() exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
-                
-                System.err.println(strMsg);
-                Assert.fail(strMsg);
+            } catch (InterruptedException e) {
+                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
             }
-        };
-        Thread                  thdTake = new Thread(tskTake);
-        
-        try {
-            this.processor.enableBackPressure(intQueCapacity);
-            this.processor.addFrames(lstFrames);
-            
-            // Give processor time to fill up message queue
-            Thread.sleep(lngDelay);
-            
-        } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
-        }
-        
-        try {
-            Instant     insStart = Instant.now();
-            thdTake.start();
-            this.processor.awaitBackPressure();
-            Instant     insStop = Instant.now();
-            Duration    durWait = Duration.between(insStart, insStop);
-            
-            System.out.println("The IngestionFrameProcessor#awaitBackPressure() blocked for " + durWait.toString());
-            
-            thdTake.join();
-            Instant     insThreadStop = Instant.now();;
-            Duration    durThread = Duration.between(insStop, insThreadStop);
-            
-            System.out.println("The take() thread then completed after " + durThread.toString());
-        
-        } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail("awaitBackPressure() threw " + e.getClass().getSimpleName() + " exception : " + e.getMessage());
         }
     }
 
     /**
-     * Test method for {@link IngestionFrameProcessor#awaitRequestQueueEmpty()} 
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#submit(java.util.List)}.
      */
     @Test
-    public final void testAwaitRequestQueueEmpty() {
+    public final void testSubmitListOfIngestionFrameSingleThread() {
         
-        // Resources and Parameters
-        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
-        final int               cntFrames = lstFrames.size();
-        final long              lngDelay = 10; // milliseconds
+        // Parameters
+        final int       cntFrames = 10;
+        final int       cntCols = 100;
+        final int       cntRows = 100;
         
-        Thread thdConsumer  = new Thread( () -> {
-            int cntTakes = 0;
-            while (this.processor.isActive()) {
-//                System.out.println("  awaitRequestQueueEmpty() isActive() = " + this.processor.isActive());
-                try {
-                    IngestDataRequest msgRqst = this.processor.take();
-                    Thread.sleep(lngDelay);
-//                    System.out.println("  awaitRequestQueueEmpty() take() #" + cntTakes);
-//                    System.out.println("  msg==null = " + (msgRqst==null));
-                    cntTakes++;
+        final List<IngestionFrame>    lstFrames = TestIngestionFrameGenerator.createDoublesPayloadWithClock(cntFrames, cntCols, cntRows);
+        
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
+        
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
 
-                } catch (IllegalStateException e) {
-                    String  strMsg = "awaitRequestQueueEmpty() thread take() exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
-
-                    System.err.println(strMsg);
-                    System.err.println("  isActive() = " + this.processor.isActive());
-                    Assert.fail(strMsg);
-                    
-                } catch (InterruptedException e) {
-                    System.out.println("  INTERRUPTED - awaitRequestQueueEmpty() thread after iteration " + cntTakes);
-                }
-            }
-//            System.out.println("  TERMINATED - awaitRequestQueueEmpty() thread after iteration " + cntTakes);
-        });
+        processor.disableConcurrency();
+        processor.activate();
+        Assert.assertFalse(processor.hasConcurrency());
+        Assert.assertTrue(processor.isSupplying());
+        Assert.assertEquals(0, processor.getRequestQueueSize());
         
-        try {
-            this.processor.addFrames(lstFrames);
-            
-            // Give processor time to fill up message queue
-            Thread.sleep(100);
-            
-        } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
+        Instant     insSubmit = Instant.now();
+        processor.submit(lstFrames);
+        
+        for (int iMsg=0; iMsg<cntFrames; iMsg++) {
+            IngestDataRequest msgRqst = processor.poll();
+            Assert.assertNotEquals(null, msgRqst);
         }
+        Instant insTake = Instant.now();
         
-        try {
-            Instant     insStart = Instant.now();
-            thdConsumer.start();
-            this.processor.awaitRequestQueueEmpty();
-            Instant     insStop = Instant.now();
-            Duration    durWait = Duration.between(insStart, insStop);
-            
-            System.out.println("The IngestionFrameProcessor#awaitRequestQueueEmpty() blocked for " + durWait.toString());
-            
-            this.processor.shutdown();
-            thdConsumer.interrupt();
-            
-            Instant     insThreadStop = Instant.now();;
-            Duration    durThread = Duration.between(insStop, insThreadStop);
-            
-            System.out.println("The consumer() thread then completed after " + durThread.toString());
-        
-        } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail("awaitBackPressure() threw " + e.getClass().getSimpleName() + " exception : " + e.getMessage());
-        }
-        
-    }
-    
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#isActive()}.
-     */
-    @Test
-    public final void testIsActive() {
+        Duration durProcess = Duration.between(insSubmit, insTake);
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - multi-frame processing duration: " + durProcess);
 
-        // Parameters and resources
-        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
-        final int               cntFrames = lstFrames.size();
-
-        // Add frames all at once
-        try {
-            this.processor.addFrames(lstFrames);
-            
-        } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
-        }
+        // Frames are smaller than decomposition - queue should be exhausted
+        IngestDataRequest msgRqst = processor.poll();
+        Assert.assertEquals(null, msgRqst);
         
         try {
-            this.processor.shutdown();
-            
-            // Still message in buffer - should be active after soft shutdown
-            Assert.assertTrue(this.processor.isActive());
-            
-            // Clear the buffer then true again
-            while (this.processor.isActive())
-                this.processor.take();
-            
-            Assert.assertFalse(this.processor.isActive());
-            
+            Assert.assertTrue(processor.isSupplying());
+            processor.shutdown();
+            Assert.assertFalse(processor.isSupplying());
+            Assert.assertTrue(processor.hasShutdown());
+
         } catch (InterruptedException e) {
-            Assert.fail("shutdown() threw Interrupted exception: " + e.getMessage());
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
         }
     }
 
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#take()}.
-     */
-    @Test
-    public final void testTake() {
-
-        // Parameters and resources
-        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
-        final int               cntFrames = lstFrames.size();
-
-        // Add frames all at once
-        try {
-            this.processor.addFrames(lstFrames);
-            
-        } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
-        }
-        
-        try {
-            this.processor.shutdown();
-            
-            // Still message in buffer - should be active after soft shutdown
-            Assert.assertTrue(this.processor.isActive());
-            
-            // Clear the buffer then try again
-            while (this.processor.isActive())
-                this.processor.take();
-            
-            Assert.assertFalse(this.processor.isActive());
-            
-        } catch (InterruptedException e) {
-            Assert.fail("shutdown() threw Interrupted exception: " + e.getMessage());
-
-        } catch (IllegalStateException e) {
-            Assert.fail("shutdown() threw Interrupted exception: " + e.getMessage());
-        }
-        
-        try {
-            
-            // This should throw an IllegalStateException
-            this.processor.take();
-            
-            Assert.fail("Inactive processor take() should have thrown exception.");
-            
-        } catch (InterruptedException e) {
-            Assert.fail("Inactive processed take() threw unexpected Interrupted exception: " + e.getMessage());
-
-        } catch (IllegalStateException e) {
-            // We should end here
-        }
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#poll()}.
-     */
-    @Test
-    public final void testPoll() {
-
-        // Parameters and resources
-        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
-        final int               cntFrames = lstFrames.size();
-
-        // Add frames all at once
-        try {
-            this.processor.addFrames(lstFrames);
-            
-        } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
-        }
-        
-        int                 cntMsgs = 0;
-        try {
-            this.processor.shutdown();
-            
-            // Still message in buffer - should be active after soft shutdown
-            Assert.assertTrue(this.processor.isActive());
-            
-            // Clear the buffer with polling until exception is thrown
-            IngestDataRequest   msgRqst = null;
-            do { 
-                msgRqst = this.processor.poll();
-                
-                cntMsgs++;
-            } while (msgRqst != null);
-            
-            Assert.fail("The last poll() should have thrown an exception.");
-            
-        } catch (InterruptedException e) {
-            Assert.fail("shutdown() threw Interrupted exception: " + e.getMessage());
-
-        } catch (IllegalStateException e) {
-            
-            Assert.assertFalse(this.processor.isActive());
-            Assert.assertEquals(cntFrames, cntMsgs);
-        }
-        
-    }
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#isSupplying()}.
+//     */
+//    @Test
+//    public final void testIsSupplying() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#take()}.
+//     */
+//    @Test
+//    public final void testTake() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#poll()}.
+//     */
+//    @Test
+//    public final void testPoll() {
+//        Assert.fail("Not yet implemented"); // TODO
+//    }
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#poll(long, java.util.concurrent.TimeUnit)}.
      */
     @Test
     public final void testPollLongTimeUnit() {
-
-        // Parameters and resources
-        List<IngestionFrame>    lstFrames = LST_FRAMES_MOD;
-        final int               cntFrames = lstFrames.size();
-        final long              lngWait = 10;
-        final TimeUnit          tuWait = TimeUnit.MILLISECONDS;
-        final Exchanger<Integer> rsltPolls = new Exchanger<>();
-        final Exchanger<Integer> rsltMsgs = new Exchanger<>();
         
-        Thread thdPoller = new Thread(() -> {
-            Integer cntPolls = 0;
-            Integer cntMsgs = 0;
+        // Parameters
+        final int       cntFrames = 15;
+        final int       cntCols = 100;
+        final int       cntRows = 100;
+        
+        final List<IngestionFrame>    lstFrames = TestIngestionFrameGenerator.createDoublesPayloadWithClock(cntFrames, cntCols, cntRows);
+        
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
+        
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
 
-//            System.out.println("  Poller Thread: entering loop, isActive() = " + this.processor.isActive());
-            
-            while (this.processor.isActive()) {
-                try {
-                    IngestDataRequest msgRqst = this.processor.poll(lngWait, tuWait);
-                    cntPolls++;
-                    
-//                    System.out.println("  Poller Thread: cntPolls=" + cntPolls);
-                    
-                    if (msgRqst == null)
-                        continue;
-                    
+        processor.activate();
+        Assert.assertTrue(processor.isSupplying());
+        Assert.assertEquals(0, processor.getRequestQueueSize());
+        
+        Instant     insSubmit = Instant.now();
+        processor.submit(lstFrames);
+        
+        IngestDataRequest msgRqst = processor.poll();
+        Assert.assertEquals(null, msgRqst);
+        
+        try {
+            int     cntMsgs = 0;
+            do {
+                msgRqst = processor.poll(LNG_TIMEOUT, TU_TIMEOUT);
+                
+                if (msgRqst != null)
                     cntMsgs++;
-                    
-                } catch (IllegalStateException | InterruptedException e) {
-                    String  strMsg = "testPollLongTimeUnit polling thread - exception while polling " 
-                                    + e.getClass().getSimpleName() 
-                                    + ": " + e.getMessage();
-                    System.err.println(strMsg);
-                    Assert.fail(strMsg);
-                }
-            }
+                
+                // Check the request queue size
+                if (processor.getRequestQueueSize() == 0 && (cntMsgs < cntFrames))
+                    Assert.assertTrue(processor.hasPendingTasks());
+                
+            } while (cntMsgs < cntFrames);
+            Instant insComplete = Instant.now();
+            
+            Duration durProcess = Duration.between(insSubmit, insComplete);
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - multi-frame polled processing duration: " + durProcess);
+
+            // Frames are smaller than decomposition - queue should be exhausted
+            msgRqst = processor.poll();
+            Assert.assertEquals(null, msgRqst);
+            
+            // Check for processing failures
+            Assert.assertFalse(processor.hasProcessingFailure());
+            
+        } catch (IllegalStateException | InterruptedException e) {
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "poll(long, TimeUnit)", e));
+            
+        } finally {
+            
             try {
-                rsltPolls.exchange(cntPolls);
-                rsltMsgs.exchange(cntMsgs);
+                Assert.assertTrue(processor.isSupplying());
+                processor.shutdown();
+                Assert.assertFalse(processor.isSupplying());
+                Assert.assertTrue(processor.hasShutdown());
                 
             } catch (InterruptedException e) {
-                String  strMsg = "testPollLongTimeUnit polling thread - interrupted while exchanging results " 
-                                + ": " + e.getMessage();
-                System.err.println(strMsg);
-                Assert.fail(strMsg);
+                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
             }
-        });
-        
-        // Start polling thread
-        thdPoller.start();
-        
-        // Sleep for while - make some failed polls
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            Assert.fail("Interrupted while waiting to begin adding frames");
         }
+    }
 
-        // Add frames all at once
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#getRequestQueueSize()}.
+     */
+    @Test
+    public final void testGetRequestQueueSize() {
+        
+        // Parameters
+        final int       cntFrames = 15;
+        final int       cntCols = 1000;
+        final int       cntRows = 1000;
+        
+        final List<IngestionFrame>    lstFrames = TestIngestionFrameGenerator.createDoublesPayloadWithClock(cntFrames, cntCols, cntRows);
+        
+        final long      szFrame = lstFrames.get(0).allocationSizeFrame();
+        
+        IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
+        
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
+
+        processor.activate();
+        Assert.assertTrue(processor.isSupplying());
+        Assert.assertEquals(0, processor.getRequestQueueSize());
+        
+        Instant     insSubmit = Instant.now();
+        processor.submit(lstFrames);
+        
+        IngestDataRequest msgRqst = processor.poll();
+        Assert.assertEquals(null, msgRqst);
+        
         try {
-            this.processor.addFrames(lstFrames);
+            int     cntMsgs = 0;
+            do {
+                msgRqst = processor.poll(LNG_TIMEOUT, TU_TIMEOUT);
+                
+                if (msgRqst != null)
+                    cntMsgs++;
+                
+//                // Check the request queue size
+//                if (processor.getRequestQueueSize() == 0)
+//                    Assert.assertTrue(processor.hasPendingMessages());
+                
+            } while (processor.getRequestQueueSize() > 0 || processor.hasPendingTasks()); // method under test
+            Instant insComplete = Instant.now();
             
-            // Do a soft shutdown
-            this.processor.shutdown();
+            Duration durProcess = Duration.between(insSubmit, insComplete);
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - large multi-frame polled processing duration: " + durProcess);
+            System.out.println("  Processed " + cntFrames + " large frames (" + szFrame + " bytes) into " + cntMsgs + " IngestDataRequest messages.");
+
+            // Frames are smaller than decomposition - queue should be exhausted
+            msgRqst = processor.poll();
+            Assert.assertEquals(null, msgRqst);
+            
+            // Check for processing failures
+            Assert.assertFalse(processor.hasProcessingFailure());
             
         } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail("addFrames() threw " + e.getClass().getSimpleName() + " exception adding "  + cntFrames + " frames: " + e.getMessage());
-        }
-        
-        // Get the results
-        try {
-            int cntPolls = rsltPolls.exchange(0);
-            int cntMsgs = rsltMsgs.exchange(0);
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "poll(long, TimeUnit)", e));
             
-            System.out.println("testPollLongTimeUnit Results:");
-            System.out.println("  number of polls = " + cntPolls);
-            System.out.println("  number of messages acquired = " + cntMsgs);
-            System.out.println("  number of frames processed = " + cntFrames);
-            Assert.assertEquals(cntFrames, cntMsgs);
+        } finally {
             
-        } catch (InterruptedException e) {
-            Assert.fail("Could not exchange results with poller thread?");
-        }
-    }
-    
-    /**
-     * Times ingestion frame processing
-     */
-    @Test
-    public final void testTimeProcessor() {
-        
-        //  Parameters and resources
-        final int                   cntRows = 1000;
-        final int                   cntCols = 2000;
-        final int                   cntFrames = 10;
-        List<IngestionFrame>        lstFrames = createDoubleFrames(cntFrames, cntCols, cntRows);
-        
-        final long                  lngFrmAlloc = lstFrames.get(0).allocationSizeFrame();
-        
-        // Note that the ingestion frames will be destroyed due to decomposition
-        try {
-            // Start timer, add frames, shutdown, stop timer
-            Instant     insStart = Instant.now();
-            this.processor.addFrames(lstFrames);
-            this.processor.shutdown();
-            Instant     insStop = Instant.now();
-            
-            // Compute results
-            Duration    durActive = Duration.between(insStart, insStop);
-            int         cntMsgs = this.processor.getRequestQueueSize();
-            int         intMsgAlloc = this.processor.take().getSerializedSize();
-            
-            // Report Results
-            System.out.println("testTimeProcessor:");
-            System.out.println("  frame allocation = " + lngFrmAlloc);
-            System.out.println("  frames processed = " + cntFrames);
-            System.out.println("  messages created = " + cntMsgs);
-            System.out.println("  message allocation = " + intMsgAlloc);
-            System.out.println("  time elapsed = " + durActive.toMillis() + "ms");
-            
-            // Check that all source frame were destroyed
-            boolean bolData = lstFrames.stream().allMatch(frm -> !frm.hasData());
-            boolean bolNoCols = lstFrames.stream().allMatch(frm -> frm.getColumnCount() == 0);
-//            boolean bolNoRows = lstFrames.stream().allMatch(frm -> frm.getRowCount() == 0);
-//            int indFrame = 0;
-//            for (IngestionFrame frm :  lstFrames) {
-//                System.out.println("Frame #" + indFrame);
-//                System.out.println("  columns = " + frm.getColumnCount());
-//                System.out.println("  rows = " + frm.getRowCount());
-//                indFrame++;
-//            }
-            Assert.assertTrue(bolData);;
-            Assert.assertTrue(bolNoCols);
-            
-        } catch (IllegalStateException e) {
-            Assert.fail("IllegalStateException: " + e.getMessage());
-            
-        } catch (InterruptedException e) {
-            Assert.fail("InterruptedException: " + e.getMessage());
-            
-        }
-    }
-    
-    /**
-     * Test the processing accuracy 
-     */
-    @Test
-    public final void testProcessorAccuracy() {
-        
-        // Parameters and resources
-        IngestionFrame      frame = MSG_FRAME_SMALL;
-        
-        try {
-            this.processor.addFrame(frame);
-            this.processor.shutdown();
-            
-            IngestDataRequest   msgRqst = this.processor.take();
-            
-            IngestionDataFrame  msgFrm = msgRqst.getIngestionDataFrame();
-            
-            // Compare clocks
-            SamplingClock  msgClk = msgFrm.getDataTimestamps().getSamplingClock();
-            UniformSamplingClock    clkMsg = ProtoMsg.toUniformSamplingClock(msgClk);
-            UniformSamplingClock    clkFrm = frame.getSamplingClock();
-            
-            Assert.assertEquals(clkFrm, clkMsg);
-            
-            // Compare data
-            List<DataColumn> lstMsgCols = msgFrm.getDataColumnsList();
-            for (DataColumn msgCol : lstMsgCols) {
-                String                  strName = msgCol.getName();
-                IDataColumn<Object>     frmCol = frame.getDataColumn(strName);
+            try {
+                Assert.assertTrue(processor.isSupplying());
+                processor.shutdown();
+                Assert.assertFalse(processor.isSupplying());
+                Assert.assertTrue(processor.hasShutdown());
                 
-                Assert.assertNotNull(frmCol);
-                
-                List<DataValue> lstMsgColVals = msgCol.getDataValuesList();
-                List<Object>    lstMsgColObjs = ProtoMsg.extractValues(msgCol);
-                List<Object>    lstFrmColObjs = frmCol.getValues();
-                
-                Assert.assertEquals(lstFrmColObjs, lstMsgColObjs);
+            } catch (InterruptedException e) {
+                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
             }
-            
-            
-        } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail("addFrame() threw exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
@@ -925,31 +729,25 @@ public class IngestionFrameProcessorTest {
     
     /**
      * <p>
-     * Creates a collection of <code>IngestionFrame</code> instances used for testing.
+     * Creates a failure message from the given arguments.
      * </p>
      * <p>
-     * All returned ingestion frames are populated with double values and establish a 
-     * uniform sampling clock to identify timestamps.
+     * The strings are concatenated with a failure notification along with the type of the exception and its
+     * detail message.
      * </p>
      * 
-     * @param cntFrames the number of ingestion frames to create
-     * @param cntCols   the number of column in each frame
-     * @param cntRows   the number of rows in each frame
+     * @param strTest       name of the test case
+     * @param strMethod     name of the method under test
+     * @param e             exception thrown
      * 
-     * @return  a new collection of ingestion frames 
+     * @return              failure message
      */
-    private static List<IngestionFrame> createDoubleFrames(int cntFrames, int cntCols, int cntRows) {
+    private String  createFailExceptionMessage(String strTest, String strMethod, Exception e) {
         
-        // Returned object
-        ArrayList<IngestionFrame>   lstFrames = new ArrayList<>(cntFrames);
+        String buf = strTest + " - " + strMethod + " failed with exception " 
+                            + e.getClass().getName() 
+                            + ": " + e.getMessage();
         
-        // Create the frames
-        for (int iFrame=0; iFrame<cntFrames; iFrame++) {
-            IngestionFrame  frame = TestIngestionFrameGenerator.createDoublesFrameWithClock(cntCols, cntRows);
-            
-            lstFrames.add(frame);
-        }
-        
-        return lstFrames;
+        return buf;
     }
 }

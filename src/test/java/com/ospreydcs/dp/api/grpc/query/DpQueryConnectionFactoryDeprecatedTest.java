@@ -44,7 +44,7 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 
 /**
  * <p>
- * JUnit test cases for <code>DpQueryConnectionFactoryDeprecated</code> class.
+ * JUnit test cases for <code>DpQueryConnectionFactoryStatic</code> class.
  * </p>
  *
  * @author Christopher K. Allen
@@ -100,12 +100,12 @@ public class DpQueryConnectionFactoryDeprecatedTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryDeprecated#connect()}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryStatic#connect()}.
      */
     @Test
     public final void testConnect() {
         try {
-            DpQueryConnection   conn = DpQueryConnectionFactoryDeprecated.connect();
+            DpQueryConnection   conn = DpQueryConnectionFactoryStatic.connect();
             
             conn.shutdownSoft();
             
@@ -119,7 +119,7 @@ public class DpQueryConnectionFactoryDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryDeprecated#connect(java.lang.String, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryStatic#connect(java.lang.String, int)}.
      */
     @Test
     public final void testConnectStringInt() {
@@ -127,7 +127,7 @@ public class DpQueryConnectionFactoryDeprecatedTest {
         int     intPort = CFG_DEFAULT.host.port;
         
         try {
-            DpQueryConnection   conn = DpQueryConnectionFactoryDeprecated.connect(strUrl, intPort);
+            DpQueryConnection   conn = DpQueryConnectionFactoryStatic.connect(strUrl, intPort);
 
             conn.shutdownSoft();
             conn.awaitTermination();
@@ -146,7 +146,7 @@ public class DpQueryConnectionFactoryDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryDeprecated#connect(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryStatic#connect(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
     public final void testConnectStringIntBooleanLongTimeUnit() {
@@ -159,7 +159,7 @@ public class DpQueryConnectionFactoryDeprecatedTest {
         TimeUnit tuTmout = CFG_DEFAULT.grpc.timeoutUnit;
         
         try {
-            DpQueryConnection   conn = DpQueryConnectionFactoryDeprecated.connect(strUrl, intPort,
+            DpQueryConnection   conn = DpQueryConnectionFactoryStatic.connect(strUrl, intPort,
                     bolPlainText,
                     lngTmout, 
                     tuTmout);
@@ -181,7 +181,7 @@ public class DpQueryConnectionFactoryDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryDeprecated#connect(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryStatic#connect(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
     public final void testConnectStringIntBooleanBooleanIntBooleanBooleanLongTimeUnit() {
@@ -198,7 +198,7 @@ public class DpQueryConnectionFactoryDeprecatedTest {
         TimeUnit tuTmout = CFG_DEFAULT.grpc.timeoutUnit;
         
         try {
-            DpQueryConnection   conn = DpQueryConnectionFactoryDeprecated.connect(strUrl, intPort,
+            DpQueryConnection   conn = DpQueryConnectionFactoryStatic.connect(strUrl, intPort,
                     bolTlsActive,
                     bolPlainText, 
                     intMaxSz, 

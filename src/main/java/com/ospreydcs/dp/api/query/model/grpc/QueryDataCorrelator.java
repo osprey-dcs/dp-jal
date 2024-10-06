@@ -635,7 +635,7 @@ public class QueryDataCorrelator {
         // Check for empty data message
         if (msgData.getDataBucketsList().isEmpty()) {
             if (BOL_LOGGING)
-                LOGGER.warn("{}: attempt to insert data from empty data message.", JavaRuntime.getCallerName());
+                LOGGER.warn("{}: attempt to insert data from empty data message.", JavaRuntime.getMethodName());
             
             return;
         }
@@ -745,7 +745,7 @@ public class QueryDataCorrelator {
             ExceptionalResult.ExceptionalResultStatus   enmStatus = msgException.getExceptionalResultStatus();
             
             if (BOL_LOGGING) 
-                LOGGER.error("{}: Query Service reported request rejection with status {}, message {}", JavaRuntime.getCallerName(), strRejectMsg, enmStatus);
+                LOGGER.error("{}: Query Service reported request rejection with status {}, message {}", JavaRuntime.getMethodName(), strRejectMsg, enmStatus);
 
             throw new ExecutionException("Query Service rejected request: status=" + enmStatus + ", message=" + strRejectMsg, null);
         }
@@ -1070,7 +1070,7 @@ public class QueryDataCorrelator {
             this.exeThreadPool.invokeAll(lstTasks, LNG_TIMEOUT, TU_TIMEOUT);
 
         } catch (InterruptedException e) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": thread pool execution interrupted - " + e.getMessage();
+            String strMsg = JavaRuntime.getQualifiedMethodName() + ": thread pool execution interrupted - " + e.getMessage();
             
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);
@@ -1078,7 +1078,7 @@ public class QueryDataCorrelator {
             throw new CompletionException(strMsg, e);
             
         } catch (RejectedExecutionException e) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": thread pool executor rejected execution - " + e.getMessage();
+            String strMsg = JavaRuntime.getQualifiedMethodName() + ": thread pool executor rejected execution - " + e.getMessage();
             
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionServiceTest.java
+ * File:	DpIngestionServiceImplTest.java
  * Package: com.ospreydcs.dp.api.ingest
- * Type: 	DpIngestionServiceTest
+ * Type: 	DpIngestionServiceImplTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -25,9 +25,12 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest;
+package com.ospreydcs.dp.api.ingest.impl;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -43,22 +46,27 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl;
+import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.IIngestionService;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceFactory;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
- * JUnit test cases for class <code>DpIngestionService</code>.
+ * JUnit test cases for class <code>DpIngestionServiceImpl</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Mar 29, 2024
  *
  */
-public class DpIngestionServiceTest {
+public class DpIngestionServiceImplTest {
 
     
     //
@@ -74,7 +82,7 @@ public class DpIngestionServiceTest {
     //
     
     /** Test Data Provider registration unique name */
-    private static final String                 STR_PROVIDER_NAME_1 = DpIngestionServiceTest.class.getName() + "_TEST_PROVIDER_1";
+    private static final String                 STR_PROVIDER_NAME_1 = DpIngestionServiceImplTest.class.getName() + "_TEST_PROVIDER_1";
     
     /** Test Data Provider attributes */
     private static final Map<String, String>    MAP_PROVIDER_ATTRS_1 = Map.of(
@@ -106,7 +114,8 @@ public class DpIngestionServiceTest {
     //
     
     /** The Ingestion Service API under test - only instantiate one */
-    private static DpIngestionService       apiIngest;
+//    private static DpIngestionServiceImpl       apiIngest;
+    private static IIngestionService            apiIngest;
     
     
     //
@@ -118,6 +127,9 @@ public class DpIngestionServiceTest {
      */
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+//        DpIngestionConnection   connIngest = DpIngestionConnectionFactory.FACTORY.connect();
+//        apiIngest = new DpIngestionServiceImpl(connIngest);
+        
         apiIngest = DpIngestionServiceFactory.FACTORY.connect();
     }
 
@@ -126,7 +138,7 @@ public class DpIngestionServiceTest {
      */
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        apiIngest.shutdownSoft();
+        apiIngest.shutdown();
         apiIngest.awaitTermination();
     }
 
@@ -150,7 +162,7 @@ public class DpIngestionServiceTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionService#from(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl#from(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
      */
     @Test
     public final void testFrom() {
@@ -158,10 +170,10 @@ public class DpIngestionServiceTest {
         try {
             DpIngestionConnection   connIngest = DpIngestionConnectionFactory.FACTORY.connect();
 
-            DpIngestionService      apiTest = DpIngestionService.from(connIngest);
+            DpIngestionServiceImpl      apiTest = DpIngestionServiceImpl.from(connIngest);
             
             // Shutdown API connection and test
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             Assert.assertTrue("Ingestion API reported NOT shutdown after shutdown operation", apiTest.isShutdown());
             
             apiTest.awaitTermination();
@@ -177,7 +189,7 @@ public class DpIngestionServiceTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionService#awaitTermination()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl#awaitTermination()}.
      */
     @Test
     public final void testAwaitTermination() {
@@ -185,9 +197,9 @@ public class DpIngestionServiceTest {
         try {
 
             // Create new Ingestion Service API, then shut it down
-            DpIngestionService      apiTest = DpIngestionServiceFactory.FACTORY.connect();
+            IIngestionService      apiTest = DpIngestionServiceFactory.FACTORY.connect();
             
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             Assert.assertTrue("Test Ingestion Service API reported NOT shutdown after shutdownSoft() operation.", apiTest.isShutdown());
             
             apiTest.awaitTermination();
@@ -210,7 +222,7 @@ public class DpIngestionServiceTest {
 
         try {
             // Create new Ingestion Service API, then shut it down hard
-            DpIngestionService      apiTest = DpIngestionServiceFactory.FACTORY.connect();
+            IIngestionService      apiTest = DpIngestionServiceFactory.FACTORY.connect();
             
             apiTest.shutdownNow();
             Assert.assertTrue("Test Ingestion Service API reported NOT shutdown after shutdownNow() operation.", apiTest.isShutdown());
@@ -259,7 +271,7 @@ public class DpIngestionServiceTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionService#registerProvider(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl#registerProvider(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
      */
     @Test
     public final void testRegisterProvider() {
@@ -281,10 +293,10 @@ public class DpIngestionServiceTest {
     }
     
     /**
-     * Test method for {@link DpIngestionService#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.model.IngestionFrame)
+     * Test method for {@link DpIngestionServiceImpl#ingest(com.ospreydcs.dp.api.ingest.IngestionFrame)
      */
     @Test
-    public final void testIngestProviderUidIngestionFrameSmall() {
+    public final void testIngestIngestionFrameSmall() {
         
         // Attempt provider registration
         ProviderUID     recUID;
@@ -300,7 +312,8 @@ public class DpIngestionServiceTest {
         
         // Attempt data ingestion
         try {
-            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_SMALL);
+//            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_SMALL);
+            List<IngestionResponse> lstRsps = apiIngest.ingest(MSG_FRAME_SMALL);
             
             Assert.assertEquals(1, lstRsps.size());
             
@@ -322,10 +335,10 @@ public class DpIngestionServiceTest {
 
 
     /**
-     * Test method for {@link DpIngestionService#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.model.IngestionFrame)
+     * Test method for {@link DpIngestionServiceImpl#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.IngestionFrame)
      */
     @Test
-    public final void testIngestProviderUidIngestionFrameLarge() {
+    public final void testIngestIngestionFrameLarge() {
         
         // Enable frame decomposition
         
@@ -344,7 +357,8 @@ public class DpIngestionServiceTest {
         
         // Attempt data ingestion
         try {
-            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_LARGE);
+//            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_LARGE);
+            List<IngestionResponse> lstRsps = apiIngest.ingest(MSG_FRAME_LARGE);
             
             Assert.assertEquals(1, lstRsps.size());
             
@@ -367,6 +381,114 @@ public class DpIngestionServiceTest {
             // Check that the ingestion frame was destroyed
             Assert.assertEquals(0, MSG_FRAME_LARGE.getColumnCount());
         }
+    }
+    
+    /**
+     * Test method for {@link DpIngestionServiceImpl#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.IngestionFrame)
+     */
+    @Test
+    public final void testIngestListOfIngestionFramesLarge() {
+        
+        // Parameters
+        final int       cntFrames = 15;
+        final int       cntCols = 1000; // ensure decomposition
+        final int       cntRows = 1000; //
+        final long      szFrmMax = 4_000_000L;
+        
+        final List<IngestionFrame>  lstFrames = TestIngestionFrameGenerator.createDoublesPayloadWithClock(cntFrames, cntCols, cntRows, true);
+        final long      szFrame = lstFrames.get(0).allocationSizeFrame();
+        final long      szPayload = lstFrames.stream().mapToLong(msg -> msg.allocationSizeFrame()).sum();
+        
+        
+        // Create API for this test
+        DpIngestionServiceImpl  apiIngest;
+        try {
+            DpIngestionConnection   connIngest = DpIngestionConnectionFactory.FACTORY.connect();
+            apiIngest = new DpIngestionServiceImpl(connIngest);
+
+            // Enable frame decomposition
+            apiIngest.enableFrameDecomposition(szFrmMax);
+            
+        } catch (DpGrpcException e) {
+            Assert.fail("Could not create Ingestion Service connection: " + e.getMessage());
+            return;
+        }
+        
+        
+        // Attempt provider registration
+        
+        try {
+            apiIngest.registerProvider(REC_PROVIDER_REG_1);
+            
+        } catch (DpIngestionException e) {
+            Assert.fail("Data Provider registration failed with exception: " + e.getMessage());
+            return;
+        }
+        
+        
+        // Test results
+        List<IngestionResponse> lstRspsAll = new LinkedList<>();    // responses from full payload
+        Instant insStart, insFinish, insShutdown, insTerminate;     // Time everything
+        
+        try {
+            // Submit payload frame-by-frame
+            insStart = Instant.now();
+            for (IngestionFrame frame : lstFrames) {
+                List<IngestionResponse> lstRsps = apiIngest.ingest(frame);
+                
+                lstRspsAll.addAll(lstRsps);
+            }
+            insFinish = Instant.now();
+            
+        } catch (Exception e) {
+            
+            // Check if ingestData() is still unimplemented
+            if (e.getCause() instanceof io.grpc.StatusRuntimeException gRpcExcp) {
+                if (e.getMessage().contains("UNIMPLEMENTED")) {
+                    System.out.println("WARNING: The Ingestion Service ingestData() operation is still unimplemented");
+                    System.out.println("  Details: " + gRpcExcp.getMessage());
+                }
+            }
+            
+            Assert.fail("Data ingestion failed with exception: " + e.getMessage());
+            return;
+        }
+        
+        // Get state variables
+        ProviderUID     recUID = apiIngest.getProviderUid();
+        int             cntXmissions = apiIngest.getTransmissionCount();
+        
+        // Shutdown API
+        try {
+            apiIngest.shutdown();
+            insShutdown = Instant.now();
+            Assert.assertTrue(apiIngest.isShutdown());
+            
+            apiIngest.awaitTermination();
+            insTerminate = Instant.now();
+            Assert.assertTrue(apiIngest.isTerminated());
+            
+        } catch (InterruptedException e) {
+            Assert.fail("API shutdown() interrupted: " + e.getMessage());
+            return;
+        }
+            
+        // Check that all ingestion frames were destroyed during decomposition
+        for (IngestionFrame frame : lstFrames)
+            Assert.assertEquals(0, frame.getColumnCount());
+        
+        // Print out results
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
+        System.out.println("  Payload frames   : " + cntFrames);
+        System.out.println("  Frame allocation : " + szFrame);
+        System.out.println("  Payload allocation : " + szPayload);
+        System.out.println("  Maximum frame size : " + szFrmMax);
+        System.out.println("  Provider UID       : " + recUID);
+        System.out.println("  Messages transmitted : " + cntXmissions);
+        System.out.println("  Time for transmission : " + Duration.between(insStart, insFinish));
+        System.out.println("  Time for shutdown     : " + Duration.between(insFinish, insShutdown));
+        System.out.println("  Time for termination  : " + Duration.between(insShutdown, insTerminate));
+        System.out.println("  Total time active     : " + Duration.between(insStart, insTerminate));
     }
     
     //

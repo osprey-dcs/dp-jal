@@ -341,7 +341,7 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
             return osByteArray.size();
             
         } catch (IOException e) {
-            throw new ArithmeticException("Unable to compute table size (e.g., too large)");
+            throw new ArithmeticException("Unable to compute column size (e.g., too large)");
             
         }
     }

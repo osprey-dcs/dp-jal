@@ -16,13 +16,13 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;;
 
 /**
  * <p>
- * JUnit test cases for class <code>DpIngestionConnectionFactoryDeprecated</code>.
+ * JUnit test cases for class <code>DpIngestionConnectionFactoryStatic</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Dec 28, 2023
  *
- * @see DpIngestionConnectionFactoryDeprecated
+ * @see DpIngestionConnectionFactoryStatic
  */
 public class DpIngestionConnectionFactoryDeprecatedTest {
 
@@ -48,12 +48,12 @@ public class DpIngestionConnectionFactoryDeprecatedTest {
     //
     
     /**
-     * Test method for {@link DpIngestionConnectionFactoryDeprecated#connect()}.
+     * Test method for {@link DpIngestionConnectionFactoryStatic#connect()}.
      */
     @Test
     public final void testConnect() {
         try {
-            DpIngestionConnection   conn = DpIngestionConnectionFactoryDeprecated.connect();
+            DpIngestionConnection   conn = DpIngestionConnectionFactoryStatic.connect();
             
             conn.shutdownSoft();
             
@@ -67,7 +67,7 @@ public class DpIngestionConnectionFactoryDeprecatedTest {
     }
 
     /**
-     * Test method for {@link DpIngestionConnectionFactoryDeprecated#connect(String, int)}.
+     * Test method for {@link DpIngestionConnectionFactoryStatic#connect(String, int)}.
      */
     @Test
     public final void testConnectStringInt() {
@@ -78,7 +78,7 @@ public class DpIngestionConnectionFactoryDeprecatedTest {
         TimeUnit tuConTmout = DpApiConfig.getInstance().connections.ingestion.timeout.unit;
         
         try {
-            DpIngestionConnection   conn = DpIngestionConnectionFactoryDeprecated.connect(strUrl, intPort);
+            DpIngestionConnection   conn = DpIngestionConnectionFactoryStatic.connect(strUrl, intPort);
 
             conn.shutdownSoft();
             conn.awaitTermination(lngConTmout, tuConTmout);
@@ -97,7 +97,7 @@ public class DpIngestionConnectionFactoryDeprecatedTest {
     }
 
     /**
-     * Test method for {@link DpIngestionConnectionFactoryDeprecated#connect(String, int, boolean, long, TimeUnit)}.
+     * Test method for {@link DpIngestionConnectionFactoryStatic#connect(String, int, boolean, long, TimeUnit)}.
      */
     @Test
     public final void testConnectStringIntBooleanLongTimeUnit() {
@@ -110,7 +110,7 @@ public class DpIngestionConnectionFactoryDeprecatedTest {
         TimeUnit tuTmout = DpApiConfig.getInstance().connections.ingestion.channel.grpc.timeoutUnit;
         
         try {
-            DpIngestionConnection   conn = DpIngestionConnectionFactoryDeprecated.connect(strUrl, intPort,
+            DpIngestionConnection   conn = DpIngestionConnectionFactoryStatic.connect(strUrl, intPort,
                     bolPlainText,
                     lngTmout, 
                     tuTmout);

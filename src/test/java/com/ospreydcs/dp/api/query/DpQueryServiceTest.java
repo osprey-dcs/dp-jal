@@ -161,7 +161,7 @@ public class DpQueryServiceTest {
      */
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
-        apiQuery.shutdownSoft();
+        apiQuery.shutdown();
         apiQuery.awaitTermination();
     }
 

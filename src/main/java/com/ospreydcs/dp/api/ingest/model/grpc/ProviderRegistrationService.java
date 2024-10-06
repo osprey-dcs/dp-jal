@@ -260,7 +260,7 @@ public final class ProviderRegistrationService {
             return recUid;
             
         } catch (io.grpc.StatusRuntimeException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                            + " - SERIOUS ERROR - gRPC threw runtime exception attempting to register provider: "
                            + "type=" + e.getClass().getName()
                            + ", details=" + e.getMessage();
@@ -271,7 +271,7 @@ public final class ProviderRegistrationService {
             throw new DpIngestionException(strMsg, e);
             
         } catch (MissingResourceException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - data provider registration failed with Ingestion Service: "
                     + e.getMessage();
 
@@ -343,7 +343,7 @@ public final class ProviderRegistrationService {
         } catch (io.grpc.StatusRuntimeException e) {
 
             if (BOL_LOGGING)
-                LOGGER.warn("Ingestion Service provider registration appears unimplemented, mocking registration. io.grpc.StatusRuntimeException = {}" + e.getMessage());
+                LOGGER.warn("Ingestion Service provider registration appears unimplemented, mocking registration: io.grpc.StatusRuntimeException = {}", e.getMessage());
 
             ProviderRegistrationService.bolRegistrationImplemented = false;
             
@@ -351,7 +351,7 @@ public final class ProviderRegistrationService {
         } catch (MissingResourceException e) {
             
             if (BOL_LOGGING)
-                LOGGER.warn("Ingestion Service provider registration appears implemented but test registration FAILED. MissingResourceException = {}" + e.getMessage());
+                LOGGER.warn("Ingestion Service provider registration appears implemented but test registration FAILED: MissingResourceException = {}", e.getMessage());
 
             ProviderRegistrationService.bolRegistrationImplemented = true;
         }
@@ -431,7 +431,7 @@ public final class ProviderRegistrationService {
             msgRsp = connIngest.getStubBlock().registerProvider(msgRqst);
             
         } catch (io.grpc.StatusRuntimeException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                            + " - gRPC threw runtime exception attempting to register provider: "
                            + "type=" + e.getClass().getName()
                            + ", details=" + e.getMessage();
@@ -449,7 +449,7 @@ public final class ProviderRegistrationService {
             recUid = ProtoMsg.toProviderUID(msgRsp);
             
         } catch (MissingResourceException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - data provider registration failed: "
                     + e.getMessage();
 

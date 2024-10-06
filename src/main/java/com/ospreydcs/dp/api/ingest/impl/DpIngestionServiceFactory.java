@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest;
+package com.ospreydcs.dp.api.ingest.impl;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
@@ -35,7 +35,7 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase;
-
+import com.ospreydcs.dp.api.ingest.IIngestionService;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceFutureStub;
@@ -46,7 +46,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
  * Connection factory for the <code>DqIngestionService</code> Data Platform Ingestion Service API interface.
  * </p>
  * <p>
- * The connection factory is capable of creating <code>{@link DpIngestionService}</code> interfaces with 
+ * The connection factory is capable of creating <code>{@link DpIngestionServiceImpl}</code> interfaces with 
  * various gRPC connection configurations to the Data Platform Ingestion Service.  These configurations range
  * from fully default to fully user specified, with various combinations as determined by the 
  * <code>connect(...)</code> method arguments.
@@ -54,15 +54,15 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
  * <p>
  * <h2>Factory Singleton</h2>
  * This class uses the static instance <code>{@link #FACTORY}</code> as the singleton connection factory 
- * for <code>DpIngestionService</code> creation using the DP API library default configuration.  
+ * for <code>DpIngestionServiceImpl</code> creation using the DP API library default configuration.  
  * Client can use the <code>{@link #FACTORY}</code> instance directory or obtain it indirectly through the 
  * <code>{@link #getInstance()}</code> static method.
  * </p>
  * <p>
  * <h2>Direct API Creation</h2>
- * Note that <code>{@link DpIngestionService}</code> instances can be created directly with 
+ * Note that <code>{@link DpIngestionServiceImpl}</code> instances can be created directly with 
  * <code>{@link DpIngestionConnection}</code>
- * objects using the <code>{@link DpIngestionService#from(DpGrpcConnection)}</code> method.  
+ * objects using the <code>{@link DpIngestionServiceImpl#from(DpGrpcConnection)}</code> method.  
  * <code>DpQueryConnection</code> instances are obtained from the <code>{@link DpIngestionConnectionFactory}</code> 
  * connection factory utility which has <code>connect(...)</code> methods analogous to those here.
  * </p>
@@ -76,14 +76,20 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
  * @author Christopher K. Allen
  * @since Mar 28, 2024
  *
- * @see DpIngestionService
+ * @see DpIngestionServiceImpl
  * @see DpIngestionConnection
  * @see DpIngestionConnectionFactory
  * @see DpServiceApiFactoryBase
  * @see DpGprcConnectionConfig
  */
+//@Deprecated(since="Aug 22, 2024", forRemoval=true)
 public final class DpIngestionServiceFactory extends
-        DpServiceApiFactoryBase<DpIngestionService, DpIngestionConnection, DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> {
+        DpServiceApiFactoryBase<IIngestionService, 
+                                DpIngestionConnection, 
+                                DpIngestionServiceGrpc, 
+                                DpIngestionServiceBlockingStub, 
+                                DpIngestionServiceFutureStub, 
+                                DpIngestionServiceStub> {
 
 
     //
@@ -181,10 +187,10 @@ public final class DpIngestionServiceFactory extends
      * @see @see com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#apiFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
      */
     @Override
-    protected DpIngestionService apiFrom(DpIngestionConnection conn) throws DpGrpcException {
-        DpIngestionService      isApi = DpIngestionService.from(conn);
+    protected IIngestionService apiFrom(DpIngestionConnection conn) throws DpGrpcException {
+        DpIngestionServiceImpl      apiIngest = DpIngestionServiceImpl.from(conn);
         
-        return isApi;
+        return apiIngest;
     }
 
 }

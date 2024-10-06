@@ -29,6 +29,7 @@ package com.ospreydcs.dp.api.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Date;
 import java.util.LinkedList;
@@ -56,7 +57,15 @@ import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
  * @since Oct 14, 2022
  *
  */
-public class BufferedImage {
+public class BufferedImage implements Serializable {
+
+    //
+    // Class Constants
+    //
+    
+    /** Serialization Identifier for Serializable interface */
+    private static final long serialVersionUID = 999247747137291777L;
+
     
     //
     // Attributes
@@ -104,26 +113,37 @@ public class BufferedImage {
     public enum Format {       
         /** Unprocessed image format */
         RAW("raw", FileType.RAW),   
+        
         /** Joint Photographic Experts Group (lossy compr.) - JPEG */
-        JPEG("jpg", FileType.JPEG), 
+        JPEG("jpg", FileType.JPEG),
+        
         /** Graphics Interchange Format - GIF */
-        GIF("gif", FileType.GIF),   
+        GIF("gif", FileType.GIF),
+        
         /** Tagged BufferedImage File Format - TIFF */
-        TIFF("tif", FileType.TIFF), 
+        TIFF("tif", FileType.TIFF),
+        
         /** Bitmap image file - BMP */
-        BMP("bmp", FileType.BMP),   
+        BMP("bmp", FileType.BMP),
+        
         /** Portable Network Graphics - PNG */
-        PNG("png", FileType.PNG),   
+        PNG("png", FileType.PNG),
+        
         /** Encapsulated Post-Script - EPS */
-        EPS("eps", FileType.EPS),   
+        EPS("eps", FileType.EPS),
+        
         /** Scalable Vector Format - SVG */
-        SVG("svg", FileType.SVG),   
+        SVG("svg", FileType.SVG),
+        
         /** Portable Document Format - JPEG */
-        PDF("pdf", FileType.PDF),   
+        PDF("pdf", FileType.PDF),
+        
         /** From EPICS NTNDArray - User specified format */
-        NTND("ntnd", null),          
+        NTND("ntnd", null),
+        
         /** User image format - See {@link BufferedImage#getDimensions()} */
-        CUSTOM("img", null),        
+        CUSTOM("img", null),
+        
         /** Format not specified - Unknown, unspecified, or unsupported format */
         UNKNOWN(null, FileType.UNRECOGNIZED);
         
@@ -467,7 +487,7 @@ public class BufferedImage {
      * 
      * @param strName new image name 
      */
-    public void setStrName(String strName) {
+    public void setName(String strName) {
         this.strName = strName;
     }
 
@@ -487,7 +507,7 @@ public class BufferedImage {
      * 
      * @param fmtImage new image format identifier 
      */
-    public void setTypImage(Format fmtImage) {
+    public void setFormat(Format fmtImage) {
         this.fmtImage = fmtImage;
     }
 

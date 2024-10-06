@@ -339,7 +339,7 @@ public class SamplingProcessTableTest {
             Assert.assertEquals(cntSamples, cntRows);
             
         } catch (ClassNotFoundException | IOException | DpGrpcException e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             
         }
     }
@@ -362,7 +362,7 @@ public class SamplingProcessTableTest {
             Assert.assertEquals(cntSources, cntCols);
             
         } catch (ClassNotFoundException | IOException | DpGrpcException e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             
         }
         
@@ -409,7 +409,7 @@ public class SamplingProcessTableTest {
         try {
             lstRawData = recQuery.recoverQueryData();
         } catch (ClassNotFoundException | IOException | DpGrpcException e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerName(), e) );
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodName(), e) );
             return;
         }
         
@@ -467,7 +467,7 @@ public class SamplingProcessTableTest {
             }
             
         } catch (ClassNotFoundException | IOException | DpGrpcException e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             
         }
         
@@ -1040,7 +1040,7 @@ public class SamplingProcessTableTest {
             return table;
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return null;
         }
     }

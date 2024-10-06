@@ -69,7 +69,11 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * @see DpGrpcConnectionFactoryBase
  */
 public final class DpQueryConnectionFactory extends 
-    DpGrpcConnectionFactoryBase<DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub>
+    DpGrpcConnectionFactoryBase<DpQueryConnection, 
+                                DpQueryServiceGrpc, 
+                                DpQueryServiceBlockingStub, 
+                                DpQueryServiceFutureStub, 
+                                DpQueryServiceStub>
 
 {
 

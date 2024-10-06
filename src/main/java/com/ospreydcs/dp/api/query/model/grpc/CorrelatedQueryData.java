@@ -231,7 +231,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         
         // Check argument
         if (!msgBucket.getDataTimestamps().hasSamplingClock())
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedCallerNameSimple() 
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() 
                     + ": Argument does not contain a sampling clock.");
         
         // Extract sampling clock
@@ -597,7 +597,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         
         // Check argument
         if (!msgBucket.getDataTimestamps().hasSamplingClock())
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedCallerNameSimple() 
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() 
                     + ": Argument does not contain a sampling clock.");
             
         SamplingClock   msgClock = msgBucket.getDataTimestamps().getSamplingClock();

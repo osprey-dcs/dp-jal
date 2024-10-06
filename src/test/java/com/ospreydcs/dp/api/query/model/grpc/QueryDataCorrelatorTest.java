@@ -226,7 +226,7 @@ public class QueryDataCorrelatorTest {
             Assert.fail(recDomains.message());
 
         // Printout processed set
-        this.printProperties(JavaRuntime.getQualifiedCallerNameSimple(), prcrTest.getCorrelatedSet());
+        this.printProperties(JavaRuntime.getQualifiedMethodNameSimple(), prcrTest.getCorrelatedSet());
     }
     
     /**
@@ -261,7 +261,7 @@ public class QueryDataCorrelatorTest {
             Assert.fail(recDomains.message());
 
         // Printout processed set
-        this.printProperties(JavaRuntime.getQualifiedCallerNameSimple(), prcrTest.getCorrelatedSet());
+        this.printProperties(JavaRuntime.getQualifiedMethodNameSimple(), prcrTest.getCorrelatedSet());
     }
     
     /**

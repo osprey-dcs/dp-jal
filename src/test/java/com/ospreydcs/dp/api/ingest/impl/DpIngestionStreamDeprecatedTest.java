@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionStreamTest.java
+ * File:	DpIngestionStreamDeprecatedTest.java
  * Package: com.ospreydcs.dp.api.ingest
- * Type: 	DpIngestionStreamTest
+ * Type: 	DpIngestionStreamDeprecatedTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -25,10 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest;
-
-import static org.junit.Assert.*;
-import org.junit.Assert;
+package com.ospreydcs.dp.api.ingest.impl;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -38,6 +35,7 @@ import java.util.Map;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,9 +45,10 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.ClientRequestId;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
@@ -57,14 +56,15 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
- * JUnit test cases for class <code>{@link DpIngestionStream}</code>.
+ * JUnit test cases for class <code>{@link DpIngestionStreamDeprecated}</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Apr 29, 2024
  *
  */
-public class DpIngestionStreamTest {
+@Deprecated(since="Aug 26, 2024", forRemoval=true)
+public class DpIngestionStreamDeprecatedTest {
 
 
     
@@ -81,7 +81,7 @@ public class DpIngestionStreamTest {
     //
     
     /** Test Data Provider registration unique name */
-    private static final String                 STR_PROVIDER_NAME_1 = DpIngestionStreamTest.class.getName() + "TEST_PROVIDER_1";
+    private static final String                 STR_PROVIDER_NAME_1 = DpIngestionStreamDeprecatedTest.class.getName() + "TEST_PROVIDER_1";
     
     /** Test Data Provider attributes */
     private static final Map<String, String>    MAP_PROVIDER_ATTRS_1 = Map.of(
@@ -122,7 +122,7 @@ public class DpIngestionStreamTest {
     //
     
     /** The Ingestion Service API under test - only use one if test allows it */
-    private static DpIngestionStream        apiIngest;
+    private static DpIngestionStreamDeprecated        apiIngest;
     
     
     //
@@ -134,7 +134,9 @@ public class DpIngestionStreamTest {
      */
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        apiIngest = DpIngestionStreamFactory.FACTORY.connect();
+        DpIngestionConnection connIngest = DpIngestionConnectionFactory.FACTORY.connect();
+//        apiIngest = DpIngestionStreamFactory.FACTORY.connect();
+        apiIngest = DpIngestionStreamDeprecated.from(connIngest);
     }
 
     /**
@@ -144,7 +146,7 @@ public class DpIngestionStreamTest {
     public static void tearDownAfterClass() throws Exception {
         if (apiIngest.isStreamOpen())
             apiIngest.closeStream();
-        apiIngest.shutdownSoft();
+        apiIngest.shutdown();
         apiIngest.awaitTermination();
     }
 
@@ -168,17 +170,18 @@ public class DpIngestionStreamTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#shutdownSoft()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#shutdown()}.
      */
     @Test
     public final void testShutdownSoft() {
         
         try {
             // Connect the interface
-            DpIngestionStream   apiTest = DpIngestionStreamFactory.FACTORY.connect();
+            DpIngestionConnection       connIngest = DpIngestionConnectionFactory.FACTORY.connect();
+            DpIngestionStreamDeprecated apiTest = DpIngestionStreamDeprecated.from(connIngest);
             
             // Now shut it down
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             
             // Check for shutdown
             Assert.assertTrue(apiTest.isShutdown());
@@ -192,14 +195,16 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#shutdownNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#shutdownNow()}.
      */
     @Test
     public final void testShutdownNow() {
         
         try {
             // Connect the interface
-            DpIngestionStream   apiTest = DpIngestionStreamFactory.FACTORY.connect();
+//            DpIngestionStreamDeprecated   apiTest = DpIngestionStreamFactory.FACTORY.connect();
+            DpIngestionConnection       connIngest = DpIngestionConnectionFactory.FACTORY.connect();
+            DpIngestionStreamDeprecated apiTest = DpIngestionStreamDeprecated.from(connIngest);
             
             // Now shut it down hard
             apiTest.shutdownNow();
@@ -214,18 +219,20 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#awaitTermination()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#awaitTermination()}.
      */
     @Test
     public final void testAwaitTermination() {
 
         try {
             // Connect the interface
-            DpIngestionStream   apiTest = DpIngestionStreamFactory.FACTORY.connect();
+//            DpIngestionStreamDeprecated   apiTest = DpIngestionStreamFactory.FACTORY.connect();
+            DpIngestionConnection       connIngest = DpIngestionConnectionFactory.FACTORY.connect();
+            DpIngestionStreamDeprecated apiTest = DpIngestionStreamDeprecated.from(connIngest);
             
             // Now shut it down
             Instant     insShutdown = Instant.now();
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             
             // Check for shutdown
             Assert.assertTrue(apiTest.isShutdown());
@@ -249,7 +256,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#from(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#from(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
      */
     @Test
     public final void testFrom() {
@@ -257,10 +264,10 @@ public class DpIngestionStreamTest {
         try {
             DpIngestionConnection   connIngest = DpIngestionConnectionFactory.FACTORY.connect();
 
-            DpIngestionStream       apiTest = DpIngestionStream.from(connIngest);
+            DpIngestionStreamDeprecated       apiTest = DpIngestionStreamDeprecated.from(connIngest);
             
             // Shutdown API connection and test
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             Assert.assertTrue("Ingestion API reported NOT shutdown after shutdown operation", apiTest.isShutdown());
             
             apiTest.awaitTermination();
@@ -276,7 +283,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#DpIngestionStream(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#DpIngestionStream(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
      */
     @Test
     public final void testDpIngestionStream() {
@@ -284,10 +291,10 @@ public class DpIngestionStreamTest {
         try {
             DpIngestionConnection   connIngest = DpIngestionConnectionFactory.FACTORY.connect();
 
-            DpIngestionStream       apiTest = new DpIngestionStream(connIngest);
+            DpIngestionStreamDeprecated       apiTest = new DpIngestionStreamDeprecated(connIngest);
             
             // Shutdown API connection and test
-            apiTest.shutdownSoft();
+            apiTest.shutdown();
             Assert.assertTrue("Ingestion API reported NOT shutdown after shutdown operation", apiTest.isShutdown());
             
             apiTest.awaitTermination();
@@ -303,7 +310,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#enableBackPressure(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#enableBackPressure(int)}.
      */
     @Test
     public final void testEnableBackPressure() {
@@ -339,7 +346,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#disableBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#disableBackPressure()}.
      */
     @Test
     public final void testDisableBackPressure() {
@@ -375,7 +382,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#openStream(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#openStream(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
      */
     @Test
     public final void testOpenStream() {
@@ -401,7 +408,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#closeStream()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#closeStream()}.
      */
     @Test
     public final void testCloseStream() {
@@ -425,7 +432,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#closeStreamNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#closeStreamNow()}.
      */
     @Test
     public final void testCloseStreamNow() {
@@ -443,7 +450,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#ingest(com.ospreydcs.dp.api.ingest.model.IngestionFrame)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#ingest(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
      */
     @Test
     public final void testIngestIngestionFrame() {
@@ -483,7 +490,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#ingest(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#ingest(java.util.List)}.
      */
     @Test
     public final void testIngestListOfIngestionFrame() {
@@ -523,7 +530,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#getOutgoingQueueSize()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#getQueueSize()}.
      */
     @Test
     public final void testGetOutgoingQueueSize() {
@@ -554,7 +561,7 @@ public class DpIngestionStreamTest {
             apiIngest.ingest(lstFrames);
             
             for (int iPoll=0; iPoll<cntPolls; iPoll++) {
-                arrQueSize[iPoll] = apiIngest.getOutgoingQueueSize();
+                arrQueSize[iPoll] = apiIngest.getQueueSize();
                 
                 Thread.sleep(lngPollWaitMs);
             }
@@ -589,7 +596,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#awaitOutgoingQueueEmpty()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#awaitQueueEmpty()}.
      */
     @Test
     public final void testAwaitOutgoingQueueEmpty() {
@@ -620,7 +627,7 @@ public class DpIngestionStreamTest {
             Thread.sleep(lngWaitMs);
             
             Instant     insStart = Instant.now();
-            apiIngest.awaitOutgoingQueueEmpty();
+            apiIngest.awaitQueueEmpty();
             Instant     insStop = Instant.now();
             Duration    durWait = Duration.between(insStart, insStop);
             
@@ -628,7 +635,7 @@ public class DpIngestionStreamTest {
             System.out.println("Outgoing queue emtpy wait after submitting 10 moderate frames:");
             System.out.println("  wait time = " + durWait);
 
-            Assert.assertEquals(0, apiIngest.getOutgoingQueueSize());
+            Assert.assertEquals(0, apiIngest.getQueueSize());
             
         } catch (DpIngestionException e) {
             Assert.fail("ingest() threw DpIngestionException: " + e.getMessage());
@@ -651,7 +658,7 @@ public class DpIngestionStreamTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#getClientRequestIds()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#getClientRequestIds()}.
      */
     @Test
     public final void testGetClientRequestIds() {
@@ -695,12 +702,12 @@ public class DpIngestionStreamTest {
         }
         
         // Get the client request IDs and compare
-        List<ClientRequestId>   lstRqstIds = apiIngest.getClientRequestIds();
+        List<ClientRequestUID>   lstRqstIds = apiIngest.getClientRequestIds();
         Assert.assertEquals(cntFrames, lstRqstIds.size());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.DpIngestionStream#getIngestionExceptions()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#getIngestionExceptions()}.
      */
     @Test
     public final void testGetIngestionExceptions() {
@@ -746,7 +753,7 @@ public class DpIngestionStreamTest {
         // Get the the request exception list - not much we can do
         List<IngestionResponse>   lstRspExcp = apiIngest.getIngestionExceptions();
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " reports " + lstRspExcp.size() + " ingestion exceptions.");
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " reports " + lstRspExcp.size() + " ingestion exceptions.");
         for (IngestionResponse recRsp : lstRspExcp) {
             Assert.assertTrue(recRsp.hasException());
         }

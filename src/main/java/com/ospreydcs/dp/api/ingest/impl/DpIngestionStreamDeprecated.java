@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionStream.java
+ * File:	DpIngestionStreamDeprecated.java
  * Package: com.ospreydcs.dp.api.ingest
- * Type: 	DpIngestionStream
+ * Type: 	DpIngestionStreamDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest;
+package com.ospreydcs.dp.api.ingest.impl;
 
 import java.util.List;
 
@@ -37,10 +37,12 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
-import com.ospreydcs.dp.api.ingest.model.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessor;
+import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.IIngestionStream;
+import com.ospreydcs.dp.api.ingest.IngestionFrame;
+import com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
-import com.ospreydcs.dp.api.model.ClientRequestId;
+import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
@@ -96,29 +98,31 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
  * Only one data stream can be open at any instance.  However, a single interface data stream
  * may use multiple gRPC data stream to transmit ingestion data (gRPC channels can support multiple
  * gRPC data stream).  If clients require multiple, concurrent data stream they should create a 
- * <code>DpIngestionStream</code> instance for each stream.  Note that each instance will 
+ * <code>DpIngestionStreamDeprecated</code> instance for each stream.  Note that each instance will 
  * manage its own gRPC channel object.
  * </p>
  * <p>
  * <h2>Instance Creation</h2>
- * In generation object of <code>DpIngestionStream</code> should be obtained from the connection
+ * In generation object of <code>DpIngestionStreamDeprecated</code> should be obtained from the connection
  * factory <code>{@link DpIngestionStreamFactory}</code>.  However, there are creator and 
  * constructor method available which require a <code>{@link DpIngestionConnection}</code>
  * instance (which may be obtained from connection factory <code>DpIngestionConnectionFactory</code>.
  * </p>
  * <p>
  * <h2>Instance Shutdown</h2>
- * All instances of <code>DpIngestionStream</code> should be shutdown when no longer needed.
+ * All instances of <code>DpIngestionStreamDeprecated</code> should be shutdown when no longer needed.
  * This will release all resources and increase overall performance.  See methods
- * <code>{@link #shutdownSoft()}</code> and <code>{@link #shutdownNow()}</code>.
+ * <code>{@link #shutdown()}</code> and <code>{@link #shutdownNow()}</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Apr 27, 2024
  *
+ * @deprecated Replaced by DpIngestionStreamImpl
  */
-public class DpIngestionStream extends
-        DpServiceApiBase<DpIngestionStream, DpIngestionConnection, DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> {
+@Deprecated(since="Aug 20, 2024")
+public class DpIngestionStreamDeprecated extends
+        DpServiceApiBase<DpIngestionStreamDeprecated, DpIngestionConnection, DpIngestionServiceGrpc, DpIngestionServiceBlockingStub, DpIngestionServiceFutureStub, DpIngestionServiceStub> implements IIngestionStream {
 
 
     //
@@ -127,7 +131,7 @@ public class DpIngestionStream extends
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>DpIngestionStream</code> attached to the 
+     * Creates and returns a new instance of <code>DpIngestionStreamDeprecated</code> attached to the 
      * given Ingestion Service connection.
      * </p>
      * <p>
@@ -137,17 +141,17 @@ public class DpIngestionStream extends
      * <p>
      * <h2>NOTE:</h2>
      * The returned object should be shut down when no longer needed using 
-     * <code>{@link #shutdownSoft()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
      * This action is necessary to release unused gRPC resources and maintain 
      * overall performance.  
      * </p>
      * 
      * @param connIngest  the gRPC channel connection to the desired DP Ingestion Service
      *  
-     * @return new <code>DpIngestionStream</code> interfaces attached to the argument
+     * @return new <code>DpIngestionStreamDeprecated</code> interfaces attached to the argument
      */
-    public static DpIngestionStream from(DpIngestionConnection connIngest) {
-        return new DpIngestionStream(connIngest);
+    public static DpIngestionStreamDeprecated from(DpIngestionConnection connIngest) {
+        return new DpIngestionStreamDeprecated(connIngest);
     }
 
     
@@ -183,7 +187,7 @@ public class DpIngestionStream extends
     //
     
     /** The processor of all incoming ingestion data (only need one) */
-    private final IngestionStreamProcessor  processor;
+    private final IngestionStreamProcessorDep  processor;
     
     
     //
@@ -203,7 +207,7 @@ public class DpIngestionStream extends
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionStream</code> attached to the given
+     * Constructs a new instance of <code>DpIngestionStreamDeprecated</code> attached to the given
      * Ingestion Service connection.
      * </p>
      * <p>
@@ -213,7 +217,7 @@ public class DpIngestionStream extends
      * <p>
      * <h2>NOTE:</h2>
      * The returned object should be shut down when no longer needed using 
-     * <code>{@link #shutdownSoft()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
      * This action is necessary to release unused gRPC resources and maintain 
      * overall performance.  
      * </p>
@@ -222,15 +226,15 @@ public class DpIngestionStream extends
      * 
      * @see DpIngestionConnectionFactory
      */
-    public DpIngestionStream(DpIngestionConnection connIngest) {
+    public DpIngestionStreamDeprecated(DpIngestionConnection connIngest) {
         super(connIngest);
         
-        this.processor = IngestionStreamProcessor.from(connIngest);
+        this.processor = IngestionStreamProcessorDep.from(connIngest);
     }
     
     
     //
-    // Ingestion Service API
+    // Configuration
     //
 
     /**
@@ -266,7 +270,7 @@ public class DpIngestionStream extends
     synchronized
     public void enableBackPressure(int intQueueCapacity) throws IllegalStateException {
         if (this.bolOpenStream)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - cannot change back pressure when open.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - cannot change back pressure when open.");
         this.processor.enableBackPressure(intQueueCapacity);
     }
     
@@ -308,6 +312,11 @@ public class DpIngestionStream extends
         this.processor.disableBackPressure();
     }
     
+    
+    //
+    // Operations
+    //
+    
     /**
      * <p>
      * Opens the data stream to the Ingestion Service.
@@ -337,9 +346,10 @@ public class DpIngestionStream extends
      * 
      * @see #closeStream()
      * @see #closeStreamNow()
-     * @see #shutdownSoft()
+     * @see #shutdown()
      * @see #shutdownNow()
      */
+    @Override
     synchronized
     public ProviderUID  openStream(ProviderRegistrar recRegistration) throws DpIngestionException {
 
@@ -402,15 +412,16 @@ public class DpIngestionStream extends
      * 
      * @return  list of responses from the Ingestion Service to data ingestion messages
      * 
-     * @throws IllegalStateException    attempted to close an opened stream
+     * @throws IllegalStateException    attempted to close an unopened stream
      * @throws InterruptedException     internal processor interrupted while waiting for pending tasks
      */
+    @Override
     synchronized
     public List<IngestionResponse> closeStream() throws IllegalStateException, InterruptedException {
         
         // Check if stream is already close
         if (!this.bolOpenStream) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() +
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() +
                     " - Attempted to close stream that was not open.";
             
             if (BOL_LOGGING) 
@@ -454,6 +465,7 @@ public class DpIngestionStream extends
      * @return  <code>true</code> if stream was closed everything was shut down,
      *          <code>false</code> if the stream was already closed or internal process failed
      */
+    @Override
     synchronized
     public boolean closeStreamNow() {
         
@@ -495,6 +507,7 @@ public class DpIngestionStream extends
      * @throws IllegalStateException    attempted to submit frame to unopened data stream
      * @throws DpIngestionException     data ingestion failure - typically interruption during back pressure
      */
+    @Override
     public void ingest(IngestionFrame frame) throws IllegalStateException, DpIngestionException {
         this.ingest(List.of(frame));
     }
@@ -524,11 +537,12 @@ public class DpIngestionStream extends
      * @throws IllegalStateException    attempted to submit frames to unopened data stream
      * @throws DpIngestionException     data ingestion failure - typically interruption during back pressure
      */
+    @Override
     public void ingest(List<IngestionFrame> lstFrames) throws IllegalStateException, DpIngestionException {
         
         // Check the stream state
         if (!this.bolOpenStream) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - data ingestion attempted on unopened stream.";
             
             if (BOL_LOGGING)
@@ -543,7 +557,7 @@ public class DpIngestionStream extends
            
             // Internal processor not ready - this should not happen (stream was opened if here)
         } catch (IllegalStateException e) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - INTERNL ERROR - processor would not accept ingestion data: "
                     + e.getMessage();
             
@@ -554,7 +568,7 @@ public class DpIngestionStream extends
             
             // Back pressure enable and we are interrupted while waiting for message queue
         } catch (InterruptedException e) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - INTERNL ERROR - processor interrupted while waiting for ingestion: "
                     + e.getMessage();
             
@@ -567,26 +581,39 @@ public class DpIngestionStream extends
     
     /**
      * <p>
-     * Returns the current size of the queue buffer containing outgoing data ingestion 
-     * messages waiting for transmission. 
+     * Allows clients to block until the queue buffer containing the outgoing data ingestion
+     * messages is ready (below capacity).
      * </p>
      * <p>
-     * Returns the current size of the ingest data request message queue buffer used by the
-     * internal gRPC stream processor.  This value can be used to estimate transmission
-     * performance by the client by timing the consumption of queued data ingestion messages.
+     * This method allows clients to due their own blocking at the ingestion side rather than
+     * rely on the internal back-pressure mechanism.
+     * Clients can wait for the outgoing queue buffer used by the internal gRPC
+     * stream processor to drop below capacity.  
+     * This activity can also be useful when clients wish to due their own performance tuning.
+     * Specifically, clients can add a fixed number of  ingestion frames then measure the time 
+     * for the queue ready event.
      * </p>
      * <p>
-     * Technically, the value returned is the number of 
-     * <code>IngestDataRequest</code> messages that are currently queued up and waiting 
-     * on an available stream processor thread for transmission.
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method will return immediately if the outgoing data message queue is below capacity.
+     * </li>
+     * <li>
+     * This method is thread safe and multiple clients can block on this method.
+     * </li>
+     * <li>
+     * All clients blocking on this method will unblock when the outgoing message buffer drops below capacity.
+     * </li>
+     * </ul>
      * </p> 
      * 
-     * @return  number of <code>IngestDataRequest<code> messages in the request queue
-     * 
-     * @throws IllegalStateException    stream was never opened and processor never activated
+     * @throws IllegalStateException    operation invoked while stream closed and processor inactive
+     * @throws InterruptedException     operation interrupted while waiting for queue ready
      */
-    public int  getOutgoingQueueSize() throws IllegalStateException {
-        return this.processor.getRequestQueueSize();
+    @Override
+    public void awaitQueueReady() throws IllegalStateException, InterruptedException {
+        this.processor.awaitRequestQueueReady();
     }
     
     /**
@@ -619,10 +646,40 @@ public class DpIngestionStream extends
      * @throws IllegalStateException    operation invoked while stream closed and processor inactive
      * @throws InterruptedException     operation interrupted while waiting for queue ready
      */
-    public void awaitOutgoingQueueEmpty() throws IllegalStateException, InterruptedException {
+    @Override
+    public void awaitQueueEmpty() throws IllegalStateException, InterruptedException {
         this.processor.awaitRequestQueueEmpty();
     }
     
+    
+    //
+    // State and Data Query
+    //
+    
+    /**
+     * <p>
+     * Returns the current size of the queue buffer containing outgoing data ingestion 
+     * messages waiting for transmission. 
+     * </p>
+     * <p>
+     * Returns the current size of the ingest data request message queue buffer used by the
+     * internal gRPC stream processor.  This value can be used to estimate transmission
+     * performance by the client by timing the consumption of queued data ingestion messages.
+     * </p>
+     * <p>
+     * Technically, the value returned is the number of 
+     * <code>IngestDataRequest</code> messages that are currently queued up and waiting 
+     * on an available stream processor thread for transmission.
+     * </p> 
+     * 
+     * @return  number of <code>IngestDataRequest<code> messages in the request queue
+     * 
+     * @throws IllegalStateException    stream was never opened and processor never activated
+     */
+//    @Override
+    public int  getQueueSize() throws IllegalStateException {
+        return this.processor.getRequestQueueSize();
+    }
     
     /**
      * <p>
@@ -663,10 +720,11 @@ public class DpIngestionStream extends
      * 
      * @throws IllegalStateException    the stream was not opened and processor was never activated
      */
-    public List<ClientRequestId>    getClientRequestIds() throws IllegalStateException {
+//    @Override
+    public List<ClientRequestUID>    getClientRequestIds() throws IllegalStateException {
     
         // Get the client request IDs from the internal processor
-        List<ClientRequestId>   lstIds = this.processor.getRequestIds();
+        List<ClientRequestUID>   lstIds = this.processor.getRequestIds();
         
         return lstIds;
     }
@@ -708,6 +766,7 @@ public class DpIngestionStream extends
      * 
      * @throws IllegalStateException    stream was never opened and processor was never activated
      */
+//    @Override
     public List<IngestionResponse>  getIngestionExceptions() throws IllegalStateException {
         
         // Get the list of exceptional responses from the internal stream processor
@@ -723,8 +782,33 @@ public class DpIngestionStream extends
      * 
      * @return  <code>true</code> if open, <code>false</code> if closed.
      */
+    @Override
     public boolean isStreamOpen() {
         return this.bolOpenStream;
+    }
+    
+    /**
+     * <p>
+     * Returns the Data Provider UID for the Data Provider registration that was used to open this data stream.
+     * </p>
+     * <p>
+     * If the data stream to the Ingestion Service was opened then subsequently closed, the Provider UID last used
+     * to open the stream is returned.
+     * </p>
+     * 
+     * @return  the UID of the data provider which opened the data stream to the Ingestion Service
+     * 
+     * @throws IllegalStateException    the data stream was never opened
+     */
+//    @Override
+    public ProviderUID  getProviderUid() throws IllegalStateException {
+        
+        // Check state
+        if (this.recProviderUid == null) {
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Stream to Ingestion Service was never opened.");
+        }
+        
+        return this.recProviderUid;
     }
     
     
@@ -749,7 +833,7 @@ public class DpIngestionStream extends
      * Once the data stream is closed, either explicitly or implicitly as described above,
      * the method defers to the base class for the actual interface shut down (e.i., involving
      * the gRPC channel under management).  
-     * See <code>{@link DpServiceApiBase#shutdownSoft()}</code> documentation for details.
+     * See <code>{@link DpServiceApiBase#shutdown()}</code> documentation for details.
      * </p>
      * <p>
      * <h2>WARNING</h2>
@@ -765,16 +849,16 @@ public class DpIngestionStream extends
      * @throws  IterruptedException interrupted on a close operation or gRPC connection shut down         
      *          
      * @see #closeStream()
-     * @see com.ospreydcs.dp.api.grpc.model.DpServiceApiBase#shutdownSoft()
+     * @see com.ospreydcs.dp.api.grpc.model.DpServiceApiBase#shutdown()
      */
     @Override
-    public boolean shutdownSoft() throws InterruptedException {
+    public boolean shutdown() throws InterruptedException {
         if (this.bolOpenStream)
             try {
                 this.closeStream();
                 
             } catch (InterruptedException e) {
-                String strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                String strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                         + " - interrupted while waiting for closeStream() operation: "
                         + e.getMessage();
                 
@@ -784,7 +868,7 @@ public class DpIngestionStream extends
                 throw e;
             }
         
-        return super.shutdownSoft();
+        return super.shutdown();
     }
 
     /**
@@ -834,6 +918,12 @@ public class DpIngestionStream extends
     //
 
     /**
+     * <p>
+     * <h2>NOTES</h2>
+     * <ul>
+     * <li>Apparently - Do NOT call this method after a hard close with <code>{@link #closeStreamNow()}</code>.</li>
+     * </ul>
+     * </p>
      *
      * @see @see com.ospreydcs.dp.api.grpc.model.IConnection#awaitTermination()
      */

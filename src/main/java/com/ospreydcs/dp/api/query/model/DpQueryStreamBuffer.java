@@ -431,7 +431,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
             
             // Check if stream has already been requested
             if (this.bolStreamRequested) {
-                String strMsg = JavaRuntime.getQualifiedCallerName() + ": ERROR - Attempted to start a stream that has already been requested.";
+                String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to start a stream that has already been requested.";
                 if (this.bolLogging)
                     LOGGER.error(strMsg);
 
@@ -440,7 +440,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
             // Log event
             if (this.bolLogging) {
-                LOGGER.debug("{} called with following request:", JavaRuntime.getQualifiedCallerName());
+                LOGGER.debug("{} called with following request:", JavaRuntime.getQualifiedMethodName());
                 LOGGER.debug(this.msgRequest.toString());
             }
 
@@ -525,7 +525,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
     
         // Check if a stream has been requested
         if (!this.bolStreamRequested) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
+            String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
             if (this.bolLogging)
                 LOGGER.error(strMsg);
 
@@ -534,7 +534,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
         // Log event
         if (this.bolLogging)
-            LOGGER.debug("{} - latching on monitor StreamStart indefinitely.", JavaRuntime.getQualifiedCallerName());
+            LOGGER.debug("{} - latching on monitor StreamStart indefinitely.", JavaRuntime.getQualifiedMethodName());
     
         this.monStrmStart.await();
     }
@@ -568,7 +568,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
     
         // Check if a stream has been requested
         if (!this.bolStreamRequested) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
+            String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
             if (this.bolLogging)
                 LOGGER.error(strMsg);
 
@@ -577,7 +577,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
         // Log event
         if (this.bolLogging)
-            LOGGER.debug("{} - latching on monitor StreamStart for {} {}", JavaRuntime.getQualifiedCallerName(),lngTimeout, tuTimeout);
+            LOGGER.debug("{} - latching on monitor StreamStart for {} {}", JavaRuntime.getQualifiedMethodName(),lngTimeout, tuTimeout);
     
         boolean bolReleased = this.monStrmStart.await(lngTimeout, tuTimeout);
         
@@ -611,14 +611,14 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * @throws IllegalStateException    gRPC stream has not been started (see {@link #start()})
      * @throws InterruptedException     an interruption occurred while waiting for response
      *  
-     * @see #shutdownSoft()
+     * @see #shutdown()
      * @see #shutdownNow()
      */
     public void awaitStreamCompleted() throws IllegalStateException, InterruptedException {
         
         // Check if a stream has been requested
         if (!this.bolStreamRequested) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
+            String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
             if (this.bolLogging)
                 LOGGER.error(strMsg);
 
@@ -627,7 +627,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
         // Log event
         if (this.bolLogging)
-            LOGGER.debug("{} - latching on monitor StreamEnd indefinitely.", JavaRuntime.getQualifiedCallerName());
+            LOGGER.debug("{} - latching on monitor StreamEnd indefinitely.", JavaRuntime.getQualifiedMethodName());
 
         this.monStrmComplete.await();
     }
@@ -655,14 +655,14 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * @throws TimeoutException         timeout for the response expired
      * @throws InterruptedException     an interruption occurred while waiting for response
      *  
-     * @see #shutdownSoft()
+     * @see #shutdown()
      * @see #shutdownNow()
      */
     public void awaitStreamCompleted(long lngTimeout, TimeUnit tuTimeout) throws IllegalStateException, TimeoutException, InterruptedException {
         
         // Check if a stream has been requested
         if (!this.bolStreamRequested) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
+            String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
             if (this.bolLogging)
                 LOGGER.error(strMsg);
 
@@ -671,12 +671,12 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
         // Log event
         if (this.bolLogging)
-            LOGGER.debug("{} - latching on monitor StreamEnd for {} {}", JavaRuntime.getQualifiedCallerName(), lngTimeout, tuTimeout);
+            LOGGER.debug("{} - latching on monitor StreamEnd for {} {}", JavaRuntime.getQualifiedMethodName(), lngTimeout, tuTimeout);
 
         boolean bolReleased = this.monStrmComplete.await(lngTimeout, tuTimeout);
         
         if ( !bolReleased ) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": Timeout out waiting for stream to complete. ";
+            String strMsg = JavaRuntime.getQualifiedMethodName() + ": Timeout out waiting for stream to complete. ";
 
             // Log event
             if (this.bolLogging)
@@ -1060,7 +1060,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
         
         // Check if timeout occurred 
         if (!bolResult) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": timeout occured after " + lngTimeout + " " + tuTimeout.name();
+            String strMsg = JavaRuntime.getQualifiedMethodName() + ": timeout occured after " + lngTimeout + " " + tuTimeout.name();
             
             // Log event
             if (this.bolLogging)
@@ -1085,7 +1085,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      */
     @Override
     public String toString() {
-        StringBuffer    buf = new StringBuffer(JavaRuntime.getCallerClass() + "\n");
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClass() + "\n");
         
         // Write out contents
         buf.append("  List of page request indices: " + this.lstIndPageRequested + "\n");
@@ -1146,7 +1146,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
         // Debugging
         if (this.bolLogging) {
-            LOGGER.debug("{} called for monStrmStart = {}", JavaRuntime.getCallerName(), this.monStrmStart);
+            LOGGER.debug("{} called for monStrmStart = {}", JavaRuntime.getMethodName(), this.monStrmStart);
         }
         
         // Check for Initial Response - If the stream start monitor is still latched this is the first time through
@@ -1164,7 +1164,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
             
             // Debugging
             if (this.bolLogging)
-                LOGGER.debug("{}: Released monitor StreamStart {}", JavaRuntime.getCallerName(), this.monStrmStart);
+                LOGGER.debug("{}: Released monitor StreamStart {}", JavaRuntime.getMethodName(), this.monStrmStart);
 
             // Notify stream observers
             this.notifyStart();
@@ -1220,7 +1220,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
     @Override
     public void onError(Throwable e) {
 
-        String strErrMsg = JavaRuntime.getCallerName() + " called by gRPC or Query Service, exception message = " + e.getMessage();
+        String strErrMsg = JavaRuntime.getMethodName() + " called by gRPC or Query Service, exception message = " + e.getMessage();
 
         // Log event
         if (this.bolLogging)
@@ -1255,7 +1255,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
         // Log event
         if (this.bolLogging)
-            LOGGER.info("{}: Stream completed with {} data page(s) received.", JavaRuntime.getCallerName(), this.lstBufferRsps.size());
+            LOGGER.info("{}: Stream completed with {} data page(s) received.", JavaRuntime.getMethodName(), this.lstBufferRsps.size());
 
         // Update state variables and conditions
         this.monStrmComplete.countDown();
@@ -1372,7 +1372,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
         // Check argument for required data request
         if (!msgRqst.hasQuerySpec()) {
-            String  strMsg = JavaRuntime.getQualifiedCallerName() + ": argument does not contain initial query.";
+            String  strMsg = JavaRuntime.getQualifiedMethodName() + ": argument does not contain initial query.";
             if (this.bolLogging)
                 LOGGER.error(strMsg);
 
@@ -1436,7 +1436,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
         String                      strMsg = msgReject.getMessage();
         
         if (this.bolLogging)
-            LOGGER.error("{}: Query Service rejected request - {}, {}", JavaRuntime.getCallerName(), enmCause.name(), strMsg);
+            LOGGER.error("{}: Query Service rejected request - {}, {}", JavaRuntime.getMethodName(), enmCause.name(), strMsg);
         
         // Shut down the stream
         //  - If this is a bidirectional stream send the completed notification

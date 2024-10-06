@@ -715,7 +715,7 @@ public class SamplingProcess {
             
             if (insPrev.compareTo(insCurr) >= 0) {
                 if (BOL_LOGGING)
-                    LOGGER.error("{}: Bad start time ordering at query data block {} with start time = {}", JavaRuntime.getCallerName(), Integer.toString(indPrev), insPrev);
+                    LOGGER.error("{}: Bad start time ordering at query data block {} with start time = {}", JavaRuntime.getMethodName(), Integer.toString(indPrev), insPrev);
                 
                 return ResultStatus.newFailure("Bad start time ordering for processed data block " + Integer.toString(indPrev) + " with start time = " + insPrev);
             }
@@ -789,7 +789,7 @@ public class SamplingProcess {
             
             if (domPrev.hasIntersectionClosed(domCurr)) {
                 if (BOL_LOGGING)
-                    LOGGER.error("{}: Collision between time domains at query data block {}, {} with {}.", JavaRuntime.getCallerName(), Integer.toString(indPrev), domCurr, domPrev);
+                    LOGGER.error("{}: Collision between time domains at query data block {}, {} with {}.", JavaRuntime.getMethodName(), Integer.toString(indPrev), domCurr, domPrev);
                 
                 return ResultStatus.newFailure("Time domain collision at query data block " + Integer.toString(indPrev) + ": " + domCurr + " with " + domPrev);
             }
@@ -825,7 +825,7 @@ public class SamplingProcess {
                 setQueryData.add(cqdFirst);
     
                 if (BOL_LOGGING)
-                    LOGGER.error("{}: Bad ordering in start times, {} ordred after {}.", JavaRuntime.getCallerName(), insPrev, insCurr);
+                    LOGGER.error("{}: Bad ordering in start times, {} ordred after {}.", JavaRuntime.getMethodName(), insPrev, insCurr);
                 
                 return ResultStatus.newFailure("Bad ordering in start times " + insPrev + " ordered after " + insCurr);
             }
@@ -838,7 +838,7 @@ public class SamplingProcess {
                 setQueryData.add(cqdFirst);
     
                 if (BOL_LOGGING)
-                    LOGGER.error("{}: Collision between sampling domains {} and {}.", JavaRuntime.getCallerName(), domPrev, domCurr);
+                    LOGGER.error("{}: Collision between sampling domains {} and {}.", JavaRuntime.getMethodName(), domPrev, domCurr);
                 
                 return ResultStatus.newFailure("Collision between sampling domains " + domPrev + " and " + domCurr);
             }
@@ -1162,7 +1162,7 @@ public class SamplingProcess {
             
             if (insPrev.compareTo(insCurr) >= 0) {
                 if (BOL_LOGGING)
-                    LOGGER.error("{}: Bad start time ordering at sample block {} with start time = {}", JavaRuntime.getCallerName(), Integer.toString(indPrev), insPrev);
+                    LOGGER.error("{}: Bad start time ordering at sample block {} with start time = {}", JavaRuntime.getMethodName(), Integer.toString(indPrev), insPrev);
                 
                 return ResultStatus.newFailure("Bad start time ordering for sample block " + Integer.toString(indPrev) + " with start time = " + insPrev);
             }
@@ -1236,7 +1236,7 @@ public class SamplingProcess {
             
             if (domPrev.hasIntersectionClosed(domCurr)) {
                 if (BOL_LOGGING)
-                    LOGGER.error("{}: Collision between time domains at sampling block {}, {} with {}.", JavaRuntime.getCallerName(), Integer.toString(indPrev), domPrev, domCurr);
+                    LOGGER.error("{}: Collision between time domains at sampling block {}, {} with {}.", JavaRuntime.getMethodName(), Integer.toString(indPrev), domPrev, domCurr);
                 
                 return ResultStatus.newFailure("Time domain collision at sample block " + Integer.toString(indPrev) + ": " + domPrev + " with " + domCurr);
             }

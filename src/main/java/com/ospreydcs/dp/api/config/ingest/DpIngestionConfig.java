@@ -31,6 +31,7 @@ import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
 import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
 import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcStreamConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcStreamConfig.DataBinning;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -54,6 +55,10 @@ public class DpIngestionConfig extends CfgStructure<DpIngestionConfig> {
     // Configuration Fields
     //
     
+    /** Default parameters for <code>IngestionFrame</code> decomposition */
+    @ACfgOverride.Struct(pathelem="DECOMPOSE")
+    public Decompose            decompose;
+    
     /** Default parameters for general Query Service gRPC streaming operations */
     @ACfgOverride.Struct(pathelem="STREAM")
     public DpGrpcStreamConfig   stream;
@@ -69,5 +74,29 @@ public class DpIngestionConfig extends CfgStructure<DpIngestionConfig> {
     /** Default logging configuration for Query Service operations */
     @ACfgOverride.Struct(pathelem="LOGGING")
     public DpLoggingConfig      logging;
+ 
     
+    /**
+     * Structure class containing parameters for <code>IngestionFrame</code> decomposition.
+     */
+    public static final class Decompose extends CfgStructure<Decompose> {
+
+        /** Default constructor required for base class */
+        public Decompose() { super(Decompose.class);  }
+        
+        // 
+        // Configuration Parameters
+        //
+        
+        /** Is data binning active */
+        @ACfgOverride.Field(name="ACTIVE")
+        public Boolean      active;
+        
+        /** Maximum size of (in bytes) of data bins */
+        @ACfgOverride.Field(name="MAX_SIZE")
+        public Integer      maxSize;
+
+    }
+    
+
 }
