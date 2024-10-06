@@ -717,7 +717,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
         } catch (InterruptedException e) {
             
             // The wait was interrupted - interpret this an error (perhaps originating elsewhere)
-            this.recResult = ResultStatus.newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " - interrupted while waiting for task completion", e);
+            this.recResult = ResultStatus.newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " - interrupted while waiting for task completion", e);
         }
     }
     
@@ -1112,7 +1112,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
         
         // Check that forward stream handle has been initialized
         if (this.hndQueryService == null) 
-            throw new Exception(JavaRuntime.getQualifiedCallerNameSimple() + ": Serious streaming error - forward stream handle is null!");
+            throw new Exception(JavaRuntime.getQualifiedMethodNameSimple() + ": Serious streaming error - forward stream handle is null!");
         
         // Create the cursor operation query request message
         CursorOperation     msgCursor = CursorOperation

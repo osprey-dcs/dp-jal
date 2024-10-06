@@ -664,14 +664,14 @@ public class TestQueryResponses {
             
             // Query new results set
             if (!rec.performQuery()) {
-                LOGGER.error("{}: query operation failed for record {}.", JavaRuntime.getCallerName(), rec.strFileName());
+                LOGGER.error("{}: query operation failed for record {}.", JavaRuntime.getMethodName(), rec.strFileName());
                 
                 bolSuccess = false;
             }
             
             // Store the results set to disk
             if (!rec.storeQueryResults()) {
-                LOGGER.error("{}: results set not available for storage operation in record {}.", JavaRuntime.getCallerName(), rec.strFileName());
+                LOGGER.error("{}: results set not available for storage operation in record {}.", JavaRuntime.getMethodName(), rec.strFileName());
                 
                 bolSuccess = false;
             }
@@ -753,7 +753,7 @@ public class TestQueryResponses {
             
             if (lstRspMsgs == null)
                 LOGGER.error("{}: the {} recover query results operation returned null for record {}.", 
-                        JavaRuntime.getCallerName(), 
+                        JavaRuntime.getMethodName(), 
                         TestQueryRecord.class.getSimpleName(), 
                         rec.strFileName());
             
@@ -761,19 +761,19 @@ public class TestQueryResponses {
             
         } catch (IOException e) {
             LOGGER.error("{}: the {} recover query results operation threw IOException for record {}", 
-                    JavaRuntime.getCallerName(), 
+                    JavaRuntime.getMethodName(), 
                     TestQueryRecord.class.getSimpleName(), 
                     rec.strFileName());
             
         } catch (ClassNotFoundException e) {
             LOGGER.error("{}: the {} recover query results operation threw ClassNotFoundException for record {}", 
-                    JavaRuntime.getCallerName(), 
+                    JavaRuntime.getMethodName(), 
                     TestQueryRecord.class.getSimpleName(), 
                     rec.strFileName());
             
         } catch (DpGrpcException e) {
             LOGGER.error("{}: the {} recover query results operation threw DpGrpcException for record {}", 
-                    JavaRuntime.getCallerName(), 
+                    JavaRuntime.getMethodName(), 
                     TestQueryRecord.class.getSimpleName(), 
                     rec.strFileName());
             

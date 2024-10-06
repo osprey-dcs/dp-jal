@@ -215,7 +215,7 @@ public final class IngestionFrameConverter {
         
         //  3rd bail out
         else 
-            throw new ProviderException(JavaRuntime.getQualifiedCallerNameSimple() + " - no Data Provider UID was available.");
+            throw new ProviderException(JavaRuntime.getQualifiedMethodNameSimple() + " - no Data Provider UID was available.");
         
         
         // Create the message and return it

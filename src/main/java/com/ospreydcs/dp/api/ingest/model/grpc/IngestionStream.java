@@ -586,7 +586,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
             return false;
         
         // Create the error message, status, and exception
-        String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() + " - Data stream terminated by client.";
+        String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - Data stream terminated by client.";
         Throwable   expGrpc = new Throwable(strMsg);
         
         this.recStatus = ResultStatus.newFailure(strMsg);
@@ -656,7 +656,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
 
         // Unexpected gRPC runtime error while streaming
         } catch (io.grpc.StatusRuntimeException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                             + "gRPC threw runtime exception during streaming: " 
                             + e.getMessage();
 
@@ -672,7 +672,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
 
         // The message supplier was polled while empty - this should not happen normally
         } catch (IllegalStateException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                             + ": Internal error - Message supplier polled when empty: "
                             + e.getMessage();
 
@@ -688,7 +688,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
 
         // The supplier polling was interrupted while waiting
         } catch (InterruptedException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                     + ": External error - Message supplier polling was interrupted: "
                     + e.getMessage();
 
@@ -704,7 +704,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
 
         // The child class objected when notified of message transmission
         } catch (ProviderException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                     + ": Subclass exception upon request transmission notification: "
                     + e.getMessage();
 
@@ -735,7 +735,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
             
             // TODO - Remove
             if (BOL_LOGGING)
-                LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - stream finished with " + this.cntRequests + " message transmissions.");
+                LOGGER.debug(JavaRuntime.getQualifiedMethodNameSimple() + " - stream finished with " + this.cntRequests + " message transmissions.");
         }
     }
     
@@ -1015,7 +1015,7 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
         } catch (InterruptedException e) {
     
             // The wait was interrupted - interpret this an error (perhaps originating elsewhere)
-            return ResultStatus.newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " - interrupted while waiting for backward stream to complete", e);
+            return ResultStatus.newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " - interrupted while waiting for backward stream to complete", e);
         }
     }
 
@@ -1086,7 +1086,7 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
      */
     @Override
     public void onError(Throwable e) {
-        String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+        String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                         + "The gRPC stream was terminated during operation with cause: "
                         + e.getMessage();
 

@@ -395,13 +395,13 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
             
             // Log event
             if (isLogging()) {
-                LOGGER.debug("{} called with following request:", JavaRuntime.getQualifiedCallerName());
+                LOGGER.debug("{} called with following request:", JavaRuntime.getQualifiedMethodName());
                 LOGGER.debug(msgRqst.toString());
             }
 
             // Check if stream has been started
             if (this.bolStreamRequested) {
-                String strMsg = JavaRuntime.getQualifiedCallerName() + ": ERROR - Attempted to start a stream that has already been requested.";
+                String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to start a stream that has already been requested.";
                 if (isLogging())
                     LOGGER.error(strMsg);
 
@@ -470,13 +470,13 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
 
             // Log event
             if (isLogging()) {
-                LOGGER.debug("{} called with following request:", JavaRuntime.getQualifiedCallerName());
+                LOGGER.debug("{} called with following request:", JavaRuntime.getQualifiedMethodName());
                 LOGGER.debug(msgRqst.toString());
             }
 
             // Check if stream has been started
             if (this.bolStreamRequested) {
-                String strMsg = JavaRuntime.getQualifiedCallerName() + ": ERROR - Attempted to start a stream that has already been requested.";
+                String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to start a stream that has already been requested.";
                 if (isLogging())
                     LOGGER.error(strMsg);
 
@@ -531,7 +531,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
     
         // Log event
         if (isLogging())
-            LOGGER.debug("{} - latching on monitor StreamStart for {} {}", JavaRuntime.getQualifiedCallerName(),cntTimeout, tuTimeout);
+            LOGGER.debug("{} - latching on monitor StreamStart for {} {}", JavaRuntime.getQualifiedMethodName(),cntTimeout, tuTimeout);
     
         boolean bolReleased = this.monStrmStart.await(this.cntTimeout, this.tuTimeout);
         
@@ -573,7 +573,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
         
         // Log event
         if (isLogging())
-            LOGGER.debug("{} - latching on monitor StreamEnd for {} {}", JavaRuntime.getQualifiedCallerName(), this.cntTimeout, this.tuTimeout);
+            LOGGER.debug("{} - latching on monitor StreamEnd for {} {}", JavaRuntime.getQualifiedMethodName(), this.cntTimeout, this.tuTimeout);
 
         boolean bolReleased = this.monStrmEnd.await(this.cntTimeout, this.tuTimeout);
         
@@ -1231,7 +1231,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
         
         // Check if timeout occurred 
         if (!bolResult) {
-            String strMsg = JavaRuntime.getQualifiedCallerName() + ": timeout occured after " + this.cntTimeout + " " + this.tuTimeout.name();
+            String strMsg = JavaRuntime.getQualifiedMethodName() + ": timeout occured after " + this.cntTimeout + " " + this.tuTimeout.name();
             
             // Log event
             if (isLogging())
@@ -1277,7 +1277,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
 
         // Debugging
         if (isLogging()) {
-            LOGGER.debug("{} called for monStrmStart = {}", JavaRuntime.getQualifiedCallerName(), this.monStrmStart);
+            LOGGER.debug("{} called for monStrmStart = {}", JavaRuntime.getQualifiedMethodName(), this.monStrmStart);
         }
         
         // Check for Initial Response - If the stream start monitor is still latched this is the first time through
@@ -1304,7 +1304,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
             
             // Debugging
             if (isLogging())
-                LOGGER.debug("{} releasing monitor StreamStart {}", JavaRuntime.getQualifiedCallerName(), this.monStrmStart);
+                LOGGER.debug("{} releasing monitor StreamStart {}", JavaRuntime.getQualifiedMethodName(), this.monStrmStart);
 
             // Release the stream start monitor
             this.monStrmStart.countDown();
@@ -1329,7 +1329,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
             String                  strMsg = msgException.getMessage();
             
             if (isLogging())
-                LOGGER.error("{}: Query Service rejected request - {}, {}", JavaRuntime.getQualifiedCallerName(), enmCause.name(), strMsg);
+                LOGGER.error("{}: Query Service rejected request - {}, {}", JavaRuntime.getQualifiedMethodName(), enmCause.name(), strMsg);
             
             // Shut down the stream
             //  - If this is a bidirectional stream send the completed notification
@@ -1383,7 +1383,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
     @Override
     public void onError(Throwable e) {
 
-        String strErrMsg = JavaRuntime.getQualifiedCallerName() + " called by gRPC or Query Service, exception message = " + e.getMessage();
+        String strErrMsg = JavaRuntime.getQualifiedMethodName() + " called by gRPC or Query Service, exception message = " + e.getMessage();
 
         // TODO - remove
         System.err.println(strErrMsg);
@@ -1421,7 +1421,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
 
         // Log event
         if (isLogging())
-            LOGGER.info("{}: Stream completed with {} data page(s) received.", JavaRuntime.getCallerName(), this.getPageCount());
+            LOGGER.info("{}: Stream completed with {} data page(s) received.", JavaRuntime.getMethodName(), this.getPageCount());
 
         // Update state variables and conditions
         this.bolStreamCompleted = true;
@@ -1472,7 +1472,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
 
         // Check argument for required data request
         if (!msgRqst.hasQuerySpec()) {
-            String  strMsg = JavaRuntime.getQualifiedCallerName() + ": argument does not contain initial query.";
+            String  strMsg = JavaRuntime.getQualifiedMethodName() + ": argument does not contain initial query.";
             if (isLogging())
                 LOGGER.error(strMsg);
 
@@ -1681,7 +1681,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
      */
     @Override
     public String toString() {
-        StringBuffer    buf = new StringBuffer(JavaRuntime.getCallerClass() + "\n");
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClass() + "\n");
         
         // Write out contents
         buf.append("  List of page requests: " + this.lstPgsRequested + "\n");

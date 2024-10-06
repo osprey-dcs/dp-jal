@@ -343,7 +343,7 @@ public class IngestionChannelTest {
         Duration    durShdn = Duration.between(insStart, insShutdn);
         int         cntXmts = chan.getRequestCount();
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Transmission duration  : " + durXmit);
         System.out.println("  Active duration        : " + durShdn);
         System.out.println("  Message payload count  : " + cntMsgs);
@@ -373,7 +373,7 @@ public class IngestionChannelTest {
         List<IngestionResponse> lstRsps = chan.getIngestionResponses();
         List<IngestionResponse> lstExcps = chan.getIngestionExceptions();
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Transmission duration   : " + durXmit);
         System.out.println("  Message payload count   : " + cntMsgs);
         System.out.println("  Message transmit count  : " + cntXmits);
@@ -493,7 +493,7 @@ public class IngestionChannelTest {
         Duration    durActive = Duration.between(insActiveStart, insActiveFinish);
         Duration    durShdn = Duration.between(insShdnStart, insShdnFinish);
                 
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Time to activate  : " + durActive);
         System.out.println("  Time to shut down : " + durShdn);
     }
@@ -560,7 +560,7 @@ public class IngestionChannelTest {
         Duration    durActive = Duration.between(insActiveStart, insActiveFinish);
         Duration    durShdn = Duration.between(insShdnStart, insShdnFinish);
                 
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Time to activate  : " + durActive);
         System.out.println("  Time to shut down : " + durShdn);
     }

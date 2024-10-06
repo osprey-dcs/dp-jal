@@ -346,7 +346,7 @@ public class DpIngestionStreamImplTest {
         }
         
         // Print out results
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Time to open stream  : " + Duration.between(insStart, insOpened));
         System.out.println("  Time to close stream : " + Duration.between(insOpened, insClosed));
         System.out.println("  Time to shutdown     : " + Duration.between(insClosed, insShutdown));
@@ -606,7 +606,7 @@ public class DpIngestionStreamImplTest {
             Assert.fail("Interrupted while waiting for interface termination: " + e.getMessage());
         }
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Single frame - allocaton : " + frame.allocationSizeFrame());
         System.out.println("  Transmission time        : " + Duration.between(insStart, insClosed));
         System.out.println("  Shutdown time            : " + Duration.between(insClosed, insShutdown));
@@ -726,7 +726,7 @@ public class DpIngestionStreamImplTest {
             return;
         }
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + "Results");
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + "Results");
         System.out.println("  Payload allocation (bytes)      : " + szPayload);
         System.out.println("  Staging capacity (bytes)        : " + szCapacity);
         System.out.println("  Transmission time (open stream) : " + Duration.between(insStart, insClosed));
@@ -823,7 +823,7 @@ public class DpIngestionStreamImplTest {
             Duration    durReady = Duration.between(insReadyStart, insReadyUnblock);
             Duration    durEmpty = Duration.between(insEmptyStart, insEmptyUnblock);
             
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + "Results");
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + "Results");
             System.out.println("  Payload allocation (bytes) : " + szPayload);
             System.out.println("  Staging capacity (bytes)   : " + szCapacity);
             System.out.println("  Queue ready wait time      : " + durReady);
@@ -953,7 +953,7 @@ public class DpIngestionStreamImplTest {
             Duration    durReady = Duration.between(insReadyStart, insReadyUnblock);
             Duration    durEmpty = Duration.between(insEmptyStart, insEmptyUnblock);
             
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + "Results");
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + "Results");
             System.out.println("  Payload allocation (bytes) : " + szPayload);
             System.out.println("  Staging capacity (bytes)   : " + szCapacity);
             System.out.println("  Queue ready wait time      : " + durReady);
@@ -1068,7 +1068,7 @@ public class DpIngestionStreamImplTest {
             
             Duration    durClose = Duration.between(insStart, insClosed);
             
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + "Results");
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + "Results");
             System.out.println("  Payload allocation (bytes) : " + szPayload);
             System.out.println("  Staging capacity (bytes)   : " + szCapacity);
             System.out.println("  Close stream wait time     : " + durClose);
@@ -1093,7 +1093,7 @@ public class DpIngestionStreamImplTest {
             Assert.assertTrue(bolResult);
             Assert.assertTrue(istream.isShutdown());
             
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + "- Shutdown took " + Duration.between(insStart, insFinish));
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + "- Shutdown took " + Duration.between(insStart, insFinish));
             
         } catch (InterruptedException e) {
             Assert.fail("Interface failed shutdown(): " + e.getMessage());
@@ -1193,7 +1193,7 @@ public class DpIngestionStreamImplTest {
         Collection<Exception>   setFrmDecmpExcp = istream.getFailedFrameDecompositions();
         Collection<Exception>   setFrmCnvrtExcp = istream.getFailedFrameConversions();
 
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + "Results");
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + "Results");
         System.out.println("  Payload allocation (bytes) : " + szPayload);
         System.out.println("  Staging capacity (bytes)   : " + szCapacity);
         System.out.println("  Hard Close stream time     : " + durClose);

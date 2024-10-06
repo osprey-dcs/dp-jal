@@ -185,7 +185,7 @@ public class DpDataRequestTest {
         Assert.assertEquals(INS_ARC_START, insStart);
         Assert.assertTrue("Empty initial query contains data sources.", lstSrcNames.isEmpty());
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " empty query contents:");
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " empty query contents:");
         System.out.println("  Data source names = " + lstSrcNames);
         System.out.println("  Archive Inception = " + STR_ARC_INCEPTION);
         System.out.println("  Start time instant = " + insStart);

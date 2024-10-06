@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.model;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
@@ -45,7 +46,7 @@ import java.util.UUID;
  * @since Apr 16, 2024
  *
  */
-public record ClientRequestUID(String requestId) {
+public record ClientRequestUID(String requestId) implements Serializable {
     
     //
     // Constants

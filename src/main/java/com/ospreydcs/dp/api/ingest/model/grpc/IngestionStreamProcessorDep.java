@@ -474,11 +474,11 @@ public final class IngestionStreamProcessorDep {
 
         // Check current state
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once activated.");
         
         // Check the argument
         if (enmStreamType == DpGrpcStreamType.BACKWARD)
-            throw new UnsupportedOperationException(JavaRuntime.getQualifiedCallerNameSimple() + " - " + enmStreamType + " not supported");
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - " + enmStreamType + " not supported");
         
         this.enmStreamType = enmStreamType;
     }
@@ -523,11 +523,11 @@ public final class IngestionStreamProcessorDep {
 
         // Check current state
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurrency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurrency once activated.");
         
         // Check the argument
         if (cntStreamsMax <= 0)
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedCallerNameSimple() + " - argument must be greater that zero. ");
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - argument must be greater that zero. ");
         
         this.bolMultistream = true;
         this.cntStreamsMax = cntStreamsMax;
@@ -570,7 +570,7 @@ public final class IngestionStreamProcessorDep {
 
         // Check current state
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurrency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurrency once activated.");
         
         this.bolMultistream = false;
     }
@@ -609,11 +609,11 @@ public final class IngestionStreamProcessorDep {
 
         // CHeck state
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change back pressure once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change back pressure once activated.");
         
         // Check argument
         if (intQueueCapacity <= 0)
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedCallerNameSimple() + " - argument must be greater that zero. ");
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - argument must be greater that zero. ");
             
         this.bolBackPressure = true;
         this.szQueueCapacity = intQueueCapacity;
@@ -656,7 +656,7 @@ public final class IngestionStreamProcessorDep {
 
         // CHeck state
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change back pressure once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change back pressure once activated.");
 
         this.bolBackPressure = false;
     }
@@ -711,7 +711,7 @@ public final class IngestionStreamProcessorDep {
     public int      getProcessorThreadCount() throws IllegalStateException {
 
         if (this.fncFrameProcessor == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
         
         // There are equal number of threads for both ingestion frame decomposition and frame to gRPC message conversion
         int     cntThds = this.fncFrameProcessor.getConcurrencyCount();
@@ -788,7 +788,7 @@ public final class IngestionStreamProcessorDep {
         
         // Check state
         if (this.fncFrameProcessor == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
         
         return this.fncFrameProcessor.getRequestQueueSize();
     }
@@ -831,7 +831,7 @@ public final class IngestionStreamProcessorDep {
         
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
 //        int cntRequests = 0;
 //        for (IngestionStream stream : this.setStreamTasks) {
@@ -891,7 +891,7 @@ public final class IngestionStreamProcessorDep {
         
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
         return this.setStreamTasks
                 .stream()
@@ -937,7 +937,7 @@ public final class IngestionStreamProcessorDep {
         
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
         List<ClientRequestUID>   lstIds = this.setStreamTasks
                 .stream()
@@ -979,7 +979,7 @@ public final class IngestionStreamProcessorDep {
 
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
         List<IngestionResponse> lstRsps = new ArrayList<>(this.setResponses.size());
         for (IngestDataResponse msgRsp : this.setResponses) {
@@ -1036,7 +1036,7 @@ public final class IngestionStreamProcessorDep {
         
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
         return this.setBadResponses
                 .stream()
@@ -1277,7 +1277,7 @@ public final class IngestionStreamProcessorDep {
         
         // Check current state
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not active.");
         
         this.fncFrameProcessor.awaitQueueReady();
     }
@@ -1314,7 +1314,7 @@ public final class IngestionStreamProcessorDep {
 
         // Check current state
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not active.");
         
         this.fncFrameProcessor.awaitRequestQueueEmpty();
     }
@@ -1393,7 +1393,7 @@ public final class IngestionStreamProcessorDep {
         
         // Check current state
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once activated.");
         
         // Add ingestion frames to the ingestion frame processor - the rest is automatic
         this.fncFrameProcessor.addFrames(lstFrames);
@@ -1436,7 +1436,7 @@ public final class IngestionStreamProcessorDep {
         }
 
         else
-            throw new UnsupportedOperationException(JavaRuntime.getQualifiedCallerNameSimple() + " - attempted to use an unsupported stream type " + this.enmStreamType);
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - attempted to use an unsupported stream type " + this.enmStreamType);
 
         return stream;
     }

@@ -768,7 +768,7 @@ public final class ProtoMsg {
             ExceptionalResultStatus enmStatus = msgExcept.getExceptionalResultStatus();
             String                  strDetails = msgExcept.getMessage();
             
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                             + " - Provider registration failed: " 
                             + " status=" + enmStatus
                             + ", details=" + strDetails;
@@ -937,7 +937,7 @@ public final class ProtoMsg {
         
         // We should never get here
         throw new MissingResourceException(
-                JavaRuntime.getQualifiedCallerNameSimple() 
+                JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - message containing neither an acknowledgement or an exception.",
                 IngestDataResponse.class.getName(),
                 "getAckResult(), getExceptionalResult()"

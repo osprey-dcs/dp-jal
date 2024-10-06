@@ -48,7 +48,6 @@ import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannel;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer;
-import com.ospreydcs.dp.api.ingest.model.grpc.IngestionStream;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
 import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
@@ -523,7 +522,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     public void setFrameProcessingConcurrency(int cntThreads) throws IllegalStateException {
         
         if (this.bolStreamOpen)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once stream opened.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once stream opened.");
         
 //        this.bolDecompConcurrent = true;
 //        this.cntDecompThrds = cntThreads;
@@ -660,7 +659,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     public void disableFrameProcessingConcurrency() throws IllegalStateException {
 
         if (this.bolStreamOpen)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once stream opened.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once stream opened.");
         
 //        this.bolDecompConcurrent = false;
         this.prcrFrames.disableConcurrency();
@@ -785,11 +784,11 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 
         // Check current state
         if (this.bolStreamOpen)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change gRPC stream type once stream opened.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change gRPC stream type once stream opened.");
         
         // Check the argument
         if (enmStreamType == DpGrpcStreamType.BACKWARD)
-            throw new UnsupportedOperationException(JavaRuntime.getQualifiedCallerNameSimple() + " - " + enmStreamType + " not supported");
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - " + enmStreamType + " not supported");
         
         this.chanIngest.setStreamType(enmStreamType);
     }
@@ -835,11 +834,11 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 
         // Check current state
         if (this.bolStreamOpen)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change stream count once stream opened.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change stream count once stream opened.");
         
         // Check the argument
         if (cntStreamsMax <= 0)
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedCallerNameSimple() + " - argument must be greater that zero. ");
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - argument must be greater that zero. ");
 
         this.chanIngest.setMultipleStreams(cntStreamsMax);
     }
@@ -880,7 +879,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 
         // Check current state
         if (this.bolStreamOpen)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurrency once stream opened.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurrency once stream opened.");
         
         this.chanIngest.disableMultipleStreams();
     }
@@ -1238,7 +1237,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 
         // Check state
         if (!this.bolStreamOpen)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Stream is not open.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Stream is not open.");
         
         // Check if no back pressure
         if (!this.bolBackPressure) {
@@ -1262,7 +1261,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 
         // Check state
         if (!this.bolStreamOpen)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Stream is not open.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Stream is not open.");
         
         // If no back pressure submit immediately
         if (!this.bolBackPressure) {
@@ -1317,7 +1316,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
         
         // Check state
         if (!this.bolStreamOpen) 
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Stream is not open.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Stream is not open.");
         
         // Shutdown the ingestion frame processor - will supply until output buffer empty
         this.prcrFrames.shutdown();     // prevents any further ingestion, blocks until complete
@@ -1327,7 +1326,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
         
         // Check for error in transfers
         if (this.recXferStatus.isFailure()) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() + 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + 
                     " - error in message transfer and staging: " +
                     this.recXferStatus.message(); 
             
@@ -1535,14 +1534,14 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
                         continue;
                     
                 } catch (IllegalStateException e) {
-                    String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() +
+                    String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() +
                             " - IngestionFrameProcessor illegal state during polling: " +
                             e.getMessage();
                     this.signalTransferError(strMsg, e);
                     return;
                     
                 } catch (InterruptedException e) {
-                    String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() +
+                    String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() +
                             " - IngestionFrameProcessor polling operation externally interrupted while waiting.";
 
                     this.signalTransferError(strMsg, e);
@@ -1561,7 +1560,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 //                        LOGGER.debug("Transferred message to staging buffer: transfer count = {}, buffer size = {}.", this.cntMsgsStaged, this.buffStaging.getQueueSize());
                     
                 } catch (IllegalStateException e) {
-                    String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() +
+                    String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() +
                             " - Staging buffer illegal state while transferring message: " +
                             e.getMessage();
                     
@@ -1569,7 +1568,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
                     return;
                     
                 } catch (InterruptedException e) {
-                    String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() +
+                    String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() +
                             " - Staging buffer transfer operation externally interrupted while waiting.";
 
                     this.signalTransferError(strMsg, e);

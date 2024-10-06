@@ -459,7 +459,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
                 
                 // Log event
                 if (BOL_LOGGING)
-                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getCallerName(), this.queMsgRequests.size(), this.szQueueCapacity);
+                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getMethodName(), this.queMsgRequests.size(), this.szQueueCapacity);
             
                 // Wait for queue ready signal
                 this.cndMsgQueReady.await();
@@ -518,7 +518,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
                 
                 // Log event
                 if (BOL_LOGGING)
-                    LOGGER.info("{}: Waiting for queue empty, queue size = {}.", JavaRuntime.getCallerName(), this.queMsgRequests.size());
+                    LOGGER.info("{}: Waiting for queue empty, queue size = {}.", JavaRuntime.getMethodName(), this.queMsgRequests.size());
             
                 // Wait for queue ready signal
                 this.cndMsgQueEmpty.await();
@@ -739,7 +739,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
 
         // Check if active
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - queue buffer is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.");
         
         // If no back-presssure enforcement just add all frames to raw frame buffer and return
         if (!this.bolBackPressure) {
@@ -755,7 +755,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
              
                 // Log event
                 if (BOL_LOGGING)
-                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getCallerName(), this.queMsgRequests.size(), this.szQueueCapacity);
+                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getMethodName(), this.queMsgRequests.size(), this.szQueueCapacity);
             
                 // Wait for queue ready signal
                 this.cndMsgQueReady.await();  // throws InterruptedException
@@ -816,7 +816,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
 
         // Check if active
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - queue buffer is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.");
         
         // If no back-presssure enforcement just add all frames to raw frame buffer and return
         if (!this.bolBackPressure) {
@@ -834,7 +834,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
              
                 // Log event
                 if (BOL_LOGGING)
-                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getCallerName(), this.queMsgRequests.size(), this.szQueueCapacity);
+                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getMethodName(), this.queMsgRequests.size(), this.szQueueCapacity);
             
                 // Wait for queue ready signal
                 this.cndMsgQueReady.await(lngTimeout, tuTimeout);  // throws InterruptedException
@@ -887,7 +887,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
         
         // Check states
         if (!this.bolActive && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is inactive and queue is empty.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
         
         try {
             IngestDataRequest   msgRqst = this.queMsgRequests.take();
@@ -910,7 +910,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
 
         // Check state
         if (!this.bolActive && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is inactive and queue is empty.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
         
         try {
             IngestDataRequest   msgRqst = this.queMsgRequests.poll();
@@ -934,7 +934,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
         
         // Check state
         if (!this.bolActive && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is inactive and queue is empty.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
         
         try {
             IngestDataRequest   msgRqst = this.queMsgRequests.poll(cntTimeout, tuTimeout);

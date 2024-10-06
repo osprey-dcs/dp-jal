@@ -27,6 +27,8 @@
  */
 package com.ospreydcs.dp.api.model;
 
+import java.io.Serializable;
+
 /**
  * <p>
  * Data Provider unique identifier.
@@ -49,7 +51,8 @@ package com.ospreydcs.dp.api.model;
  * @since Mar 28, 2024
  *
  */
-public final record ProviderUID(int uid) {
+public final record ProviderUID(int uid) implements Serializable {
+    
     
     //
     // Creators

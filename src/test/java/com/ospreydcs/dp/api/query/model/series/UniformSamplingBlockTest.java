@@ -155,7 +155,7 @@ public class UniformSamplingBlockTest {
             UniformSamplingBlock    blkTest = UniformSamplingBlock.from(cqdFirst);  // method under test
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
         }
         
     }
@@ -173,7 +173,7 @@ public class UniformSamplingBlockTest {
             UniformSamplingBlock    blkTest = new UniformSamplingBlock(cqdTest); // method under test
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             
         }
     }
@@ -191,7 +191,7 @@ public class UniformSamplingBlockTest {
             blkTest = this.singleSeries(msgBucket);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
             
         }
@@ -222,7 +222,7 @@ public class UniformSamplingBlockTest {
             lstBlocksTest = this.process(lstRawMsgData);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
         }
         
@@ -259,7 +259,7 @@ public class UniformSamplingBlockTest {
             lstBlocksTest = this.process(lstRawMsgData);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
         }
         
@@ -317,7 +317,7 @@ public class UniformSamplingBlockTest {
             lstBlocksTest = this.process(lstRawMsgData);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
         }
         
@@ -387,7 +387,7 @@ public class UniformSamplingBlockTest {
             lstBlocksTest = this.process(lstRawMsgData);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
         }
         
@@ -461,7 +461,7 @@ public class UniformSamplingBlockTest {
             lstBlocksTest = this.process(lstRawMsgData);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
         }
         
@@ -513,7 +513,7 @@ public class UniformSamplingBlockTest {
             lstBlocksTest = this.process(lstRawData);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
         }
         
@@ -548,7 +548,7 @@ public class UniformSamplingBlockTest {
             lstBlocksTest = this.process(lstRawData);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
         }
 
@@ -606,7 +606,7 @@ public class UniformSamplingBlockTest {
             blkTest = this.singleSeries(msgBucket);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
             
         }
@@ -617,7 +617,7 @@ public class UniformSamplingBlockTest {
         lstValsRaw = ProtoMsg.extractValues(msgBucket.getDataColumn());
         
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
             
         }
@@ -645,7 +645,7 @@ public class UniformSamplingBlockTest {
             lstBlocksTest = this.process(lstRawData);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
         }
 
@@ -683,7 +683,7 @@ public class UniformSamplingBlockTest {
             lstBlocksTest = this.process(lstRawData);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
         }
 
@@ -728,7 +728,7 @@ public class UniformSamplingBlockTest {
             blkTest = this.singleSeries(msgBucket);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
             
         }
@@ -768,7 +768,7 @@ public class UniformSamplingBlockTest {
             lstBlocksTest = this.process(lstRawData);
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return;
         }
 

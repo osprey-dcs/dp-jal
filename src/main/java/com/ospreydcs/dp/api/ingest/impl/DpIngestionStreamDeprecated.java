@@ -270,7 +270,7 @@ public class DpIngestionStreamDeprecated extends
     synchronized
     public void enableBackPressure(int intQueueCapacity) throws IllegalStateException {
         if (this.bolOpenStream)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - cannot change back pressure when open.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - cannot change back pressure when open.");
         this.processor.enableBackPressure(intQueueCapacity);
     }
     
@@ -421,7 +421,7 @@ public class DpIngestionStreamDeprecated extends
         
         // Check if stream is already close
         if (!this.bolOpenStream) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() +
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() +
                     " - Attempted to close stream that was not open.";
             
             if (BOL_LOGGING) 
@@ -542,7 +542,7 @@ public class DpIngestionStreamDeprecated extends
         
         // Check the stream state
         if (!this.bolOpenStream) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - data ingestion attempted on unopened stream.";
             
             if (BOL_LOGGING)
@@ -557,7 +557,7 @@ public class DpIngestionStreamDeprecated extends
            
             // Internal processor not ready - this should not happen (stream was opened if here)
         } catch (IllegalStateException e) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - INTERNL ERROR - processor would not accept ingestion data: "
                     + e.getMessage();
             
@@ -568,7 +568,7 @@ public class DpIngestionStreamDeprecated extends
             
             // Back pressure enable and we are interrupted while waiting for message queue
         } catch (InterruptedException e) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - INTERNL ERROR - processor interrupted while waiting for ingestion: "
                     + e.getMessage();
             
@@ -805,7 +805,7 @@ public class DpIngestionStreamDeprecated extends
         
         // Check state
         if (this.recProviderUid == null) {
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Stream to Ingestion Service was never opened.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Stream to Ingestion Service was never opened.");
         }
         
         return this.recProviderUid;
@@ -858,7 +858,7 @@ public class DpIngestionStreamDeprecated extends
                 this.closeStream();
                 
             } catch (InterruptedException e) {
-                String strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+                String strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                         + " - interrupted while waiting for closeStream() operation: "
                         + e.getMessage();
                 

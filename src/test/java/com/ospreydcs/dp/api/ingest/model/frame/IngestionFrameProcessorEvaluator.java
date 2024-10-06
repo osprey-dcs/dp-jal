@@ -237,7 +237,7 @@ public final class IngestionFrameProcessorEvaluator {
             this.finish();
             
         } catch (IllegalStateException | InterruptedException e) {
-            throw new ProviderException(JavaRuntime.getQualifiedCallerNameSimple() + " - poll(long, TimeUnit) threw exception: " + e.getMessage(), e);
+            throw new ProviderException(JavaRuntime.getQualifiedMethodNameSimple() + " - poll(long, TimeUnit) threw exception: " + e.getMessage(), e);
         }
         
         // Shutdown the processor
@@ -246,7 +246,7 @@ public final class IngestionFrameProcessorEvaluator {
             this.shutdown();
             
         } catch (InterruptedException e) {
-            throw new CompletionException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor shutdown() threw exception: " + e.getMessage(), e);
+            throw new CompletionException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor shutdown() threw exception: " + e.getMessage(), e);
         }
         
         // Compute processing results and return
@@ -304,7 +304,7 @@ public final class IngestionFrameProcessorEvaluator {
             this.finish();
             
         } catch (IllegalStateException | InterruptedException e) {
-            throw new ProviderException(JavaRuntime.getQualifiedCallerNameSimple() + " - poll(long, TimeUnit) threw exception: " + e.getMessage(), e);
+            throw new ProviderException(JavaRuntime.getQualifiedMethodNameSimple() + " - poll(long, TimeUnit) threw exception: " + e.getMessage(), e);
         }
         
         // Shutdown the processor
@@ -313,7 +313,7 @@ public final class IngestionFrameProcessorEvaluator {
             this.shutdown();
             
         } catch (InterruptedException e) {
-            throw new CompletionException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor shutdown() threw exception: " + e.getMessage(), e);
+            throw new CompletionException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor shutdown() threw exception: " + e.getMessage(), e);
         }
         
         // Compute processing results and return

@@ -159,7 +159,7 @@ public class IngestionStreamProcessorDeprecatedTest {
 
             REC_PROVIDER_UID = ProviderUID.from(msgRegRsp.getRegistrationResult().getProviderId());
 
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " obtained provider UID " + REC_PROVIDER_UID + " from provider name " + STR_PROVIDER_NAME);
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " obtained provider UID " + REC_PROVIDER_UID + " from provider name " + STR_PROVIDER_NAME);
         
         } else {
             

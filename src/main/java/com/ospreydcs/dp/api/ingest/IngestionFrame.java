@@ -986,7 +986,7 @@ public class IngestionFrame implements Serializable {
         else if (this.vecTms != null)
             cntRows = this.vecTms.size();
         else {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                                + " - Neither a sampling clock or list of timestamps was set for the ingestion frame."; 
             
             return ResultStatus.newFailure(strMsg);
@@ -994,7 +994,7 @@ public class IngestionFrame implements Serializable {
         
         // Check that data columns were established
         if (this.vecColData == null || this.vecColData.isEmpty()) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - The ingestion frame has no data columns."; 
  
             return ResultStatus.newFailure(strMsg);

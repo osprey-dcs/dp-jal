@@ -2275,7 +2275,7 @@ public final class DpDataRequest {
      */
     @Override
     public String toString() {
-        StringBuffer    buf = new StringBuffer(JavaRuntime.getCallerClass());
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClass());
         
         buf.append(" contents:\n");
         buf.append("  source name(s) = " + this.lstSelCmps + "\n");

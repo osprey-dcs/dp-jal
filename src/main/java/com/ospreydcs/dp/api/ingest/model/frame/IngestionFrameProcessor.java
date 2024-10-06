@@ -561,7 +561,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     public void setConcurrency(int cntThreads) throws IllegalStateException {
         
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once activated.");
         
         this.bolConcurrency = true;
         this.cntConcurrentThrds = cntThreads;
@@ -697,7 +697,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     public void disableConcurrency() throws IllegalStateException {
 
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once activated.");
         
         this.bolConcurrency = false;
     }
@@ -1206,7 +1206,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 
         // Check if active
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not active.");
         
         // No concurrency - Process on main thread 
         if (!this.bolConcurrency) {
@@ -1264,7 +1264,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 
         // Check if active
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not active.");
         
         // No concurrency - Process on main thread
         if (!this.bolConcurrency) {
@@ -1326,7 +1326,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         
         // Check state
         if (!this.bolActive && !this.hasPendingTasks() && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processing is inactive and queue is empty.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processing is inactive and queue is empty.");
         
         return this.queMsgRequests.take();
     }
@@ -1340,7 +1340,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         
         // Check state
         if (!this.bolActive && !this.hasPendingTasks() && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processing is inactive and queue is empty.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processing is inactive and queue is empty.");
         
         return this.queMsgRequests.poll();
     }
@@ -1355,7 +1355,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         
         // Check state
         if (!this.bolActive && !this.hasPendingTasks() && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processing is inactive and queue is empty.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processing is inactive and queue is empty.");
         
         return this.queMsgRequests.poll(cntTimeout, tuTimeout);
     }

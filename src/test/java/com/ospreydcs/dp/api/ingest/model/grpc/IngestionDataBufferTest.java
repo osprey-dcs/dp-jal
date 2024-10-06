@@ -490,7 +490,7 @@ public class IngestionDataBufferTest {
         Duration        durEmpty = Duration.between(insStart, insEmpty);
         
         // Report findings
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Message count    : " + cntMsgs);
         System.out.println("  Buffer capacity  : " + szCapacity);
         System.out.println("  Queue ready wait : " + durReady);
@@ -591,7 +591,7 @@ public class IngestionDataBufferTest {
         Runnable        tskConsUpdt = this.createConsumerUpdateTask(tskCons, System.out);
 
         Thread          thdBuffMntr = new Thread(this.createBufferMonitorTask(buffer, intWait));
-        System.out.println("--------------- " + JavaRuntime.getQualifiedCallerNameSimple() + " ----------------------");
+        System.out.println("--------------- " + JavaRuntime.getQualifiedMethodNameSimple() + " ----------------------");
         
         Instant     insStart = Instant.now();
         Future<?>   futProd = XTOR_PERD_TASKS.scheduleAtFixedRate(tskProd, LNG_PERD_PROD_TASK, LNG_PERD_PROD_TASK, TU_PERD_PROD_TASK);
@@ -615,7 +615,7 @@ public class IngestionDataBufferTest {
         
         Duration    durActive = Duration.between(insStart, insStop);
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Message count    : " + cntMsgs);
         System.out.println("  Buffer capacity  : " + szCapacity);
         System.out.println("  Duration active  : " + durActive);
@@ -623,7 +623,7 @@ public class IngestionDataBufferTest {
         System.out.println("    completed : " + tskCons.hasCompleted());
         System.out.println("    error     : " + tskCons.hasError());
         System.out.println("    messages  : " + tskCons.getConsumedMessageCount());
-        System.out.println("--------------- " + JavaRuntime.getQualifiedCallerNameSimple() + " ----------------------");
+        System.out.println("--------------- " + JavaRuntime.getQualifiedMethodNameSimple() + " ----------------------");
     }
 
     /**
@@ -667,7 +667,7 @@ public class IngestionDataBufferTest {
             
             Duration durPolling = Duration.between(insStart, insStop);
             
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
             System.out.println("  Message count    : " + cntMsgs);
             System.out.println("  Buffer capacity  : " + szCapacity);
             System.out.println("  Polling interval : 0 " );
@@ -720,7 +720,7 @@ public class IngestionDataBufferTest {
             
             Duration durPolling = Duration.between(insStart, insStop);
             
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
             System.out.println("  Message count    : " + cntMsgs);
             System.out.println("  Buffer capacity  : " + szCapacity);
             System.out.println("  Polling interval : " + lngPoll + " " + tuPoll);

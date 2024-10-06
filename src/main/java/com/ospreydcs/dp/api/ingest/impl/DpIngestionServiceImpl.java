@@ -537,7 +537,7 @@ public final class DpIngestionServiceImpl extends
         
         // Check registration
         if (this.recProviderUid == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Data Provider was not registered.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Data Provider was not registered.");
         
         // Create list of frames to be ingested - depends on auto-decomposition
         List<IngestionFrame>    lstFrames = this.decomposeFrame(frame); // throws DpIngestionException
@@ -607,7 +607,7 @@ public final class DpIngestionServiceImpl extends
         
             // The ingestion frame could not be decomposed - columns too large
         } catch (IllegalArgumentException e) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - ingestion frame decomposition (by column) FAILED, columns are too large: "
                     + e.getMessage();
             
@@ -618,7 +618,7 @@ public final class DpIngestionServiceImpl extends
             
             // Ingestion frame decomposition error
         } catch (CompletionException e) {
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - ingestion frame decomposition (by column) ERROR: "
                     + e.getMessage();
             
@@ -686,7 +686,7 @@ public final class DpIngestionServiceImpl extends
                 
                 // Unexpected gRPC runtime exception during ingestion 
             } catch (io.grpc.StatusRuntimeException e) {
-                String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+                String      strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                         + " - gRPC runtime exception during unary ingestData() operation: "
                         + e.getMessage();
                 
@@ -697,7 +697,7 @@ public final class DpIngestionServiceImpl extends
                 
                 // The Ingestion Service rejected the ingestion request
             } catch (MissingResourceException e) {
-                String      strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+                String      strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                         + " - Ingestion Service rejected unary ingestData() operation: "
                         + e.getMessage();
                 

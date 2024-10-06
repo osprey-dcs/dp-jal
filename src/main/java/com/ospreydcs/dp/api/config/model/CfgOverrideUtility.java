@@ -183,7 +183,7 @@ public final class CfgOverrideUtility {
         
         // Runtime check for null argument
         if ( Objects.isNull(root) ) {
-            String  strMsg = JavaRuntime.getQualifiedCallerName() + ": Argument is null";
+            String  strMsg = JavaRuntime.getQualifiedMethodName() + ": Argument is null";
             LOGGER.error(strMsg);
             
             throw new IllegalArgumentException(strMsg);
@@ -191,7 +191,7 @@ public final class CfgOverrideUtility {
         
         // Runtime check if root annotation is present
         if (!clsRoot.isAnnotationPresent(ACfgOverride.Root.class)) {
-            String  strMthdNm = JavaRuntime.getQualifiedCallerName();
+            String  strMthdNm = JavaRuntime.getQualifiedMethodName();
             String  strErrMsg = strMthdNm +": Argument type + " + root.getClass().getCanonicalName() + " is not annotated with " + ACfgOverride.Root.class.getCanonicalName();
             LOGGER.error(strErrMsg);
             
@@ -306,7 +306,7 @@ public final class CfgOverrideUtility {
             
             // Runtime check for null argument
             if ( Objects.isNull(struct) ) {
-                String  strMsg = JavaRuntime.getQualifiedCallerName() + ": Argument is null";
+                String  strMsg = JavaRuntime.getQualifiedMethodName() + ": Argument is null";
                 LOGGER.error(strMsg);
                 
                 throw new IllegalArgumentException(strMsg);
@@ -520,7 +520,7 @@ public final class CfgOverrideUtility {
         
         // Check for null argument
         if ( Objects.isNull(root) ) {
-            String  strMsg = JavaRuntime.getQualifiedCallerName() + ": Argument is null";
+            String  strMsg = JavaRuntime.getQualifiedMethodName() + ": Argument is null";
             LOGGER.error(strMsg);
             
             throw new IllegalArgumentException(strMsg);
@@ -529,7 +529,7 @@ public final class CfgOverrideUtility {
         // Check for Root annotation
         Class<?> clsRoot = root.getClass();
         if (!clsRoot.isAnnotationPresent(ACfgOverride.Root.class)) {
-            String  strMsg = JavaRuntime.getQualifiedCallerName() + ": Argument (type=" + clsRoot.getSimpleName() + ") missing annotation " + ACfgOverride.Root.class.getSimpleName();
+            String  strMsg = JavaRuntime.getQualifiedMethodName() + ": Argument (type=" + clsRoot.getSimpleName() + ") missing annotation " + ACfgOverride.Root.class.getSimpleName();
             LOGGER.error(strMsg);
             
             throw new IllegalArgumentException(strMsg);

@@ -143,7 +143,7 @@ public class TimeDuration {
      * time duration in abstract form.
      * </p>
      * 
-     * @return  the amount of time within the duration
+     * @return  the length of time within the duration
      */
     public long getAmount() {
         return this.lngAmount;
@@ -151,7 +151,7 @@ public class TimeDuration {
     
     /**
      * <p>
-     * Return the time duration units as a <code>{@link ChronoUnit}</code> enumeration constant.
+     * Return the time duration units as a Java <code>{@link ChronoUnit}</code> enumeration constant.
      * </p>
      * 
      * @return  the units of the time duration corresponding to the amount <code>{@link #getAmount()}</code>
@@ -162,7 +162,7 @@ public class TimeDuration {
     
     /**
      * <p>
-     * Return the time duration units as a <code>{@link TimeUnit}</code> enumeration constant.
+     * Return the time duration units as a Java <code>{@link TimeUnit}</code> enumeration constant.
      * </p>
      * 
      * @return  the units of the time duration corresponding to the amount <code>{@link #getAmount()}</code>
@@ -173,7 +173,7 @@ public class TimeDuration {
     
     /**
      * <p>
-     * Return time duration as an abstract <code>{@link Duration}</code> instance.
+     * Return time duration as Java <code>{@link Duration}</code> instance.
      * </p>
      * <p>
      * Note that the <code>Duration</code> class maintains the duration amount in arbitrary units.

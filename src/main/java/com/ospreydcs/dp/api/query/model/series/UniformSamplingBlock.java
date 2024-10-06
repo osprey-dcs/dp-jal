@@ -253,7 +253,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         ResultStatus    rsltUnique = cqdSampleBlock.verifySourceUniqueness();
         if (rsltUnique.isFailure()) {
             if (BOL_LOGGING)
-                LOGGER.error("{} correlated data block has non-unique sources: {}", JavaRuntime.getCallerName(), rsltUnique.message());
+                LOGGER.error("{} correlated data block has non-unique sources: {}", JavaRuntime.getMethodName(), rsltUnique.message());
 
             throw new IllegalArgumentException("Correlated data block has non-unique sources: " + rsltUnique.message());
         }
@@ -262,7 +262,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         ResultStatus    rsltSizes = cqdSampleBlock.verifySourceSizes();
         if (rsltSizes.isFailure()) {
             if (BOL_LOGGING)
-                LOGGER.error("{} correlated data block has columns with bad sizes: {}", JavaRuntime.getCallerName(), rsltSizes.message());
+                LOGGER.error("{} correlated data block has columns with bad sizes: {}", JavaRuntime.getMethodName(), rsltSizes.message());
             
             throw new IllegalArgumentException("Correlated data block has columns with bad sizes: " + rsltSizes.message());
         }
@@ -714,7 +714,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         
         // Check argument
         if (!this.hasSourceData(strName))
-            throw new NoSuchElementException(JavaRuntime.getCallerClassSimple() + " does NOT contain source " + strName);
+            throw new NoSuchElementException(JavaRuntime.getMethodClassSimple() + " does NOT contain source " + strName);
             
         return this.mapSrcToIndex.get(strName);
 //        OptionalInt index = IntStream.range(0, this.getDataSourceCount()).filter(i -> this.vecSeriess.get(i).getName().equals(strName)).findAny();
@@ -791,7 +791,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
 
         // Check argument
         if (!this.hasSourceData(strName))
-            throw new NoSuchElementException(JavaRuntime.getCallerClassSimple() + " does NOT contain source " + strName);
+            throw new NoSuchElementException(JavaRuntime.getMethodClassSimple() + " does NOT contain source " + strName);
             
         return this.mapSrcToSeries.get(strName);
     }

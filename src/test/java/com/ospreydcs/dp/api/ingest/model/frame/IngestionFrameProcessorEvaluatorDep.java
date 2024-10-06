@@ -274,7 +274,7 @@ public class IngestionFrameProcessorEvaluatorDep {
             }
             
         } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "take()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "take()", e));
             
         }
         Instant     insFinish = Instant.now();
@@ -284,7 +284,7 @@ public class IngestionFrameProcessorEvaluatorDep {
             processor.shutdown();
             
         } catch (InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "shutdown()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
         }
         Instant insShutdown = Instant.now();
 
@@ -302,13 +302,13 @@ public class IngestionFrameProcessorEvaluatorDep {
         double      dblRateActPayload = ((double)szPayloadAlloc) / dblDurActive;
         double      dblRateActMessage = ((double)cntMsgBytes) / dblDurActive;
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " - Configuration");
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Configuration");
         System.out.println("  Concurrency         : " + bolConcurrency);
         System.out.println("    Thread count      : " + cntThreads);
         System.out.println("  Frame decomposition : " + bolFrameDecomp);
         System.out.println("    Max frame size    : " + szMaxFrame);
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " - Payload (table frames)");
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Payload (table frames)");
         System.out.println("  Creation time       : " + durPayload);
         System.out.println("  Number of frames    : " + cntFrames);
         System.out.println("    Columns per frame : " + cntCols);
@@ -316,7 +316,7 @@ public class IngestionFrameProcessorEvaluatorDep {
         System.out.println("    Bytes per frame   : " + szFrameAlloc);
         System.out.println("  Payload allocation  : " + szPayloadAlloc);
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " - Activity Results");
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Activity Results");
         System.out.println("  Polling attempts    : " + cntPolls);
         System.out.println("  Messages consumed   : " + cntMsgs);
         System.out.println("  Bytes consumed      : " + cntMsgBytes);
@@ -324,7 +324,7 @@ public class IngestionFrameProcessorEvaluatorDep {
         System.out.println("  Shutdown time       : " + durShutdown);
         System.out.println("  Total message time  : " + durActive);
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " - Processing Results");
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Processing Results");
         System.out.println("  Processing Rate with shutdown (Mbps)");
         System.out.println("    Payload (frontend): " + dblRateActPayload/1_000_000);
         System.out.println("    Message  (backend): " + dblRateActMessage/1_000_000);
@@ -394,7 +394,7 @@ public class IngestionFrameProcessorEvaluatorDep {
             results.finish();
             
         } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "take()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "take()", e));
         }
         
         // Shutdown the processor
@@ -403,7 +403,7 @@ public class IngestionFrameProcessorEvaluatorDep {
             results.shutdown();
             
         } catch (InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "shutdown()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
         }
         
         // Record processing results
@@ -412,7 +412,7 @@ public class IngestionFrameProcessorEvaluatorDep {
         results.computeResults();
 
         // Print out test results to standard output
-        results.printAll(System.out, JavaRuntime.getQualifiedCallerNameSimple());
+        results.printAll(System.out, JavaRuntime.getQualifiedMethodNameSimple());
     }    
 
     

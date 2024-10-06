@@ -455,7 +455,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
     public void enableConcurrency(int cntThreads) throws IllegalStateException {
         
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once activated.");
         
         this.bolConcurrency = true;
         this.cntConcurrencyThrds = cntThreads;
@@ -490,7 +490,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
     public void disableConcurrency() throws IllegalStateException {
 
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once activated.");
         
         this.bolConcurrency = false;
     }
@@ -994,7 +994,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
 
         // Check if active
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is no longer active.");
         
         // If no back-presssure enforcement just add all frames to raw frame buffer and return
         if (!this.bolBackPressure) {
@@ -1051,7 +1051,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
         
         // Check if active - if deactivated will wait forever.
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is no longer active.");
 
         // Do this regardless of whether back pressure is active or not
         //  The client wants to wait, we wait
@@ -1157,7 +1157,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
         
         // Check states
         if (!this.bolActive && !this.hasPendingMessages() && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is inactive and queue is empty.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
         
         try {
             IngestDataRequest   msgRqst = this.queMsgRequests.take();
@@ -1180,7 +1180,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
 
         // Check state
         if (!this.bolActive && !this.hasPendingMessages() && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is inactive and queue is empty.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
         
         try {
             IngestDataRequest   msgRqst = this.queMsgRequests.poll();
@@ -1204,7 +1204,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
         
         // Check state
         if (!this.bolActive && !this.hasPendingMessages() && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is inactive and queue is empty.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
         
         try {
             IngestDataRequest   msgRqst = this.queMsgRequests.poll(cntTimeout, tuTimeout);

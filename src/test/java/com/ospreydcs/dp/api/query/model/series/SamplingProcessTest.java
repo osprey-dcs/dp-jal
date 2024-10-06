@@ -571,7 +571,7 @@ public class SamplingProcessTest {
             return process;
             
         } catch (Exception e) {
-            Assert.fail(failMessage(JavaRuntime.getQualifiedCallerNameSimple(), e));
+            Assert.fail(failMessage(JavaRuntime.getQualifiedMethodNameSimple(), e));
             return null;
         }
     }

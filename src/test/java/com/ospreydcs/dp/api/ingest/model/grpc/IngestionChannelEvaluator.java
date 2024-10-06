@@ -325,7 +325,7 @@ public class IngestionChannelEvaluator {
         
         // Check state
         if (this.bolEvaluate == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - The evaluation was not run.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - The evaluation was not run.");
         
         return this.recStatus;
     }
@@ -347,10 +347,10 @@ public class IngestionChannelEvaluator {
         
         // Check state
         if (this.bolEvaluate == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - The evaluation was not run.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - The evaluation was not run.");
         
         if (this.recStatus.isFailure())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - The evaluation failed.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - The evaluation failed.");
         
         return this.dblXmitRateRaw / 1_000_000;
     }
@@ -373,10 +373,10 @@ public class IngestionChannelEvaluator {
         
         // Check state
         if (this.bolEvaluate == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - The evaluation was not run.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - The evaluation was not run.");
         
         if (this.recStatus.isFailure())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - The evaluation failed.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - The evaluation failed.");
         
         return this.dblXmitRateFull / 1_000_000;
     }
@@ -403,7 +403,7 @@ public class IngestionChannelEvaluator {
         
         // Check state
         if (this.bolEvaluate == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Test was never run.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Test was never run.");
         
         // If evaluation failed print out failure description
         if (this.recStatus.isFailure()) {
@@ -580,10 +580,10 @@ public class IngestionChannelEvaluator {
         
         // Check state
         if (this.bolEvaluate == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - The evaluation was not run.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - The evaluation was not run.");
         
         if (this.recStatus.isFailure())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - The evaluation failed.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - The evaluation failed.");
         
         // Collect results
         this.durInit = Duration.between(this.insStart, this.insActivate);

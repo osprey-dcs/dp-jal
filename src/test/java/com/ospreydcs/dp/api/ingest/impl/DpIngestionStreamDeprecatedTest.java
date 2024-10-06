@@ -753,7 +753,7 @@ public class DpIngestionStreamDeprecatedTest {
         // Get the the request exception list - not much we can do
         List<IngestionResponse>   lstRspExcp = apiIngest.getIngestionExceptions();
         
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " reports " + lstRspExcp.size() + " ingestion exceptions.");
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " reports " + lstRspExcp.size() + " ingestion exceptions.");
         for (IngestionResponse recRsp : lstRspExcp) {
             Assert.assertTrue(recRsp.hasException());
         }

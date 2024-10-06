@@ -478,7 +478,7 @@ public class DpIngestionServiceImplTest {
             Assert.assertEquals(0, frame.getColumnCount());
         
         // Print out results
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple());
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Payload frames   : " + cntFrames);
         System.out.println("  Frame allocation : " + szFrame);
         System.out.println("  Payload allocation : " + szPayload);

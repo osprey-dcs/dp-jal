@@ -256,8 +256,8 @@ public interface IIngestionStream extends IConnection {
      * Ingestion Service.  However, no new ingestion frames will be accepted (unless the stream
      * is re-opened later).  
      * </p>
-     * This activity may be useful
-     * when clients wish to due their own performance tuning.
+     * This is a blocking operation, it does not return until all previously submitted data is
+     * fully transmitted.  This condition may be useful when clients wish to due performance tuning.
      * <p>
      * <h2>Ingestion Service Responses</h2>
      * The method returns a list of all responses received by the Ingestion Service during data

@@ -354,7 +354,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
             ExceptionalResultStatus enmExcept = msgExcept.getExceptionalResultStatus();
             String                  strExcept = msgExcept.getMessage();
             
-            String      strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                                + " - Query Service reported an exception: status=" + enmExcept
                                + ", message=" + strExcept;
             
@@ -377,7 +377,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
         return lstRecs;
         
         } catch (IllegalArgumentException | TypeNotPresentException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple()
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                            + " - Could not convert response to PvMetaRecord: "
                            + "exception=" + e.getClass().getSimpleName()
                            + ", message=" + e.getMessage();
@@ -458,7 +458,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
             
         } catch (CompletionException | CannotProceedException | IllegalArgumentException | ExecutionException e) {
             if (BOL_LOGGING) 
-                LOGGER.error("{} - Exception while correlating response: {}, {}}", JavaRuntime.getCallerName(), e.getClass().getSimpleName(), e.getMessage());
+                LOGGER.error("{} - Exception while correlating response: {}, {}}", JavaRuntime.getMethodName(), e.getClass().getSimpleName(), e.getMessage());
 
             throw new DpQueryException("Exception while correlating response: " + e.getClass() + ", " + e.getMessage(), e);
         }
@@ -515,7 +515,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
             return table;
         
         } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | RangeException | TypeNotPresentException | CompletionException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                            + " - Failed to create SamplingProcess, exception thrown: type="
                            + e.getClass().getSimpleName()
                            + ", message=" + e.getMessage();
@@ -577,7 +577,7 @@ public final class DpQueryService extends DpServiceApiBase<DpQueryService, DpQue
             return table;
         
         } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | RangeException | TypeNotPresentException | CompletionException e) {
-            String  strMsg = JavaRuntime.getQualifiedCallerNameSimple() 
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                            + " - Failed to create SamplingProcess, exception thrown: type="
                            + e.getClass().getSimpleName()
                            + ", message=" + e.getMessage();

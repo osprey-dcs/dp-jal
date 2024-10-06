@@ -320,11 +320,11 @@ public class IngestionFrameProcessorEvaluatorTest {
             test.evaluatePolling(cfgTest);
 
             // Print out test results to standard output
-            test.printAll(System.out, "TEST: " + JavaRuntime.getQualifiedCallerNameSimple());
+            test.printAll(System.out, "TEST: " + JavaRuntime.getQualifiedMethodNameSimple());
             System.out.println("Output file name = " + cfgTest.createOutputFileName());
             
         } catch (Exception e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "evaluatePolling()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "evaluatePolling()", e));
         }
     }
 
@@ -342,10 +342,10 @@ public class IngestionFrameProcessorEvaluatorTest {
             test.evaluateTake(cfgTest);
 
             // Save the test results
-            this.storeResults(test, JavaRuntime.getCallerName());
+            this.storeResults(test, JavaRuntime.getMethodName());
             
         } catch (Exception e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "evaluateTake()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "evaluateTake()", e));
             return;
         }
     }
@@ -360,7 +360,7 @@ public class IngestionFrameProcessorEvaluatorTest {
             this.runSuite(LST_CFG_400K);
             
         } catch (Exception e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), e.getCause().getMessage(), e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), e.getCause().getMessage(), e));
         }
     }
     
@@ -374,7 +374,7 @@ public class IngestionFrameProcessorEvaluatorTest {
             this.runSuite(LST_CFG_1M);
             
         } catch (Exception e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), e.getCause().getMessage(), e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), e.getCause().getMessage(), e));
         }
     }
     
@@ -388,7 +388,7 @@ public class IngestionFrameProcessorEvaluatorTest {
             this.runSuite(LST_CFG_4M);
             
         } catch (Exception e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), e.getCause().getMessage(), e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), e.getCause().getMessage(), e));
         }
     }
     
@@ -470,7 +470,7 @@ public class IngestionFrameProcessorEvaluatorTest {
             osResults.close();
 
         } catch (FileNotFoundException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "storeResults()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "storeResults()", e));
         }
     }
 

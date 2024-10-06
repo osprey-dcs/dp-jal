@@ -328,11 +328,11 @@ public class IngestionChannel {
 
         // Check current state
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change gRPC stream type once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change gRPC stream type once activated.");
         
         // Check the argument
         if (enmStreamType == DpGrpcStreamType.BACKWARD)
-            throw new UnsupportedOperationException(JavaRuntime.getQualifiedCallerNameSimple() + " - " + enmStreamType + " not supported");
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - " + enmStreamType + " not supported");
         
         this.enmStreamType = enmStreamType;
     }
@@ -378,11 +378,11 @@ public class IngestionChannel {
 
         // Check current state
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change stream count once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change stream count once activated.");
         
         // Check the argument
         if (cntStreamsMax <= 0)
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedCallerNameSimple() + " - argument must be greater that zero. ");
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - argument must be greater that zero. ");
         
         this.bolMultistream = true;
         this.cntStreamsMax = cntStreamsMax;
@@ -424,7 +424,7 @@ public class IngestionChannel {
 
         // Check current state
         if (this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - Cannot change concurrency once activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurrency once activated.");
         
         this.bolMultistream = false;
     }
@@ -523,7 +523,7 @@ public class IngestionChannel {
         
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - instance was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - instance was never activated.");
 
         // Return the sum of all stream responses
         return this.setStreamTasks
@@ -573,7 +573,7 @@ public class IngestionChannel {
         
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
         // Collect all the client IDs recorded within each ingestion stream
         List<ClientRequestUID>   lstIds = this.setStreamTasks
@@ -620,7 +620,7 @@ public class IngestionChannel {
         
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - processor was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
         return this.setStreamTasks
                 .stream()
@@ -666,7 +666,7 @@ public class IngestionChannel {
 
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - channel was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - channel was never activated.");
 
         // Iterate through the collection of IngestDataResponse messages converting them to API record instance
         List<IngestionResponse> lstRsps = new ArrayList<>(this.setRspRecs);
@@ -742,7 +742,7 @@ public class IngestionChannel {
         
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - instance was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - instance was never activated.");
 
         // Returned value
         ArrayList<IngestionResponse>    lstRsps = new ArrayList<>(this.setRspRecsBad);
@@ -868,7 +868,7 @@ public class IngestionChannel {
 
         // Check message supplier state - not active?
         if (!this.srcRqstMsgs.isSupplying())
-            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - IMessageSupplier instance is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - IMessageSupplier instance is not active.");
         
         // Set activation flag before launching threads
         this.bolActive = true;
@@ -1028,7 +1028,7 @@ public class IngestionChannel {
         }
 
         else
-            throw new UnsupportedOperationException(JavaRuntime.getQualifiedCallerNameSimple() + " - attempted to use an unsupported stream type " + this.enmStreamType);
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - attempted to use an unsupported stream type " + this.enmStreamType);
 
         return stream;
     }

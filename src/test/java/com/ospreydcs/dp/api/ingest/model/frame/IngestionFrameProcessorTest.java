@@ -169,7 +169,7 @@ public class IngestionFrameProcessorTest {
         Assert.assertEquals(cntThreads, processor.getConcurrencyCount());
         
         int cntThrdsNew = processor.getConcurrencyCount();
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + ": Default thread count=" + cntThrdsDef + ", new thread count=" + cntThrdsNew);
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + ": Default thread count=" + cntThrdsDef + ", new thread count=" + cntThrdsNew);
         
         processor.disableConcurrency();
         Assert.assertFalse(processor.hasConcurrency());
@@ -310,7 +310,7 @@ public class IngestionFrameProcessorTest {
             Assert.assertFalse(processor.isSupplying());
             
         } catch (InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "shutdown()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
         }
     }
 
@@ -375,12 +375,12 @@ public class IngestionFrameProcessorTest {
             Instant insTake = Instant.now();
             
             Duration durProcess = Duration.between(insSubmit, insTake);
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " - Single frame processing duration: " + durProcess);
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Single frame processing duration: " + durProcess);
             
             Assert.assertNotEquals(null, msgRqst);
             
         } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "take()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "take()", e));
             
         } finally {
             
@@ -391,7 +391,7 @@ public class IngestionFrameProcessorTest {
                 Assert.assertTrue(processor.hasShutdown());
                 
             } catch (InterruptedException e) {
-                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "shutdown()", e));
+                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
             }
         }
     }
@@ -428,7 +428,7 @@ public class IngestionFrameProcessorTest {
         Instant insTake = Instant.now();
         
         Duration durProcess = Duration.between(insSubmit, insTake);
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " - Single frame processing duration: " + durProcess);
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Single frame processing duration: " + durProcess);
         
         Assert.assertNotEquals(null, msgRqst);
         try {
@@ -438,7 +438,7 @@ public class IngestionFrameProcessorTest {
             Assert.assertTrue(processor.hasShutdown());
 
         } catch (InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "shutdown()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
         }
     }
 
@@ -478,7 +478,7 @@ public class IngestionFrameProcessorTest {
             Instant insTake = Instant.now();
             
             Duration durProcess = Duration.between(insSubmit, insTake);
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " - multi-frame processing duration: " + durProcess);
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - multi-frame processing duration: " + durProcess);
 
             // Frames are smaller than decomposition - queue should be exhausted
             msgRqst = processor.poll();
@@ -488,7 +488,7 @@ public class IngestionFrameProcessorTest {
             Assert.assertFalse(processor.hasProcessingFailure());
             
         } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "take()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "take()", e));
             
         } finally {
             
@@ -499,7 +499,7 @@ public class IngestionFrameProcessorTest {
                 Assert.assertTrue(processor.hasShutdown());
                 
             } catch (InterruptedException e) {
-                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "shutdown()", e));
+                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
             }
         }
     }
@@ -538,7 +538,7 @@ public class IngestionFrameProcessorTest {
         Instant insTake = Instant.now();
         
         Duration durProcess = Duration.between(insSubmit, insTake);
-        System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " - multi-frame processing duration: " + durProcess);
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - multi-frame processing duration: " + durProcess);
 
         // Frames are smaller than decomposition - queue should be exhausted
         IngestDataRequest msgRqst = processor.poll();
@@ -551,7 +551,7 @@ public class IngestionFrameProcessorTest {
             Assert.assertTrue(processor.hasShutdown());
 
         } catch (InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "shutdown()", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
         }
     }
 
@@ -623,7 +623,7 @@ public class IngestionFrameProcessorTest {
             Instant insComplete = Instant.now();
             
             Duration durProcess = Duration.between(insSubmit, insComplete);
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " - multi-frame polled processing duration: " + durProcess);
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - multi-frame polled processing duration: " + durProcess);
 
             // Frames are smaller than decomposition - queue should be exhausted
             msgRqst = processor.poll();
@@ -633,7 +633,7 @@ public class IngestionFrameProcessorTest {
             Assert.assertFalse(processor.hasProcessingFailure());
             
         } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "poll(long, TimeUnit)", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "poll(long, TimeUnit)", e));
             
         } finally {
             
@@ -644,7 +644,7 @@ public class IngestionFrameProcessorTest {
                 Assert.assertTrue(processor.hasShutdown());
                 
             } catch (InterruptedException e) {
-                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "shutdown()", e));
+                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
             }
         }
     }
@@ -695,7 +695,7 @@ public class IngestionFrameProcessorTest {
             Instant insComplete = Instant.now();
             
             Duration durProcess = Duration.between(insSubmit, insComplete);
-            System.out.println(JavaRuntime.getQualifiedCallerNameSimple() + " - large multi-frame polled processing duration: " + durProcess);
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - large multi-frame polled processing duration: " + durProcess);
             System.out.println("  Processed " + cntFrames + " large frames (" + szFrame + " bytes) into " + cntMsgs + " IngestDataRequest messages.");
 
             // Frames are smaller than decomposition - queue should be exhausted
@@ -706,7 +706,7 @@ public class IngestionFrameProcessorTest {
             Assert.assertFalse(processor.hasProcessingFailure());
             
         } catch (IllegalStateException | InterruptedException e) {
-            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "poll(long, TimeUnit)", e));
+            Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "poll(long, TimeUnit)", e));
             
         } finally {
             
@@ -717,7 +717,7 @@ public class IngestionFrameProcessorTest {
                 Assert.assertTrue(processor.hasShutdown());
                 
             } catch (InterruptedException e) {
-                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedCallerNameSimple(), "shutdown()", e));
+                Assert.fail(this.createFailExceptionMessage(JavaRuntime.getQualifiedMethodNameSimple(), "shutdown()", e));
             }
         }
     }

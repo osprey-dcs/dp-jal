@@ -368,7 +368,7 @@ public class TestQueryServiceTest {
         QueryDataResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
         
         // Check the response
-        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, List.of(msgResponse));
+        this.checkResults(JavaRuntime.getQualifiedMethodNameSimple(), msgRequest, List.of(msgResponse));
     }
 
     /**
@@ -382,7 +382,7 @@ public class TestQueryServiceTest {
         QueryDataResponse   msgResponse = apiQueryService.queryResponseSingle(msgRequest);
         
         // Check the response
-        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, List.of(msgResponse));
+        this.checkResults(JavaRuntime.getQualifiedMethodNameSimple(), msgRequest, List.of(msgResponse));
     }
 
     /**
@@ -431,7 +431,7 @@ public class TestQueryServiceTest {
             Assert.fail(recSizes.message());
         
         // Inspect the query data
-        this.printActivityRanges(JavaRuntime.getQualifiedCallerNameSimple(), lstResultsSet);
+        this.printActivityRanges(JavaRuntime.getQualifiedMethodNameSimple(), lstResultsSet);
         
         List<DataBucket>    lstBuckets = lstResultsSet
                 .stream()
@@ -453,7 +453,7 @@ public class TestQueryServiceTest {
         List<QueryDataResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
         
         // Check the response
-        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
+        this.checkResults(JavaRuntime.getQualifiedMethodNameSimple(), msgRequest, lstResultsSet);
     }
 
     /**
@@ -467,7 +467,7 @@ public class TestQueryServiceTest {
         List<QueryDataResponse>   lstResultsSet = apiQueryService.queryResponseStream(msgRequest);
         
         // Check the response
-        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
+        this.checkResults(JavaRuntime.getQualifiedMethodNameSimple(), msgRequest, lstResultsSet);
     }
 
     /**
@@ -523,7 +523,7 @@ public class TestQueryServiceTest {
             Assert.fail(recSizes.message());
         
         // Inspect the query data
-        this.printActivityRanges(JavaRuntime.getQualifiedCallerNameSimple(), lstResultsSet);
+        this.printActivityRanges(JavaRuntime.getQualifiedMethodNameSimple(), lstResultsSet);
         
         List<DataBucket>    lstBuckets = lstResultsSet
                 .stream()
@@ -552,7 +552,7 @@ public class TestQueryServiceTest {
         }
         
         // Check the response
-        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
+        this.checkResults(JavaRuntime.getQualifiedMethodNameSimple(), msgRequest, lstResultsSet);
     }
 
     /**
@@ -573,7 +573,7 @@ public class TestQueryServiceTest {
         }
         
         // Check the response
-        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
+        this.checkResults(JavaRuntime.getQualifiedMethodNameSimple(), msgRequest, lstResultsSet);
     }
 
     /**
@@ -594,7 +594,7 @@ public class TestQueryServiceTest {
         }
         
         // Check the response
-        this.checkResults(JavaRuntime.getQualifiedCallerNameSimple(), msgRequest, lstResultsSet);
+        this.checkResults(JavaRuntime.getQualifiedMethodNameSimple(), msgRequest, lstResultsSet);
     }
 
     /**
@@ -869,7 +869,7 @@ public class TestQueryServiceTest {
             // Remove the first occurrence of target source name from the mutable list
             boolean bolRemoved = lstSrcNmsMutable.remove(strSrcNm);
             if (!bolRemoved)
-                return ResultStatus. newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " Algorithm remove FAILURE for source " + strSrcNm);
+                return ResultStatus. newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " Algorithm remove FAILURE for source " + strSrcNm);
 
             // Check if there are any other source name list entries
             boolean bolMatch = lstSrcNmsMutable.stream().anyMatch(s -> s.equals(strSrcNm));
@@ -879,7 +879,7 @@ public class TestQueryServiceTest {
             // Return the target name to mutable list and continue
             boolean bolReplaced = lstSrcNmsMutable.add(strSrcNm);
             if (!bolReplaced)
-                return ResultStatus. newFailure(JavaRuntime.getQualifiedCallerNameSimple() + " Algorithm replace FAILURE for source " + strSrcNm);
+                return ResultStatus. newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " Algorithm replace FAILURE for source " + strSrcNm);
                 
         }
         
