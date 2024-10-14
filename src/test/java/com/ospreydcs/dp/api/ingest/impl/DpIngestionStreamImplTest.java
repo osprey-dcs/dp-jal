@@ -695,7 +695,7 @@ public class DpIngestionStreamImplTest {
         
         // Get the transmission results
         ProviderUID             recPrvrUid = istream.getProviderUid();
-        List<ClientRequestUID>  lstRqstUids = istream.getClientRequestIds();
+        List<ClientRequestUID>  lstRqstUids = istream.getRequestIds();
         int                     cntXmissions = istream.getTransmissionCount();
         List<IngestionResponse> lstRsps = istream.getIngestionResponses();
         List<IngestionResponse> lstXmitExcps = istream.getIngestionExceptions();
@@ -1189,7 +1189,7 @@ public class DpIngestionStreamImplTest {
         Duration    durClose = Duration.between(insStart, insClosed);
         List<IngestionResponse> lstRsps = istream.getIngestionResponses();
         List<IngestionResponse> lstExcps = istream.getIngestionExceptions();
-        List<ClientRequestUID>  lstRqstUids = istream.getClientRequestIds();
+        List<ClientRequestUID>  lstRqstUids = istream.getRequestIds();
         Collection<Exception>   setFrmDecmpExcp = istream.getFailedFrameDecompositions();
         Collection<Exception>   setFrmCnvrtExcp = istream.getFailedFrameConversions();
 

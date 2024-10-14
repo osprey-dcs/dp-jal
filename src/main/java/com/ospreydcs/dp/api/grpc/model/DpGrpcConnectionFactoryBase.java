@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.grpc.DpConnectionsConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 
 import io.grpc.ChannelCredentials;
@@ -163,12 +165,26 @@ public abstract class DpGrpcConnectionFactoryBase<
     > 
 {
 
+    // 
+    // Application Resources
+    //
+    
+    /** The connections services default configuration */
+    private static final DpConnectionsConfig    CFG_DEFAULT = DpApiConfig.getInstance().connections;
+    
+    
     //
     // Class Constants
     //
 
+    /** Is logging active */
+    public static final boolean BOL_LOGGING = CFG_DEFAULT.logging.active;
+    
     /** Default maximum gRPC message size - this is a gRPC parameter */
-    public static final int    INT_MSG_SIZE_MAX_DEFAULT = 4194304;
+    public static final int     INT_MSG_SIZE_MAX_DEFAULT = 4194304;
+    
+    /** The "GZIP compressor name" used by gRPC for GZIP compression */
+    public static final String  STR_GZIP_NAME = "gzip";
     
 
     //
@@ -491,19 +507,22 @@ public abstract class DpGrpcConnectionFactoryBase<
         if (bolTlsActive) {
             bldrChan = ManagedChannelBuilder.forAddress(strHost, intPort);
             bldrChan.useTransportSecurity();
-            LOGGER.info("Enforcing default TLS transport security.");
+            if (BOL_LOGGING)
+                LOGGER.info("Enforcing default TLS transport security.");
             
         } else {
             ChannelCredentials  credsInsecure = InsecureChannelCredentials.create();
             
             bldrChan = Grpc.newChannelBuilderForAddress(strHost, intPort, credsInsecure);
-            LOGGER.info("Not enforcing security - insecure channel credentials.");
+            if (BOL_LOGGING)
+                LOGGER.info("Not enforcing security - insecure channel credentials.");
         }
         
         // NOTE: Plain text negates TLS security
         if (bolPlainText) {
             bldrChan.usePlaintext();
-            LOGGER.warn("Transmitting plain text - any default TLS security is disabled.");
+            if (BOL_LOGGING)
+                LOGGER.warn("Transmitting plain text - any default TLS security is disabled.");
             
 //        } else {
 //            bldrChan.useTransportSecurity();
@@ -513,29 +532,33 @@ public abstract class DpGrpcConnectionFactoryBase<
         // Configure - Maximum message size 
         if (INT_MSG_SIZE_MAX_DEFAULT != intMsgSizeMax) {
             bldrChan.maxInboundMessageSize(intMsgSizeMax);
-            LOGGER.info("Maximum gRPC message set to nondefault value {}", intMsgSizeMax);
+            if (BOL_LOGGING)
+                LOGGER.info("Maximum gRPC message set to nondefault value {}", intMsgSizeMax);
         }
         
         // Configure - Idle timeouts
         if (bolKeepAlive) {
             bldrChan.keepAliveWithoutCalls(true);
-            LOGGER.warn("Keeping connection alive indefinitely - excessive gRPC resources");
+            if (BOL_LOGGING)
+                LOGGER.warn("Keeping connection alive indefinitely - excessive gRPC resources");
             
         } else {
             bldrChan.keepAliveTimeout(lngTimeout, tuTimeout);
-            LOGGER.info("Timeout after Keepalive ping set to {} {}", lngTimeout, tuTimeout);
+            if (BOL_LOGGING)
+                LOGGER.info("Timeout after Keepalive ping set to {} {}", lngTimeout, tuTimeout);
         }
         
-        // Configure - Set the data compression flag enable
-        if (bolGzipCompr) {
-            bldrChan.enableFullStreamDecompression();
-            LOGGER.warn("Enabling GZIP compression - known performance issues with gRPC compression.");
-        }
+        // Configure - Set the data compression flag enable - no longer supported at the channel level
+//        if (bolGzipCompr) {
+//            bldrChan.enableFullStreamDecompression();
+//            LOGGER.warn("Enabling GZIP compression - known performance issues with gRPC compression.");
+//        }
 
         
         // Build a gRPC channel 
         ManagedChannel grpcChan = bldrChan.build();
-        LOGGER.info("Created gRPC channel for host connection {}:{}", strHost, intPort);
+        if (BOL_LOGGING)
+            LOGGER.info("Created gRPC channel for host connection {}:{}", strHost, intPort);
         
         // Create gRPC service connection
         DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>   connRaw = 
@@ -543,7 +566,17 @@ public abstract class DpGrpcConnectionFactoryBase<
         
         Connection  connBound = this.createFrom(connRaw);
         
-        LOGGER.info("Service {} established for channel {}", this.clsService.getSimpleName(), grpcChan);
+        // Enable GZIP compression for all the communication stubs if requested
+        if (bolGzipCompr) {
+            if (BOL_LOGGING)
+                LOGGER.warn("Enabling GZIP compression - known performance issues with gRPC compression.");
+            connBound.getStubBlock().withCompression(STR_GZIP_NAME);
+            connBound.getStubFuture().withCompression(STR_GZIP_NAME);
+            connBound.getStubAsync().withCompression(STR_GZIP_NAME);
+        }
+        
+        if (BOL_LOGGING)
+            LOGGER.info("Service {} established for channel {}", this.clsService.getSimpleName(), grpcChan);
 
         // Return the connection
         return connBound;
@@ -707,49 +740,67 @@ public abstract class DpGrpcConnectionFactoryBase<
         }
         
         ChannelCredentials  grpcCreds = bldrCreds.build();
-        LOGGER.info("Using TLS security from files {}, {}, {}.", fileTrustedCerts, fileClientCertsChain, fileClientKey);
+        if (BOL_LOGGING)
+            LOGGER.info("Using TLS security from files {}, {}, {}.", fileTrustedCerts, fileClientCertsChain, fileClientKey);
         
         // Configure the gRPC channel 
         ManagedChannelBuilder<?> bldrChan = Grpc.newChannelBuilderForAddress(strHost, intPort, grpcCreds);
-        LOGGER.info("Building gRPC channel for host {} and port {}", strHost, intPort);
+        if (BOL_LOGGING)
+            LOGGER.info("Building gRPC channel for host {} and port {}", strHost, intPort);
 
         // NOTE: this negates TLS security
         if (bolPlainText) {
             bldrChan.usePlaintext();
-            LOGGER.warn("Transmitting plain text - security disabled.");
+            if (BOL_LOGGING)
+                LOGGER.warn("Transmitting plain text - security disabled.");
         }
 
         // Configure - Maximum message size 
         if (INT_MSG_SIZE_MAX_DEFAULT != intMsgSizeMax) {
             bldrChan.maxInboundMessageSize(intMsgSizeMax);
-            LOGGER.info("Maximum gRPC message set to nondefault value {}", intMsgSizeMax);
+            if (BOL_LOGGING)
+                LOGGER.info("Maximum gRPC message set to nondefault value {}", intMsgSizeMax);
         }
         
         // Configure - Idle timeouts
         if (bolKeepAlive) {
             bldrChan.keepAliveWithoutCalls(true);
-            LOGGER.warn("Keeping connection alive indefinitely - excessive gRPC resources");
+            if (BOL_LOGGING)
+                LOGGER.warn("Keeping connection alive indefinitely - excessive gRPC resources");
             
         } else {
             bldrChan.keepAliveTimeout(lngTimeout, tuTimeout);
-            LOGGER.info("Timeout after Keepalive ping set to {} {}", lngTimeout, tuTimeout);
+            if (BOL_LOGGING)
+                LOGGER.info("Timeout after Keepalive ping set to {} {}", lngTimeout, tuTimeout);
         }
         
-        // Configure - Set the data compression flag enable
-        if (bolGzipCompr) {
-            bldrChan.enableFullStreamDecompression();
-            LOGGER.warn("Enabling GZIP compression - known performance issues with gRPC compression.");
-        }
+        // Configure - Set the data compression flag enable - no longer supported at the channel level
+//        if (bolGzipCompr) {
+//            bldrChan.enableFullStreamDecompression();
+//            if (BOL_LOGGING)
+//                LOGGER.warn("Enabling GZIP compression - known performance issues with gRPC compression.");
+//        }
 
         // Build a gRPC channel 
         ManagedChannel grpcChan = bldrChan.build();
-        LOGGER.info("gRPC channel created for host connection {}:{}", strHost, intPort);
+        if (BOL_LOGGING)
+            LOGGER.info("gRPC channel created for host connection {}:{}", strHost, intPort);
         
         // Create gRPC service connection
         DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>   connRaw = new DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>(this.clsService, grpcChan);
         Connection  connBound = this.createFrom(connRaw);
         
-        LOGGER.info("gRPC connection established for service {}", this.clsService);
+        // Enable GZIP compression for all the communication stubs if requested
+        if (bolGzipCompr) {
+            if (BOL_LOGGING)
+                LOGGER.warn("Enabling GZIP compression - known performance issues with gRPC compression.");
+            connBound.getStubBlock().withCompression(STR_GZIP_NAME);
+            connBound.getStubFuture().withCompression(STR_GZIP_NAME);
+            connBound.getStubAsync().withCompression(STR_GZIP_NAME);
+        }
+        
+        if (BOL_LOGGING)
+            LOGGER.info("gRPC connection established for service {}", this.clsService);
 
         // Return the connection
         return connBound;

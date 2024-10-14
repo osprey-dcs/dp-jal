@@ -30,17 +30,25 @@ package com.ospreydcs.dp.api.model;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import com.google.protobuf.ByteString;
 import com.ospreydcs.dp.api.common.AUnavailable;
 import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
 
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
+
 /**
- * <p>
+ * <h1>
  * Enumeration of data types supported as heterogeneous <em>data values</em> within the Data Platform.
+ * </h1>
+ * <p>
+ * <h2>Type Bindings</h2>
+ * All Data Platform Protobuf types are hidden and not referenced here, only Java types supported within
+ * the client library appear.  All bindings between Java Data Platform native types (i.e., Protobuf messages
+ * and enumerations) are localized and performed in utility class <code>{@link ProtoMsg}</code>.
  * </p>
  * <p>
+ * <h2>Type Mappings</h2>
  * The mapping of Protocol Buffers ("Protobuf") data types to Java data types is NOT one-to-one.  Protobuf
  * has more <em>primitive</em> types than Java, particularly the unsigned integral values.  Moreover,
  * structured data defined with Protobuf message (e.g., <code>Array</code>, <code>Structure</code>, 
@@ -49,17 +57,6 @@ import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
  * within this library (e.g., <code>Image</code>).
  * </p>
  * <p>
- * <h2>NOTES:</h2>
- * <ul>
- * <li>All <em>unsigned</em> Protobuf data types are represented as their signed equivalents.</li>
- * <li>The <code>bytes</code> Protobuf primitive is represented by the Google class <code>com.google.Protobuf.ByteString</code> class.</li>
- * <li>The <code>Array</code> Protobuf message is currently represented as a Java <code>Vector</code>. 
- * <li>The <code>Structure</code> Protobuf message is represented as a Java <code>Map</code>.</li>
- * <li>The <code>Image</code> Protobuf message is represented with the DP API class <code>BufferedImage</code>.</li>
- * </ul>
- * </p>
- * <p>
- * <h2>Mappings</h2>
  * The current Protobuf type to Java object mappings are listed below:
  * <br/>
  * <code>
@@ -83,8 +80,18 @@ import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
  * </code>
  * </p>
  * <p>
+ * <h2>NOTES:</h2>
+ * <ul>
+ * <li>All <em>unsigned</em> Protobuf data types are represented as their signed equivalents.</li>
+ * <li>The <code>bytes</code> Protobuf primitive is represented by the Google class <code>com.google.Protobuf.ByteString</code> class.</li>
+ * <li>The <code>Array</code> Protobuf message is currently represented as a Java <code>Vector</code>. 
+ * <li>The <code>Structure</code> Protobuf message is represented as a Java <code>Map</code>.</li>
+ * <li>The <code>Image</code> Protobuf message is represented with the DP API class <code>BufferedImage</code>.</li>
+ * </ul>
+ * </p>
+ * <p>
  * <h2>TODO:</h2>
- * Consider changing the <code>Array</code> representation to a Java <code>ArrayList</code>.
+ * Consider changing the <code>Array</code> representation to a Java <code>ArrayList</code>, essentially a vector.
  * </p>
  *
  * @author Christopher K. Allen
@@ -203,6 +210,10 @@ public enum DpSupportedType {
     
     /** Java class type used to represent data value instances */
     private final Class<? extends Object>       clsType;
+    
+    //
+    // Constructor
+    //
     
     /**
      * <p>

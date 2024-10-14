@@ -379,21 +379,24 @@ public final class ProviderRegistrationService {
 
         String  strProviderName = recRegistration.name();
         int     intProviderUid;
+        boolean bolIsNew;
         
         // Check if we have already registered provider
         if (MAP_PROVIDER_UID.containsKey(strProviderName)) {
             intProviderUid = MAP_PROVIDER_UID.get(strProviderName);
+            bolIsNew = false;
             
         } else {
             intProviderUid = intProviderUidCounter;
             intProviderUidCounter++;
             
             MAP_PROVIDER_UID.put(strProviderName, Integer.valueOf(intProviderUid));
+            bolIsNew = true;
         }
             
-        
         // Create provider registration UID
-        ProviderUID     recUid = ProviderUID.from(intProviderUid);
+        String          strProviderUid = Integer.toString(intProviderUid);
+        ProviderUID     recUid = ProviderUID.from(strProviderUid, strProviderName, bolIsNew);
         
         return recUid;
     }

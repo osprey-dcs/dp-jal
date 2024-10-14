@@ -52,7 +52,11 @@ public record ClientRequestUID(String requestId) implements Serializable {
     // Constants
     //
     
-    /** Prefix given to randomly generated client UIDs */
+    /** The universal null request UID, used when an UID is required but none is specified */
+    public static final ClientRequestUID    NULL = ClientRequestUID.from("null");
+    
+    
+    /** Prefix given to all randomly generated client UIDs */
     public static final String  STR_PREFIX = "dp-api-java-";
     
     
@@ -169,6 +173,30 @@ public record ClientRequestUID(String requestId) implements Serializable {
         String  strRqstId = strPrefix + uuidRqst.toString();
         
         return new ClientRequestUID(strRqstId);
+    }
+
+    
+    //
+    // record Overrides
+    //
+    
+    /**
+     * <h1>
+     * Compares the request UID field for equality.
+     * </h2>
+     * <p>
+     * This override is required to avoid Java equality comparision as Objects.
+     * </p>
+     * 
+     * @see java.lang.Record#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        
+        if (obj instanceof ClientRequestUID rec)
+            return this.requestId.equals(rec.requestId);
+        
+        return false;
     }
     
 }

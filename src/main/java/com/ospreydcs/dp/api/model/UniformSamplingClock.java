@@ -41,9 +41,9 @@ import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 
 /**
- * <p>
- * Represents a finite-duration sampling clock with uniform sampling period.
- * </p> 
+ * <h1>
+ * Represents a finite-duration sampling clock with constant sampling period.
+ * </h1> 
  * <p>
  * Contains parameters defining a uniform sampling clock active for a finite duration.  Instances can be used
  * to identify the sampling times for a uniform, time-series process.

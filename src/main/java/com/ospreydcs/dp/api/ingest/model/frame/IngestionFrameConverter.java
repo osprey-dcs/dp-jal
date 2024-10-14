@@ -290,7 +290,7 @@ public final class IngestionFrameConverter {
         IngestDataRequest   msgRqst = IngestDataRequest.newBuilder()
                 .setProviderId(recPrvUid.uid())
                 .setClientRequestId(recRqstId.requestId())
-                .setRequestTime(ProtoTime.now())
+//                .setRequestTime(ProtoTime.now())
                 .addAllAttributes(ProtoMsg.createAttributes(frame.getAttributes()))
                 .setEventMetadata(IngestionFrameConverter.extractEventMetadata(frame))
                 .setIngestionDataFrame(ProtoMsg.from(frame))

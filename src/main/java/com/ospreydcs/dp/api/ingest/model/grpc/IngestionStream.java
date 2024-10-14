@@ -49,6 +49,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataStreamResponse;
 
 import io.grpc.stub.CallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -61,9 +62,9 @@ import io.grpc.stub.StreamObserver;
  * Performs the basic operations required for establishing a gRPC data stream between with the
  * Ingestion Service and transmitting <code>{@link IngestDataRequest}</code> messages.
  * Subclasses implement the specific details depending upon whether the desired gRPC stream is
- * unidirectional or bidirectional.  Note that these subclasses are internal  and cannot be 
+ * unidirectional or bidirectional.  Note that these subclasses are hidden and cannot be 
  * instantiated externally.
- * The creators for <code>IngestionStream</code> provide concrete instances
+ * The creators for <code>IngestionStream</code> provide concrete instances of the subclasses
  * that clients can use for stream processing.
  * </p>
  * <p>
@@ -93,17 +94,36 @@ import io.grpc.stub.StreamObserver;
  * to the <code>run()</code> method then returns the status of the stream processing.
  * </p>
  * <p>
+ * <h2>Exceptions</h2>
+ * This class no longer monitors the data stream for ingestion exceptions signaled by the Ingestion Service.
+ * The only exception handling within this class is for the gRPC streaming.  It is the responsibility of the 
+ * client to determine whether or not the transmitted data was successfully ingested, specifically by
+ * inspection of the responses provided by the Ingestion Service.
+ * </p>
+ * <p>
+ * Having said the above, the <code>IngestionStream</code> class does record all client request 
+ * UIDs of the incoming ingestion data.  These UIDs are available from method <code>{@link #getRequestIds()}</code>.
+ * These client request UIDs can be used to query the Data Platform for success/failure of the supplied data.
+ * </p>
+ * <p>
  * <h2>Unidirectional gRPC Streams</h2>
- * Unidirectional gRPC data streams are not currently supported by the Ingestion Service.
- * Do not use creator <code>{@link #newUniProcessor(DpIngestionServiceStub, IMessageSupplier)}</code>.
+ * Unidirectional gRPC data streams requires both a supplier of <code>IngestDataRequest</code> messages
+ * and a consumer for the single <code>IngestDataStreamResponse</code> message recovered by the data stream.  
+ * The unidirectional stream will transmit all data obtained from the supplier as fast as possible.
+ * When all data has been transmitted (i.e., the <code>{@link IMessageSupplier#isSupplying()}</code> returns
+ * <code>false</code>) the client signals a "half-closed" event to the Ingestion Service (i.e., invokes the
+ * <code>{@link StreamObserver#onCompleted()}</code> method).  Under normal operations the Ingestion Service
+ * 1) transmits the single <code>IngestDataStreamResponse</code> which is passed to the message consumer, then
+ * 2) signals the final "half-closed" event terminating the data stream.
  * </p> 
  * <p>
  * <h2>Bidirectional gRPC Streams</h2>
  * Bidirectional gRPC data streams require both a supplier of <code>IngestDataRequest</code> messages
  * and a consumer of <code>IngestDataResponse</code> messages.  The bidirectional stream will
- * transmit all data obtained from the supplier as fast as possible, then collect the responses as
- * the arrive.  The bidirectional stream will not terminate (i.e., the <code>run()</code> method
- * will not return) until the Ingestion Service has signaled that there are no more responses.
+ * transmit all data obtained from the supplier as fast as possible, then collect all responses as
+ * fast as they arrive.  The bidirectional stream will not terminate (i.e., the <code>run()</code> method
+ * will not return) until the Ingestion Service has signaled that there are no more responses (i.e., it receives
+ * the <code>{@link StreamObserver#onCompleted()}</code> "half-close" event).
  * </p> 
  *
  * @author Christopher K. Allen
@@ -144,14 +164,14 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
      * </p>
      * 
      * @param stubAsync     the asynchronous communications stub to the Ingestion Service 
-     * @param fncRqstSrc    the supplier of <code>IngestDataRequest</code> messages 
+     * @param fncDataSrc    the supplier of <code>IngestDataRequest</code> messages 
      * @param fncRspSink   the consumer of <code>IngestDataResponse</code> messages
      *  
      * @return  new bidirectional ingestion stream processor ready for independent thread spawn
      */
-    public static IngestionStream newBidiProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncRqstSrc, Consumer<IngestDataResponse> fncRspSink) {
+    public static IngestionStream newBidiProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSrc, Consumer<IngestDataResponse> fncRspSink) {
         
-        return new IngestionBidiStream(stubAsync, fncRqstSrc, fncRspSink);
+        return new IngestionBidiStream(stubAsync, fncDataSrc, fncRspSink);
     }
     
     /**
@@ -159,25 +179,19 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
      * Creates and returns a new unidirectional ingestion stream processor for the Ingestion Service.
      * </p>
      * <p>
-     * <h2>NOT IMPLEMENTED</h2>
-     * The Ingestion Service current does NOT support single-stream ingestion and, therefore,
-     * this class will not function.  The <code>{@link #initiateGrpcStream()}</code> operation
-     * simply returns <code>null</code>.
+     * The gRPC data stream to the Ingestion Service is established when the stream upon 
+     * invocation of <code>{@link #run()}</code> or </code>{@link #call()}</code>.
      * </p>
-     * <p>
-     * TODO 
-     * Implement single-stream ingestion with Ingestion Service.
-     * </p> 
      * 
      * @param stubAsync     the asynchronous gRPC communications stub to the Ingestion Service
-     * @param fncRqstSrc    supplier of <code>IngestDataRequest</code> messages
+     * @param fncDataSrc    supplier of <code>IngestDataRequest</code> messages
+     * @param fncRspSink    the consumer of <code>IngestDataStreamResponse</code> messages
      * 
      * @return  new unidirectional ingestion stream processor ready for independent thread spawn
      */
-    @AUnavailable(status=STATUS.UNKNOWN, note="The Ingestion Service does NOT support unidirectional ingestion streams.")
-    public static IngestionStream newUniProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncRqstSrc) {
+    public static IngestionStream newUniProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSrc, Consumer<IngestDataStreamResponse> fncRspSink) {
     
-        return new IngestionUniStream(stubAsync, fncRqstSrc);
+        return new IngestionUniStream(stubAsync, fncDataSrc, fncRspSink);
     }
     
     
@@ -217,9 +231,15 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     // Defining Attributes
     //
     
-    /** The supplier of <code>IngestDataRequest</code> messages */
-    private final IMessageSupplier<IngestDataRequest>   fncDataSource;
+    /** The asynchronous communications stub to the Ingestion Service */
+    protected final DpIngestionServiceStub                  stubAsync;
     
+    /** The supplier of <code>IngestDataRequest</code> messages */
+    protected final IMessageSupplier<IngestDataRequest>     fncDataSource;
+    
+//    /** The consumer of <code>IngestDataResponse</code> messages */
+//    protected final Consumer<IngestDataResponse>            fncRspSink;
+
     
     //
     // Stream Resources
@@ -229,7 +249,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     private CallStreamObserver<IngestDataRequest>   hndForwardStream = null;
 
     /** Collection of all outgoing message client request IDs */
-    private final List<ClientRequestUID>             lstClientIds = new LinkedList<>();
+    private final List<ClientRequestUID>            lstClientIds = new LinkedList<>();
     
     
     //
@@ -239,21 +259,25 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     /** Has the gRPC data stream started ? */
     protected boolean         bolStreamStarted = false;
     
-    /** Has the gRPC data stream completed ? */
-    protected boolean         bolStreamComplete = false;
+//    /** Has the gRPC data stream completed ? */
+//    protected boolean         bolStreamComplete = false;
     
     /** Can be set by child classes to indicate an error and terminate stream */
     protected boolean         bolStreamError = false;
     
+    /** Has the backward gRPC data stream completed */
+    protected CountDownLatch    monStreamCompleted = new CountDownLatch(1);
+    
+    
+    //
+    // Result Conditions
+    //
     
     /** The current number of requests sent forward through the stream */
     protected int             cntRequests = 0;
     
     /** The current number of responses (acknowledgments) received from the gRPC stream */
     protected int             cntResponses = 0;
-    
-//    /** Has the gRPC data stream completed ? */
-//    private CountDownLatch  monStreamCompleted = new CountDownLatch(1);
     
     /** Was successful ? Were there any errors during streaming ? */
     protected ResultStatus    recStatus = null;
@@ -268,10 +292,14 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
      * Constructs a new instance, initialized of <code>IngestionStream</code>.
      * </p>
      *
+     * @param stubAsync     the asynchronous communications stub to the Ingestion Service 
      * @param fncDataSource the supplier of <code>IngestDataRequest</code> messages 
+     * @param fncRspSink    the consumer of <code>IngestDataResponse</code> messages 
      */
-    protected IngestionStream(IMessageSupplier<IngestDataRequest> fncDataSource) { 
+    protected IngestionStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSource /*, Consumer<IngestDataResponse> fncRspSink */) {
+        this.stubAsync = stubAsync;
         this.fncDataSource = fncDataSource;
+//        this.fncRspSink = fncRspSink;
     }
 
     
@@ -303,24 +331,6 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
      * @return  the forward stream handle to the Ingestion Service (i.e., the ingestion stream)
      */
     abstract protected CallStreamObserver<IngestDataRequest>  initiateGrpcStream();
-    
-    /**
-     * <p>
-     * Blocks until the gRPC data stream has completed, either normally or from error.
-     * </p>
-     * <p>
-     * This operation is intended to be called from the <code>{@link #run()}</code> method
-     * which initiates the stream and performs all data transmission (as a thread).
-     * After transmitted all data the <code>{@link #run()}</code> calls this method to
-     * perform any cleanup operations, or wait for all responses to be recovered if the
-     * stream is bidirectional.    
-     * When this method returns  the streaming is considered complete and the 
-     * <code>{@link #run()}</code> method can return.
-     * </p>
-     * 
-     * @return the status of the stream completion
-     */
-    abstract protected ResultStatus awaitCompletion();
     
     /**
      * <p>
@@ -417,7 +427,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
      * @see #isSuccess()
      */
     public boolean  isCompleted() {
-        return this.bolStreamComplete;
+        return this.monStreamCompleted.getCount() == 0;
     }
     
     /**
@@ -564,25 +574,73 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
         return this.recStatus;
     }
 
+    
     //
     // Operations
     //
     
     /**
      * <p>
-     * Terminates a data stream if currently active.
+     * Blocks until the gRPC data stream has completed, either normally or from error.
+     * </p>
+     * <p>
+     * This operation is intended to be called from the <code>{@link #run()}</code> method
+     * which initiates the stream and performs all data transmission (as a thread).
+     * After transmitted all data the <code>{@link #run()}</code> calls this method to
+     * perform any cleanup operations, or wait for all responses to be recovered if the
+     * stream is bidirectional.    
+     * When this method returns  the streaming is considered complete and the 
+     * <code>{@link #run()}</code> method can return.
+     * </p>
+     * <p>
+     * The method is make public as multiple outside processes can also block on the
+     * stream completion event.
+     * </p> 
+     * 
+     * @return the status of the stream operation and completion
+     */
+    public ResultStatus awaitCompletion() {
+        
+        
+        // Block until the streaming operation is complete
+        try {
+            this.monStreamCompleted.await();
+            
+            // If an error occurred during streaming the status should be set - return it
+            if (this.bolStreamError && this.recStatus!=null)
+                return this.recStatus;
+            
+            // If we are here everything worked without error
+            return ResultStatus.SUCCESS;
+            
+        } catch (InterruptedException e) {
+            
+            // The wait was interrupted - interpret this an error (perhaps originating elsewhere)
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - interrupted while waiting for Ingestion Stream gRPC stream half-closed event.";
+
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            return ResultStatus.newFailure(strMsg, e);
+        }
+    }
+    
+    /**
+     * <p>
+     * External termination of a data stream if currently active.
      * </p>
      * <p>
      * This method terminates an active data stream thread by setting the <code>{@link #bolStreamError}</code>
      * to <code>true</code>.  This action causes the processing loop within <code>{@link #run()}</code> to exit.
      * The gRPC stream is then terminated with an <code>{@link StreamObserver#onError(Throwable)}</code> invocation.
+     * </p>
      * 
      * @return  <code>true</code> if the data stream task was successfully terminated,
      *          <code>false</code> otherwise (e.g., the stream was never started or has already completed)
      */
     public boolean  terminate() {
         
-        if (!this.bolStreamStarted || this.bolStreamComplete || this.bolStreamError)
+        if (!this.isStreamStarted() || this.isCompleted() || this.bolStreamError)
             return false;
         
         // Create the error message, status, and exception
@@ -619,8 +677,9 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     @Override
     public void run() {
         
-//        // TODO - Remove
-//        LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - Started thread, about to enter processing loop.");
+        // TODO - Remove
+        if (BOL_LOGGING)
+            LOGGER.debug("{} - Started thread, about to enter processing loop.", JavaRuntime.getQualifiedCallerNameSimple());
         
         // Initiate the gRPC data stream
         this.hndForwardStream = this.initiateGrpcStream();
@@ -721,21 +780,18 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
             
         
         // Check if completed normally 
-        // - Terminate the data stream 
+        // - Terminate the data stream (send half-close at client end) 
         // - Set state variables
-        // - Await the subclass completion
+        // - Await the data stream completion (await half-close at server end)
         if (!this.bolStreamError) {
             
-//            // TODO - Remove
-//            LOGGER.debug(JavaRuntime.getQualifiedCallerNameSimple() + " - terminating without stream error.");
-                    
             this.hndForwardStream.onCompleted();
-            this.bolStreamComplete = true;
             this.recStatus = this.awaitCompletion();
+//            this.bolStreamComplete = true;
             
-            // TODO - Remove
+            // Log stream successful event
             if (BOL_LOGGING)
-                LOGGER.debug(JavaRuntime.getQualifiedMethodNameSimple() + " - stream finished with " + this.cntRequests + " message transmissions.");
+                LOGGER.debug("{} - stream finished with {} message transmissions.", JavaRuntime.getQualifiedMethodNameSimple(), this.cntRequests);
         }
     }
     
@@ -770,27 +826,35 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     }
 }
 
+//
+// Hidden Classes
+//
+
 /**
  * <p>
- * Implements a forward gRPC data stream to the Ingestion Service.
+ * Implements a forward, unidirectional gRPC data stream to the Ingestion Service.
  * </p>
  * <p>
- * <h2>NOT IMPLEMENTED</h2>
- * The Ingestion Service current does NOT support single-stream ingestion and, therefore,
- * this class will not function.  The <code>{@link #initiateGrpcStream()}</code> operation
- * simply returns <code>null</code>.
+ * <h2>Unidirectional Streaming</h2>
+ * For a unidirectional gRPC stream the client sends ingest data requests as fast as they are available
+ * from the data source <code>{@link #fncDataSource}</code> and accepted by the Ingestion Service; 
+ * it does not collect any ingest data responses during streaming.  Only a single ingest data response
+ * is received from the Ingestion Service upon completion of the stream (i.e., a single invocation of
+ * <code>{@link StreamObserver#onNext(Object)}</code> by the Ingestion Service before it calls
+ * <code>{@link StreamObserver#onCompleted()}</code>). 
  * </p>
  * <p>
- * TODO 
- * Implement single-stream ingestion with Ingestion Service.
- * </p> 
+ * The forward gRPC data stream to the Ingestion Service is established when the stream is
+ * initiated with <code>{@link #initiateGrpcStream()}</code>.  This class acts as the single
+ * response collector for gRPC data stream receiving a single acknowledgment from the Ingestion Service and passing
+ * it to the data sink supplied during construction.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Apr 9, 2024
  *
  */
-@AUnavailable(status=STATUS.UNKNOWN, note="Usefulness of single-stream ingestion is currently undetermined.")
-final class IngestionUniStream extends IngestionStream {
+final class IngestionUniStream extends IngestionStream implements StreamObserver<IngestDataStreamResponse> {
 
     
     //
@@ -800,18 +864,23 @@ final class IngestionUniStream extends IngestionStream {
 //    /** The asynchronous communications stub to the Ingestion Service */
 //    private final DpIngestionServiceStub                stubAsync;
     
+    /** The consumer of <code>IngestDataResponse</code> messages */
+    private final Consumer<IngestDataStreamResponse>  fncRspSink;
+
+    
     /**
      * <p>
      * Constructs a new instance of <code>IngestionUniStream</code>.
      * </p>
      *
      * @param stubAsync     the asynchronous communications stub to the Ingestion Service 
-     * @param fncRqstSource the supplier of <code>IngestDataRequest</code> messages 
+     * @param fncRqstSrc    the supplier of <code>IngestDataRequest</code> messages 
+     * @param fncRspSink    the consumer of <code>IngestDataResponse</code> messages 
      */
-    @AUnavailable(status=STATUS.UNKNOWN, note="Do not create instances of this class.")
-    protected IngestionUniStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncRqstSource) {
-        super(fncRqstSource);
+    protected IngestionUniStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncRqstSrc, Consumer<IngestDataStreamResponse> fncRspSink) {
+        super(stubAsync, fncRqstSrc /*, fncRspSink */);
         
+        this.fncRspSink = fncRspSink;
 //        this.stubAsync = stubAsync;
     }
 
@@ -821,41 +890,146 @@ final class IngestionUniStream extends IngestionStream {
     //
     
     /**
-     * This method is inactive.
+     * <p>
+     * Initiates the bidirectional gRPC data stream and returns the handle to the forward
+     * stream to the Ingestion Service.
+     * </p>
+     * <p>
+     * The method invokes the <code>{@link DpIngestionServiceStub#ingestDataStream(StreamObserver)}</code>
+     * on the asynchronous communication stub to open the data stream, which also returns the
+     * forward stream interface.  The returned interface is cast to the base class and
+     * returned.
+     * </p>
      * 
-     * @return  <code>null</code>
+     * @return  the handle to the forward gRPC ingestion stream
      *
      * @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionStream#initiateGrpcStream()
      */
-    @AUnavailable(status=STATUS.UNKNOWN, note="A null value is always returned.")
-    @Override
     protected CallStreamObserver<IngestDataRequest> initiateGrpcStream() {
-        // CallStreamObserver<IngestDataRequest>   hndFoward = this.stubAsync.
-        return null;
+        
+        // Initiate the unidirectional data stream
+        StreamObserver<IngestDataRequest>       ifcForward = super.stubAsync.ingestDataStream(this);
+        
+        // Cast forward stream interface to implementing class and return it
+        CallStreamObserver<IngestDataRequest>   hndForward = (CallStreamObserver<IngestDataRequest>)ifcForward;
+        
+        return hndForward;
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionStream#requestTransmitted(com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest)
+     * <p>
+     * Accept notification of data message transmission.
+     * </p>
+     * <p>
+     * There is nothing to do here.
+     * </p>
+     * 
+     * @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionStream#requestTransmitted(com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest)
      */
     @Override
     protected void requestTransmitted(IngestDataRequest msgRqst) throws ProviderException {
-     
-        // Nothing to do here
     }
 
+    
+    //
+    // StreamObserver<IngestDataResponse> Interface
+    //
+    
     /**
+     * <h1>
+     * Recovers the single response from the Ingestion Service.
+     * </h1>
+     * <p>
+     * Under normal operations this method is invoked once by the Ingestion Service, after an 
+     * <code>{@link StreamObserver#onCompleted()}</code> signal is sent to the Ingestion Service.
+     * The signal is send in the base class processing thread (i.e., the <code>{@link Runnable#run()}</code>
+     * method) and indicates that the client has finished all data transmission.
+     * </p>
+     * Once the single response message has been recovered the Ingestion Service should signal the final
+     * half-closed event on this interface (i.e., <code>{@link StreamObserver#onCompleted()}</code>.
+     * </p>
      *
-     * @see @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionStream#awaitCompletion()
+     * @see io.grpc.stub.StreamObserver#onNext(java.lang.Object)
      */
     @Override
-    protected ResultStatus awaitCompletion() {
-        
-//        if (this.recStatus == null)
-//            this.recStatus = ResultStatus.SUCCESS;
-//        
-//        return this.recStatus;
-        return ResultStatus.SUCCESS;
+    public void onNext(IngestDataStreamResponse msgRsp) {
+
+        super.cntResponses++;
+        this.fncRspSink.accept(msgRsp);
+    }
+
+
+    /**
+     * <h1>
+     * Handles a gRPC streaming error.
+     * </h1>
+     * <p>
+     * This operation is typically called by gRPC to signal a general streaming error.
+     * However, it can be called by the Query Service to signal an unanticipated exception.
+     * In either event, the following actions ensue:
+     * <ol>  
+     * <li>An error message is sent to the class logger (if active).</li>
+     * <li>The stream error flag <code>{@link IngestionStream#bolStreamError}</code> is set <code>true</code>.
+     * <li>The result record <code>{@link #recStatus}</code> is set to a failure with message and exception.</li>
+     * <li>The stream completed monitor <code>{@link #monStreamCompleted}</code> is released.</li>
+     * </ol>
+     * The data stream is officially terminated whenever this operation is called so all
+     * data processing is terminated.
+     * </p>
+     * <p>
+     * TODO
+     * See that the returned result is not overwritten.
+     * </p>
+     *
+     * @param   e   the terminating exception causing invocation, contains error message
+     * 
+     * @see io.grpc.stub.StreamObserver#onError(java.lang.Throwable)
+     */
+    @Override
+    public void onError(Throwable e) {
+        String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
+                + "The gRPC stream was terminated during operation with cause: "
+                + e.getMessage();
+
+        if (BOL_LOGGING)
+            LOGGER.error(strMsg);
+
+        super.bolStreamError = true;
+        super.recStatus = ResultStatus.newFailure(strMsg, e);
+        super.monStreamCompleted.countDown();
+    }
+
+
+    /**
+     * <h1>
+     * Handles the gRPC streaming completed notification.
+     * </h1>
+     * <p>
+     * This operation is invoked by the Ingestion Service to signal that no more ingestion
+     * responses are available.  This occurs when the base class has transmitted all its
+     * data and has signaled an <code>{@link StreamObserver#onCompleted()}</code> operation
+     * (i.e., a "half-closed" stream event) on the forward stream.
+     * </p>
+     * <p>
+     * The method performs the following actions:
+     * <ol>  
+     * <li>The stream completed monitor <code>{@link #monStreamCompleted}</code> is released.</li>
+     * </ol>
+     * Releasing the <code>{@link #monStreamCompleted}</code> latch unblocks the 
+     * <code>{@link #awaitCompletion()}</code> lock which then allows it to return the result 
+     * of the backward response streaming operation.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The data stream is officially terminated whenever this operation is called and all
+     * data processing should be complete.
+     * </p>
+     *
+     * @see io.grpc.stub.StreamObserver#onCompleted()
+     */
+    @Override
+    public void onCompleted() {
+        super.monStreamCompleted.countDown();
     }
     
 }
@@ -865,9 +1039,11 @@ final class IngestionUniStream extends IngestionStream {
  * Implements a bidirectional gRPC data stream with the Ingestion Service.
  * </p>
  * <p>
+ * <h2>Bidirectional Streaming</h2>
  * The forward gRPC data stream to the Ingestion Service is established when the stream is
- * initiated with <code>{@link #initiateGrpcStream()}</code>.  This class acts as the
- * reverse gRPC data stream receiving acknowledgments from the Ingestion Service and passing
+ * initiated with <code>{@link #initiateGrpcStream()}</code>.  The forward stream handle 
+ * is passed to the base class and established as attribute <code>{@link IngestionStream#hndForwardStream}</code>. 
+ * This class acts as the reverse gRPC data stream receiving acknowledgments from the Ingestion Service and passing
  * them to the data sink supplied during construction.
  * </p>
  * <p>
@@ -897,8 +1073,8 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
     // Defining Attributes
     //
     
-    /** The asynchronous communications stub to the Ingestion Service */
-    private final DpIngestionServiceStub        stubAsync;
+//    /** The asynchronous communications stub to the Ingestion Service */
+//    private final DpIngestionServiceStub        stubAsync;
     
     /** The consumer of <code>IngestDataResponse</code> messages */
     private final Consumer<IngestDataResponse>  fncRspSink;
@@ -908,16 +1084,16 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
     // Instance Resources
     //
     
-    /** Collection of responses that have indicated rejected request by the Ingestion Service */
-    private final List<IngestDataResponse>      lstBadRsps = new LinkedList<>();
+//    /** Collection of responses that have indicated rejected request by the Ingestion Service */
+//    private final List<IngestDataResponse>      lstBadRsps = new LinkedList<>();
     
     
     //
     // State Variables and Conditions
     //
     
-    /** Has the backward gRPC data stream completed */
-    private CountDownLatch      monStreamCompleted = new CountDownLatch(1);
+//    /** Has the backward gRPC data stream completed */
+//    private CountDownLatch      monStreamCompleted = new CountDownLatch(1);
     
     
     /**
@@ -926,13 +1102,13 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
      * </p>
      *
      * @param stubAsync     the asynchronous communications stub to the Ingestion Service 
-     * @param fncRqstSource the supplier of <code>IngestDataRequest</code> messages 
+     * @param fncDataSrc the supplier of <code>IngestDataRequest</code> messages 
      * @param fncRspSink    the consumer of <code>IngestDataResponse</code> messages 
      */
-    protected IngestionBidiStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncRqstSource, Consumer<IngestDataResponse> fncRspSink) {
-        super(fncRqstSource);
+    protected IngestionBidiStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSrc, Consumer<IngestDataResponse> fncRspSink) {
+        super(stubAsync, fncDataSrc /*, fncRspSink */);
 
-        this.stubAsync = stubAsync;
+//        this.stubAsync = stubAsync;
         this.fncRspSink = fncRspSink;
     }
 
@@ -953,13 +1129,15 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
      * returned.
      * </p>
      * 
+     * @return  the handle to the forward gRPC ingestion stream
+     * 
      * @see com.ospreydcs.dp.api.ingest.model.grpc.IngestionStream#initiateGrpcStream()
      */
     @Override
     protected CallStreamObserver<IngestDataRequest> initiateGrpcStream() {
         
         // Initiate the bidirectional data stream
-        StreamObserver<IngestDataRequest>   ifcForward = this.stubAsync.ingestDataStream(this);
+        StreamObserver<IngestDataRequest>       ifcForward = this.stubAsync.ingestDataBidiStream(this);
         
         // Cast forward stream interface to implementing class and return it
         CallStreamObserver<IngestDataRequest>   hndForward = (CallStreamObserver<IngestDataRequest>)ifcForward;
@@ -967,57 +1145,45 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
         return hndForward;
     }
 
-    /**
-     * <p>
-     * Blocks until the gRPC data stream has completed, either normally or from error.
-     * </p>
-     * <p>
-     * This operation is intended to be called from the <code>{@link #run()}</code> method
-     * which starts initiates the stream processing task as an independent thread. 
-     * This method blocks on the <code>{@link #monStreamCompleted}</code> stream completed 
-     * monitor until it is released, either through normal streaming operations or from
-     * an error encountered during streaming/processing.  In either event, the task is
-     * finished and the <code>{@link #run()}</code> method can return.
-     * </p>
-     * <p>
-     * <h2>NOTES</h2>
-     * If the (thread) process is interrupted while waiting for the task to complete, the
-     * <code>{@link #recStatus}</code> is set to failure and includes a description along with
-     * the causing exception.
-     * </p>
-     * 
-     * @return the status of the stream completion
-     */
-    @Override
-    protected ResultStatus  awaitCompletion() {
-    
-        // Block until the streaming operation is complete
-        try {
-            this.monStreamCompleted.await();
-            
-            // If an error occurred during streaming the status should be set - return it
-            if (super.bolStreamError && super.recStatus!=null)
-                return super.recStatus;
-            
-            // If bad requests were encountered report them in status message
-            if (!this.lstBadRsps.isEmpty()) {
-                String  strMsg = this.createRejectedRequestsMessage();
-                
-                if (BOL_LOGGING)
-                    LOGGER.warn(strMsg);
-                
-                return ResultStatus.newFailure(strMsg);
-            }
-    
-            // If we are here everything worked without error
-            return ResultStatus.SUCCESS;
-            
-        } catch (InterruptedException e) {
-    
-            // The wait was interrupted - interpret this an error (perhaps originating elsewhere)
-            return ResultStatus.newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " - interrupted while waiting for backward stream to complete", e);
-        }
-    }
+//    /**
+//     * <p>
+//     * Blocks until the gRPC data stream has completed, either normally or from error.
+//     * </p>
+//     * <p>
+//     * This operation is intended to be called from the <code>{@link #run()}</code> method
+//     * which starts initiates the stream processing task as an independent thread. 
+//     * This method blocks on the <code>{@link #monStreamCompleted}</code> stream completed 
+//     * monitor until it is released, either through normal streaming operations or from
+//     * an error encountered during streaming/processing.  In either event, the task is
+//     * finished and the <code>{@link #run()}</code> method can return.
+//     * </p>
+//     * <p>
+//     * <h2>NOTES</h2>
+//     * If the (thread) process is interrupted while waiting for the task to complete, the
+//     * <code>{@link #recStatus}</code> is set to failure and includes a description along with
+//     * the causing exception.
+//     * </p>
+//     * 
+//     * @return the status of the stream completion
+//     */
+//    @Override
+//    protected ResultStatus  awaitCompletion() {
+//    
+//        // Wait for the stream to finish
+//        ResultStatus recStatus = super.awaitCompletion();
+//        
+//        // If bad requests were encountered report them in status message
+//        if (!this.lstBadRsps.isEmpty() && recStatus.isSuccess()) {
+//            String  strMsg = this.createRejectedRequestsMessage();
+//            
+//            if (BOL_LOGGING)
+//                LOGGER.warn(strMsg);
+//            
+//            return ResultStatus.newFailure(strMsg);
+//        }
+//        
+//        return recStatus;
+//    }
 
     /**
      * <p>
@@ -1054,14 +1220,15 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
     public void onNext(IngestDataResponse msgRsp) {
 
         // Process the ingestion response message and increment counter
-        this.processResponse(msgRsp);
+//        this.processResponse(msgRsp);
+        this.fncRspSink.accept(msgRsp);
         super.cntResponses++;
     }
 
     /**
-     * <p>
+     * <h1>
      * Handles a gRPC streaming error.
-     * </p>
+     * </h1>
      * <p>
      * This operation is typically called by gRPC to signal a general streaming error.
      * However, it can be called by the Query Service to signal an unanticipated exception.
@@ -1095,13 +1262,13 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
         
         super.bolStreamError = true;
         super.recStatus = ResultStatus.newFailure(strMsg, e);
-        this.monStreamCompleted.countDown();
+        super.monStreamCompleted.countDown();
     }
 
     /**
-     * <p>
+     * <h1>
      * Handles the gRPC streaming completed notification.
-     * </p>
+     * </h1>
      * <p>
      * This operation is invoked by the Ingestion Service to signal that no more ingestion
      * responses are available.  This occurs when the base class has transmitted all its
@@ -1123,11 +1290,11 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
      * data processing should be complete.
      * </p>
      *
-     * @see @see io.grpc.stub.StreamObserver#onCompleted()
+     * @see io.grpc.stub.StreamObserver#onCompleted()
      */
     @Override
     public void onCompleted() {
-        this.monStreamCompleted.countDown();
+        super.monStreamCompleted.countDown();
     }
 
     
@@ -1177,61 +1344,61 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
 //        return ResultStatus.SUCCESS;
 //    }
 //
-    /**
-     * <p>
-     * Processes the ingestion response message.
-     * </p>
-     * <p>
-     * For normal operation, a <code>AckResult</code> message is confirmed within the argument.
-     * If confirmed the argument is then passed to the message consumer identified at construction.
-     * A SUCCESS result record is then returned indicating successful consumption of response data.
-     * </p>
-     * <p>
-     * The argument is passed to the message consumer identified at construction.
-     * If the argument contains an exception(i.e., rather than data) then the message
-     * is added to the list of bad responses.
-     * </p>
-     * 
-     * @param msgRsp    an Ingestion Service response message containing acknowledgment or status error
-     * 
-     * @return  the SUCCESS record if acknowledgment was confirmed,
-     *          otherwise a failure message containing the status error description 
-     */
-    private void processResponse(IngestDataResponse msgRsp) {
-
-        // Check for exception then pass to message consumer
-        if (msgRsp.hasExceptionalResult()) {
-
-            this.lstBadRsps.add(msgRsp);
-        }
-        
-        this.fncRspSink.accept(msgRsp);
-    }
-
-    /**
-     * <p>
-     * Creates a status message in the case where requests where rejected by the Ingestion Service.
-     * </p>
-     * <p>
-     * Creates and returns a string describing the condition which contains a list of all the
-     * ingestion request IDs that have been rejected 
-     * (see <code>{@link IngestDataRequest#getClientRequestId()}</code>).
-     * </p>
-     * 
-     * @return  message describing the rejected ingestion requests condition
-     */
-    private String  createRejectedRequestsMessage() {
-        
-        // Collect the request IDs of rejected requests
-        List<String>    lstRqstIds = this.lstBadRsps
-                .stream()
-                .<String>map(IngestDataResponse::getClientRequestId)
-                .toList();
-        
-        // Create the status message and return it
-        String  strMsg = "Ingestion Service rejected IngestionDataRequest message(s) with ID(s) "
-                        + lstRqstIds;
-
-        return strMsg;
-    }
+//    /**
+//     * <p>
+//     * Processes the ingestion response message.
+//     * </p>
+//     * <p>
+//     * For normal operation, a <code>AckResult</code> message is confirmed within the argument.
+//     * If confirmed the argument is then passed to the message consumer identified at construction.
+//     * A SUCCESS result record is then returned indicating successful consumption of response data.
+//     * </p>
+//     * <p>
+//     * The argument is passed to the message consumer identified at construction.
+//     * If the argument contains an exception(i.e., rather than data) then the message
+//     * is added to the list of bad responses.
+//     * </p>
+//     * 
+//     * @param msgRsp    an Ingestion Service response message containing acknowledgment or status error
+//     * 
+//     * @return  the SUCCESS record if acknowledgment was confirmed,
+//     *          otherwise a failure message containing the status error description 
+//     */
+//    private void processResponse(IngestDataResponse msgRsp) {
+//
+//        // Check for exception then pass to message consumer
+//        if (msgRsp.hasExceptionalResult()) {
+//
+//            this.lstBadRsps.add(msgRsp);
+//        }
+//        
+//        this.fncRspSink.accept(msgRsp);
+//    }
+//
+//    /**
+//     * <p>
+//     * Creates a status message in the case where requests where rejected by the Ingestion Service.
+//     * </p>
+//     * <p>
+//     * Creates and returns a string describing the condition which contains a list of all the
+//     * ingestion request IDs that have been rejected 
+//     * (see <code>{@link IngestDataRequest#getClientRequestId()}</code>).
+//     * </p>
+//     * 
+//     * @return  message describing the rejected ingestion requests condition
+//     */
+//    private String  createRejectedRequestsMessage() {
+//        
+//        // Collect the request IDs of rejected requests
+//        List<String>    lstRqstIds = this.lstBadRsps
+//                .stream()
+//                .<String>map(IngestDataResponse::getClientRequestId)
+//                .toList();
+//        
+//        // Create the status message and return it
+//        String  strMsg = "Ingestion Service rejected IngestionDataRequest message(s) with ID(s) "
+//                        + lstRqstIds;
+//
+//        return strMsg;
+//    }
 }

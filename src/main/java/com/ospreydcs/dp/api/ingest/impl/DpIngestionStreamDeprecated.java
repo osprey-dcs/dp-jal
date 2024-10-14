@@ -37,6 +37,7 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
@@ -44,6 +45,7 @@ import com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
 import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -417,7 +419,7 @@ public class DpIngestionStreamDeprecated extends
      */
     @Override
     synchronized
-    public List<IngestionResponse> closeStream() throws IllegalStateException, InterruptedException {
+    public IngestionResult closeStream() throws IllegalStateException, InterruptedException {
         
         // Check if stream is already close
         if (!this.bolOpenStream) {
@@ -435,13 +437,13 @@ public class DpIngestionStreamDeprecated extends
         // - blocks until all processes are finished
         this.processor.shutdown();  // throw InterruptedException
         
-        // Retrieve the Ingestion Service responses 
-        List<IngestionResponse> lstRsps = this.processor.getIngestionResponses();
+        // Retrieve the Ingestion Service responses and create result
+        IngestionResult         recResult = this.processor.getIngestionResult();
         
         // Clear the open stream flag and return responses
         this.bolOpenStream = false;
         
-        return lstRsps;
+        return recResult;
     }
     
     /**
@@ -649,6 +651,15 @@ public class DpIngestionStreamDeprecated extends
     @Override
     public void awaitQueueEmpty() throws IllegalStateException, InterruptedException {
         this.processor.awaitRequestQueueEmpty();
+    }
+    
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#getRequestIds()
+     */
+    @Override
+    public List<ClientRequestUID> getRequestIds() {
+        return this.processor.getRequestIds();
     }
     
     

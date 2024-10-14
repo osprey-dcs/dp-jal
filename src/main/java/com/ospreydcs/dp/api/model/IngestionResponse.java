@@ -30,13 +30,35 @@ package com.ospreydcs.dp.api.model;
 import java.time.Instant;
 
 /**
- * <p>
+ * <h1>
  * Record encapsulation of an <code>IngestDataResponse</code> message.
- * </p>
+ * </h1>
  * <p>
  * This record is essentially the client API equivalent of the Ingestion Service Protocol
  * Buffers message <code>IngestDataResponse</code>.  To convert from the message response
  * to this record see <code>{@link ProtoMsg#toIngestionResponse(IngestDataResponse)}</code>.
+ * </p>
+ * <p>
+ * <h2>Ingestion Responses</h2>
+ * A response from the Data Platform Ingestion Service is a rudimentary acknowledgement of an
+ * ingestion data request, specifically the request given by the <code>clientRequestId</code>
+ * field.  The response, if successful, contains only the number of data columns ingested along
+ * with the number of rows in each column.
+ * </p>  
+ * <p>
+ * <h2>Client Request IDs</h2>
+ * Within the Java Client API library the client request ID is encapsulated by the
+ * <code>com.ospreydcs.dp.api.model.ClientRequestUID</code> record.  These records are generated
+ * randomly for a <code>com.ospreydcs.dp.api.ingest.IngestionFrame</code> instance upon creation,
+ * however, they can be explicitly set. Note that ingestion processing within the Data Platform
+ * continues past the initial acceptance of an ingestion frame, thus, the data within a frame
+ * may fail to archive after receipt of a <code>IngestionResponse</code>.
+ * </p> 
+ * <p>
+ * <h2>NOTES:</h2>
+ * Clients desiring a more detailed determination of data processing and archiving post receipt of an
+ * ingestion response should retain the client request ID.  The Ingestion Service provides an API
+ * for querying the ultimate fate of the ingestion.
  * </p>
  * 
  * @param   providerId      unique identifier of the data provider supplying the data message
@@ -48,13 +70,15 @@ import java.time.Instant;
  * @author Christopher K. Allen
  * @since Apr 17, 2024
  *
+ * @deprecated  Replaced by <code>IngestionResult</code>
  */
+@Deprecated(since="Oct 13, 2024", forRemoval=true)
 public record IngestionResponse(
-        int         providerId, 
-        String      clientRequestId, 
-        Instant     responseTime,
-        Acknowledge acknowledge,
-        Exception   exception
+        String                  providerId, 
+        ClientRequestUID        clientRequestId, 
+        Instant                 responseTime,
+        Acknowledge             acknowledge,
+        Exception               exception
         ) 
 {
     
@@ -75,7 +99,7 @@ public record IngestionResponse(
      * 
      * @return  <code>IngestionResponse</code> record containing Ingestion Service acknowledgment
      */
-    public static IngestionResponse from(int providerId, String clientRequestId, Instant responseTime, int colCount, int rowCount) {
+    public static IngestionResponse from(String providerId, ClientRequestUID clientRequestId, Instant responseTime, int colCount, int rowCount) {
         return new IngestionResponse(providerId, clientRequestId, responseTime, colCount, rowCount);
     }
     
@@ -92,7 +116,7 @@ public record IngestionResponse(
      * 
      * @return  <code>IngestionResponse</code> record containing Ingestion Service exception
      */
-    public static IngestionResponse from(int providerId, String clientRequestId, Instant responseTime, String type, String message) {
+    public static IngestionResponse from(String providerId, ClientRequestUID clientRequestId, Instant responseTime, String type, String message) {
         return new IngestionResponse(providerId, clientRequestId, responseTime, type, message);
     }
 
@@ -112,7 +136,7 @@ public record IngestionResponse(
      * @param   colCount number of columns within the ingest data request (reported by Ingestion Service)
      * @param   rowCount number of rows within the ingest data request (reported by Ingestion Service)
      */
-    public IngestionResponse(int providerId, String clientRequestId, Instant responseTime, int colCount, int rowCount) {
+    public IngestionResponse(String providerId, ClientRequestUID clientRequestId, Instant responseTime, int colCount, int rowCount) {
         this(providerId, clientRequestId, responseTime, new Acknowledge(colCount, rowCount), new Exception());
     }
     
@@ -127,7 +151,7 @@ public record IngestionResponse(
      * @param   type            the exception type
      * @param   message         exception detail message
      */
-    public IngestionResponse(int providerId, String clientRequestId, Instant responseTime, String type, String message) {
+    public IngestionResponse(String providerId, ClientRequestUID clientRequestId, Instant responseTime, String type, String message) {
         this(providerId, clientRequestId, responseTime, new Acknowledge(), new Exception(type, message));
     }
     
