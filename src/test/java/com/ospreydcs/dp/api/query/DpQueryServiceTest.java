@@ -305,7 +305,7 @@ public class DpQueryServiceTest {
             System.out.println("Regular Expression PV Metadata Records: " + strPvRegex);
             for (PvMetaRecord rec : lstRecs) {
                 System.out.println("  name: " + rec.name());
-                System.out.println("  type: " + rec.lastType());
+                System.out.println("  type: " + rec.type());
                 System.out.println("  first tms: " + rec.firstTimestamp());
                 System.out.println("  last tms: " + rec.lastTimestamp());
                 System.out.println();

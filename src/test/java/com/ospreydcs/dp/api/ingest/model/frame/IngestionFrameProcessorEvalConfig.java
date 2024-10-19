@@ -27,9 +27,7 @@
  */
 package com.ospreydcs.dp.api.ingest.model.frame;
 
-import java.text.DateFormat;
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -141,7 +139,7 @@ public final class IngestionFrameProcessorEvalConfig {
     
     
     /** Default Data Provider UID used for testing */
-    public static final ProviderUID     REC_PRV_UID = ProviderUID.from(2);
+    public static final ProviderUID     REC_PRV_UID = ProviderUID.from("42", IngestionFrameProcessorEvalConfig.class.getSimpleName(), false);
 
     
     //

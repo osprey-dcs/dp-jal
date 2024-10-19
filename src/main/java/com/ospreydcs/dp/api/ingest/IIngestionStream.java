@@ -313,13 +313,25 @@ public interface IIngestionStream extends IConnection {
      * </p>
      * <p>
      * The method returns immediately after canceling all active processes.  Upon return
-     * the data stream is inactive.
+     * the data stream is inactive.  No exceptions are thrown.  This method reacts according to
+     * the current state of the stream.
+     * </p>
+     * <p>
+     * <h2>Returned Value</h2>
+     * <ul>
+     * <li>If the stream was never opened the value <code>{@link IngestionResult#NULL}</code> is returned.</li>
+     * <li>If the stream is active the returned value contains the results up to this point and are likely
+     *     incomplete.</li>  
+     * <li>If the stream was already shutdown nothing is done and the returned value is a copy of that
+     *     returned from <code>{@link #closeStream()}</code>.</li>
+     * </ul>
      * </p>
      * 
+     * @return  the result of the ingestion operation as described above
      * @return  <code>true</code> if stream was closed everything was shut down,
      *          <code>false</code> if the stream was already closed or internal process failed
      */
-    public boolean closeStreamNow();
+    public IngestionResult closeStreamNow();
 
 //    /**
 //     * <p>

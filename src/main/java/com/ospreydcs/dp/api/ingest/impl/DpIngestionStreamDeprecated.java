@@ -464,16 +464,17 @@ public class DpIngestionStreamDeprecated extends
      * the data stream is inactive.
      * </p>
      * 
+     * @return  result of the ingestion operation
      * @return  <code>true</code> if stream was closed everything was shut down,
      *          <code>false</code> if the stream was already closed or internal process failed
      */
     @Override
     synchronized
-    public boolean closeStreamNow() {
+    public IngestionResult closeStreamNow() {
         
         // Check if stream is already close
         if (!this.bolOpenStream)
-            return false;
+            return IngestionResult.NULL;
         
         // Deactivate the ingestion stream processor
         boolean bolShutdown = this.processor.shutdownNow();
@@ -481,7 +482,17 @@ public class DpIngestionStreamDeprecated extends
         // Clear the open stream flag and return
         this.bolOpenStream = false;
         
-        return bolShutdown;
+        try {
+            IngestionResult recResult = this.processor.getIngestionResult();
+            
+            return recResult;
+            
+        } catch (Exception e) {
+            if (BOL_LOGGING)
+                LOGGER.warn("{} - attempt to recover ingestion result failed with exception {}.", JavaRuntime.getQualifiedMethodNameSimple(), e);
+            
+            return IngestionResult.NULL;
+        }
     }
     
     /**

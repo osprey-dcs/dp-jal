@@ -41,25 +41,29 @@ NOTES:
 
         <!-- Java - Override Version -->
         <java.version>16</java.version>
+        <java.version>21</java.version>
 
 		<!-- Data Platform Properties-->        
         <dp-grpc.version>1.5.0</dp-grpc.version>
-        <dp-service.version>1.5.0</dp-service.version>
+        <dp-service.version>1.5.0</dp-service.version> <!-- Remove - Unused -->
 
         <!-- gRPC Properties -->
         <io.grpc.version>1.49.0</io.grpc.version>
+        <io.grpc.version>1.65.1</io.grpc.version>
 
         <!-- Protobuf Properties -->
         <protobuf.version>4.0.0-rc-2</protobuf.version>
         <protobuf-java-format.version>1.4</protobuf-java-format.version>
         <protoc-gen-validate.version>0.6.7</protoc-gen-validate.version>
+        <protobuf.version>4.27.2</protobuf.version>
+        <protobuf-java-format.version>1.4</protobuf-java-format.version>
 
 		<!-- EPICS Java Library Properties -->
     	<epics-core.version>7.0.7</epics-core.version>
     	<epics-ntypes.version>0.3.7</epics-ntypes.version>
     	<pvaclient.version>4.3.2</pvaclient.version>
 
-		<!-- MongoDB Properties -->
+		<!-- MongoDB Properties --> <!-- Should remove - no need for MongoDB imports -->
         <mongodb.version>4.9.1</mongodb.version>
         <mongodb.version>5.1.2</mongodb.version>
         
@@ -155,6 +159,7 @@ NOTES:
 
 
 		<!-- ###### MongoDB Resources ######## -->
+		<!-- These should be removed - Unnecessary -->
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>bson</artifactId>

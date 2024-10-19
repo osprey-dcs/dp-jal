@@ -271,18 +271,21 @@ public class IngestionChannel {
     /** Collection of future results from streaming tasks - used for shutdowns */
     private final Collection<Future<Boolean>>   setStreamFutures = new LinkedList<>();
 
+
+    /** Object used as synchronization lock for incoming unidirectional responses (there may be concurrent streaming tasks) */
+    private final Object        objUniRspLock = new Object();
     
-    /** Collection of all incoming ingestion responses - multiple from each bidirectional streaming tasks */
-//    private Collection<IngestDataResponse>      setResponses = null; // = new LinkedList<>();
-//    private final Collection<IngestDataResponse>      setResponses = new LinkedList<>();
-//    private final Collection<IngestionResponse> setRspRecs = new LinkedList<>();
-    private final List<IngestDataResponse>          lstBidiRsps = new LinkedList<>();
+    /** Object used as synchronization lock for incoming bidirectional responses (there may be concurrent streaming tasks) */
+    private final Object        objBidiRspLock = new Object();
+
     
     /** The collection of ingestion responses - one from each unidirectional streaming tasks */
     private final List<IngestDataStreamResponse>    lstUniRsps = new LinkedList<>();
     
-    /** Collection of all ingestion responses with exceptions */
-//    private Collection<IngestDataResponse>      setBadResponses = null;
+    /** Collection of all incoming ingestion responses - multiple from each bidirectional streaming tasks */
+    private final List<IngestDataResponse>          lstBidiRsps = new LinkedList<>();
+    
+    /** Collection of all ingestion responses with exceptions */    // No longer monitored
 //    private final Collection<IngestionResponse> setRspRecsBad = new LinkedList<>();
     
     
@@ -813,6 +816,10 @@ public class IngestionChannel {
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - channel was never activated.");
         
+//        // TODO - Consider removing
+//        if (BOL_LOGGING)
+//            LOGGER.debug("{} - Stream type = {}, lstUniRsps size = {}, lstBidiRsps size = {}", JavaRuntime.getCallerClassSimple(), this.enmStreamType, this.lstUniRsps.size(), this.lstBidiRsps.size());
+        
         // Create result depending upon stream type
         if (this.enmStreamType == DpGrpcStreamType.FORWARD) {
             if (this.lstUniRsps.isEmpty())
@@ -826,7 +833,7 @@ public class IngestionChannel {
             if (this.lstBidiRsps.isEmpty())
                 return IngestionResult.NULL;
             
-            IngestionResult recResult = ProtoMsg.toIngestionResult(lstBidiRsps);        // throws MissingResourceException
+            IngestionResult recResult = ProtoMsg.toIngestionResult(this.lstBidiRsps);    // throws MissingResourceException
 
             return recResult;
             
@@ -1107,23 +1114,6 @@ public class IngestionChannel {
     public boolean shutdown() throws InterruptedException {
 
         return this.shutdown(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
-        
-//        // Check state
-//        if (!this.bolActive)
-//            return false;
-//
-//        // Shutdown all streaming tasks 
-//        this.xtorStreamTasks.shutdown();
-//
-//        // Wait for all pending streaming tasks to complete - all should be complete at this point
-//        boolean bolResult = this.xtorStreamTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
-//        
-//        // Just in case - terminate any threads still active (timeout occurred)
-//        this.setStreamFutures.forEach(future -> future.cancel(false));
-//        
-//        this.bolActive = false;
-//
-//        return bolResult;
     }
     
     /**
@@ -1166,7 +1156,6 @@ public class IngestionChannel {
         boolean bolResult = this.xtorStreamTasks.awaitTermination(lngTimeout, tuTimeout);
         
         // Just in case - terminate any threads still active (timeout occurred)
-//      this.setStreamTasks.forEach(task -> task.terminate());
         this.setStreamFutures.forEach(future -> future.cancel(false));
         
         this.bolActive = false;
@@ -1236,9 +1225,11 @@ public class IngestionChannel {
             
             // Create the response consumer as a lambda function
             Consumer<IngestDataStreamResponse>  fncRspSink = (msgRsp) -> { 
-                this.lstUniRsps.add(msgRsp);
-                this.cntResponses++;
-                };
+                synchronized (this.objUniRspLock) {     // there can be multiple, concurrent streams
+                    this.lstUniRsps.add(msgRsp);
+                    this.cntResponses++;
+                }
+            };
             
             stream = IngestionStream.newUniProcessor(this.connIngest.getStubAsync(), this.srcRqstMsgs, fncRspSink);
         }
@@ -1247,17 +1238,12 @@ public class IngestionChannel {
         else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
             
             // Create consumer of response messages as lambda function 
-            Consumer<IngestDataResponse>    fncRspSink = (msgRsp) -> { 
-                this.lstBidiRsps.add(msgRsp);
-                this.cntResponses++;
-                };
-//            Consumer<IngestDataResponse>    fncRspSink = (msgRsp) -> { 
-//                IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
-//                
-//                this.setRspRecs.add(recRsp);
-//                if (msgRsp.hasExceptionalResult())
-//                    this.setRspRecsBad.add(recRsp);
-//                };
+            Consumer<IngestDataResponse>    fncRspSink = (msgRsp) -> {
+                synchronized (this.objBidiRspLock) {    // there can be multiple, concurrent streams
+                    this.lstBidiRsps.add(msgRsp);
+                    this.cntResponses++;
+                }
+            };
             
             stream = IngestionStream.newBidiProcessor(this.connIngest.getStubAsync(), this.srcRqstMsgs, fncRspSink);
         }

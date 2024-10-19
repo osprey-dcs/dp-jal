@@ -1314,11 +1314,11 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#closeStreamNow()
      */
     @Override
-    public boolean closeStreamNow() {
+    public IngestionResult closeStreamNow() {
 
         // Check state
         if (!this.bolStreamOpen)
-            return false;
+            return IngestionResult.NULL;
         
         // Shut down all internal processes immediately
         this.prcrFrames.shutdownNow();
@@ -1328,7 +1328,18 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
         
         this.bolStreamOpen = false;
         
-        return true;
+        // Return the partial result
+        try { 
+            IngestionResult recResult = this.chanIngest.getIngestionResult();
+            
+            return recResult;
+            
+        } catch (Exception e) {
+            if (BOL_LOGGING)
+                LOGGER.warn("{} - Attempt to recover ingestion result failed with exception {}.", JavaRuntime.getQualifiedMethodNameSimple(), e);
+            
+            return IngestionResult.NULL;
+        }
     }
 
     /**

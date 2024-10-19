@@ -677,9 +677,9 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     @Override
     public void run() {
         
-        // TODO - Remove
+        // TODO - Consider removal
         if (BOL_LOGGING)
-            LOGGER.debug("{} - Started thread, about to enter processing loop.", JavaRuntime.getQualifiedCallerNameSimple());
+            LOGGER.debug("{} - Started thread, about to enter processing loop.", JavaRuntime.getQualifiedMethodNameSimple());
         
         // Initiate the gRPC data stream
         this.hndForwardStream = this.initiateGrpcStream();
@@ -792,6 +792,14 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
             // Log stream successful event
             if (BOL_LOGGING)
                 LOGGER.debug("{} - stream finished with {} message transmissions.", JavaRuntime.getQualifiedMethodNameSimple(), this.cntRequests);
+
+            // Otherwise 
+            // - A gRPC streaming error occurred: the stream is closed and monitor released
+            // - A terminate() command was invoked: the gRPC stream is closed and monitor released
+            // - Logger event should have been issued at error location
+        } else {
+            
+            return;
         }
     }
     
@@ -954,8 +962,8 @@ final class IngestionUniStream extends IngestionStream implements StreamObserver
     @Override
     public void onNext(IngestDataStreamResponse msgRsp) {
 
-        super.cntResponses++;
         this.fncRspSink.accept(msgRsp);
+        super.cntResponses++;
     }
 
 
@@ -1029,6 +1037,11 @@ final class IngestionUniStream extends IngestionStream implements StreamObserver
      */
     @Override
     public void onCompleted() {
+        
+//        // TODO - Remove
+//        if (BOL_LOGGING)
+//            LOGGER.debug("UNI onCompleted() invoked by service with {} requests sent and {} responsed received.", this.cntRequests, this.cntResponses);
+        
         super.monStreamCompleted.countDown();
     }
     
@@ -1102,7 +1115,7 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
      * </p>
      *
      * @param stubAsync     the asynchronous communications stub to the Ingestion Service 
-     * @param fncDataSrc the supplier of <code>IngestDataRequest</code> messages 
+     * @param fncDataSrc    the supplier of <code>IngestDataRequest</code> messages 
      * @param fncRspSink    the consumer of <code>IngestDataResponse</code> messages 
      */
     protected IngestionBidiStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSrc, Consumer<IngestDataResponse> fncRspSink) {
@@ -1294,6 +1307,11 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
      */
     @Override
     public void onCompleted() {
+
+//        // TODO - Remove
+//        if (BOL_LOGGING)
+//            LOGGER.debug("BIDI onCompleted() invoked by service with {} requests sent and {} responsed received.", this.cntRequests, this.cntResponses);
+        
         super.monStreamCompleted.countDown();
     }
 

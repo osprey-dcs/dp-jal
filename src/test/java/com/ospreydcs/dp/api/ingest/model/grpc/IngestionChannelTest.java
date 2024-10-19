@@ -50,6 +50,7 @@ import com.ospreydcs.dp.api.ingest.test.TestIngestDataRequestGenerator;
 import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -369,19 +370,21 @@ public class IngestionChannelTest {
         Duration    durXmit = Duration.between(insStart, insFinish);
         int         cntXmits = chan.getRequestCount();
         int         cntRsps = chan.getResponseCount();
-        List<ClientRequestUID>   lstRqstIds = chan.getRequestIds();
-        List<IngestionResponse> lstRsps = chan.getIngestionResponses();
-        List<IngestionResponse> lstExcps = chan.getIngestionExceptions();
+        List<ClientRequestUID>  lstRqstIds = chan.getRequestIds();
+        IngestionResult         recResult = chan.getIngestionResult();
+//        List<IngestionResponse> lstRsps = chan.getIngestionResponses();
+//        List<IngestionResponse> lstExcps = chan.getIngestionExceptions();
         
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Transmission duration   : " + durXmit);
         System.out.println("  Message payload count   : " + cntMsgs);
         System.out.println("  Message transmit count  : " + cntXmits);
         System.out.println("  Message response count  : " + cntRsps);
-        System.out.println("  Exception count         : " + lstExcps.size());
-        System.out.println("  Client request IDs      : " + lstRqstIds);
-        System.out.println("  Ingest. Serv. Responses : " + lstRsps);
-        System.out.println("  Transmit exceptions     : " + lstExcps);
+        System.out.println("  Exception count         : " + recResult.exceptions().size());
+        System.out.println("  Request UIDs sent       : " + lstRqstIds);
+        System.out.println("  Request UIDs received   : " + recResult.receivedRequestIds());
+        System.out.println("  Request UIDs rejected   : " + recResult.rejectedRequestIds());
+        System.out.println("  Transmit exceptions     : " + recResult.exceptions());
     }
 
 //    /**

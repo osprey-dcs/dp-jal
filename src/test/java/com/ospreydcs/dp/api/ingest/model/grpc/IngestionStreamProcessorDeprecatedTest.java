@@ -42,6 +42,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
 import com.ospreydcs.dp.api.model.ClientRequestUID;
@@ -73,14 +74,18 @@ public class IngestionStreamProcessorDeprecatedTest {
     
     
     /** Ingestion Service registerProvider() implemented */
-    private static final boolean            BOL_PROVIDER_REG_IMPL = false;
+    private static final boolean            BOL_PROVIDER_REG_IMPL = true;
+
     
     /** Default data provider UID (i.e., if registerProvider() not implemented) */
-    private static final int                INT_PROVIDER_UID = 42;
+    private static final String             STR_PROVIDER_UID = "42";
     
-    
-    /** Data Provider unique name */
+    /** Default data Provider unique name (i.e., if registerProvider() not implemented) */
     private static final String             STR_PROVIDER_NAME = IngestionStreamProcessorDeprecatedTest.class.getSimpleName();
+    
+    /** Default data provider "isNew" field (i.e., if registerProvider() not implemented) */
+    private static final boolean            BOL_PROVIDER_ISNEW = false;
+    
     
     /** Data provider registration record */
     private static final ProviderRegistrar  REC_PROVIDER_REGISTRAR = ProviderRegistrar.from(STR_PROVIDER_NAME);;
@@ -156,14 +161,15 @@ public class IngestionStreamProcessorDeprecatedTest {
                 System.err.println(strMsg);
                 Assert.fail(strMsg);
             }
-
-            REC_PROVIDER_UID = ProviderUID.from(msgRegRsp.getRegistrationResult().getProviderId());
+            
+            REC_PROVIDER_UID = ProtoMsg.toProviderUID(msgRegRsp);
+//            REC_PROVIDER_UID = ProviderUID.from(msgRegRsp.getRegistrationResult().getProviderId());
 
             System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " obtained provider UID " + REC_PROVIDER_UID + " from provider name " + STR_PROVIDER_NAME);
         
         } else {
             
-            REC_PROVIDER_UID = ProviderUID.from(INT_PROVIDER_UID);
+            REC_PROVIDER_UID = ProviderUID.from(STR_PROVIDER_UID, STR_PROVIDER_NAME, BOL_PROVIDER_ISNEW);
         }
     }
 
@@ -430,8 +436,8 @@ public class IngestionStreamProcessorDeprecatedTest {
         try {
             List<IngestionResponse>   lstRsps = this.processor.getIngestionResponses();
             
-            List<Integer>   lstPrvIds = lstRsps.stream().<Integer>map(IngestionResponse::providerId).toList(); 
-            List<String>    lstCltIds = lstRsps.stream().<String>map(IngestionResponse::clientRequestId).toList();
+            List<String>            lstPrvIds = lstRsps.stream().<String>map(IngestionResponse::providerId).toList(); 
+            List<ClientRequestUID>  lstCltIds = lstRsps.stream().<ClientRequestUID>map(IngestionResponse::clientRequestId).toList();
             System.out.println("Provider IDs: " + lstPrvIds);
             System.out.println("Client request IDs: " + lstCltIds);
             
@@ -474,8 +480,8 @@ public class IngestionStreamProcessorDeprecatedTest {
         try {
             List<IngestionResponse>   lstRsps = this.processor.getIngestionExceptions();
             
-            List<Integer>   lstPrvIds = lstRsps.stream().<Integer>map(IngestionResponse::providerId).toList(); 
-            List<String>    lstCltIds = lstRsps.stream().<String>map(IngestionResponse::clientRequestId).toList();
+            List<String>            lstPrvIds = lstRsps.stream().<String>map(IngestionResponse::providerId).toList(); 
+            List<ClientRequestUID>  lstCltIds = lstRsps.stream().<ClientRequestUID>map(IngestionResponse::clientRequestId).toList();
             System.out.println("Provider IDs: " + lstPrvIds);
             System.out.println("Client request IDs: " + lstCltIds);
             
