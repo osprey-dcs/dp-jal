@@ -43,7 +43,7 @@ import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
@@ -669,7 +669,7 @@ public class DpIngestionStreamDeprecated extends
      * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#getRequestIds()
      */
     @Override
-    public List<ClientRequestUID> getRequestIds() {
+    public List<IngestRequestUID> getRequestIds() {
         return this.processor.getRequestIds();
     }
     
@@ -743,10 +743,10 @@ public class DpIngestionStreamDeprecated extends
      * @throws IllegalStateException    the stream was not opened and processor was never activated
      */
 //    @Override
-    public List<ClientRequestUID>    getClientRequestIds() throws IllegalStateException {
+    public List<IngestRequestUID>    getClientRequestIds() throws IllegalStateException {
     
         // Get the client request IDs from the internal processor
-        List<ClientRequestUID>   lstIds = this.processor.getRequestIds();
+        List<IngestRequestUID>   lstIds = this.processor.getRequestIds();
         
         return lstIds;
     }

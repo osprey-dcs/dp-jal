@@ -48,7 +48,7 @@ import java.time.Instant;
  * <p>
  * <h2>Client Request IDs</h2>
  * Within the Java Client API library the client request ID is encapsulated by the
- * <code>com.ospreydcs.dp.api.model.ClientRequestUID</code> record.  These records are generated
+ * <code>com.ospreydcs.dp.api.model.IngestRequestUID</code> record.  These records are generated
  * randomly for a <code>com.ospreydcs.dp.api.ingest.IngestionFrame</code> instance upon creation,
  * however, they can be explicitly set. Note that ingestion processing within the Data Platform
  * continues past the initial acceptance of an ingestion frame, thus, the data within a frame
@@ -75,7 +75,7 @@ import java.time.Instant;
 @Deprecated(since="Oct 13, 2024", forRemoval=true)
 public record IngestionResponse(
         String                  providerId, 
-        ClientRequestUID        clientRequestId, 
+        IngestRequestUID        clientRequestId, 
         Instant                 responseTime,
         Acknowledge             acknowledge,
         Exception               exception
@@ -99,7 +99,7 @@ public record IngestionResponse(
      * 
      * @return  <code>IngestionResponse</code> record containing Ingestion Service acknowledgment
      */
-    public static IngestionResponse from(String providerId, ClientRequestUID clientRequestId, Instant responseTime, int colCount, int rowCount) {
+    public static IngestionResponse from(String providerId, IngestRequestUID clientRequestId, Instant responseTime, int colCount, int rowCount) {
         return new IngestionResponse(providerId, clientRequestId, responseTime, colCount, rowCount);
     }
     
@@ -116,7 +116,7 @@ public record IngestionResponse(
      * 
      * @return  <code>IngestionResponse</code> record containing Ingestion Service exception
      */
-    public static IngestionResponse from(String providerId, ClientRequestUID clientRequestId, Instant responseTime, String type, String message) {
+    public static IngestionResponse from(String providerId, IngestRequestUID clientRequestId, Instant responseTime, String type, String message) {
         return new IngestionResponse(providerId, clientRequestId, responseTime, type, message);
     }
 
@@ -136,7 +136,7 @@ public record IngestionResponse(
      * @param   colCount number of columns within the ingest data request (reported by Ingestion Service)
      * @param   rowCount number of rows within the ingest data request (reported by Ingestion Service)
      */
-    public IngestionResponse(String providerId, ClientRequestUID clientRequestId, Instant responseTime, int colCount, int rowCount) {
+    public IngestionResponse(String providerId, IngestRequestUID clientRequestId, Instant responseTime, int colCount, int rowCount) {
         this(providerId, clientRequestId, responseTime, new Acknowledge(colCount, rowCount), new Exception());
     }
     
@@ -151,7 +151,7 @@ public record IngestionResponse(
      * @param   type            the exception type
      * @param   message         exception detail message
      */
-    public IngestionResponse(String providerId, ClientRequestUID clientRequestId, Instant responseTime, String type, String message) {
+    public IngestionResponse(String providerId, IngestRequestUID clientRequestId, Instant responseTime, String type, String message) {
         this(providerId, clientRequestId, responseTime, new Acknowledge(), new Exception(type, message));
     }
     

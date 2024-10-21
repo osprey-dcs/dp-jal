@@ -45,7 +45,7 @@ import com.ospreydcs.dp.api.common.AAdvancedApi;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.model.BufferedImage;
 import com.ospreydcs.dp.api.model.BufferedImage.Format;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.DpTimestampCase;
 import com.ospreydcs.dp.api.model.IngestionResponse;
@@ -865,7 +865,7 @@ public final class ProtoMsg {
         String  strRequestId = msgRsp.getClientRequestId();
         Instant insTimestamp = ProtoMsg.toInstant(msgRsp.getResponseTime());
         
-        ClientRequestUID    recRequestId = ClientRequestUID.from(strRequestId);
+        IngestRequestUID    recRequestId = IngestRequestUID.from(strRequestId);
         
         // In case of acknowledgment
         if (msgRsp.hasAckResult()) {
@@ -901,22 +901,27 @@ public final class ProtoMsg {
      * Creates and returns a new <code>IngestionResult</code> record from a single <code>IngestDataResponse</code> message.
      * </h1>
      * <p>
-     * The argument is assumed to be the single response from a unary ingestion operation.
+     * The 1st argument is a the ingest data request UID from the data message sent to the Ingestion
+     * Service during the ingestion operation.  
+     * </p>
+     * <p>
+     * The 2nd argument is assumed to be the single response from a unary ingestion operation.
      * </p>
      * 
+     * @param recXmitId client request UID for the original data request message
      * @param msgRsp    the single Ingestion Service response from a unary ingestion operation
      * 
      * @return new <code>IngestionResult</code> record populated with the argument data
      * 
      * @throws MissingResourceException the argument contained neither an acknowledgment or an exception
      */
-    public static IngestionResult   toIngestionResultUnary(IngestDataResponse msgRsp) throws MissingResourceException {
+    public static IngestionResult   toIngestionResultUnary(IngestRequestUID recXmitId, IngestDataResponse msgRsp) throws MissingResourceException {
         
         // Extract message data
-        Instant insTimestamp = ProtoMsg.toInstant(msgRsp.getResponseTime());
-        String  strRequestId = msgRsp.getClientRequestId();
+        Instant insTms = ProtoMsg.toInstant(msgRsp.getResponseTime());
+        String  strRqstId = msgRsp.getClientRequestId();
         
-        ClientRequestUID    recRequestId = ClientRequestUID.from(strRequestId);
+        IngestRequestUID    recRqstId = IngestRequestUID.from(strRqstId);
         
         // In case of acknowledgment
         if (msgRsp.hasAckResult()) {
@@ -925,7 +930,7 @@ public final class ProtoMsg {
             int     cntCols = msgAck.getNumColumns();
             int     cntRows = msgAck.getNumRows();
             
-            return IngestionResult.newUnarySuccess(insTimestamp, recRequestId, cntCols, cntRows);
+            return IngestionResult.newUnarySuccess(recXmitId, recRqstId, insTms, cntCols, cntRows);
         }
         
         // In case of exception
@@ -935,7 +940,7 @@ public final class ProtoMsg {
             String  strType = msgExcept.getExceptionalResultStatus().toString();
             String  strDetail = msgExcept.getMessage();
             
-            return IngestionResult.newUnaryFailed(insTimestamp, recRequestId, strType, strDetail);
+            return IngestionResult.newUnaryFailed(recXmitId, recRqstId, insTms, strType, strDetail);
         }
         
         // We should never get here
@@ -953,7 +958,11 @@ public final class ProtoMsg {
      * message. 
      * </h1>
      * <p>
-     * The argument is assumed to be the response of from a single-stream unidirectional streaming ingestion
+     * The 1st argument is a the collection of ingest data request UIDs from all the data messages sent to the Ingestion
+     * Service during the ingestion operation.  The client must monitor and collect these UIDs.
+     * </p>
+     * <p>
+     * The 2nd argument is assumed to be the response of from a single-stream unidirectional streaming ingestion
      * operation with the Ingestion Service.  This method extracts the results of the argument and populates the
      * returned record with a summary of the operation.
      * </p> 
@@ -964,45 +973,47 @@ public final class ProtoMsg {
      * in the argument.
      * </p>
      * 
-     * @param msgRsp    the single Ingestion Service response from a unidirectional ingestion operation
+     * @param lstXmitIds    collection of ingestion request UIDs for messages transmitted to Ingestion Service by client
+     * @param msgRsp        the single Ingestion Service response from a unidirectional ingestion operation
      * 
      * @return new <code>IngestionResult</code> record populated with the argument data
      * 
      * @throws MissingResourceException the argument contained neither an acknowledgment or an exception
      */
-    public static IngestionResult   toIngestionResultUni(IngestDataStreamResponse msgRsp) throws MissingResourceException {
+    public static IngestionResult   toIngestionResultUni(List<IngestRequestUID> lstXmitIds, IngestDataStreamResponse msgRsp) throws MissingResourceException {
         
-        // Extract the response data from the response message
+        // Extract the common response data 
         IngestionResult.Mode        enmMode = IngestionResult.Mode.UNIDIRECTIONAL;
-        Instant                     insResponse = ProtoMsg.toInstant(msgRsp.getResponseTime());
-        List<ClientRequestUID>      lstReceivedIds = msgRsp.getClientRequestIdsList()
+        int                         cntXmitIds = lstXmitIds.size();
+        Instant                     insRsp = ProtoMsg.toInstant(msgRsp.getResponseTime());
+        List<IngestRequestUID>      lstRcvdIds = msgRsp.getClientRequestIdsList()
                                     .stream()
-                                    .map(ClientRequestUID::from)
+                                    .map(IngestRequestUID::from)
                                     .toList();
-        List<ClientRequestUID>      lstRejectedIds = msgRsp.getRejectedRequestIdsList()
+        List<IngestRequestUID>      lstRjctIds = msgRsp.getRejectedRequestIdsList()
                                     .stream()
-                                    .map(ClientRequestUID::from)
+                                    .map(IngestRequestUID::from)
                                     .toList();
         
         // Exception free case
         if (msgRsp.hasIngestDataStreamResult()) {
             IngestDataStreamResponse.IngestDataStreamResult  msgResult = msgRsp.getIngestDataStreamResult();
             
-            int cntAcceptedIds = msgResult.getNumRequests();
+            int cntAccptIds = msgResult.getNumRequests();
             
-            IngestionResult recResult = IngestionResult.newStreamSuccess(enmMode, insResponse, cntAcceptedIds, lstReceivedIds);
+            IngestionResult recResult = IngestionResult.newStreamSuccess(enmMode, cntXmitIds, cntAccptIds, insRsp, insRsp, lstXmitIds, lstRcvdIds);
             
             return recResult;
         }
         
         // Exceptional case
         if (msgRsp.hasExceptionalResult()) {
-            int                 cntAcceptedIds = lstReceivedIds.size() - lstRejectedIds.size();
+            int                 cntAccptIds = lstRcvdIds.size() - lstRjctIds.size();
             ExceptionalResult   msgExcep = msgRsp.getExceptionalResult();
             String              strStatus = msgExcep.getExceptionalResultStatus().name();
             String              strDetail = msgExcep.getMessage();
             
-            IngestionResult recResult = IngestionResult.newStreamFailed(enmMode, insResponse, cntAcceptedIds, lstReceivedIds, lstRejectedIds);
+            IngestionResult recResult = IngestionResult.newStreamFailed(enmMode, cntXmitIds, cntAccptIds, insRsp, insRsp, lstXmitIds, lstRcvdIds, lstRjctIds);
             recResult.addException(strStatus, strDetail);
             
             return recResult;
@@ -1024,7 +1035,11 @@ public final class ProtoMsg {
      * <code>IngestDataStreamResponse</code> messages. 
      * </h1>
      * <p>
-     * The argument is assumed to be the responses from a multiple unidirectional streaming ingestion
+     * The 1st argument is a the collection of ingest data request UIDs from all the data messages sent to the Ingestion
+     * Service during the ingestion operation.  The client must monitor and collect these UIDs.
+     * </p>
+     * <p>
+     * The 2nd argument is assumed to be the responses from a multiple unidirectional streaming ingestion
      * operations with the Ingestion Service.  This method extracts the results of all the argument messages and 
      * populates the returned record with a summary of the operation.
      * </p> 
@@ -1035,14 +1050,15 @@ public final class ProtoMsg {
      * in the argument.
      * </p>
      * 
-     * @param lstRsps   collection of Ingestion Service responses from multiple unidirectional ingestion operations
+     * @param lstXmitIds    collection of ingestion request UIDs for messages transmitted to Ingestion Service by client
+     * @param lstRsps       collection of Ingestion Service responses from multiple unidirectional ingestion operations
      * 
      * @return new <code>IngestionResult</code> record populated with the argument data
      * 
      * @throws IllegalArgumentException the argument list was empty
      * @throws MissingResourceException a message within the argument list contained neither an acknowledgment or an exception
      */
-    public static IngestionResult   toIngestionResultUni(List<IngestDataStreamResponse> lstRsps) throws IllegalArgumentException, MissingResourceException {
+    public static IngestionResult   toIngestionResultUni(List<IngestRequestUID> lstXmitIds, List<IngestDataStreamResponse> lstRsps) throws IllegalArgumentException, MissingResourceException {
         
         // Check for empty list
         if (lstRsps.isEmpty())
@@ -1050,8 +1066,20 @@ public final class ProtoMsg {
         
         // Recover the timestamp, received request IDs, and rejected request IDs
         IngestionResult.Mode    enmMode = IngestionResult.Mode.UNIDIRECTIONAL;
+        int                     cntXmitIds = lstXmitIds.size();
         
-        Instant insTms = lstRsps.stream()
+        Instant insTmsFirst = lstRsps.stream()
+                .<Timestamp>map(msg -> msg.getResponseTime())
+                .<Instant>map(ProtoMsg::toInstant)
+                .reduce((t1,t2) -> {
+                    if (t1.compareTo(t2) < 0)
+                        return t1;
+                    else 
+                        return t2;
+                    }
+                ).get();    // get the first timestamp instant of all messages
+        
+        Instant insTmsFinal = lstRsps.stream()
                 .<Timestamp>map(msg -> msg.getResponseTime())
                 .<Instant>map(ProtoMsg::toInstant)
                 .reduce((t1, t2) -> { 
@@ -1062,19 +1090,19 @@ public final class ProtoMsg {
                     }
                 ).get();    // gets the latest timestamp instant of all messages
         
-        List<ClientRequestUID>  lstReceivedIds = lstRsps.stream()
+        List<IngestRequestUID>  lstRcvdIds = lstRsps.stream()
                 .<String>flatMap( msg -> msg.getClientRequestIdsList().stream() )
-                .<ClientRequestUID>map(ClientRequestUID::from)
+                .<IngestRequestUID>map(IngestRequestUID::from)
                 .toList();
         
-        List<ClientRequestUID>  lstRejectedIds = lstRsps.stream()
+        List<IngestRequestUID>  lstRjctIds = lstRsps.stream()
                 .<String>flatMap( msg -> msg.getRejectedRequestIdsList().stream() )
-                .<ClientRequestUID>map(ClientRequestUID::from)
+                .<IngestRequestUID>map(IngestRequestUID::from)
                 .toList();
         
         
         // Parse responses for exceptions and acknowledgment value
-        int                     cntAcceptedIds = 0;
+        int                     cntAccptIds = 0;
         List<ExceptionalResult> lstErrors = new LinkedList<>();
         
         for (IngestDataStreamResponse msgRsp : lstRsps) {
@@ -1089,7 +1117,7 @@ public final class ProtoMsg {
             } else if (msgRsp.hasIngestDataStreamResult()) {
                 IngestDataStreamResponse.IngestDataStreamResult    msgAck = msgRsp.getIngestDataStreamResult();
                 
-                cntAcceptedIds += msgAck.getNumRequests();
+                cntAccptIds += msgAck.getNumRequests();
                 
             // We should never get here
             } else {
@@ -1106,10 +1134,10 @@ public final class ProtoMsg {
         // Create the returned value according to exception status
         IngestionResult recResult;
         if (lstErrors.isEmpty())
-            recResult = IngestionResult.newStreamSuccess(enmMode, insTms, cntAcceptedIds, lstReceivedIds);
+            recResult = IngestionResult.newStreamSuccess(enmMode, cntXmitIds, cntAccptIds, insTmsFirst, insTmsFinal, lstXmitIds, lstRcvdIds);
         
         else {
-            recResult = IngestionResult.newStreamFailed(enmMode, insTms, cntAcceptedIds, lstReceivedIds, lstRejectedIds);
+            recResult = IngestionResult.newStreamFailed(enmMode, cntXmitIds, cntAccptIds, insTmsFirst, insTmsFinal, lstXmitIds, lstRcvdIds, lstRjctIds);
             
             // Populate the exceptions
             for (ExceptionalResult msgErr : lstErrors) {
@@ -1129,7 +1157,11 @@ public final class ProtoMsg {
      * messages. 
      * </h1>
      * <p>
-     * The argument is assumed to be the collection of ingestion responses from a either
+     * The 1st argument is a the collection of ingest data request UIDs from all the data messages sent to the Ingestion
+     * Service during the ingestion operation.  The client must monitor and collect these UIDs.
+     * </p>
+     * <p>
+     * The 2nd argument is assumed to be the collection of ingestion responses from a either
      * <ol>
      * <li>A series of unary ingestion operations from a decomposed ingestion frame.</li>
      * <li>A bidirectional streaming ingestion operation with the Ingestion Service.</li>  
@@ -1148,26 +1180,27 @@ public final class ProtoMsg {
      * <code>{@link IngestionResult#exception()} field contains a list of all exceptions reported in the argument.
      * </p>
      * 
-     * @param lstRsps   collection of all Ingestion Service responses during the bidirectional streaming operation
+     * @param lstXmitIds    collection of ingestion request UIDs for messages transmitted to Ingestion Service by client
+     * @param lstRsps       collection of all Ingestion Service responses during the bidirectional streaming operation
      *    
      * @return  new <code>IngestionResult</code> record summarizing the argument collection
      * 
      * @throws  IllegalArgumentException the argument was an empty list
      * @throws  MissingResourceException the argument contained a message with neither an acknowledgment or an exception
      */
-    public static IngestionResult   toIngestionResult(List<IngestDataResponse> lstRsps) throws IllegalArgumentException, MissingResourceException {
+    public static IngestionResult   toIngestionResult(List<IngestRequestUID> lstXmitIds, List<IngestDataResponse> lstRsps) throws IllegalArgumentException, MissingResourceException {
         
         // Internal types
-        record AcknowledgePair(ClientRequestUID reqId, IngestDataResponse.AckResult msgAck) {};
-        record ExceptionPair(ClientRequestUID reqId, ExceptionalResult msgError) {};
+        record AcknowledgePair(IngestRequestUID reqId, IngestDataResponse.AckResult msgAck) {};
+        record ExceptionPair(IngestRequestUID reqId, ExceptionalResult msgError) {};
         
         // Check for empty list
         if (lstRsps.isEmpty())
             throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - argument was an emtpy list.");
         
         // Create the lists of client request IDs
-        ArrayList<ClientRequestUID>     lstReceivedIds = new ArrayList<>(lstRsps.size());
-        LinkedList<ClientRequestUID>    lstRejectedIds = new LinkedList<>();
+        ArrayList<IngestRequestUID>     lstRcvdIds = new ArrayList<>(lstRsps.size());
+        LinkedList<IngestRequestUID>    lstRjctIds = new LinkedList<>();
         
         // Create lists of auxiliary data 
         ArrayList<Timestamp>        lstTmsMsgs = new ArrayList<>(lstRsps.size());
@@ -1176,31 +1209,31 @@ public final class ProtoMsg {
         
         // Parse responses for request IDs and auxiliary data
         for (IngestDataResponse msgRsp : lstRsps) {
-            String              strRequestId = msgRsp.getClientRequestId();
-            Timestamp           tmsResponse = msgRsp.getResponseTime();
-            ClientRequestUID    recRequestId = ClientRequestUID.from(strRequestId);
+            String              strRqstId = msgRsp.getClientRequestId();
+            Timestamp           tmsRsp = msgRsp.getResponseTime();
+            IngestRequestUID    recRqstId = IngestRequestUID.from(strRqstId);
             
-            lstReceivedIds.add(recRequestId);
-            lstTmsMsgs.add(tmsResponse);
+            lstRcvdIds.add(recRqstId);
+            lstTmsMsgs.add(tmsRsp);
             
             // Message contains an exception
             if (msgRsp.hasExceptionalResult()) {
-                ExceptionalResult   msgExcep = msgRsp.getExceptionalResult();
+                ExceptionalResult   msgErr = msgRsp.getExceptionalResult();
                 
-                lstErrPairs.add(new ExceptionPair(recRequestId, msgExcep));
-                lstRejectedIds.add(recRequestId);
+                lstErrPairs.add(new ExceptionPair(recRqstId, msgErr));
+                lstRjctIds.add(recRqstId);
             
             // Message contains an acknowledgment
             } else if (msgRsp.hasAckResult()) {
                 IngestDataResponse.AckResult    msgAck = msgRsp.getAckResult();
                 
-                lstAckPairs.add(new AcknowledgePair(recRequestId, msgAck));
+                lstAckPairs.add(new AcknowledgePair(recRqstId, msgAck));
                 
             // We should never get here
             } else {
                 throw new MissingResourceException(
                         JavaRuntime.getQualifiedMethodNameSimple() 
-                            + " - message containing neither a result or an exception for request UID " + strRequestId,
+                            + " - message containing neither a result or an exception for request UID " + strRqstId,
                         IngestDataStreamResponse.class.getName(),
                         "getAckResult(), getExceptionalResult()"
                         );
@@ -1209,34 +1242,44 @@ public final class ProtoMsg {
         
         // Create the common IngestionResult fields
         IngestionResult.Mode    enmMode = IngestionResult.Mode.BIDIRECTIONAL;
-        
-        int         cntAcceptedIds = lstReceivedIds.size() - lstRejectedIds.size();
+        int         cntXmitIds = lstXmitIds.size();
+        int         cntAccptIds = lstRcvdIds.size() - lstRjctIds.size();
 
-        Instant     insResponse = lstTmsMsgs.stream()
+        Instant     insTmsFirst = lstTmsMsgs.stream()
+                        .<Instant>map(ProtoMsg::toInstant)
+                        .reduce((t1,t2) -> {
+                            if (t1.compareTo(t2) < 0)
+                                return t1;
+                            else
+                                return t2;
+                            }
+                        ).get();    // gets the first timestamp instant
+        
+        Instant     insTmsFinal = lstTmsMsgs.stream()
                         .<Instant>map(ProtoMsg::toInstant)
                         .reduce((t1, t2) -> {
                             if (t1.compareTo(t2) > 0)
                                 return t1;
                             else 
                                 return t2;
-                        })
-                        .get();     // gets the latest timestamp instant
+                            }
+                        ).get();     // gets the latest timestamp instant
 
         
         // Create the returned value and populate with acknowledgments and any exceptions
         IngestionResult     recResult;
         
-        if (lstRejectedIds.isEmpty()) {
+        if (lstRjctIds.isEmpty()) {
             // Exception free case
-            recResult = IngestionResult.newStreamSuccess(enmMode, insResponse, cntAcceptedIds, lstReceivedIds);
+            recResult = IngestionResult.newStreamSuccess(enmMode, cntXmitIds, cntAccptIds, insTmsFirst, insTmsFinal, lstXmitIds, lstRcvdIds);
             
         } else {
             // Exceptional case
-            recResult = IngestionResult.newStreamFailed(enmMode, insResponse, cntAcceptedIds, lstReceivedIds, lstRejectedIds);
+            recResult = IngestionResult.newStreamFailed(enmMode, cntXmitIds, cntAccptIds, insTmsFirst, insTmsFinal, lstXmitIds, lstRcvdIds, lstRjctIds);
             
             // Populate with exceptions
             for (ExceptionPair rec : lstErrPairs) {
-                ClientRequestUID    reqId = rec.reqId();
+                IngestRequestUID    reqId = rec.reqId();
                 String              status = rec.msgError().getExceptionalResultStatus().name();
                 String              message = rec.msgError().getMessage();
                 
@@ -1246,7 +1289,7 @@ public final class ProtoMsg {
         
         // Populate the acknowledgments
         for (AcknowledgePair rec : lstAckPairs) {
-            ClientRequestUID    reqId = rec.reqId();
+            IngestRequestUID    reqId = rec.reqId();
             int                 colCnt = rec.msgAck().getNumColumns();
             int                 rowCnt = rec.msgAck().getNumRows();
             

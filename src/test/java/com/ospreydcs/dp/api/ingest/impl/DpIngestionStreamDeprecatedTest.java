@@ -48,7 +48,7 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
@@ -702,7 +702,7 @@ public class DpIngestionStreamDeprecatedTest {
         }
         
         // Get the client request IDs and compare
-        List<ClientRequestUID>   lstRqstIds = apiIngest.getClientRequestIds();
+        List<IngestRequestUID>   lstRqstIds = apiIngest.getClientRequestIds();
         Assert.assertEquals(cntFrames, lstRqstIds.size());
     }
 

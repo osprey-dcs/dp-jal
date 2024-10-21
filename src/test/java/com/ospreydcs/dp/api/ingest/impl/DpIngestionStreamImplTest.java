@@ -50,7 +50,7 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.IngestionResult;
@@ -701,7 +701,7 @@ public class DpIngestionStreamImplTest {
         
         // Get the transmission results
         ProviderUID             recPrvrUid = istream.getProviderUid();
-        List<ClientRequestUID>  lstRqstUids = istream.getRequestIds();
+        List<IngestRequestUID>  lstRqstUids = istream.getRequestIds();
         int                     cntXmissions = istream.getTransmissionCount();
 //        List<IngestionResponse> lstRsps = istream.getIngestionResponses();
 //        List<IngestionResponse> lstXmitExcps = istream.getIngestionExceptions();
@@ -1205,7 +1205,7 @@ public class DpIngestionStreamImplTest {
         Duration    durClose = Duration.between(insStart, insClosed);
 //        List<IngestionResponse> lstRsps = istream.getIngestionResponses();
 //        List<IngestionResponse> lstExcps = istream.getIngestionExceptions();
-        List<ClientRequestUID>  lstRqstUids = istream.getRequestIds();
+        List<IngestRequestUID>  lstRqstUids = istream.getRequestIds();
         Collection<Exception>   setFrmDecmpExcp = istream.getFailedFrameDecompositions();
         Collection<Exception>   setFrmCnvrtExcp = istream.getFailedFrameConversions();
 

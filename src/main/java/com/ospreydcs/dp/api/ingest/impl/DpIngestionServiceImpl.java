@@ -49,7 +49,7 @@ import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameBinner;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameConverter;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
@@ -244,7 +244,7 @@ public final class DpIngestionServiceImpl extends
     private int                     cntMsgXmissions = 0;
     
     /** The collection of client request UIDs of transmitted data */
-    private List<ClientRequestUID>  lstRequestIds = new LinkedList<>();
+    private List<IngestRequestUID>  lstRequestIds = new LinkedList<>();
 
     
     //
@@ -556,10 +556,16 @@ public final class DpIngestionServiceImpl extends
         // Convert responses to result and return
         IngestionResult     recResult;
         
-        if (lstRsps.size() == 1)
-            recResult = ProtoMsg.toIngestionResultUnary(lstRsps.get(0));
-        else
-            recResult = ProtoMsg.toIngestionResult(lstRsps);
+        if (lstRsps.size() == 1) {
+            IngestRequestUID recXmitId = this.lstRequestIds.get(0);
+            IngestDataResponse  msgRsp = lstRsps.get(0);
+            
+            recResult = ProtoMsg.toIngestionResultUnary(recXmitId, msgRsp);
+            
+        } else {
+            recResult = ProtoMsg.toIngestionResult(this.lstRequestIds, lstRsps);
+            
+        }
         
         return recResult;
     }
@@ -569,7 +575,7 @@ public final class DpIngestionServiceImpl extends
      * @see @see com.ospreydcs.dp.api.ingest.IIngestionService#getRequestIds()
      */
     @Override
-    public List<ClientRequestUID>   getRequestIds() throws IllegalStateException {
+    public List<IngestRequestUID>   getRequestIds() throws IllegalStateException {
         
         // Check registration
         if (this.recProviderUid == null)

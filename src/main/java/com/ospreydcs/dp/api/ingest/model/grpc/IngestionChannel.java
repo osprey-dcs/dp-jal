@@ -50,7 +50,7 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.IngestionResult;
@@ -601,16 +601,16 @@ public class IngestionChannel {
      * @see #getIngestionResponses()
      * @see #getIngestionExceptions()
      */
-    public List<ClientRequestUID>    getRequestIds() throws IllegalStateException {
+    public List<IngestRequestUID>    getRequestIds() throws IllegalStateException {
         
         // Check if activated
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
         // Collect all the client IDs recorded within each ingestion stream
-        List<ClientRequestUID>   lstIds = this.setStreamTasks
+        List<IngestRequestUID>   lstIds = this.setStreamTasks
                 .stream()
-                .<ClientRequestUID>flatMap(stream -> stream.getRequestIds().stream())
+                .<IngestRequestUID>flatMap(stream -> stream.getRequestIds().stream())
                 .toList();
         
         return lstIds;
@@ -825,7 +825,8 @@ public class IngestionChannel {
             if (this.lstUniRsps.isEmpty())
                 return IngestionResult.NULL;
             
-            IngestionResult recResult = ProtoMsg.toIngestionResultUni(this.lstUniRsps); // throws MissingResourceException
+            List<IngestRequestUID> lstXmitIds = this.getRequestIds();
+            IngestionResult recResult = ProtoMsg.toIngestionResultUni(lstXmitIds, this.lstUniRsps); // throws MissingResourceException
             
             return recResult;
             
@@ -833,7 +834,8 @@ public class IngestionChannel {
             if (this.lstBidiRsps.isEmpty())
                 return IngestionResult.NULL;
             
-            IngestionResult recResult = ProtoMsg.toIngestionResult(this.lstBidiRsps);    // throws MissingResourceException
+            List<IngestRequestUID> lstXmitIds = this.getRequestIds();
+            IngestionResult recResult = ProtoMsg.toIngestionResult(lstXmitIds, this.lstBidiRsps);    // throws MissingResourceException
 
             return recResult;
             

@@ -45,7 +45,7 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
@@ -393,10 +393,10 @@ public class IngestionStreamProcessorDeprecatedTest {
         }
 
         try {
-            List<ClientRequestUID>   lstIds = this.processor.getRequestIds();
+            List<IngestRequestUID>   lstIds = this.processor.getRequestIds();
             Assert.assertEquals(cntFrames, lstIds.size());
             
-            List<String>    lstStrIds = lstIds.stream().<String>map(ClientRequestUID::requestId).toList();
+            List<String>    lstStrIds = lstIds.stream().<String>map(IngestRequestUID::requestId).toList();
             System.out.println("Client request IDs: " + lstStrIds);
             
         } catch (IllegalStateException e) {
@@ -437,7 +437,7 @@ public class IngestionStreamProcessorDeprecatedTest {
             List<IngestionResponse>   lstRsps = this.processor.getIngestionResponses();
             
             List<String>            lstPrvIds = lstRsps.stream().<String>map(IngestionResponse::providerId).toList(); 
-            List<ClientRequestUID>  lstCltIds = lstRsps.stream().<ClientRequestUID>map(IngestionResponse::clientRequestId).toList();
+            List<IngestRequestUID>  lstCltIds = lstRsps.stream().<IngestRequestUID>map(IngestionResponse::clientRequestId).toList();
             System.out.println("Provider IDs: " + lstPrvIds);
             System.out.println("Client request IDs: " + lstCltIds);
             
@@ -481,7 +481,7 @@ public class IngestionStreamProcessorDeprecatedTest {
             List<IngestionResponse>   lstRsps = this.processor.getIngestionExceptions();
             
             List<String>            lstPrvIds = lstRsps.stream().<String>map(IngestionResponse::providerId).toList(); 
-            List<ClientRequestUID>  lstCltIds = lstRsps.stream().<ClientRequestUID>map(IngestionResponse::clientRequestId).toList();
+            List<IngestRequestUID>  lstCltIds = lstRsps.stream().<IngestRequestUID>map(IngestionResponse::clientRequestId).toList();
             System.out.println("Provider IDs: " + lstPrvIds);
             System.out.println("Client request IDs: " + lstCltIds);
             

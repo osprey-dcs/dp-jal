@@ -50,7 +50,7 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.IngestionResult;
@@ -376,7 +376,7 @@ public final class IngestionStreamProcessorDep {
 //    private final BlockingQueue<IngestDataRequest>  queRequests = new LinkedBlockingQueue(INT_BUFFER_SIZE);
 //    
 //    /** Collection of all outgoing message client request IDs */
-//    private final Collection<ClientRequestUID>       setClientIds = new LinkedList<>();
+//    private final Collection<IngestRequestUID>       setClientIds = new LinkedList<>();
 //    
 //    /** Source for incoming response messages */
 //    private final Consumer<IngestDataResponse>      fncDataSink = (rsp) -> { this.setResponses.add(rsp); };
@@ -939,15 +939,15 @@ public final class IngestionStreamProcessorDep {
      * @see #getIngestionResponses()
      * @see #getIngestionExceptions()
      */
-    public List<ClientRequestUID>    getRequestIds() throws IllegalStateException {
+    public List<IngestRequestUID>    getRequestIds() throws IllegalStateException {
         
         // Check if activated
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
-        List<ClientRequestUID>   lstIds = this.setStreamTasks
+        List<IngestRequestUID>   lstIds = this.setStreamTasks
                 .stream()
-                .<ClientRequestUID>flatMap(stream -> stream.getRequestIds().stream())
+                .<IngestRequestUID>flatMap(stream -> stream.getRequestIds().stream())
                 .toList();
         
         return lstIds;
@@ -1030,7 +1030,8 @@ public final class IngestionStreamProcessorDep {
             if (this.lstRspsUni.isEmpty())
                 return IngestionResult.NULL;
             
-            IngestionResult recResult = ProtoMsg.toIngestionResultUni(this.lstRspsUni); // throws MissingResourceException
+            List<IngestRequestUID> lstXmitIds = this.getRequestIds();
+            IngestionResult recResult = ProtoMsg.toIngestionResultUni(lstXmitIds, this.lstRspsUni); // throws MissingResourceException
             
             return recResult;
             
@@ -1038,7 +1039,8 @@ public final class IngestionStreamProcessorDep {
             if (this.lstRspsBidi.isEmpty())
                 return IngestionResult.NULL;
             
-            IngestionResult recResult = ProtoMsg.toIngestionResult(lstRspsBidi);        // throws MissingResourceException
+            List<IngestRequestUID> lstXmitIds = this.getRequestIds();
+            IngestionResult recResult = ProtoMsg.toIngestionResult(lstXmitIds, this.lstRspsBidi);        // throws MissingResourceException
 
             return recResult;
             

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	ClientRequestUID.java
+ * File:	IngestRequestUID.java
  * Package: com.ospreydcs.dp.api.model
- * Type: 	ClientRequestUID
+ * Type: 	IngestRequestUID
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -32,12 +32,14 @@ import java.util.UUID;
 
 /**
  * <p>
- * Record for encapsulating the ingest data request unique identifier.
+ * Record for encapsulating an ingestion request unique identifier.
  * </p>
  * <p>
- * The ingest data request UID, or client request ID, is an identifier provided by Ingestion
- * Service clients to identify each ingest data request it sends.  This record is intended to
- * abstract the notion since the exact form of the identifier may change in the future.
+ * The ingest data request UID, or client request UID, is an identifier provided use by the Ingestion
+ * Service to identify each ingest data request it receives from a client.  All data ingestion requests
+ * are identified by such an UID and can be used to refer to the status of an ingestion and archiving
+ * operation post transmission.
+ * This record is intended to abstract this notion since the exact form of the identifier may change in the future.
  * </p>
  * 
  * @param   requestId    the client ingest data request identifier (as a string)
@@ -46,17 +48,17 @@ import java.util.UUID;
  * @since Apr 16, 2024
  *
  */
-public record ClientRequestUID(String requestId) implements Serializable {
+public record IngestRequestUID(String requestId) implements Serializable {
     
     //
     // Constants
     //
     
     /** The universal null request UID, used when an UID is required but none is specified */
-    public static final ClientRequestUID    NULL = ClientRequestUID.from("null");
+    public static final IngestRequestUID    NULL = IngestRequestUID.from("null");
     
     
-    /** Prefix given to all randomly generated client UIDs */
+    /** Prefix given to all randomly generated Java Client API request UIDs */
     public static final String  STR_PREFIX = "dp-api-java-";
     
     
@@ -66,7 +68,7 @@ public record ClientRequestUID(String requestId) implements Serializable {
     
     /**
      * <p>
-     * Creates a new <code>ClientRequestUID</code> record instance exactly from the given argument.
+     * Creates a new <code>IngestRequestUID</code> record instance exactly from the given argument.
      * </p>
      * <p>
      * <h2>WARNING</h2>
@@ -80,30 +82,30 @@ public record ClientRequestUID(String requestId) implements Serializable {
      * 
      * @return  new record initialized with the given argument
      */
-    public static ClientRequestUID   from(String strRequestId) {
-        return new ClientRequestUID(strRequestId);
+    public static IngestRequestUID   from(String strRequestId) {
+        return new IngestRequestUID(strRequestId);
     }
     
     /**
      * <p>
-     * Creates a new <code>ClientRequestUID</code> instance from the given arguments.
+     * Creates a new <code>IngestRequestUID</code> instance from the given arguments.
      * </p>
      * <p>
      * The returned client request UUID is assembled from the given request UUID argument
      * and the given suffix.  Specifically, the returned client request ingestion request
      * "unique identifier" is formed by appending the <code>String</code> argument to the 
-     * <code>ClientRequestUID</code> argument.
+     * <code>IngestRequestUID</code> argument.
      * </p>
      *  
      * @param uidMain   the main body of the Universally Unique IDentifier
      * @param strSuffix the suffix within the returned client request UUID
      * 
-     * @return  a new <code>ClientRequestUID</code> instance formed by appending the given string to the given UUID
+     * @return  a new <code>IngestRequestUID</code> instance formed by appending the given string to the given UUID
      */
-    public static ClientRequestUID  from(ClientRequestUID uidMain, String strSuffix) {
+    public static IngestRequestUID  from(IngestRequestUID uidMain, String strSuffix) {
         String  strUid = uidMain.requestId + strSuffix;
         
-        return new ClientRequestUID(strUid);
+        return new IngestRequestUID(strUid);
     }
     
     /**
@@ -125,13 +127,13 @@ public record ClientRequestUID(String requestId) implements Serializable {
      * <code>{@link #STR_PREFIX}</code>.  See <code>{@link #random(String)}</code> for further details.
      * </p>
      * 
-     * @return  a new <code>ClientRequestUID</code> instance with prefix <code>{@link #STR_PREFIX}</code> and 
+     * @return  a new <code>IngestRequestUID</code> instance with prefix <code>{@link #STR_PREFIX}</code> and 
      *          randomly generated UUID body
      *          
      * @see #random(String)
      */
-    public static ClientRequestUID   random() {
-        return ClientRequestUID.random(STR_PREFIX);
+    public static IngestRequestUID   random() {
+        return IngestRequestUID.random(STR_PREFIX);
     }
 
     /**
@@ -166,13 +168,13 @@ public record ClientRequestUID(String requestId) implements Serializable {
      * 
      * @param strPrefix prefix string for the randomly generated UUID string
      * 
-     * @return  a new <code>ClientRequestUID</code> instance with given prefix and randomly generated UUID body
+     * @return  a new <code>IngestRequestUID</code> instance with given prefix and randomly generated UUID body
      */
-    public static ClientRequestUID   random(String strPrefix) {
+    public static IngestRequestUID   random(String strPrefix) {
         UUID    uuidRqst = UUID.randomUUID();
         String  strRqstId = strPrefix + uuidRqst.toString();
         
-        return new ClientRequestUID(strRqstId);
+        return new IngestRequestUID(strRqstId);
     }
 
     
@@ -193,7 +195,7 @@ public record ClientRequestUID(String requestId) implements Serializable {
     @Override
     public boolean equals(Object obj) {
         
-        if (obj instanceof ClientRequestUID rec)
+        if (obj instanceof IngestRequestUID rec)
             return this.requestId.equals(rec.requestId);
         
         return false;

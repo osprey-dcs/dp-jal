@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 
 /**
  * <p>
@@ -464,7 +464,7 @@ public class IngestionFrameBinner {
      * Creates new client request UIDs for the binned ingestion frames from the source frame request UID.
      * </p>
      * <p>
-     * The new <code>ClientRequestUID</code> values for each binned ingestion frame within the argument
+     * The new <code>IngestRequestUID</code> values for each binned ingestion frame within the argument
      * are created simply by appending the index of the frame (i.e., within the list) to the request UID of the
      * source frame. Upon return the collection of binned frames will contain the new ingest data request UIDs.
      * </p>
@@ -492,11 +492,11 @@ public class IngestionFrameBinner {
     private void    assignClientRequestUids(IngestionFrame frmSrc, List<IngestionFrame> lstBins) {
         
         // Initialize loop
-        ClientRequestUID    uidMain = frmSrc.getClientRequestUid();
+        IngestRequestUID    uidMain = frmSrc.getClientRequestUid();
         Integer             indFrmBinned = 0;
         for (IngestionFrame frmBinned : lstBins) {
             String              strSuffix = "-" + indFrmBinned.toString();
-            ClientRequestUID    uidFrmBinned = ClientRequestUID.from(uidMain, strSuffix);
+            IngestRequestUID    uidFrmBinned = IngestRequestUID.from(uidMain, strSuffix);
             
             frmBinned.setClientRequestUid(uidFrmBinned);
             indFrmBinned++;

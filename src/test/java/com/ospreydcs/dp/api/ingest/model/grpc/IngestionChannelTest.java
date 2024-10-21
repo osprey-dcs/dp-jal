@@ -27,14 +27,9 @@
  */
 package com.ospreydcs.dp.api.ingest.model.grpc;
 
-import static org.junit.Assert.*;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -45,11 +40,9 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
 import com.ospreydcs.dp.api.ingest.test.TestIngestDataRequestGenerator;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
-import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
@@ -370,7 +363,7 @@ public class IngestionChannelTest {
         Duration    durXmit = Duration.between(insStart, insFinish);
         int         cntXmits = chan.getRequestCount();
         int         cntRsps = chan.getResponseCount();
-        List<ClientRequestUID>  lstRqstIds = chan.getRequestIds();
+        List<IngestRequestUID>  lstRqstIds = chan.getRequestIds();
         IngestionResult         recResult = chan.getIngestionResult();
 //        List<IngestionResponse> lstRsps = chan.getIngestionResponses();
 //        List<IngestionResponse> lstExcps = chan.getIngestionExceptions();

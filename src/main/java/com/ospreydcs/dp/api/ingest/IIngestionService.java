@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
@@ -100,7 +100,7 @@ public interface IIngestionService extends IConnection {
      * <li>
      * Client request UIDs are assigned by the internal processor before transmission to the
      * Ingestion Service, if not directly assigned by the client 
-     * (see <code>{@link IngestionFrame#setClientRequestUid(ClientRequestUID)}</code>). 
+     * (see <code>{@link IngestionFrame#setClientRequestUid(IngestRequestUID)}</code>). 
      * In the case of large <code>IngestionFrame</code> instances that are decomposed into
      * smaller frames (to meet gRPC message size limits), the decomposed frames may be suffixed
      * with a count number or given the same UID. 
@@ -122,7 +122,7 @@ public interface IIngestionService extends IConnection {
      * 
      * @throws IllegalStateException    likely from unregistered interface state
      */
-    public List<ClientRequestUID>   getRequestIds() throws IllegalStateException;
+    public List<IngestRequestUID>   getRequestIds() throws IllegalStateException;
 
     /**
      * @see @see com.ospreydcs.dp.api.grpc.model.IConnection#awaitTermination()

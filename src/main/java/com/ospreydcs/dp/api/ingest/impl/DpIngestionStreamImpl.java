@@ -49,7 +49,7 @@ import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannel;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.IngestionResult;
@@ -1347,10 +1347,10 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#getRequestIds()
      */
     @Override
-    public List<ClientRequestUID> getRequestIds() throws IllegalStateException {
+    public List<IngestRequestUID> getRequestIds() throws IllegalStateException {
         
         // Get the client request IDs from the internal processor
-        List<ClientRequestUID>   lstIds = this.chanIngest.getRequestIds();
+        List<IngestRequestUID>   lstIds = this.chanIngest.getRequestIds();
         
         return lstIds;
     }
@@ -1369,7 +1369,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 //     * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#getClientRequestIds()
 //     */
 //    @Override
-//    public List<ClientRequestUID> getClientRequestIds() throws IllegalStateException {
+//    public List<IngestRequestUID> getClientRequestIds() throws IllegalStateException {
 //        // TODO Auto-generated method stub
 //        return null;
 //    }

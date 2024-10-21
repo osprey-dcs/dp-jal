@@ -27,6 +27,8 @@
  */
 package com.ospreydcs.dp.api.model;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
@@ -86,33 +88,51 @@ import java.util.List;
  * <p>
  * <h2>Ingestion Request UIDs</h2>
  * Within the Java Client API library the client ingestion request UID is encapsulated by the
- * <code>com.ospreydcs.dp.api.model.ClientRequestUID</code> record.  These records are generated
+ * <code>com.ospreydcs.dp.api.model.IngestRequestUID</code> record.  These records are generated
  * randomly for a <code>com.ospreydcs.dp.api.ingest.IngestionFrame</code> instance upon creation,
  * however, they can be explicitly set. Note that ingestion processing within the Data Platform
  * continues past the initial acceptance of an ingestion frame, thus, the data within a frame
  * may fail to archive after receipt of a <code>IngestionResponse</code>.
  * </p> 
  * <p>
+ * <h2>Transmitted Request UIDs</h2>
+ * The record contains 2 fields describing all client request UIDs for data that the client transmitted
+ * to the Ingestion Service, <code>{@link #transmitRequestCount}</code> and <code>{@link #transmitRequestIds}</code>.  
+ * These fields are populated at the client side by the API library and are available for confirmation and
+ * further ingestion status query from the Ingestion Service (see below).
+ * </p> 
+ * <p>
+ * <h2>Timestamps</h2>
+ * There are two timestamps for each record, <code>{@link #startTime}</code> and <code>{@link #finalTime}</code>.  These
+ * values are not necessarily unique, for example, in the cases of unary data requests and unidirectional data
+ * request streams.  For bidirectional gRPC ingestion the first timestamp should be the time of the first
+ * response and the second timestamp should be the timestamp of the final response (as provided by the Ingestion
+ * Service).
+ * </p> 
+ * <p>
  * <h2>NOTES:</h2>
  * <ul>
  * <li>
- * Clients desiring a more detailed determination of data processing and archiving post receipt of an
- * ingestion response should retain the client request ID.  The Ingestion Service provides an API
- * for querying the ultimate fate of the ingestion.
+ * Clients desiring a more detailed determination of data processing and archiving post ingestion can utilize
+ * the collections of client request ID within the ingestion result.  The Ingestion Service provides an API
+ * for querying the final status of ingestion operation by client request UID.
  * </li>
  * <li>To convert from a collection of <code>{@link IngestDataResponse}</code> response messages to this record 
  * see <code>{@link ProtoMsg#toIngestionResult(List)}</code>.
  * </li>
- * <ul>
+ * </ul>
  * </p>
  *
  * @param   mode                    the mode of data ingestion 
- * @param   responseTime            timestamp of the response provided by the Ingestion Service
+ * @param   transmitRequestCount    number of transmitted messages from the client to the Ingestion Service (provided by client)
  * @param   acceptedRequestCount    number of accepted requests within the ingestion operation
+ * @param   startTime               timestamp of the first response provided by the Ingestion Service
+ * @param   finalTime               timestamp of the last response provided by the Ingestion Service
+ * @param   transmitRequestIds      collection of all client request UIDs transmitted by the client to Ingestion Service (provided by client)    
  * @param   receivedRequestIds      collection of all client request UIDs received and reported by the Ingestion Service
  * @param   rejectedRequestIds      collection of all client request UIDs rejected during injestion process
- * @param   exceptions              a list of any reported exception to the referenced ingest data request (empty if none)
- * @param   acknowledgments         the list of acknowledgments for ingest data requests produced by the Ingestion Service
+ * @param   exceptions              collection of any reported exception to the referenced ingest data request (empty if none)
+ * @param   acknowledgments         collection of acknowledgments for ingest data requests produced by the Ingestion Service
  *  
  * @author Christopher K. Allen
  * @since Oct 9, 2024
@@ -120,10 +140,13 @@ import java.util.List;
  */
 public record IngestionResult(
         Mode                    mode,
-        Instant                 responseTime,
+        int                     transmitRequestCount,
         int                     acceptedRequestCount,
-        List<ClientRequestUID>  receivedRequestIds,
-        List<ClientRequestUID>  rejectedRequestIds,
+        Instant                 startTime,
+        Instant                 finalTime,
+        List<IngestRequestUID>  transmitRequestIds,
+        List<IngestRequestUID>  receivedRequestIds,
+        List<IngestRequestUID>  rejectedRequestIds,
         List<Exception>         exceptions,
         List<Acknowledge>       acknowledgments
         ) 
@@ -133,8 +156,8 @@ public record IngestionResult(
     // Constants
     //
     
-    /** The single <code>NULL</code> result to be used when an ingestion operation was failed, was not performed, or undefined. */
-    public static final IngestionResult     NULL = new IngestionResult(Mode.NULL, Instant.MIN, 0, List.of(), List.of(), List.of(), List.of());
+    /** The singleton <code>NULL</code> constant to be used when an ingestion operation was failed, was not performed, or undefined. */
+    public static final IngestionResult     NULL = new IngestionResult(Mode.NULL, 0, 0, Instant.EPOCH, Instant.EPOCH, List.of(), List.of(), List.of(), List.of(), List.of());
 
     
     //
@@ -150,22 +173,26 @@ public record IngestionResult(
      * single acknowledgment field.
      * </p>
      * 
+     * @param transmitId    client request UID of the data request transmitted by client 
+     * @param receivedId    client request UID of the accepted operation (from the Ingestion Service)
      * @param responseTime  timestamp of the response provided by the Ingestion Service
-     * @param requestId     the client request UID of the accepted operation
      * @param colCount      the number of columns within the accepted data frame 
      * @param rowCount      the number of rows within the accepted data frame
      * 
      * @return  new <code>IngestionResult</code> populated with the given ingestion result
      */
-    public static IngestionResult   newUnarySuccess(Instant responseTime, ClientRequestUID requestId, int colCount, int rowCount) {
+    public static IngestionResult   newUnarySuccess(IngestRequestUID transmitId, IngestRequestUID receivedId, Instant responseTime, int colCount, int rowCount) {
         return new IngestionResult(
                 Mode.UNARY, 
-                responseTime, 
                 1, 
-                List.of(requestId), 
+                1,
+                responseTime, 
+                responseTime,
+                List.of(transmitId),
+                List.of(receivedId), 
                 List.of(), 
                 List.of(), 
-                List.of(new Acknowledge(requestId, colCount, rowCount))
+                List.of(new Acknowledge(receivedId, colCount, rowCount))
                 );
     }
     
@@ -178,21 +205,25 @@ public record IngestionResult(
      * exceptions field.
      * </p>
      * 
+     * @param transmitId    client request UID of the data request transmitted by client 
+     * @param receivedId    client request UID of the accepted operation (from the Ingestion Service)
      * @param responseTime  timestamp of the response provided by the Ingestion Service
-     * @param requestId     the client request UID of the accepted operation
      * @param strExcepType  name of the exception enumeration constant 
      * @param strExcepMsg   detail message for the exception (provided by Ingestion Service)
      * 
      * @return  new <code>IngestionResult</code> populated with the given ingestion result
      */
-    public static IngestionResult   newUnaryFailed(Instant responseTime, ClientRequestUID requestId, String strExcepType, String strExcepMsg) {
+    public static IngestionResult   newUnaryFailed(IngestRequestUID transmitId, IngestRequestUID receivedId, Instant responseTime, String strExcepType, String strExcepMsg) {
         return new IngestionResult(
-                Mode.UNARY, 
-                responseTime, 
+                Mode.UNARY,
+                1,
                 0, 
-                List.of(), 
-                List.of(requestId), 
-                List.of(new Exception(requestId, strExcepType, strExcepMsg)), 
+                responseTime, 
+                responseTime,
+                List.of(transmitId),
+                List.of(receivedId), 
+                List.of(receivedId), 
+                List.of(new Exception(receivedId, strExcepType, strExcepMsg)), 
                 List.of());
     }
     
@@ -205,20 +236,27 @@ public record IngestionResult(
      * the <code>exceptions</code> field cannot be modified.  The provided argument list of client request UIDs
      * is used as the list of received request UIDs and the list of rejected UIDs is assumed empty (and immutable).      
      * However, the returned record <b>is not</b> immutable; acknowledgments can be added post creation using
-     * <code>{@link #addAcknowledgment(ClientRequestUID, int, int)}</code>.
+     * <code>{@link #addAcknowledgment(IngestRequestUID, int, int)}</code>.
      * </p>
      * 
      * @param   mode                    mode of data ingestion (i.e., <code>{@link Mode#UNIDIRECTIONAL}</code> or <code>{@link Mode#BIDIRECTIONAL}</code>)
-     * @param   responseTime            timestamp of the response provided by the Ingestion Service
+     * @param   transmitRequestCount    number of transmitted messages from the client to the Ingestion Service (provided by client)
      * @param   acceptedRequestCount    number of accepted requests within the ingestion operation
+     * @param   startTime               timestamp of the first response provided by the Ingestion Service
+     * @param   finalTime               timestamp of the last response provided by the Ingestion Service
+     * @param   transmitRequestIds      collection of all client request UIDs transmitted by the client to Ingestion Service (provided by client)    
      * @param   receivedRequestIds      collection of all client request UIDs received and reported by the Ingestion Service
      * 
      * @return  new <code>IngestionResult</code> populated with the given ingestion summary results
      */
-    public static IngestionResult   newStreamSuccess(Mode mode, Instant responseTime, int acceptedRequestCount, List<ClientRequestUID> receivedRequestIds) {
-        return new IngestionResult(mode, 
-                responseTime, 
-                acceptedRequestCount, 
+    public static IngestionResult   newStreamSuccess(Mode mode, int transmitRequestCount, int acceptedRequestCount, Instant startTime, Instant finalTime, List<IngestRequestUID> transmitRequestIds, List<IngestRequestUID> receivedRequestIds) {
+        return new IngestionResult(
+                mode, 
+                transmitRequestCount,
+                transmitRequestCount,
+                startTime, 
+                finalTime,
+                transmitRequestIds,
                 receivedRequestIds, 
                 List.of(), 
                 List.of(), 
@@ -232,23 +270,29 @@ public record IngestionResult(
      * </h1>
      * <p>
      * Convenience creator for the case of a streaming ingestion operation containing rejected requests.
-     * Creates a new, mutable <code>IngestionResult</code> record emtpy exceptions and acknowledgments fields.
-     * These fields are to be populated post creation with the exceptions and
+     * Creates a new, mutable <code>IngestionResult</code> record empty exceptions and acknowledgments fields.
+     * These fields are to be populated post creation with the exceptions and acknowledgments.
      * </p>
      * 
      * @param   mode                    mode of data ingestion (i.e., <code>{@link Mode#UNIDIRECTIONAL}</code> or <code>{@link Mode#BIDIRECTIONAL}</code>)
-     * @param   responseTime            timestamp of the response provided by the Ingestion Service
+     * @param   transmitRequestCount    number of transmitted messages from the client to the Ingestion Service (provided by client)
      * @param   acceptedRequestCount    number of accepted requests within the ingestion operation
+     * @param   startTime               timestamp of the first response provided by the Ingestion Service
+     * @param   finalTime               timestamp of the last response provided by the Ingestion Service
+     * @param   transmitRequestIds      collection of all client request UIDs transmitted by the client to Ingestion Service (provided by client)    
      * @param   receivedRequestIds      collection of all client request UIDs received and reported by the Ingestion Service
      * @param   rejectedRequestIds      collection of all client request UIDs rejected during injestion process
      * 
      * @return  new <code>IngestionResult</code> populated with the given ingestion summary results and exception
      */
-    public static IngestionResult   newStreamFailed(Mode mode, Instant responseTime, int acceptedRequestCount, List<ClientRequestUID> receivedRequestIds, List<ClientRequestUID> rejectedRequestIds) {
+    public static IngestionResult   newStreamFailed(Mode mode, int transmitRequestCount, int acceptedRequestCount, Instant startTime, Instant finalTime, List<IngestRequestUID> transmitRequestIds, List<IngestRequestUID> receivedRequestIds, List<IngestRequestUID> rejectedRequestIds) {
         return new IngestionResult(
                 mode, 
-                responseTime, 
+                transmitRequestCount,
                 acceptedRequestCount, 
+                startTime,
+                finalTime,
+                transmitRequestIds,
                 receivedRequestIds, 
                 rejectedRequestIds, 
                 new LinkedList<Exception>(), 
@@ -322,7 +366,7 @@ public record IngestionResult(
      * @throws  UnsupportedOperationException   record was not created with <code>newStreamFailed()</code>
      */
     public void addException(String status, String message) throws UnsupportedOperationException {
-        this.addException(ClientRequestUID.NULL, status, message);
+        this.addException(IngestRequestUID.NULL, status, message);
     }
     
     /**
@@ -342,7 +386,7 @@ public record IngestionResult(
      * 
      * @throws  UnsupportedOperationException   record was not created with <code>newStreamFailed()</code>
      */
-    public void addException(ClientRequestUID requestId, String status, String message) throws UnsupportedOperationException {
+    public void addException(IngestRequestUID requestId, String status, String message) throws UnsupportedOperationException {
         this.exceptions.add(new Exception(requestId, status, message));
     }
     
@@ -360,8 +404,30 @@ public record IngestionResult(
      * 
      * @throws UnsupportedOperationException    record was not created with <code>newStreamSuccess()</code> or <code>newStreamFailed</code>
      */
-    public void addAcknowledgment(ClientRequestUID requestId, int colCount, int rowCount) throws UnsupportedOperationException {
+    public void addAcknowledgment(IngestRequestUID requestId, int colCount, int rowCount) throws UnsupportedOperationException {
         this.acknowledgments.add(new Acknowledge(requestId, colCount, rowCount));
+    }
+    
+    public String printOut() {
+        StringWriter    wtrBuffer = new StringWriter();
+        PrintWriter     os = new PrintWriter(wtrBuffer);
+        
+        os.println("Data ingestion mode       : " + this.mode);
+        os.println("Transmitted request count : " + this.transmitRequestCount);
+        os.println("Accepted request count    : " + this.acceptedRequestCount);
+        os.println("Ingestion exception count : " + this.exceptions.size());
+        os.println("Acknowledgment count      : " + this.acknowledgments.size());
+        os.println("Start time instant        : " + this.startTime);
+        os.println("Final time instant        : " + this.finalTime);
+        os.println("Transmitted request UIDs  : " + this.transmitRequestIds);
+        os.println("Received request UIDS     : " + this.receivedRequestIds);
+        os.println("Rejected request UIDS     : " + this.rejectedRequestIds);
+        os.println("Ingestion exceptions      : " + this.exceptions);
+        os.println("Ingestion acknowledgments : " + this.acknowledgments);
+        os.flush();
+        os.close();
+        
+        return wtrBuffer.toString();
     }
     
     
@@ -408,7 +474,7 @@ public record IngestionResult(
      * @param   status      the exception status name (i.e., the name of the exception enumeration constant)
      * @param   message     exception detail message
      */
-    public static record Exception(ClientRequestUID requestId, String status, String message) {
+    public static record Exception(IngestRequestUID requestId, String status, String message) {
         
         /**
          * <p>
@@ -431,7 +497,7 @@ public record IngestionResult(
      * @param   colCount    number of columns within the ingest data request (reported by Ingestion Service)
      * @param   rowCount    number of rows within the ingest data request (reported by Ingestion Service)
      */
-    public static record Acknowledge(ClientRequestUID requestId, Integer colCount, Integer rowCount) {
+    public static record Acknowledge(IngestRequestUID requestId, Integer colCount, Integer rowCount) {
 
         /**
          * <p>
