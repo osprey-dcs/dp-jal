@@ -4,8 +4,9 @@
 Common Resources for Data Platform Client Java API Libraries
 
 Project provides tools for the following:
+- Java-based interaction with the Data Platform
 - Configuration management using YAML
-- Standard gRPC operations in Java
+- Tuning of gRPC parameters and techniques for optimized performance
 
 NOTES:
 - The dependency structure of this POM is too inclusive.  Once the project settles the
