@@ -70,10 +70,16 @@ public class IngestionFrameProcessorDepTest {
     //
     
     /** The data provider UID used for all <code>IngestDataRequest</code> messages. */
-    public static final int         INT_PROVIDER_UID = 1;
+    public static final String      STR_PROVIDER_UID = "1";
+    
+    /** The data provider unique name need for the provider UID record */
+    public static final String      STR_PROVIDER_NAME = IngestionFrameProcessorDepTest.class.getSimpleName();
+    
+    /** The data provider "isNew" flag needed for the provider UID record */
+    public static final boolean     BOL_PROVIDER_ISNEW = false;
     
     /** The data provider UID record used for all <code>IngestDataRequest</code> messages */
-    public static final ProviderUID REC_PROVIDER_UID = ProviderUID.from(INT_PROVIDER_UID);
+    public static final ProviderUID REC_PROVIDER_UID = ProviderUID.from(STR_PROVIDER_UID, STR_PROVIDER_NAME, BOL_PROVIDER_ISNEW);
     
     
     /** Concurrency - Number of concurrent threads - for concurrency testing */
@@ -159,7 +165,7 @@ public class IngestionFrameProcessorDepTest {
 //        try {
 //            IngestDataRequest msgRqst = this.processor.createRequest(frame);
 //
-//            Assert.assertEquals(INT_PROVIDER_UID, msgRqst.getProviderId());
+//            Assert.assertEquals(STR_PROVIDER_UID, msgRqst.getProviderId());
 //
 //        } catch (Exception e) {
 //            Assert.fail("createRequest(IngestionFrame) threw exception " + e.getClass().getSimpleName() + ": " + e.getMessage());

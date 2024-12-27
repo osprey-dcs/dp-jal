@@ -46,6 +46,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
@@ -236,14 +237,16 @@ public class IngestionChannelEvaluatorTest {
     
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannelEvaluator#evaluate(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * 
+     * Unidirectional streaming is not implemented until version 1.5
      */
     @Test
-    public final void testEvaluateBidi() {
-        
-        psOutput.println("Bidirectional Streaming Tests");
+    public final void testEvaluateUni() {
+
+        psOutput.println("UNIDIRECTIONAL STREAMING TESTS");
         
         try {
-            this.runSuite(LST_CFG_BIDI);
+            this.runSuite(LST_CFG_FWD);
             
         } catch (CompletionException e) {
             Assert.fail("Evaluation failed for configuration - " + e.getMessage());
@@ -253,16 +256,14 @@ public class IngestionChannelEvaluatorTest {
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannelEvaluator#evaluate(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
-     * 
-     * Unidirectional streaming is not implemented until version 1.5
      */
-//    @Test
-    public final void testEvaluateForward() {
-
-        psOutput.println("Unidirectional Streaming Tests");
+    @Test
+    public final void testEvaluateBidi() {
+        
+        psOutput.println("BIDIRECTIONAL STREAMING TESTS");
         
         try {
-            this.runSuite(LST_CFG_FWD);
+            this.runSuite(LST_CFG_BIDI);
             
         } catch (CompletionException e) {
             Assert.fail("Evaluation failed for configuration - " + e.getMessage());
@@ -294,6 +295,8 @@ public class IngestionChannelEvaluatorTest {
             IngestionChannelEvaluator   test = new IngestionChannelEvaluator(cfg);
             
             // Perform evaluation test and check for success
+            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - performing " + cfg.streamType() + " evalutaion for stream count " + cfg.streamCount());
+            
             boolean bolResult = test.evaluate(connIngest);
             
             if (!bolResult) {
@@ -305,6 +308,7 @@ public class IngestionChannelEvaluatorTest {
             // Store results
             psOutput.println();
             test.printResults(psOutput, strCfgName);
+            psOutput.println();
         }
     }
 }

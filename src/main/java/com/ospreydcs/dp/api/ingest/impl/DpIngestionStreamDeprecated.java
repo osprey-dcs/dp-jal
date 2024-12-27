@@ -37,13 +37,15 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -417,7 +419,7 @@ public class DpIngestionStreamDeprecated extends
      */
     @Override
     synchronized
-    public List<IngestionResponse> closeStream() throws IllegalStateException, InterruptedException {
+    public IngestionResult closeStream() throws IllegalStateException, InterruptedException {
         
         // Check if stream is already close
         if (!this.bolOpenStream) {
@@ -435,13 +437,13 @@ public class DpIngestionStreamDeprecated extends
         // - blocks until all processes are finished
         this.processor.shutdown();  // throw InterruptedException
         
-        // Retrieve the Ingestion Service responses 
-        List<IngestionResponse> lstRsps = this.processor.getIngestionResponses();
+        // Retrieve the Ingestion Service responses and create result
+        IngestionResult         recResult = this.processor.getIngestionResult();
         
         // Clear the open stream flag and return responses
         this.bolOpenStream = false;
         
-        return lstRsps;
+        return recResult;
     }
     
     /**
@@ -462,16 +464,17 @@ public class DpIngestionStreamDeprecated extends
      * the data stream is inactive.
      * </p>
      * 
+     * @return  result of the ingestion operation
      * @return  <code>true</code> if stream was closed everything was shut down,
      *          <code>false</code> if the stream was already closed or internal process failed
      */
     @Override
     synchronized
-    public boolean closeStreamNow() {
+    public IngestionResult closeStreamNow() {
         
         // Check if stream is already close
         if (!this.bolOpenStream)
-            return false;
+            return IngestionResult.NULL;
         
         // Deactivate the ingestion stream processor
         boolean bolShutdown = this.processor.shutdownNow();
@@ -479,7 +482,17 @@ public class DpIngestionStreamDeprecated extends
         // Clear the open stream flag and return
         this.bolOpenStream = false;
         
-        return bolShutdown;
+        try {
+            IngestionResult recResult = this.processor.getIngestionResult();
+            
+            return recResult;
+            
+        } catch (Exception e) {
+            if (BOL_LOGGING)
+                LOGGER.warn("{} - attempt to recover ingestion result failed with exception {}.", JavaRuntime.getQualifiedMethodNameSimple(), e);
+            
+            return IngestionResult.NULL;
+        }
     }
     
     /**
@@ -651,6 +664,15 @@ public class DpIngestionStreamDeprecated extends
         this.processor.awaitRequestQueueEmpty();
     }
     
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#getRequestIds()
+     */
+    @Override
+    public List<IngestRequestUID> getRequestIds() {
+        return this.processor.getRequestIds();
+    }
+    
     
     //
     // State and Data Query
@@ -721,10 +743,10 @@ public class DpIngestionStreamDeprecated extends
      * @throws IllegalStateException    the stream was not opened and processor was never activated
      */
 //    @Override
-    public List<ClientRequestUID>    getClientRequestIds() throws IllegalStateException {
+    public List<IngestRequestUID>    getClientRequestIds() throws IllegalStateException {
     
         // Get the client request IDs from the internal processor
-        List<ClientRequestUID>   lstIds = this.processor.getRequestIds();
+        List<IngestRequestUID>   lstIds = this.processor.getRequestIds();
         
         return lstIds;
     }

@@ -46,13 +46,11 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionService;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceFactory;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -312,10 +310,10 @@ public class DpIngestionServiceImplTest {
         
         // Attempt data ingestion
         try {
-//            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_SMALL);
-            List<IngestionResponse> lstRsps = apiIngest.ingest(MSG_FRAME_SMALL);
+//            List<IngestionResponse> lstRsps = apiIngest.ingest(MSG_FRAME_SMALL);
+            IngestionResult recResult = apiIngest.ingest(MSG_FRAME_SMALL);
             
-            Assert.assertEquals(1, lstRsps.size());
+            Assert.assertEquals(1, recResult.acceptedRequestCount());
             
         } catch (DpIngestionException e) {
             
@@ -357,10 +355,11 @@ public class DpIngestionServiceImplTest {
         
         // Attempt data ingestion
         try {
-//            List<IngestionResponse> lstRsps = apiIngest.ingest(recUID, MSG_FRAME_LARGE);
-            List<IngestionResponse> lstRsps = apiIngest.ingest(MSG_FRAME_LARGE);
+//            List<IngestionResponse> lstRsps = apiIngest.ingest(MSG_FRAME_LARGE);
+            IngestionResult recResult = apiIngest.ingest(MSG_FRAME_LARGE);
             
-            Assert.assertEquals(1, lstRsps.size());
+            // The frame decomposition will create 4 composite-frames
+            Assert.assertEquals(4, recResult.acceptedRequestCount());
             
         } catch (DpIngestionException e) {
             
@@ -427,16 +426,19 @@ public class DpIngestionServiceImplTest {
         
         
         // Test results
-        List<IngestionResponse> lstRspsAll = new LinkedList<>();    // responses from full payload
+//        List<IngestionResponse> lstRspsAll = new LinkedList<>();    // responses from full payload
+        List<IngestionResult>   lstRecResults = new LinkedList<>(); // results from full payload
         Instant insStart, insFinish, insShutdown, insTerminate;     // Time everything
         
         try {
             // Submit payload frame-by-frame
             insStart = Instant.now();
             for (IngestionFrame frame : lstFrames) {
-                List<IngestionResponse> lstRsps = apiIngest.ingest(frame);
+//                List<IngestionResponse> lstRsps = apiIngest.ingest(frame);
+                IngestionResult recResult = apiIngest.ingest(frame);
                 
-                lstRspsAll.addAll(lstRsps);
+//                lstRspsAll.addAll(lstRsps);
+                lstRecResults.add(recResult);
             }
             insFinish = Instant.now();
             
@@ -484,7 +486,8 @@ public class DpIngestionServiceImplTest {
         System.out.println("  Payload allocation : " + szPayload);
         System.out.println("  Maximum frame size : " + szFrmMax);
         System.out.println("  Provider UID       : " + recUID);
-        System.out.println("  Messages transmitted : " + cntXmissions);
+        System.out.println("  Messages transmitted  : " + cntXmissions);
+        System.out.println("  Messages accepted     : " + lstRecResults.stream().mapToInt(rec -> rec.acceptedRequestCount()).sum());
         System.out.println("  Time for transmission : " + Duration.between(insStart, insFinish));
         System.out.println("  Time for shutdown     : " + Duration.between(insFinish, insShutdown));
         System.out.println("  Time for termination  : " + Duration.between(insShutdown, insTerminate));

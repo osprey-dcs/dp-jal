@@ -40,6 +40,7 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
 import com.ospreydcs.dp.api.ingest.test.TestIngestDataRequestGenerator;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -173,10 +174,14 @@ public class IngestionChannelEvaluator {
     //
     
     /** IngestionChannel activate() result */
-    private Boolean bolActivate = null;
+    private Boolean         bolActivate = null;
     
     /** IngestionChannel shutdown() result */
-    private Boolean bolShutdown = null;
+    private Boolean         bolShutdown = null;
+    
+    
+    /** Ingestion operation result */
+    private IngestionResult recResult = null;
 
     
     /** Initialization duration for the evaluation (between start and activation) */
@@ -275,6 +280,7 @@ public class IngestionChannelEvaluator {
             //  Since shutdown() operation is blocking - does not return until all messages are transmitted
             this.bolShutdown = this.chan.shutdown();
             this.insFinish = Instant.now();
+            this.recResult= this.chan.getIngestionResult();
         
         } catch (UnsupportedOperationException | RejectedExecutionException e) {
             this.recStatus = ResultStatus.newFailure("IngestionChannel instance failed to activate().", e);
@@ -426,8 +432,8 @@ public class IngestionChannelEvaluator {
         psOut.println("    gRPC stream type       : " + this.cfgTest.streamType());
         psOut.println("    gRPC data stream count : " + this.cfgTest.streamCount());
         psOut.println("  Payload Configuration " );
-        psOut.println("    Message count      : " + IngestionChannelEvaluator.CNT_MSGS_PAYLOAD);
-        psOut.println("    Avg. message allocation : " + IngestionChannelEvaluator.SZ_MSG_ALLOC_AVG);
+        psOut.println("    Message count            : " + IngestionChannelEvaluator.CNT_MSGS_PAYLOAD);
+        psOut.println("    Avg. message allocation  : " + IngestionChannelEvaluator.SZ_MSG_ALLOC_AVG);
         psOut.println("    Total payload allocation : " + IngestionChannelEvaluator.SZ_PAYLOAD_ALLOC);
         psOut.println("  Test Activity");
         psOut.println("    Transmission duration    : " + this.durXmit);
@@ -439,7 +445,8 @@ public class IngestionChannelEvaluator {
         psOut.println("    shutdown() result      : " + this.bolShutdown);
         psOut.println("    Message transmit count : " + this.chan.getRequestCount());
         psOut.println("    Response message count : " + this.chan.getResponseCount());
-        psOut.println("    Response error count   : " + this.chan.getIngestionExceptions().size());
+        psOut.println("    Accepted request count : " + this.recResult.acceptedRequestCount());
+        psOut.println("    Response error count   : " + this.recResult.exceptions().size());
         psOut.println("  Evaluation Results");
         psOut.println("    Full transmission rate (Mbps) : " + this.getTransmissionRateFull());
         psOut.println("    Raw transmission rate (Mbps)  : " + this.getTransmissionRateRaw());

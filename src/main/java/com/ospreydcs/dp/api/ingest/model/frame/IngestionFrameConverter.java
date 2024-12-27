@@ -34,7 +34,7 @@ import java.util.UUID;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.EventMetadata;
@@ -250,9 +250,9 @@ public final class IngestionFrameConverter {
             throws IllegalStateException, MissingResourceException, TypeNotPresentException, ClassCastException  {
 
         // Create a new request ID
-        ClientRequestUID  recRqstUid = frame.getClientRequestUid();
+        IngestRequestUID  recRqstUid = frame.getClientRequestUid();
         if (recRqstUid == null)
-            recRqstUid = ClientRequestUID.random();
+            recRqstUid = IngestRequestUID.random();
             
 
         // Create the message and return it
@@ -284,13 +284,13 @@ public final class IngestionFrameConverter {
      * 
      * @see ProtoMsg#from(IngestionFrame)
      */
-    public IngestDataRequest createRequest(IngestionFrame frame, ProviderUID recPrvUid, ClientRequestUID recRqstId) 
+    public IngestDataRequest createRequest(IngestionFrame frame, ProviderUID recPrvUid, IngestRequestUID recRqstId) 
             throws ProviderException, MissingResourceException, TypeNotPresentException, ClassCastException  {
         
         IngestDataRequest   msgRqst = IngestDataRequest.newBuilder()
                 .setProviderId(recPrvUid.uid())
                 .setClientRequestId(recRqstId.requestId())
-                .setRequestTime(ProtoTime.now())
+//                .setRequestTime(ProtoTime.now())
                 .addAllAttributes(ProtoMsg.createAttributes(frame.getAttributes()))
                 .setEventMetadata(IngestionFrameConverter.extractEventMetadata(frame))
                 .setIngestionDataFrame(ProtoMsg.from(frame))
@@ -368,7 +368,7 @@ public final class IngestionFrameConverter {
 //     *  
 //     * @return  a new client request ID unique within the execution of the current JVM
 //     */
-//    private static ClientRequestUID newClientRequestId() {
+//    private static IngestRequestUID newClientRequestId() {
 //
 //        UUID    uuidRqst = UUID.randomUUID();
 //        

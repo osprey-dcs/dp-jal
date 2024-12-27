@@ -50,9 +50,10 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -196,9 +197,11 @@ public class DpIngestionStreamImplTest {
         
         // Close the interface stream
         try {
-            List<IngestionResponse> lstRsps = istream.closeStream();
+//            List<IngestionResponse> lstRsps = istream.closeStream();
+            IngestionResult recResult = istream.closeStream();
+            
             Assert.assertFalse(istream.isStreamOpen());
-            Assert.assertEquals(0, lstRsps.size());
+            Assert.assertEquals(0, recResult.acceptedRequestCount());
             
         } catch (IllegalStateException | CompletionException | InterruptedException e) {
             istream.shutdownNow();
@@ -310,10 +313,11 @@ public class DpIngestionStreamImplTest {
         
         // Close the interface stream
         try {
-            List<IngestionResponse> lstRsps = istream.closeStream();
+//            List<IngestionResponse> lstRsps = istream.closeStream();
+            IngestionResult recResult = istream.closeStream();
             insClosed = Instant.now();
             Assert.assertFalse(istream.isStreamOpen());
-            Assert.assertEquals(0, lstRsps.size());
+            Assert.assertEquals(0, recResult.acceptedRequestCount());
             
         } catch (IllegalStateException | CompletionException | InterruptedException e) {
             istream.shutdownNow();
@@ -572,10 +576,11 @@ public class DpIngestionStreamImplTest {
         
         // Close the interface stream
         try {
-            List<IngestionResponse> lstRsps = istream.closeStream();
+//            List<IngestionResponse> lstRsps = istream.closeStream();
+            IngestionResult recResult = istream.closeStream();
             insClosed = Instant.now();
             Assert.assertFalse(istream.isStreamOpen());
-            Assert.assertEquals(1, lstRsps.size());
+            Assert.assertEquals(1, recResult.acceptedRequestCount());
             
         } catch (IllegalStateException | CompletionException | InterruptedException e) {
             istream.shutdownNow();
@@ -681,8 +686,9 @@ public class DpIngestionStreamImplTest {
         }
         
         // Close the interface stream
+        IngestionResult     recResult;
         try {
-            istream.closeStream();
+            recResult = istream.closeStream();
             insClosed = Instant.now();
             
             Assert.assertFalse(istream.isStreamOpen());
@@ -695,10 +701,12 @@ public class DpIngestionStreamImplTest {
         
         // Get the transmission results
         ProviderUID             recPrvrUid = istream.getProviderUid();
-        List<ClientRequestUID>  lstRqstUids = istream.getClientRequestIds();
+        List<IngestRequestUID>  lstRqstUids = istream.getRequestIds();
         int                     cntXmissions = istream.getTransmissionCount();
-        List<IngestionResponse> lstRsps = istream.getIngestionResponses();
-        List<IngestionResponse> lstXmitExcps = istream.getIngestionExceptions();
+//        List<IngestionResponse> lstRsps = istream.getIngestionResponses();
+//        List<IngestionResponse> lstXmitExcps = istream.getIngestionExceptions();
+        List<IngestionResult.Acknowledge>   lstRspAcks = recResult.acknowledgments();
+        List<IngestionResult.Exception>     lstRspErrs = recResult.exceptions();
         Collection<Exception>   setFrmDecompExcp = istream.getFailedFrameDecompositions();
         Collection<Exception>   setFrmCnvrtExcp = istream.getFailedFrameConversions();
         
@@ -734,13 +742,14 @@ public class DpIngestionStreamImplTest {
         System.out.println("  Termination time                : " + Duration.between(insShutdown, insTerminated));
         System.out.println("  Total API active time           : " + Duration.between(insStart, insTerminated));
         System.out.println("  Messages transmitted            : " + cntXmissions);
-        System.out.println("  Responses received              : " + lstRsps.size());
+        System.out.println("  Messages accepted               : " + recResult.acceptedRequestCount());
+        System.out.println("  Acknowledgments received        : " + recResult.acknowledgments().size());
         System.out.println("  Data Provider UID               : " + recPrvrUid);
         System.out.println("  Client request UIDs             : " + lstRqstUids);
-        System.out.println("  Exceptional responses           : " + lstXmitExcps);
+        System.out.println("  Exceptional responses           : " + recResult.exceptions().size());
         System.out.println("  Failed frame decompsitions      : " + setFrmDecompExcp);
         System.out.println("  Failed frame conversions        : " + setFrmCnvrtExcp);
-        System.out.println("  All Ingestion Service responses : " + lstRsps);
+        System.out.println("  Ingestion Service request UIDs  : " + recResult.receivedRequestIds());
     }
 
     /**
@@ -836,11 +845,13 @@ public class DpIngestionStreamImplTest {
         
         // Close the interface stream
         try {
-            List<IngestionResponse> lstRsps = istream.closeStream();
+//            List<IngestionResponse> lstRsps = istream.closeStream();
+            IngestionResult recResult = istream.closeStream();
             Instant     insClosed = Instant.now();
             
             System.out.println("  Messages transmitted       : " + istream.getTransmissionCount());
-            System.out.println("  Responses received         : " + lstRsps.size());
+            System.out.println("  Messages received          : " + recResult.receivedRequestIds().size());
+            System.out.println("  Accepted messages          : " + recResult.acceptedRequestCount());
             System.out.println("  Total time stream open     : " + Duration.between(insStart, insClosed));
 
             Assert.assertFalse(istream.isStreamOpen());
@@ -966,11 +977,13 @@ public class DpIngestionStreamImplTest {
         
         // Close the interface stream
         try {
-            List<IngestionResponse> lstRsps = istream.closeStream();
+//            List<IngestionResponse> lstRsps = istream.closeStream();
+            IngestionResult recResult = istream.closeStream();
             Instant     insClosed = Instant.now();
             
             System.out.println("  Messages transmitted       : " + istream.getTransmissionCount());
-            System.out.println("  Responses received         : " + lstRsps.size());
+            System.out.println("  Messages received          : " + recResult.receivedRequestIds().size());
+            System.out.println("  Accepted messages          : " + recResult.acceptedRequestCount());
             System.out.println("  Total time stream open     : " + Duration.between(insStart, insClosed));
 
             Assert.assertFalse(istream.isStreamOpen());
@@ -1063,7 +1076,8 @@ public class DpIngestionStreamImplTest {
         // Close the interface stream
         try {
             Instant insStart = Instant.now();
-            List<IngestionResponse> lstRsps = istream.closeStream();
+//            List<IngestionResponse> lstRsps = istream.closeStream();
+            IngestionResult recResult = istream.closeStream();
             Instant insClosed = Instant.now();
             
             Duration    durClose = Duration.between(insStart, insClosed);
@@ -1073,7 +1087,8 @@ public class DpIngestionStreamImplTest {
             System.out.println("  Staging capacity (bytes)   : " + szCapacity);
             System.out.println("  Close stream wait time     : " + durClose);
             System.out.println("  Messages transmitted       : " + istream.getTransmissionCount());
-            System.out.println("  Responses received         : " + lstRsps.size());
+            System.out.println("  Messages received          : " + recResult.receivedRequestIds().size());
+            System.out.println("  Accepted messages          : " + recResult.acceptedRequestCount());
             
             Assert.assertFalse(istream.isStreamOpen());
 //            Assert.assertEquals(1, lstRsps.size());
@@ -1182,14 +1197,15 @@ public class DpIngestionStreamImplTest {
         LOGGER.debug("Issuing a hard close operation after pausing {} milliseconds: queue size = {}, messages transmitted = {}", intWait, istream.getQueueSize(), istream.getTransmissionCount());
         
         Instant insStart = Instant.now();
-        boolean bolClosed = istream.closeStreamNow();
+//        boolean bolClosed = istream.closeStreamNow();
+        IngestionResult recResult = istream.closeStreamNow();
         Instant insClosed = Instant.now();
 
         // Get results
         Duration    durClose = Duration.between(insStart, insClosed);
-        List<IngestionResponse> lstRsps = istream.getIngestionResponses();
-        List<IngestionResponse> lstExcps = istream.getIngestionExceptions();
-        List<ClientRequestUID>  lstRqstUids = istream.getClientRequestIds();
+//        List<IngestionResponse> lstRsps = istream.getIngestionResponses();
+//        List<IngestionResponse> lstExcps = istream.getIngestionExceptions();
+        List<IngestRequestUID>  lstRqstUids = istream.getRequestIds();
         Collection<Exception>   setFrmDecmpExcp = istream.getFailedFrameDecompositions();
         Collection<Exception>   setFrmCnvrtExcp = istream.getFailedFrameConversions();
 
@@ -1198,14 +1214,15 @@ public class DpIngestionStreamImplTest {
         System.out.println("  Staging capacity (bytes)   : " + szCapacity);
         System.out.println("  Hard Close stream time     : " + durClose);
         System.out.println("  Messages transmitted       : " + istream.getTransmissionCount());
-        System.out.println("  Responses received         : " + lstRsps.size());
-        System.out.println("  Transmission exceptions    : " + lstExcps.size());
+        System.out.println("  Messages transmitted       : " + istream.getTransmissionCount());
+        System.out.println("  Messages received          : " + recResult.receivedRequestIds().size());
+        System.out.println("  Accepted messages          : " + recResult.acceptedRequestCount());
+        System.out.println("  Transmission exceptions    : " + recResult.exceptions().size());
         System.out.println("  Client Request UIDs        : " + lstRqstUids.size());
         System.out.println("  Frame decompsition errors  : " + setFrmDecmpExcp);
         System.out.println("  Frame conversion errors    : " + setFrmCnvrtExcp);
 
         Assert.assertFalse(istream.isStreamOpen());
-        Assert.assertTrue(bolClosed);
 
         
         // Shut down the interface

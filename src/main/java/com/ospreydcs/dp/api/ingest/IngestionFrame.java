@@ -45,7 +45,7 @@ import org.epics.pvdata.pv.PVStructure;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpSupportedType;
 import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.model.ProviderUID;
@@ -302,7 +302,7 @@ public class IngestionFrame implements Serializable {
     private ProviderUID         recProviderUid = null;
     
     /** The client request unique identifier */
-    private ClientRequestUID     recClientUid = null;
+    private IngestRequestUID     recClientUid = null;
     
     
     /** Optional name for ingestion frame */
@@ -358,7 +358,7 @@ public class IngestionFrame implements Serializable {
      * </p> 
      */
     public IngestionFrame() {
-        this.recClientUid = ClientRequestUID.random();
+        this.recClientUid = IngestRequestUID.random();
         this.vecColData = new ArrayList<>();
     }
     
@@ -392,7 +392,7 @@ public class IngestionFrame implements Serializable {
      * @see #checkFrameConsistency()
      */
     public IngestionFrame(UniformSamplingClock clk, ArrayList<IDataColumn<Object>> lstCols) throws IllegalArgumentException {
-        this.recClientUid = ClientRequestUID.random();
+        this.recClientUid = IngestRequestUID.random();
 
         this.clkTms = clk;
         this.vecColData = lstCols;
@@ -438,7 +438,7 @@ public class IngestionFrame implements Serializable {
      */
     public IngestionFrame(UniformSamplingClock clk, ArrayList<IDataColumn<Object>> lstCols, Map<String, String> mapAttrs) 
             throws IllegalArgumentException {
-        this.recClientUid = ClientRequestUID.random();
+        this.recClientUid = IngestRequestUID.random();
 
         this.clkTms = clk;
         this.vecColData = lstCols;
@@ -521,7 +521,7 @@ public class IngestionFrame implements Serializable {
     public IngestionFrame(ArrayList<Instant> vecTms, ArrayList<IDataColumn<Object>> lstCols, Map<String, String> mapAttrs) 
             throws IllegalArgumentException {
 
-        this.recClientUid = ClientRequestUID.random();
+        this.recClientUid = IngestRequestUID.random();
      
         this.vecTms = vecTms;
         this.vecColData = lstCols;
@@ -837,7 +837,7 @@ public class IngestionFrame implements Serializable {
      * 
      * @param recRequestUid new universally unique request ID 
      */
-    public void setClientRequestUid(ClientRequestUID recRequestUid) {
+    public void setClientRequestUid(IngestRequestUID recRequestUid) {
         this.recClientUid = recRequestUid;
     }
     
@@ -1864,7 +1864,7 @@ public class IngestionFrame implements Serializable {
      *  
      * @return  request UUID for the ingestion frame 
      */
-    public ClientRequestUID getClientRequestUid() {
+    public IngestRequestUID getClientRequestUid() {
         return this.recClientUid;
     }
     

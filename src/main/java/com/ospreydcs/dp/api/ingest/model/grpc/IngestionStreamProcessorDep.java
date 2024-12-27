@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,14 +50,16 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataStreamResponse;
 
 /**
  * <p>
@@ -373,7 +376,7 @@ public final class IngestionStreamProcessorDep {
 //    private final BlockingQueue<IngestDataRequest>  queRequests = new LinkedBlockingQueue(INT_BUFFER_SIZE);
 //    
 //    /** Collection of all outgoing message client request IDs */
-//    private final Collection<ClientRequestUID>       setClientIds = new LinkedList<>();
+//    private final Collection<IngestRequestUID>       setClientIds = new LinkedList<>();
 //    
 //    /** Source for incoming response messages */
 //    private final Consumer<IngestDataResponse>      fncDataSink = (rsp) -> { this.setResponses.add(rsp); };
@@ -394,12 +397,15 @@ public final class IngestionStreamProcessorDep {
     /** Collection of future results from streaming tasks - used for shutdowns */
     private Collection<Future<Boolean>> setStreamFutures = null;
 
+
+    /** Collection of all incoming ingestion response - from unidirectional stream tasks */
+    private List<IngestDataStreamResponse> lstRspsUni = null;
     
     /** Collection of all incoming ingestion responses - from bidirectional streaming tasks */
-    private Collection<IngestDataResponse>      setResponses = null; // = new LinkedList<>();
+    private List<IngestDataResponse>      lstRspsBidi = null; // = new LinkedList<>();
     
     /** Collection of all ingestion responses with exceptions */
-    private Collection<IngestDataResponse>      setBadResponses = null;
+    private List<IngestDataResponse>      setBadResponses = null;
     
     
     
@@ -933,15 +939,15 @@ public final class IngestionStreamProcessorDep {
      * @see #getIngestionResponses()
      * @see #getIngestionExceptions()
      */
-    public List<ClientRequestUID>    getRequestIds() throws IllegalStateException {
+    public List<IngestRequestUID>    getRequestIds() throws IllegalStateException {
         
         // Check if activated
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
-        List<ClientRequestUID>   lstIds = this.setStreamTasks
+        List<IngestRequestUID>   lstIds = this.setStreamTasks
                 .stream()
-                .<ClientRequestUID>flatMap(stream -> stream.getRequestIds().stream())
+                .<IngestRequestUID>flatMap(stream -> stream.getRequestIds().stream())
                 .toList();
         
         return lstIds;
@@ -981,8 +987,8 @@ public final class IngestionStreamProcessorDep {
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
-        List<IngestionResponse> lstRsps = new ArrayList<>(this.setResponses.size());
-        for (IngestDataResponse msgRsp : this.setResponses) {
+        List<IngestionResponse> lstRsps = new ArrayList<>(this.lstRspsBidi.size());
+        for (IngestDataResponse msgRsp : this.lstRspsBidi) {
             IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
             
             lstRsps.add(recRsp);
@@ -995,6 +1001,52 @@ public final class IngestionStreamProcessorDep {
         return lstRsps;
     }
     
+    public List<IngestDataStreamResponse>   getIngestionResponseUni() throws IllegalStateException {
+        
+        // Check if activated
+        if (this.setStreamTasks == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
+        
+        return this.lstRspsUni;
+    }
+    
+    public List<IngestDataResponse> getIngestionResponsesBidi() throws IllegalStateException {
+        
+        // Check if activated
+        if (this.setStreamTasks == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
+
+        return this.lstRspsBidi;
+    }
+    
+    public IngestionResult  getIngestionResult() throws IllegalStateException, UnsupportedOperationException, MissingResourceException {
+        
+        // Check if activated
+        if (this.setStreamTasks == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - channel was never activated.");
+        
+        // Create result depending upon stream type
+        if (this.enmStreamType == DpGrpcStreamType.FORWARD) {
+            if (this.lstRspsUni.isEmpty())
+                return IngestionResult.NULL;
+            
+            List<IngestRequestUID> lstXmitIds = this.getRequestIds();
+            IngestionResult recResult = ProtoMsg.toIngestionResultUni(lstXmitIds, this.lstRspsUni); // throws MissingResourceException
+            
+            return recResult;
+            
+        } else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
+            if (this.lstRspsBidi.isEmpty())
+                return IngestionResult.NULL;
+            
+            List<IngestRequestUID> lstXmitIds = this.getRequestIds();
+            IngestionResult recResult = ProtoMsg.toIngestionResult(lstXmitIds, this.lstRspsBidi);        // throws MissingResourceException
+
+            return recResult;
+            
+        } else
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - encountered an unsupported stream type " + this.enmStreamType);
+    }
     /**
      * <p>
      * Returns a list of all ingestion responses reporting an exception with the corresponding
@@ -1155,7 +1207,8 @@ public final class IngestionStreamProcessorDep {
         this.xtorStreamTasks = Executors.newFixedThreadPool(cntStreams);
         this.setStreamFutures = new LinkedList<>();
         this.setStreamTasks = new LinkedList<>();
-        this.setResponses = new LinkedList<>();
+        this.lstRspsUni = new LinkedList<>();
+        this.lstRspsBidi = new LinkedList<>();
         this.setBadResponses = new LinkedList<>();
         
         // Create the streaming tasks and submit them
@@ -1423,13 +1476,17 @@ public final class IngestionStreamProcessorDep {
         IngestionStream     stream;
         
         // Create the stream task based upon forward unidirectional stream type
-        if (this.enmStreamType == DpGrpcStreamType.FORWARD)
-            stream = IngestionStream.newUniProcessor(this.connIngest.getStubAsync(), this.fncFrameProcessor);
+        if (this.enmStreamType == DpGrpcStreamType.FORWARD) {
+            
+            // Consumer of response messages
+            Consumer<IngestDataStreamResponse>  fncDataSink = (msgRsp) -> { this.lstRspsUni.add(msgRsp); };
+            
+            stream = IngestionStream.newUniProcessor(this.connIngest.getStubAsync(), this.fncFrameProcessor, fncDataSink);
 
         // Create the stream task based upon bidirectional stream type
-        else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
+        } else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
             
-            // Need a consumer of response messages
+            // Consumer of response messages
             Consumer<IngestDataResponse>    fncDataSink = (msgRsp) -> { this.processResponse(msgRsp); };
             
             stream = IngestionStream.newBidiProcessor(this.connIngest.getStubAsync(), this.fncFrameProcessor, fncDataSink);
@@ -1467,7 +1524,7 @@ public final class IngestionStreamProcessorDep {
             this.setBadResponses.add(msgRsp);
         }
         
-        this.setResponses.add(msgRsp);
+        this.lstRspsBidi.add(msgRsp);
     }
 
     /**

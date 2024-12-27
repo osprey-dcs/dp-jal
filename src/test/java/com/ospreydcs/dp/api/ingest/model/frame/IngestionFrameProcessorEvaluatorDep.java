@@ -65,7 +65,7 @@ public class IngestionFrameProcessorEvaluatorDep {
     //
     
     /** Default Data Provider UID used for testing */
-    public static final ProviderUID     REC_PRV_UID = ProviderUID.from(2);
+    public static final ProviderUID     REC_PRV_UID = ProviderUID.from("42", IngestionFrameProcessorEvaluatorDep.class.getSimpleName(), false);
 
     
     /** Timeout limit for polling operations */

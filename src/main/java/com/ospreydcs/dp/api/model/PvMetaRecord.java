@@ -51,10 +51,14 @@ import java.time.Instant;
  * </p>
  * 
  * @param   name            data source name
- * @param   lastType        the type of data the data source last produced
- * @param   lastClock       the sampling clock for last used by the data source
+ * @param   type            the type of data the data source last produced
+ * @param   dpTypeName      the Data Platform type name for the last data produced 
  * @param   firstTimestamp  the timestamp where the data source was first active (i.e., earliest archive timestamp) 
  * @param   lastTimestamp   the timestamp where the data source was last active (i.e., latest archive timestamp)
+ * @param   timestampCase   the timestamp case when last active 
+ * @param   timestampType   the timestamp case enumeration string ???
+ * @param   sampleCount     the sample count for the last data bucket produced by the PV
+ * @param   samplePeriod    the sampling period for the last data bucket produced by the PV (in nanoseconds)
  * 
  * @author Christopher K. Allen
  * @since Mar 14, 2024
@@ -62,11 +66,49 @@ import java.time.Instant;
  */
 public record PvMetaRecord(
         String                  name,
-        DpSupportedType         lastType,
-        UniformSamplingClock    lastClock,
+        DpSupportedType         type,
+        String                  dpTypeName,
         Instant                 firstTimestamp,
-        Instant                 lastTimestamp
+        Instant                 lastTimestamp,
+        DpTimestampCase         timestampCase,
+        String                  timestampType,
+        int                     sampleCount,
+        long                    samplePeriod
         ) 
 {
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <h1>Creates a new <code>PvMetaRecord</code> populated with the given argument data.</h1>
+     * 
+     * @param   name            data source name
+     * @param   type            the type of data the data source last produced
+     * @param   dpTypeName      the Data Platform type name for the last data produced 
+     * @param   firstTimestamp  the timestamp where the data source was first active (i.e., earliest archive timestamp) 
+     * @param   lastTimestamp   the timestamp where the data source was last active (i.e., latest archive timestamp)
+     * @param   timestampCase   the timestamp case when last active 
+     * @param   timestampType   the timestamp case enumeration string ???
+     * @param   sampleCount     the sample count for the last data bucket produced by the PV
+     * @param   samplePeriod    the sampling period for the last data bucket produced by the PV (in nanoseconds)
+     * 
+     * @return  a new metadata record populated with the given arguments
+     */
+    public static PvMetaRecord  from(
+            String name, 
+            DpSupportedType type,
+            String  dpTypeName,
+            Instant firstTimestamp, 
+            Instant lastTimestamp, 
+            DpTimestampCase timestampCase,
+            String timestampType,
+            int sampleCount,
+            long samplePeriod
+            ) 
+    {
+        return new PvMetaRecord(name, type, dpTypeName, firstTimestamp, lastTimestamp, timestampCase, timestampType, sampleCount, samplePeriod);
+    }
 
 }

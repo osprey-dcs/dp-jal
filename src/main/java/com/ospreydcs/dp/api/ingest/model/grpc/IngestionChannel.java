@@ -50,18 +50,25 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataStreamResponse;
 
 /**
+ * <h1>Representation of an ingestion channel to the Ingestion Service</h1>
  * <p>
- * Implements a cooperating collection of <code>IngestionStream</code> instances used for concurrent data
- * transmission to the Ingestion Service via a gRPC channel.
+ * Class instances function as "data channels" to the Ingestion Service using gRPC data streams
+ * for data transmission.  This condition is not to be interpreted as a gRPC <code>Channel</code>
+ * instance, although they are related (a single gRPC <code>Channel</code> can support multiple 
+ * data streams).
+ * Class instances implement a cooperating collection of <code>IngestionStream</code> objects used 
+ * for concurrent data transmission to the Ingestion Service via a gRPC channel.
  * </p>
  * <p>
  * Class instances transmit processed client ingestion data using a collection of 
@@ -120,11 +127,26 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * side.
  * </p>
  * <p>
+ * <h2>Exception Checking</h2>
+ * This class no longer monitors the ingestion stream for rejected ingestion requests.  It simply
+ * collects all Ingestion Service responses (either unidirectional or bidirectional) and makes
+ * them available to clients of this class.  It is the responsibility of the client to determine
+ * if exceptions occurred. Such exceptions and be parsed and reported in an 
+ * <code>{@link IngestionResult}</code> record.
+ * </p>
+ * <p>
+ * Note that the underlying <code>IngestionStream</code> objects managed by this class do respond
+ * to errors in the ingestion stream itself.  
+ * <p>
  * <h2>NOTES:</h2>
- * At the time of this documentation only the bidirectional streaming operation is supported
+ * <s>At the time of this documentation only the bidirectional streaming operation is supported
  * by the Ingestion Service (i.e., <code>{@link DpGrpcStreamType#BIDIRECTIONAL}</code>).  
  * Attempting to use a unidirectional stream could result in a RPC failure at the 
- * Ingestion Service.
+ * Ingestion Service.</s>
+ * <br/>
+ * <b>UPDATE:</b>
+ * Currently both unidirectional and bidirectional streaming are now supported by the Ingestion
+ * Service; this class will support either streaming alternative. 
  * </p>
  * 
  * @author Christopher K. Allen
@@ -241,28 +263,38 @@ public class IngestionChannel {
     //
     
     /** The pool of (multiple) gRPC streaming thread(s) for recovering requests */
-    private ExecutorService             xtorStreamTasks = null;
+    private ExecutorService                     xtorStreamTasks = null;
     
     /** Collection of executing stream processing tasks  */
-    private final Collection<IngestionStream> setStreamTasks = new LinkedList<>();
+    private final Collection<IngestionStream>   setStreamTasks = new LinkedList<>();
     
     /** Collection of future results from streaming tasks - used for shutdowns */
-    private final Collection<Future<Boolean>> setStreamFutures = new LinkedList<>();
+    private final Collection<Future<Boolean>>   setStreamFutures = new LinkedList<>();
+
+
+    /** Object used as synchronization lock for incoming unidirectional responses (there may be concurrent streaming tasks) */
+    private final Object        objUniRspLock = new Object();
+    
+    /** Object used as synchronization lock for incoming bidirectional responses (there may be concurrent streaming tasks) */
+    private final Object        objBidiRspLock = new Object();
 
     
-    /** Collection of all incoming ingestion responses - from bidirectional streaming tasks */
-//    private Collection<IngestDataResponse>      setResponses = null; // = new LinkedList<>();
-//    private final Collection<IngestDataResponse>      setResponses = new LinkedList<>();
-    private final Collection<IngestionResponse> setRspRecs = new LinkedList<>();
+    /** The collection of ingestion responses - one from each unidirectional streaming tasks */
+    private final List<IngestDataStreamResponse>    lstUniRsps = new LinkedList<>();
     
-    /** Collection of all ingestion responses with exceptions */
-//    private Collection<IngestDataResponse>      setBadResponses = null;
-    private final Collection<IngestionResponse> setRspRecsBad = new LinkedList<>();
+    /** Collection of all incoming ingestion responses - multiple from each bidirectional streaming tasks */
+    private final List<IngestDataResponse>          lstBidiRsps = new LinkedList<>();
+    
+    /** Collection of all ingestion responses with exceptions */    // No longer monitored
+//    private final Collection<IngestionResponse> setRspRecsBad = new LinkedList<>();
     
     
     // 
     // State Variables
     //
+    
+    /** The number of Ingestion Service responses so far */
+    private int     cntResponses = 0;
     
     /** Are streaming tasks active */
     private boolean bolActive = false;
@@ -332,7 +364,7 @@ public class IngestionChannel {
         
         // Check the argument
         if (enmStreamType == DpGrpcStreamType.BACKWARD)
-            throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - " + enmStreamType + " not supported");
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - " + enmStreamType + " not supported for data ingestion.");
         
         this.enmStreamType = enmStreamType;
     }
@@ -509,7 +541,7 @@ public class IngestionChannel {
      * </li> 
      * <br/>
      * <li>
-     * If the <code>active()</code> method is called after a shutdown the returned value 
+     * If the <code>activate()</code> method is called after a shutdown the returned value 
      * resets.
      * </li>
      * </ul>
@@ -569,50 +601,57 @@ public class IngestionChannel {
      * @see #getIngestionResponses()
      * @see #getIngestionExceptions()
      */
-    public List<ClientRequestUID>    getRequestIds() throws IllegalStateException {
+    public List<IngestRequestUID>    getRequestIds() throws IllegalStateException {
         
         // Check if activated
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
         // Collect all the client IDs recorded within each ingestion stream
-        List<ClientRequestUID>   lstIds = this.setStreamTasks
+        List<IngestRequestUID>   lstIds = this.setStreamTasks
                 .stream()
-                .<ClientRequestUID>flatMap(stream -> stream.getRequestIds().stream())
+                .<IngestRequestUID>flatMap(stream -> stream.getRequestIds().stream())
                 .toList();
         
         return lstIds;
     }
     
     /**
+     * <h1>
+     * Returns the number of response messages received from the Ingestion Service so far.
+     * </h1>
      * <p>
-     * Returns the number of <code>IngestDataResponse</code> messages received from the
-     * Ingestion Service so far.
-     * </p>
-     * <p>
-     * For a bidirectional gRPC data stream the Ingestion Service will send a response for
-     * every ingestion request it receives.  In that case, this method returns the number of 
+     * For a bidirectional gRPC data stream the Ingestion Service will send a <code>IngestDataResponse</code> 
+     * response for every ingestion request it receives.  In that case, this method returns the number of 
      * responses received so far, which (ideally) should be equal to the value returned by
-     * <code>{@link #getRequestCount()}</code>.  For unidirectional gRPC streaming the
-     * Ingestion Service will return at most one response.
+     * <code>{@link #getRequestCount()}</code>.  For multiple data streams the returned value will
+     * be the combined number of responses from each stream. 
+     * </p>
+     * <p>  
+     * For unidirectional gRPC streaming the Ingestion Service will return at most one response for each data
+     * stream.  This response is send only after all data is transmitted and a "half-closed" event is signaled
+     * to the Ingestion Service.  Thus, under normal operations the returned value should be 0 while all gRPC
+     * data streams are still active, and the number of data streams used to transmit data after the shutdown 
+     * operation is called.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * At the time of this documentation the Ingestion Service only supports bidirectional
-     * gRPC data streams.
+     * At the time of this documentation the Ingestion Service now supports both unidirectional and bidirectional
+     * gRPC data streams.  
      * </li>
      * <br/>
      * <li>
      * This value is available after a shutdown operation has been called.  At that time
      * the returned value is the total number of <code>IngestDataRequest</code> messages
-     * transmitted to the Ingestion Service during that activation cycle.
+     * transmitted to the Ingestion Service during that activation cycle for a bidirectional stream, and
+     * the total number of gRPC data streams for a unidirectional stream.
      * </li> 
      * </ul>
      * </p>
      * 
-     * @return  the number of <code>IngestDataResponse</code> messages received so far
+     * @return  the number of response messages received from the Ingestion Service so far
      * 
      * @throws IllegalStateException    processor was never activated
      */
@@ -622,27 +661,40 @@ public class IngestionChannel {
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor was never activated.");
 
-        return this.setStreamTasks
-                .stream()
-                .mapToInt(IngestionStream::getResponseCount)
-                .sum();
+        return this.cntResponses;
+//        return this.setStreamTasks
+//                .stream()
+//                .mapToInt(IngestionStream::getResponseCount)
+//                .sum();
     }
     
     /**
+     * <h1>
+     * Return a list of all the Ingestion Service response messages for an unidirectional ingestion operation.
+     * </h1>
      * <p>
-     * Return a list of all the responses to the ingest data request messages.
+     * This method has context only when using unidirectional gRPC data streams; it can be invoked at any
+     * time after the channel is activated (i.e., after <code>{@link #activate()}</code> is invoked).  The
+     * current number of response messages will be returns (i.e., the number at the time of invocation).
      * </p>
      * <p>
-     * This method is only practical when using bidirectional gRPC data streams where the
-     * Ingestion Service sents a response corresponding to every ingestion request.
-     * For unidirectional gRPC data streams the Ingestion Service sends at most one
-     * reply.  
+     * For unidirectional gRPC data streams the Ingestion Service sends at most one response to the streaming
+     * operation, at the time of the stream closure.  Thus, invoking this method before any 
+     * <code>IngestionStream</code> task within the channel has terminated will return an empty list.
+     * Invoking this method after a successful shutdown operation will return the list of single responses
+     * for each ingestion stream.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The size of this list should be the value returned by <code>{@link #getResponseCount()}</code>.
+     * The size of this list should, in theory, be the value returned by 
+     * <code>{@link #getResponseCount()}</code>.  However, due to the asynchronous nature of the streaming
+     * operation and the possibility of multiple, concurrent data streams, the values may differ at the
+     * same time instant.
+     * </li>
+     * <li>
+     * This method will return an empty list if a bidirectional streaming operation was specified. 
      * </li>
      * <li>
      * The ordering of this list does not necessarily reflect the order that ingestion frames
@@ -659,103 +711,233 @@ public class IngestionChannel {
      * @return  a list of all Ingestion Service responses to all transmitted ingestion requests
      * 
      * @throws IllegalStateException    channel was never activated
-     * @throws MissingResourceException a IngestDataResponse message could not be converted to API record
      */
-//    @AAdvancedApi(status=STATUS.TESTED_ALPHA, note="This implementation is unstable! - NullPointerException: Cannot read field 'next' because 'this.next' is null.")
-    public List<IngestionResponse>   getIngestionResponses() throws IllegalStateException, MissingResourceException {
-
+    public List<IngestDataStreamResponse>    getIngestionUniResponses() throws IllegalStateException {
+        
         // Check if activated
         if (this.setStreamTasks == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - channel was never activated.");
 
-        // Iterate through the collection of IngestDataResponse messages converting them to API record instance
-        List<IngestionResponse> lstRsps = new ArrayList<>(this.setRspRecs);
-        
-        return lstRsps;
-        
-//        // TODO -Remove
-//        if (BOL_LOGGING)
-//            LOGGER.debug("Response collection size = {} before collecting.", this.setResponses.size());
-//        
-//        int     cntMsgs = 0;
-//        for (IngestDataResponse msgRsp : this.setResponses) {
-//            IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
-//            
-//            lstRsps.add(recRsp);
-//            
-//            LOGGER.debug("Response message #{}", cntMsgs);
-//            cntMsgs++;
-//        }
-//        
-//        // TODO -Remove
-//        if (BOL_LOGGING)
-//            LOGGER.debug("Response collection size = {} after collecting.", this.setResponses.size());
-//        
-//        lstRsps.addAll(this.setRspRecs);
-//        
-//        // Iterate through the collection of IngestDataResponse messages converting them to API record instance
-//        //  Not sure why this is unstable
-//        List<IngestionResponse> lstRsps = this.setResponses
-//                .stream()
-//                .<IngestionResponse>map(ProtoMsg::toIngestionResponse)
-//                .toList();
+        return this.lstUniRsps;
     }
     
     /**
+     * <h1>
+     * Return a list of all the Ingestion Service response messages for a bidirectional ingestion operation.
+     * </h1>
      * <p>
-     * Returns a list of all ingestion responses reporting an exception with the corresponding
-     * ingestion request.
+     * This method has context only when using bidirectional gRPC data streams; it can be invoked at any
+     * time after the channel is activated (i.e., after <code>{@link #activate()}</code> is invoked).  The
+     * current number of response messages will be returns (i.e., the number at the time of invocation).
      * </p>
      * <p>
-     * This method is only practical when using bidirectional gRPC data streams where the
-     * Ingestion Service sents a response corresponding to every ingestion request.
-     * For unidirectional gRPC data streams the Ingestion Service sends at most one
-     * reply.
-     * </p>
-     * <p>
-     * The stream pool monitors incoming responses from the Ingestion Service for exceptions.
-     * The returned list is the collection of all responses indicating an exception with
-     * its corresponding request, which may be identified by the client request ID.
+     * For bidirectional streaming the Ingestion Service sends a response for <em>every</em> ingestion request.
+     * The returned list will contain all responses from all currently active <code>IngestionStream</code> tasks.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * Any ingestion request message identified in the list (i.e., by client request ID) had
-     * some type of exception encountered immediately by the Ingestion Service.  The exception
-     * details are included in the response.
+     * The size of this list should, in theory, be the value returned by 
+     * <code>{@link #getResponseCount()}</code>.  However, due to the asynchronous nature of the streaming
+     * operation and the possibility of multiple, concurrent data streams, the values may differ at the
+     * same time instant.
      * </li>
      * <li>
-     * If a client request ID does not appear in the returned list there is no guarantee that
-     * an error did not occur later in the Ingestion Service processing and archiving.
-     * One may query the Ingestion Service, via client request ID, for all client ingestion
-     * requests that failed processing post transmission. 
+     * This method will return an empty list if an unidirectional streaming operation was specified. 
      * </li>
+     * <li>
+     * The ordering of this list does not necessarily reflect the order that ingestion frames
+     * were offered to the processor.  Processed ingestion request messages do not necessarily
+     * get transmitted in order.
+     * </li>
+     * <li>
+     * This method returns a collection of <code>{@link IngestionResponse}</code> records native to the API
+     * library, rather than <code>{@link IngestDataResponse}</code> Protocol Buffers messages.  This action
+     * is simply for convenience. 
      * </ul>
      * </p>
-     *   
-     * @return  the collection of Ingestion Service responses reporting an exception
      * 
-     * @throws IllegalStateException    stream pool instance was never activated
+     * @return  a list of all Ingestion Service responses to all transmitted ingestion requests
+     * 
+     * @throws IllegalStateException    channel was never activated
      */
-    public List<IngestionResponse>    getIngestionExceptions() throws IllegalStateException {
+    public List<IngestDataResponse> getIngestionBidiResponses() throws IllegalStateException {
         
         // Check if activated
         if (this.setStreamTasks == null)
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - instance was never activated.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - channel was never activated.");
 
-        // Returned value
-        ArrayList<IngestionResponse>    lstRsps = new ArrayList<>(this.setRspRecsBad);
-        
-        return lstRsps;
-        
-//        // Iterate through the list of known exceptional responses and convert them to IngestionResponse records
-//        return this.setBadResponses
-//                .stream()
-//                .<IngestionResponse>map(ProtoMsg::toIngestionResponse)
-//                .toList();
-        
+        return this.lstBidiRsps;
     }
+    
+    /**
+     * <h1>
+     * Returns the result of the ingestion operation so far.
+     * </h1>
+     * <p>
+     * Returns the result of the ingestion operation as determined by the responses obtained from the
+     * Ingestion Service.  All Ingestion Services responses are parsed and collected to created the
+     * returned result, which summarizes the ingestion operation, whether unidirectional, bidirectional,
+     * single stream, or multiple stream.
+     * </p>   
+     * <p>
+     * If the ingestion operation is still in progress the returned record will either contain
+     * a partial result if the operations used a bidirectional streaming operation, or the operation used
+     * a unidirectional streaming operation <b>and</b> at least one of <code>IngestionStream</code> tasks has
+     * finished (i.e., the stream has closed).  Otherwise the returned result will be the 
+     * <code>{@link IngestionResult#NULL}</code> record (rather than throwing an exception).
+     * </p>
+     * <p>
+     * <h2>Usage</h2>
+     * The intended use of this method is invocation after the ingestion channel has been activated, all data
+     * has been transmitted, and the channel shut down.  In that situation the returned value will be the true result
+     * of the full ingestion operation.  The success or failure of the operation can be determined via the
+     * record <code>{@link IngestionResult#hasException()}</code> method.  The record then contains a list of
+     * all exceptions and rejected request UIDs provided by the Ingestion Service. 
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * To obtain the Ingestion Service responses in raw Protobuf messsage format use 
+     * <code>{@link #getIngestionUniResponses()}</code> for the unidirectional streaming case and
+     * <code>{@link #getIngestionBidiResponses()}</code> for the bidirectional streaming case.  See method
+     * <code>{@link #getStreamType()}</code> to determine the current gRPC stream type setting.
+     * </p>
+     * 
+     * @return  the current result of the ingestion operation or <code>NULL</code> record if none is available
+     * 
+     * @throws IllegalStateException            channel was never activated
+     * @throws UnsupportedOperationException    an unsupported gRPC stream type was specified
+     * @throws MissingResourceException         a response message could not be converted to API record due to missing resource
+     */
+    public IngestionResult  getIngestionResult() throws IllegalStateException, UnsupportedOperationException, MissingResourceException {
+     
+        // Check if activated
+        if (this.setStreamTasks == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - channel was never activated.");
+        
+//        // TODO - Consider removing
+//        if (BOL_LOGGING)
+//            LOGGER.debug("{} - Stream type = {}, lstUniRsps size = {}, lstBidiRsps size = {}", JavaRuntime.getCallerClassSimple(), this.enmStreamType, this.lstUniRsps.size(), this.lstBidiRsps.size());
+        
+        // Create result depending upon stream type
+        if (this.enmStreamType == DpGrpcStreamType.FORWARD) {
+            if (this.lstUniRsps.isEmpty())
+                return IngestionResult.NULL;
+            
+            List<IngestRequestUID> lstXmitIds = this.getRequestIds();
+            IngestionResult recResult = ProtoMsg.toIngestionResultUni(lstXmitIds, this.lstUniRsps); // throws MissingResourceException
+            
+            return recResult;
+            
+        } else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
+            if (this.lstBidiRsps.isEmpty())
+                return IngestionResult.NULL;
+            
+            List<IngestRequestUID> lstXmitIds = this.getRequestIds();
+            IngestionResult recResult = ProtoMsg.toIngestionResult(lstXmitIds, this.lstBidiRsps);    // throws MissingResourceException
+
+            return recResult;
+            
+        } else
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - encountered an unsupported stream type " + this.enmStreamType);
+    }
+    
+//    /**
+//     * <h1>
+//     * Return a list of all the responses to the ingest data request messages.
+//     * </h1>
+//     * <p>
+//     * This method is only practical when using bidirectional gRPC data streams where the
+//     * Ingestion Service sents a response corresponding to every ingestion request.
+//     * For unidirectional gRPC data streams the Ingestion Service sends at most one
+//     * reply.  
+//     * </p>
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li>
+//     * The size of this list should be the value returned by <code>{@link #getResponseCount()}</code>.
+//     * </li>
+//     * <li>
+//     * The ordering of this list does not necessarily reflect the order that ingestion frames
+//     * were offered to the processor.  Processed ingestion request messages do not necessarily
+//     * get transmitted in order.
+//     * </li>
+//     * <li>
+//     * This method returns a collection of <code>{@link IngestionResponse}</code> records native to the API
+//     * library, rather than <code>{@link IngestDataResponse}</code> Protocol Buffers messages.  This action
+//     * is simply for convenience. 
+//     * </ul>
+//     * </p>
+//     * 
+//     * @return  a list of all Ingestion Service responses to all transmitted ingestion requests
+//     * 
+//     * @throws IllegalStateException    channel was never activated
+//     * @throws MissingResourceException a IngestDataResponse message could not be converted to API record
+//     */
+////    @AAdvancedApi(status=STATUS.TESTED_ALPHA, note="This implementation is unstable! - NullPointerException: Cannot read field 'next' because 'this.next' is null.")
+//    public List<IngestionResponse>   getIngestionResponses() throws IllegalStateException, MissingResourceException {
+//
+//        // Check if activated
+//        if (this.setStreamTasks == null)
+//            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - channel was never activated.");
+//
+////        return this.lstBidiRsps;
+//        // Iterate through the collection of IngestDataResponse messages converting them to API record instance
+//        List<IngestionResponse> lstRsps = new ArrayList<>(this.setRspRecs);
+//        
+//        return lstRsps;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Returns a list of all ingestion responses reporting an exception with the corresponding
+//     * ingestion request.
+//     * </p>
+//     * <p>
+//     * This method is only practical when using bidirectional gRPC data streams where the
+//     * Ingestion Service sents a response corresponding to every ingestion request.
+//     * For unidirectional gRPC data streams the Ingestion Service sends at most one
+//     * reply.
+//     * </p>
+//     * <p>
+//     * The stream pool monitors incoming responses from the Ingestion Service for exceptions.
+//     * The returned list is the collection of all responses indicating an exception with
+//     * its corresponding request, which may be identified by the client request ID.
+//     * </p>
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li>
+//     * Any ingestion request message identified in the list (i.e., by client request ID) had
+//     * some type of exception encountered immediately by the Ingestion Service.  The exception
+//     * details are included in the response.
+//     * </li>
+//     * <li>
+//     * If a client request ID does not appear in the returned list there is no guarantee that
+//     * an error did not occur later in the Ingestion Service processing and archiving.
+//     * One may query the Ingestion Service, via client request ID, for all client ingestion
+//     * requests that failed processing post transmission. 
+//     * </li>
+//     * </ul>
+//     * </p>
+//     *   
+//     * @return  the collection of Ingestion Service responses reporting an exception
+//     * 
+//     * @throws IllegalStateException    stream pool instance was never activated
+//     */
+//    public List<IngestionResponse>    getIngestionExceptions() throws IllegalStateException {
+//        
+//        // Check if activated
+//        if (this.setStreamTasks == null)
+//            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - instance was never activated.");
+//
+//        // Returned value
+//        ArrayList<IngestionResponse>    lstRsps = new ArrayList<>(this.setRspRecsBad);
+//        
+//        return lstRsps;
+//    }
     
     
     /**
@@ -884,13 +1066,15 @@ public class IngestionChannel {
         this.setStreamFutures.clear();
         
         // Create new containers for streaming tasks and streaming responses
-//        this.setStreamTasks = new LinkedList<>();
+        this.cntResponses = 0;
         this.setStreamTasks.clear();
 //        this.setResponses = new LinkedList<>();
 //        this.setResponses.clear();
-        this.setRspRecs.clear();
-        this.setRspRecsBad.clear();
+//        this.setRspRecs.clear();
+//        this.setRspRecsBad.clear();
 //        this.setBadResponses = new LinkedList<>();
+        this.lstBidiRsps.clear();
+        this.lstUniRsps.clear();
         
         // Create the streaming tasks and submit them
         for (int iStream=0; iStream<cntStreams; iStream++) {
@@ -907,7 +1091,7 @@ public class IngestionChannel {
     
     /**
      * <p>
-     * Performs an orderly shutdown of all ingestion data gRPC streaming operations.
+     * Performs an orderly shutdown of all ingestion data gRPC streaming operations using default timeout limit.
      * </p>
      * <p>
      * All ingestion data transmission will continue until the <code>IMessageSupplier&lt;IngestDataRequest&gt;</code>
@@ -930,6 +1114,38 @@ public class IngestionChannel {
      */
     synchronized
     public boolean shutdown() throws InterruptedException {
+
+        return this.shutdown(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
+    }
+    
+    /**
+     * <p>
+     * Performs an orderly shutdown of all ingestion data gRPC streaming operations using the given timeout limits.
+     * </p>
+     * <p>
+     * All ingestion data transmission will continue until the <code>IMessageSupplier&lt;IngestDataRequest&gt;</code>
+     * (provided at construction) becomes inactive (i.e., <code>{@link IMessageSupplier#isSupplying()}</code> returns 
+     * <code>false</code>).
+     * That is, transmission continues until all ingestion request messages within that supplier are exhausted.  
+     * To shutdown transmission immediately without regard to any pending ingestion 
+     * messages use <code>{@link #shutdownNow()}</code>.
+     * </p>
+     * <p>
+     * This method <b>blocks</b> until all pending messages within the message supplier are exhausted.
+     * Once the message supplier becomes inactive (i.e., is exhausted) the method will return. All streaming
+     * tasks will be terminated at that time.
+     * </p>  
+     * 
+     * @param   lngTimeout  timeout limit to wait for streaming tasks to complete
+     * @param   tuTimeout   timeout units for timeout limit
+     * 
+     * @return  <code>true</code> if everything was shutdown, 
+     *          <code>false</code> if stream pool was already shutdown or an error occurred during operation
+     *          
+     * @throws InterruptedException process interrupted while waiting for pending operations to complete
+     */
+    synchronized
+    public boolean shutdown(long lngTimeout, TimeUnit tuTimeout) throws InterruptedException {
         
         // Check state
         if (!this.bolActive)
@@ -939,10 +1155,9 @@ public class IngestionChannel {
         this.xtorStreamTasks.shutdown();
 
         // Wait for all pending streaming tasks to complete - all should be complete at this point
-        boolean bolResult = this.xtorStreamTasks.awaitTermination(LNG_TIMEOUT_GENERAL, TU_TIMEOUT_GENERAL);
+        boolean bolResult = this.xtorStreamTasks.awaitTermination(lngTimeout, tuTimeout);
         
         // Just in case - terminate any threads still active (timeout occurred)
-//      this.setStreamTasks.forEach(task -> task.terminate());
         this.setStreamFutures.forEach(future -> future.cancel(false));
         
         this.bolActive = false;
@@ -1008,21 +1223,29 @@ public class IngestionChannel {
         IngestionStream     stream;
         
         // Create the stream task based upon forward unidirectional stream type
-        if (this.enmStreamType == DpGrpcStreamType.FORWARD)
-            stream = IngestionStream.newUniProcessor(this.connIngest.getStubAsync(), this.srcRqstMsgs);
+        if (this.enmStreamType == DpGrpcStreamType.FORWARD) {
+            
+            // Create the response consumer as a lambda function
+            Consumer<IngestDataStreamResponse>  fncRspSink = (msgRsp) -> { 
+                synchronized (this.objUniRspLock) {     // there can be multiple, concurrent streams
+                    this.lstUniRsps.add(msgRsp);
+                    this.cntResponses++;
+                }
+            };
+            
+            stream = IngestionStream.newUniProcessor(this.connIngest.getStubAsync(), this.srcRqstMsgs, fncRspSink);
+        }
 
         // Create the stream task based upon bidirectional stream type
         else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
             
-            // Create consumer of response messages as lambda function calling processResponse()
-//            Consumer<IngestDataResponse>    fncRspSink = (msgRsp) -> { this.processResponse(msgRsp); };
-            Consumer<IngestDataResponse>    fncRspSink = (msgRsp) -> { 
-                IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
-                
-                this.setRspRecs.add(recRsp);
-                if (msgRsp.hasExceptionalResult())
-                    this.setRspRecsBad.add(recRsp);
-                };
+            // Create consumer of response messages as lambda function 
+            Consumer<IngestDataResponse>    fncRspSink = (msgRsp) -> {
+                synchronized (this.objBidiRspLock) {    // there can be multiple, concurrent streams
+                    this.lstBidiRsps.add(msgRsp);
+                    this.cntResponses++;
+                }
+            };
             
             stream = IngestionStream.newBidiProcessor(this.connIngest.getStubAsync(), this.srcRqstMsgs, fncRspSink);
         }
@@ -1053,16 +1276,17 @@ public class IngestionChannel {
      * 
      * @param msgRsp    an Ingestion Service response message containing acknowledgment or status error
      */
+    @Deprecated(since="Oct 13, 2024", forRemoval=true)
     private void processResponse(IngestDataResponse msgRsp) {
-        IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
-        
-        this.setRspRecs.add(recRsp);
-        
-        // Check for exception then pass to message consumer
-        if (msgRsp.hasExceptionalResult()) {
-
-            this.setRspRecsBad.add(recRsp);
-        }
+//        IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
+//        
+//        this.setRspRecs.add(recRsp);
+//        
+//        // Check for exception then pass to message consumer
+//        if (msgRsp.hasExceptionalResult()) {
+//
+//            this.setRspRecsBad.add(recRsp);
+//        }
     }
 
 

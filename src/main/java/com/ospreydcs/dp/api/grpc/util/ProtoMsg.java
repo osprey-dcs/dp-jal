@@ -42,12 +42,14 @@ import java.util.stream.Collectors;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.ospreydcs.dp.api.common.AAdvancedApi;
-import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.model.BufferedImage;
 import com.ospreydcs.dp.api.model.BufferedImage.Format;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpSupportedType;
+import com.ospreydcs.dp.api.model.DpTimestampCase;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.model.PvMetaRecord;
@@ -59,9 +61,8 @@ import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.common.DataValue.ValueCase;
-import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
-import com.ospreydcs.dp.grpc.v1.common.DataValueType;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
 import com.ospreydcs.dp.grpc.v1.common.Image;
 import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
@@ -71,9 +72,10 @@ import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse.AckResult;
+import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataStreamResponse;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
-import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse.AckResult;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse.RegistrationResult;
 import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
@@ -199,7 +201,7 @@ public final class ProtoMsg {
         RegisterProviderRequest     msgRqst = RegisterProviderRequest.newBuilder()
                 .setProviderName(recRegistration.name())
                 .addAllAttributes(ProtoMsg.createAttributes(recRegistration.attributes()))
-                .setRequestTime(ProtoMsg.from(Instant.now()))
+//                .setRequestTime(ProtoMsg.from(Instant.now()))
                 .build();
         
         return msgRqst;
@@ -622,52 +624,6 @@ public final class ProtoMsg {
     
     /**
      * <p>
-     * Converts a <code>DataValueType</code> Protobuf enumeration to a <code>{@link DpSupportedType}</code> 
-     * enumeration.
-     * </p>
-     * <p>
-     * This mapping is NOT one-to-one (injective), but it is onto (surjective).  Specifically, there are more
-     * Protobuf primitive types than Java primitive types.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>Unsigned Protobuf integral types get mapped to the Java unsigned equivalent.</li>
-     * <li>All Data Platform structured types are part of the <code>DpSupportedType</code> enumeration.</li>
-     * <li>In the case where the argument equals <code>{@link DataValueType#UNRECOGNIZED}</code> the returned 
-     *     value is <code>{@link DpSupportedType#UNSUPPORTED_TYPE}</code>.
-     * </ul>
-     * </p>
-     * 
-     * @param msgValueType  Protobuf supported data type enumeration
-     * @return              Data Platform API supported data type enumeration
-     * 
-     * @throws  TypeNotPresentException    the argument had an recognized type
-     * 
-     * @see DpSupportedType
-     */
-    public static DpSupportedType   toDpSupportedType(DataValueType msgValueType) throws TypeNotPresentException {
-        
-        return switch (msgValueType) {
-        case DATA_TYPE_STRING -> DpSupportedType.STRING;
-        case DATA_TYPE_BOOLEAN -> DpSupportedType.BOOLEAN;
-        case DATA_TYPE_UINT -> DpSupportedType.INTEGER;
-        case DATA_TYPE_ULONG -> DpSupportedType.LONG;
-        case DATA_TYPE_INT -> DpSupportedType.INTEGER;
-        case DATA_TYPE_LONG -> DpSupportedType.LONG;
-        case DATA_TYPE_FLOAT -> DpSupportedType.FLOAT;
-        case DATA_TYPE_DOUBLE -> DpSupportedType.DOUBLE;
-        case DATA_TYPE_BYTES -> DpSupportedType.BYTE_ARRAY;
-        case DATA_TYPE_ARRAY -> DpSupportedType.ARRAY;
-        case DATA_TYPE_STRUCT -> DpSupportedType.STRUCTURE;
-        case DATA_TYPE_IMAGE -> DpSupportedType.IMAGE;
-        case UNRECOGNIZED -> DpSupportedType.UNSUPPORTED_TYPE; // throw new UnsupportedOperationException("Unimplemented case: " + msgValueType);
-        default -> throw new IllegalArgumentException("Unexpected value: " + msgValueType);
-        };
-    }
-    
-    /**
-     * <p>
      * Converts the given <code>Timestamp</code> message to a Long Unix epoch value in nanoseconds.
      * </p>
      * <p>
@@ -780,9 +736,11 @@ public final class ProtoMsg {
         
         // Extract the provider UID and create return value
         RegistrationResult  msgResult = msgRsp.getRegistrationResult();
-        int                 intUid = msgResult.getProviderId();
+        String              strUid = msgResult.getProviderId();
+        String              strName = msgResult.getProviderName();
+        boolean             bolIsNew = msgResult.getIsNewProvider();
         
-        return new ProviderUID(intUid);
+        return ProviderUID.from(strUid, strName, bolIsNew);
     }
     
     /**
@@ -820,6 +778,8 @@ public final class ProtoMsg {
      * </p>
      * <p>
      * <h2>TODO</h2>
+     * Done.
+     * <s>
      * <ul>
      * <li>
      * <b>Data Type</b> - The data type in the <code>PvInfo</code> message is specified as a string and must be 
@@ -842,6 +802,7 @@ public final class ProtoMsg {
      * <code>lastClock</code> record attribute to <code>null</code> 
      * </li>
      * </ul>
+     * </s>
      * </p>
      * 
      * @param msgPvInfo Query Service process variable metadata response message
@@ -854,44 +815,30 @@ public final class ProtoMsg {
     public static PvMetaRecord  toPvMetaRecord(QueryMetadataResponse.MetadataResult.PvInfo msgPvInfo) 
             throws IllegalArgumentException, TypeNotPresentException {
         
-//        // Check the type value string
-//        String          strType = msgPvInfo.getLastBucketDataType();
-//        boolean         bolValidType = false;
-//        for (DataValueType msgType : DataValueType.values()) {
-//            if ( strType.equals(msgType.name()) ) {
-//                    bolValidType = true;
-//                    break;
-//            }
-//        }
-//        if (!bolValidType)
-//            throw new IllegalArgumentException("Last PV data type " + strType + " is NOT a DataValueType enumeration name.");
-        
-        // Extract the name and timestamps
-        String      strName = msgPvInfo.getPvName();
-        Instant     insFirst = ProtoMsg.toInstant(msgPvInfo.getFirstTimestamp());
-        Instant     insLast = ProtoMsg.toInstant(msgPvInfo.getLastTimestamp());
+        // Extract the PV name and type information
+        String      strPvName = msgPvInfo.getPvName();
 
-        // Extract the type value
-        String          strType = msgPvInfo.getLastBucketDataType();
-        
-        // TODO - fix this kluge!
-        strType = "DATA_TYPE_" + strType;
-        // ------------------------
-        
-        DataValueType   msgType = DataValueType.valueOf(DataValueType.class, strType);  // throws IllegalArgumentException
-        DpSupportedType enmType = ProtoMsg.toDpSupportedType(msgType);                    // throws TypeNotPresentException
+        int                 intType = msgPvInfo.getLastBucketDataTypeCase();
+        String              strDpType = msgPvInfo.getLastBucketDataType();
+        DataValue.ValueCase enmType = DataValue.ValueCase.forNumber(intType);
+        DpSupportedType     enmDpType = ProtoMsg.convertType(enmType);
 
-        // Extract the sampling clock
-        SamplingClock           msgClock = msgPvInfo.getLastSamplingClock();
-        UniformSamplingClock    apiClock;
+        // Extract the PV timestamp information
+        Instant     insTmsFirst = ProtoMsg.toInstant(msgPvInfo.getFirstDataTimestamp());
+        Instant     insTmsLast = ProtoMsg.toInstant(msgPvInfo.getLastDataTimestamp());
+        int         intTmsCase = msgPvInfo.getLastBucketDataTimestampsCase();
+        String      strTmsType = msgPvInfo.getLastBucketDataTimestampsType();
         
-        if (msgClock.getCount() > 0)
-            apiClock = ProtoMsg.toUniformSamplingClock(msgClock);
-        else
-            apiClock = null;
+        DataTimestamps.ValueCase    enmTmsCase = DataTimestamps.ValueCase.forNumber(intTmsCase);
+        DpTimestampCase             enmDpTmsCase = ProtoMsg.convertType(enmTmsCase);
+        
+        // Extract the sampling information
+        int     intSmplCnt = msgPvInfo.getLastBucketSampleCount();
+        long    lngSmplPer = msgPvInfo.getLastBucketSamplePeriod();
+        
         
         // Create metadata record
-        PvMetaRecord    recPvInfo = new PvMetaRecord(strName, enmType, apiClock, insFirst, insLast);
+        PvMetaRecord    recPvInfo = PvMetaRecord.from(strPvName, enmDpType, strDpType, insTmsFirst, insTmsLast, enmDpTmsCase, strTmsType, intSmplCnt, lngSmplPer);
         
         return recPvInfo;
     }
@@ -907,13 +854,18 @@ public final class ProtoMsg {
      * @return new <code>IngestionResponse</code> record equivalent to the argument
      * 
      * @throws MissingResourceException the argument contained neither an acknowledgment or an exception
+     * 
+     * @deprecated <code>IngestionResponse</code> has been replaced by <code>IngestionResult</code>
      */
+    @Deprecated(since="Oct 10, 2024", forRemoval=true)
     public static IngestionResponse toIngestionResponse(IngestDataResponse msgRsp) throws MissingResourceException {
         
         // Extract message data
-        int     intProdiverId = msgRsp.getProviderId();
+        String  strProviderId = msgRsp.getProviderId();
         String  strRequestId = msgRsp.getClientRequestId();
         Instant insTimestamp = ProtoMsg.toInstant(msgRsp.getResponseTime());
+        
+        IngestRequestUID    recRequestId = IngestRequestUID.from(strRequestId);
         
         // In case of acknowledgment
         if (msgRsp.hasAckResult()) {
@@ -922,7 +874,7 @@ public final class ProtoMsg {
             int     cntCols = msgAck.getNumColumns();
             int     cntRows = msgAck.getNumRows();
             
-            return IngestionResponse.from(intProdiverId, strRequestId, insTimestamp, cntCols, cntRows);
+            return IngestionResponse.from(strProviderId, recRequestId, insTimestamp, cntCols, cntRows);
         }
         
         // In case of exception
@@ -932,7 +884,7 @@ public final class ProtoMsg {
             String  strType = msgExcept.getExceptionalResultStatus().toString();
             String  strDetail = msgExcept.getMessage();
             
-            return IngestionResponse.from(intProdiverId, strRequestId, insTimestamp, strType, strDetail);
+            return IngestionResponse.from(strProviderId, recRequestId, insTimestamp, strType, strDetail);
         }
         
         // We should never get here
@@ -944,11 +896,520 @@ public final class ProtoMsg {
                 );
     }
     
+    /**
+     * <h1>
+     * Creates and returns a new <code>IngestionResult</code> record from a single <code>IngestDataResponse</code> message.
+     * </h1>
+     * <p>
+     * The 1st argument is a the ingest data request UID from the data message sent to the Ingestion
+     * Service during the ingestion operation.  
+     * </p>
+     * <p>
+     * The 2nd argument is assumed to be the single response from a unary ingestion operation.
+     * </p>
+     * 
+     * @param recXmitId client request UID for the original data request message
+     * @param msgRsp    the single Ingestion Service response from a unary ingestion operation
+     * 
+     * @return new <code>IngestionResult</code> record populated with the argument data
+     * 
+     * @throws MissingResourceException the argument contained neither an acknowledgment or an exception
+     */
+    public static IngestionResult   toIngestionResultUnary(IngestRequestUID recXmitId, IngestDataResponse msgRsp) throws MissingResourceException {
+        
+        // Extract message data
+        Instant insTms = ProtoMsg.toInstant(msgRsp.getResponseTime());
+        String  strRqstId = msgRsp.getClientRequestId();
+        
+        IngestRequestUID    recRqstId = IngestRequestUID.from(strRqstId);
+        
+        // In case of acknowledgment
+        if (msgRsp.hasAckResult()) {
+            AckResult   msgAck = msgRsp.getAckResult();
+            
+            int     cntCols = msgAck.getNumColumns();
+            int     cntRows = msgAck.getNumRows();
+            
+            return IngestionResult.newUnarySuccess(recXmitId, recRqstId, insTms, cntCols, cntRows);
+        }
+        
+        // In case of exception
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
+            
+            String  strType = msgExcept.getExceptionalResultStatus().toString();
+            String  strDetail = msgExcept.getMessage();
+            
+            return IngestionResult.newUnaryFailed(recXmitId, recRqstId, insTms, strType, strDetail);
+        }
+        
+        // We should never get here
+        throw new MissingResourceException(
+                JavaRuntime.getQualifiedMethodNameSimple() 
+                    + " - message containing neither an acknowledgement or an exception.",
+                IngestDataResponse.class.getName(),
+                "getAckResult(), getExceptionalResult()"
+                );
+    }
+    
+    /**
+     * <h1>
+     * Creates and returns a new <code>IngestionResult</code> record from a single <code>IngestDataStreamResponse</code>
+     * message. 
+     * </h1>
+     * <p>
+     * The 1st argument is a the collection of ingest data request UIDs from all the data messages sent to the Ingestion
+     * Service during the ingestion operation.  The client must monitor and collect these UIDs.
+     * </p>
+     * <p>
+     * The 2nd argument is assumed to be the response of from a single-stream unidirectional streaming ingestion
+     * operation with the Ingestion Service.  This method extracts the results of the argument and populates the
+     * returned record with a summary of the operation.
+     * </p> 
+     * <p>
+     * <h2>Ingestion Exceptions</h2>
+     * If an exception is contained within the argument (i.e., there are rejected ingestion requests) the
+     * <code>{@link IngestionResult#exception()}</code> field contains a list with a single exception as reported 
+     * in the argument.
+     * </p>
+     * 
+     * @param lstXmitIds    collection of ingestion request UIDs for messages transmitted to Ingestion Service by client
+     * @param msgRsp        the single Ingestion Service response from a unidirectional ingestion operation
+     * 
+     * @return new <code>IngestionResult</code> record populated with the argument data
+     * 
+     * @throws MissingResourceException the argument contained neither an acknowledgment or an exception
+     */
+    public static IngestionResult   toIngestionResultUni(List<IngestRequestUID> lstXmitIds, IngestDataStreamResponse msgRsp) throws MissingResourceException {
+        
+        // Extract the common response data 
+        IngestionResult.Mode        enmMode = IngestionResult.Mode.UNIDIRECTIONAL;
+        int                         cntXmitIds = lstXmitIds.size();
+        Instant                     insRsp = ProtoMsg.toInstant(msgRsp.getResponseTime());
+        List<IngestRequestUID>      lstRcvdIds = msgRsp.getClientRequestIdsList()
+                                    .stream()
+                                    .map(IngestRequestUID::from)
+                                    .toList();
+        List<IngestRequestUID>      lstRjctIds = msgRsp.getRejectedRequestIdsList()
+                                    .stream()
+                                    .map(IngestRequestUID::from)
+                                    .toList();
+        
+        // Exception free case
+        if (msgRsp.hasIngestDataStreamResult()) {
+            IngestDataStreamResponse.IngestDataStreamResult  msgResult = msgRsp.getIngestDataStreamResult();
+            
+            int cntAccptIds = msgResult.getNumRequests();
+            
+            IngestionResult recResult = IngestionResult.newStreamSuccess(enmMode, cntXmitIds, cntAccptIds, insRsp, insRsp, lstXmitIds, lstRcvdIds);
+            
+            return recResult;
+        }
+        
+        // Exceptional case
+        if (msgRsp.hasExceptionalResult()) {
+            int                 cntAccptIds = lstRcvdIds.size() - lstRjctIds.size();
+            ExceptionalResult   msgExcep = msgRsp.getExceptionalResult();
+            String              strStatus = msgExcep.getExceptionalResultStatus().name();
+            String              strDetail = msgExcep.getMessage();
+            
+            IngestionResult recResult = IngestionResult.newStreamFailed(enmMode, cntXmitIds, cntAccptIds, insRsp, insRsp, lstXmitIds, lstRcvdIds, lstRjctIds);
+            recResult.addException(strStatus, strDetail);
+            
+            return recResult;
+        }
+        
+        // We should never get here
+        throw new MissingResourceException(
+                JavaRuntime.getQualifiedMethodNameSimple() 
+                    + " - message containing neither a result or an exception.",
+                IngestDataStreamResponse.class.getName(),
+                "getIngestDataStreamResult(), getExceptionalResult()"
+                );
+    }
+    
+    
+    /**
+     * <h1>
+     * Creates and returns a new <code>IngestionResult</code> record from a collection of 
+     * <code>IngestDataStreamResponse</code> messages. 
+     * </h1>
+     * <p>
+     * The 1st argument is a the collection of ingest data request UIDs from all the data messages sent to the Ingestion
+     * Service during the ingestion operation.  The client must monitor and collect these UIDs.
+     * </p>
+     * <p>
+     * The 2nd argument is assumed to be the responses from a multiple unidirectional streaming ingestion
+     * operations with the Ingestion Service.  This method extracts the results of all the argument messages and 
+     * populates the returned record with a summary of the operation.
+     * </p> 
+     * <p>
+     * <h2>Ingestion Exceptions</h2>
+     * If an exception is contained within the argument (i.e., there are rejected ingestion requests) the
+     * <code>{@link IngestionResult#exception()}</code> field contains a list with any exceptions contained
+     * in the argument.
+     * </p>
+     * 
+     * @param lstXmitIds    collection of ingestion request UIDs for messages transmitted to Ingestion Service by client
+     * @param lstRsps       collection of Ingestion Service responses from multiple unidirectional ingestion operations
+     * 
+     * @return new <code>IngestionResult</code> record populated with the argument data
+     * 
+     * @throws IllegalArgumentException the argument list was empty
+     * @throws MissingResourceException a message within the argument list contained neither an acknowledgment or an exception
+     */
+    public static IngestionResult   toIngestionResultUni(List<IngestRequestUID> lstXmitIds, List<IngestDataStreamResponse> lstRsps) throws IllegalArgumentException, MissingResourceException {
+        
+        // Check for empty list
+        if (lstRsps.isEmpty())
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - argument was an emtpy list.");
+        
+        // Recover the timestamp, received request IDs, and rejected request IDs
+        IngestionResult.Mode    enmMode = IngestionResult.Mode.UNIDIRECTIONAL;
+        int                     cntXmitIds = lstXmitIds.size();
+        
+        Instant insTmsFirst = lstRsps.stream()
+                .<Timestamp>map(msg -> msg.getResponseTime())
+                .<Instant>map(ProtoMsg::toInstant)
+                .reduce((t1,t2) -> {
+                    if (t1.compareTo(t2) < 0)
+                        return t1;
+                    else 
+                        return t2;
+                    }
+                ).get();    // get the first timestamp instant of all messages
+        
+        Instant insTmsFinal = lstRsps.stream()
+                .<Timestamp>map(msg -> msg.getResponseTime())
+                .<Instant>map(ProtoMsg::toInstant)
+                .reduce((t1, t2) -> { 
+                    if (t1.compareTo(t2) > 0)
+                        return t1;
+                    else
+                        return t2; 
+                    }
+                ).get();    // gets the latest timestamp instant of all messages
+        
+        List<IngestRequestUID>  lstRcvdIds = lstRsps.stream()
+                .<String>flatMap( msg -> msg.getClientRequestIdsList().stream() )
+                .<IngestRequestUID>map(IngestRequestUID::from)
+                .toList();
+        
+        List<IngestRequestUID>  lstRjctIds = lstRsps.stream()
+                .<String>flatMap( msg -> msg.getRejectedRequestIdsList().stream() )
+                .<IngestRequestUID>map(IngestRequestUID::from)
+                .toList();
+        
+        
+        // Parse responses for exceptions and acknowledgment value
+        int                     cntAccptIds = 0;
+        List<ExceptionalResult> lstErrors = new LinkedList<>();
+        
+        for (IngestDataStreamResponse msgRsp : lstRsps) {
+            
+            // Message contains an exception
+            if (msgRsp.hasExceptionalResult()) {
+                ExceptionalResult   msgExcep = msgRsp.getExceptionalResult();
+                
+                lstErrors.add(msgExcep);
+                
+            // Message contains an acknowledgment
+            } else if (msgRsp.hasIngestDataStreamResult()) {
+                IngestDataStreamResponse.IngestDataStreamResult    msgAck = msgRsp.getIngestDataStreamResult();
+                
+                cntAccptIds += msgAck.getNumRequests();
+                
+            // We should never get here
+            } else {
+                throw new MissingResourceException(
+                        JavaRuntime.getQualifiedMethodNameSimple() 
+                            + " - message with timestamp " + msgRsp.getResponseTime() + " contains neither a result or an exception.",
+                        IngestDataStreamResponse.class.getName(),
+                        "getIngestDataStreamResult(), getExceptionalResult()"
+                        );
+            }
+        }
+        
+        
+        // Create the returned value according to exception status
+        IngestionResult recResult;
+        if (lstErrors.isEmpty())
+            recResult = IngestionResult.newStreamSuccess(enmMode, cntXmitIds, cntAccptIds, insTmsFirst, insTmsFinal, lstXmitIds, lstRcvdIds);
+        
+        else {
+            recResult = IngestionResult.newStreamFailed(enmMode, cntXmitIds, cntAccptIds, insTmsFirst, insTmsFinal, lstXmitIds, lstRcvdIds, lstRjctIds);
+            
+            // Populate the exceptions
+            for (ExceptionalResult msgErr : lstErrors) {
+                String  strStatus = msgErr.getExceptionalResultStatus().name();
+                String  strMessage = msgErr.getMessage();
+                
+                recResult.addException(strStatus, strMessage);
+            }
+        }
+        
+        return recResult;
+    }
+    
+    /**
+     * <h1>
+     * Creates and returns a new <code>IngestionResult</code> record from a list of <code>IngestDataResponse</code>
+     * messages. 
+     * </h1>
+     * <p>
+     * The 1st argument is a the collection of ingest data request UIDs from all the data messages sent to the Ingestion
+     * Service during the ingestion operation.  The client must monitor and collect these UIDs.
+     * </p>
+     * <p>
+     * The 2nd argument is assumed to be the collection of ingestion responses from a either
+     * <ol>
+     * <li>A series of unary ingestion operations from a decomposed ingestion frame.</li>
+     * <li>A bidirectional streaming ingestion operation with the Ingestion Service.</li>  
+     * This method collects the results of the argument and populates the
+     * returned record with a summary of the operation.
+     * </p> 
+     * <p>
+     * There is no real slick way to create the returned result.  This method uses brute force parsing
+     * of all the messages in the argument list determining whether they contain exceptions or acknowledgment.
+     * The exceptions and acknowledgments are collected and processed afterward to create the final
+     * returned result.
+     * </p>
+     * <p>
+     * <h2>Ingestion Exceptions</h2>
+     * If any exceptions are found within the argument collection (i.e., there are rejected ingestion requests) the
+     * <code>{@link IngestionResult#exception()} field contains a list of all exceptions reported in the argument.
+     * </p>
+     * 
+     * @param lstXmitIds    collection of ingestion request UIDs for messages transmitted to Ingestion Service by client
+     * @param lstRsps       collection of all Ingestion Service responses during the bidirectional streaming operation
+     *    
+     * @return  new <code>IngestionResult</code> record summarizing the argument collection
+     * 
+     * @throws  IllegalArgumentException the argument was an empty list
+     * @throws  MissingResourceException the argument contained a message with neither an acknowledgment or an exception
+     */
+    public static IngestionResult   toIngestionResult(List<IngestRequestUID> lstXmitIds, List<IngestDataResponse> lstRsps) throws IllegalArgumentException, MissingResourceException {
+        
+        // Internal types
+        record AcknowledgePair(IngestRequestUID reqId, IngestDataResponse.AckResult msgAck) {};
+        record ExceptionPair(IngestRequestUID reqId, ExceptionalResult msgError) {};
+        
+        // Check for empty list
+        if (lstRsps.isEmpty())
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - argument was an emtpy list.");
+        
+        // Create the lists of client request IDs
+        ArrayList<IngestRequestUID>     lstRcvdIds = new ArrayList<>(lstRsps.size());
+        LinkedList<IngestRequestUID>    lstRjctIds = new LinkedList<>();
+        
+        // Create lists of auxiliary data 
+        ArrayList<Timestamp>        lstTmsMsgs = new ArrayList<>(lstRsps.size());
+        ArrayList<AcknowledgePair>  lstAckPairs = new ArrayList<>(lstRsps.size());
+        LinkedList<ExceptionPair>   lstErrPairs = new LinkedList<>();
+        
+        // Parse responses for request IDs and auxiliary data
+        for (IngestDataResponse msgRsp : lstRsps) {
+            String              strRqstId = msgRsp.getClientRequestId();
+            Timestamp           tmsRsp = msgRsp.getResponseTime();
+            IngestRequestUID    recRqstId = IngestRequestUID.from(strRqstId);
+            
+            lstRcvdIds.add(recRqstId);
+            lstTmsMsgs.add(tmsRsp);
+            
+            // Message contains an exception
+            if (msgRsp.hasExceptionalResult()) {
+                ExceptionalResult   msgErr = msgRsp.getExceptionalResult();
+                
+                lstErrPairs.add(new ExceptionPair(recRqstId, msgErr));
+                lstRjctIds.add(recRqstId);
+            
+            // Message contains an acknowledgment
+            } else if (msgRsp.hasAckResult()) {
+                IngestDataResponse.AckResult    msgAck = msgRsp.getAckResult();
+                
+                lstAckPairs.add(new AcknowledgePair(recRqstId, msgAck));
+                
+            // We should never get here
+            } else {
+                throw new MissingResourceException(
+                        JavaRuntime.getQualifiedMethodNameSimple() 
+                            + " - message containing neither a result or an exception for request UID " + strRqstId,
+                        IngestDataStreamResponse.class.getName(),
+                        "getAckResult(), getExceptionalResult()"
+                        );
+            }
+        }
+        
+        // Create the common IngestionResult fields
+        IngestionResult.Mode    enmMode = IngestionResult.Mode.BIDIRECTIONAL;
+        int         cntXmitIds = lstXmitIds.size();
+        int         cntAccptIds = lstRcvdIds.size() - lstRjctIds.size();
+
+        Instant     insTmsFirst = lstTmsMsgs.stream()
+                        .<Instant>map(ProtoMsg::toInstant)
+                        .reduce((t1,t2) -> {
+                            if (t1.compareTo(t2) < 0)
+                                return t1;
+                            else
+                                return t2;
+                            }
+                        ).get();    // gets the first timestamp instant
+        
+        Instant     insTmsFinal = lstTmsMsgs.stream()
+                        .<Instant>map(ProtoMsg::toInstant)
+                        .reduce((t1, t2) -> {
+                            if (t1.compareTo(t2) > 0)
+                                return t1;
+                            else 
+                                return t2;
+                            }
+                        ).get();     // gets the latest timestamp instant
+
+        
+        // Create the returned value and populate with acknowledgments and any exceptions
+        IngestionResult     recResult;
+        
+        if (lstRjctIds.isEmpty()) {
+            // Exception free case
+            recResult = IngestionResult.newStreamSuccess(enmMode, cntXmitIds, cntAccptIds, insTmsFirst, insTmsFinal, lstXmitIds, lstRcvdIds);
+            
+        } else {
+            // Exceptional case
+            recResult = IngestionResult.newStreamFailed(enmMode, cntXmitIds, cntAccptIds, insTmsFirst, insTmsFinal, lstXmitIds, lstRcvdIds, lstRjctIds);
+            
+            // Populate with exceptions
+            for (ExceptionPair rec : lstErrPairs) {
+                IngestRequestUID    reqId = rec.reqId();
+                String              status = rec.msgError().getExceptionalResultStatus().name();
+                String              message = rec.msgError().getMessage();
+                
+                recResult.addException(reqId, status, message);
+            }
+        }
+        
+        // Populate the acknowledgments
+        for (AcknowledgePair rec : lstAckPairs) {
+            IngestRequestUID    reqId = rec.reqId();
+            int                 colCnt = rec.msgAck().getNumColumns();
+            int                 rowCnt = rec.msgAck().getNumRows();
+            
+            recResult.addAcknowledgment(reqId, colCnt, rowCnt);
+        }
+        
+        return recResult;
+    }
     
     
     //
     // Protobuf Message Field Extraction
     //
+    
+    /**
+     * <p>
+     * Converts the value of a <code>DataValue.ValueCase</code> Protobuf enumeration to a 
+     * <code>{@link DpSupportedType}</code> enumeration.
+     * </p>
+     * <p>
+     * This mapping is NOT one-to-one (injective), but it is onto (surjective).  Specifically, there are more
+     * Protobuf primitive types than Java primitive types.
+     * </p>
+     * <p>
+     * <h2>Mappings</h2>
+     * The following mappings are used for the <code>{@link DataValue#getValueCase()}</code> type 
+     * enumeration, along with the corresponding Protobuf type (primitive or message):
+     * <ul>
+     * <code>
+     * <li>bool: BOOLEANVALUE -> DpSupportedType.BOOLEAN</li>
+     * <li>uint32: UINTVALUE -> DpSupportedType.INTEGER</li>
+     * <li>sint32: INTVALUE -> DpSupportedType.INTEGER</li>
+     * <li>uint64: ULONGVALUE -> DpSupportedType.LONG</li>
+     * <li>sint64: LONGVALUE -> DpSupportedType.LONG</li>
+     * <li>float: FLOATVALUE -> DpSupportedType.FLOAT</li>
+     * <li>double: DOUBLEVALUE -> DpSupportedType.DOUBLE</li>
+     * <li>string: STRINGVALUE -> DpSupportedType.STRING</li>
+     * <li>bytes: BYTEARRAYVALUE -> DpSupportedType.BYTE_ARRAY</li>
+     * <li>Array: ARRAYVALUE -> DpSupportedType.ARRAY</li>
+     * <li>Structure: STRUCTUREVALUE -> DpSupportedType.STRUCTURE</li>
+     * <li>Image: IMAGEVALUE -> DpSupportedType.IMAGE</li>
+     * <li>Timestampe: TIMESTAMPVALUE -> DpSupportedType.TIMESTAMP</li>
+     * <li>null: VALUE_NOT_SET -> DpSupportedType.UNSUPPORTED_TYPE</li>
+     * </code>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Unsigned Protobuf integral types get mapped to the Java unsigned equivalent.</li>
+     * <li>All Data Platform structured types are part of the <code>DpSupportedType</code> enumeration.</li>
+     * <li>In the case where the argument equals <code>{@link DataValue.ValueCase#VALUE_NOT_SET}</code> the returned 
+     *     value is <code>{@link DpSupportedType#UNSUPPORTED_TYPE}</code>.
+     * </ul>
+     * </p>
+     * 
+     * @param enmValueCase  Protobuf supported data message data type enumeration
+     * 
+     * @return              Data Platform API supported data type enumeration
+     * 
+     * @throws TypeNotPresentException an unexpected type was encountered
+     * 
+     * @see DpSupportedType
+     */
+    public static DpSupportedType   convertType(DataValue.ValueCase enmValueCase) throws TypeNotPresentException {
+        
+        return switch (enmValueCase) {
+        case STRINGVALUE -> DpSupportedType.STRING;
+        case BOOLEANVALUE -> DpSupportedType.BOOLEAN;
+        case UINTVALUE -> DpSupportedType.INTEGER;
+        case ULONGVALUE -> DpSupportedType.LONG;
+        case INTVALUE -> DpSupportedType.INTEGER;
+        case LONGVALUE -> DpSupportedType.LONG;
+        case FLOATVALUE -> DpSupportedType.FLOAT;
+        case DOUBLEVALUE -> DpSupportedType.DOUBLE;
+        case BYTEARRAYVALUE -> DpSupportedType.BYTE_ARRAY;
+        case ARRAYVALUE -> DpSupportedType.ARRAY;
+        case STRUCTUREVALUE -> DpSupportedType.STRUCTURE;
+        case IMAGEVALUE -> DpSupportedType.IMAGE;
+        case TIMESTAMPVALUE -> DpSupportedType.TIMESTAMP;
+        case VALUE_NOT_SET -> DpSupportedType.UNSUPPORTED_TYPE; // throw new UnsupportedOperationException("Unimplemented case: " + msgValueType);
+        default -> throw new TypeNotPresentException(enmValueCase.toString(), new Throwable("Unexpected value: " + enmValueCase));
+        };
+    }
+    
+    /**
+     * <p>
+     * Converts the value of a <code>DataTimestamps.ValueCase</code> Protobuf enumeration to a 
+     * <code>{@link DpTimestampCase}</code> enumeration.
+     * </p>
+     * <p>
+     * <h2>Mappings</h2>
+     * The following mappings are used for the <code>{@link DataTimestamps#getValueCase()}</code> type 
+     * enumeration, along with the corresponding Protobuf type (i.e., message):
+     * <ul>
+     * <code>
+     * <li>TimestampList: TIMESTAMPLIST -> DpTimestampCase.TIMESTAMP_LIST</li>
+     * <li>SamplingClock: SAMPLINGCLOCK -> DpTimestampCase.SAMPLING_CLOCK</li>
+     * <li>null: VALUE_NOT_SET -> DpTimestampCase.UNSUPPORTED_CASE</li>
+     * </code>
+     * </ul>
+     * </p>
+     * 
+     * @param enmValueCase  Protobuf <code>DataTimestamps.ValueCase</code> enumeration constant
+     * 
+     * @return              corresponding <code>DpTimestampCase</code> enumeration constant
+     * 
+     * @throws TypeNotPresentException an unexpected type was encountered
+     * 
+     * @see DpTimestampCase
+     */
+    public static DpTimestampCase   convertType(DataTimestamps.ValueCase enmValueCase) throws TypeNotPresentException {
+        
+        return switch (enmValueCase) {
+        case TIMESTAMPLIST -> DpTimestampCase.TIMESTAMP_LIST;
+        case SAMPLINGCLOCK -> DpTimestampCase.SAMPLING_CLOCK;
+        case VALUE_NOT_SET -> DpTimestampCase.UNSUPPORTED_CASE;
+        default -> throw new TypeNotPresentException(enmValueCase.toString(), new Throwable("Unexpected value: " + enmValueCase));
+        };
+    }
     
     /**
      * <p>
@@ -1151,52 +1612,38 @@ public final class ProtoMsg {
      * as a <code>DpSupportedType</code> enumeration constant.
      * </p>
      * <p>
-     * <h2>Mappings</h2>
-     * The following mappings are used for the <code>{@link DataValue#getValueCase()}</code> type 
-     * enumeration, along with the corresponding Protobuf type (primitive or message):
-     * <ul>
-     * <code>
-     * <li>bool: BOOLEANVALUE -> DpSupportedType.BOOLEAN</li>
-     * <li>uint32: UINTVALUE -> DpSupportedType.INTEGER</li>
-     * <li>sint32: INTVALUE -> DpSupportedType.INTEGER</li>
-     * <li>uint64: ULONGVALUE -> DpSupportedType.LONG</li>
-     * <li>sint64: LONGVALUE -> DpSupportedType.LONG</li>
-     * <li>float: FLOATVALUE -> DpSupportedType.FLOAT</li>
-     * <li>double: DOUBLEVALUE -> DpSupportedType.DOUBLE</li>
-     * <li>string: STRINGVALUE -> DpSupportedType.STRING</li>
-     * <li>bytes: BYTEARRAYVALUE -> DpSupportedType.BYTE_ARRAY</li>
-     * <li>Array: ARRAYVALUE -> DpSupportedType.ARRAY</li>
-     * <li>Structure: STRUCTUREVALUE -> DpSupportedType.STRUCTURE</li>
-     * <li>Image: IMAGEVALUE -> DpSupportedType.IMAGE</li>
-     * <li>null: VALUE_NOT_SET -> IllegalArgumentException</li>
-     * </code>
-     * </ul>
+     * <h2>NOTES</h2>
+     * This method defers to <code>ProtoMsg{@link #convertType(ValueCase)}</code> to convert the data type
+     * of the Protobuf message to the returned value.
+     * </p>
      *  
      * @param msgDataValue <code>DataValue</code> message whose value type is to be extracted
      *  
      * @return  <code>DpSupportedType</code> representation of the message value data type
      * 
-     * @throws IllegalArgumentException the data value field was not set (empty)
-     * @throws TypeNotPresentException  an unrecognized data type was encountered
+     * @throws TypeNotPresentException an unexpected type was encountered
      */
-    public static DpSupportedType   extractType(DataValue msgDataValue) throws IllegalArgumentException, TypeNotPresentException {
+    public static DpSupportedType   extractType(DataValue msgDataValue) throws TypeNotPresentException {
         
-        return switch (msgDataValue.getValueCase()) {
-        case BOOLEANVALUE -> DpSupportedType.BOOLEAN;
-        case UINTVALUE -> DpSupportedType.INTEGER;
-        case INTVALUE -> DpSupportedType.INTEGER;
-        case ULONGVALUE -> DpSupportedType.LONG;
-        case LONGVALUE -> DpSupportedType.LONG;
-        case FLOATVALUE -> DpSupportedType.FLOAT;
-        case DOUBLEVALUE -> DpSupportedType.DOUBLE;
-        case STRINGVALUE -> DpSupportedType.STRING;
-        case BYTEARRAYVALUE -> DpSupportedType.BYTE_ARRAY;
-        case ARRAYVALUE -> DpSupportedType.ARRAY;
-        case STRUCTUREVALUE -> DpSupportedType.STRUCTURE;
-        case IMAGEVALUE -> DpSupportedType.IMAGE;
-        case VALUE_NOT_SET -> throw new IllegalArgumentException("The data value was not set.");
-        default -> throw new TypeNotPresentException("The data value type was not recognized.", null);
-        };
+        DataValue.ValueCase enmType = msgDataValue.getValueCase();
+
+        return ProtoMsg.convertType(enmType);
+//        return switch (msgDataValue.getValueCase()) {
+//        case BOOLEANVALUE -> DpSupportedType.BOOLEAN;
+//        case UINTVALUE -> DpSupportedType.INTEGER;
+//        case INTVALUE -> DpSupportedType.INTEGER;
+//        case ULONGVALUE -> DpSupportedType.LONG;
+//        case LONGVALUE -> DpSupportedType.LONG;
+//        case FLOATVALUE -> DpSupportedType.FLOAT;
+//        case DOUBLEVALUE -> DpSupportedType.DOUBLE;
+//        case STRINGVALUE -> DpSupportedType.STRING;
+//        case BYTEARRAYVALUE -> DpSupportedType.BYTE_ARRAY;
+//        case ARRAYVALUE -> DpSupportedType.ARRAY;
+//        case STRUCTUREVALUE -> DpSupportedType.STRUCTURE;
+//        case IMAGEVALUE -> DpSupportedType.IMAGE;
+//        case VALUE_NOT_SET -> throw new IllegalArgumentException("The data value was not set.");
+//        default -> throw new TypeNotPresentException("The data value type was not recognized.", null);
+//        };
     }
     
     /**

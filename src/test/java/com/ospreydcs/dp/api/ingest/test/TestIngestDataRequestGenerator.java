@@ -61,7 +61,7 @@ public class TestIngestDataRequestGenerator {
 //    private static final String         STR_SNST_LBL_PREFIX = TestIngestDataRequestGenerator.class.getSimpleName() + "-Snapshot-";
     
     /** Default Data Provider UID */
-    public static final ProviderUID     REC_PRVD_UID = ProviderUID.from(1);
+    public static final ProviderUID     REC_PRVD_UID = ProviderUID.from("42", TestIngestDataRequestGenerator.class.getSimpleName(), false);
     
     
     /** Double-Valued Frames: Default prefix used for data source (PV) names */

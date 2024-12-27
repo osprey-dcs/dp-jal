@@ -4,8 +4,9 @@
 Common Resources for Data Platform Client Java API Libraries
 
 Project provides tools for the following:
+- Java-based interaction with the Data Platform
 - Configuration management using YAML
-- Standard gRPC operations in Java
+- Tuning of gRPC parameters and techniques for optimized performance
 
 NOTES:
 - The dependency structure of this POM is too inclusive.  Once the project settles the
@@ -19,49 +20,59 @@ NOTES:
     <modelVersion>4.0.0</modelVersion>
 
 	<!-- Project Identification -->
+	<name>Data Platform Java Client API</name>
+	<description>Java language API for the Data Platform services.</description>
     <groupId>com.ospreydcs</groupId>
-    <artifactId>dp-api-common</artifactId>
+    <artifactId>dp-api-java</artifactId>
     <packaging>jar</packaging>
-    <version>1.3.0</version>
+    <version>1.5.0</version>
 
     <properties>
 		
 		<!-- Maven Properties -->
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.plugin.shade.version>3.6.0</maven.plugin.shade.version>
         
         <!-- Project Properties -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+        <main.basedir>${project.basedir}</main.basedir>
+
         <!-- Java - Override Version -->
         <java.version>16</java.version>
+        <java.version>21</java.version>
 
 		<!-- Data Platform Properties-->        
-        <dp-grpc.version>1.3.0</dp-grpc.version>
-        <dp-common.version>1.0.0</dp-common.version>
-        <dp-service.version>1.3.0</dp-service.version>
+        <dp-grpc.version>1.5.0</dp-grpc.version>
+        <dp-service.version>1.5.0</dp-service.version> <!-- Remove - Unused -->
 
         <!-- gRPC Properties -->
         <io.grpc.version>1.49.0</io.grpc.version>
+        <io.grpc.version>1.65.1</io.grpc.version>
 
         <!-- Protobuf Properties -->
         <protobuf.version>4.0.0-rc-2</protobuf.version>
         <protobuf-java-format.version>1.4</protobuf-java-format.version>
         <protoc-gen-validate.version>0.6.7</protoc-gen-validate.version>
+        <protobuf.version>4.27.2</protobuf.version>
+        <protobuf-java-format.version>1.4</protobuf-java-format.version>
 
 		<!-- EPICS Java Library Properties -->
     	<epics-core.version>7.0.7</epics-core.version>
     	<epics-ntypes.version>0.3.7</epics-ntypes.version>
     	<pvaclient.version>4.3.2</pvaclient.version>
 
-		<!-- MongoDB Properties -->
+		<!-- MongoDB Properties --> <!-- Should remove - no need for MongoDB imports -->
         <mongodb.version>4.9.1</mongodb.version>
+        <mongodb.version>5.1.2</mongodb.version>
         
 		<!-- Utilities Properties -->
 		<commons-io.version>2.6</commons-io.version>
 		<mockito-core.version>3.4.0</mockito-core.version>
         <log4j-version>2.20.0</log4j-version>
+        <log4j-version>2.23.1</log4j-version>
         <snakeyaml.version>1.31</snakeyaml.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         
@@ -149,6 +160,7 @@ NOTES:
 
 
 		<!-- ###### MongoDB Resources ######## -->
+		<!-- These should be removed - Unnecessary -->
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>bson</artifactId>

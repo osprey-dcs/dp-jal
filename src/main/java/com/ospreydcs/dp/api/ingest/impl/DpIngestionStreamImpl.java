@@ -49,9 +49,10 @@ import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannel;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
-import com.ospreydcs.dp.api.model.ClientRequestUID;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -427,8 +428,8 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     /** Stream opened flag */
     private boolean         bolStreamOpen = false;
     
-    /** Stream error flag */
-    private boolean         bolStreamError = false;
+//    /** Stream error flag */
+//    private boolean         bolStreamError = false;
     
     
     /** Transfer thread: The number of ingest data messages staged for transmission */
@@ -1011,138 +1012,91 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
         return this.chanIngest.getRequestCount();
     }
     
-    /**
-     * <p>
-     * Returns an immutable list of "client request IDs" within all the data ingestion messages
-     * sent to the Ingestion Service during the current open stream session.
-     * </p>
-     * <p>
-     * Every ingest data request message contains a "client request ID" that should provide the
-     * unique identifier for that request.  The Ingestion Service records the identifier for later
-     * query.  Additionally, when using bidirectional data streams the Ingestion Service will 
-     * provide either an acknowledgment of data received for that ingestion message, or an 
-     * exception.  See <code>{@link #getIngestionResponses()}</code> and 
-     * <code>{@link #getIngestionExceptions()}</code>.
-     * </p>  
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>
-     * Client request IDs are assigned by the internal processor before transmission to the
-     * Ingestion Service. Since large <code>IngestionFrame</code> instances may be decomposed into
-     * smaller frames (to meet gRPC message size limits), it is not practical to set request
-     * IDs within a frame itself.
-     * </li>
-     * <li>
-     * The returned collection is a list of all client request IDs assigned to outgoing data
-     * ingestion messages and can be used by clients to locate ingested data within the archive,
-     * or queery the Ingestion Service about request status post ingestion.
-     * </li>
-     * <li>
-     * The ordering of this list does not necessarily reflect the order that ingestion frames
-     * were offered to the processor.  Processed ingestion request messages do not necessarily
-     * get transmitted in order.
-     * </li>
-     * </ul>
-     * </p>
-     * 
-     * @return  all client request IDs for messages transmitted to Ingestion Service.
-     * 
-     * @throws IllegalStateException    the stream was not opened and processor was never activated
-     */
-    public List<ClientRequestUID> getClientRequestIds() throws IllegalStateException {
-        
-        // Get the client request IDs from the internal processor
-        List<ClientRequestUID>   lstIds = this.chanIngest.getRequestIds();
-        
-        return lstIds;
-    }
-    
-    /**
-     * <p>
-     * Return a list of all the responses to the ingest data request messages.
-     * </p>
-     * <p>
-     * This method is only practical when using bidirectional gRPC data streams where the
-     * Ingestion Service sents a response corresponding to every ingestion request.
-     * For unidirectional gRPC data streams the Ingestion Service sends at most one
-     * reply.  
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>
-     * The size of this list should be the value returned by <code>{@link #getResponseCount()}</code>.
-     * </li>
-     * <li>
-     * The ordering of this list does not necessarily reflect the order that ingestion frames
-     * were offered to the processor.  Processed ingestion request messages do not necessarily
-     * get transmitted in order.
-     * </li>
-     * <li>
-     * This method returns a collection of <code>{@link IngestionResponse}</code> records native to the API
-     * library, rather than <code>{@link IngestDataResponse}</code> Protocol Buffers messages.  This action
-     * is simply for convenience. 
-     * </ul>
-     * </p>
-     * 
-     * @return  a list of all Ingestion Service responses to all transmitted ingestion requests
-     * 
-     * @throws IllegalStateException    stream was was never opened 
-     * @throws MissingResourceException a IngestDataResponse message could not be converted to API record
-     */
-    public List<IngestionResponse>  getIngestionResponses() throws IllegalStateException, MissingResourceException {
-        
-        // Get the ingestion responses from the ingestion channel
-        List<IngestionResponse> lstRsps = this.chanIngest.getIngestionResponses();
-        
-        return lstRsps;
-    }
-
-    /**
-     * <p>
-     * Returns a list of all ingestion responses reporting an exception with the corresponding
-     * ingestion request.
-     * </p>
-     * <p>
-     * This method is only practical when using bidirectional gRPC data streams where the
-     * Ingestion Service sents a response corresponding to every ingestion request.
-     * For unidirectional gRPC data streams the Ingestion Service sends at most one
-     * reply.
-     * </p>
-     * <p>
-     * The internal processor monitors incoming responses from the Ingestion Service for 
-     * exceptions.  The returned list is the collection of all responses indicating an exception 
-     * with its corresponding request, which may be identified by the client request ID.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>
-     * Any ingestion request message identified in list (i.e., by client request ID) had
-     * some type of exception encountered immediately by the Ingestion Service.  The exception
-     * details are included in the response.
-     * </li>
-     * <li>
-     * If a client request ID does not appear in the returned list there is <em>no guarantee</em> 
-     * that an error <em>did not occur later</em> in the Ingestion Service processing and archiving.
-     * One may query the Ingestion Service, via client request ID, for all client ingestion
-     * requests that failed archiving. 
-     * </li>
-     * </ul>
-     * </p>
-     *   
-     * @return  the collection of Ingestion Service responses reporting an exception
-     * 
-     * @throws IllegalStateException    stream was never opened and processor was never activated
-     */
-    public List<IngestionResponse> getIngestionExceptions() throws IllegalStateException {
-        
-        // Get the list of exceptional responses from the internal stream processor
-        List<IngestionResponse> lstRsps = this.chanIngest.getIngestionExceptions();
-        
-        return lstRsps;
-    }
+//    /**
+//     * <p>
+//     * Return a list of all the responses to the ingest data request messages.
+//     * </p>
+//     * <p>
+//     * This method is only practical when using bidirectional gRPC data streams where the
+//     * Ingestion Service sents a response corresponding to every ingestion request.
+//     * For unidirectional gRPC data streams the Ingestion Service sends at most one
+//     * reply.  
+//     * </p>
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li>
+//     * The size of this list should be the value returned by <code>{@link #getResponseCount()}</code>.
+//     * </li>
+//     * <li>
+//     * The ordering of this list does not necessarily reflect the order that ingestion frames
+//     * were offered to the processor.  Processed ingestion request messages do not necessarily
+//     * get transmitted in order.
+//     * </li>
+//     * <li>
+//     * This method returns a collection of <code>{@link IngestionResponse}</code> records native to the API
+//     * library, rather than <code>{@link IngestDataResponse}</code> Protocol Buffers messages.  This action
+//     * is simply for convenience. 
+//     * </ul>
+//     * </p>
+//     * 
+//     * @return  a list of all Ingestion Service responses to all transmitted ingestion requests
+//     * 
+//     * @throws IllegalStateException    stream was was never opened 
+//     * @throws MissingResourceException a IngestDataResponse message could not be converted to API record
+//     */
+//    public List<IngestionResponse>  getIngestionResponses() throws IllegalStateException, MissingResourceException {
+//        
+//        // Get the ingestion responses from the ingestion channel
+//        List<IngestionResponse> lstRsps = this.chanIngest.getIngestionResponses();
+//        
+//        return lstRsps;
+//    }
+//
+//    /**
+//     * <p>
+//     * Returns a list of all ingestion responses reporting an exception with the corresponding
+//     * ingestion request.
+//     * </p>
+//     * <p>
+//     * This method is only practical when using bidirectional gRPC data streams where the
+//     * Ingestion Service sents a response corresponding to every ingestion request.
+//     * For unidirectional gRPC data streams the Ingestion Service sends at most one
+//     * reply.
+//     * </p>
+//     * <p>
+//     * The internal processor monitors incoming responses from the Ingestion Service for 
+//     * exceptions.  The returned list is the collection of all responses indicating an exception 
+//     * with its corresponding request, which may be identified by the client request ID.
+//     * </p>
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li>
+//     * Any ingestion request message identified in list (i.e., by client request ID) had
+//     * some type of exception encountered immediately by the Ingestion Service.  The exception
+//     * details are included in the response.
+//     * </li>
+//     * <li>
+//     * If a client request ID does not appear in the returned list there is <em>no guarantee</em> 
+//     * that an error <em>did not occur later</em> in the Ingestion Service processing and archiving.
+//     * One may query the Ingestion Service, via client request ID, for all client ingestion
+//     * requests that failed archiving. 
+//     * </li>
+//     * </ul>
+//     * </p>
+//     *   
+//     * @return  the collection of Ingestion Service responses reporting an exception
+//     * 
+//     * @throws IllegalStateException    stream was never opened and processor was never activated
+//     */
+//    public List<IngestionResponse> getIngestionExceptions() throws IllegalStateException {
+//        
+//        // Get the list of exceptional responses from the internal stream processor
+//        List<IngestionResponse> lstRsps = this.chanIngest.getIngestionExceptions();
+//        
+//        return lstRsps;
+//    }
 
     /**
      * <p>
@@ -1312,7 +1266,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      */
     @Override
     synchronized
-    public List<IngestionResponse> closeStream() throws IllegalStateException, InterruptedException, CompletionException {
+    public IngestionResult closeStream() throws IllegalStateException, InterruptedException, CompletionException, MissingResourceException {
         
         // Check state
         if (!this.bolStreamOpen) 
@@ -1344,12 +1298,15 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
         
         // Shutdown the ingestion channel
         this.chanIngest.shutdown();     // blocks until complete
-        List<IngestionResponse> lstRsps = this.chanIngest.getIngestionResponses();
+        
+//        List<IngestionResponse> lstRsps = this.chanIngest.getIngestionResponses();
+                                // IllegalStateException, UnsupportedOperationException, MisssingResourceException
+        IngestionResult         recResult = this.chanIngest.getIngestionResult(); 
         
         // All internal resources are shutdown - close stream is complete
         this.bolStreamOpen = false;
         
-        return lstRsps;
+        return recResult;
     }
 
     /**
@@ -1357,11 +1314,11 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#closeStreamNow()
      */
     @Override
-    public boolean closeStreamNow() {
+    public IngestionResult closeStreamNow() {
 
         // Check state
         if (!this.bolStreamOpen)
-            return false;
+            return IngestionResult.NULL;
         
         // Shut down all internal processes immediately
         this.prcrFrames.shutdownNow();
@@ -1371,9 +1328,33 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
         
         this.bolStreamOpen = false;
         
-        return true;
+        // Return the partial result
+        try { 
+            IngestionResult recResult = this.chanIngest.getIngestionResult();
+            
+            return recResult;
+            
+        } catch (Exception e) {
+            if (BOL_LOGGING)
+                LOGGER.warn("{} - Attempt to recover ingestion result failed with exception {}.", JavaRuntime.getQualifiedMethodNameSimple(), e);
+            
+            return IngestionResult.NULL;
+        }
     }
 
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#getRequestIds()
+     */
+    @Override
+    public List<IngestRequestUID> getRequestIds() throws IllegalStateException {
+        
+        // Get the client request IDs from the internal processor
+        List<IngestRequestUID>   lstIds = this.chanIngest.getRequestIds();
+        
+        return lstIds;
+    }
+    
     /**
      *
      * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#isStreamOpen()
@@ -1388,7 +1369,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 //     * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#getClientRequestIds()
 //     */
 //    @Override
-//    public List<ClientRequestUID> getClientRequestIds() throws IllegalStateException {
+//    public List<IngestRequestUID> getClientRequestIds() throws IllegalStateException {
 //        // TODO Auto-generated method stub
 //        return null;
 //    }

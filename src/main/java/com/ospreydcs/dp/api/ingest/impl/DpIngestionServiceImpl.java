@@ -49,7 +49,9 @@ import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameBinner;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameConverter;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -236,10 +238,13 @@ public final class DpIngestionServiceImpl extends
     //
     
     /** Data Provider UID record obtained from registration */
-    private ProviderUID     recProviderUid = null;
+    private ProviderUID             recProviderUid = null;
     
     /** The number of data messages transmitted to the Ingestion Service so far */
-    private int             cntMsgXmissions = 0;
+    private int                     cntMsgXmissions = 0;
+    
+    /** The collection of client request UIDs of transmitted data */
+    private List<IngestRequestUID>  lstRequestIds = new LinkedList<>();
 
     
     //
@@ -533,7 +538,7 @@ public final class DpIngestionServiceImpl extends
      * @throws DpIngestionException     general ingestion exception (see detail and cause)
      */
     @Override
-    public List<IngestionResponse> ingest(IngestionFrame frame) throws IllegalStateException, DpIngestionException {
+    public IngestionResult ingest(IngestionFrame frame) throws IllegalStateException, DpIngestionException {
         
         // Check registration
         if (this.recProviderUid == null)
@@ -542,11 +547,41 @@ public final class DpIngestionServiceImpl extends
         // Create list of frames to be ingested - depends on auto-decomposition
         List<IngestionFrame>    lstFrames = this.decomposeFrame(frame); // throws DpIngestionException
         
+        // Save the request UIDs
+        this.lstRequestIds.addAll(lstFrames.stream().map(frm -> frm.getClientRequestUid()).toList());
+        
         // Convert frames to messages and transmit, recovering responses
-        List<IngestionResponse> lstRsps = this.transmitFrames(this.recProviderUid, lstFrames); // throws DpIngestionException
+        List<IngestDataResponse> lstRsps = this.transmitFrames(this.recProviderUid, lstFrames); // throws DpIngestionException
 
-        // Return responses
-        return lstRsps;
+        // Convert responses to result and return
+        IngestionResult     recResult;
+        
+        if (lstRsps.size() == 1) {
+            IngestRequestUID recXmitId = this.lstRequestIds.get(0);
+            IngestDataResponse  msgRsp = lstRsps.get(0);
+            
+            recResult = ProtoMsg.toIngestionResultUnary(recXmitId, msgRsp);
+            
+        } else {
+            recResult = ProtoMsg.toIngestionResult(this.lstRequestIds, lstRsps);
+            
+        }
+        
+        return recResult;
+    }
+    
+    /**
+     *
+     * @see @see com.ospreydcs.dp.api.ingest.IIngestionService#getRequestIds()
+     */
+    @Override
+    public List<IngestRequestUID>   getRequestIds() throws IllegalStateException {
+        
+        // Check registration
+        if (this.recProviderUid == null)
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Data Provider was not registered, no data transmitted.");
+        
+        return this.lstRequestIds;
     }
     
     
@@ -572,8 +607,9 @@ public final class DpIngestionServiceImpl extends
      * Decomposes large ingestion frames if automatic decomposition is enabled.
      * </p>
      * <p>
-     * Attempts to decompose the given ingestion frame horizontally (by columns).  If
-     * column size is too large to fit memory allocation limit an exception is throw.
+     * Attempts to decompose the given ingestion frame horizontally (by columns).  
+     * If horizontal decomposition fails a vertical decomposition is attempted (by rows).
+     * If both attempts fail an exception is throw.
      * </p>
      * <p>
      * If automatic frame decomposition is disabled then the method simple returns a 
@@ -589,7 +625,7 @@ public final class DpIngestionServiceImpl extends
      * @return          list of composite ingestion frames if decomposed, 
      *                  otherwise original frame
      *                   
-     * @throws DpIngestionException
+     * @throws DpIngestionException both horizontal and vertical decomposition failed
      */
     private List<IngestionFrame>    decomposeFrame(IngestionFrame frame) throws DpIngestionException {
 
@@ -599,33 +635,39 @@ public final class DpIngestionServiceImpl extends
             return  List.of(frame);
         }
         
-        // Decompose the original ingestion frame if too large
+        // Decompose the original ingestion frame (if too large - does nothing if allocation is less than limit)
         try {
             List<IngestionFrame>    lstFrames = this.prcrFrmDecomp.decomposeHorizontally(frame);
             
             return lstFrames;
         
-            // The ingestion frame could not be decomposed - columns too large
-        } catch (IllegalArgumentException e) {
-            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
-                    + " - ingestion frame decomposition (by column) FAILED, columns are too large: "
-                    + e.getMessage();
+            // The ingestion frame could not be decomposed horizontally - likely columns too large
+        } catch (Exception e1) {
+            String      strMsg1 = JavaRuntime.getQualifiedMethodNameSimple() 
+                    + " - horizontal ingestion frame decomposition (by column) attempt FAILED: "
+                    + e1.getMessage();
             
             if (BOL_LOGGING)
-                LOGGER.error(strMsg);
+                LOGGER.warn(strMsg1);
             
-            throw new DpIngestionException(strMsg, e);
-            
-            // Ingestion frame decomposition error
-        } catch (CompletionException e) {
-            String      strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
-                    + " - ingestion frame decomposition (by column) ERROR: "
-                    + e.getMessage();
-            
-            if (BOL_LOGGING)
-                LOGGER.error(strMsg);
-            
-            throw new DpIngestionException(strMsg, e);
+            // Try decomposing vertically
+            try {
+                
+                List<IngestionFrame>    lstFrames = this.prcrFrmDecomp.decomposeVertically(frame);
+                
+                return lstFrames;
+                
+                // Vertical decomposition failed - exceptional case
+            } catch (Exception e2) {
+                String      strMsg2 = JavaRuntime.getQualifiedMethodNameSimple() 
+                        + " - both horizontal and vertical ingestion frame decomposition attempts FAILED: "
+                        + e2.getMessage();
+
+                if (BOL_LOGGING)
+                    LOGGER.error(strMsg2);
+
+                throw new DpIngestionException(strMsg2, e2);
+            }
         }
     }
     
@@ -662,10 +704,10 @@ public final class DpIngestionServiceImpl extends
      * 
      * @throws DpIngestionException unexpected gRPC runtime exception or request was rejected (see details)
      */
-    private List<IngestionResponse> transmitFrames(ProviderUID recUid, List<IngestionFrame> lstFrames) throws DpIngestionException {
+    private List<IngestDataResponse> transmitFrames(ProviderUID recUid, List<IngestionFrame> lstFrames) throws DpIngestionException {
         
         // Returned collection
-        List<IngestionResponse> lstRsps = new LinkedList<>();
+        List<IngestDataResponse> lstRsps = new LinkedList<>();
         
         // For each ingestion frame transmit synchronously, in serial, using unary RPC
         for (IngestionFrame frm : lstFrames) {
@@ -677,11 +719,11 @@ public final class DpIngestionServiceImpl extends
                 // Transmit data message and recover response - throws StatusRuntimeException
                 IngestDataResponse msgRsp = super.grpcConn.getStubBlock().ingestData(msgRqst);
                 
-                // Convert response to client API record - throws MissingResourceException if rejected
-                IngestionResponse  recRsp = ProtoMsg.toIngestionResponse(msgRsp);
+//                // Convert response to client API record - throws MissingResourceException if rejected
+//                IngestionResponse  recRsp = ProtoMsg.toIngestionResponse(msgRsp);
 
                 // Add to returned list
-                lstRsps.add(recRsp);
+                lstRsps.add(msgRsp);
                 this.cntMsgXmissions++;
                 
                 // Unexpected gRPC runtime exception during ingestion 

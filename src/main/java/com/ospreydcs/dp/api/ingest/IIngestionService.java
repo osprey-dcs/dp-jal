@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 
@@ -75,12 +76,53 @@ public interface IIngestionService extends IConnection {
      * 
      * @param frame ingestion frame containing data for transmission to the Ingestion Service
      * 
-     * @return  collection of Ingestion Service responses to data within ingestion frame
+     * @return  the result of the ingestion operation
      * 
      * @throws IllegalStateException    unregistered Data Provider
      * @throws DpIngestionException     general ingestion exception (see detail and cause)
      */
-    public List<IngestionResponse> ingest(IngestionFrame frame) throws IllegalStateException, DpIngestionException;
+    public IngestionResult ingest(IngestionFrame frame) throws IllegalStateException, DpIngestionException;
+    
+    /**
+     * <p>
+     * Returns a list of "client request UIDs" taken from all the data ingestion messages
+     * sent to the Ingestion Service during the current session.
+     * </p>
+     * <p>
+     * Every ingest data request message contains a "client request UID" that provides the
+     * unique identifier for that request.  The Ingestion Service records the identifier for later
+     * query.  These values may also be compared with the list of received request UIDs from the
+     * <code>{@link IngestionResult#receivedRequestIds()}</code>.
+     * </p>  
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Client request UIDs are assigned by the internal processor before transmission to the
+     * Ingestion Service, if not directly assigned by the client 
+     * (see <code>{@link IngestionFrame#setClientRequestUid(IngestRequestUID)}</code>). 
+     * In the case of large <code>IngestionFrame</code> instances that are decomposed into
+     * smaller frames (to meet gRPC message size limits), the decomposed frames may be suffixed
+     * with a count number or given the same UID. 
+     * </li>
+     * <li>
+     * The returned collection is a list of all client request IDs assigned to outgoing data
+     * ingestion messages and can be used by clients to locate ingested data within the archive,
+     * or query the Ingestion Service about request status post ingestion.
+     * </li>
+     * <li>
+     * The ordering of this list does not necessarily reflect the order that ingestion frames
+     * were offered to the processor.  Processed ingestion request messages do not necessarily
+     * get transmitted in order.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @return  all client request IDs for messages transmitted to Ingestion Service so far
+     * 
+     * @throws IllegalStateException    likely from unregistered interface state
+     */
+    public List<IngestRequestUID>   getRequestIds() throws IllegalStateException;
 
     /**
      * @see @see com.ospreydcs.dp.api.grpc.model.IConnection#awaitTermination()

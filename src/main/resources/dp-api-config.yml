@@ -166,10 +166,14 @@ query:      # Data Platform Query Service client API default configuration param
       active: true                   # is logging active              : DP_API_QUERY_LOGGING_ACTIVE
       level: DEBUG                   # logger output level if active  : DP_API_QUERY_LOGGING_LEVEL
  
-connections:   # All available Data Platform service connections
-   ingestion:
+connections:   # All available Data Platform service connections   
+   logging:     # General event logging for all connection operations 
+      active: true                   # is logging active              : DP_API_CONNECTION_LOGGING_ACTIVE
+      level: INFO                    # logger output level if active  : DP_API_CONNECTION_LOGGING_LEVEL
+      
+   ingestion:   # Ingestion Service connection
       name: DP Ingestion Service     # (opt) name of connection  : DP_API_CONNECTION_INGESTION_NAME
-      version: 1.0.0                 # (opt) parameters version  : DP_API_CONNECTION_INGESTION_VERSION
+      version: 1.5.0                 # (opt) parameters version  : DP_API_CONNECTION_INGESTION_VERSION
       description: Data Platform Ingestion Service default connection parameters # : DP_API_CONNECTION_INGESTION_DESCRIPTION 
       supplement: None               # (opt) anonymous parameter: DP_API_CONNECTION_INGESTION_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)
@@ -195,9 +199,9 @@ connections:   # All available Data Platform service connections
             keepAliveWithoutCalls: false # channel never idle       : DP_API_CONNECTION_INGESTION_CHANNEL_GRPC_KEEP_ALIVE
             gzip: false                 # use gzip compression      : DP_API_CONNECTION_INGESTION_CHANNEL_GRPC_COMPRESS_GZIP
     
-   query:
+   query:   # Query Service connection
       name: DP Query Service         # (opt) name of connection  : DP_API_CONNECTION_QUERY_NAME
-      version: 1.0.0                 # (opt) parameters version  : DP_API_CONNECTION_QUERY_VERSION
+      version: 1.5.0                 # (opt) parameters version  : DP_API_CONNECTION_QUERY_VERSION
       description: Data Platform Query Service default connection parameters # : DP_API_CONNECTION_QUERY_DESCRIPTION
       supplement: None               # (opt) anonymous parameter : DP_API_CONNECTION_QUERY_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)

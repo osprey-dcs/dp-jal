@@ -1,6 +1,7 @@
 package com.ospreydcs.dp.api.ingest;
 
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -8,7 +9,9 @@ import java.util.concurrent.TimeUnit;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
+import com.ospreydcs.dp.api.model.IngestRequestUID;
 import com.ospreydcs.dp.api.model.IngestionResponse;
+import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
 
@@ -286,21 +289,22 @@ public interface IIngestionStream extends IConnection {
      * in the <code>{@link DpApiConfig}</code> configuration class.
      * </p>
      * 
-     * @return  list of responses from the Ingestion Service to data ingestion messages
+     * @return  the result of the ingestion operation 
      * 
      * @throws IllegalStateException    attempted to close an unopened stream
      * @throws InterruptedException     internal processor interrupted while waiting for pending tasks
-     * @throws ExecutionException       internal error while shutting down resources (see detail and cause)
+     * @throws CompletionException      internal error while shutting down resources (see detail and cause)
+     * @throws MissingResourceException internal error converting ingestion responses to result (this should not occur)
      */
-    public List<IngestionResponse> closeStream() throws IllegalStateException, InterruptedException, CompletionException;
+    public IngestionResult  closeStream() throws IllegalStateException, InterruptedException, CompletionException, MissingResourceException;
 
     /**
      * <p>
      * Immediately closes the data stream to the Ingestion Service.
      * </p>
      * <p>
-     * Performs a "hard close" of the current Ingestion Service data stream.
-     * Specifically,
+     * Performs a "hard close" of the current Ingestion Service data stream.  This method is typically invoked
+     * for exceptional situations.  The following operations are performed:
      * <ul>
      * <li>All pending operations are cancelled.</li>
      * <li>All ingestion frames queued for processing are discarded.</li>
@@ -309,13 +313,25 @@ public interface IIngestionStream extends IConnection {
      * </p>
      * <p>
      * The method returns immediately after canceling all active processes.  Upon return
-     * the data stream is inactive.
+     * the data stream is inactive.  No exceptions are thrown.  This method reacts according to
+     * the current state of the stream.
+     * </p>
+     * <p>
+     * <h2>Returned Value</h2>
+     * <ul>
+     * <li>If the stream was never opened the value <code>{@link IngestionResult#NULL}</code> is returned.</li>
+     * <li>If the stream is active the returned value contains the results up to this point and are likely
+     *     incomplete.</li>  
+     * <li>If the stream was already shutdown nothing is done and the returned value is a copy of that
+     *     returned from <code>{@link #closeStream()}</code>.</li>
+     * </ul>
      * </p>
      * 
+     * @return  the result of the ingestion operation as described above
      * @return  <code>true</code> if stream was closed everything was shut down,
      *          <code>false</code> if the stream was already closed or internal process failed
      */
-    public boolean closeStreamNow();
+    public IngestionResult closeStreamNow();
 
 //    /**
 //     * <p>
@@ -339,47 +355,47 @@ public interface IIngestionStream extends IConnection {
 //     */
 //    int getQueueSize() throws IllegalStateException;
 
-//    /**
-//     * <p>
-//     * Returns an immutable list of "client request IDs" within all the data ingestion messages
-//     * sent to the Ingestion Service during the current open stream session.
-//     * </p>
-//     * <p>
-//     * Every ingest data request message contains a "client request ID" that should provide the
-//     * unique identifier for that request.  The Ingestion Service records the identifier for later
-//     * query.  Additionally, when using bidirectional data streams the Ingestion Service will 
-//     * provide either an acknowledgment of data received for that ingestion message, or an 
-//     * exception.  See <code>{@link #getIngestionResponses()}</code> and 
-//     * <code>{@link #getIngestionExceptions()}</code>.
-//     * </p>  
-//     * <p>
-//     * <h2>NOTES:</h2>
-//     * <ul>
-//     * <li>
-//     * Client request IDs are assigned by the internal processor before transmission to the
-//     * Ingestion Service. Since large <code>IngestionFrame</code> instances may be decomposed into
-//     * smaller frames (to meet gRPC message size limits), it is not practical to set request
-//     * IDs within a frame itself.
-//     * </li>
-//     * <li>
-//     * The returned collection is a list of all client request IDs assigned to outgoing data
-//     * ingestion messages and can be used by clients to locate ingested data within the archive,
-//     * or queery the Ingestion Service about request status post ingestion.
-//     * </li>
-//     * <li>
-//     * The ordering of this list does not necessarily reflect the order that ingestion frames
-//     * were offered to the processor.  Processed ingestion request messages do not necessarily
-//     * get transmitted in order.
-//     * </li>
-//     * </ul>
-//     * </p>
-//     * 
-//     * @return  all client request IDs for messages transmitted to Ingestion Service.
-//     * 
-//     * @throws IllegalStateException    the stream was not opened and processor was never activated
-//     */
-//    List<ClientRequestUID> getClientRequestIds() throws IllegalStateException;
-//
+    /**
+     * <p>
+     * Returns an immutable list of "client request UIDs" taken from all the data ingestion messages
+     * sent to the Ingestion Service during the current open stream session.
+     * </p>
+     * <p>
+     * Every ingest data request message contains a "client request UID" that provides the
+     * unique identifier for that request.  The Ingestion Service records the identifier for later
+     * query.  These values may also be compared with the list of received request UIDs from the
+     * <code>{@link IngestionResult#receivedRequestIds()}</code>.
+     * </p>  
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Client request UIDs are assigned by the internal processor before transmission to the
+     * Ingestion Service, if not directly assigned by the client 
+     * (see <code>{@link IngestionFrame#setClientRequestUid(IngestRequestUID)}</code>). 
+     * In the case of large <code>IngestionFrame</code> instances that are decomposed into
+     * smaller frames (to meet gRPC message size limits), the decomposed frames may be suffixed
+     * with a count number or given the same UID. 
+     * </li>
+     * <li>
+     * The returned collection is a list of all client request IDs assigned to outgoing data
+     * ingestion messages and can be used by clients to locate ingested data within the archive,
+     * or query the Ingestion Service about request status post ingestion.
+     * </li>
+     * <li>
+     * The ordering of this list does not necessarily reflect the order that ingestion frames
+     * were offered to the processor.  Processed ingestion request messages do not necessarily
+     * get transmitted in order.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @return  all client request IDs for messages transmitted to Ingestion Service.
+     * 
+     * @throws IllegalStateException    the stream was not opened and processor was never activated
+     */
+    public List<IngestRequestUID> getRequestIds() throws IllegalStateException;
+
     /**
      * <p>
      * Determines whether or not the stream between the Ingestion Service is currently open.
