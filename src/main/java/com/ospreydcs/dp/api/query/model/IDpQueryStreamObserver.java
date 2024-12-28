@@ -40,6 +40,9 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * conditions, errors, stream completion, and data availability.
  * </p>
  * <p>
+ * This interface is used by <code>DpQueryStreamBuffer</code> instances to allow clients to receive
+ * notifications concerning streaming conditions.
+ * <p>
  * <h2>NOTE:</h2>
  * The implementation of these methods should not incur significant processing time.
  * The notification should be accepted and returned so as not to interrupt the 

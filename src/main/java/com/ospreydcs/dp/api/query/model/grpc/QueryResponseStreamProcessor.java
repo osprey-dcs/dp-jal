@@ -32,8 +32,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
+import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
@@ -211,11 +211,13 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * <code>{@link DpDataRequest#getStreamType()}</code>.
      * The concrete type is given according to the following:
      * <ul>
-     * <li><code>{@link DpQueryStreamType#UNIDIRECTIONAL}</code> -> <code>{@link QueryResponseUniStreamProcessor}</code>.</li>
-     * <li><code>{@link DpQueryStreamType#BIDIRECTIONAL}</code> -> <code>{@link QueryResponseBidiStreamProcessor}</code>.</li>
+     * <li><code>{@link DpGrpcStreamType#BACKWARD}</code> -> <code>{@link QueryResponseUniStreamProcessor}</code>.</li>
+     * <li><code>{@link DpGrpcStreamType#BIDIRECTIONAL}</code> -> <code>{@link QueryResponseBidiStreamProcessor}</code>.</li>
      * </li>
      * </ul>
-     * Both concrete implementations above are contained within this source file. 
+     * Both concrete implementations above are contained within this source file.  Note that the stream type
+     * <code>{@link DpGrpcStreamType#FORWARD}</code> is not supported (no context) and an exception will be
+     * thrown. 
      * </p>
      * <p>
      * <h2>USE</h2>
@@ -231,6 +233,8 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * 
      * @return  a new unidirectional Query Service data stream processor ready for starting
      * 
+     * @throws  IllegalArgumentException Illegal stream type specified (e.g., <code>{@link DpGrpcStreamType#BACKWARD}</code>)
+     * 
      * @see #isSuccess()
      * 
      * @see QueryResponseUniStreamProcessor
@@ -239,16 +243,16 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
     public static QueryResponseStreamProcessor  newTask(
             DpDataRequest dpRequest,
             DpQueryServiceStub  stubAsync,
-            Consumer<QueryDataResponse.QueryData> ifcDataSink) 
+            Consumer<QueryDataResponse.QueryData> ifcDataSink) throws IllegalArgumentException   
     {
         // Extract the preferred stream type and the Protobuf query result message
-        DpQueryStreamType   enmType = dpRequest.getStreamType();
+        DpGrpcStreamType    enmType = dpRequest.getStreamType();
         QueryDataRequest    msgRqst = dpRequest.buildQueryRequest();
         
         return switch (enmType) {
-        case UNIDIRECTIONAL -> QueryResponseUniStreamProcessor.newUniTask(msgRqst, stubAsync, ifcDataSink);
+        case BACKWARD -> QueryResponseUniStreamProcessor.newUniTask(msgRqst, stubAsync, ifcDataSink);
         case BIDIRECTIONAL -> QueryResponseBidiStreamProcessor.newBidiTask(msgRqst, stubAsync, ifcDataSink);
-        default -> throw new IllegalArgumentException("Unexpected value: " + enmType);
+        default -> throw new IllegalArgumentException("Illegal stream type: " + enmType);
         };
     }
     
@@ -283,22 +287,24 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * 
      * @return  a new unidirectional Query Service data stream processor ready for starting
      * 
+     * @throws  IllegalArgumentException Illegal stream type specified (e.g., <code>{@link DpGrpcStreamType#BACKWARD}</code>)
+     * 
      * @see #isSuccess()
      * 
      * @see QueryResponseUniStreamProcessor
      * @see QueryResponseBidiStreamProcessor
      */
     public static QueryResponseStreamProcessor  newTask(
-            DpQueryStreamType   enmStreamType,
+            DpGrpcStreamType   enmStreamType,
             QueryDataRequest    msgRequest,
             DpQueryServiceStub  stubAsync,
-            Consumer<QueryDataResponse.QueryData> ifcDataSink) 
+            Consumer<QueryDataResponse.QueryData> ifcDataSink) throws IllegalArgumentException
     {
         // Choose stream process implementation based upon requested stream type
         return switch (enmStreamType) {
-        case UNIDIRECTIONAL -> QueryResponseUniStreamProcessor.newUniTask(msgRequest, stubAsync, ifcDataSink);
+        case BACKWARD -> QueryResponseUniStreamProcessor.newUniTask(msgRequest, stubAsync, ifcDataSink);
         case BIDIRECTIONAL -> QueryResponseBidiStreamProcessor.newBidiTask(msgRequest, stubAsync, ifcDataSink);
-        default -> throw new IllegalArgumentException("Unexpected value: " + enmStreamType);
+        default -> throw new IllegalArgumentException("Illegal stream type: " + enmStreamType);
         };
     }
     

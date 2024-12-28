@@ -27,7 +27,9 @@
  */
 package com.ospreydcs.dp.api.query.test;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -43,8 +45,14 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * testing archive.  Configuration of the DP test archive is provided from the DP 
  * testing configuration.
  * </p>
+ * <h2>Data Platform Test Archive</h2>
+ * The Data Platform test archive is populated with the utility <i>app-run-test-data-generator</i>
+ * which ships with the Data Platform installation.  This utility must be run before using this
+ * utility class or all query requests will fail.  The parameters for the test archive are given
+ * as class constants which can be changed if the test archive is modified.
+ * <h2>Data Requests</h2>
  * <p>
- * Note that there are 4 parameters to the full query:
+ * Note that there are 4 parameters to the full query request:
  * <ul>
  * <li>
  * <code>cntSources</code> - number of data sources in the query.
@@ -111,32 +119,62 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  *
  */
 public class TestDpDataRequestGenerator {
-    
+
     //
     // Application Resources
     //
     
-    /** Default DP API library testing parameters */
-    public static final DpApiTestingConfig.TestArchive      CFG_ARCHIVE = DpApiTestingConfig.getInstance().testArchive;
+//    /** Default DP API library testing parameters */
+//    public static final DpApiTestingConfig.TestArchive      CFG_ARCHIVE = DpApiTestingConfig.getInstance().testArchive;
 
     
     //
     // Class Constants
     //
 
+
+    /** The inception time instant of the test archive */
+    private static final String STR_ISO_ARCHIVE_INCEPT = "2023-10-31T15:51:02.000+00:00";
+    
+    /** The last timestamp instant within the test data archive */
+    private static final String STR_ISO_ARCHIVE_LAST = "2023-10-31T15:51:21.999+00:00"; 
+
+    
+    /** 
+     * The inception time instant of the test Data Platform data archive test data set.
+     * <p>
+     * The value is taken from test default parameter [<code>testArchive.inception</code>].
+     */
+    public static final Instant     INS_INCEPT = Instant.parse(STR_ISO_ARCHIVE_INCEPT);
+    
+    /** 
+     * The final time instant of all Data Platform data archive test data set
+     * <p>
+     * This is a computed value equal to <code>{@link #INS_INCEPT} + {@link #LNG_DURATION}</code>.
+     */
+    public static final Instant     INS_FINAL = Instant.parse(STR_ISO_ARCHIVE_LAST);
+
+    /** 
+     * Size of time domain with Data Platform data archive test data set.
+     * <p>
+     * The value is taken from test default parameter [<code>testArchive.duration</code>].
+     */ 
+    public static final Long        LNG_DURATION = Duration.between(INS_INCEPT, INS_FINAL).get(ChronoUnit.NANOS);
+ 
+   
     /** 
      * The total number of unique data source names within the Data Platform data archive test data set.
      * <p>
      * The value is taken from test default parameter [<code>testArchive.pvCount</code>].
      */
-    public static final int         CNT_PV_NAMES;
+    public static final int         CNT_PV_NAMES = 4000;
     
     /**
      * The prefix for each data source name within the Data Platform test archive.
      * <p>
      * The value is taken from test default parameter [<code>testArchive.pvPrefix</code>].
      */
-    public static final String      STR_PV_PREFIX;
+    public static final String      STR_PV_PREFIX = "dpTest_";
     
     /** 
      * List of all data source names within the Data Platform data archive test data set 
@@ -144,28 +182,6 @@ public class TestDpDataRequestGenerator {
      * The prefix for the data source names is taken from test default parameter [<code>testArchive.pvPrefix</code>].
      */
     public static final List<String> LST_PV_NAMES;
-    
-    
-    /** 
-     * Size of time domain with Data Platform data archive test data set.
-     * <p>
-     * The value is taken from test default parameter [<code>testArchive.duration</code>].
-     */ 
-    public static final Long        LNG_DURATION;
-    
-    /** 
-     * The inception time instant of the test Data Platform data archive test data set.
-     * <p>
-     * The value is taken from test default parameter [<code>testArchive.inception</code>].
-     */
-    public static final Instant     INS_INCEPT;
-    
-    /** 
-     * The final time instant of all Data Platform data archive test data set
-     * <p>
-     * This is a computed value equal to <code>{@link #INS_INCEPT} + {@link #LNG_DURATION}</code>.
-     */
-    public static final Instant     INS_FINAL;
     
     
     /**
@@ -177,12 +193,14 @@ public class TestDpDataRequestGenerator {
      * </p>
      */
     static {
-        LNG_DURATION = CFG_ARCHIVE.duration;
-        INS_INCEPT = Instant.ofEpochSecond(CFG_ARCHIVE.inception);
-        INS_FINAL = INS_INCEPT.plusSeconds(CFG_ARCHIVE.duration);
-
-        CNT_PV_NAMES = CFG_ARCHIVE.pvCount;
-        STR_PV_PREFIX = CFG_ARCHIVE.pvPrefix;
+//        INS_INCEPT = Instant.parse(STR_ISO_ARCHIVE_INCEPT);
+//        
+//        LNG_DURATION = CFG_ARCHIVE.duration;
+//        INS_INCEPT = Instant.ofEpochSecond(CFG_ARCHIVE.inception);
+//        INS_FINAL = INS_INCEPT.plusSeconds(CFG_ARCHIVE.duration);
+//
+//        CNT_PV_NAMES = CFG_ARCHIVE.pvCount;
+//        STR_PV_PREFIX = CFG_ARCHIVE.pvPrefix;
         
         LST_PV_NAMES = IntStream
                 .rangeClosed(1, CNT_PV_NAMES)
@@ -291,8 +309,8 @@ public class TestDpDataRequestGenerator {
      * </p>
      * 
      * @param cntSources        number of data sources in the query
-     * @param lngDuration       time duration of query (in seconds), range = [INS_INCEPT, INS_INCEPT + lngDuration]
-     * @param lngStartTime      start time of the query (in seconds) - actually an offset from <code>{@link #INS_INCEPT}</code>
+     * @param lngDuration       time duration of query (in nanoseconds), range = [INS_INCEPT, INS_INCEPT + lngDuration]
+     * @param lngStartTime      start time of the query (in nanoseconds) - actually an offset from <code>{@link #INS_INCEPT}</code>
      * 
      * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and the specified time range
      * 
@@ -342,7 +360,7 @@ public class TestDpDataRequestGenerator {
      * 
      * @param cntSources        number of data sources in the query
      * @param indSourceFirst    index of the first data source within the list of source names
-     * @param lngDuration       time duration of query (in seconds)
+     * @param lngDuration       time duration of query (in nanoseconds)
      * 
      * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and the specified time range
      * 
@@ -390,8 +408,8 @@ public class TestDpDataRequestGenerator {
      * 
      * @param cntSources        number of data sources in the query
      * @param indSourceFirst    index of the first data source within the list of source names
-     * @param lngDuration       time duration of query (in seconds)
-     * @param lngStartTime      start time of the query (in seconds) - actually an offset from <code>{@link #INS_INCEPT}</code>
+     * @param lngDuration       time duration of query (in nanoseconds)
+     * @param lngStartTime      start time of the query (in nanoseconds) - actually an offset from <code>{@link #INS_INCEPT}</code>
      * 
      * @return  new <code>DpDataRequest</code> build from the given parameters
      * 
@@ -416,8 +434,8 @@ public class TestDpDataRequestGenerator {
         DpDataRequest   rqst = DpDataRequest.newRequest();
         
         List<String>    lstNames = LST_PV_NAMES.subList(indSourceFirst, indSourceLast);
-        Instant         insStart = INS_INCEPT.plusSeconds(lngStartTime);
-        Instant         insFinal = insStart.plusSeconds(lngDuration);
+        Instant         insStart = INS_INCEPT.plusNanos(lngStartTime);
+        Instant         insFinal = insStart.plusNanos(lngDuration);
         
         rqst.rangeBetween(insStart, insFinal);
         rqst.selectSources(lstNames);

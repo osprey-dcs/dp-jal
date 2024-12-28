@@ -149,7 +149,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * </p>
  * <p>
  * <h2>NOTES:</h2>
- * This class uses instances of <code>{@link IngestionFrameBinner}</code> for frame decomposition
+ * This class uses instances of <code>{@link IngestionFrameDecomposer}</code> for frame decomposition
  * and instances of class <code>{@link IngestionFrameConverter}</code> for frame conversion
  * to ingest data request messages.
  * </p>
@@ -158,7 +158,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * @author Christopher K. Allen
  * @since Apr 10, 2024
  *
- * @see IngestionFrameBinner
+ * @see IngestionFrameDecomposer
  * @see IngestionFrameConverter
  * 
  * @deprecated  Ingestion frame processing was refactored and this class was decomposed into multiple (less complicated) classes
@@ -1277,7 +1277,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
      * 
      * @return  a new <code>Callable</code> instance performing frame decompositions
      * 
-     * throws InterruptedException interrupted while waiting for an available IngestionFrameBinner instance 
+     * throws InterruptedException interrupted while waiting for an available IngestionFrameDecomposer instance 
      */
     private Callable<Boolean> createFrameDecompositionTask() /* throws InterruptedException */ {
     
@@ -1290,7 +1290,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
             
             
             // Create a new frame binner processor for this thread
-            IngestionFrameBinner binner = IngestionFrameBinner.from(this.lngBinSizeMax);
+            IngestionFrameDecomposer binner = IngestionFrameDecomposer.from(this.lngBinSizeMax);
 
             // While active - Continuously process frames from raw frame buffer
             // - second OR conditional allows for soft shutdowns

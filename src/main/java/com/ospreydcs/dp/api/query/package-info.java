@@ -29,6 +29,29 @@
  * <p>
  * Package supporting Data Platform Query Service operations.
  * </p>
+ * <h2>Query Service APIs</h2>
+ * Currently there is only one interface for the Data Platform Query Service, <code>IQueryService</code>.
+ * It contains operations for both time-series data requests and metadata requests.
+ * <p>
+ * <b>Time-Series Data Requests</b>
+ * <br/>  
+ * Results of time-series
+ * data requests are returned as <code>IDataTable</code> instances.  Additionally, clients can request
+ * a data stream object represented by a <code>DpQueryStreamBuffer</code> instance.  In the latter case
+ * client do their own data processing.
+ * </p>
+ * <p>
+ * <b>Metadata Requests</b>
+ * <br/>
+ * Metadata results are returned as lists of metadata records, for example <code>PvMetaRecord</code>.  There will
+ * be one record for every matching criteria within the request.
+ * </p>
+ * <p>
+ * <h2>Connection Factory</h2>
+ * Implementations of <code>IQueryService</code> are obtained from the Query Service API <em>connection factory</em>.
+ * Specifically, the class <code>DpQueryApiFactory</code> contains numerous static methods for connecting to the
+ * Data Platform Query Service and returning an appropriate interface.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Dec 31, 2023

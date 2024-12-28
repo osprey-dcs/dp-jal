@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryServiceFactoryTest.java
+ * File:	DpQueryApiFactoryTest.java
  * Package: com.ospreydcs.dp.api.query
- * Type: 	DpQueryServiceFactoryTest
+ * Type: 	DpQueryApiFactoryTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -20,12 +20,14 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jan 7, 2024
+ * @since Dec 28, 2024
  *
  * TODO:
  * - None
  */
 package com.ospreydcs.dp.api.query;
+
+import static org.junit.Assert.*;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -37,17 +39,18 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.api.query.impl.DpQueryServiceFactory;
+import com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl;
 
 /**
  * <p>
- * JUnit test cases for <code>@link DpQueryServiceFactory}</code>.
- * </p>
+ * JUnit test cases for class <code>DpQueryApiFactory</code>.
  *
  * @author Christopher K. Allen
- * @since Jan 7, 2024
+ * @since Dec 28, 2024
  *
  */
-public class DpQueryServiceFactoryTest {
+public class DpQueryApiFactoryTest {
 
     
     //
@@ -91,42 +94,14 @@ public class DpQueryServiceFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryServiceFactory#getInstance()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService()}.
      */
     @Test
-    public final void testGetInstance() {
-        boolean                 bolResult = false;
-        DpQueryServiceFactory   fac = DpQueryServiceFactory.getInstance();
-
-        try {
-            DpQueryService qsApi = fac.connect();
-            
-            bolResult = qsApi.shutdown();
-            
-            Assert.assertTrue("Service API shutdown reported failure", bolResult);
-            
-            bolResult = qsApi.awaitTermination();
-            
-            Assert.assertTrue("Termination wait failure - service API apparently failed to shut down.", bolResult);
-            
-        } catch (DpGrpcException e) {
-            Assert.fail("Connection factory creation exception: " + e.getMessage());
-            
-        } catch (InterruptedException e) {
-            Assert.fail("Exception thrown while waiting for service api shutdown termination: " + e.getMessage());
-            
-        }
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#connect()}.
-     */
-    @Test
-    public final void testConnect() {
+    public final void testConnectService() {
         boolean bolResult = false;
         
         try {
-            DpQueryService qs = DpQueryServiceFactory.FACTORY.connect();
+            IQueryService qs = DpQueryApiFactory.connectService();
             
             bolResult = qs.shutdown();
             
@@ -146,14 +121,14 @@ public class DpQueryServiceFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#connect(java.lang.String, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int)}.
      */
     @Test
-    public final void testConnectStringInt() {
+    public final void testConnectServiceStringInt() {
         boolean bolResult = false;
         
         try {
-            DpQueryService qs = DpQueryServiceFactory.FACTORY.connect(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
+            IQueryService   qs = DpQueryApiFactory.connectService(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
             
             bolResult = qs.shutdown();
             
@@ -173,14 +148,45 @@ public class DpQueryServiceFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#connect(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int, boolean)}.
      */
     @Test
-    public final void testConnectStringIntBooleanLongTimeUnit() {
+    public final void testConnectServiceStringIntBoolean() {
         boolean bolResult = false;
         
         try {
-            DpQueryService qs = DpQueryServiceFactory.FACTORY.connect(
+            IQueryService qs = DpQueryApiFactory.connectService(
+                    CFG_DEFAULT.channel.host.url, 
+                    CFG_DEFAULT.channel.host.port,
+                    CFG_DEFAULT.channel.grpc.usePlainText
+                    );
+            
+            bolResult = qs.shutdown();
+            
+            Assert.assertTrue("Service API shutdown reported failure", bolResult);
+            
+            bolResult = qs.awaitTermination();
+            
+            Assert.assertTrue("Termination wait failure - service API apparently failed to shut down.", bolResult);
+            
+        } catch (DpGrpcException e) {
+            Assert.fail("Connection factory creation exception: " + e.getMessage());
+
+        } catch (InterruptedException e) {
+            Assert.fail("Exception thrown while waiting for service api shutdown termination: " + e.getMessage());
+
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
+     */
+    @Test
+    public final void testConnectServiceStringIntBooleanLongTimeUnit() {
+        boolean bolResult = false;
+        
+        try {
+            IQueryService qs = DpQueryApiFactory.connectService(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.grpc.usePlainText,
@@ -206,14 +212,14 @@ public class DpQueryServiceFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#connect(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
-    public final void testConnectStringIntBooleanBooleanIntBooleanBooleanLongTimeUnit() {
+    public final void testConnectServiceStringIntBooleanBooleanIntBooleanBooleanLongTimeUnit() {
         boolean bolResult = false;
         
         try {
-            DpQueryService qs = DpQueryServiceFactory.FACTORY.connect(
+            IQueryService   qs = DpQueryApiFactory.connectService(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.tls.active,
@@ -241,5 +247,29 @@ public class DpQueryServiceFactoryTest {
 
         }
     }
+
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.io.File, java.io.File, java.io.File)}.
+//     */
+//    @Test
+//    public final void testConnectServiceFileFileFile() {
+//        fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int, java.io.File, java.io.File, java.io.File)}.
+//     */
+//    @Test
+//    public final void testConnectServiceStringIntFileFileFile() {
+//        fail("Not yet implemented"); // TODO
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int, java.io.File, java.io.File, java.io.File, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
+//     */
+//    @Test
+//    public final void testConnectServiceStringIntFileFileFileBooleanIntBooleanBooleanLongTimeUnit() {
+//        fail("Not yet implemented"); // TODO
+//    }
 
 }

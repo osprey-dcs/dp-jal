@@ -50,10 +50,10 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
+import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpDataRequest.CompositeType;
-import com.ospreydcs.dp.api.query.model.DpQueryException;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
+import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
@@ -758,30 +758,33 @@ public class QueryResponseCorrelator {
                     this.theCorrelator.addQueryData(msgData);
                     this.cntMsgsProcessed++;
                     
-                    // TODO - remove
-                    System.out.println("Processed message " + this.cntMsgsProcessed);
+                    if (BOL_LOGGING)
+                        LOGGER.debug("{} - Processed message {}", JavaRuntime.getQualifiedMethodNameSimple(), this.cntMsgsProcessed);
 
                 } catch (InterruptedException e) {
                     if (this.cntMsgsMax != null && (this.cntMsgsProcessed >= this.cntMsgsMax)) {
                         this.recResult = ResultStatus.SUCCESS;
                         
-                        // TODO - remove
-                        System.out.println("Interrupted but successful.");
+                        if (BOL_LOGGING)
+                            LOGGER.warn("Interrupted but successful.");
                         
                         return;
                     }
                     
-                    // TODO - remove
-                    System.out.println("HA HA HA HA - Interrupted and FAILED.");
+                    String  strErrMsg = JavaRuntime.getQualifiedMethodNameSimple() +
+                            " - Process interrupted externally and FAILED while waiting for data buffer.";
                     
-                    this.recResult = ResultStatus.newFailure("Process interrupted externally while waiting for the data buffer.", e);
+                    if (BOL_LOGGING) 
+                        LOGGER.error(strErrMsg);
+                    
+                    this.recResult = ResultStatus.newFailure(strErrMsg, e);
 
                     return;
                 }
             }
 
-            // TODO - remove
-            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + ": Exiting processing loop.");
+            if (BOL_LOGGING)
+                LOGGER.debug("{} - Exiting processing loop.", JavaRuntime.getQualifiedMethodNameSimple());
             
             this.recResult = ResultStatus.SUCCESS;
         }
@@ -1482,7 +1485,7 @@ public class QueryResponseCorrelator {
         
         // Create a gRPC stream processor data for each component request within the argument
         for (DpDataRequest dpRequest : lstRequests) {
-            DpQueryStreamType       enmStreamType = dpRequest.getStreamType();
+            DpGrpcStreamType       enmStreamType = dpRequest.getStreamType();
             QueryDataRequest        msgRequest = dpRequest.buildQueryRequest();
             DpQueryServiceStub      stubAsync = this.connQuery.getStubAsync();
             QueryDataConsumer       fncConsumer = QueryDataConsumer.newInstance(this.queStreamBuffer);

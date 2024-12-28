@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.query;
 
-import static org.junit.Assert.fail;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedList;

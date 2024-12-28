@@ -175,7 +175,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * </p>
  * <p>
  * <h2>NOTES:</h2>
- * This class uses instances of <code>{@link IngestionFrameBinner}</code> for frame decomposition
+ * This class uses instances of <code>{@link IngestionFrameDecomposer}</code> for frame decomposition
  * and instances of class <code>{@link IngestionFrameConverter}</code> for frame conversion
  * to ingest data request messages.
  * </p>
@@ -202,7 +202,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * @author Christopher K. Allen
  * @since Jul 25, 2024
  *
- * @see IngestionFrameBinner
+ * @see IngestionFrameDecomposer
  * @see IngestionFrameConverter
  */
 public class IngestionFrameProcessor implements IMessageSupplier<IngestDataRequest> {
@@ -436,7 +436,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     //
     
     /** Frame decomposition sub-processor for main thread */
-    private IngestionFrameBinner      prcrMsgBinner;
+    private IngestionFrameDecomposer      prcrMsgBinner;
     
     /** Frame-to-message sub-processor for main thread */
     private IngestionFrameConverter   prcMsgConverter;
@@ -1035,7 +1035,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         
         // If no multi-threaded concurrency
         if (!this.bolConcurrency) {
-            this.prcrMsgBinner = IngestionFrameBinner.from(this.szMaxFrmAlloc);
+            this.prcrMsgBinner = IngestionFrameDecomposer.from(this.szMaxFrmAlloc);
             this.prcMsgConverter = IngestionFrameConverter.create(this.recProviderUid);
             
             return true;
@@ -1485,7 +1485,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * 
      * @return  a new <code>Callable</code> instance performing frame decompositions
      * 
-     * throws InterruptedException interrupted while waiting for an available IngestionFrameBinner instance 
+     * throws InterruptedException interrupted while waiting for an available IngestionFrameDecomposer instance 
      */
     private Callable<Boolean> createFrameDecompositionTask() /* throws InterruptedException */ {
     
@@ -1497,7 +1497,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 //            final int   intThrdId = this.cntDecompThrds++;
             
             // Create a new frame binner processor for this thread
-            IngestionFrameBinner binner = IngestionFrameBinner.from(this.szMaxFrmAlloc);
+            IngestionFrameDecomposer binner = IngestionFrameDecomposer.from(this.szMaxFrmAlloc);
 
             // While active - Continuously process frames from raw frame buffer
             // - remaining OR conditional(s) allow for soft shutdowns
@@ -1687,7 +1687,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </p>
      * 
      * @param frame     the offending ingestion frame
-     * @param e         the exception thrown by the <code>IngestionFrameBinner</code>
+     * @param e         the exception thrown by the <code>IngestionFrameDecomposer</code>
      */
     private void registerDecompException(IngestionFrame frame, Exception e) {
         

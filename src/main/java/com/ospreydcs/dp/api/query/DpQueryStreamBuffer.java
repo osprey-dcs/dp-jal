@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model;
+package com.ospreydcs.dp.api.query;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -38,6 +38,11 @@ import java.util.concurrent.TimeoutException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.model.DpGrpcStreamType;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
+import com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
@@ -132,32 +137,63 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
     
     //
-    // Class Types
+    // Creators
     //
     
-//    /**
-//     * Enumeration of gRPC data streaming services currently supported by the Query Service.
-//     */
-//    public static enum StreamType {
-//        
-//        /**
-//         * Unidirectional gRPC Stream.
-//         * <p>
-//         * Indicates a unidirectional (backward) stream from the Query Service to this client.
-//         */
-//        UNIDIRECTIONAL,
-//        
-//        
-//        /**
-//         * Bidirectional gRPC Stream.
-//         * <p>
-//         * Indicates a fully bidirectional stream between the Client and the Query Service.
-//         * Client explicitly requests each data page (within QueryResponse message) from the
-//         * Query Service. 
-//         */
-//        BIDIRECTIONAL;
-//    }
-//    
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>DpQueryStreamBuffer</code> ready for use.
+     * </p>
+     * <p>
+     * All internal logging for the returned instance is turned off.
+     * </p>
+     * 
+     * @param enmStreamType the gRPC data stream type this response buffer is managing 
+     * @param stubAsync     the streaming communications stub of the Query Service gRPC interface 
+     * @param msgRequest    the Query Service data request message 
+     * 
+     * @return new <code>DpQueryStreamBuffer</code> initialized with the given arguments.
+     * 
+     * @throws  IllegalArgumentException    invalid gRPC stream type (e.g., <code>{@link DpGrpcStreamType#FORWARD}</code>)
+     * 
+     * @see #DpQueryStreamBuffer(DpQueryStreamType, DpQueryServiceStub, QueryRequest, boolean)
+     * @see DpQueryStreamBuffer
+     */
+    public static DpQueryStreamBuffer create(DpGrpcStreamType enmType, DpQueryServiceStub stubAsync, QueryDataRequest msgRequest) 
+            throws IllegalArgumentException {
+        return DpQueryStreamBuffer.create(enmType, stubAsync, msgRequest, false);
+    }
+    
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>DpQueryStreamBuffer</code> ready for use.
+     * </p>
+     * 
+     * @param enmStreamType the gRPC data stream type this response buffer is managing 
+     * @param stubAsync     the streaming communications stub of the Query Service gRPC interface 
+     * @param msgRequest    the Query Service data request message 
+     * @param bolLogging    set <code>true</code> to include event logging (for debugging)
+     * 
+     * @return new <code>DpQueryStreamBuffer</code> initialized with the given arguments.
+     * 
+     * @throws  IllegalArgumentException    invalid gRPC stream type (e.g., <code>{@link DpGrpcStreamType#FORWARD}</code>)
+     * 
+     * @see #DpQueryStreamBuffer(DpQueryStreamType, DpQueryServiceStub, QueryRequest, boolean)
+     * @see DpQueryStreamBuffer
+     */
+    public static DpQueryStreamBuffer create(DpGrpcStreamType enmType, DpQueryServiceStub stubAsync, QueryDataRequest msgRequest, boolean bolLogging) 
+            throws IllegalArgumentException {
+        return new DpQueryStreamBuffer(enmType, stubAsync, msgRequest, bolLogging);
+    }
+    
+    
+    //
+    // Application Resources
+    //
+    
+    /** Default Query Service API configuration parameters */
+    private static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    
     
     //
     // Class Resources
@@ -172,7 +208,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
     //
     
     /** The gRPC data stream type this response buffer is managing */
-    private final DpQueryStreamType     enmStreamType;
+    private final DpGrpcStreamType      enmStreamType;
     
     /** The (asynchronous) streaming communications stub of the Query Service gRPC interface */
     private final DpQueryServiceStub    stubAsync;
@@ -261,51 +297,6 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
     
     //
-    // Creators
-    //
-    
-    /**
-     * <p>
-     * Creates a new, initialized instance of <code>DpQueryStreamBuffer</code> ready for use.
-     * </p>
-     * <p>
-     * All internal logging for the returned instance is turned off.
-     * </p>
-     * 
-     * @param enmStreamType the gRPC data stream type this response buffer is managing 
-     * @param stubAsync     the streaming communications stub of the Query Service gRPC interface 
-     * @param msgRequest    the Query Service data request message 
-     * 
-     * @return new <code>DpQueryStreamBuffer</code> initialized with the given arguments.
-     * 
-     * @see #DpQueryStreamBuffer(DpQueryStreamType, DpQueryServiceStub, QueryRequest, boolean)
-     * @see DpQueryStreamBuffer
-     */
-    public static DpQueryStreamBuffer newBuffer(DpQueryStreamType enmType, DpQueryServiceStub stubAsync, QueryDataRequest msgRequest) {
-        return DpQueryStreamBuffer.newBuffer(enmType, stubAsync, msgRequest, false);
-    }
-    
-    /**
-     * <p>
-     * Creates a new, initialized instance of <code>DpQueryStreamBuffer</code> ready for use.
-     * </p>
-     * 
-     * @param enmStreamType the gRPC data stream type this response buffer is managing 
-     * @param stubAsync     the streaming communications stub of the Query Service gRPC interface 
-     * @param msgRequest    the Query Service data request message 
-     * @param bolLogging    set <code>true</code> to include event logging (for debugging)
-     * 
-     * @return new <code>DpQueryStreamBuffer</code> initialized with the given arguments.
-     * 
-     * @see #DpQueryStreamBuffer(DpQueryStreamType, DpQueryServiceStub, QueryRequest, boolean)
-     * @see DpQueryStreamBuffer
-     */
-    public static DpQueryStreamBuffer newBuffer(DpQueryStreamType enmType, DpQueryServiceStub stubAsync, QueryDataRequest msgRequest, boolean bolLogging) {
-        return new DpQueryStreamBuffer(enmType, stubAsync, msgRequest, bolLogging);
-    }
-    
-    
-    //
     // Construction and Initialization
     //
     
@@ -339,14 +330,20 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * @param msgRequest    the Query Service data request message 
      * @param bolLogging    set <code>true</code> to include event logging (for debugging)
      * 
+     * @throws  IllegalArgumentException    invalid gRPC stream type (e.g., <code>{@link DpGrpcStreamType#FORWARD}</code>)
+     * 
      * @see DpQueryStreamBuffer
      */
     public DpQueryStreamBuffer(
-            DpQueryStreamType enmStreamType, 
+            DpGrpcStreamType enmStreamType, 
             DpQueryServiceStub stubAsync, 
             QueryDataRequest msgRequest, 
-            boolean bolLogging) 
+            boolean bolLogging) throws IllegalArgumentException 
     {
+        // Check stream type
+        if (enmStreamType == DpGrpcStreamType.FORWARD)
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Illegal stream type: " + enmStreamType);
+        
         this.enmStreamType = enmStreamType;
         this.stubAsync = stubAsync;
         this.msgRequest = msgRequest;
@@ -431,7 +428,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
             
             // Check if stream has already been requested
             if (this.bolStreamRequested) {
-                String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to start a stream that has already been requested.";
+                String strMsg = JavaRuntime.getQualifiedMethodNameSimple() + ": ERROR - Attempted to start a stream that has already been requested.";
                 if (this.bolLogging)
                     LOGGER.error(strMsg);
 
@@ -440,8 +437,9 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
             // Log event
             if (this.bolLogging) {
-                LOGGER.debug("{} called with following request:", JavaRuntime.getQualifiedMethodName());
-                LOGGER.debug(this.msgRequest.toString());
+                LOGGER.debug("{} invoked - initiating {} data stream.", JavaRuntime.getQualifiedMethodNameSimple(), this.enmStreamType);
+//                LOGGER.debug("{} called with following request:", JavaRuntime.getQualifiedMethodNameSimple());
+//                LOGGER.debug(this.msgRequest.toString());
             }
 
 
@@ -525,16 +523,20 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
     
         // Check if a stream has been requested
         if (!this.bolStreamRequested) {
-            String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
+            String strMsg = JavaRuntime.getQualifiedMethodNameSimple() + ": ERROR - Attempted to wait on a stream that has not been requested.";
             if (this.bolLogging)
                 LOGGER.error(strMsg);
 
             throw new IllegalStateException(strMsg);
         }
+        
+        // Check if stream has already been started
+        if (this.monStrmStart.getCount() == 0)
+            return;
 
         // Log event
         if (this.bolLogging)
-            LOGGER.debug("{} - latching on monitor StreamStart indefinitely.", JavaRuntime.getQualifiedMethodName());
+            LOGGER.debug("{} - latching on monitor StreamStart indefinitely.", JavaRuntime.getQualifiedMethodNameSimple());
     
         this.monStrmStart.await();
     }
@@ -568,16 +570,20 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
     
         // Check if a stream has been requested
         if (!this.bolStreamRequested) {
-            String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
+            String strMsg = JavaRuntime.getQualifiedMethodNameSimple() + ": ERROR - Attempted to wait on a stream that has not been requested.";
             if (this.bolLogging)
                 LOGGER.error(strMsg);
 
             throw new IllegalStateException(strMsg);
         }
 
+        // Check if stream has already been started
+        if (this.monStrmStart.getCount() == 0)
+            return;
+
         // Log event
         if (this.bolLogging)
-            LOGGER.debug("{} - latching on monitor StreamStart for {} {}", JavaRuntime.getQualifiedMethodName(),lngTimeout, tuTimeout);
+            LOGGER.debug("{} - latching on monitor StreamStart for {} {}", JavaRuntime.getQualifiedMethodNameSimple(),lngTimeout, tuTimeout);
     
         boolean bolReleased = this.monStrmStart.await(lngTimeout, tuTimeout);
         
@@ -618,16 +624,20 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
         
         // Check if a stream has been requested
         if (!this.bolStreamRequested) {
-            String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
+            String strMsg = JavaRuntime.getQualifiedMethodNameSimple() + ": ERROR - Attempted to wait on a stream that has not been requested.";
             if (this.bolLogging)
                 LOGGER.error(strMsg);
 
             throw new IllegalStateException(strMsg);
         }
 
+        // Check if stream has already completed
+        if (this.monStrmComplete.getCount() == 0)
+            return;
+
         // Log event
         if (this.bolLogging)
-            LOGGER.debug("{} - latching on monitor StreamEnd indefinitely.", JavaRuntime.getQualifiedMethodName());
+            LOGGER.debug("{} - latching on monitor StreamEnd indefinitely.", JavaRuntime.getQualifiedMethodNameSimple());
 
         this.monStrmComplete.await();
     }
@@ -662,21 +672,25 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
         
         // Check if a stream has been requested
         if (!this.bolStreamRequested) {
-            String strMsg = JavaRuntime.getQualifiedMethodName() + ": ERROR - Attempted to wait on a stream that has not been requested.";
+            String strMsg = JavaRuntime.getQualifiedMethodNameSimple() + ": ERROR - Attempted to wait on a stream that has not been requested.";
             if (this.bolLogging)
                 LOGGER.error(strMsg);
 
             throw new IllegalStateException(strMsg);
         }
 
+        // Check if stream has already completed
+        if (this.monStrmComplete.getCount() == 0)
+            return;
+
         // Log event
         if (this.bolLogging)
-            LOGGER.debug("{} - latching on monitor StreamEnd for {} {}", JavaRuntime.getQualifiedMethodName(), lngTimeout, tuTimeout);
+            LOGGER.debug("{} - latching on monitor StreamComplete for {} {}", JavaRuntime.getQualifiedMethodNameSimple(), lngTimeout, tuTimeout);
 
         boolean bolReleased = this.monStrmComplete.await(lngTimeout, tuTimeout);
         
         if ( !bolReleased ) {
-            String strMsg = JavaRuntime.getQualifiedMethodName() + ": Timeout out waiting for stream to complete. ";
+            String strMsg = JavaRuntime.getQualifiedMethodNameSimple() + ": Timeout out waiting for stream to complete. ";
 
             // Log event
             if (this.bolLogging)
@@ -1060,7 +1074,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
         
         // Check if timeout occurred 
         if (!bolResult) {
-            String strMsg = JavaRuntime.getQualifiedMethodName() + ": timeout occured after " + lngTimeout + " " + tuTimeout.name();
+            String strMsg = JavaRuntime.getQualifiedMethodNameSimple() + ": timeout occured after " + lngTimeout + " " + tuTimeout.name();
             
             // Log event
             if (this.bolLogging)
@@ -1372,7 +1386,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
         // Check argument for required data request
         if (!msgRqst.hasQuerySpec()) {
-            String  strMsg = JavaRuntime.getQualifiedMethodName() + ": argument does not contain initial query.";
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + ": argument does not contain initial query.";
             if (this.bolLogging)
                 LOGGER.error(strMsg);
 
@@ -1386,14 +1400,13 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
         
         // Initiate and start the gRPC data stream according to stream type
         switch (this.enmStreamType) {
-        
-        case UNIDIRECTIONAL:
+
+        case BACKWARD:
 
             // Send the data initializing and starting the backward stream 
             this.stubAsync.queryDataStream(msgRqst, this);
-            
             break;
-            
+
         case BIDIRECTIONAL:
 
             // Initiate the stream and retrieve the forward stream handle
@@ -1401,9 +1414,15 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
             // Send the first data request starting the BIDI streaming process
             this.hndSvrStrm.onNext(msgRqst);
-
             break;
             
+        default:
+            String  strErrMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - Illegal stream type: " + this.enmStreamType;
+
+            if (this.bolLogging)
+                LOGGER.error(strErrMsg);
+            
+            throw new IllegalArgumentException(strErrMsg);
         }
         
         // Set the active request flag and return
@@ -1440,7 +1459,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
         
         // Shut down the stream
         //  - If this is a bidirectional stream send the completed notification
-        if(this.enmStreamType == DpQueryStreamType.BIDIRECTIONAL) 
+        if(this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) 
             this.hndSvrStrm.onCompleted();
            
         //  - State associated state condition and variables
@@ -1480,7 +1499,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
     protected void requestNextPageBidi() {
 
         // If this is not a bidirectional stream there is nothing to do
-        if (this.enmStreamType != DpQueryStreamType.BIDIRECTIONAL)
+        if (this.enmStreamType != DpGrpcStreamType.BIDIRECTIONAL)
             return;
 
         // Add next page index to request list  

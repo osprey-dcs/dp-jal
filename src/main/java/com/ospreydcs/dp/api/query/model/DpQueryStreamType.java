@@ -62,7 +62,10 @@ package com.ospreydcs.dp.api.query.model;
  * </li>
  * </ul>
  * </p>
+ * 
+ * @deprecated  Replaced by DpGrpcStreamType
  */
+@Deprecated(since="Dec 28, 2024", forRemoval=true)
 public enum DpQueryStreamType {
     
     /**

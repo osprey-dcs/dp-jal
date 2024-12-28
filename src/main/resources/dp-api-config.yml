@@ -124,7 +124,7 @@ query:      # Data Platform Query Service client API default configuration param
    data:         # Parameters for time-series data queries
       request:        # Default parameters used in data requests
          stream:           # gRPC streaming default parameters
-            preference: UNIDIRECTIONAL  # {UNIDIRECTIONAL, BIDRECTIONAL} : DP_API_QUERY_DATA_REQUEST_STREAM_PREFERENCE
+            preference: BACKWARD        # {BACKWARD, BIDRECTIONAL} : DP_API_QUERY_DATA_REQUEST_STREAM_PREFERENCE
          composite:        # data request query decomposition default parameters (for multi-streaming)
             active: true                # use query decomposition  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_ACTIVE
             maxSources: 1000            # max data source count    : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_SOURCES

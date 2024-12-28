@@ -41,6 +41,7 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
+import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
@@ -184,6 +185,52 @@ public final class DpDataRequest {
 
     
     //
+    // Creators 
+    //
+    
+    /**
+     * <p>
+     * Creates a new <code>DpDataRequest</code> instance for creating time-series
+     * data requests from the <em>Query Service</em>.
+     * </p>
+     * <p>
+     * Note that the returned data request will create the 
+     * "open query", which requests all time-series data currently within the 
+     * <em>Data Platform</em> data archive since its inception.
+     * Use the "selection" and "restrictor" methods to narrow the data request
+     * results based upon specific PV names, timestamps ranges, and other 
+     * data filters.
+     * </p>
+     * <h3>The following are not currently applicable:</h3>
+     * <p>
+     * Use the <code>{@link #setPageSize(Integer)}</code> to performance tweak
+     * the size of the data pages in the <em>Query Service</em> data stream when
+     * using paged data tables (in particular, for asynchronous data requests).
+     * The default page size is given in the <i>application.yml</i> file.
+     * </p>
+     * <p>
+     * Use the <code>{@link #setPageStartIndex(Integer)}</code> tell the 
+     * <em>Query Service</em> to send the specific page index for the given
+     * query.  For asynchronously streamed data (<code>QueryRequest</code>) 
+     * this instructs the <em>Query Service</em> to send data pages from the given 
+     * index on to the last page index.
+     * <br/> <br/>
+     * &nbsp; &nbsp; <i>setting this value </i>> 1<i> sends only the tail of the data request.</i> 
+     * of the full request.
+     * <br/><br/>
+     * Thus, <b>use at your own risk</b>.
+     * </p> 
+     * 
+     * @return  a new "open query" <code>DpDataRequest</code> instance
+     */
+    public static DpDataRequest newRequest() {
+        DpDataRequest bldr = new DpDataRequest();
+        
+        return bldr;
+    }
+    
+
+    //
     //  Application Resources
     //
     
@@ -274,7 +321,7 @@ public final class DpDataRequest {
     
     
     /** gRPC stream type default preference */
-    private static final DpQueryStreamType             ENM_STREAM_PREF = CFG_DEFAULT.query.data.request.stream.preference;
+    private static final DpGrpcStreamType       ENM_STREAM_PREF = CFG_DEFAULT.query.data.request.stream.preference;
     
     
     /** The start of this time epoch (Jan 1, 1970) */
@@ -319,7 +366,7 @@ public final class DpDataRequest {
     private int indStartPage = 0;
 
     /** optional gRPC stream type */
-    private DpQueryStreamType  enmStrmType = ENM_STREAM_PREF;
+    private DpGrpcStreamType  enmStrmType = ENM_STREAM_PREF;
     
     /** The time range start instant */
     private Instant insStart = INS_INCEPT;
@@ -338,51 +385,6 @@ public final class DpDataRequest {
     /** "WHERE" components of the query - data filters to restrict time interval  */
     private final LinkedList<String>  lstWhrCmps = new LinkedList<String>();
     
-    
-    //
-    // Creators and Constructors
-    //
-    
-    /**
-     * <p>
-     * Creates a new <code>DpDataRequest</code> instance for creating time-series
-     * data requests from the <em>Query Service</em>.
-     * </p>
-     * <p>
-     * Note that the returned data request will create the 
-     * "open query", which requests all time-series data currently within the 
-     * <em>Data Platform</em> data archive since its inception.
-     * Use the "selection" and "restrictor" methods to narrow the data request
-     * results based upon specific PV names, timestamps ranges, and other 
-     * data filters.
-     * </p>
-     * <h3>The following are not currently applicable:</h3>
-     * <p>
-     * Use the <code>{@link #setPageSize(Integer)}</code> to performance tweak
-     * the size of the data pages in the <em>Query Service</em> data stream when
-     * using paged data tables (in particular, for asynchronous data requests).
-     * The default page size is given in the <i>application.yml</i> file.
-     * </p>
-     * <p>
-     * Use the <code>{@link #setPageStartIndex(Integer)}</code> tell the 
-     * <em>Query Service</em> to send the specific page index for the given
-     * query.  For asynchronously streamed data (<code>QueryRequest</code>) 
-     * this instructs the <em>Query Service</em> to send data pages from the given 
-     * index on to the last page index.
-     * <br/> <br/>
-     * &nbsp; &nbsp; <i>setting this value </i>> 1<i> sends only the tail of the data request.</i> 
-     * of the full request.
-     * <br/><br/>
-     * Thus, <b>use at your own risk</b>.
-     * </p> 
-     * 
-     * @return  a new "open query" <code>DpDataRequest</code> instance
-     */
-    public static DpDataRequest newRequest() {
-        DpDataRequest bldr = new DpDataRequest();
-        
-        return bldr;
-    }
     
     /**
      * <p>
@@ -695,7 +697,7 @@ public final class DpDataRequest {
      * 
      * @return  the preferred gRPC data stream type for the request operation
      */
-    public DpQueryStreamType   getStreamType() {
+    public DpGrpcStreamType   getStreamType() {
         return this.enmStrmType;
     }
     /**
@@ -1050,19 +1052,24 @@ public final class DpDataRequest {
      * </p>
      * <p>
      * Sets the preferred gRPC data stream "type" used for the data request operation.  The currently supported
-     * Query Service data stream types are provided in the enumeration <code>{@link DpQueryStreamType}</code>.
+     * Query Service data stream types are provided in the enumeration <code>{@link DpGrpcStreamType}</code>.
      * See the enumeration documentation for further details on gRPC data streams supported by the Query Service.
      * types 
      * <p> 
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
+     * Note all stream types within enumeration <code>DpGrpcStreamType</code> are applicable.  Specifically,
+     * the <code>{@link DpGrpcStreamType#FORWARD}</code> <b>cannot</b> be used (it has no context) and
+     * an exception will be thrown.
+     * </li> 
+     * <li>
      * This value is only applicable if a streaming RPC operation is used to recover the query results set.  
      * Even then, the choice of preferred gRPC data stream type is not guaranteed.
      * </li>
      * <br/>
      * <li>
-     * This is a metadata property to be set for advanced operations.  Typically, the default value is chosen for 
+     * This is a property to be set for advanced operations.  Typically, the default value is chosen for 
      * performance considerations.  The default value is current given by
      * <code>
      * <pre>
@@ -1076,8 +1083,15 @@ public final class DpDataRequest {
      * </p>
      * 
      * @param enmStreamType preferred gRPC data stream type for streaming query operation
+     * 
+     * @throws  IllegalArgumentException    attempted to specify a unidirectional forward stream
      */
-    public void setStreamType(DpQueryStreamType enmStreamType) {
+    public void setStreamType(DpGrpcStreamType enmStreamType) throws IllegalArgumentException {
+        
+        // Check stream type
+        if (enmStreamType == DpGrpcStreamType.FORWARD)
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + ": Illegal stream type: " + enmStreamType);
+        
         this.enmStrmType = enmStreamType;
     }
     
@@ -1758,7 +1772,7 @@ public final class DpDataRequest {
      * @param insStop       final instant of time range
      * @param lstSources    list of all data source names for the new request
      */
-    private DpDataRequest(DpQueryStreamType enmType, Instant insStart, Instant insStop, List<String> lstSources) {
+    private DpDataRequest(DpGrpcStreamType enmType, Instant insStart, Instant insStop, List<String> lstSources) {
         this.indStartPage = 0;
         this.szPage = SZ_PAGES;
 

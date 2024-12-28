@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query;
+package com.ospreydcs.dp.api.query.impl;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
@@ -43,7 +43,7 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * Connection factory for the <code>DqQueryService</code> Data Platform Query Service API interface.
  * </p>
  * <p>
- * The connection factory is capable of creating <code>{@link DpQueryService}</code> interfaces with 
+ * The connection factory is capable of creating <code>{@link DpQueryServiceImpl}</code> interfaces with 
  * various gRPC connection configurations to the Data Platform Query Service.  These configurations range
  * from fully default to fully user specified, with various combinations as determined by the 
  * <code>connect(...)</code> method arguments.
@@ -51,14 +51,14 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * <p>
  * <h2>Factory Singleton</h2>
  * This class uses the static instance <code>{@link #FACTORY}</code> as the singleton connection factory 
- * for <code>DpQueryService</code> creation using the DP API library default configuration.  
+ * for <code>DpQueryServiceImpl</code> creation using the DP API library default configuration.  
  * Users can use the <code>{@link #FACTORY}</code> instance directory or obtain it indirectly through the 
  * <code>{@link #getInstance()}</code> static method.
  * </p>
  * <p>
  * <h2>Direct Creation</h2>
- * Note that <code>{@link DpQueryService}</code> instances can be created directly with a <code>{@link DpQueryConnection}</code>
- * objects using the <code>{@link DpQueryService#from(DpGrpcConnection)}</code> method.  
+ * Note that <code>{@link DpQueryServiceImpl}</code> instances can be created directly with a <code>{@link DpQueryConnection}</code>
+ * objects using the <code>{@link DpQueryServiceImpl#from(DpGrpcConnection)}</code> method.  
  * <code>DpQueryConnection</code> instances are obtained from the <code>{@link DpQueryConnectionFactory}</code> connection 
  * factory utility which has <code>connect(...)</code> methods analogous to those here.
  * </p>
@@ -72,14 +72,14 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * @author Christopher K. Allen
  * @since Jan 7, 2024
  *
- * @see DpQueryService
+ * @see DpQueryServiceImpl
  * @see DpQueryConnection
  * @see DpQueryConnectionFactory
  * @see DpServiceApiFactoryBase
  * @see DpGrpcConnectionConig
  */
 public final class DpQueryServiceFactory
-        extends DpServiceApiFactoryBase<DpQueryService, DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> {
+        extends DpServiceApiFactoryBase<DpQueryServiceImpl, DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> {
     
 
     //
@@ -114,7 +114,7 @@ public final class DpQueryServiceFactory
      * 
      * @param   cfgDefault  the default connection parameters for the query service used by new factory
      * 
-     * @return  a new Query Service API factory ready for <code>DpQueryService</code> creation and connection
+     * @return  a new Query Service API factory ready for <code>DpQueryServiceImpl</code> creation and connection
      */
     public static final DpQueryServiceFactory   newFactory(DpGrpcConnectionConfig cfgDefault) {
         return new DpQueryServiceFactory(cfgDefault);
@@ -166,11 +166,11 @@ public final class DpQueryServiceFactory
      * @see com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#apiFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
      */
     @Override
-//    protected DpQueryService apiFrom(DpGrpcConnection<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> conn) throws DpGrpcException {
-    protected DpQueryService apiFrom(DpQueryConnection conn) throws DpGrpcException {
+//    protected DpQueryServiceImpl apiFrom(DpGrpcConnection<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> conn) throws DpGrpcException {
+    protected DpQueryServiceImpl apiFrom(DpQueryConnection conn) throws DpGrpcException {
 //        DpQueryConnection   connSub = DpQueryConnection.from(conn);
-//        DpQueryService      qsApi = DpQueryService.from(connSub);
-        DpQueryService      qsApi = DpQueryService.from(conn);
+//        DpQueryServiceImpl      qsApi = DpQueryServiceImpl.from(connSub);
+        DpQueryServiceImpl      qsApi = DpQueryServiceImpl.from(conn);
         
         return qsApi;
     }

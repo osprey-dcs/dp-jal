@@ -30,7 +30,6 @@ package com.ospreydcs.dp.api.ingest.impl;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
-import java.util.concurrent.CompletionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,12 +44,12 @@ import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionService;
+import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameBinner;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameConverter;
+import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameDecomposer;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
 import com.ospreydcs.dp.api.model.IngestRequestUID;
-import com.ospreydcs.dp.api.model.IngestionResponse;
 import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.model.ProviderRegistrar;
 import com.ospreydcs.dp.api.model.ProviderUID;
@@ -89,7 +88,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * All data providers must first register with the Ingestion Service before supplying 
  * <code>IngestionFrame</code> objects.  The Ingestion Service will then attribute all incoming
  * data to the provider as part of maintaining full data provenance.  Data providers may also
- * be identified when query the archived data.
+ * be identified when querying the archived data.
  * </p>  
  * <p>
  * A populated <code>{@link ProviderRegistrar}</code> containing the data provider's unique name
@@ -173,7 +172,7 @@ public final class DpIngestionServiceImpl extends
     // Application Resources
     //
     
-    /** Default Query Service configuration parameters */
+    /** Default Ingestion Service configuration parameters */
     private static final DpIngestionConfig  CFG_DEFAULT = DpApiConfig.getInstance().ingest;
     
     
@@ -227,7 +226,7 @@ public final class DpIngestionServiceImpl extends
     //
     
     /** The ingestion frame decomposition tool - only created if used */
-    private IngestionFrameBinner            prcrFrmDecomp = null;
+    private IngestionFrameDecomposer            prcrFrmDecomp = null;
     
     /** The ingestion frame to Protobuf message converter tool */
     private final IngestionFrameConverter   prcrFrmCnvrtr = IngestionFrameConverter.create();
@@ -275,7 +274,7 @@ public final class DpIngestionServiceImpl extends
         super(connIngest);
         
         if (this.bolDecompAuto) 
-            this.prcrFrmDecomp = IngestionFrameBinner.from(this.lngFrmSizeMax);
+            this.prcrFrmDecomp = IngestionFrameDecomposer.from(this.lngFrmSizeMax);
     }
 
 
@@ -334,7 +333,7 @@ public final class DpIngestionServiceImpl extends
 
         this.bolDecompAuto = true;
         this.lngFrmSizeMax = lngMaxBinSize;
-        this.prcrFrmDecomp = IngestionFrameBinner.from(lngMaxBinSize);
+        this.prcrFrmDecomp = IngestionFrameDecomposer.from(lngMaxBinSize);
     }
     
     /**

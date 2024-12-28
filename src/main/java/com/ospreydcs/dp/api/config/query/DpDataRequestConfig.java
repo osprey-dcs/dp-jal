@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
+import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 
 /**
  * <p>
@@ -83,7 +83,7 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
         
         /** Preference for gRPC data stream type */
         @ACfgOverride.Field(name="PREFERENCE")
-        public DpQueryStreamType   preference;
+        public DpGrpcStreamType   preference;
     }
     
     /**

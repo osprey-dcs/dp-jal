@@ -44,7 +44,7 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.model.DpQueryException;
+import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.test.TestQueryCompositeRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
