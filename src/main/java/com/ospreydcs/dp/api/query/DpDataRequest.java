@@ -37,12 +37,16 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.common.AAdvancedApi;
 import com.ospreydcs.dp.api.common.AUnavailable;
-import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
+import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
+import com.ospreydcs.dp.api.ingest.IIngestionService;
+import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
+import com.ospreydcs.dp.api.query.model.request.CompositeType;
+import com.ospreydcs.dp.api.query.model.request.RequestDomainDecomp;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
@@ -229,6 +233,38 @@ public final class DpDataRequest {
         return bldr;
     }
     
+    /**
+     * <p>
+     * Creates a new, initialized <code>DpDataRequest</code> instance defining a time-series data requests 
+     * from the <em>Query Service</em>.
+     * </p>
+     * <p>
+     * Note that the returned data request is defined by the given parameters. 
+     * The returned request can be further modified using the "selection" and "restrictor" methods to narrow 
+     * the returned data request based upon specific PV names, timestamps ranges, and other data filters.
+     * </p>
+     * <h2>NOTES:</h2>
+     * <p>
+     * Invocation of this method for time-series data request creation assumes familiarity with the internal
+     * structure and operation of the <code>DpDataRequest</code> class.
+     * Thus, <b>use at your own risk</b>.
+     * </p>
+     *  
+     * @param enmStreamType the preferred gRPC stream type for the  
+     * @param insStart      the start time of the data request
+     * @param insEnd        the final time of the data request
+     * @param lstPvNames    the data source names (i.e., process variable names) of the data request
+     * 
+     * @return  a new Query Service data request initialized with the given arguments
+     * 
+     * @throws  IllegalArgumentException    the given stream type is out of context
+     */
+    public static DpDataRequest from(DpGrpcStreamType enmStreamType, Instant insStart, Instant insEnd, List<String> lstPvNames) 
+            throws IllegalArgumentException {
+        
+        return new DpDataRequest(enmStreamType, insStart, insEnd, lstPvNames);
+    }
+    
 
     //
     //  Application Resources
@@ -242,73 +278,7 @@ public final class DpDataRequest {
     // Class Types
     //
     
-    /**
-     * <p>
-     * Enumeration of possible query domain decomposition strategies.
-     * </p>
-     * <p>
-     * Query domain decompositions are used for <em>composite query</em> construction.
-     * </p>
-     * 
-     * @see DomainDecomposition
-     * @see DpDataRequest#buildCompositeRequest(CompositeType, int)
-     */
-    public static enum CompositeType {
-        
-        /**
-         * Query domain is decomposed horizontally (by data sources).
-         * <p>
-         * The data sources are divided equally amongst the concurrent queries. <br/>
-         * That is, each separate query is for a different set of data sources. <br/>
-         * All queries have the same time range. 
-         */
-        HORIZONTAL,
-
-        /**
-         * Query domain is decomposed vertically (in time).
-         * <p>
-         * The time range is divided equally amongst the concurrent queries. <br/>
-         * That is, each separate query is for a different time range. <br/>
-         * All queries have the same data sources.
-         */
-        VERTICAL,
-        
-        /**
-         * Query domain is decomposed into a grid (i.e., of blocks in source and time).
-         * <p>
-         * Both the data sources and time range is divided equally amongst the concurrent queries.<br/>
-         * That is, each separate query contains a subset of data sources and subset of time ranges.<br/> 
-         */
-        GRID,
-        
-        /**
-         * Query domain is not decomposed.
-         * <p>
-         * Query domain decomposition is NOT applicable.  The query domain remains in 
-         * its original form.
-         */
-        NONE;
-    };
     
-    /**
-     * <p> 
-     * Record containing the parameters for supported query domain decompositions.
-     * </p>
-     * <p>
-     * Query domain decompositions are used for <em>composite query</em> construction.
-     * </p>
-     * 
-     * @param type          the type of composite query 
-     * @param cntHor    number of sub-division for the data sources axis
-     * @param cntVer      number of sub-divisions for the time range axis.
-     * 
-     * @see DpDataRequest#buildCompositeRequest(DomainDecomposition)
-     */
-    public static record DomainDecomposition(CompositeType type, int cntHor, int cntVer) {
-        
-        /** Return the total number of domain covering sets */
-        public int totalCovers() { return cntHor * cntVer; };
-    }
 
     
     //
@@ -434,20 +404,20 @@ public final class DpDataRequest {
      * <p>
      * <p>
      * Computes the default query domain decomposition using <code>{@link #decomposeDomainDefault()}</code>
-     * then passes the result to <code>{@link #buildCompositeRequest(DomainDecomposition)}</code>.
+     * then passes the result to <code>{@link #buildCompositeRequest(RequestDomainDecomp)}</code>.
      * The current data query request instance is left unchanged.
      * </p>
      * 
      * @return  an equivalent composite query request where query domain is decomposed with default parameters 
      * 
-     * @see #buildCompositeRequest(DomainDecomposition)
+     * @see #buildCompositeRequest(RequestDomainDecomp)
      * @see DpQueryConfig
      * @see DpApiConfig
      */
     public List<DpDataRequest> buildCompositeRequest() {
         
         // Get the default domain decomposition 
-        DomainDecomposition recDomains = this.decomposeDomainDefault();
+        RequestDomainDecomp recDomains = this.decomposeDomainDefault();
 
         return this.buildCompositeRequest(recDomains);
     }
@@ -470,14 +440,14 @@ public final class DpDataRequest {
      * @see #buildCompositeRequest(CompositeType, int)
      * @see #buildCompositeRequestGrid(int, int)                      
      */
-    public List<DpDataRequest> buildCompositeRequest(DomainDecomposition recDomains) {
+    public List<DpDataRequest> buildCompositeRequest(RequestDomainDecomp recDomains) {
         
-        return switch (recDomains.type) {
+        return switch (recDomains.type()) {
         case NONE -> List.of(this);
-        case HORIZONTAL -> this.buildCompositeRequest(recDomains.type, recDomains.cntHor);
-        case VERTICAL -> this.buildCompositeRequest(recDomains.type, recDomains.cntVer);
-        case GRID -> this.buildCompositeRequestGrid(recDomains.cntHor, recDomains.cntVer);
-        default -> throw new IllegalArgumentException("Unexpected value: " + recDomains.type);
+        case HORIZONTAL -> this.buildCompositeRequest(recDomains.type(), recDomains.cntHorizontal());
+        case VERTICAL -> this.buildCompositeRequest(recDomains.type(), recDomains.cntVertical());
+        case GRID -> this.buildCompositeRequestGrid(recDomains.cntHorizontal(), recDomains.cntVertical());
+        default -> throw new IllegalArgumentException("Unexpected value: " + recDomains.type());
         };
     }
     
@@ -731,9 +701,40 @@ public final class DpDataRequest {
      * 
      * @return  (unordered) list of all data source names in the current data request configuration
      */
-    @AAdvancedApi(note="This method is subject to modification or removall.")
     public final List<String>   getSourceNames() {
         return this.lstSelCmps;
+    }
+    
+    /**
+     * <p>
+     * Returns the initial time instant within the current time-series data request.
+     * </p>
+     * <p>
+     * The returned value is the greatest lower bound end-point for the time interval describing
+     * the time-series data request.  Note that this value changes according to invocations of
+     * the <code>range</code> methods.
+     * </p>
+     *   
+     * @return  initial time instant within the current time-series data request
+     */
+    public final Instant    getInitialTime() {
+        return this.insStart;
+    }
+    
+    /**
+     * <p>
+     * Returns the final time instant within the current time-series data request.
+     * </p>
+     * <p>
+     * The returned value is the least upper bound end-point for the time interval describing
+     * the time-series data request.  Note that this value changes according to invocations of
+     * the <code>range</code> methods.
+     * </p>
+     *   
+     * @return  final time instant within the current time-series data request
+     */
+    public final Instant    getFinalTime() {
+        return this.insStop;
     }
     
     /**
@@ -980,7 +981,7 @@ public final class DpDataRequest {
      * @see DpApiConfig
      * @see DpQueryConfig
      */
-    public DomainDecomposition decomposeDomainDefault() {
+    public RequestDomainDecomp decomposeDomainDefault() {
 
         // The composite query type
         CompositeType   enmType;
@@ -1018,7 +1019,7 @@ public final class DpDataRequest {
 
         }
 
-        return new DomainDecomposition(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
+        return new RequestDomainDecomp(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
     }
 
 //    /**
@@ -1037,7 +1038,7 @@ public final class DpDataRequest {
 //     * @see DpApiConfig
 //     * @see DpQueryConfig
 //     */
-//    public DomainDecomposition  getDecompositionDefault() {
+//    public RequestDomainDecomp  getDecompositionDefault() {
 //        return this.decomposeDomainDefault();
 //    }
     
@@ -1771,8 +1772,15 @@ public final class DpDataRequest {
      * @param insStart      starting instant of time range
      * @param insStop       final instant of time range
      * @param lstSources    list of all data source names for the new request
+     * 
+     * @throws  IllegalArgumentException    the given stream type is out of context
      */
-    private DpDataRequest(DpGrpcStreamType enmType, Instant insStart, Instant insStop, List<String> lstSources) {
+    private DpDataRequest(DpGrpcStreamType enmType, Instant insStart, Instant insStop, List<String> lstSources) throws IllegalArgumentException {
+        
+        // Check stream type
+        if (enmType == DpGrpcStreamType.FORWARD)
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Illegal stream type: " + enmType);
+        
         this.indStartPage = 0;
         this.szPage = SZ_PAGES;
 

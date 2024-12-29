@@ -52,8 +52,9 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.DpDataRequest.CompositeType;
 import com.ospreydcs.dp.api.query.DpQueryException;
+import com.ospreydcs.dp.api.query.model.request.CompositeType;
+import com.ospreydcs.dp.api.query.model.request.RequestDomainDecomp;
 import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
@@ -1402,7 +1403,7 @@ public class QueryResponseCorrelator {
         List<DpDataRequest>     lstCmpRqsts;    // composite request to be returned
         
         // Try default query domain decomposition will work
-        DpDataRequest.DomainDecomposition recDomain = dpRequest.decomposeDomainDefault();
+        RequestDomainDecomp recDomain = dpRequest.decomposeDomainDefault();
         
         if (recDomain.totalCovers() < CNT_MULTISTREAM) {
             lstCmpRqsts = dpRequest.buildCompositeRequest(recDomain);

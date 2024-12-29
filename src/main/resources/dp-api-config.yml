@@ -93,7 +93,7 @@ ingest: # Data Platform Ingestion Service client API default configuration param
       maxSize: 4000000            # max bin size (bytes)        : DP_API_INGEST_DECOMPOSE_MAX_SIZE
    stream:       # General gRPC streaming parameter for Ingestion Service operations
       active: true                 # use streaming parameters    : DP_API_INGEST_STREAM_ACTIVE
-      type: BIDIRECTIONAL           # preferred- DpGrpcStreamType : DP_API_INGEST_STREAM_TYPE
+      type: BIDIRECTIONAL           # preferred- {FORWARD, BIDIRECTIONAL} : DP_API_INGEST_STREAM_TYPE
       buffer:              # data buffering and queueing parameters (transmission staging)
          active: true                # apply data buffering/queue  : DP_API_INGEST_STREAM_BUFFER_ACTIVE
          size: 100                   # buffer/queue size (messages): DP_API_INGEST_STREAM_BUFFER_SIZE

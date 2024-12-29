@@ -4,10 +4,9 @@ import java.util.List;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
+import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IDataTable;
 import com.ospreydcs.dp.api.model.PvMetaRecord;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceFactory;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
 import com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver;
 import com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
@@ -181,7 +180,7 @@ public interface IQueryService extends IConnection {
      * 
      * @throws DpQueryException     the Query Service reported an error (see message)
      */
-    List<PvMetaRecord> queryPvs(DpMetadataRequest rqst) throws DpQueryException;
+    public List<PvMetaRecord> queryPvs(DpMetadataRequest rqst) throws DpQueryException;
 
     /**
      * <p>
@@ -226,7 +225,7 @@ public interface IQueryService extends IConnection {
      * 
      * @throws  DpQueryException    general exception during query or data reconstruction (see cause)
      */
-    IDataTable queryDataUnary(DpDataRequest rqst) throws DpQueryException;
+    public IDataTable queryDataUnary(DpDataRequest rqst) throws DpQueryException;
 
     /**
      * <p>
@@ -263,7 +262,7 @@ public interface IQueryService extends IConnection {
      * 
      * @throws DpQueryException general exception during query or data reconstruction (see cause)
      */
-    IDataTable queryData(DpDataRequest rqst) throws DpQueryException;
+    public IDataTable queryData(DpDataRequest rqst) throws DpQueryException;
 
     /**
      * <p>
@@ -300,7 +299,7 @@ public interface IQueryService extends IConnection {
      * 
      * @throws DpQueryException general exception during query or data reconstruction (see cause)
      */
-    IDataTable queryData(List<DpDataRequest> lstRqsts) throws DpQueryException;
+    public IDataTable queryData(List<DpDataRequest> lstRqsts) throws DpQueryException;
 
     /**
      * <p>
@@ -329,11 +328,11 @@ public interface IQueryService extends IConnection {
      * <ul>
      * <li>
      * Choose the gRPC data stream type using 
-     * <code>{@link DpDataRequest#setStreamType(DpQueryStreamType)}</code>.
+     * <code>{@link DpDataRequest#setStreamType(DpGrpcStreamType)}</code>.
      *   <ul>
      *   <li>Unidirectional streams are potentially faster but less stable.</li>
      *   <li>Bidirectional streams are typically more stable but potentially slower.</li>
-     *   <li>The default is a unidirectional stream <code>{@link DpQueryStreamType#UNIDIRECTIONAL}</code>.</li>
+     *   <li>The default is a unidirectional stream <code>{@link DpGrpcStreamType#BACKWARD}</code>.</li>
      *   </ul>
      * </li>
      * </ul>
@@ -347,6 +346,6 @@ public interface IQueryService extends IConnection {
      * @see DpQueryStreamBuffer#start()
      * @see DpQueryStreamBuffer#startAndAwaitCompletion()
      */
-    DpQueryStreamBuffer queryDataStream(DpDataRequest rqst);
+    public DpQueryStreamBuffer queryDataStream(DpDataRequest rqst);
 
 }

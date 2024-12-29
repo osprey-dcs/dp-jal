@@ -44,7 +44,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
-import com.ospreydcs.dp.api.query.DpDataRequest.CompositeType;
+import com.ospreydcs.dp.api.query.model.request.CompositeType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
