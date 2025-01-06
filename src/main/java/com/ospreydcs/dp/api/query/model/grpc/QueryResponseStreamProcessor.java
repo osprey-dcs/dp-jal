@@ -266,8 +266,8 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * the argument <code>enmStreamType</code>. 
      * The concrete type is given according to the following:
      * <ul>
-     * <li><code>{@link DpQueryStreamType#UNIDIRECTIONAL}</code> -> <code>{@link QueryResponseUniStreamProcessor}</code>.</li>
-     * <li><code>{@link DpQueryStreamType#BIDIRECTIONAL}</code> -> <code>{@link QueryResponseBidiStreamProcessor}</code>.</li>
+     * <li><code>{@link DpQueryStreamTypeDeprecated#UNIDIRECTIONAL}</code> -> <code>{@link QueryResponseUniStreamProcessor}</code>.</li>
+     * <li><code>{@link DpQueryStreamTypeDeprecated#BIDIRECTIONAL}</code> -> <code>{@link QueryResponseBidiStreamProcessor}</code>.</li>
      * </li>
      * </ul>
      * Both concrete implementations above are contained within this source file. 

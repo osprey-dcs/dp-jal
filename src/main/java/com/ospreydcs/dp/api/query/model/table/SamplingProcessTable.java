@@ -65,7 +65,7 @@ import com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock;
  * <p>
  * <h2>Paged Data Table</h2>
  * This class essentially functions as a paged data table.  The table "pages" are the 
- * <code>{@link UniformSamplingBlock}</code> instances forming the composite <code>{@link SamplingProcess}</code>.
+ * <code>{@link UniformSamplingBlock}</code> instances forming the decompose <code>{@link SamplingProcess}</code>.
  * (Note that class <code>{@link UniformSamplingBlock}</code> also implements the <code>{@link IDataTable}</code>
  * interface.)
  * Thus, any table row lookup must identify both the table page and the page row within the page.  Such the 

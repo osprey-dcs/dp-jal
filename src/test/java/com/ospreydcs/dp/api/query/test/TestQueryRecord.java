@@ -165,8 +165,8 @@ public final record TestQueryRecord (
      * @param   strFileName     name of the file where persistent query result data is stored
      * @param   cntSources      number of data sources (PVs) within query result set
      * @param   indSourceFirst  index of the first data source within the list of source names
-     * @param   lngDuration     the query time range duration (in seconds)
-     * @param   lngStartTime    start time of the time range (in seconds)
+     * @param   lngDuration     the query time range duration (in nanoseconds)
+     * @param   lngStartTime    start time of the time range (in nanoseconds)
      * 
      * @see TestDpDataRequestGenerator#createRequest(int, int, long)
      */

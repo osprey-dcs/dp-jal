@@ -54,8 +54,9 @@ import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.impl.DpQueryServiceFactory;
 import com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
-import com.ospreydcs.dp.api.query.model.request.CompositeType;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamTypeDeprecated;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecompType;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
@@ -426,11 +427,12 @@ public class DpQueryServiceImplTest {
         final Long              LNG_DURATION = 10L;
         final int               CNT_REQUESTS = 3;
         final DpGrpcStreamType  ENM_STREAM_TYPE = DpGrpcStreamType.BACKWARD;
+        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
         
         final Integer   LNG_ROWS = 1000 * LNG_DURATION.intValue(); // sample rate (1 kHz) times duration
         
         final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        final List<DpDataRequest>   lstRqsts = rqst.buildCompositeRequest(CompositeType.HORIZONTAL, CNT_REQUESTS);
+        final List<DpDataRequest>   lstRqsts = rqstDecomp.buildCompositeRequest(rqst, DataRequestDecompType.HORIZONTAL, CNT_REQUESTS);
         
         rqst.setStreamType(ENM_STREAM_TYPE);
         
@@ -457,11 +459,12 @@ public class DpQueryServiceImplTest {
         final long              LNG_DURATION = 10L;
         final int               CNT_REQUESTS = 3;
         final DpGrpcStreamType  ENM_STREAM_TYPE = DpGrpcStreamType.BIDIRECTIONAL;
+        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
         
         final int               CNT_ROWS = 1000 * Long.valueOf(LNG_DURATION).intValue(); // sample rate (1 kHz) times duration
         
         final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        final List<DpDataRequest>   lstRqsts = rqst.buildCompositeRequest(CompositeType.HORIZONTAL, CNT_REQUESTS);
+        final List<DpDataRequest>   lstRqsts = rqstDecomp.buildCompositeRequest(rqst, DataRequestDecompType.HORIZONTAL, CNT_REQUESTS);
         
         rqst.setStreamType(ENM_STREAM_TYPE);
         

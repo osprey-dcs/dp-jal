@@ -101,17 +101,17 @@ public class DpDataResponseConfig extends CfgStructure<DpDataResponseConfig> {
         @ACfgOverride.Field(name="ACTIVE")
         public Boolean      active;
         
-        /** Query domain size (dimensions of sources-time) activating multiple streaming of responses */
-        @ACfgOverride.Field(name="PIVOT_SIZE")
-        public Long         pivotSize;
-        
-        /** Time units used for pivotSize */
-        @ACfgOverride.Field(name="PIVOT_PERIOD")
-        public TimeUnit     pivotPeriod;
-        
-        /** Maximum number of gRPC data stream to use for request recover */
+        /** Maximum number of gRPC data stream to use for request recovery */
         @ACfgOverride.Field(name="MAX_STREAMS")
         public Integer      maxStreams;
+        
+        /** Query domain size (dimensions of sources-time) activating multiple streaming of responses */
+        @ACfgOverride.Field(name="DOMAIN_SIZE")
+        public Long         sizeDomain;
+        
+//        /** Time units used for pivotSize */
+//        @ACfgOverride.Field(name="PIVOT_PERIOD")
+//        public TimeUnit     pivotPeriod;
     }
     
 }

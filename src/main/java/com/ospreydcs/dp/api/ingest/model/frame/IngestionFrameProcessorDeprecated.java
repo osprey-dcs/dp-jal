@@ -86,7 +86,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <li>
  * <code>{@link #enableFrameDecomposition(long)}</code> - All incoming ingestion frames
  * are check for memory allocation size.  If a frame has allocation larger than the given
- * size it is decomposed in a collection of equivalent, composite frame each meeting the
+ * size it is decomposed in a collection of equivalent, decompose frame each meeting the
  * size requirement. 
  * </li>
  * <br/>
@@ -204,7 +204,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
      * <li>
      * <code>{@link #enableFrameDecomposition(long)}</code> - All incoming ingestion frames
      * are check for memory allocation size.  If a frame has allocation larger than the given
-     * size it is decomposed in a collection of equivalent, composite frame each meeting the
+     * size it is decomposed in a collection of equivalent, decompose frame each meeting the
      * size requirement. 
      * </li>
      * <br/>

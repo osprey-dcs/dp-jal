@@ -85,7 +85,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <li>
  * <code>{@link #setFrameDecomposition(long)}</code> - All incoming ingestion frames
  * are checked for memory allocation size.  If a frame has allocation larger than the maximum
- * gRPC message size it is decomposed in a collection of equivalent, composite frame each meeting the
+ * gRPC message size it is decomposed in a collection of equivalent, decompose frame each meeting the
  * size requirement.  A horizontal decomposition (i.e., by columns) is attempted first since 
  * this technique is the most efficient.  If horizontal decomposition fails a vertical 
  * decomposition (i.e., by row) is attempted, which is significantly more resource intensive.
@@ -1412,7 +1412,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
             }
         }
         
-        // Frame decomposition successful - convert each composite to gRPC messages
+        // Frame decomposition successful - convert each decompose to gRPC messages
         boolean bolResult = true;
         for (IngestionFrame frmDecomp : lstFrames) {
             bolResult = bolResult && this.convertAndQueueFrame(frmDecomp);

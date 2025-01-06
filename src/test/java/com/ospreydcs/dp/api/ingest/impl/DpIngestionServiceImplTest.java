@@ -358,7 +358,7 @@ public class DpIngestionServiceImplTest {
 //            List<IngestionResponse> lstRsps = apiIngest.ingest(MSG_FRAME_LARGE);
             IngestionResult recResult = apiIngest.ingest(MSG_FRAME_LARGE);
             
-            // The frame decomposition will create 4 composite-frames
+            // The frame decomposition will create 4 decompose-frames
             Assert.assertEquals(4, recResult.acceptedRequestCount());
             
         } catch (DpIngestionException e) {

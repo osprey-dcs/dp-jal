@@ -42,8 +42,8 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * separate threads.
  * </p>
  * <p>
- * This class both defines a composite target query and creates the <code>{@link TestQueryRecord}</code>
- * instances describing each component query of the larger composite.
+ * This class both defines a decompose target query and creates the <code>{@link TestQueryRecord}</code>
+ * instances describing each component query of the larger decompose.
  * The target query is described by its the query domain [data sources]&times;[time],
  * where [data sources] is the horizontal axis and [time] is the vertical axis.
  * The component queries are built by sub-dividing the query domain into disjoint sets that
@@ -242,7 +242,7 @@ public class TestQueryCompositeRecord {
     }
     
     /**
-     * @return  the entire collection of composite query records
+     * @return  the entire collection of decompose query records
      */
     public final Vector<TestQueryRecord>    getQueryRecordsAll() {
         return this.vecRecords;
@@ -250,18 +250,18 @@ public class TestQueryCompositeRecord {
 
     /**
      * <p>
-     * Returns the composite query record at the given index.
+     * Returns the decompose query record at the given index.
      * </p>
      * <p>
      * <h2>NOTE:</h2>
      * Indices are zero-based and run from 0, 1, ..., {@link #cntQueries} - 1.
      * </p>
      * 
-     * @param index index into the vector of composite query records ({@link #vecRecords})
+     * @param index index into the vector of decompose query records ({@link #vecRecords})
      * 
-     * @return      the composite query record at given index
+     * @return      the decompose query record at given index
      * 
-     * @throws IndexOutOfBoundsException    if the index is greater than the number of composite queries - 1
+     * @throws IndexOutOfBoundsException    if the index is greater than the number of decompose queries - 1
      */
     public final TestQueryRecord    getQueryRecord(int index) throws IndexOutOfBoundsException {
         return this.vecRecords.elementAt(index);
@@ -336,11 +336,11 @@ public class TestQueryCompositeRecord {
     
     /**
      * <p>
-     * Creates and returns the composite request defined by this composite record.
+     * Creates and returns the decompose request defined by this decompose record.
      * </p>
      * <p>
      * Calls the <code>{@link TestQueryRecord#createRequest()}</code> method for component
-     * record within this composite record.
+     * record within this decompose record.
      * </p>
      *  
      * @return  list of <code>{@link DpDataRequest}</code> objects for each component record
@@ -361,10 +361,10 @@ public class TestQueryCompositeRecord {
     
     /**
      * <p>
-     * Builds all the <code>TestQueryRecord</code> instances for each composite query.
+     * Builds all the <code>TestQueryRecord</code> instances for each decompose query.
      * </p>
      * <p>
-     * The composite query records are built according to the given <code>CompositeStrategy</code>
+     * The decompose query records are built according to the given <code>CompositeStrategy</code>
      * argument.
      * </p>
      * 

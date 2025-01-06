@@ -7,7 +7,6 @@ import com.ospreydcs.dp.api.grpc.model.IConnection;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.model.IDataTable;
 import com.ospreydcs.dp.api.model.PvMetaRecord;
-import com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver;
 import com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 
@@ -318,7 +317,7 @@ public interface IQueryService extends IConnection {
      * within the returned object.
      * Query stream observers implementing the <code>{@link IDpQueryStreamObserver}</code> interface
      * can register with the returned object to receive callback notifications for data and stream events
-     * using the <code>{@link DpQueryStreamBuffer#addStreamObserver(com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver)}</code>
+     * using the <code>{@link DpQueryStreamBuffer#addStreamObserver(com.ospreydcs.dp.api.query.IDpQueryStreamObserver)}</code>
      * method.
      * For more information on use of the returned stream buffer see documentation on 
      * <code>{@link DpQueryStreamBuffer}</code>.

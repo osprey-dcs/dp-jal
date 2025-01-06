@@ -39,7 +39,7 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
 
 /**
  * <p>
- * Class for decomposing Query Service time-series data requests into composite requests.
+ * Class for decomposing Query Service time-series data requests into decompose requests.
  * </p>
  * <p>
  * <h2>Objective</h2>
@@ -47,7 +47,7 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * <code>DpDataRequest</code>.  These instances contain a single <code>QueryDataRequest</code> 
  * Protocol Buffers message defining the request.  In the gRPC data streaming case only one
  * stream is support per time-series data request.  By decomposing a single query request
- * into multiple composite requests it is possible to recover the query result set in multiple
+ * into multiple decompose requests it is possible to recover the query result set in multiple
  * gRPC data streams.
  * </p>
  * <h2>Request Decomposition</h2>
@@ -62,7 +62,7 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * archive.  Data buckets have an atomic structure containing a given number of samples and
  * timestamps for a data source.  If a time-series data request specifies any timestamps within
  * a given data bucket the entire data bucket is returned. Thus, decomposing a time-series data request 
- * vertically can yield the same result set for each composite request.  
+ * vertically can yield the same result set for each decompose request.  
  * </p>
  * <p>
  * Due to the design of the <code>QueryResponseCorrelator</code> the above situation will always yield the correct 
@@ -115,16 +115,16 @@ public class DataRequestDecomposer {
     // Class Constants
     //
     
-    /** Use composite queries feature */
-    private static final boolean                BOL_ACTIVE = CFG_RQST.composite.active;
+    /** Use decompose queries feature */
+    private static final boolean                BOL_ACTIVE = CFG_RQST.decompose.active;
     
-    /** Maximum number of data sources for a composite query */
-    private static final int                    CNT_MAX_SOURCES = CFG_RQST.composite.maxSources;
+    /** Maximum number of data sources for a decompose query */
+    private static final int                    CNT_MAX_SOURCES = CFG_RQST.decompose.maxSources;
     
-    /** Maximum time range duration for a composite query */
+    /** Maximum time range duration for a decompose query */
     private static final Duration               DUR_MAX = Duration.of(
-                                                    CFG_RQST.composite.maxDuration,
-                                                    CFG_RQST.composite.unitDuration.toChronoUnit()
+                                                    CFG_RQST.decompose.maxDuration,
+                                                    CFG_RQST.decompose.unitDuration.toChronoUnit()
                                                     );
     
     //
@@ -134,10 +134,10 @@ public class DataRequestDecomposer {
     /** Turn request decomposition on/off */
     private boolean     bolActive = BOL_ACTIVE;
     
-    /** Maximum allowable number of data sources in a composite request */
+    /** Maximum allowable number of data sources in a decompose request */
     private int         cntSrcsMax = CNT_MAX_SOURCES;
     
-    /** Maximum allowable time duration in a composite request */
+    /** Maximum allowable time duration in a decompose request */
     private Duration    durMax = DUR_MAX;
     
     
@@ -171,14 +171,14 @@ public class DataRequestDecomposer {
     }
 
     /**
-     * @return the maximum allowable number of data sources per composite request
+     * @return the maximum allowable number of data sources per decompose request
      */
     public final int getMaxDataSources() {
         return cntSrcsMax;
     }
 
     /**
-     * @return the maximum allowable time duration within a composite request
+     * @return the maximum allowable time duration within a decompose request
      */
     public final Duration getMaxDuration() {
         return durMax;
@@ -203,14 +203,14 @@ public class DataRequestDecomposer {
 
     /**
      * <p>
-     * Sets the maximum number of allow data sources within a composite request.
+     * Sets the maximum number of allow data sources within a decompose request.
      * </p>
      * <p>
-     * Requests will be decomposed so that the number of data sources within a composite request is always
+     * Requests will be decomposed so that the number of data sources within a decompose request is always
      * less than or equal to the given value.
      * </p>
      *  
-     * @param cntSrcsMax the maximum number of data sources within a composite request 
+     * @param cntSrcsMax the maximum number of data sources within a decompose request 
      */
     public final void setMaxDataSources(int cntSrcsMax) {
         this.cntSrcsMax = cntSrcsMax;
@@ -218,19 +218,19 @@ public class DataRequestDecomposer {
 
     /**
      * <p>
-     * Sets the maximum time duration within a composite request.
+     * Sets the maximum time duration within a decompose request.
      * </p>
      * <p>
-     * Requests will be decomposed so the the maximum time duration within a composite request is always
+     * Requests will be decomposed so the the maximum time duration within a decompose request is always
      * less than or equal to the given value.
      * </p>
      * <p>
      * <h2>WARNING:</h2>
      * Using vertical decomposition can yield unexpected result sets.  Specifically, data buckets can be
-     * repeated across composite requests.  See class documentation for further details.
+     * repeated across decompose requests.  See class documentation for further details.
      * </p>
      * 
-     * @param durMax the maximum time duration within a composite request 
+     * @param durMax the maximum time duration within a decompose request 
      */
     public final void setMaxDuration(Duration durMax) {
         this.durMax = durMax;
@@ -248,7 +248,7 @@ public class DataRequestDecomposer {
 //     * <p>
 //     * Subdivides the query domain of the given source data request to create a set of sub-queries which,
 //     * in total, are equivalent to the original request.  That is, the returned set of 
-//     * <code>DpDataRequest</code> instances are a composite of the source data request.
+//     * <code>DpDataRequest</code> instances are a decompose of the source data request.
 //     * </p>
 //     * <p>
 //     * Composite queries are useful for large data requests, to increase query performance.  
@@ -267,13 +267,13 @@ public class DataRequestDecomposer {
 //     * 
 //     * @param rqst          source data request
 //     * @param enmType       the strategy used in query domain decomposition
-//     * @param cntQueries    the number of sub-queries in the returned composite query
+//     * @param cntQueries    the number of sub-queries in the returned decompose query
 //     * 
 //     * @return  a collection of sub-queries which, in total, are equivalent to the current data request
 //     * 
-//     * @see #buildCompositeRequest(CompositeType, int)
+//     * @see #buildCompositeRequest(DataRequestDecompType, int)
 //     */
-//    public static List<DpDataRequest>   buildCompositeRequest(DpDataRequest rqst, CompositeType enmType, int cntQueries) {
+//    public static List<DpDataRequest>   buildCompositeRequest(DpDataRequest rqst, DataRequestDecompType enmType, int cntQueries) {
 //        return rqst.buildCompositeRequest(enmType, cntQueries);
 //    }
     
@@ -282,7 +282,7 @@ public class DataRequestDecomposer {
      * Computes and returns the query domain decomposition parameters for a preferred decomposition. 
      * </p>
      * <p>
-     * Computes the query sub-domain parameters for a preferred composite query.
+     * Computes the query sub-domain parameters for a preferred decompose query.
      * This method computes and returns the parameters used for a query domain decomposition 
      * using the default decomposition parameters specified, but <em>prefers</em> a 
      * horizontal decomposition as horizontal decompositions are typically the most efficient.
@@ -308,14 +308,14 @@ public class DataRequestDecomposer {
      * </code>
      * </p>
      * <p>
-     * The composite query type is also determined by the value of the above quantities
+     * The decompose query type is also determined by the value of the above quantities
      * according whichever condition is found (in order):
      * <ol>
      * <code>
-     *   <li>{@link CompositeType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) </li> 
-     *   <li>{@link CompositeType#HORIZONTAL} <- cntQueriesHor > 1 </li> 
-     *   <li>{@link CompositeType#VERTICAL}   <- cntQueriesVer > 1 </li> 
-     *   <li>{@link CompositeType#GRID}       <- else </li> 
+     *   <li>{@link DataRequestDecompType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) </li> 
+     *   <li>{@link DataRequestDecompType#HORIZONTAL} <- cntQueriesHor > 1 </li> 
+     *   <li>{@link DataRequestDecompType#VERTICAL}   <- cntQueriesVer > 1 </li> 
+     *   <li>{@link DataRequestDecompType#GRID}       <- else </li> 
      * </code>
      * </ol>
      * </p>
@@ -327,9 +327,9 @@ public class DataRequestDecomposer {
      * @see DpApiConfig
      * @see DpQueryConfig
      */
-    public RequestDomainDecomp decomposeDomainPreferred(DpDataRequest rqst) {
+    public DataRequestDecompParams decomposeDomainPreferred(DpDataRequest rqst) {
 
-        // Determine composite query domain sizes
+        // Determine decompose query domain sizes
         int     cntQueriesHor = rqst.getSourceCount() / this.cntSrcsMax;
         long    cntQueriesVer = rqst.rangeDuration().dividedBy(this.durMax);
 
@@ -343,22 +343,22 @@ public class DataRequestDecomposer {
         // The overall request is not large enough to invoke decomposition
         if ((cntQueriesHor == 1) && (cntQueriesVer == 1)) {
 
-            return new RequestDomainDecomp(CompositeType.NONE, 1, 1);
+            return new DataRequestDecompParams(DataRequestDecompType.NONE, 1, 1);
 
-            // Horizontal composite request
+            // Horizontal decompose request
         } else if (cntQueriesHor > 1) {
             
-            return new RequestDomainDecomp(CompositeType.HORIZONTAL, cntQueriesHor, 1);
+            return new DataRequestDecompParams(DataRequestDecompType.HORIZONTAL, cntQueriesHor, 1);
 
-            // Vertical composite request
+            // Vertical decompose request
         } else if (cntQueriesVer > 1) {
 
-            return new RequestDomainDecomp(CompositeType.VERTICAL, 1, Long.valueOf(cntQueriesVer).intValue());
+            return new DataRequestDecompParams(DataRequestDecompType.VERTICAL, 1, Long.valueOf(cntQueriesVer).intValue());
 
-            // Grid composite request
+            // Grid decompose request
         } else {
 
-            return new RequestDomainDecomp(CompositeType.GRID, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
+            return new DataRequestDecompParams(DataRequestDecompType.GRID, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
         }
     }
 
@@ -367,8 +367,8 @@ public class DataRequestDecomposer {
      * Computes and returns the query domain decomposition parameters for a default decomposition. 
      * </p>
      * <p>
-     * Computes the query sub-domain parameters for a default composite query.
-     * Query domain decomposition parameters are used to build composite queries.
+     * Computes the query sub-domain parameters for a default decompose query.
+     * Query domain decomposition parameters are used to build decompose queries.
      * This method computes and returns the parameters used for a query domain decomposition 
      * when using the default decomposition parameters specified in the application default 
      * parameters (i.e., rather than decomposition parameters given by users).
@@ -394,14 +394,14 @@ public class DataRequestDecomposer {
      * </code>
      * </p>
      * <p>
-     * The composite query type is also determined by the value of the above quantities
+     * The decompose query type is also determined by the value of the above quantities
      * according to the following:
      * <code>
      * <pre>
-     *   {@link CompositeType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) 
-     *   {@link CompositeType#HORIZONTAL} <- (cntQueriesHor > 1) && (cntQueriesVer == 1) 
-     *   {@link CompositeType#VERTICAL}   <- (cntQueriesHor == 1) && (cntQueriesVer > 1) 
-     *   {@link CompositeType#GRID}       <- (cntQueriesHor > 1) && (cntQueriesVer > 1) 
+     *   {@link DataRequestDecompType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) 
+     *   {@link DataRequestDecompType#HORIZONTAL} <- (cntQueriesHor > 1) && (cntQueriesVer == 1) 
+     *   {@link DataRequestDecompType#VERTICAL}   <- (cntQueriesHor == 1) && (cntQueriesVer > 1) 
+     *   {@link DataRequestDecompType#GRID}       <- (cntQueriesHor > 1) && (cntQueriesVer > 1) 
      * </pre>
      * </code>
      * </p>
@@ -413,12 +413,12 @@ public class DataRequestDecomposer {
      * @see DpApiConfig
      * @see DpQueryConfig
      */
-    public RequestDomainDecomp decomposeDomainDefault(DpDataRequest rqst) {
+    public DataRequestDecompParams decomposeDomainDefault(DpDataRequest rqst) {
 
-        // The composite query type
-        CompositeType   enmType;
+        // The decompose query type
+        DataRequestDecompType   enmType;
 
-        // Determine composite query domain sizes
+        // Determine decompose query domain sizes
         int     cntQueriesHor = rqst.getSourceCount() / this.cntSrcsMax;
         long    cntQueriesVer = rqst.rangeDuration().dividedBy(this.durMax);
 
@@ -432,59 +432,59 @@ public class DataRequestDecomposer {
         // The overall request is not large enough to invoke decomposition
         if ((cntQueriesHor == 1) && (cntQueriesVer == 1)) {
 
-            enmType = CompositeType.NONE;
+            enmType = DataRequestDecompType.NONE;
 
-            // Horizontal composite request
+            // Horizontal decompose request
         } else if ((cntQueriesHor > 1) && (cntQueriesVer == 1)) {
 
-            enmType = CompositeType.HORIZONTAL;
+            enmType = DataRequestDecompType.HORIZONTAL;
 
-            // Vertical composite request
+            // Vertical decompose request
         } else if ((cntQueriesHor == 1) && (cntQueriesVer > 1)) {
 
-            enmType = CompositeType.VERTICAL;
+            enmType = DataRequestDecompType.VERTICAL;
 
-            // Grid composite request
+            // Grid decompose request
         } else {
 
-            enmType = CompositeType.GRID;
+            enmType = DataRequestDecompType.GRID;
 
         }
 
-        return new RequestDomainDecomp(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
+        return new DataRequestDecompParams(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
     }
 
 
     /**
      * <p>
-     * Builds and returns a composite data request based upon the default domain decomposition 
+     * Builds and returns a decompose data request based upon the preferred domain decomposition 
      * parameters.
      * <p>
      * <p>
-     * Computes the default query domain decomposition using <code>{@link #decomposeDomainDefault()}</code>
-     * then passes the result to <code>{@link #buildCompositeRequest(RequestDomainDecomp)}</code>.
+     * Computes the default query domain decomposition using <code>{@link #decomposeDomainPreferred()}</code>
+     * then passes the result to <code>{@link #buildCompositeRequestPreferred(DataRequestDecompParams)}</code>.
      * The current data query request instance is left unchanged.
      * </p>
      * 
      * @param   rqst    the time-series data request to be decomposed
      * 
-     * @return  an equivalent composite query request where query domain is decomposed with preferred parameters 
+     * @return  an equivalent decompose query request where query domain is decomposed with preferred parameters 
      * 
-     * @see #buildCompositeRequest(RequestDomainDecomp)
+     * @see #buildCompositeRequestPreferred(DataRequestDecompParams)
      * @see DpQueryConfig
      * @see DpApiConfig
      */
-    public List<DpDataRequest> buildCompositeRequest(DpDataRequest rqst) {
+    public List<DpDataRequest> buildCompositeRequestPreferred(DpDataRequest rqst) {
         
         // Get the preferred domain decomposition 
-        RequestDomainDecomp recDomains = this.decomposeDomainPreferred(rqst);
+        DataRequestDecompParams recDomains = this.decomposeDomainPreferred(rqst);
 
         return this.buildCompositeRequest(rqst, recDomains);
     }
     
     /**
      * <p>
-     * Builds and returns a composite data request based upon the query domain decomposition 
+     * Builds and returns a decompose data request based upon the query domain decomposition 
      * specified in the argument.
      * </p>
      * <p>
@@ -495,13 +495,13 @@ public class DataRequestDecomposer {
      * @param   rqst        the time-series data request to be decomposed
      * @param   recDomains  the query domain decomposition parameters    
      * 
-     * @return              an equivalent composite query request where query domain is 
+     * @return              an equivalent decompose query request where query domain is 
      *                      decomposed by argument parameters
      *                      
-     * @see #buildCompositeRequest(CompositeType, int)
+     * @see #buildCompositeRequest(DataRequestDecompType, int)
      * @see #buildCompositeRequestGrid(int, int)                      
      */
-    public List<DpDataRequest> buildCompositeRequest(DpDataRequest rqst, RequestDomainDecomp recDomains) {
+    public List<DpDataRequest> buildCompositeRequest(DpDataRequest rqst, DataRequestDecompParams recDomains) {
         
         return switch (recDomains.type()) {
         case NONE -> List.of(rqst);
@@ -519,7 +519,7 @@ public class DataRequestDecomposer {
      * <p>
      * Subdivides the query domain of the current data request to create a set of sub-queries which,
      * in total, are equivalent to the current data request.  That is, the returned set of 
-     * <code>DpDataRequest</code> instances are a composite of the current data request.
+     * <code>DpDataRequest</code> instances are a decompose of the current data request.
      * </p>
      * <p>
      * Composite queries are useful for large data requests, to increase query performance.  
@@ -539,11 +539,11 @@ public class DataRequestDecomposer {
      * 
      * @param   rqst        the time-series data request to be decomposed
      * @param   enmType     the strategy used in query domain decomposition
-     * @param   cntQueries  the number of sub-queries in the returned composite query
+     * @param   cntQueries  the number of sub-queries in the returned decompose query
      * 
-     * @return  a collection of composite queries which, in total, are equivalent to the given data request
+     * @return  a collection of decompose queries which, in total, are equivalent to the given data request
      */
-    public List<DpDataRequest>  buildCompositeRequest(DpDataRequest rqst, CompositeType enmType, int cntQueries) {
+    public List<DpDataRequest>  buildCompositeRequest(DpDataRequest rqst, DataRequestDecompType enmType, int cntQueries) {
 
         return switch (enmType) {
         
@@ -581,7 +581,7 @@ public class DataRequestDecomposer {
      * @param   cntQueriesHor   number of query domain cntHor axis (data source) decompositions 
      * @param   cntQueriesVer   number of query domain cntVer axis (time range) decompositions
      * 
-     * @return  a collection of composite queries which, in total, are equivalent to the given data request
+     * @return  a collection of decompose queries which, in total, are equivalent to the given data request
      */
     public List<DpDataRequest>  buildCompositeRequestGrid(DpDataRequest rqst, int cntQueriesHor, int cntQueriesVer) {
         return this.decomposeDomainGridded(rqst, cntQueriesHor, cntQueriesVer);
@@ -594,7 +594,7 @@ public class DataRequestDecomposer {
     
     /**
      * <p>
-     * Creates a composite data query by decomposing the data source domain axes.
+     * Creates a decompose data query by decomposing the data source domain axes.
      * </p>
      * <p>
      * The query domain cntHor axes is decomposed into the given number of 
@@ -613,7 +613,7 @@ public class DataRequestDecomposer {
      * @param rqstOrg       the time-series data request to be decomposed
      * @param cntQueries    number of cntHor axis (data source) decompositions
      * 
-     * @return  a new list of <code>DpDataRequest</code> instances composing the composite request
+     * @return  a new list of <code>DpDataRequest</code> instances composing the decompose request
      */
     private List<DpDataRequest> decomposeDomainHorizontally(DpDataRequest rqstOrg, int cntQueries) {
         
@@ -626,7 +626,7 @@ public class DataRequestDecomposer {
         if (intRemainder > 0) 
             cntSources++;
         
-        // Create composite data requests by bucketing data source names
+        // Create decompose data requests by bucketing data source names
         int indRqstStart = 0;
         
         for (int n=0; n<cntQueries; n++) {
@@ -650,7 +650,7 @@ public class DataRequestDecomposer {
     
     /**
      * <p>
-     * Creates a composite data query request by decomposing the time domain axis.
+     * Creates a decompose data query request by decomposing the time domain axis.
      * </p>
      * <p>
      * The query domain cntVer axes is decomposed into the given number of 
@@ -670,7 +670,7 @@ public class DataRequestDecomposer {
      * @param rqstOrg       the time-series data request to be decomposed
      * @param cntQueries    number of cntVer axis (time range) decompositions
      * 
-     * @return  a new list of <code>DpDataRequest</code> instances composing the composite request
+     * @return  a new list of <code>DpDataRequest</code> instances composing the decompose request
      */
     private List<DpDataRequest> decomposeDomainVertically(DpDataRequest rqstOrg, int cntQueries) {
         
@@ -681,7 +681,7 @@ public class DataRequestDecomposer {
         Duration    durRequest = durTotal.dividedBy(cntQueries);
         Duration    durRemain = durTotal.minus(durRequest.multipliedBy(cntQueries));
         
-        // Create composite queries by divide time range interval
+        // Create decompose queries by divide time range interval
         Instant insRqstTmStart = rqstOrg.getInitialTime();
         
         for (int n=0; n<cntQueries; n++) {
@@ -702,7 +702,7 @@ public class DataRequestDecomposer {
     
     /**
      * <p>
-     * Creates a composite data query request by decomposing both the data source and time domain axes.
+     * Creates a decompose data query request by decomposing both the data source and time domain axes.
      * </p>
      * <p>
      * The query domain cntHor axes is decomposed into <code>cntQueriesHor</code> 
@@ -724,7 +724,7 @@ public class DataRequestDecomposer {
      * @param cntQueriesHor number of cntHor axis (data source) decompositions
      * @param cntQueriesVer number of cntVer axis (time range) decompositions
      * 
-     * @return  a new list of <code>DpDataRequest</code> instances composing the composite request
+     * @return  a new list of <code>DpDataRequest</code> instances composing the decompose request
      */
     private List<DpDataRequest> decomposeDomainGridded(DpDataRequest rqstOrg, int cntQueriesHor, int cntQueriesVer) {
         
@@ -782,7 +782,7 @@ public class DataRequestDecomposer {
 
     /**
      * <p>
-     * Creates a composite data query request by decomposing both the data source and time domain axes.
+     * Creates a decompose data query request by decomposing both the data source and time domain axes.
      * </p>
      * <p>
      * The grid sub-domain is decomposed horizontally and vertically equally by the argument
@@ -798,7 +798,7 @@ public class DataRequestDecomposer {
      * @param rqstOrg       the time-series data request to be decomposed
      * @param cntQueries    total number of queries returned
      * 
-     * @return  a new list of <code>DpDataRequest</code> instances composing the composite request
+     * @return  a new list of <code>DpDataRequest</code> instances composing the decompose request
      * 
      * @see #decomposeDomainGridded(int, int)
      */

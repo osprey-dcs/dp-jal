@@ -53,8 +53,9 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.request.CompositeType;
-import com.ospreydcs.dp.api.query.model.request.RequestDomainDecomp;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecompType;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecompParams;
 import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
@@ -127,7 +128,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * and suffixed by the action they perform.
  * <ul>
  * <li>
- * <code>{@link #setMultiStreaming(boolean)}</code>: Toggles the use of multiple gRPC data streams for recovering
+ * <code>{@link #setMultiStreamingResponse(boolean)}</code>: Toggles the use of multiple gRPC data streams for recovering
  * Query Service request data. Query requests are decomposed for multi-streaming via an internal algorithm. 
  * </li>
  * <br/>
@@ -138,7 +139,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * </li>
  * <br/>
  * <li>
- * <code>{@link #setCorrelateMidstream(boolean)}</code>: Toggles the function of performing data correlation while
+ * <code>{@link #setCorrelateWhileStreaming(boolean)}</code>: Toggles the function of performing data correlation while
  * concurrently data streaming; otherwise data is correlated separately, after gRPC data stream completion.
  * </li>
  * </ul>
@@ -173,8 +174,12 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <ul>
  * <li>
  * <code>{@link #processRequestStream(DpDataRequest)}</code> - standard gRPC data streaming request method.
- * Attempts to use multiple data streams with the default configuration.  The request defined in the argument 
- * is decomposed into smaller composite requests, each recovered on a separate gRPC data stream.
+ * Attempts to recovery the query result set using multiple data streams. The request defined in the argument 
+ * is decomposed into smaller decompose requests, each recovered on a separate gRPC data stream.  
+ * The preferred request decomposition is used 
+ * (see <code>{@link DataRequestDecomposer#decomposeDomainPreferred(DpDataRequest)}</code>) unless otherwise
+ * specified.  Multiple response streams are only triggered if the request domain size >= the minimum domain size,
+ * or <code>{@link DpDataRequest#approxDomainSize()} >= {@link #geMultiStreamingDomainSize()}</code>. 
  * </li>
  * <br/>
  * <li>
@@ -196,9 +201,9 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * </p>
  * <p>
  * The <em>type</em> of data stream used for the above request can be specified by the client using the 
- * <code>{@link DpDataRequest#setStreamType(com.ospreydcs.dp.api.query.model.DpQueryStreamType)}</code> method
+ * <code>{@link DpDataRequest#setStreamType(com.ospreydcs.dp.api.query.model.DpGrpcStreamType)}</code> method
  * within the data request object.  See the documentation for the method for further details on available gRPC 
- * data stream types (or see enumeration <code>{@link com.ospreydcs.dp.api.query.model.DpQueryStreamType}</code>.
+ * data stream types (or see enumeration <code>{@link com.ospreydcs.dp.api.query.model.DpGrpcStreamType}</code>.
  * (This is a performance option.)
  * </p>
  * <p>
@@ -282,6 +287,7 @@ public class QueryResponseCorrelator {
     public static QueryResponseCorrelator   from(DpQueryConnection connQuery) {
         return new QueryResponseCorrelator(connQuery);
     }
+    
     
     //
     // Class Types
@@ -549,6 +555,9 @@ public class QueryResponseCorrelator {
         /** thread started flag */
         private boolean         bolStarted = false;
         
+        /** thread external termination flag */
+        private boolean         bolTerminated = false;
+        
         /** Number of data messages to process (unknown until set) */
         private Integer         cntMsgsMax = null;
         
@@ -617,10 +626,15 @@ public class QueryResponseCorrelator {
         public void terminate() {
             if (!this.bolStarted)
                 return;
+
+            this.bolTerminated = true;
             
-            Thread.currentThread().interrupt();
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - The data processing thread was terminted externally.";
             
-            this.recResult = ResultStatus.newFailure("The data processing thread was terminted externally.");
+            if (BOL_LOGGING)
+                LOGGER.warn(strMsg);
+            
+            this.recResult = ResultStatus.newFailure(strMsg);
         }
         
         //
@@ -644,11 +658,20 @@ public class QueryResponseCorrelator {
             return this.bolStarted;
         }
         
-//        public boolean isSuccess() {
-//            if (this.recResult == null)
-//                return false;
-//            
-//            return this.recResult.isSuccess();
+//        /**
+//         * <p>
+//         * Returns whether or not the processing thread was terminated externally.
+//         * </p>
+//         * <p>
+//         * If the returned value is <code>true</code> this indicates that the 
+//         * <code>{@link #terminate()}</code> method has been invoked while the processor
+//         * was running.
+//         * </p>
+//         * 
+//         * @return  <code>true</code> if the processor was terminated externally, <code>false</code> otherwise
+//         */
+//        public boolean isCancelled() {
+//            return this.bolTerminated;
 //        }
         
         /**
@@ -745,7 +768,7 @@ public class QueryResponseCorrelator {
         public void run() {
             this.bolStarted = true;
             
-            while (this.cntMsgsMax == null || this.cntMsgsProcessed < this.cntMsgsMax) {
+            while ((this.cntMsgsMax == null) || (this.cntMsgsProcessed < this.cntMsgsMax) && !this.bolTerminated) {
                 try {
                     QueryDataResponse.QueryData msgData = this.queDataBuffer.poll(LNG_TIMEOUT, TU_TIMEOUT);
 
@@ -758,9 +781,10 @@ public class QueryResponseCorrelator {
                     // Note that this operation will block until completed
                     this.theCorrelator.addQueryData(msgData);
                     this.cntMsgsProcessed++;
-                    
-                    if (BOL_LOGGING)
-                        LOGGER.debug("{} - Processed message {}", JavaRuntime.getQualifiedMethodNameSimple(), this.cntMsgsProcessed);
+
+                    // TODO - Remove
+//                    if (BOL_LOGGING)
+//                        LOGGER.debug("{} - Processed message {}", JavaRuntime.getQualifiedMethodNameSimple(), this.cntMsgsProcessed);
 
                 } catch (InterruptedException e) {
                     if (this.cntMsgsMax != null && (this.cntMsgsProcessed >= this.cntMsgsMax)) {
@@ -832,10 +856,7 @@ public class QueryResponseCorrelator {
     public static final int         CNT_MULTISTREAM = CFG_QUERY.data.response.multistream.maxStreams;
     
     /** Query domain size triggering multiple streaming (if active) */
-    public static final long        SIZE_MULTISTREAM_PIVOT = CFG_QUERY.data.response.multistream.pivotSize;
-    
-    /** Query domain time units used in multi-streaming pivot size */
-    public static final TimeUnit    TU_MULTISTREAM_PERIOD = CFG_QUERY.data.response.multistream.pivotPeriod;
+    public static final long        SIZE_DOMAIN_MULTISTREAM = CFG_QUERY.data.response.multistream.sizeDomain;
     
     
     //
@@ -858,8 +879,8 @@ public class QueryResponseCorrelator {
     // Instance Resources
     //
     
-    /** The pool of (multiple) gRPC streaming thread(s) for recovering requests */
-    private final ExecutorService           exeThreadPool = Executors.newFixedThreadPool(CNT_MULTISTREAM);
+    /** The data request decomposer needed for multi-streaming requests */
+    private final DataRequestDecomposer     rqstDecomp = DataRequestDecomposer.create();
     
     /** The queue buffering all response messages for data correlation processing */
     private final BlockingQueue<QueryData>  queStreamBuffer = new LinkedBlockingQueue<>();
@@ -868,12 +889,25 @@ public class QueryResponseCorrelator {
     private final QueryDataCorrelator       theCorrelator = new QueryDataCorrelator();  
     
     
+    /** The pool of (multiple) gRPC streaming thread(s) for recovering requests */
+    private ExecutorService           exeThreadPool = Executors.newFixedThreadPool(CNT_MULTISTREAM > 1 ? CNT_MULTISTREAM : 1);
+    
+    /** The query response processor thread */
+    private QueryDataProcessor        thdDataProcessor = null;
+
+    
     //
     //  Configuration
     //
     
     /** Multi-streaming query response toggle */
     private boolean bolMultiStream = BOL_MULTISTREAM;
+    
+    /** The request domain size (PV count - time) triggering multi-streaming */
+    private long    szDomainMultiStream = SIZE_DOMAIN_MULTISTREAM;
+    
+    /** Number of data streams for multi-streaming response recovery */
+    private int     cntStreams = CNT_MULTISTREAM;
 
     /** Use multi-threading for query data correlation */
     private boolean bolCorrelateConcurrency = BOL_CORRELATE_CONCURRENCY;
@@ -907,6 +941,7 @@ public class QueryResponseCorrelator {
         this.theCorrelator.setConcurrency(this.bolCorrelateConcurrency);
     }
 
+    
     //
     // State and Configuration
     //
@@ -919,7 +954,7 @@ public class QueryResponseCorrelator {
      * <p>
      * The method <code>{@link #processRequestStream(DpDataRequest)}</code>
      * is capable of using multiple gRPC data streams.  The method attempts to decompose
-     * large data requests into composite request according to settings in the default
+     * large data requests into decompose request according to settings in the default
      * Data Platform API configuration (see <code>{@link DpApiConfig}</code>).  This
      * operation can turn off the default behavior.
      * </p>
@@ -931,23 +966,81 @@ public class QueryResponseCorrelator {
      * </p> 
      * <p>
      * Query data can be recovered using multiple gRPC data streams.  There, the domain of the
-     * data  request is decomposed using the default composite query mechanism.  The components
-     * of the composite request are then separate performed on independent gRPC data streams.
+     * data  request is decomposed using the default decompose query mechanism.  The components
+     * of the decompose request are then separate performed on independent gRPC data streams.
      * The full result set is then assembled from the multiple data streams.
+     * </p>
+     * <p>
+     * The default value is taken from the Java API Library configuration file
+     * (see <code>{@link #BOL_MULTISTREAM}</code>).  This value can be recovered from 
+     * <code>{@link #isMultiStreamingResponse()}</code>.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>Only affects the operation of <code>{@link #processRequestStream(DpDataRequest)}</code>.</li>
-     * <li>All composite query configuration parameters are taken from the default API parameters.</li>
+     * <li>All decompose query configuration parameters are taken from the default API parameters.</li>
      * <li>All gRPC multi-streaming parameters are taken from the default API parameters.</li>
      * </ul>
      * </p>  
      * 
      * @param bolMultiStream    turn on/off the use of multiple gRPC streams for query response recovery
      */
-    public void setMultiStreaming(boolean bolMultiStream) {
+    public void setMultiStreamingResponse(boolean bolMultiStream) {
         this.bolMultiStream = bolMultiStream;
+    }
+    
+    /**
+     * <p>
+     * Sets the request domain size threshold to trigger multi-streaming of request results.
+     * </p>
+     * <p>
+     * If the multi-streaming feature is turned on (see <code>{@link #isMultiStreamingResponse()}</code>)
+     * it will only be triggered if the request domain size is greater than the given value.
+     * The approximate domain size of a request is given by the method 
+     * <code>{@link DpDataRequest#approxDomainSize()}</code>.  
+     * </p>
+     * <p>
+     * Requiring that data requests have a given domain size is a performance issue and the given value is
+     * thus a performance parameter.  The ideal is to limit the use of multiple, concurrent data streams for
+     * large requests.  Creating multiple gRPC data streams for a small request can usurp unnecessary 
+     * resources.
+     * </p>
+     *  
+     * @param szDomain  the request domain size (in source-count seconds) threshold where multis-treaming is triggered
+     */
+    public void setMultiStreamingDomainSize(long szDomain) {
+        this.szDomainMultiStream = szDomain;
+    }
+    
+    /**
+     * <p>
+     * Sets the number of gRPC data stream used for multi-streaming query responses.
+     * </p>
+     * <p>
+     * This method should be called before any query response processing has started, if at all.  The default value
+     * in the Java API Library configuration file should be used as a matter of course.  However, this method is
+     * available for performance evaluations. 
+     * </p>
+     * 
+     * @param cntStreams    number of gRPC data streams to use in multi-streaming data request recovery
+     * 
+     * @throws IllegalStateException    method called while actively processing
+     */
+    synchronized 
+    public void setMultiStreamCount(int cntStreams) throws IllegalStateException {
+//        if (this.theCorrelator.sizeCorrelatedSet() > 0 || (this.thdDataProcessor!=null && this.thdDataProcessor.isStarted())) {
+        if (this.thdDataProcessor!=null && this.thdDataProcessor.isStarted()) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change stream count while processing.";
+            
+            if (BOL_LOGGING)
+                LOGGER.warn(strMsg);
+            
+            throw new IllegalStateException(strMsg);
+        }
+        
+        this.cntStreams = cntStreams;
+        this.exeThreadPool = Executors.newFixedThreadPool(cntStreams);
     }
     
     /**
@@ -1009,15 +1102,112 @@ public class QueryResponseCorrelator {
      *   
      * @param bolCorrelateMidstream turn on/off the use of correlation processing while gRPC streaming
      */
-    public void setCorrelateMidstream(boolean bolCorrelateMidstream) {
+    public void setCorrelateWhileStreaming(boolean bolCorrelateMidstream) {
         this.bolCorrelateMidstream = bolCorrelateMidstream;
     }
     
     
+    /**
+     * <p>
+     * Specifies whether or not multi-streaming of query responses is enabled.
+     * </p>
+     * <p>
+     * The default value is taken from the Java API Library configuration file
+     * (see {@link #BOL_MULTISTREAM}).
+     * </p>
+     * 
+     * @return <code>true</code> if multi-streaming is enabled, <code>false</code> if disabled
+     * 
+     * @see #BOL_MULTISTREAM
+     */
+    public final boolean isMultiStreamingResponse() {
+        return this.bolMultiStream;
+    }
+
+    /**
+     * <p>
+     * Returns the minimum request domain size which triggers query response multi-streaming.
+     * </p>
+     * <p>
+     * The returned value has context only if query response multi-streaming has context, specifically,
+     * <code>{@link #isMultiStreamingResponse()}</code> returns <code>true</code>.  Otherwise a single
+     * response stream is always used.  If multi-streaming responses are enabled then multiple gRPC
+     * data streams will only be used if the returned value is greater than the size of the 
+     * query request domain, which is given by <code>{@link DpDataRequest#approxDomainSize()}</code>.
+     * </p>
+     * <p>
+     * The requirement for a minimum domain size is used as a performance criterion.  Minimum domain
+     * sizes prevent the use of multiple gRPC data streams for small data requests, preventing unnecessary 
+     * resource allocation.
+     * </p>
+     * <p>
+     * The default value is taken from the Java API Library configuration file
+     * (see {@link #SIZE_DOMAIN_MULTISTREAM}).
+     * </p>
+     * 
+     * @return the minimum query domain size triggering multi-streaming of response data (in data source * seconds)
+     */
+    public final long geMultiStreamingDomainSize() {
+        return this.szDomainMultiStream;
+    }
+
+    /**
+     * <p>
+     * Returns the number of gRPC data streams used for multi-streaming of query responses.
+     * </p>
+     * <p>
+     * The returned value is the number of gRPC data streams always used for a multi-streaming response.
+     * Note that the returned value has context only when multi-streaming is enabled, specificially,
+     * <code>{@link #isMultiStreamingResponse()}</code> returns <code>true</code>.
+     * </p>
+     * 
+     * @return the number of concurrent gRPC data streams used to recover query responses when enabled
+     */
+    public final int getMultiStreamCount() {
+        return this.cntStreams;
+    }
+
+    /**
+     * <p>
+     * Returns whether or not concurrent correlation is enabled.
+     * </p>
+     * <p>
+     * If the returned value is <code>true</code> then the correlation of query response data
+     * is performed using multi-threading.  This is a performance feature which can be turned
+     * on/off.  In general, allowing concurrent processing of response data will increase performance
+     * so long as processing threads do not interfere with other activities.
+     * </p>
+     * 
+     * @return <code>true</code> if concurrent correlation of response data is enabled, <code>false</code> otherwise
+     */
+    public final boolean isCorrelatingConcurrently() {
+        return this.bolCorrelateConcurrency;
+    }
+
+    /**
+     * <p>
+     * Returns whether or not correlation of response data is allowed while it is being streamed back from the
+     * Query Service.
+     * </p>
+     * <p>
+     * If the returned value is <code>true</code> then the correlation of query response data is allowed
+     * to proceed while it simultaneously being streamed back from the Query Service.  This is a performance
+     * feature increasing concurrency of the correlation process.  Specifically, correlation does not need to
+     * wait until all query data is available.  However, the over use of concurrency can cause performance
+     * degradation and use of this feature should be used with caution.
+     * </p>
+     * 
+     * @return <code>true</code> if query response data can be correlated as it is being streamed back, 
+     *         <code>false</code> otherwise
+     */
+    public final boolean isCorrelatingWhileStreaming() {
+        return this.bolCorrelateMidstream;
+    }
+
+    
     //
     // Operations
     //
-    
     
     /**
      * <p>
@@ -1099,7 +1289,7 @@ public class QueryResponseCorrelator {
      * Performs the given request using gRPC data streaming and blocks until request and 
      * processing are complete.  The given data request is potentially decomposed to create multiple
      * gRPC data streams unless multi-streaming is explicitly turned off using
-     * <code>{@link #setMultiStreaming(boolean)}</code> before calling this method.
+     * <code>{@link #setMultiStreamingResponse(boolean)}</code> before calling this method.
      * </p>
      * <p>
      * The type of data stream used, either a unidirectional stream or a bidirectional stream, 
@@ -1112,9 +1302,9 @@ public class QueryResponseCorrelator {
      * Various data streaming and processing options are available for this method.  See the
      * following methods for more information:
      * <ul>
-     * <li><code>{@link #setCorrelateMidstream(boolean)}</code></li>
+     * <li><code>{@link #setCorrelateWhileStreaming(boolean)}</code></li>
      * <li><code>{@link #setCorrelationConcurrency(boolean)}</code></li>
-     * <li><code>{@link #setMultiStreaming(boolean)}</code></li>
+     * <li><code>{@link #setMultiStreamingResponse(boolean)}</code></li>
      * </ul>
      * These are all performance options that should be tuned for specific platforms.
      * The default values for these options are set in the Data Platform API configuration
@@ -1122,9 +1312,9 @@ public class QueryResponseCorrelator {
      * </p>
      * <p>
      * <h2>Multi-Streaming</h2>
-     * The method attempts to decompose large data requests into composite request according to 
+     * The method attempts to decompose large data requests into decompose request according to 
      * settings in the default Data Platform API configuration (see <code>{@link DpApiConfig}</code>).  
-     * The <code>{@link #setMultiStreaming(boolean)}</code> operation can be used to turn off 
+     * The <code>{@link #setMultiStreamingResponse(boolean)}</code> operation can be used to turn off 
      * the default behavior.
      * </p>
      * <p>
@@ -1163,9 +1353,9 @@ public class QueryResponseCorrelator {
      * 
      * @throws DpQueryException general exception during data recovery and/or processing (see cause)
      * 
-     * @see #setCorrelateMidstream(boolean)
+     * @see #setCorrelateWhileStreaming(boolean)
      * @see #setCorrelationConcurrency(boolean)
-     * @see #setMultiStreaming(boolean)
+     * @see #setMultiStreamingResponse(boolean)
      */
     public SortedSet<CorrelatedQueryData>   processRequestStream(DpDataRequest dpRequest) throws DpQueryException {
 
@@ -1208,11 +1398,11 @@ public class QueryResponseCorrelator {
      * Various data streaming and processing options are available for this method.  See the
      * following methods for more information:
      * <ul>
-     * <li><code>{@link #setCorrelateMidstream(boolean)}</code></li>
+     * <li><code>{@link #setCorrelateWhileStreaming(boolean)}</code></li>
      * <li><code>{@link #setCorrelationConcurrency(boolean)}</code></li>
-     * <li><code>{@link #setMultiStreaming(boolean)}</code></li>
+     * <li><code>{@link #setMultiStreamingResponse(boolean)}</code></li>
      * </ul>
-     * Note that the <code>{@link #setMultiStreaming(boolean)}</code> has no effect here.
+     * Note that the <code>{@link #setMultiStreamingResponse(boolean)}</code> has no effect here.
      * These performance options should be tuned for specific platforms.
      * The default values for these options are set in the Data Platform API configuration
      * (see {@link DpApiConfig}</code>).  
@@ -1233,7 +1423,7 @@ public class QueryResponseCorrelator {
      * 
      * @throws DpQueryException general exception during data recovery and/or processing (see cause)
      * 
-     * @see #setCorrelateMidstream(boolean)
+     * @see #setCorrelateWhileStreaming(boolean)
      * @see #setCorrelationConcurrency(boolean)
      */
     public SortedSet<CorrelatedQueryData>   processRequestMultiStream(List<DpDataRequest> lstRequests) throws DpQueryException {
@@ -1245,12 +1435,12 @@ public class QueryResponseCorrelator {
         List<QueryResponseStreamProcessor>  lstStrmTasks = this.createStreamingTasks(lstRequests);
         
         // Create the data correlation thread task
-        QueryDataProcessor  thdDataProcessor = QueryDataProcessor.newThread(this.queStreamBuffer, this.theCorrelator);
+        this.thdDataProcessor = QueryDataProcessor.newThread(this.queStreamBuffer, this.theCorrelator);
 
         
         // Start data processing thread if mid-stream processing true
         if (this.bolCorrelateMidstream)
-            thdDataProcessor.start();
+            this.thdDataProcessor.start();
         
         // Start all streaming tasks and wait for completion 
         int     cntMsgs;    // returns number of response messages streamed
@@ -1259,15 +1449,15 @@ public class QueryResponseCorrelator {
             cntMsgs = this.executeStreamingTasks(lstStrmTasks);
             
         } catch (InterruptedException e) {
-            thdDataProcessor.terminate();
+            this.thdDataProcessor.terminate();
             
             if (BOL_LOGGING)
-                LOGGER.error("{}: InterruptedException while streaming request results - {}", e.getMessage());
+                LOGGER.error("{}: InterruptedException while streaming request results - {}", JavaRuntime.getMethodName(), e.getMessage());
             
             throw new DpQueryException(e);
 
         } catch (TimeoutException e) {
-            thdDataProcessor.terminate();
+            this.thdDataProcessor.terminate();
             
             if (BOL_LOGGING)
                 LOGGER.error("{}: TimeoutException while streaming requst results - {}", JavaRuntime.getMethodName(), e.getMessage());
@@ -1275,7 +1465,7 @@ public class QueryResponseCorrelator {
             throw new DpQueryException(e);
 
         } catch (CompletionException e) {
-            thdDataProcessor.terminate();
+            this.thdDataProcessor.terminate();
         
             if (BOL_LOGGING)
                 LOGGER.error("{}: ExecutionException while streaming request results - {}", JavaRuntime.getMethodName(), e.getMessage());
@@ -1287,13 +1477,13 @@ public class QueryResponseCorrelator {
         // - Tell the data processor task the number of messages to process
         // - Start if it has not already been started (i.e., via mid-stream processing)
         // - Wait for it to finish
-        thdDataProcessor.setMaxMessages(cntMsgs);
+        this.thdDataProcessor.setMaxMessages(cntMsgs);
         
-        if (!thdDataProcessor.isStarted())
-            thdDataProcessor.start();
+        if (!this.thdDataProcessor.isStarted())
+            this.thdDataProcessor.start();
         
         try {
-            thdDataProcessor.join(timeoutLimitDefaultMillis());
+            this.thdDataProcessor.join(timeoutLimitDefaultMillis());
             
         } catch (InterruptedException e) {
             if (BOL_LOGGING)
@@ -1303,13 +1493,14 @@ public class QueryResponseCorrelator {
         }
     
         // Check for successful processing then return processed data
-        ResultStatus    recProcessed = thdDataProcessor.getResult();
+        ResultStatus    recProcessed = this.thdDataProcessor.getResult();
         if (recProcessed == null || recProcessed.isFailure()) {
             if (BOL_LOGGING)
                 LOGGER.error("{}: Data correlation processing FAILED - {}", JavaRuntime.getMethodName(), recProcessed.message());
 
             throw new DpQueryException("Data correlation processing FAILED: " + recProcessed.message());
         }
+        this.thdDataProcessor = null;
         
         SortedSet<CorrelatedQueryData>  setPrcdData = this.theCorrelator.getCorrelatedSet();
         return setPrcdData;
@@ -1322,26 +1513,71 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
+     * Decomposing the given query request into a composite request.
+     * </p>
+     * <p>
+     * The given request is decomposed only if the request domain is greater than the current
+     * minimum request domain size; specifically, only if 
+     * <code>{@link DpDataRequest#approxDomainSize()} > {@link #geMultiStreamingDomainSize()}</code>.
+     * Otherwise the returned list contains a single element, the original request.  
+     * </p>
+     * <p>
+     * The decomposition is performed using the preferred decomposition as specified by the
+     * <code>DataRequestDecomposer</code> class.  This decomposition is given by the method
+     * <code>{@link DataRequestDecomposer#decomposeDomainPreferred(DpDataRequest)}</code>.
+     * </p>
+     * <h2>WARNING:</h2>
+     * Note that the number of composite request can be larger than the number of gRPC streams used
+     * in multi-streaming.  In that case the thread pool continues executing, creating new gRPC
+     * streams for each request but no more than the maximum at a single instance.  This condition
+     * may not be optimal.
+     * 
+     * @param rqst  data request to be decomposed for multi-streaming 
+     * 
+     * @return  the decompose data request obtained from the above decomposition strategy
+     */
+    private List<DpDataRequest> decomposeRequest(DpDataRequest rqst) {
+        
+        // Check if request size approximation is large enough to pivot to multi-streaming
+        long    szDomain = rqst.approxDomainSize();
+
+        if (szDomain < this.szDomainMultiStream)
+            return List.of(rqst);
+
+
+        // If we are here - we are doing multiple gRPC streams requiring a decompose query
+        List<DpDataRequest>     lstCmpRqsts;    // decompose request to be returned
+
+        // Use the preferred domain decomposition, regardless of the number of requests produced
+        DataRequestDecompParams recDomain = this.rqstDecomp.decomposeDomainPreferred(rqst);
+
+        lstCmpRqsts = this.rqstDecomp.buildCompositeRequest(rqst, recDomain);
+        
+        return lstCmpRqsts;
+    }
+    
+    /**
+     * <p>
      * Attempts to decompose the given data request into a composite request (i.e., for multi-streaming).
      * </p>
      * <p>
-     * Attempts a decomposition of the given request into a composite request collection of no more than
-     * <code>{@link #CNT_MULTISTREAM}</code> elements.  
+     * Attempts a decomposition of the given request into a decompose request collection of no more than
+     * <code>{@link #getMultiStreamCount()}</code> elements.  
      * This method is part of the DEFAULT multi-streaming mechanism within <code>QueryResponseCorrelator</code>.
      * </p>
      * <p>
      * <h2>Request Size</h2>
      * The <code>DpDataRequest</code> class provides a request size estimate given by
-     * <code>{@link DpDataRequest#approxRequestSamples(long, TimeUnit)}</code>.  This method returned the 
-     * estimated number of data samples within the request given the sampling period.  If this size
-     * estimate is less than <code>{@link #SIZE_MULTISTREAM_PIVOT}</code> nothing is done and a list 
+     * <code>{@link DpDataRequest#approxDomainSize()}</code>.  This method returned the 
+     * estimated domain size within the given query request (in data sources * seconds).  If this size
+     * estimate is less than <code>{@link #geMultiStreamingDomainSize()}</code> nothing is done and a list 
      * containing the original data request is returned.
      * </p>
      * <p>
-     * The sampling period for the size estimate method is given as a single unit of the 
+     * <s>The sampling period for the size estimate method is given as a single unit of the 
      * <code>{@link TimeUnit}</code> enumeration specified by class constant 
      * <code>{@link #TU_MULTISTREAM_PERIOD}</code>.  That is, the arguments of the above method are 1L and
-     * <code>{@link #TU_MULTISTREAM_PERIOD}</code>, respectively.
+     * <code>{@link #TU_MULTISTREAM_PERIOD}</code>, respectively.</s>
      * </p>
      * <p>
      * <h2>Decomposition Strategy</h2>
@@ -1350,36 +1586,36 @@ public class QueryResponseCorrelator {
      * are evaluated in order:
      * <ol>
      * <li>
-     * <h3>Default Decomposition</h3>
-     * Does the <code>DpDataRequest</code> default decomposition provided by 
-     * <code>{@link DpDataRequest#decomposeDomainDefault()}</code> yield a query domain decomposition where
-     * the number of domain covers &le; <code>{@link #CNT_MULTISTREAM}</code>?  If so, this query domain
-     * decomposition is used to produce the returned composite query for multi-streaming.
+     * <h3>Preferred Decomposition</h3>
+     * Does the <code>DpDataRequest</code> preferred decomposition provided by 
+     * <code>{@link DpDataRequest#decomposeDomainPreferred()}</code> yield a query domain decomposition where
+     * the number of domain covers &le; <code>{@link #getMultiStreamCount()}</code>?  If so, this query domain
+     * decomposition is used to produce the returned decompose query for multi-streaming.
      * </li>
      * <li>
      * <h3>Horizontal Decomposition</h3>
-     * If the number of data sources within the given data request &ge; <code>{@link #CNT_MULTISTREAM}</code>
-     * then a "horizontal" query domain decomposition is used to generate the returned composite request.
+     * If the number of data sources within the given data request &ge; <code>{@link #getMultiStreamCount()}</code>
+     * then a "horizontal" query domain decomposition is used to generate the returned decompose request.
      * Specifically, the returned value is given by 
-     * <code>{@link DpDataRequest#buildCompositeRequest(CompositeType, int)}</code> where the arguments are
-     * <code>{@link CompositeType#HORIZONTAL}</code> and <code>{@link #CNT_MULTISTREAM}</code>, respectively.
+     * <code>{@link DpDataRequest#buildCompositeRequest(DataRequestDecompType, int)}</code> where the arguments are
+     * <code>{@link DataRequestDecompType#HORIZONTAL}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
      * </li>
      * <li>
      * <h3>Vertical Decomposition</h3>
      * If the estimated number of samples within the request &ge; 
-     * <code>{@link #CNT_MULTISTREAM}</code> * <code>{@link #SIZE_MULTISTREAM_PIVOT}</code> then a "vertical"
-     * query domain decomposition is used to create the returned composite request.  Specifically, the returned
+     * <code>{@link #getMultiStreamCount()}</code> * <code>{@link #geMultiStreamingDomainSize()}</code> then a "vertical"
+     * query domain decomposition is used to create the returned decompose request.  Specifically, the returned
      * value is given by 
-     * <code>{@link DpDataRequest#buildCompositeRequest(CompositeType, int)}</code> where the arguments are
-     * <code>{@link CompositeType#VERTICAL}</code> and <code>{@link #CNT_MULTISTREAM}</code>, respectively.
+     * <code>{@link DpDataRequest#buildCompositeRequest(DataRequestDecompType, int)}</code> where the arguments are
+     * <code>{@link DataRequestDecompType#VERTICAL}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
      * </li>
      * <li>
      * <h3>Grid Decomposition</h3>
-     * If the number of data sources within the request &le; <code>{@link #CNT_MULTISTREAM}</code> / 2 then a
-     * "grid" query domain decomposition is used to create the returned composite request.  Specifically, the
+     * If the number of data sources within the request &le; <code>{@link #getMultiStreamCount()}</code> / 2 then a
+     * "grid" query domain decomposition is used to create the returned decompose request.  Specifically, the
      * returned value is given by 
-     * <code>{@link DpDataRequest#buildCompositeRequest(CompositeType, int)}</code> where the arguments are
-     * <code>{@link CompositeType#GRID}</code> and <code>{@link #CNT_MULTISTREAM}</code>, respectively.
+     * <code>{@link DpDataRequest#buildCompositeRequest(DataRequestDecompType, int)}</code> where the arguments are
+     * <code>{@link DataRequestDecompType#GRID}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
      * </li>
      * </ol>
      * If all the above conditions fail, the data request is consider "undecomposable".  
@@ -1388,55 +1624,56 @@ public class QueryResponseCorrelator {
      * 
      * @param dpRequest data request to be decomposed for multi-streaming 
      * 
-     * @return  the composite data request obtained from the above decomposition strategy
+     * @return  the decompose data request obtained from the above decomposition strategy
+     * 
      */
     private List<DpDataRequest> attemptRequestDecomposition(DpDataRequest dpRequest) {
         
         // Check if request size approximation is large enough to pivot to multi-streaming
-        long szRequest = dpRequest.approxRequestSamples(1, TU_MULTISTREAM_PERIOD);
+        long    szDomain = dpRequest.approxDomainSize();
         
-        if (szRequest < SIZE_MULTISTREAM_PIVOT)
+        if (szDomain < this.szDomainMultiStream)
             return List.of(dpRequest);
         
         
-        // If we are here - we are doing multiple gRPC streams requiring a composite query
-        List<DpDataRequest>     lstCmpRqsts;    // composite request to be returned
+        // If we are here - we are doing multiple gRPC streams requiring a decompose query
+        List<DpDataRequest>     lstCmpRqsts;    // decompose request to be returned
         
         // Try default query domain decomposition will work
-        RequestDomainDecomp recDomain = dpRequest.decomposeDomainDefault();
+        DataRequestDecompParams recDomain = this.rqstDecomp.decomposeDomainPreferred(dpRequest);
         
-        if (recDomain.totalCovers() < CNT_MULTISTREAM) {
-            lstCmpRqsts = dpRequest.buildCompositeRequest(recDomain);
+        if (recDomain.totalCovers() < this.cntStreams) {
+            lstCmpRqsts = this.rqstDecomp.buildCompositeRequest(dpRequest, recDomain);
             
             return lstCmpRqsts;
         }
         
         // Try horizontal query domain decomposition (by data sources)
         //  Works when request source count is greater than the stream count
-        if (dpRequest.getSourceCount() > CNT_MULTISTREAM) {
-            lstCmpRqsts = dpRequest.buildCompositeRequest(CompositeType.HORIZONTAL, CNT_MULTISTREAM);
+        if (dpRequest.getSourceCount() > this.cntStreams) {
+            lstCmpRqsts = this.rqstDecomp.buildCompositeRequest(dpRequest, DataRequestDecompType.HORIZONTAL, this.cntStreams);
         
             return lstCmpRqsts;
         }
         
         // Try vertical query domain decomposition (by time domain)
         //  First compute the number of samples per request
-        long lngSmpsPerRqst = szRequest / SIZE_MULTISTREAM_PIVOT;
-        int  cntSmpsPerRqst = Long.valueOf(lngSmpsPerRqst).intValue();
+        long lngDomPerRqst = szDomain / this.szDomainMultiStream;
+        int  szDomPerRqst = Long.valueOf(lngDomPerRqst).intValue();
         
         //  Add any remainder (just in case)
-        cntSmpsPerRqst += (szRequest % SIZE_MULTISTREAM_PIVOT > 0) ? 1 : 0;
+        szDomPerRqst += (szDomain % this.szDomainMultiStream > 0) ? 1 : 0;
         
-        if (cntSmpsPerRqst < CNT_MULTISTREAM) {
-            lstCmpRqsts = dpRequest.buildCompositeRequest(CompositeType.VERTICAL, CNT_MULTISTREAM);
+        if (szDomPerRqst < this.cntStreams) {
+            lstCmpRqsts = this.rqstDecomp.buildCompositeRequest(dpRequest, DataRequestDecompType.VERTICAL, this.cntStreams);
             
             return lstCmpRqsts;
         }
         
         // Try a grid-based query domain decomposition
         //  Works when the source count is at least half of the stream count
-        if (dpRequest.getSourceCount() > (CNT_MULTISTREAM/2)) {
-            lstCmpRqsts = dpRequest.buildCompositeRequest(CompositeType.GRID, CNT_MULTISTREAM);
+        if (dpRequest.getSourceCount() > (this.cntStreams/2)) {
+            lstCmpRqsts = this.rqstDecomp.buildCompositeRequest(dpRequest, DataRequestDecompType.GRID, this.cntStreams);
             
             return lstCmpRqsts;
         }
@@ -1475,7 +1712,7 @@ public class QueryResponseCorrelator {
      * </ul>  
      * </p>
      * 
-     * @param lstRequests   composite data request, one request for each data stream
+     * @param lstRequests   decompose data request, one request for each data stream
      * 
      * @return  collection of gRPC stream processor tasks suitable for thread execution
      */

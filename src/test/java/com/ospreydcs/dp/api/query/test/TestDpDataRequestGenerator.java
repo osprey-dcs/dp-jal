@@ -29,7 +29,6 @@ package com.ospreydcs.dp.api.query.test;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -124,8 +123,8 @@ public class TestDpDataRequestGenerator {
     // Application Resources
     //
     
-//    /** Default DP API library testing parameters */
-//    public static final DpApiTestingConfig.TestArchive      CFG_ARCHIVE = DpApiTestingConfig.getInstance().testArchive;
+    /** Default DP API library testing parameters */
+    public static final DpApiTestingConfig.TestArchive      CFG_ARCHIVE = DpApiTestingConfig.getInstance().testArchive;
 
     
     //
@@ -134,10 +133,10 @@ public class TestDpDataRequestGenerator {
 
 
     /** The inception time instant of the test archive */
-    private static final String STR_ISO_ARCHIVE_INCEPT = "2023-10-31T15:51:02.000+00:00";
+    private static final String STR_ISO_ARCHIVE_INCEPT = CFG_ARCHIVE.firstTimestamp; // "2023-10-31T15:51:02.000+00:00";
     
     /** The last timestamp instant within the test data archive */
-    private static final String STR_ISO_ARCHIVE_LAST = "2023-10-31T15:51:21.999+00:00"; 
+    private static final String STR_ISO_ARCHIVE_LAST = CFG_ARCHIVE.lastTimestamp; // "2023-10-31T15:51:21.999+00:00"; 
 
     
     /** 
@@ -159,7 +158,7 @@ public class TestDpDataRequestGenerator {
      * <p>
      * The value is taken from test default parameter [<code>testArchive.duration</code>].
      */ 
-    public static final Long        LNG_DURATION = Duration.between(INS_INCEPT, INS_FINAL).get(ChronoUnit.NANOS);
+    public static final Long        LNG_DURATION = Duration.between(INS_INCEPT, INS_FINAL).toNanos();
  
    
     /** 
@@ -167,14 +166,14 @@ public class TestDpDataRequestGenerator {
      * <p>
      * The value is taken from test default parameter [<code>testArchive.pvCount</code>].
      */
-    public static final int         CNT_PV_NAMES = 4000;
+    public static final int         CNT_PV_NAMES = CFG_ARCHIVE.pvCount; // 4000;
     
     /**
      * The prefix for each data source name within the Data Platform test archive.
      * <p>
      * The value is taken from test default parameter [<code>testArchive.pvPrefix</code>].
      */
-    public static final String      STR_PV_PREFIX = "dpTest_";
+    public static final String      STR_PV_PREFIX = CFG_ARCHIVE.pvPrefix; // "dpTest_";
     
     /** 
      * List of all data source names within the Data Platform data archive test data set 
@@ -256,11 +255,11 @@ public class TestDpDataRequestGenerator {
      * </p>
      * <p>
      * Note that the no starting index or start time is given so the request always starts
-     * at the origin of the query domain.  Not intended for composite queries. 
+     * at the origin of the query domain.  Not intended for decompose queries. 
      * </p>
      * 
      * @param cntSources        number of data sources in the query
-     * @param lngDuration       time duration of query (in seconds), range = [INS_INCEPT, INS_INCEPT + lngDuration]
+     * @param lngDuration       time duration of query (in nanoseconds), range = [INS_INCEPT, INS_INCEPT + lngDuration]
      * 
      * @return  new <code>DpDataRequest</code> for the all data source in LST_PV_NAMES and the specified time range
      * 
@@ -279,7 +278,7 @@ public class TestDpDataRequestGenerator {
      * (The index for the first data source defaults to 0.)
      * </p>
      * <p>
-     * Note that the start time is given so that composite queries can
+     * Note that the start time is given so that decompose queries can
      * be created to target a larger time range (i.e., "vertical" decomposition).
      * </p>
      * 
@@ -303,7 +302,7 @@ public class TestDpDataRequestGenerator {
      * (The index for the first data source defaults to 0.)
      * </p>
      * <p>
-     * Note that the start time is given so that composite queries can
+     * Note that the start time is given so that decompose queries can
      * be created to target a larger time range (i.e., "vertical" decomposition).
      * The number of data sources is given to reduce the size of the overall query.
      * </p>
@@ -329,7 +328,7 @@ public class TestDpDataRequestGenerator {
      * (the start time defaults to 0).
      * </p>
      * <p>
-     * Note that the index of the first data source is given so that composite queries can
+     * Note that the index of the first data source is given so that decompose queries can
      * be created for a larger target set of sources (i.e., "horizontal" decomposition).
      * </p>
      * 
@@ -353,7 +352,7 @@ public class TestDpDataRequestGenerator {
      * The start time of the returned query defaults to 0.
      * </p>
      * <p>
-     * Note that the index of the first data source is given so that composite queries can
+     * Note that the index of the first data source is given so that decompose queries can
      * be created for a larger target set of sources (i.e., "horizontal" decomposition).
      * The duration is given to reduce the size of the overall query.
      * </p>
@@ -384,18 +383,18 @@ public class TestDpDataRequestGenerator {
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The index of the first data source is given so that composite queries can
+     * The index of the first data source is given so that decompose queries can
      * be created that target a larger set of sources (which can then be concurrently streamed).
      * </li>
      * <br/>
      * <li>
-     * The start time is given so that composite queries can be created that target a larger
+     * The start time is given so that decompose queries can be created that target a larger
      * time range (which can then be concurrently streamed).
      * </li>
      * <br/>
      * <li>
      * Since both query domains can be decomposed this method is appropriate for creating
-     * "grid" composite queries.
+     * "grid" decompose queries.
      * </li>
      * <br/>
      * <li>

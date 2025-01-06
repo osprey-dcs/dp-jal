@@ -41,8 +41,7 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.DpGrpcStreamType;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
-import com.ospreydcs.dp.api.query.model.IDpQueryStreamObserver;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamTypeDeprecated;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
@@ -72,9 +71,9 @@ import io.grpc.stub.StreamObserver;
  * <p>
  * <h2>gRPC Streaming</h2>
  * The type of gRPC data stream employed is determined by the value of <code>{@link #enmStreamType}</code> set
- * during construction (see <code>{@link DpQueryStreamType}</code>).
- * The <code>{@link DpQueryStreamType#UNIDIRECTIONAL}</code> value creates a unidirectional stream while the 
- * <code>{@link DpQueryStreamType#BIDIRECTIONAL}</code> value creates a bidirectional stream.
+ * during construction (see <code>{@link DpQueryStreamTypeDeprecated}</code>).
+ * The <code>{@link DpQueryStreamTypeDeprecated#UNIDIRECTIONAL}</code> value creates a unidirectional stream while the 
+ * <code>{@link DpQueryStreamTypeDeprecated#BIDIRECTIONAL}</code> value creates a bidirectional stream.
  * The <code>DpQueryStreamBuffer</code> instance itself receives the responses through the implemented methods of the 
  * <code>StreamObserver</code> interface (that is, the instance itself acts as the backward stream from the 
  * Query Service).
@@ -156,7 +155,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * 
      * @throws  IllegalArgumentException    invalid gRPC stream type (e.g., <code>{@link DpGrpcStreamType#FORWARD}</code>)
      * 
-     * @see #DpQueryStreamBuffer(DpQueryStreamType, DpQueryServiceStub, QueryRequest, boolean)
+     * @see #DpQueryStreamBuffer(DpQueryStreamTypeDeprecated, DpQueryServiceStub, QueryRequest, boolean)
      * @see DpQueryStreamBuffer
      */
     public static DpQueryStreamBuffer create(DpGrpcStreamType enmType, DpQueryServiceStub stubAsync, QueryDataRequest msgRequest) 
@@ -178,7 +177,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * 
      * @throws  IllegalArgumentException    invalid gRPC stream type (e.g., <code>{@link DpGrpcStreamType#FORWARD}</code>)
      * 
-     * @see #DpQueryStreamBuffer(DpQueryStreamType, DpQueryServiceStub, QueryRequest, boolean)
+     * @see #DpQueryStreamBuffer(DpQueryStreamTypeDeprecated, DpQueryServiceStub, QueryRequest, boolean)
      * @see DpQueryStreamBuffer
      */
     public static DpQueryStreamBuffer create(DpGrpcStreamType enmType, DpQueryServiceStub stubAsync, QueryDataRequest msgRequest, boolean bolLogging) 
@@ -400,7 +399,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * The Query Service unidirectional streaming request initiates the gRPC data stream after which
      * the Query Service streams requested data at arbitrary rate.  It is up to the client to process
      * data in a timely fashion.  Bidirectional streaming provides a more synchronized data path for
-     * clients with excessive processing requirements (see <code>{@link DpQueryStreamType#BIDIRECTIONAL}</code>).
+     * clients with excessive processing requirements (see <code>{@link DpQueryStreamTypeDeprecated#BIDIRECTIONAL}</code>).
      * <p>
      * After this method returns the streaming process becomes
      * independent and thread-like.  The requested data becomes available

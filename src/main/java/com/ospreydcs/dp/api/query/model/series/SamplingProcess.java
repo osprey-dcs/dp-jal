@@ -325,11 +325,11 @@ public class SamplingProcess {
      * Internally, <code>SamplingProcess</code> objects are composed of an ordered vector
      * of <code>UniformSamplingBlock</code> instances. Each sampling block instance contains
      * the time-series data for the process for a given duration and uniform sampling clock.
-     * This method returns the total number sampling block instances forming the composite 
+     * This method returns the total number sampling block instances forming the decompose 
      * sampling process.
      * </p>
      * 
-     * @return  number of component sampling blocks within composite sampling process
+     * @return  number of component sampling blocks within decompose sampling process
      */
     public final int    getSamplingBlockCount() {
         return this.vecSmplBlocks.size();
@@ -347,7 +347,7 @@ public class SamplingProcess {
      * This method returns the sampling block instance at the given index.
      * </p>
      * 
-     * @param index index of desired sampling block within composite sampling process
+     * @param index index of desired sampling block within decompose sampling process
      * 
      * @return  component sampling block (within sampling process) at given index
      * 
@@ -510,7 +510,7 @@ public class SamplingProcess {
      * Creates and returns a new, ordered list of timestamps for all time-series data within this process.
      * </p>
      * <p>
-     * The timestamps returned are for the <em>entire</em> stampling process.  It is a composite of all
+     * The timestamps returned are for the <em>entire</em> stampling process.  It is a decompose of all
      * sampling blocks within the sampling process. 
      * <p>
      * <h2>NOTES</h2>
@@ -546,7 +546,7 @@ public class SamplingProcess {
      * </p>
      * <p>
      * The time-series for the given data source is returned for the <em>entire</em> sampling
-     * process.  The returned value is a composite of all time-series data within component 
+     * process.  The returned value is a decompose of all time-series data within component 
      * sampling blocks.
      * </p>
      * <p>

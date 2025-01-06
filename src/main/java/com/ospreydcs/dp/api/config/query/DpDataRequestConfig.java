@@ -58,8 +58,8 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
     public Stream                   stream;
     
     /** Composite data query parameters */
-    @ACfgOverride.Struct(pathelem="COMPOSITE")
-    public CompositeQueryConfig     composite;
+    @ACfgOverride.Struct(pathelem="DECOMPOSE")
+    public CompositeQueryConfig     decompose;
     
 
     /**
@@ -69,7 +69,7 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
     public static class Stream extends CfgStructure<Stream> {
         
 //        /** Enumeration of data stream type preferences */
-//        public static enum DpQueryStreamType {
+//        public static enum DpQueryStreamTypeDeprecated {
 //            /** Unidirectional stream - backward stream from Query Service to client */
 //            UNIDIRECTIONAL,
 //
@@ -87,7 +87,7 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
     }
     
     /**
-     *  Structure class defining default configuration parameters for composite queries. 
+     *  Structure class defining default configuration parameters for decompose queries. 
      */
     public static class CompositeQueryConfig extends CfgStructure<CompositeQueryConfig> {
         
@@ -99,7 +99,7 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
         // Configuration Fields
         //
         
-        /** Is composite query decomposition active */
+        /** Is decompose query decomposition active */
         @ACfgOverride.Field(name="ACTIVE")
         public Boolean      active;
         

@@ -65,9 +65,9 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
     @ACfgOverride.Struct(pathelem="DATA")
     public TimeSeriesDataConfig data;
     
-    /** Default parameters for general Query Service gRPC streaming operations */
-    @ACfgOverride.Struct(pathelem="STREAM")
-    public DpGrpcStreamConfig   stream;
+//    /** Default parameters for general Query Service gRPC streaming operations */
+//    @ACfgOverride.Struct(pathelem="STREAM")
+//    public DpGrpcStreamConfig   stream;
     
     /** Default concurrency parameters for Query Service operations */
     @ACfgOverride.Struct(pathelem="CONCURRENCY")

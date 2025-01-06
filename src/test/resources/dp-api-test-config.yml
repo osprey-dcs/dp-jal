@@ -15,10 +15,10 @@
 #
 
 testArchive:
-   inception: 1698767462      # epoch seconds since inception       : DP_API_TEST_ARCHIVE_INCEPTION     
-   duration: 60               # (seconds) duration of archive data  : DP_API_TEST_ARCHIVE_DURATION
+   firstTimestamp: 2023-10-31T15:51:02.000+00:00 # first timestap w/in archive : DP_API_TEST_ARCHIVE_FIRST_TIMESTAMP     
+   lastTimestamp: 2023-10-31T15:51:21.999+00:00  # last timestamp w/in archive : DP_API_TEST_ARCHIVE_LAST_TIMESTAMP
    pvCount: 4000              # number of data sources (PV names)   : DP_API_TEST_ARCHIVE_PV_COUNT
-   pvPrefix: "dpTest_"            # the prefix ofdata source names      : DP_API_TEST_ARCHIVE_PV_PREFIX
+   pvPrefix: "dpTest_"        # the prefix of data source names     : DP_API_TEST_ARCHIVE_PV_PREFIX
    
 testQuery:
    data:
@@ -36,7 +36,7 @@ testQuery:
    
    connection:
       name: Query Service Test Archive # (opt) name of connection  : DP_API_TEST_QUERY_CONNECTION_NAME
-      version: 1.0.0                 # (opt) parameters version  : DP_API_TEST_QUERY_CONNECTION_VERSION
+      version: 1.5.0                 # (opt) parameters version  : DP_API_TEST_QUERY_CONNECTION_VERSION
       description: Query Service test archive connection parameters # : DP_API_TEST_QUERY_CONNECTION_DESCRIPTION
       supplement: None               # (opt) anonymous parameter : DP_API_TEST_QUERY_CONNECTION_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)

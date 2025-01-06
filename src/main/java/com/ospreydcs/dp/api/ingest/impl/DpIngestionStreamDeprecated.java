@@ -397,7 +397,7 @@ public class DpIngestionStreamDeprecated extends
      * </li>
      * <li>gRPC message size limitation:
      *   As described above, the gRPC message size limitation will determine the number of
-     *   composite ingestion frames required to conform to the limit.
+     *   decompose ingestion frames required to conform to the limit.
      * </li>
      * <li>gRPC data stream type (either unidirectional or bidirectional):
      *   There are two possible gRPC data stream types available for data transmission.  In the
