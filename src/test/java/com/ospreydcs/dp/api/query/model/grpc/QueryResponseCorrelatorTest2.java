@@ -267,7 +267,7 @@ public class QueryResponseCorrelatorTest2 {
         Duration        durQuery;
         
         try {
-            durQuery = this.performQuery(rqst, this.tstRspCorrelator);
+            durQuery = this.performRequest(rqst, this.tstRspCorrelator);
             
         } catch (DpQueryException e) {
             Assert.fail("Query operation failed with exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
@@ -297,22 +297,22 @@ public class QueryResponseCorrelatorTest2 {
             os.println(JavaRuntime.getQualifiedMethodName());
             os.println("CONCURRENCY = " + correl.isCorrelatingConcurrently());
             os.println("WHILE STREAMING = " + correl.isCorrelatingWhileStreaming());
-            this.performQueries(os, rqst, correl, lstStrCnt, lstStrType);
+            this.performRequests(os, rqst, correl, lstStrCnt, lstStrType);
 
             correl.setCorrelateWhileStreaming(false);
             os.println("CONCURRENCY = " + correl.isCorrelatingConcurrently());
             os.println("WHILE STREAMING = " + correl.isCorrelatingWhileStreaming());
-            this.performQueries(os, rqst, correl, lstStrCnt, lstStrType);
+            this.performRequests(os, rqst, correl, lstStrCnt, lstStrType);
             
             correl.setCorrelationConcurrency(false);
             os.println("CONCURRENCY = " + correl.isCorrelatingConcurrently());
             os.println("WHILE STREAMING = " + correl.isCorrelatingWhileStreaming());
-            this.performQueries(os, rqst, correl, lstStrCnt, lstStrType);
+            this.performRequests(os, rqst, correl, lstStrCnt, lstStrType);
             
             correl.setCorrelateWhileStreaming(true);
             os.println("CONCURRENCY = " + correl.isCorrelatingConcurrently());
             os.println("WHILE STREAMING = " + correl.isCorrelatingWhileStreaming());
-            this.performQueries(os, rqst, correl, lstStrCnt, lstStrType);
+            this.performRequests(os, rqst, correl, lstStrCnt, lstStrType);
             
         } catch (DpQueryException e) {
             Assert.fail("Query operation failed with exception " + e.getClass().getSimpleName() + ": " + e.getMessage());
@@ -325,7 +325,20 @@ public class QueryResponseCorrelatorTest2 {
     // Support Methods
     //
     
-    private void    performQueries(PrintStream os, DpDataRequest rqst, QueryResponseCorrelator corr, List<Integer> lstStrCnt, List<DpGrpcStreamType> lstStrType) throws DpQueryException {
+    /**
+     * <p>
+     * Performs all the requests in the given argument lists using the argument resources.
+     * </p>
+     * 
+     * @param os            print stream to store output data
+     * @param rqst          the prototype data request - modified according to list arguments
+     * @param corr          the correlator object performing the requests
+     * @param lstStrCnt     list of gRPC stream maximum stream counts to use
+     * @param lstStrType    list of gRPC stream types to use
+     * 
+     * @throws DpQueryException general exception during data recovery or processing
+     */
+    private void    performRequests(PrintStream os, DpDataRequest rqst, QueryResponseCorrelator corr, List<Integer> lstStrCnt, List<DpGrpcStreamType> lstStrType) throws DpQueryException {
         
         for (DpGrpcStreamType enmType : lstStrType)
             for (Integer cntStrs : lstStrCnt) {
@@ -337,17 +350,33 @@ public class QueryResponseCorrelatorTest2 {
                 corr.setMultiStreamCount(cntStrs);
                 
                 // Perform query
-                Duration    durQuery = this.performQuery(rqst, corr);
+                Duration    durQuery = this.performRequest(rqst, corr);
+                long        lngBytes = corr.getBytesProcessed();
+                double      dblRate  = ( ((double)lngBytes) * 1000 )/durQuery.toNanos();
                 
                 // Print out results
-                os.println("  Query Duration  : " + durQuery);
+                os.println("  Query Duration   : " + durQuery);
+                os.println("  Bytes processed  : " + lngBytes);
+                os.println("  Data rate (Mbps) : " + dblRate);
                 this.printConfiguration(os, rqst);
                 this.printConfiguration(os, tstRspCorrelator);
                 os.println();
             }
     }
     
-    private Duration    performQuery(DpDataRequest rqst, QueryResponseCorrelator rspCorrelator) throws DpQueryException {
+    /**
+     * <p>
+     * Performs the given data request using the given correlator object.
+     * </p>
+     * 
+     * @param rqst              data request to perform
+     * @param rspCorrelator     correlator used for data request
+     * 
+     * @return                  time duration for the data request
+     * 
+     * @throws DpQueryException general exception during data recovery or processing
+     */
+    private Duration    performRequest(DpDataRequest rqst, QueryResponseCorrelator rspCorrelator) throws DpQueryException {
         
         Instant insStart = Instant.now();
         rspCorrelator.processRequestStream(rqst);
@@ -358,6 +387,14 @@ public class QueryResponseCorrelatorTest2 {
         return durQuery;
     }
     
+    /**
+     * <p>
+     * Prints out the configuration of the given data request to the given print stream.
+     * </p>
+     * 
+     * @param os    print stream receiving output data (i.e., the configuration)
+     * @param rqst  the data request whose configuration is to be output 
+     */
     private void    printConfiguration(PrintStream os, DpDataRequest rqst) {
         os.println("  Time-series Data Request");
         os.println("    gRPC stream type   : " + rqst.getStreamType());
@@ -366,14 +403,23 @@ public class QueryResponseCorrelatorTest2 {
         os.println("    domain size        : " + rqst.approxDomainSize());
     }
     
+    /**
+     * <p>
+     * Prints out the configuration of the given correlator to the given print stream.
+     * </p>
+     * 
+     * @param os    print stream receiving output data (i.e., the configuration)
+     * @param corr  the correlator whose configuration is to be output
+     */
     private void    printConfiguration(PrintStream os, QueryResponseCorrelator corr) {
         
-        os.println("  Mutli-streaming Properties");
-        os.println("    multi-streaming active : " + corr.isMultiStreamingResponse());
-        os.println("    maximum stream count   : " + corr.getMultiStreamCount());
-        os.println("    minimum domain size    : " + corr.geMultiStreamingDomainSize());
-        os.println("  Correlation Concurrency Properties");
-        os.println("    concurrency active   : " + corr.isCorrelatingConcurrently());
-        os.println("    while streaming      : " + corr.isCorrelatingWhileStreaming());
+        os.println("  Correlator Properties");
+        os.println("    Mutli-streaming Properties");
+        os.println("      multi-streaming active : " + corr.isMultiStreamingResponse());
+        os.println("      maximum stream count   : " + corr.getMultiStreamCount());
+        os.println("      minimum domain size    : " + corr.geMultiStreamingDomainSize());
+        os.println("    Correlation Concurrency Properties");
+        os.println("      concurrency active   : " + corr.isCorrelatingConcurrently());
+        os.println("      while streaming      : " + corr.isCorrelatingWhileStreaming());
     }
 }

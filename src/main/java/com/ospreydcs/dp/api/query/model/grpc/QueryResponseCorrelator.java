@@ -542,10 +542,10 @@ public class QueryResponseCorrelator {
         //
         
         /** The external queued data buffer supplying data messages for correlation */
-        private final BlockingQueue<QueryData>     queDataBuffer;
+        private final BlockingQueue<QueryData>  queDataBuffer;
         
         /** The external data correlator doing the data message processing */
-        private final QueryDataCorrelator           theCorrelator;
+        private final QueryDataCorrelator       theCorrelator;
         
         
         //
@@ -1504,6 +1504,31 @@ public class QueryResponseCorrelator {
         
         SortedSet<CorrelatedQueryData>  setPrcdData = this.theCorrelator.getCorrelatedSet();
         return setPrcdData;
+    }
+    
+    
+    //
+    // State Inquiry
+    //
+    
+    /**
+     * <p>
+     * Returns the number of bytes processed during a query request.
+     * </p>
+     * <p>
+     * Returns the number of bytes queried and processed from the Query Service for a query request
+     * operation initiated by a <code>processRequest...()</code> method.
+     * </p>
+     * <p>
+     * The returned value has context immediately after a query request.  It is reset after each 
+     * called to a <code>processRequest...()</code> method in the same fashion as the returned
+     * object is reset.
+     * </p>
+     * 
+     * @return  number of bytes processed in the most recent query request
+     */
+    public long getBytesProcessed() {
+        return this.theCorrelator.getBytesProcessed();
     }
     
     

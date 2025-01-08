@@ -8,6 +8,10 @@ Project provides tools for the following:
 - Configuration management using YAML
 - Tuning of gRPC parameters and techniques for optimized performance
 
+Project requires the following (Dependencies):
+- Data Platform gRPC communications framework (dp-grpc)
+- Configuration management using YAML (Snake YAML)
+
 NOTES:
 - The dependency structure of this POM is too inclusive.  Once the project settles the
   dependencies should be culled. 
@@ -19,7 +23,7 @@ NOTES:
 
     <modelVersion>4.0.0</modelVersion>
 
-	<!-- Project Identification -->
+	<!-- Java API LIbrary Project Identification -->
 	<name>Data Platform Java Client API</name>
 	<description>Java language API for the Data Platform services.</description>
     <groupId>com.ospreydcs</groupId>
@@ -29,21 +33,25 @@ NOTES:
 
     <properties>
 		
-		<!-- Maven Properties -->
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <maven.plugin.shade.version>3.6.0</maven.plugin.shade.version>
-        
         <!-- Project Properties -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <main.basedir>${project.basedir}</main.basedir>
 
+		<!-- Maven Properties -->
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
+        <maven-shade-plugin-version>3.6.0</maven-shade-plugin-version>
+        
         <!-- Java - Override Version -->
         <java.version>16</java.version>
         <java.version>21</java.version>
 
+        <!-- Java API Library Properties -->
+        <dp-api-java.uber-jar>dp-api-java-shaded-${project.version}</dp-api-java.uber-jar>
+        
 		<!-- Data Platform Properties-->        
         <dp-grpc.version>1.5.0</dp-grpc.version>
         <dp-service.version>1.5.0</dp-service.version> <!-- Remove - Unused -->
@@ -76,7 +84,6 @@ NOTES:
         <snakeyaml.version>1.31</snakeyaml.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         
-
     </properties>
 
     <profiles>
@@ -114,23 +121,6 @@ NOTES:
             <version>${dp-grpc.version}</version>
         </dependency>
 
-		<!-- Data Platform Common Utitilies -->
-		<!-- 
-        <dependency>
-            <groupId>com.ospreydcs</groupId>
-            <artifactId>dp-common</artifactId>
-            <version>${dp-common.version}</version>
-        </dependency>
-        -->
-        
-        <!-- Data Platform Service Library -->
-        <!-- 
-        <dependency>
-			<groupId>com.ospreydcs</groupId>
-			<artifactId>dp-service</artifactId>
-			<version>${dp-service.version}</version>
-		</dependency>
-		-->
 
 		<!--  ###### EPICS Resources ##### -->
 		
@@ -161,6 +151,7 @@ NOTES:
 
 		<!-- ###### MongoDB Resources ######## -->
 		<!-- These should be removed - Unnecessary -->
+		<!-- 
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>bson</artifactId>
@@ -184,6 +175,7 @@ NOTES:
             <artifactId>mongodb-driver-reactivestreams</artifactId>
             <version>${mongodb.version}</version>
         </dependency>
+        -->
 
 
 		<!-- ###### Log4j Utility ######## -->
@@ -233,17 +225,15 @@ NOTES:
         <plugins>
             <!-- Maven compiler plugin: compile for Java 8 -->
             <!-- CKA: We don't need explicit Maven comilation -->
-            <!-- 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
-			-->
 
             <!--
             Maven shade plugin configuration: this is required so that if you build a single JAR file (an "uber-jar")
@@ -252,8 +242,52 @@ NOTES:
 
             mvn package
             cd target
-            java -cp deeplearning4j-examples-1.0.0-beta-bin.jar org.deeplearning4j.LenetMnistExample
+            java -cp dp-api-java com.ospreydcs.dp.api.JUnitTestExample
+
+            <plugin>
+            	<groupId>org.apache.maven.plugins</groupId>
+            	<artifactId>maven-shade-plugin</artifactId>
+            	<version>${maven-shade-plugin.version}</version>
+            	
+            	<executions>
+            		<execution>
+            			<phase>package</phase>
+            			<goals>
+            				<goal>shade</goal>
+            			</goals>
+            	
+						<configuration>
+        		        	<finalName>${dp-api-java.uber-jar}</finalName>
+		            		<transformers>
+            					<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+        		    				<manifestEntries>
+		            					<Main-Class>${injestion.scenario.main-class}</Main-Class>
+										<Multi-Release>true</Multi-Release>
+										<Release-Number>${project.version}</Release-Number>
+            							<Build-Number>${ingestion.scenario.build-number}</Build-Number>
+									</manifestEntries>
+        		    			</transformer>
+					  		</transformers>
+            				
+							<filters>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+											<exclude>META-INF/*.SF</exclude>
+											<exclude>META-INF/*.DSA</exclude>
+											<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+							<shadedArtifactAttached>true</shadedArtifactAttached>
+						</configuration>
+
+            		</execution>
+            	</executions>
+            </plugin>
+            
             -->
+            
         </plugins>
     </build>
     
