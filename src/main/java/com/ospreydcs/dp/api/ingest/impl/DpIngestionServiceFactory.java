@@ -124,7 +124,7 @@ public final class DpIngestionServiceFactory extends
      * 
      * @param   cfgDefault  the default connection parameters for the query service used by new factory
      * 
-     * @return  a new Query Service API factory ready for <code>DpQueryService</code> creation and connection
+     * @return  a new Ingestion Service API factory ready for <code>DpIngestionServiceImpl</code> creation and connection
      */
     public static final DpIngestionServiceFactory   newFactory(DpGrpcConnectionConfig cfgDefault) {
         return new DpIngestionServiceFactory(cfgDefault);

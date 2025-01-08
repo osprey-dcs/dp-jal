@@ -36,7 +36,7 @@ import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceFactory;
 import com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamFactory;
 
 /**
- * <h1>Connection factory for DP Ingestion Service APIs</h1>
+ * <h2>Connection factory for Data Platform Ingestion Service APIs</h2>
  * <p>
  * Connection factory supplying the Java applications programming interfaces to the Data Platform Ingestion Service.
  * Currently the following 2 interfaces are available:
@@ -79,10 +79,7 @@ public class DpIngestionApiFactory {
     // Class Resources
     //
     
-//    /** Ingestion Service connection factory used for connecting all API instances */ 
-//    private static final DpIngestionConnectionFactory   FAC_CONNECT = DpIngestionConnectionFactory.FACTORY;
-
-    /** The API connection factory for basic connection to the Ingestion Service */
+    /** The API connection factory for unary RPC connection to the Ingestion Service */
     private static final DpIngestionServiceFactory      FAC_SERVICE = DpIngestionServiceFactory.FACTORY;
     
     /** The API connection factory for gRPC streams to the Ingestion Service */
@@ -192,10 +189,6 @@ public class DpIngestionApiFactory {
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
     public static IIngestionService    connectService(String strHostUrl, int intHostPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
-//        DpIngestionConnection   connIngest = FAC_CONNECT.connect(strHostUrl, intHostPort, bolPlainText, lngTimeout, tuTimeout);
-//        DpIngestionServiceImpl  apiService = DpIngestionServiceImpl.from(connIngest);
-//        
-//        return apiService;
         return FAC_SERVICE.connect(strHostUrl, intHostPort, bolPlainText, lngTimeout, tuTimeout);
     }
     
@@ -272,10 +265,6 @@ public class DpIngestionApiFactory {
                                                       boolean bolGzipCompr, 
                                                       long lngTimeout, 
                                                       TimeUnit tuTimeout) throws DpGrpcException {
-//        DpIngestionConnection   connIngest = FAC_CONNECT.connect(strHostUrl, intHostPort, bolTisActive, bolPlainText, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout);
-//        DpIngestionServiceImpl  apiService = DpIngestionServiceImpl.from(connIngest);
-//        
-//        return apiService;
         return FAC_SERVICE.connect(strHostUrl, intHostPort, bolTisActive, bolPlainText, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout);
     }
     
@@ -304,10 +293,6 @@ public class DpIngestionApiFactory {
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
     public static IIngestionService    connectService(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
-//        DpIngestionConnection   connIngest = FAC_CONNECT.connect(fileTrustedCerts, fileClientCerts, fileClientKey);
-//        DpIngestionServiceImpl  apiService = DpIngestionServiceImpl.from(connIngest);
-//        
-//        return apiService;
         return FAC_SERVICE.connect(fileTrustedCerts, fileClientCerts, fileClientKey);
     }
     

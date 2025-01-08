@@ -93,15 +93,12 @@ ingest: # Data Platform Ingestion Service client API default configuration param
       maxSize: 4000000            # max bin size (bytes)        : DP_API_INGEST_DECOMPOSE_MAX_SIZE
    stream:       # General gRPC streaming parameter for Ingestion Service operations
       active: true                 # use streaming parameters    : DP_API_INGEST_STREAM_ACTIVE
-      type: BIDIRECTIONAL           # preferred- DpGrpcStreamType : DP_API_INGEST_STREAM_TYPE
+      type: BIDIRECTIONAL           # preferred- {FORWARD, BIDIRECTIONAL} : DP_API_INGEST_STREAM_TYPE
       buffer:              # data buffering and queueing parameters (transmission staging)
          active: true                # apply data buffering/queue  : DP_API_INGEST_STREAM_BUFFER_ACTIVE
          size: 100                   # buffer/queue size (messages): DP_API_INGEST_STREAM_BUFFER_SIZE
          allocation: 400000000       # max buffer allocation (bytes): DP_API_INGEST_STREAM_BUFFER_ALLOCATION   
          backPressure : true         # enable ingestion throttling : DP_API_INGEST_STREAM_BUFFER_BACKPRESSURE
-#      binning:             # data binning parameters
-#         active: true                # use data binning            : DP_API_INGEST_STREAM_BINNING_ACTIVE
-#         maxSize: 4000000            # max bin size (bytes)        : DP_API_INGEST_STREAM_BINNING_MAX_SIZE
       concurrency:         # multiple,concurrent gRPC stream parameters
          active: true                # use multiple streams when possible : DP_API_INGEST_STREAM_CONCURRENCY_ACTIVE
          pivotSize: 10               # currency activation size (frames)  : DP_API_INGEST_STREAM_CONCURRENCY_PIVOT_SIZE
@@ -124,36 +121,33 @@ query:      # Data Platform Query Service client API default configuration param
    data:         # Parameters for time-series data queries
       request:        # Default parameters used in data requests
          stream:           # gRPC streaming default parameters
-            preference: UNIDIRECTIONAL  # {UNIDIRECTIONAL, BIDRECTIONAL} : DP_API_QUERY_DATA_REQUEST_STREAM_PREFERENCE
-         composite:        # data request query decomposition default parameters (for multi-streaming)
-            active: true                # use query decomposition  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_ACTIVE
-            maxSources: 1000            # max data source count    : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_SOURCES
-            maxDuration: 1000           # max time range duration  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
-            unitDuration: MILLISECONDS  # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_UNIT_DURATION
+            preference: BACKWARD        # {BACKWARD, BIDRECTIONAL} : DP_API_QUERY_DATA_REQUEST_STREAM_PREFERENCE
+         decompose:        # data request query decomposition default parameters (for multi-streaming)
+            active: true            # use query decomposition  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_ACTIVE
+            maxSources: 1000        # max data source count    : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_SOURCES
+            maxDuration: 1          # max time range duration  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
+            unitDuration: SECONDS   # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_UNIT_DURATION
       response:       # Default parameters used for data responses
          correlate:        # Query data correlation parameters
             useConcurrency: true    # use mult-thread correlation : DP_API_QUERY_DATA_RESPONSE_CORRELATE_USE_CONCURRENCY
             whileStreaming: true    # correlate during gRPC stream: DP_API_QUERY_DATA_RESPONSE_CORRELATE_WHILE_STREAMING
          multistream:      # Multiple gRPC data stream parameters
             active: true             # use multistreamed responses : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_ACTIVE
-            pivotSize: 4000000       # approx request size (samples): DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
-            pivotPeriod: MILLISECONDS # java.concurrent.TimeUnit   : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_PERIOD 
             maxStreams: 3            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
-   stream:       # General gRPC streaming parameter for Query Service operations
-      active: false                  # use streaming parameters    : DP_API_QUERY_STREAM_ACTIVE
-      type: BACKWARD                 # preferred- DpGrpcStreamType : DP_API_QUERY_STREAM_TYPE
-      buffer:              # data buffering and queueing parameters
-         active: false               # apply data buffering/queue  : DP_API_QUERY_STREAM_BUFFER_ACTIVE
-         size: 100                   # buffer/queue size (messages): DP_API_QUERY_STREAM_BUFFER_SIZE    
-         allocation: 400000000       # max buffer allocation (bytes): DP_API_INGEST_STREAM_BUFFER_ALLOCATION   
-         backPressure : true         # enable query throttling      : DP_API_QUERY_STREAM_BUFFER_BACKPRESSURE
-#      binning:             # data binning parameters
-#         active: false               # use data binning            : DP_API_QUERY_STREAM_BINNING_ACTIVE
-#         maxSize: 4000000            # max bin size (bytes)        : DP_API_QUERY_STREAM_BINNING_MAX_SIZE
-      concurrency:         # multiple,concurrent gRPC stream parameters
-         active: false               # use multiple streams when possible : DP_API_QUERY_STREAM_CONCURRENCY_ACTIVE
-         pivotSize: 4000000          # currency activation size (bytes)   : DP_API_QUERY_STREAM_CONCURRENCY_PIVOT_SIZE
-         maxStreams: 3               # maximum number of streams to use   : DP_API_QUERY_STREAM_CONCURRENT_MAX_STREAMS
+            sizeDomain: 2000         # rqst domain size (samples-time) triggering ms : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
+#            pivotPeriod: MILLISECONDS # java.concurrent.TimeUnit (approx samping period)  : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_PERIOD 
+#   stream:       # General gRPC streaming parameter for Query Service operations
+#      active: false                  # use streaming parameters    : DP_API_QUERY_STREAM_ACTIVE
+#      type: BACKWARD                 # preferred- DpGrpcStreamType : DP_API_QUERY_STREAM_TYPE
+#      buffer:              # data buffering and queueing parameters
+#         active: false               # apply data buffering/queue  : DP_API_QUERY_STREAM_BUFFER_ACTIVE
+#         size: 100                   # buffer/queue size (messages): DP_API_QUERY_STREAM_BUFFER_SIZE    
+#         allocation: 400000000       # max buffer allocation (bytes): DP_API_INGEST_STREAM_BUFFER_ALLOCATION   
+#         backPressure : true         # enable query throttling      : DP_API_QUERY_STREAM_BUFFER_BACKPRESSURE
+#      concurrency:         # multiple,concurrent gRPC stream parameters
+#         active: false               # use multiple streams when possible : DP_API_QUERY_STREAM_CONCURRENCY_ACTIVE
+#         pivotSize: 4000000          # currency activation size (bytes)   : DP_API_QUERY_STREAM_CONCURRENCY_PIVOT_SIZE
+#         maxStreams: 3               # maximum number of streams to use   : DP_API_QUERY_STREAM_CONCURRENT_MAX_STREAMS
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency            : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE

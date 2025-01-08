@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionFrameBinner.java
+ * File:	IngestionFrameDecomposer.java
  * Package: com.ospreydcs.dp.api.ingest.model.frame
- * Type: 	IngestionFrameBinner
+ * Type: 	IngestionFrameDecomposer
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -51,7 +51,7 @@ import com.ospreydcs.dp.api.model.IngestRequestUID;
  * @since Apr 8, 2024
  *
  */
-public class IngestionFrameBinner {
+public class IngestionFrameDecomposer {
 
     
     //
@@ -186,17 +186,17 @@ public class IngestionFrameBinner {
     
     /**
      * <p>
-     * Creates a new instance of <code>IngestionFrameBinner</code> configured to the argument.
+     * Creates a new instance of <code>IngestionFrameDecomposer</code> configured to the argument.
      * </p>
      *
      * @param   cntBytesMax     maximum size of any binned ingestion frame (in bytes)
      * 
-     * @return  new <code>IngestionFrameBinner</code> instance produces bins no greater than the argument
+     * @return  new <code>IngestionFrameDecomposer</code> instance produces bins no greater than the argument
      * 
      * @throws IllegalArgumentException the argument was less than or equal to zero
      */
-    public static IngestionFrameBinner    from(long cntBytesMax) throws IllegalArgumentException {
-        return new IngestionFrameBinner(cntBytesMax);
+    public static IngestionFrameDecomposer    from(long cntBytesMax) throws IllegalArgumentException {
+        return new IngestionFrameDecomposer(cntBytesMax);
     }
     
     
@@ -206,14 +206,14 @@ public class IngestionFrameBinner {
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionFrameBinner</code> according to the given bin size.
+     * Constructs a new instance of <code>IngestionFrameDecomposer</code> according to the given bin size.
      * </p>
      *
      * @param   cntBytesMax     maximum size of any binned ingestion frame (in bytes)
      * 
      * @throws IllegalArgumentException the argument was less than or equal to zero
      */
-    public IngestionFrameBinner(long cntBytesMax) throws IllegalArgumentException {
+    public IngestionFrameDecomposer(long cntBytesMax) throws IllegalArgumentException {
         
         // Check argument
         if (cntBytesMax <= 0) 
@@ -249,7 +249,7 @@ public class IngestionFrameBinner {
      * 
      * @param frame target frame for binning decomposition
      * 
-     * @return  the parameters used for target frame decomposition by this <code>IngestionFrameBinner</code>.
+     * @return  the parameters used for target frame decomposition by this <code>IngestionFrameDecomposer</code>.
      */
     public BinParameters    computeBinParameters(IngestionFrame frame) {
         return BinParameters.from(frame, this.cntBytesMax);
@@ -351,7 +351,7 @@ public class IngestionFrameBinner {
                     + frmSource.getFrameLabel() + ": was not fully consumed.", 
                     new Throwable("Incomplete decomposition"));
 
-        // Assign unique client request IDs to each composite frame
+        // Assign unique client request IDs to each decompose frame
         this.assignClientRequestUids(frmSource, lstBins);
         
         return lstBins;
@@ -449,7 +449,7 @@ public class IngestionFrameBinner {
                         + frmSource.getFrameLabel() + ": was not fully consumed.", 
                         new Throwable("Incomplete decomposition"));
 
-        // Assign unique client request IDs to each composite frame
+        // Assign unique client request IDs to each decompose frame
         this.assignClientRequestUids(frmSource, lstBins);
         
         return lstBins;
@@ -479,7 +479,7 @@ public class IngestionFrameBinner {
      * <li>
      * If not, then the Ingestion Service would record the success/failure of an ingestion operation using a non-
      * unique UID.  Retrieving the results for a given client UID would return multiple instances.  This could
-     * actually be desirable if a composite frame of a decomposed frame failed ingestion - it would have the
+     * actually be desirable if a decompose frame of a decomposed frame failed ingestion - it would have the
      * client request UID of the original frame, alerting the client that the original frame had, at least, a
      * partial failure.
      * </li>
@@ -487,7 +487,7 @@ public class IngestionFrameBinner {
      * </p> 
      * 
      * @param frmSrc    the original (source) ingestion frame
-     * @param lstBins   the decomposed composite ingestion frames
+     * @param lstBins   the decomposed decompose ingestion frames
      */
     private void    assignClientRequestUids(IngestionFrame frmSrc, List<IngestionFrame> lstBins) {
         

@@ -195,11 +195,11 @@ public class TestQueryResponsesTest {
             lstRspsAll.addAll(lstRsps);
         }
         
-        System.out.println("Total size of the HORIZONTAL composite query response list = " + lstRspsAll.size());
+        System.out.println("Total size of the HORIZONTAL decompose query response list = " + lstRspsAll.size());
         
         List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
-        System.out.println("Number of data buckets in the HORIZONTAL composite query results set = " + lstBuckets.size());
+        System.out.println("Number of data buckets in the HORIZONTAL decompose query results set = " + lstBuckets.size());
     }
 
     /**
@@ -220,11 +220,11 @@ public class TestQueryResponsesTest {
             lstRspsAll.addAll(lstRsps);
         }
         
-        System.out.println("Total size of the VERTICAL composite query response list = " + lstRspsAll.size());
+        System.out.println("Total size of the VERTICAL decompose query response list = " + lstRspsAll.size());
         
         List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
-        System.out.println("Number of data buckets in the VERTICAL composite query results set = " + lstBuckets.size());
+        System.out.println("Number of data buckets in the VERTICAL decompose query results set = " + lstBuckets.size());
     }
 
     /**
@@ -245,11 +245,11 @@ public class TestQueryResponsesTest {
             lstRspsAll.addAll(lstRsps);
         }
         
-        System.out.println("Total size of the GRID composite query response list = " + lstRspsAll.size());
+        System.out.println("Total size of the GRID decompose query response list = " + lstRspsAll.size());
         
         List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
-        System.out.println("Number of data buckets in the GRID composite query results set = " + lstBuckets.size());
+        System.out.println("Number of data buckets in the GRID decompose query results set = " + lstBuckets.size());
     }
 
     /**

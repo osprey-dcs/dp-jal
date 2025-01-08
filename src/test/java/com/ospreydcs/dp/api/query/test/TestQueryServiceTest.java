@@ -47,8 +47,9 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
+import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamType;
+import com.ospreydcs.dp.api.query.model.DpQueryStreamTypeDeprecated;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
@@ -298,7 +299,7 @@ public class TestQueryServiceTest {
         final String  strSrcNm = "dpTest_1";
         final Instant insBegin = Instant.ofEpochSecond(1698767462);
         final Instant insEnd = Instant.ofEpochSecond(1698767472);
-        final DpQueryStreamType enmType = DpQueryStreamType.UNIDIRECTIONAL;
+        final DpGrpcStreamType enmType = DpGrpcStreamType.BACKWARD;
         
         // Create request and configure
         DpDataRequest   rqst = DpDataRequest.newRequest();

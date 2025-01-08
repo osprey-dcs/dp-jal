@@ -58,9 +58,9 @@ public interface IIngestionService extends IConnection {
      * <li>
      * A list of Ingestion Service response is returned in order to accommodate all the following cases.
      *   <ul>
-     *   <li>Frame Decomposition: If the frame has allocation larger than the maximum it is decomposed into composite 
-     *       frames.  Each composite frame is converted into a message that receives a response upon transmission.
-     *       The returned list will contain an Ingestion Service response for each composite message.
+     *   <li>Frame Decomposition: If the frame has allocation larger than the maximum it is decomposed into decompose 
+     *       frames.  Each decompose frame is converted into a message that receives a response upon transmission.
+     *       The returned list will contain an Ingestion Service response for each decompose message.
      *   </li>
      *   <li>No Decomposition: If the frame has allocation less than the maximum limit a single response is
      *       contained in the list.

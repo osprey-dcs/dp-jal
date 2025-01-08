@@ -145,11 +145,11 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
             super(TestArchive.class);
         }
         
-        @ACfgOverride.Field(name="INCEPTION")
-        public Long         inception;
+        @ACfgOverride.Field(name="FIRST_TIMESTAMP")
+        public String       firstTimestamp;
         
-        @ACfgOverride.Field(name="DURATION")
-        public Long         duration; 
+        @ACfgOverride.Field(name="LAST_TIMESTAMP")
+        public String       lastTimestamp; 
         
         @ACfgOverride.Field(name="PV_COUNT")
         public Integer      pvCount;

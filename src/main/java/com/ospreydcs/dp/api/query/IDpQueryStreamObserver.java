@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model;
+package com.ospreydcs.dp.api.query;
 
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
@@ -39,6 +39,9 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * The data stream can send messages to the implementer of this class about streaming
  * conditions, errors, stream completion, and data availability.
  * </p>
+ * <p>
+ * This interface is used by <code>DpQueryStreamBuffer</code> instances to allow clients to receive
+ * notifications concerning streaming conditions.
  * <p>
  * <h2>NOTE:</h2>
  * The implementation of these methods should not incur significant processing time.

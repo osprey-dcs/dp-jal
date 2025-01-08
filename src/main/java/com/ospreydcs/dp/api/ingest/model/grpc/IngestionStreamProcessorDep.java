@@ -207,7 +207,7 @@ public final class IngestionStreamProcessorDep {
 //        // Creator
 //        //
 //        
-////        public static BinnerThread from(final IngestionFrameBinner binner, IngestionFrame frame) {
+////        public static BinnerThread from(final IngestionFrameDecomposer binner, IngestionFrame frame) {
 ////            return IngestionStreamProcessorDep.this.new BinnerThread(binner, frame);
 ////        }
 //        
@@ -216,12 +216,12 @@ public final class IngestionStreamProcessorDep {
 //        //
 //        
 //        /** The active frame decomposition processing */
-//        private final IngestionFrameBinner       binner;
+//        private final IngestionFrameDecomposer       binner;
 //        
 //        /** The target ingestion frame to be decomposed */
 //        private final IngestionFrame    frame;
 //        
-//        BinnerThread(final IngestionFrameBinner binner, IngestionFrame frame) {
+//        BinnerThread(final IngestionFrameDecomposer binner, IngestionFrame frame) {
 //            this.binner = binner;
 //            this.frame = frame;
 //        }
@@ -370,7 +370,7 @@ public final class IngestionStreamProcessorDep {
 //    private final Queue<IngestionFrame>             bufFrames = new LinkedList<>();
 //    
 //    /** Pool of ingestion frame decomposers (frame binners) */
-//    private final BlockingQueue<IngestionFrameBinner>        polBinners = new LinkedBlockingQueue<>(INT_CONCURRENCY_CNT_THREADS);
+//    private final BlockingQueue<IngestionFrameDecomposer>        polBinners = new LinkedBlockingQueue<>(INT_CONCURRENCY_CNT_THREADS);
 //    
 //    /** Outgoing ingestion request queue */
 //    private final BlockingQueue<IngestDataRequest>  queRequests = new LinkedBlockingQueue(INT_BUFFER_SIZE);

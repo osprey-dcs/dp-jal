@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model;
+package com.ospreydcs.dp.api.query;
 
 /**
  * <p>

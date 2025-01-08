@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.query;
 
-import static org.junit.Assert.fail;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedList;
@@ -46,7 +44,8 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
-import com.ospreydcs.dp.api.query.DpDataRequest.CompositeType;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecompType;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
@@ -192,34 +191,35 @@ public class DpDataRequestTest {
         System.out.println("  Stop time instant = " + insStop);
     }
 
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest, com.ospreydcs.dp.api.query.DpDataRequest.CompositeType, int)}.
-     */
-    @Test
-    public final void testBuildCompositeRequestDpDataRequestCompositeTypeInt() {
-        CompositeType   ENM_TYPE = CompositeType.GRID;
-        final int       CNT_QUERIES = 5;
-        
-        List<DpDataRequest> lstSubRqsts1 = DpDataRequest.buildCompositeRequest(this.rqstTest, ENM_TYPE, CNT_QUERIES);
-        List<DpDataRequest> lstSubRqsts2 = this.rqstTest.buildCompositeRequest(ENM_TYPE, CNT_QUERIES);
-        
-        Assert.assertEquals(lstSubRqsts2, lstSubRqsts1);
-    }
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest, com.ospreydcs.dp.api.query.DpDataRequest.DataRequestDecompType, int)}.
+//     */
+//    @Test
+//    public final void testBuildCompositeRequestDpDataRequestCompositeTypeInt() {
+//        DataRequestDecompType   ENM_TYPE = DataRequestDecompType.GRID;
+//        final int       CNT_QUERIES = 5;
+//        
+//        List<DpDataRequest> lstSubRqsts1 = DpDataRequest.buildCompositeRequest(this.rqstTest, ENM_TYPE, CNT_QUERIES);
+//        List<DpDataRequest> lstSubRqsts2 = this.rqstTest.buildCompositeRequest(ENM_TYPE, CNT_QUERIES);
+//        
+//        Assert.assertEquals(lstSubRqsts2, lstSubRqsts1);
+//    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.CompositeType, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.DataRequestDecompType, int)}.
      */
     @Test
     public final void testBuildCompositeRequestCompositeTypeIntHorizontal() {
-        CompositeType   ENM_TYPE = CompositeType.HORIZONTAL;
-        final int       CNT_QUERIES = 6;
+        DataRequestDecompType   ENM_TYPE = DataRequestDecompType.HORIZONTAL;
+        final int               CNT_QUERIES = 6;
+        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
         
-        List<DpDataRequest> lstSubRqsts = this.rqstTest.buildCompositeRequest(ENM_TYPE, CNT_QUERIES);
+        List<DpDataRequest> lstSubRqsts = rqstDecomp.buildCompositeRequest(this.rqstTest, ENM_TYPE, CNT_QUERIES);
         
         System.out.println("Composite Requests - HORIZONTAL:");
         System.out.println("  " + lstSubRqsts);
         
-        // Check composite query
+        // Check decompose query
         QueryDataRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
         List<String>        lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getPvNamesList();
         Timestamp           tmsStartOrg = msgRqstOrg.getQuerySpec().getBeginTime();
@@ -249,19 +249,20 @@ public class DpDataRequestTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.CompositeType, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.DataRequestDecompType, int)}.
      */
     @Test
     public final void testBuildCompositeRequestCompositeTypeIntVertical() {
-        CompositeType   ENM_TYPE = CompositeType.VERTICAL;
-        final int       CNT_QUERIES = 4;
+        DataRequestDecompType   ENM_TYPE = DataRequestDecompType.VERTICAL;
+        final int               CNT_QUERIES = 4;
+        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
         
-        List<DpDataRequest> lstSubRqsts = this.rqstTest.buildCompositeRequest(ENM_TYPE, CNT_QUERIES);
+        List<DpDataRequest> lstSubRqsts = rqstDecomp.buildCompositeRequest(this.rqstTest, ENM_TYPE, CNT_QUERIES);
         
         System.out.println("Composite Requests - VERTICAL:");
         System.out.println("  " + lstSubRqsts);
         
-        // Check composite query
+        // Check decompose query
         QueryDataRequest    msgRqstOrg = this.rqstTest.buildQueryRequest();
         List<String>        lstSrcNmsOrg = msgRqstOrg.getQuerySpec().getPvNamesList();
         Timestamp           tmsStartOrg = msgRqstOrg.getQuerySpec().getBeginTime();
@@ -281,7 +282,7 @@ public class DpDataRequestTest {
             // Check data sources
             Assert.assertEquals(lstSrcNmsOrg, lstSrcNmsSub);
 
-            // Advance the composite time interval endpoints and duration
+            // Advance the decompose time interval endpoints and duration
             Instant         insStartSub = ProtoMsg.toInstant(tmsStartSub);
             Instant         insStopSub = ProtoMsg.toInstant(tmsStopSub);
             Duration        durSubRqst = Duration.between(insStartSub, insStopSub);
@@ -295,7 +296,7 @@ public class DpDataRequestTest {
             durComposite = durComposite.plus(durSubRqst);
         }        
         
-        // Check the composite time interval
+        // Check the decompose time interval
         Instant     insStartOrg = ProtoMsg.toInstant(tmsStartOrg);
         Instant     insStopOrg = ProtoMsg.toInstant(tmsStopOrg);
         Duration    durRqstOrg = Duration.between(insStartOrg, insStopOrg);
@@ -307,14 +308,15 @@ public class DpDataRequestTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.CompositeType, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.DataRequestDecompType, int)}.
      */
     @Test
     public final void testBuildCompositeRequestCompositeTypeIntGrid() {
-        CompositeType   ENM_TYPE = CompositeType.GRID;
-        final int       CNT_QUERIES = 5;
+        DataRequestDecompType   ENM_TYPE = DataRequestDecompType.GRID;
+        final int               CNT_QUERIES = 5;
+        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
         
-        List<DpDataRequest> lstSubRqsts = this.rqstTest.buildCompositeRequest(ENM_TYPE, CNT_QUERIES);
+        List<DpDataRequest> lstSubRqsts = rqstDecomp.buildCompositeRequest(this.rqstTest, ENM_TYPE, CNT_QUERIES);
         
         System.out.println("Composite Requests - GRID:");
         System.out.println("  " + lstSubRqsts);

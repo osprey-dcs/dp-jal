@@ -174,10 +174,10 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     // Resources
     //
     
-    /** The initial sampling time instant - taken from <code>msgSmpIval</code> */
+    /** The initial sampling time instant - taken from <code>msgSmpClk</code> */
     private final Instant                       insStart;
     
-    /** The time domain of contained time series data - computed from <code>msgSmpIval</code> */
+    /** The time domain of contained time series data - computed from <code>msgSmpClk</code> */
     private final TimeInterval                  domTimeRange;
     
     /** Set of all unique data source names active within sampling interval - taken from incoming data messages */

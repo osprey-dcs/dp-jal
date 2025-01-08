@@ -827,7 +827,7 @@ public class IngestionFrame implements Serializable {
      * Under normal operation the request UID is set during construction of the ingestion frame
      * and does not need to be modified.  However, this method is available for ingestion frame
      * decomposition when frame with memory allocation larger than maximum are decomposed into
-     * composite frames meeting the limit.  Each new frame requires a new request UID.   
+     * decompose frames meeting the limit.  Each new frame requires a new request UID.   
      * </p>
      * <h2>WARNING</h2>
      * The given argument must be universally unique within the request space of the Ingestion Service.

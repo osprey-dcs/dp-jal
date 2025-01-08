@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.api.ingest.model.impl
+ * Package: com.ospreydcs.dp.api.query.model.request
  * Type: 	package-info
  *
  * Copyright 2010-2023 the original author or authors.
@@ -20,18 +20,22 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Aug 14, 2024
+ * @since Dec 27, 2024
  *
  * TODO:
  * - None
  */
 /**
  * <p>
- * Package containing implementations and required resources for DP Ingestion Service API interfaces.
- * </p> 
- *
+ * Package containing resources for processing of Query Service requests.
+ * </p>
+ * <p>
+ * The focus of this package is to process instances of <code>DpDataRequest</code> which represent 
+ * time-series data requests to the Data Platform Query Service.
+ * </p>
+ * 
  * @author Christopher K. Allen
- * @since Aug 14, 2024
+ * @since Dec 27, 2024
  *
  */
-package com.ospreydcs.dp.api.ingest.model.impl;
+package com.ospreydcs.dp.api.query.model.request;

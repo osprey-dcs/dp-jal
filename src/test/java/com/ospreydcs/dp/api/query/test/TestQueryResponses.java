@@ -139,7 +139,7 @@ public class TestQueryResponses {
     
     /**
      * <p>
-     * Enumeration of available composite query types within the managed set.
+     * Enumeration of available decompose query types within the managed set.
      * </p>
      */
     public static enum CompositeQueryType {
@@ -165,22 +165,22 @@ public class TestQueryResponses {
          */
         GRID(TestQueryResponses.CQRECS_GRID);
         
-        /** The composite of record instances for the query type */
+        /** The decompose of record instances for the query type */
         private TestQueryCompositeRecord   recsQuery;
         
         /** Enumeration constant constructor */
         private CompositeQueryType(TestQueryCompositeRecord recs) { this.recsQuery = recs; };
 
-        /** @return the number of sub-queries in this composite query */
+        /** @return the number of sub-queries in this decompose query */
         public int                  getQueryCount()    { return this.recsQuery.getQueryCount(); };
         
-        /** @return the composite query record instance for this composite query type */
+        /** @return the decompose query record instance for this decompose query type */
         public TestQueryCompositeRecord    getCompositeRecord() { return this.recsQuery; };
         
         /**
-         * Returns the query record instance for this constant by composite index.
+         * Returns the query record instance for this constant by decompose index.
          * 
-         * @param index  index into the composite record vector (< {@link #getQueryCount()})
+         * @param index  index into the decompose record vector (< {@link #getQueryCount()})
          * 
          * @return the query record instance for this query type and given index
          *  
@@ -214,7 +214,7 @@ public class TestQueryResponses {
                                                 "queryresults-single-bucket.dat", 
                                                 1, 
                                                 0, 
-                                                1L, 
+                                                1_000_000_000L, 
                                                 0L);
     
     /** 
@@ -227,7 +227,7 @@ public class TestQueryResponses {
                                                 "queryresults-single-1source.dat", 
                                                 1, 
                                                 0, 
-                                                10L, 
+                                                10_000_000_000L, 
                                                 0L);
     
     /** 
@@ -240,7 +240,7 @@ public class TestQueryResponses {
                                                 "queryresults-single-2source.dat", 
                                                 2, 
                                                 0, 
-                                                2L, 
+                                                2_000_000_000L, 
                                                 0L);
     
     /** 
@@ -253,38 +253,91 @@ public class TestQueryResponses {
                                                 "queryresults-single-wide.dat", 
                                                 100, 
                                                 0, 
-                                                5L, 
+                                                5_000_000_000L, 
                                                 0L);
     
     /** 
      * Query definition record for "long" query  
      * <p>
      * 5 data source(s)<br/>
-     * 60 second(s) duration
+     * 20 second(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
      */
     public static final TestQueryRecord     QREC_LONG = new TestQueryRecord(
                                                 "queryresults-single-long.dat", 
                                                 5, 
                                                 0, 
-                                                60L, 
+                                                TestDpDataRequestGenerator.LNG_DURATION, 
                                                 0L);
     
     /**
      * Query definition record for "big" query
      * <p>
-     * 100 data source(s)<br/>
-     * 60 seconds(s) duration
+     * 500 data source(s)<br/>
+     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
      */
     public static final TestQueryRecord     QREC_BIG = new TestQueryRecord(
                                                 "queryresults-single-big.dat",
-                                                100,
+                                                500,
                                                 0,
-                                                60L,
+                                                TestDpDataRequestGenerator.LNG_DURATION,
                                                 0L);
+    
+    /**
+     * Query definition record for "huge" query
+     * <p>
+     * 1000 data source(s)<br/>
+     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
+     */
+    public static final TestQueryRecord     QREC_HUGE = new TestQueryRecord(
+                                                "queryresults-single-huge.dat",
+                                                1000,
+                                                0,
+                                                TestDpDataRequestGenerator.LNG_DURATION,
+                                                0L);
+    
+    /**
+     * Query definition record for half the text archive
+     * <p>
+     * 2000 data source(s)<br/>
+     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
+     */
+    public static final TestQueryRecord     QREC_HALF_SRC = new TestQueryRecord(
+                                                "queryresults-single-half_src.dat",
+                                                TestDpDataRequestGenerator.CNT_PV_NAMES/2,
+                                                0,
+                                                TestDpDataRequestGenerator.LNG_DURATION,
+                                                0L);
+    
+    /**
+     * Query definition record for half the text archive
+     * <p>
+     * All data source(s)<br/>
+     * 10 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
+     */
+    public static final TestQueryRecord     QREC_HALF_RNG = new TestQueryRecord(
+                                                "queryresults-single-half_src.dat",
+                                                TestDpDataRequestGenerator.CNT_PV_NAMES,
+                                                0,
+                                                TestDpDataRequestGenerator.LNG_DURATION/2,
+                                                0L);
+    
+    /**
+     * Query definition record for entire test archive query
+     * <p>
+     * 100 data source(s)<br/>
+     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
+     */
+    public static final TestQueryRecord     QREC_ALL = new TestQueryRecord(
+                                                "queryresults-single-all.data",
+                                                TestDpDataRequestGenerator.CNT_PV_NAMES,
+                                                0,
+                                                TestDpDataRequestGenerator.LNG_DURATION,
+                                                0L
+                                                );
 
     
     /**
-     * Query definition records for "horizontal" composite query
+     * Query definition records for "horizontal" decompose query
      * <p>
      * 5 sub-queries <br/>
      * 50 data source(s) total - 10 per sub-query <br/>
@@ -294,11 +347,11 @@ public class TestQueryResponses {
                                                         TestQueryCompositeRecord.CompositeStrategy.HORIZONTAL,
                                                         5,
                                                         50,
-                                                        5L,
-                                                        "queryresults-composite-horizontal");
+                                                        5_000_000_000L,
+                                                        "queryresults-decompose-horizontal");
     
     /**
-     * Query definition record for "vertical" composite query
+     * Query definition record for "vertical" decompose query
      * <p>
      * 5 sub-queries <br/>
      * 10 data source(s) <br/>
@@ -308,11 +361,11 @@ public class TestQueryResponses {
                                                         TestQueryCompositeRecord.CompositeStrategy.VERTICAL,
                                                         5,
                                                         50,
-                                                        5L,
-                                                        "queryresults-composite-vertical");
+                                                        5_000_000_000L,
+                                                        "queryresults-decompose-vertical");
     
     /**
-     * Query definition record for "vertical" composite query
+     * Query definition record for "vertical" decompose query
      * <p>
      * 10 sub-queries <br/>
      * 50 data source(s) - 10 per sub-query<br/>
@@ -322,8 +375,8 @@ public class TestQueryResponses {
                                                         TestQueryCompositeRecord.CompositeStrategy.GRID,
                                                         10,
                                                         50,
-                                                        5L,
-                                                        "queryresults-composite-grid");
+                                                        5_000_000_000L,
+                                                        "queryresults-decompose-grid");
     
     
     //
@@ -403,16 +456,16 @@ public class TestQueryResponses {
     /**
      * <p>
      * Creates and returns a new list of <code>{@link DpDataRequest}</code> objects representing
-     * the composite data query of the given composite query.
+     * the decompose data query of the given decompose query.
      * </p>
      * <p>
      * Recovers the <code>{@link TestCompositeQueryRecord}<?code> from the argument, using it to
      * create the DP API data request objects for the query.
      * </p>
      *  
-     * @param enmType   enumeration constant specifying the desired composite query type
+     * @param enmType   enumeration constant specifying the desired decompose query type
      * 
-     * @return  list of <code>DpDataRequest</code> objects defining the composite data request
+     * @return  list of <code>DpDataRequest</code> objects defining the decompose data request
      */
     public static List<DpDataRequest>   request(CompositeQueryType enmType) {
         return enmType.getCompositeRecord().createCompositeRequest();
@@ -522,11 +575,11 @@ public class TestQueryResponses {
     
     /**
      * <p>
-     * Recovers and returns the results sets for the given composite query.
+     * Recovers and returns the results sets for the given decompose query.
      * </p>
      * <p>
-     * All the results sets for the composite query cases are available here.  The
-     * composite cases assumes that a larger query operation was divided into multiple
+     * All the results sets for the decompose query cases are available here.  The
+     * decompose cases assumes that a larger query operation was divided into multiple
      * query operations each running on a separate thread, each querying for a subset of
      * the original data source set.
      * </p>
@@ -544,10 +597,10 @@ public class TestQueryResponses {
      * class can load results sets into heap memory from persistent storage whenever necessary.
      * </p>
      * 
-     * @param enmType   enumeration constant specifying the desired composite query type
-     * @param index     index of the component query in the composite query set
+     * @param enmType   enumeration constant specifying the desired decompose query type
+     * @param index     index of the component query in the decompose query set
      * 
-     * @return  the results set of the given (indexed) sub-query within the composite query
+     * @return  the results set of the given (indexed) sub-query within the decompose query
      * 
      * @throws IndexOutOfBoundsException    the index was >= the number of sub-queries
      * 
@@ -559,7 +612,7 @@ public class TestQueryResponses {
         if (index >= enmType.getQueryCount())
             throw new IndexOutOfBoundsException("Given index value = " + index + " >= number of available results sets " + enmType.getQueryCount());
         
-        // Get the composite query record
+        // Get the decompose query record
         TestQueryRecord rec = enmType.getQueryRecord(index);
         
         return TestQueryResponses.recoverQueryResults(rec);
@@ -567,22 +620,22 @@ public class TestQueryResponses {
     
     /**
      * <p>
-     * Returns the number of sub-queries within the composite query.
+     * Returns the number of sub-queries within the decompose query.
      * </p>
      * <p>
-     * This method is used to obtain the number of (sub)queries within a composite query
+     * This method is used to obtain the number of (sub)queries within a decompose query
      * to avoid exceptions in <code>{@link #queryResults(CompositeQueryType, int)}</code>.
      * </p>
      * 
-     * @param enmType   enumeration constant specifying the desired composite query type
+     * @param enmType   enumeration constant specifying the desired decompose query type
      * 
-     * @return  the number of sub-queries within the given, managed composite query
+     * @return  the number of sub-queries within the given, managed decompose query
      * 
      * @see TestQueryCompositeRecord#getQueryCount()
      */
     public static int   getSubQueryCount(CompositeQueryType enmType) {
        
-        // Get the number of composite sub-queries
+        // Get the number of decompose sub-queries
         int cntSubQueries = enmType.getQueryCount();
         
         return cntSubQueries;

@@ -64,7 +64,7 @@ public class DpIngestionStreamFactory extends
     // Application Resources
     //
     
-    /** Default configuration parameters for all DP Query Service connections as taken from the application configuration */
+    /** Default configuration parameters for all DP Ingestion Service connections as taken from the application configuration */
     private static final DpGrpcConnectionConfig   CFG_CONN_DEFAULT = DpApiConfig.getInstance().connections.ingestion;
 
     
@@ -83,16 +83,16 @@ public class DpIngestionStreamFactory extends
     /**
      * <p>
      * Creates a new, initialized instance of the <code>DpIngestionServiceFactory</code> 
-     * Query Service API connection factory.
+     * Ingestion Service API connection factory.
      * </p>
      * <p>
      * The caller must supply the new factory's default connection parameters used for the 
-     * Data Platform Query Service.
+     * Data Platform Ingestion Service.
      * </p>
      * 
-     * @param   cfgDefault  the default connection parameters for the query service used by new factory
+     * @param   cfgDefault  the default connection parameters for the Ingestion Service used by new factory
      * 
-     * @return  a new Query Service API factory ready for <code>DpQueryService</code> creation and connection
+     * @return  a new Ingestion Service API factory ready for <code>DpIngestionServiceImpl</code> creation and connection
      */
     public static final DpIngestionStreamFactory   newFactory(DpGrpcConnectionConfig cfgDefault) {
         return new DpIngestionStreamFactory(cfgDefault);

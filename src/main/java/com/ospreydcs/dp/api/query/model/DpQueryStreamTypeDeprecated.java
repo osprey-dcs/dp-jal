@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    DpQueryStreamType.java
+ * File:    DpQueryStreamTypeDeprecated.java
  * Package: com.ospreydcs.dp.api.query
- * Type:    DpQueryStreamType
+ * Type:    DpQueryStreamTypeDeprecated
  *
  * Copyright 2010-2022 the original author or authors.
  *
@@ -62,8 +62,11 @@ package com.ospreydcs.dp.api.query.model;
  * </li>
  * </ul>
  * </p>
+ * 
+ * @deprecated  Replaced by DpGrpcStreamType
  */
-public enum DpQueryStreamType {
+@Deprecated(since="Dec 28, 2024", forRemoval=true)
+public enum DpQueryStreamTypeDeprecated {
     
     /**
      * Unidirectional gRPC Stream.

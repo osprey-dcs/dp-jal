@@ -49,7 +49,7 @@ import com.ospreydcs.dp.api.model.IDataColumn;
  * provide fast indexing.
  * </p>
  * <p>
- * Typically, a <code>StaticDataColumn</code> is a unit of homogeneous data within a larger composite of
+ * Typically, a <code>StaticDataColumn</code> is a unit of homogeneous data within a larger decompose of
  * time-correlated, heterogeneous data such as a <code>StaticDataTable</code>.
  * </p>
  *
