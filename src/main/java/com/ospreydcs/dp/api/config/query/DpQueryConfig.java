@@ -27,14 +27,14 @@
  */
 package com.ospreydcs.dp.api.config.query;
 
-import com.ospreydcs.dp.api.common.AUnavailable;
-import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
 import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
 import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcStreamConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.api.model.AUnavailable;
+import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 
 /**
  * <p>

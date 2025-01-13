@@ -46,9 +46,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.ingest.model.IResourceConsumer;
 import com.ospreydcs.dp.api.ingest.test.TestIngestDataRequestGenerator;
+import com.ospreydcs.dp.api.model.IMessageSupplier;
+import com.ospreydcs.dp.api.model.IMessageConsumer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -828,7 +828,7 @@ public class IngestionDataBufferTest {
      * @return  supplier task for the given payload iterator and target message buffer
      */
     @SuppressWarnings("unused")
-    private Callable<Integer>   createSupplier(Iterator<IngestDataRequest> itrMsgs, IResourceConsumer<IngestDataRequest> buffer) {
+    private Callable<Integer>   createSupplier(Iterator<IngestDataRequest> itrMsgs, IMessageConsumer<IngestDataRequest> buffer) {
         
         Callable<Integer>   task = () -> {
             

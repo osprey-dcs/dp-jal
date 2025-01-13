@@ -43,18 +43,18 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.common.AAdvancedApi;
-import com.ospreydcs.dp.api.common.AAdvancedApi.STATUS;
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
+import com.ospreydcs.dp.api.common.IngestRequestUID;
+import com.ospreydcs.dp.api.common.IngestionResponse;
+import com.ospreydcs.dp.api.common.IngestionResult;
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.model.IngestRequestUID;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
-import com.ospreydcs.dp.api.model.IngestionResponse;
-import com.ospreydcs.dp.api.model.IngestionResult;
-import com.ospreydcs.dp.api.model.ProviderUID;
+import com.ospreydcs.dp.api.model.AAdvancedApi;
+import com.ospreydcs.dp.api.model.IMessageSupplier;
+import com.ospreydcs.dp.api.model.AAdvancedApi.STATUS;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
@@ -1233,7 +1233,7 @@ public class IngestionChannel {
                 }
             };
             
-            stream = IngestionStream.newUniProcessor(this.connIngest.getStubAsync(), this.srcRqstMsgs, fncRspSink);
+            stream = IngestionStream.newUniStream(this.connIngest.getStubAsync(), this.srcRqstMsgs, fncRspSink);
         }
 
         // Create the stream task based upon bidirectional stream type
@@ -1247,7 +1247,7 @@ public class IngestionChannel {
                 }
             };
             
-            stream = IngestionStream.newBidiProcessor(this.connIngest.getStubAsync(), this.srcRqstMsgs, fncRspSink);
+            stream = IngestionStream.newBidiStream(this.connIngest.getStubAsync(), this.srcRqstMsgs, fncRspSink);
         }
 
         else

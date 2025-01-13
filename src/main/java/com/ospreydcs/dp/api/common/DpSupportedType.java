@@ -25,17 +25,16 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.model;
+package com.ospreydcs.dp.api.common;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import com.google.protobuf.ByteString;
-import com.ospreydcs.dp.api.common.AUnavailable;
-import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
-
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
+import com.ospreydcs.dp.api.model.AUnavailable;
+import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 
 /**
  * <h1>

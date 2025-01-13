@@ -44,11 +44,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.model.ProviderUID;
+import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -118,7 +118,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <code>IngestDataRequest</code> message buffer from growing without bound.
  * The ability to add ingestion frames
  * to an <code>IngestionFrameProcessor</code> can be throttled at the supplier side using
- * an implementation of the <code>{@link IResourceConsumer&lt;IngestionFrame&gt;}</code> interface,
+ * an implementation of the <code>{@link IMessageConsumer&lt;IngestionFrame&gt;}</code> interface,
  * in particular a blocking ingestion frame buffer.   
  * In this fashion, clients will experience "back pressure" from consumers of 
  * <code>IngestDataRequest</code> messages when they become backlogged.
@@ -186,7 +186,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * </p>
  * <p>
  * <h2>TODO</h2>
- * Perhaps support the <code>IResourceConsumer&lt;IngestionFrame&gt;</code> interface.
+ * Perhaps support the <code>IMessageConsumer&lt;IngestionFrame&gt;</code> interface.
  * <ul>
  * <li>
  * Argument against this support: Follows from the fact that the interface assumes potential back-pressure 
@@ -1306,7 +1306,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * @return <code>true</code> if there are currently request messages available or pending
      *         <code>false</code> otherwise
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#isSupplying()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#isSupplying()
      */
     @Override
     public boolean isSupplying() {
@@ -1319,7 +1319,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#take()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#take()
      */
     @Override
     public IngestDataRequest take() throws IllegalStateException, InterruptedException {
@@ -1333,7 +1333,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#poll()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll()
      */
     @Override
     public IngestDataRequest poll() throws IllegalStateException {
@@ -1347,7 +1347,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
      */
     @Override
     public IngestDataRequest poll(long cntTimeout, TimeUnit tuTimeout)

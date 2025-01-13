@@ -40,9 +40,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -123,7 +123,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#IngestionFrameProcessor(com.ospreydcs.dp.api.model.ProviderUID)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#IngestionFrameProcessor(com.ospreydcs.dp.api.common.ProviderUID)}.
      */
     @Test
     public final void testIngestionFrameProcessorProviderUID() {
@@ -135,7 +135,7 @@ public class IngestionFrameProcessorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#setProviderUid(com.ospreydcs.dp.api.model.ProviderUID)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#setProviderUid(com.ospreydcs.dp.api.common.ProviderUID)}.
      */
     @Test
     public final void testSetProviderUid() {

@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest.model;
+package com.ospreydcs.dp.api.model;
 
 import java.util.concurrent.TimeUnit;
 
@@ -75,7 +75,7 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
     
     /**
      * <p>
-     * Returns the next available Protobuf message from the message supplier blocking 
+     * Returns the next available Protocol Buffers message from the message supplier blocking 
      * indefinitely until one becomes available.
      * </p>
      * <p>
@@ -88,7 +88,7 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
      * </li>
      * <br/>
      * <li>
-     * Calling this method when <code>{@link #isSupplying()} returns <code>false</code> should throw
+     * Calling this method when <code>{@link #isSupplying()}</code> returns <code>false</code> should throw
      * an exception.
      * </li>
      * </ul>
@@ -103,7 +103,7 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
     
     /**
      * <p>
-     * Returns the next available Protobuf message from the message supplier or <code>null</code>
+     * Returns the next available Protocol Buffers message from the message supplier or <code>null</code>
      * if none is available.
      * </p>
      * <p>
@@ -130,7 +130,7 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
     
     /**
      * <p>
-     * Returns the next available Protobuf message from the message supplier blocking until the
+     * Returns the next available Protocol Buffers message from the message supplier blocking until the
      * one becomes available, or the given timeout limit is reached.
      * </p>
      * <p>

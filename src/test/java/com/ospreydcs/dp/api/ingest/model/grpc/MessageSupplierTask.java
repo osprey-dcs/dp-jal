@@ -31,13 +31,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import com.ospreydcs.dp.api.ingest.model.IResourceConsumer;
+import com.ospreydcs.dp.api.model.IMessageConsumer;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**
  * <p>
  * Producer task that supplies <code>IngestDataRequest</code> messages to a 
- * <code>IResourceConsumer&lt;IngestDataRequest&gt;</code> implementation.
+ * <code>IMessageConsumer&lt;IngestDataRequest&gt;</code> implementation.
  * </p>
  * <p>
  * The task is meant to be run periodically within an executor service.
@@ -67,7 +67,7 @@ public final class MessageSupplierTask implements Runnable, Callable<Integer> {
     private final List<IngestDataRequest>               lstMsgsPayload;
     
     /** Message message buffer to receive payload of ingest data request messages */
-    private final IResourceConsumer<IngestDataRequest>  bufTarget;
+    private final IMessageConsumer<IngestDataRequest>  bufTarget;
     
     
     //
@@ -111,7 +111,7 @@ public final class MessageSupplierTask implements Runnable, Callable<Integer> {
      * @param lstMsgs   payload of message to be supplied to the buffer
      * @param bufTarget target buffer to receive message payload
      */
-    public MessageSupplierTask(List<IngestDataRequest> lstMsgs, IResourceConsumer<IngestDataRequest> bufTarget) {
+    public MessageSupplierTask(List<IngestDataRequest> lstMsgs, IMessageConsumer<IngestDataRequest> bufTarget) {
         this.lstMsgsPayload = lstMsgs;
         this.bufTarget = bufTarget;
         

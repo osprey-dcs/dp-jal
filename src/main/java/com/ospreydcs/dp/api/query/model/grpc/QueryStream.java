@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryResponseStreamProcessor.java
+ * File:	QueryStream.java
  * Package: com.ospreydcs.dp.api.query.model.grpc
- * Type: 	QueryResponseStreamProcessor
+ * Type: 	QueryStream
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -31,8 +31,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
@@ -67,7 +67,7 @@ import io.grpc.stub.StreamObserver;
  * It processes the <code>QueryResponse</code> messages obtained from the Data Platform
  * Query Service from a data request.  In fact, this class implements all that is required
  * from a <em>unidirectional</em> backwards gRPC data stream from the Query Service to this object.  
- * That is, instances of <code>QueryResponseStreamProcessor</code> represent the backward stream 
+ * That is, instances of <code>QueryStream</code> represent the backward stream 
  * handle (data sink for the Query Service).   
  * </p>
  * <p>
@@ -77,7 +77,7 @@ import io.grpc.stub.StreamObserver;
  * creation to receive the incoming data from the Query Service.  The implementation
  * should perform <em>all</em> actual and specific data processing.
  * <br/><br/>
- * <code>QueryResponseStreamProcessor</code> objects extract the <code>BucketData</code>
+ * <code>QueryStream</code> objects extract the <code>BucketData</code>
  * messages from the streaming <code>QueryReponse</code> messages and pass only the data
  * messages to the <code>Consumer</code> object.  Thus, all errors and exceptions are
  * processed by the <code>QueryResponseStreamProcess</code> object. However, it does not
@@ -85,7 +85,7 @@ import io.grpc.stub.StreamObserver;
  * </p>
  * <p>
  * <h2>Streaming Exceptions</h2>
- * As described above, the <code>QueryResponseStreamProcessor</code> processes the gRPC
+ * As described above, the <code>QueryStream</code> processes the gRPC
  * <em>data stream</em>.  Any errors returned by the Query Service are handled here, as
  * well as exceptions thrown by gRPC regarding streaming.  The following error conditions
  * are processed:
@@ -110,7 +110,7 @@ import io.grpc.stub.StreamObserver;
  * concerning the cause of the error.
  * </li>
  * </ul>
- * In the event of any of the above, the <code>QueryResponseStreamProcessor</code> reacts 
+ * In the event of any of the above, the <code>QueryStream</code> reacts 
  * essentially the same.  The following actions occur in order:
  * <ol>
  * <li>The gRPC data stream is terminated.</li>
@@ -160,9 +160,126 @@ import io.grpc.stub.StreamObserver;
  * @since Feb 6, 2024
  *
  */
-public abstract class QueryResponseStreamProcessor implements Runnable, Callable<Boolean>, StreamObserver<QueryDataResponse> {
+public abstract class QueryStream implements Runnable, Callable<Boolean>, StreamObserver<QueryDataResponse> {
 
 
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new concrete instance of <code>QueryStream</code> 
+     * ready for processing.
+     * </p>
+     * <p>
+     * The <code>{@link QueryRequest}</code> message is extracted from the argument <code>dpRequest</code>
+     * using <code>{@link DpDataRequest#buildQueryRequest()}</code>.
+     * The specific implementation of the <code>QueryStream</code> depends upon
+     * the preferred gRPC data stream indicated by 
+     * <code>{@link DpDataRequest#getStreamType()}</code>.
+     * The concrete type is given according to the following:
+     * <ul>
+     * <li><code>{@link DpGrpcStreamType#BACKWARD}</code> -> <code>{@link QueryUniStream}</code>.</li>
+     * <li><code>{@link DpGrpcStreamType#BIDIRECTIONAL}</code> -> <code>{@link QueryBidiStream}</code>.</li>
+     * </li>
+     * </ul>
+     * Both concrete implementations above are contained within this source file.  Note that the stream type
+     * <code>{@link DpGrpcStreamType#FORWARD}</code> is not supported (no context) and an exception will be
+     * thrown. 
+     * </p>
+     * <p>
+     * <h2>USE</h2>
+     * The returned instance is ready for independent thread execution via the 
+     * <code>{@link #run()}</code> method.  Once that method returns the gRPC stream processing
+     * task is complete, either normally or terminated due to error.  At that point use the 
+     * <code>{@link #isSuccess()}</code> method to determine success/failure.
+     * </p>
+     * 
+     * @param dpRequest     the Query Service <code>DpDataRequest</code> request to process
+     * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
+     * @param fncDataSink   the target receiving the incoming results set from Query Service
+     * 
+     * @return  a new unidirectional Query Service data stream processor ready for starting
+     * 
+     * @throws  IllegalArgumentException Illegal stream type specified (e.g., <code>{@link DpGrpcStreamType#BACKWARD}</code>)
+     * 
+     * @see #isSuccess()
+     * 
+     * @see QueryUniStream
+     * @see QueryBidiStream
+     */
+    public static QueryStream  from(
+            DpDataRequest dpRequest,
+            DpQueryServiceStub  stubAsync,
+            Consumer<QueryDataResponse.QueryData> fncDataSink) throws IllegalArgumentException   
+    {
+        // Extract the preferred stream type and the Protobuf query result message
+        DpGrpcStreamType    enmType = dpRequest.getStreamType();
+        QueryDataRequest    msgRqst = dpRequest.buildQueryRequest();
+        
+
+        return QueryStream.from(enmType, msgRqst, stubAsync, fncDataSink);
+//        return switch (enmType) {
+//        case BACKWARD -> QueryUniStream.newUniTask(msgRqst, stubAsync, ifcDataSink);
+//        case BIDIRECTIONAL -> QueryBidiStream.newBidiTask(msgRqst, stubAsync, ifcDataSink);
+//        default -> throw new IllegalArgumentException("Illegal stream type: " + enmType);
+//        };
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new concrete instance of <code>QueryStream</code> 
+     * ready for processing.
+     * </p>
+     * <p>
+     * The specific implementation of the <code>QueryStream</code> depends upon
+     * the argument <code>enmStreamType</code>. 
+     * The concrete type is given according to the following:
+     * <ul>
+     * <li><code>{@link DpQueryStreamTypeDeprecated#UNIDIRECTIONAL}</code> -> <code>{@link QueryUniStream}</code>.</li>
+     * <li><code>{@link DpQueryStreamTypeDeprecated#BIDIRECTIONAL}</code> -> <code>{@link QueryBidiStream}</code>.</li>
+     * </li>
+     * </ul>
+     * Both concrete implementations above are contained within this source file. 
+     * </p>
+     * <p>
+     * <h2>USE</h2>
+     * The returned instance is ready for independent thread execution via the 
+     * <code>{@link #run()}</code> method.  Once that method returns the gRPC stream processing
+     * task is complete, either normally or terminated due to error.  At that point use the 
+     * <code>{@link #isSuccess()}</code> method to determine success/failure.
+     * </p>
+     * 
+     * @param enmStreamType data stream type to use for gRPC streaming
+     * @param msgRequest    the Query Service <code>DpDataRequest</code> request to process
+     * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
+     * @param fncDataSink   the target receiving the incoming results set from Query Service
+     * 
+     * @return  a new unidirectional Query Service data stream processor ready for starting
+     * 
+     * @throws  IllegalArgumentException Illegal stream type specified (e.g., <code>{@link DpGrpcStreamType#BACKWARD}</code>)
+     * 
+     * @see #isSuccess()
+     * 
+     * @see QueryUniStream
+     * @see QueryBidiStream
+     */
+    public static QueryStream  from(
+            DpGrpcStreamType   enmStreamType,
+            QueryDataRequest    msgRequest,
+            DpQueryServiceStub  stubAsync,
+            Consumer<QueryDataResponse.QueryData> fncDataSink) throws IllegalArgumentException
+    {
+        // Choose stream process implementation based upon requested stream type
+        return switch (enmStreamType) {
+        case BACKWARD -> QueryUniStream.newUniStream(msgRequest, stubAsync, fncDataSink);
+        case BIDIRECTIONAL -> QueryBidiStream.newBidiStream(msgRequest, stubAsync, fncDataSink);
+        default -> throw new IllegalArgumentException("Illegal stream type: " + enmStreamType);
+        };
+    }
+    
+    
     //
     // Initialization Targets
     //
@@ -195,134 +312,19 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
     
     
     //
-    // Creators
-    //
-    
-    /**
-     * <p>
-     * Creates and returns a new concrete instance of <code>QueryResponseStreamProcessor</code> 
-     * ready for processing.
-     * </p>
-     * <p>
-     * The <code>{@link QueryRequest}</code> message is extracted from the argument <code>dpRequest</code>
-     * using <code>{@link DpDataRequest#buildQueryRequest()}</code>.
-     * The specific implementation of the <code>QueryResponseStreamProcessor</code> depends upon
-     * the preferred gRPC data stream indicated by 
-     * <code>{@link DpDataRequest#getStreamType()}</code>.
-     * The concrete type is given according to the following:
-     * <ul>
-     * <li><code>{@link DpGrpcStreamType#BACKWARD}</code> -> <code>{@link QueryResponseUniStreamProcessor}</code>.</li>
-     * <li><code>{@link DpGrpcStreamType#BIDIRECTIONAL}</code> -> <code>{@link QueryResponseBidiStreamProcessor}</code>.</li>
-     * </li>
-     * </ul>
-     * Both concrete implementations above are contained within this source file.  Note that the stream type
-     * <code>{@link DpGrpcStreamType#FORWARD}</code> is not supported (no context) and an exception will be
-     * thrown. 
-     * </p>
-     * <p>
-     * <h2>USE</h2>
-     * The returned instance is ready for independent thread execution via the 
-     * <code>{@link #run()}</code> method.  Once that method returns the gRPC stream processing
-     * task is complete, either normally or terminated due to error.  At that point use the 
-     * <code>{@link #isSuccess()}</code> method to determine success/failure.
-     * </p>
-     * 
-     * @param dpRequest     the Query Service <code>DpDataRequest</code> request to process
-     * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
-     * @param ifcDataSink   the target receiving the incoming results set from Query Service
-     * 
-     * @return  a new unidirectional Query Service data stream processor ready for starting
-     * 
-     * @throws  IllegalArgumentException Illegal stream type specified (e.g., <code>{@link DpGrpcStreamType#BACKWARD}</code>)
-     * 
-     * @see #isSuccess()
-     * 
-     * @see QueryResponseUniStreamProcessor
-     * @see QueryResponseBidiStreamProcessor
-     */
-    public static QueryResponseStreamProcessor  newTask(
-            DpDataRequest dpRequest,
-            DpQueryServiceStub  stubAsync,
-            Consumer<QueryDataResponse.QueryData> ifcDataSink) throws IllegalArgumentException   
-    {
-        // Extract the preferred stream type and the Protobuf query result message
-        DpGrpcStreamType    enmType = dpRequest.getStreamType();
-        QueryDataRequest    msgRqst = dpRequest.buildQueryRequest();
-        
-        return switch (enmType) {
-        case BACKWARD -> QueryResponseUniStreamProcessor.newUniTask(msgRqst, stubAsync, ifcDataSink);
-        case BIDIRECTIONAL -> QueryResponseBidiStreamProcessor.newBidiTask(msgRqst, stubAsync, ifcDataSink);
-        default -> throw new IllegalArgumentException("Illegal stream type: " + enmType);
-        };
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new concrete instance of <code>QueryResponseStreamProcessor</code> 
-     * ready for processing.
-     * </p>
-     * <p>
-     * The specific implementation of the <code>QueryResponseStreamProcessor</code> depends upon
-     * the argument <code>enmStreamType</code>. 
-     * The concrete type is given according to the following:
-     * <ul>
-     * <li><code>{@link DpQueryStreamTypeDeprecated#UNIDIRECTIONAL}</code> -> <code>{@link QueryResponseUniStreamProcessor}</code>.</li>
-     * <li><code>{@link DpQueryStreamTypeDeprecated#BIDIRECTIONAL}</code> -> <code>{@link QueryResponseBidiStreamProcessor}</code>.</li>
-     * </li>
-     * </ul>
-     * Both concrete implementations above are contained within this source file. 
-     * </p>
-     * <p>
-     * <h2>USE</h2>
-     * The returned instance is ready for independent thread execution via the 
-     * <code>{@link #run()}</code> method.  Once that method returns the gRPC stream processing
-     * task is complete, either normally or terminated due to error.  At that point use the 
-     * <code>{@link #isSuccess()}</code> method to determine success/failure.
-     * </p>
-     * 
-     * @param enmStreamType data stream type to use for gRPC streaming
-     * @param msgRequest    the Query Service <code>DpDataRequest</code> request to process
-     * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
-     * @param ifcDataSink   the target receiving the incoming results set from Query Service
-     * 
-     * @return  a new unidirectional Query Service data stream processor ready for starting
-     * 
-     * @throws  IllegalArgumentException Illegal stream type specified (e.g., <code>{@link DpGrpcStreamType#BACKWARD}</code>)
-     * 
-     * @see #isSuccess()
-     * 
-     * @see QueryResponseUniStreamProcessor
-     * @see QueryResponseBidiStreamProcessor
-     */
-    public static QueryResponseStreamProcessor  newTask(
-            DpGrpcStreamType   enmStreamType,
-            QueryDataRequest    msgRequest,
-            DpQueryServiceStub  stubAsync,
-            Consumer<QueryDataResponse.QueryData> ifcDataSink) throws IllegalArgumentException
-    {
-        // Choose stream process implementation based upon requested stream type
-        return switch (enmStreamType) {
-        case BACKWARD -> QueryResponseUniStreamProcessor.newUniTask(msgRequest, stubAsync, ifcDataSink);
-        case BIDIRECTIONAL -> QueryResponseBidiStreamProcessor.newBidiTask(msgRequest, stubAsync, ifcDataSink);
-        default -> throw new IllegalArgumentException("Illegal stream type: " + enmStreamType);
-        };
-    }
-    
-    
-    //
     // Constructor
     //
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseStreamProcessor</code> ready for processing.
+     * Constructs a new instance of <code>QueryStream</code> ready for processing.
      * </p>
      *
      * @param msgRequest    the Query Service request to process
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    protected QueryResponseStreamProcessor(QueryDataRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<QueryData> ifcDataSink) {
+    protected QueryStream(QueryDataRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<QueryData> ifcDataSink) {
         this.msgRequest = msgRequest;
         this.stubAsync = stubAsync;
         this.ifcDataSink = ifcDataSink;
@@ -494,7 +496,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
 
     /**
      * <p>
-     * Signal to child classes that the request has been processed.
+     * Signal to child classes that the response has been processed.
      * </p>
      * <p>
      * This method is called immediately after the given argument has been accepted
@@ -522,7 +524,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
      * 
      * @throws Exception    general exception thrown by base class to indicate error
      */
-    abstract protected void  requestProcessed(QueryDataResponse msgRsp) throws Exception;
+    abstract protected void  responseProcessed(QueryDataResponse msgRsp) throws Exception;
     
     
     //
@@ -629,7 +631,7 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
         //  - perform any post-precessing within child class
         //  - send any acknowledgments to the Query Service
         try {
-            this.requestProcessed(msgRsp);
+            this.responseProcessed(msgRsp);
             
         } catch (Exception e) {
             this.recResult = ResultStatus.newFailure("Exception thrown during post-processing.", e);
@@ -834,9 +836,9 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
  * </p>
  * <p>
  * This implementation assumes a <em>unidirectional</em> backwards gRPC data stream from the
- * Query Service to this object.  That is, objects of <code>QueryResponseUniStreamProcessor</code>
+ * Query Service to this object.  That is, objects of <code>QueryUniStream</code>
  * represent the backward stream handle (data sink for the Query Service). All processing
- * is done in the base class <code>{@link QueryResponseStreamProcessor}</code>.
+ * is done in the base class <code>{@link QueryStream}</code>.
  * No processing or streaming operations are performed in the 
  * <code>{@link #requestTransmitted(QueryResponse)}</code> override.
  * </p>
@@ -850,9 +852,9 @@ public abstract class QueryResponseStreamProcessor implements Runnable, Callable
  * @author Christopher K. Allen
  * @since Feb 5, 2024
  *
- * @see QueryResponseStreamProcessor
+ * @see QueryStream
  */
-final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor {
+final class QueryUniStream extends QueryStream {
 
     
     //
@@ -861,7 +863,7 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>QueryResponseUniStreamProcessor</code> ready for processing.
+     * Creates and returns a new instance of <code>QueryUniStream</code> ready for processing.
      * </p>
      * <p>
      * The returned instance is ready for independent thread execution via the 
@@ -878,11 +880,11 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
      * 
      * @see #isSuccess()
      */
-    public static QueryResponseUniStreamProcessor  newUniTask(
+    public static QueryUniStream  newUniStream(
             QueryDataRequest msgRequest, 
             DpQueryServiceStub stubAsync, 
             Consumer<QueryData> ifcDataSink) {
-        return new QueryResponseUniStreamProcessor(msgRequest, stubAsync, ifcDataSink);
+        return new QueryUniStream(msgRequest, stubAsync, ifcDataSink);
     }
     
     //
@@ -891,7 +893,7 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseUniStreamProcessor</code> ready for processing
+     * Constructs a new instance of <code>QueryUniStream</code> ready for processing
      * unidirectional Query Service data stream.
      * </p>
      *
@@ -899,13 +901,13 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    public QueryResponseUniStreamProcessor(QueryDataRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<QueryData> ifcDataSink) {
+    public QueryUniStream(QueryDataRequest msgRequest, DpQueryServiceStub stubAsync, Consumer<QueryData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
     }
     
     
     // 
-    // QueryResponseStreamProcessor Overrides
+    // QueryStream Overrides
     //
     
     /**
@@ -949,10 +951,10 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
      *
      * @param   msgRsp  response message that was just processed (unused)
      * 
-     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestTransmitted(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryStream#requestTransmitted(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
-    protected void requestProcessed(QueryDataResponse msgRsp) {
+    protected void responseProcessed(QueryDataResponse msgRsp) {
     }
 }
 
@@ -963,13 +965,13 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
  * <p>
  * This implementation assumes a <em>bidirectional</em> gRPC data stream to/from the
  * Query Service to this object.  Note that all subclasses of 
- * <code>QueryResponseStreamProcessor</code> represent the backward stream handle 
+ * <code>QueryStream</code> represent the backward stream handle 
  * (data sink for the Query Service).  The forward stream handle is maintained as an attribute
  * within this subclass.
  * </p>
  * <p>
  * All data processing is done in the base class 
- * <code>{@link QueryResponseStreamProcessor}</code>.
+ * <code>{@link QueryStream}</code>.
  * The forward streaming operations are performed in the 
  * <code>{@link #requestTransmitted(QueryResponse)}</code> override. There a 
  * <code>{@link QueryRequest</code> message containing a <code>{@link CursorOperation}</code> 
@@ -989,9 +991,9 @@ final class QueryResponseUniStreamProcessor extends QueryResponseStreamProcessor
  * @author Christopher K. Allen
  * @since Feb 6, 2024
  *
- * @see QueryResponseStreamProcessor
+ * @see QueryStream
  */
-final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcessor {
+final class QueryBidiStream extends QueryStream {
 
     
     // 
@@ -1008,7 +1010,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>QueryResponseBidiStreamProcessor</code> ready for processing
+     * Creates and returns a new instance of <code>QueryBidiStream</code> ready for processing
      * a bidirectional Query Service data stream.
      * </p>
      * <p>
@@ -1026,10 +1028,10 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * 
      * @see #isSuccess()
      */
-    public static QueryResponseBidiStreamProcessor  newBidiTask(QueryDataRequest msgRequest, 
+    public static QueryBidiStream  newBidiStream(QueryDataRequest msgRequest, 
             DpQueryServiceStub stubAsync,
             Consumer<QueryData> ifcDataSink) {
-        return new QueryResponseBidiStreamProcessor(msgRequest, stubAsync, ifcDataSink);
+        return new QueryBidiStream(msgRequest, stubAsync, ifcDataSink);
     }
     
 
@@ -1039,7 +1041,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseBidiStreamProcessor</code> ready for processing
+     * Constructs a new instance of <code>QueryBidiStream</code> ready for processing
      * a bidirectional Query Service data stream.
      * </p>
      *
@@ -1047,7 +1049,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * @param stubAsync     the Query Service (streaming RPC) communications stub to invoke request 
      * @param ifcDataSink   the target receiving the incoming results set from Query Service
      */
-    public QueryResponseBidiStreamProcessor(QueryDataRequest msgRequest, 
+    public QueryBidiStream(QueryDataRequest msgRequest, 
             DpQueryServiceStub stubAsync,
             Consumer<QueryData> ifcDataSink) {
         super(msgRequest, stubAsync, ifcDataSink);
@@ -1055,7 +1057,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
 
     
     //
-    // QueryResponseStreamProcessor Overrides
+    // QueryStream Overrides
     //
     
     /**
@@ -1081,7 +1083,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * because of an error).
      * </p>
      *
-     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#run()
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryStream#run()
      */
     @Override
     public void run() {
@@ -1101,7 +1103,7 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * Requests the next <code>QueryResponse</code> message from the Query Service.
      * </p>
      * <p>
-     * Sends a <code>QueryRequest</code> message containing a <code>CursorOperation</code> 
+     * Sends a <code>QueryDataRequest</code> message containing a <code>CursorOperation</code> 
      * message using the forward stream handle. If the forward stream handle 
      * <code>{@link #hndQueryService}</code> is <code>null</code> this indicates a serious
      * streaming error and this method responds by throwing an exception.
@@ -1109,12 +1111,12 @@ final class QueryResponseBidiStreamProcessor extends QueryResponseStreamProcesso
      * 
      * @param msgRsp    response message just processed (unused)
      * 
-     * @throws Exception    the <code>{@link #hndQueryService}</code> instance is <code>null<?coce>
+     * @throws Exception    the <code>{@link #hndQueryService}</code> instance is <code>null</code>
      * 
-     * @see com.ospreydcs.dp.api.query.model.grpc.QueryResponseStreamProcessor#requestTransmitted(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
+     * @see com.ospreydcs.dp.api.query.model.grpc.QueryStream#requestTransmitted(com.ospreydcs.dp.grpc.v1.query.QueryResponse)
      */
     @Override
-    protected void requestProcessed(QueryDataResponse msgRsp) throws Exception {
+    protected void responseProcessed(QueryDataResponse msgRsp) throws Exception {
         
         // Check that forward stream handle has been initialized
         if (this.hndQueryService == null) 

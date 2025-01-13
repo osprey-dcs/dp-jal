@@ -2,12 +2,12 @@ package com.ospreydcs.dp.api.query;
 
 import java.util.List;
 
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
+import com.ospreydcs.dp.api.common.IDataTable;
+import com.ospreydcs.dp.api.common.PvMetaRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
-import com.ospreydcs.dp.api.model.IDataTable;
-import com.ospreydcs.dp.api.model.PvMetaRecord;
-import com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator;
+import com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelator;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 
 /**

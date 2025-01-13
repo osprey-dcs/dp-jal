@@ -31,11 +31,11 @@ import java.security.ProviderException;
 import java.util.MissingResourceException;
 import java.util.UUID;
 
+import com.ospreydcs.dp.api.common.IngestRequestUID;
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.model.IngestRequestUID;
-import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.EventMetadata;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;

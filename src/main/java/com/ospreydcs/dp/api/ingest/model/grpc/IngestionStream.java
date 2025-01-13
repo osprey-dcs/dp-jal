@@ -38,13 +38,11 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.common.AUnavailable;
-import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
+import com.ospreydcs.dp.api.common.IngestRequestUID;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.model.IngestRequestUID;
+import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
@@ -82,7 +80,7 @@ import io.grpc.stub.StreamObserver;
  * used to instantiate the processor.  Use 
  * <code>{@link #newUniProcessor(DpIngestionServiceStub, IMessageSupplier)}</code> for a unidirectional
  * data stream (currently unavailable) or 
- * <code>{@link #newBidiProcessor(DpIngestionServiceStub, IMessageSupplier, Consumer)}</code> for a
+ * <code>{@link #newBidiStream(DpIngestionServiceStub, IMessageSupplier, Consumer)}</code> for a
  * bidirectional data stream. 
  * </p>
  * <p>
@@ -169,7 +167,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
      *  
      * @return  new bidirectional ingestion stream processor ready for independent thread spawn
      */
-    public static IngestionStream newBidiProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSrc, Consumer<IngestDataResponse> fncRspSink) {
+    public static IngestionStream newBidiStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSrc, Consumer<IngestDataResponse> fncRspSink) {
         
         return new IngestionBidiStream(stubAsync, fncDataSrc, fncRspSink);
     }
@@ -189,7 +187,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
      * 
      * @return  new unidirectional ingestion stream processor ready for independent thread spawn
      */
-    public static IngestionStream newUniProcessor(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSrc, Consumer<IngestDataStreamResponse> fncRspSink) {
+    public static IngestionStream newUniStream(DpIngestionServiceStub stubAsync, IMessageSupplier<IngestDataRequest> fncDataSrc, Consumer<IngestDataStreamResponse> fncRspSink) {
     
         return new IngestionUniStream(stubAsync, fncDataSrc, fncRspSink);
     }

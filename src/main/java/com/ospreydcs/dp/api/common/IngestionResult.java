@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.model;
+package com.ospreydcs.dp.api.common;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

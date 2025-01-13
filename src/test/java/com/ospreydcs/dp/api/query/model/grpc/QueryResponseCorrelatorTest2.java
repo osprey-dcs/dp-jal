@@ -44,14 +44,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpDataResponseConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannelEvaluatorTest;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
+import com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
@@ -178,7 +179,7 @@ public class QueryResponseCorrelatorTest2 {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator#from(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelator#from(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
      */
     @Test
     public final void testFrom() {
@@ -189,7 +190,7 @@ public class QueryResponseCorrelatorTest2 {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator#setMultiStreamingResponse(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelator#setMultiStreamingResponse(boolean)}.
      */
     @Test
     public final void testSetMultiStreamingResponse() {
@@ -201,7 +202,7 @@ public class QueryResponseCorrelatorTest2 {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator#setMultiStreamingDomainSize(long)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelator#setMultiStreamingDomainSize(long)}.
      */
     @Test
     public final void testSetMultiStreamingDomainSize() {
@@ -214,7 +215,7 @@ public class QueryResponseCorrelatorTest2 {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator#setMultiStreamCount(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelator#setMultiStreamCount(int)}.
      */
     @Test
     public final void testSetMultiStreamCount() {
@@ -227,7 +228,7 @@ public class QueryResponseCorrelatorTest2 {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator#setCorrelationConcurrency(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelator#setCorrelationConcurrency(boolean)}.
      */
     @Test
     public final void testSetCorrelationConcurrency() {
@@ -239,7 +240,7 @@ public class QueryResponseCorrelatorTest2 {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator#setCorrelateWhileStreaming(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelator#setCorrelateWhileStreaming(boolean)}.
      */
     @Test
     public final void testSetCorrelateMidstream() {

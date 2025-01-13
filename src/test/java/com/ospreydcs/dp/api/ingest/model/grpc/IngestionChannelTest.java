@@ -38,12 +38,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
+import com.ospreydcs.dp.api.common.IngestRequestUID;
+import com.ospreydcs.dp.api.common.IngestionResult;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.ingest.test.TestIngestDataRequestGenerator;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
-import com.ospreydcs.dp.api.model.IngestRequestUID;
-import com.ospreydcs.dp.api.model.IngestionResult;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -174,7 +174,7 @@ public class IngestionChannelTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannel#setStreamType(com.ospreydcs.dp.api.model.DpGrpcStreamType)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannel#setStreamType(com.ospreydcs.dp.api.common.DpGrpcStreamType)}.
      */
     @Test
     public final void testSetStreamType() {

@@ -43,13 +43,13 @@ import java.util.stream.IntStream;
 import org.epics.nt.NTTable;
 import org.epics.pvdata.pv.PVStructure;
 
+import com.ospreydcs.dp.api.common.DpSupportedType;
+import com.ospreydcs.dp.api.common.IDataColumn;
+import com.ospreydcs.dp.api.common.IngestRequestUID;
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.model.IngestRequestUID;
-import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.IDataColumn;
-import com.ospreydcs.dp.api.model.ProviderUID;
-import com.ospreydcs.dp.api.model.UniformSamplingClock;
+import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.model.table.StaticDataColumn;
 import com.ospreydcs.dp.api.util.Epics;
 import com.ospreydcs.dp.api.util.JavaRuntime;

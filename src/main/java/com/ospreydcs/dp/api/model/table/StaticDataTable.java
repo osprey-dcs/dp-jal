@@ -38,8 +38,8 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.ospreydcs.dp.api.model.IDataColumn;
-import com.ospreydcs.dp.api.model.IDataTable;
+import com.ospreydcs.dp.api.common.IDataColumn;
+import com.ospreydcs.dp.api.common.IDataTable;
 
 /**
  * <p>
@@ -365,7 +365,7 @@ public class StaticDataTable implements IDataTable, Serializable {
      *
      * @return  <code>false</code>
      * 
-     * @see com.ospreydcs.dp.api.model.IDataTable#hasError()
+     * @see com.ospreydcs.dp.api.common.IDataTable#hasError()
      */
     @Override
     public boolean hasError() {
@@ -401,7 +401,7 @@ public class StaticDataTable implements IDataTable, Serializable {
 
     /**
      * 
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnName(int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnName(int)
      */
     @Override
     public int  getColumnIndex(String strColName) throws NoSuchElementException {

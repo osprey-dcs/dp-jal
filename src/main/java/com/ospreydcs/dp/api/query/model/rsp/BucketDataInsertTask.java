@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.grpc;
+package com.ospreydcs.dp.api.query.model.rsp;
 
 import java.util.SortedSet;
 import java.util.concurrent.Callable;

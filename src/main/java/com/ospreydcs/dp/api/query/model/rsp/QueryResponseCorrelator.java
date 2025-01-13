@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.grpc;
+package com.ospreydcs.dp.api.query.model.rsp;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -46,15 +46,16 @@ import javax.naming.CannotProceedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecompType;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
+import com.ospreydcs.dp.api.query.model.grpc.QueryStream;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecompParams;
 import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -201,9 +202,9 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * </p>
  * <p>
  * The <em>type</em> of data stream used for the above request can be specified by the client using the 
- * <code>{@link DpDataRequest#setStreamType(com.ospreydcs.dp.api.query.model.DpGrpcStreamType)}</code> method
+ * <code>{@link DpDataRequest#setStreamType(com.com.ospreydcs.dp.api.common.DpGrpcStreamType)}</code> method
  * within the data request object.  See the documentation for the method for further details on available gRPC 
- * data stream types (or see enumeration <code>{@link com.ospreydcs.dp.api.query.model.DpGrpcStreamType}</code>.
+ * data stream types (or see enumeration <code>{@link com.com.ospreydcs.dp.api.common.DpGrpcStreamType}</code>.
  * (This is a performance option.)
  * </p>
  * <p>
@@ -231,7 +232,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  *
  * @see DpDataRequest
  * @see CorrelatedQueryData
- * @see QueryResponseStreamProcessor
+ * @see QueryStream
  * @see QueryDataCorrelator
  */
 public class QueryResponseCorrelator {
@@ -295,17 +296,17 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
-     * Data consumer operation for <code>{@link QueryResponseStreamProcessor}</code> objects.
+     * Data consumer operation for <code>{@link QueryStream}</code> objects.
      * </p>
      * <p>
      * Implementation of <code>{@link Consumer}</code> interface bound to the 
-     * <code>{@link BucketData}</code> Protobuf message type.
+     * <code>{@link QueryData}</code> Protobuf message type.
      * Transfers request data from a gRPC data stream implemented by 
-     * <code>{@link QueryResponseStreamProcessor}</code> to a data buffer of type 
+     * <code>{@link QueryStream}</code> to a data buffer of type 
      * <code>{@link Queue}</code collecting response data.
      * </p>
      * <p> 
-     * The <code>{@link #accept(BucketData)}</code> method of this class simply transfers a 
+     * The <code>{@link #accept(QueryData)}</code> method of this class simply transfers a 
      * <code>BucketData</code> message to a <code>{@link Queue}</code> reference, assumed 
      * to be the data buffer of a <code>{@link QueryResponseCorrelator}</code> object.
      * The current number of <code>BucketData</code> messages transferred is available through 
@@ -314,7 +315,7 @@ public class QueryResponseCorrelator {
      * <p>
      * Instances are intended to be passed to newly created 
      * <code>{@link QuerResponseStreamProcessor}</code> instances via the creator 
-     * <code>{@link QueryResponseStreamProcessor#newTask(DpDataRequest, DpQueryServiceStub, Consumer)}</code>.
+     * <code>{@link QueryStream#from(DpDataRequest, DpQueryServiceStub, Consumer)}</code>.
      * There should be one instance of this function for every active data stream.
      * </p>
      *  
@@ -391,7 +392,7 @@ public class QueryResponseCorrelator {
         /**
          * Adds the given message to the data queue buffer <code>{@link queDataBuffer}</code>.
          * 
-         * @param msgData   data message obtained from the associated <code>{@link QueryResponseStreamProcessor}</code>.
+         * @param msgData   data message obtained from the associated <code>{@link QueryStream}</code>.
          * 
          * @see java.util.function.Consumer#accept(java.lang.Object)
          */
@@ -1432,7 +1433,7 @@ public class QueryResponseCorrelator {
         this.theCorrelator.reset();
         
         // Create streaming task for each component request
-        List<QueryResponseStreamProcessor>  lstStrmTasks = this.createStreamingTasks(lstRequests);
+        List<QueryStream>  lstStrmTasks = this.createStreamingTasks(lstRequests);
         
         // Create the data correlation thread task
         this.thdDataProcessor = QueryDataProcessor.newThread(this.queStreamBuffer, this.theCorrelator);
@@ -1741,21 +1742,22 @@ public class QueryResponseCorrelator {
      * 
      * @return  collection of gRPC stream processor tasks suitable for thread execution
      */
-    private List<QueryResponseStreamProcessor>  createStreamingTasks(List<DpDataRequest> lstRequests) {
+    private List<QueryStream>  createStreamingTasks(List<DpDataRequest> lstRequests) {
         
         // Container for multiple stream processing tasks
-        List<QueryResponseStreamProcessor>  lstStrmTasks = new LinkedList<>();
+        List<QueryStream>  lstStrmTasks = new LinkedList<>();
         
         // Create a gRPC stream processor data for each component request within the argument
         for (DpDataRequest dpRequest : lstRequests) {
-            DpGrpcStreamType       enmStreamType = dpRequest.getStreamType();
-            QueryDataRequest        msgRequest = dpRequest.buildQueryRequest();
+//            DpGrpcStreamType       enmStreamType = dpRequest.getStreamType();
+//            QueryDataRequest        msgRequest = dpRequest.buildQueryRequest();
             DpQueryServiceStub      stubAsync = this.connQuery.getStubAsync();
             QueryDataConsumer       fncConsumer = QueryDataConsumer.newInstance(this.queStreamBuffer);
             
-            QueryResponseStreamProcessor    taskStrm = QueryResponseStreamProcessor.newTask(
-                    enmStreamType,
-                    msgRequest, 
+            QueryStream    taskStrm = QueryStream.from(
+//                    enmStreamType,
+//                    msgRequest,
+                    dpRequest,
                     stubAsync, 
                     fncConsumer
                     );
@@ -1801,7 +1803,7 @@ public class QueryResponseCorrelator {
      * @throws TimeoutException     thread pool execution exceeded default timeout limit
      * @throws CompletionException  at least one streaming operation did not complete successfully (see message)
      */
-    private int executeStreamingTasks(List<QueryResponseStreamProcessor> lstStrmTasks) 
+    private int executeStreamingTasks(List<QueryStream> lstStrmTasks) 
             throws InterruptedException, TimeoutException, CompletionException {
         
         // Start all data stream tasks and wait for completion
@@ -1865,7 +1867,7 @@ public class QueryResponseCorrelator {
     
 //    private SortedSet<CorrelatedQueryData> processSingleStream(DpDataRequest dpRequest) throws InterruptedException, TimeoutException, ExecutionException {
 //
-//        QueryResponseStreamProcessor    taskStream = QueryResponseStreamProcessor.newTask(
+//        QueryStream    taskStream = QueryStream.newTask(
 //                dpRequest, 
 //                this.connQuery.getStubAsync(), 
 //                QueryDataConsumer.newInstance(this.queStreamBuffer)
@@ -1970,9 +1972,9 @@ public class QueryResponseCorrelator {
 //    private SortedSet<CorrelatedQueryData> processMultiStream(List<DpDataRequest> lstRequests) throws InterruptedException, TimeoutException, ExecutionException {
 //        
 //        // Create the multiple stream processing tasks
-//        List<QueryResponseStreamProcessor>  lstStrmTasks = new LinkedList<>();
+//        List<QueryStream>  lstStrmTasks = new LinkedList<>();
 //        for (DpDataRequest dpRequest : lstRequests) {
-//            QueryResponseStreamProcessor    taskStrm = QueryResponseStreamProcessor.newTask(
+//            QueryStream    taskStrm = QueryStream.newTask(
 //                    dpRequest, 
 //                    this.connQuery.getStubAsync(), 
 //                    QueryDataConsumer.newInstance(this.queStreamBuffer)
@@ -2043,7 +2045,7 @@ public class QueryResponseCorrelator {
 //    }
 //    
 //    private Thread  newStreamProcessor(DpDataRequest dpRequest) {
-//        QueryResponseStreamProcessor    taskProcessor = QueryResponseStreamProcessor.newTask(
+//        QueryStream    taskProcessor = QueryStream.newTask(
 //                dpRequest, 
 //                this.connQuery.getStubAsync(), 
 //                QueryDataConsumer.newInstance(this.queStreamBuffer)

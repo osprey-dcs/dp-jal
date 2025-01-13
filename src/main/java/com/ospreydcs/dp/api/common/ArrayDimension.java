@@ -1,4 +1,4 @@
-package com.ospreydcs.dp.api.model;
+package com.ospreydcs.dp.api.common;
 
 /**
  * <p>

@@ -27,10 +27,10 @@
  */
 package com.ospreydcs.dp.api.config.common;
 
-import com.ospreydcs.dp.api.common.AUnavailable;
-import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.api.model.AUnavailable;
+import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 
 /**
  * <p>

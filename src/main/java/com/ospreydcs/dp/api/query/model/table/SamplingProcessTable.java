@@ -40,10 +40,10 @@ import java.util.concurrent.CompletionException;
 
 import org.w3c.dom.ranges.RangeException;
 
-import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.IDataColumn;
-import com.ospreydcs.dp.api.model.IDataTable;
-import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
+import com.ospreydcs.dp.api.common.DpSupportedType;
+import com.ospreydcs.dp.api.common.IDataColumn;
+import com.ospreydcs.dp.api.common.IDataTable;
+import com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock;
 
@@ -378,7 +378,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * </ul>
      * </p>
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumn(int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumn(int)
      */
     @Override
     public IDataColumn<Object> getColumn(int indCol) throws IndexOutOfBoundsException, ClassCastException {
@@ -421,7 +421,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * </ul>
      * </p>
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumn(java.lang.String)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumn(java.lang.String)
      */
     @Override
     public IDataColumn<Object> getColumn(String strName) throws NoSuchElementException, ClassCastException {
@@ -451,7 +451,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnName(int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnName(int)
      */
     @Override
     public String getColumnName(int indCol) throws IndexOutOfBoundsException {
@@ -466,7 +466,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnType(int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnType(int)
      */
     @Override
     public DpSupportedType getColumnType(int indCol) throws IndexOutOfBoundsException {
@@ -478,7 +478,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnType(java.lang.String)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnType(java.lang.String)
      */
     @Override
     public DpSupportedType getColumnType(String strName) throws NoSuchElementException {
@@ -488,7 +488,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnSize(int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnSize(int)
      */
     @Override
     public Integer getColumnSize(int indCol) throws IndexOutOfBoundsException {
@@ -503,7 +503,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnSize(java.lang.String)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnSize(java.lang.String)
      */
     @Override
     public Integer getColumnSize(String strName) throws NoSuchElementException {
@@ -518,7 +518,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnSizeMin()
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnSizeMin()
      */
     @Override
     public Integer getColumnSizeMin() {
@@ -528,7 +528,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnSizeMax()
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnSizeMax()
      */
     @Override
     public Integer getColumnSizeMax() {
@@ -538,7 +538,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getTimestamp(int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getTimestamp(int)
      */
     @Override
     public Instant getTimestamp(int indRow) throws IndexOutOfBoundsException {
@@ -548,7 +548,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      * 
-     * @see com.ospreydcs.dp.api.model.IDataTable#getValue(int, int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getValue(int, int)
      */
     @Override
     public Object getValue(int indRow, int indCol) throws IndexOutOfBoundsException, ArithmeticException {
@@ -573,7 +573,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      * 
-     * @see com.ospreydcs.dp.api.model.IDataTable#getValue(int, String)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getValue(int, String)
      */
     @Override
     public Object getValue(int indRow, String strName) 
@@ -598,7 +598,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getRowValues(int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getRowValues(int)
      */
     @Override
     public Object[] getRowValues(int indRow) throws IndexOutOfBoundsException {
@@ -631,7 +631,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getRowValuesAsList(int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getRowValuesAsList(int)
      */
     @Override
     public List<Object> getRowValuesAsList(int indRow) throws IndexOutOfBoundsException {
@@ -641,7 +641,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnData(int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnData(int)
      */
     @Override
     public List<Object> getColumnData(int indCol) throws IndexOutOfBoundsException {
@@ -700,7 +700,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnDataTyped(int)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnDataTyped(int)
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -727,7 +727,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnDataTyped(java.lang.String)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnDataTyped(java.lang.String)
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -755,7 +755,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     /**
      * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#allocationSize()
+     * @see com.ospreydcs.dp.api.common.IDataTable#allocationSize()
      */
     @Override
     public long allocationSize() throws UnsupportedOperationException, ArithmeticException {

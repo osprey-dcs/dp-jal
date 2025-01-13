@@ -73,8 +73,9 @@ ingestion frames will always have allocation less than the limit; this option is
 ingestion performance.
 
 ## Query API
-The client ingestion API resources are available in the package `com.ospreydcs.dp.api.query`.  The connection factory
-for obtaining Query Service interfaces is the class `DpQueryApiFactory`.
+The client Query API resources are available in the package `com.ospreydcs.dp.api.query`.  The connection factory
+for obtaining Query Service interfaces is the class `DpQueryApiFactory`.  There also some Query API resources within
+the `com.ospreydcs.dp.api.model` package (e.g., `IDataTable`, `PvMetadataRecord`, etc.).
 
 ### Query API
 The Query API for the Java API Library contains a only single interface `IQueryService`.  The interface contains operations

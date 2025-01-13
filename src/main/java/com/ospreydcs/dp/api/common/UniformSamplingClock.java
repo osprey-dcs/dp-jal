@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.model;
+package com.ospreydcs.dp.api.common;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -36,7 +36,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
 
-import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 

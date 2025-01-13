@@ -43,6 +43,11 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
+import com.ospreydcs.dp.api.common.IngestRequestUID;
+import com.ospreydcs.dp.api.common.IngestionResponse;
+import com.ospreydcs.dp.api.common.IngestionResult;
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
@@ -50,11 +55,6 @@ import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessorDeprecated;
-import com.ospreydcs.dp.api.model.IngestRequestUID;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
-import com.ospreydcs.dp.api.model.IngestionResponse;
-import com.ospreydcs.dp.api.model.IngestionResult;
-import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
@@ -1481,7 +1481,7 @@ public final class IngestionStreamProcessorDep {
             // Consumer of response messages
             Consumer<IngestDataStreamResponse>  fncDataSink = (msgRsp) -> { this.lstRspsUni.add(msgRsp); };
             
-            stream = IngestionStream.newUniProcessor(this.connIngest.getStubAsync(), this.fncFrameProcessor, fncDataSink);
+            stream = IngestionStream.newUniStream(this.connIngest.getStubAsync(), this.fncFrameProcessor, fncDataSink);
 
         // Create the stream task based upon bidirectional stream type
         } else if (this.enmStreamType == DpGrpcStreamType.BIDIRECTIONAL) {
@@ -1489,7 +1489,7 @@ public final class IngestionStreamProcessorDep {
             // Consumer of response messages
             Consumer<IngestDataResponse>    fncDataSink = (msgRsp) -> { this.processResponse(msgRsp); };
             
-            stream = IngestionStream.newBidiProcessor(this.connIngest.getStubAsync(), this.fncFrameProcessor, fncDataSink);
+            stream = IngestionStream.newBidiStream(this.connIngest.getStubAsync(), this.fncFrameProcessor, fncDataSink);
         }
 
         else

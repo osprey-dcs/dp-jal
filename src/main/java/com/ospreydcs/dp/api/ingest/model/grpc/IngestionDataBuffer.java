@@ -40,8 +40,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.ingest.model.IResourceConsumer;
+import com.ospreydcs.dp.api.model.IMessageSupplier;
+import com.ospreydcs.dp.api.model.IMessageConsumer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -74,7 +74,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * @since Jul 28, 2024
  *
  */
-public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>, IMessageSupplier<IngestDataRequest> {
+public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>, IMessageSupplier<IngestDataRequest> {
 
     
     //
@@ -495,7 +495,7 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
     
     /**
      * <p>
-     * Allows clients to block until the request message queue queue buffer completely empties.
+     * Allows clients to block until the request message queue buffer completely empties.
      * </p>
      * <p>
      * This method allows clients to wait for the <code>IngestDataRequest</code> queue buffer
@@ -554,7 +554,7 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
     
 
     //
-    // IResourceConsumer<IngestDataRequest> Interface
+    // IMessageConsumer<IngestDataRequest> Interface
     //
     
     /**
@@ -763,8 +763,14 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
     public void offer(List<IngestDataRequest> lstMsgRqsts) throws IllegalStateException, InterruptedException {
 
         // Check if active
-        if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.");
+        if (!this.bolActive) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.";
+            
+            if (BOL_LOGGING)
+                LOGGER.warn(strMsg);
+            
+            throw new IllegalStateException(strMsg);
+        }
         
         // Compute the the memory allocation of the request messages
         long    szAlloc = lstMsgRqsts.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
@@ -841,15 +847,21 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
      * @throws InterruptedException     interrupted while waiting for message buffer ready (back-pressure enabled)
      * @param lstMsgRqsts
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IResourceConsumer#offer(java.util.List, long, java.util.concurrent.TimeUnit)
+     * @see com.ospreydcs.dp.api.model.IMessageConsumer#offer(java.util.List, long, java.util.concurrent.TimeUnit)
      */
     @Override
     public boolean offer(List<IngestDataRequest> lstMsgRqsts, long lngTimeout, TimeUnit tuTimeout)
             throws IllegalStateException, InterruptedException {
 
         // Check if active
-        if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.");
+        if (!this.bolActive) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.";
+            
+            if (BOL_LOGGING)
+                LOGGER.warn(strMsg);
+            
+            throw new IllegalStateException(strMsg);
+        }
         
         // Compute the the memory allocation of the request messages
         long    szAlloc = lstMsgRqsts.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
@@ -909,7 +921,7 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
      * @return <code>true</code> if there are currently request messages available or pending
      *         <code>false</code> otherwise
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#isSupplying()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#isSupplying()
      */
     @Override
     public boolean isSupplying() {
@@ -918,14 +930,20 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#take()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#take()
      */
     @Override
     public IngestDataRequest take() throws IllegalStateException, InterruptedException {
         
         // Check states
-        if (!this.bolActive && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
+        if (!this.bolActive && this.queMsgRequests.isEmpty()) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.";
+            
+            if (BOL_LOGGING)
+                LOGGER.warn(strMsg);
+            
+            throw new IllegalStateException(strMsg);
+        }
         
         try {
             IngestDataRequest   msgRqst = this.queMsgRequests.take();
@@ -949,14 +967,20 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#poll()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll()
      */
     @Override
     public IngestDataRequest poll() throws IllegalStateException {
 
         // Check state
-        if (!this.bolActive && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
+        if (!this.bolActive && this.queMsgRequests.isEmpty()) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.";
+            
+            if (BOL_LOGGING)
+                LOGGER.warn(strMsg);
+            
+            throw new IllegalStateException(strMsg);
+        }
         
         try {
             IngestDataRequest   msgRqst = this.queMsgRequests.poll();
@@ -980,15 +1004,21 @@ public class IngestionDataBuffer implements IResourceConsumer<IngestDataRequest>
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
      */
     @Override
     public IngestDataRequest poll(long cntTimeout, TimeUnit tuTimeout)
             throws IllegalStateException, InterruptedException {
         
         // Check state
-        if (!this.bolActive && this.queMsgRequests.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
+        if (!this.bolActive && this.queMsgRequests.isEmpty()) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.";
+            
+            if (BOL_LOGGING)
+                LOGGER.warn(strMsg);
+            
+            throw new IllegalStateException(strMsg);
+        }
         
         try {
             IngestDataRequest   msgRqst = this.queMsgRequests.poll(cntTimeout, tuTimeout);

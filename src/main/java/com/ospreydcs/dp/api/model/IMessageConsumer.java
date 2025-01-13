@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IResourceConsumer.java
+ * File:	IMessageConsumer.java
  * Package: com.ospreydcs.dp.api.ingest.model
- * Type: 	IResourceConsumer
+ * Type: 	IMessageConsumer
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -25,13 +25,14 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest.model;
+package com.ospreydcs.dp.api.model;
 
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
 
+import com.google.protobuf.GeneratedMessage;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 
 /**
@@ -51,11 +52,11 @@ import com.ospreydcs.dp.api.ingest.IngestionFrame;
  * @since Jul 25, 2024
  *
  */
-public interface IResourceConsumer<T> {
+public interface IMessageConsumer<T extends GeneratedMessage> {
 
     /**
      * <p>
-     * Activates the conumer of <code>T</code> resources.
+     * Activates the consumer of <code>T</code> resources.
      * </p>
      * <p>
      * After invoking this method the consumer instance is ready for resource acceptance and
@@ -108,7 +109,7 @@ public interface IResourceConsumer<T> {
     
     /**
      * <p>
-     * Offers the given list of resource to the consumer with the possibility of blocking.
+     * Offers the given list of Protocol Buffers messages to the consumer with the possibility of blocking.
      * </p>
      * <p>
      * This operation is intended to offer the capability of blocking if the consumer is not in
@@ -116,16 +117,17 @@ public interface IResourceConsumer<T> {
      * queue is at capacity the consumer may choose to block until queue space becomes available.
      * </p>
      *  
-     * @param lstRscs     list of resources to be consumed
+     * @param lstMsgs     list of messages to be consumed
      * 
      * @throws IllegalStateException    consumer is not accepting resources 
      * @throws InterruptedException     the process was interrupted while waiting for resources to be accepted
      */
-    public void offer(List<T> lstRscs) throws IllegalStateException, InterruptedException;
+    public void offer(List<T> lstMsgs) throws IllegalStateException, InterruptedException;
     
     /**
      * <p>
-     * Offers the given list of resources to the consumer with the possibility of blocking until the given timeout.
+     * Offers the given list of Protocol Buffers messages to the consumer with the possibility of blocking until 
+     * the given timeout.
      * </p>
      * <p>
      * This operation is intended to offer the capability of blocking if the consumer is not in
@@ -135,7 +137,7 @@ public interface IResourceConsumer<T> {
      * a given timeout limit is specified after which the operation fails return a value <code>false</code>
      * </p>
      * 
-     * @param lstRsrcs      list of resources to be consumed
+     * @param lstMsgs       list of messages to be consumed
      * @param lngTimeout    timeout limit to wait for consumer acceptance
      * @param tuTimeout     timeout units to wait for consumer acceptance
      * 
@@ -144,7 +146,7 @@ public interface IResourceConsumer<T> {
      * @throws IllegalStateException    consumer is not accepting resources 
      * @throws InterruptedException the process was interrupted while waiting for resources to be accepted
      */
-    public boolean  offer(List<T> lstRsrcs, long lngTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException;
+    public boolean  offer(List<T> lstMsgs, long lngTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException;
 
     /**
      * <p>
@@ -158,8 +160,7 @@ public interface IResourceConsumer<T> {
      * </p>
      * <p>
      * This method will block until all currently executing processing tasks have finished.
-     * The queue of ingestion request messages may still contain available messages
-     * however. 
+     * The queue of <code>T</code> messages may still contain available messages however. 
      * 
      * @return <code>true</code> if the message supplier was shutdown,
      *         <code>false</code> if the message supplier was not active or shutdown operation failed to complete
@@ -194,31 +195,31 @@ public interface IResourceConsumer<T> {
     
     /**
      * <p>
-     * Default convenience operation for offering a single <code>T</code> type resource instance.
+     * Default convenience operation for offering a single <code>T</code> type message instance.
      * </p>
      * <p>
      * The argument is converted to a single-element list then deferred to <code>{@link #offer(List)}</code>.
      * </p>
      * 
-     * @param rsrc         resource instance to be consumed
+     * @param msg         message instance to be consumed
      * 
      * @throws InterruptedException the process was interrupted while waiting for resource to be accepted
      * 
      * @see {@link #offer(List)}
      */
-    default void offer(T rsrc) throws InterruptedException {
-        this.offer(List.of(rsrc));
+    default void offer(T msg) throws InterruptedException {
+        this.offer(List.of(msg));
     }
     
     /**
      * <p>
-     * Default convenience operation for offering a single <code>T</code> type resource instance with timeout limit.
+     * Default convenience operation for offering a single <code>T</code> type message instance with timeout limit.
      * </p>
      * <p>
      * The argument is converted to a single-element list then deferred to <code>{@link #offer(List, long, TimeUnit)}</code>.
      * </p>
      * 
-     * @param rsrc          resource instance to be consumed
+     * @param msg          message instance to be consumed
      * 
      * @param lngTimeout    timeout limit to wait for consumer acceptance
      * @param tuTimeout     timeout units to wait for consumer acceptance
@@ -227,16 +228,16 @@ public interface IResourceConsumer<T> {
      * 
      * @throws InterruptedException the process was interrupted while waiting for resource to be accepted
      */
-    default boolean offer(T rsrc, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException {
-        return this.offer(List.of(rsrc), lngTimeout, tuTimeout);
+    default boolean offer(T msg, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException {
+        return this.offer(List.of(msg), lngTimeout, tuTimeout);
     }
     
     /**
      * <p>
-     * Default convenience operation allowing resource supplier to pre-process resource before acceptance.
+     * Default convenience operation allowing message supplier to pre-process message before consuming.
      * </p>
      * <p>
-     * This method is intended for fast pre-processing of resources before acceptance, primarily the setting of properties,
+     * This method is intended for fast pre-processing of messages before offering, primarily the setting of properties,
      * attributes, and identifiers.  
      * For example, in the case of <code>T = IngestionFrame</code> the operation could set the provider UID of the ingestion
      * frame before it is given to the consumer.  In that case the <code>UnaryOperator</code> argument can be
@@ -257,17 +258,17 @@ public interface IResourceConsumer<T> {
      * </p> 
      *  
      * @param fncProcess    the pre-processing operation to be performed on all resources before submission 
-     * @param lstRsrcs      list of resource instances to be processed then consumed
+     * @param lstMsgs       list of message instances to be processed then consumed
      * 
      * @throws InterruptedException the process was interrupted while waiting for resources to be accepted
      * 
      * @see #offer(List)
      */
-    default public void processThenOffer(UnaryOperator<T> fncProcess, List<T> lstRsrcs) 
+    default public void processThenOffer(UnaryOperator<T> fncProcess, List<T> lstMsgs) 
             throws InterruptedException {
 
         // Pre-process all resources in the given list with the given processing function
-        List<T> lstPrcdFrms = lstRsrcs
+        List<T> lstPrcdFrms = lstMsgs
                 .stream()
                 .<T>map(frame -> fncProcess.apply(frame))
                 .toList();
@@ -278,11 +279,11 @@ public interface IResourceConsumer<T> {
     
     /**
      * <p>
-     * Default convenience operation allowing resource supplier to pre-process resources before acceptance and
+     * Default convenience operation allowing message supplier to pre-process messages before consuming and
      * providing a timeout limit for acceptance.
      * </p>
      * <p>
-     * This method is intended for fast pre-processing of resources, primarily the setting of properties,
+     * This method is intended for fast pre-processing of messages, primarily the setting of properties,
      * attributes, and identifiers.  
      * For example, in the <code>T = IngestionFrame</code> the operation could set the provider UID of the ingestion
      * frame before it is given to the consumer.  In that case the <code>UnaryOperator</code> argument can be
@@ -303,7 +304,7 @@ public interface IResourceConsumer<T> {
      * </p> 
      * 
      * @param fncProcess    the pre-processing operation to be performed on all frames before submission 
-     * @param lstRscs       list of resource instances to be processed then consumed
+     * @param lstMsgs       list of message instances to be processed then consumed
      * @param lngTimeout    timeout limit to wait for consumer acceptance
      * @param tuTimeout     timeout units to wait for consumer acceptance
      * 
@@ -313,11 +314,11 @@ public interface IResourceConsumer<T> {
      * 
      * @see #offer(IngestionFrame, long, TimeUnit)
      */
-    default public boolean processThenOffer(UnaryOperator<T> fncProcess, List<T> lstRscs, long lngTimeout, TimeUnit tuTimeout) 
+    default public boolean processThenOffer(UnaryOperator<T> fncProcess, List<T> lstMsgs, long lngTimeout, TimeUnit tuTimeout) 
                     throws InterruptedException {
         
         // Pre-process all resources in the given list with the given processing function
-        List<T> lstPrcdFrms = lstRscs
+        List<T> lstPrcdFrms = lstMsgs
                 .stream()
                 .<T>map(frame -> fncProcess.apply(frame))
                 .toList();
@@ -328,24 +329,24 @@ public interface IResourceConsumer<T> {
     
     /**
      * <p>
-     * Default convenience operation allowing a consumer to pre-process a single resource instance before acceptance.
+     * Default convenience operation allowing a supplier to pre-process a single message instance before consuming.
      * </p>
      * <p>
      * The argument is converted to a single-element list then deferred to <code>{@link #processThenoffer(List)}</code>.
      * </p>
      * 
      * @param fncProcess    the pre-processing operation to be performed on all frames before submission 
-     * @param rsrc          resource instance to be processed and consumed
+     * @param msg           resource instance to be processed and consumed
      * 
      * @throws InterruptedException the process was interrupted while waiting for resource to be accepted
      */
-    default void processThenOffer(UnaryOperator<T> fncProcess, T rsrc) throws InterruptedException {
-        this.processThenOffer(fncProcess, List.of(rsrc));
+    default void processThenOffer(UnaryOperator<T> fncProcess, T msg) throws InterruptedException {
+        this.processThenOffer(fncProcess, List.of(msg));
     }
     
     /**
      * <p>
-     * Default convenience operation allowing a consumer to pre-process a single resource instance before acceptance 
+     * Default convenience operation allowing a consumer to pre-process a single resource instance before consuming
      * with timeout.
      * </p>
      * <p>
@@ -353,7 +354,7 @@ public interface IResourceConsumer<T> {
      * </p>
      * 
      * @param fncProcess    the pre-processing operation to be performed on all frames before submission 
-     * @param rsrc          resource instance to be processed and consumed
+     * @param msg           message instance to be processed and consumed
      * @param lngTimeout    timeout limit to wait for consumer acceptance
      * @param tuTimeout     timeout units to wait for consumer acceptance
      * 
@@ -363,7 +364,7 @@ public interface IResourceConsumer<T> {
      * 
      * @see #processThenOffer(UnaryOperator, List, long, TimeUnit)
      */
-    default boolean processThenOffer(UnaryOperator<T> fncProcess, T rsrc, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException {
-        return this.processThenOffer(fncProcess, List.of(rsrc), lngTimeout, tuTimeout);
+    default boolean processThenOffer(UnaryOperator<T> fncProcess, T msg, long lngTimeout, TimeUnit tuTimeout) throws InterruptedException {
+        return this.processThenOffer(fncProcess, List.of(msg), lngTimeout, tuTimeout);
     }
 }
