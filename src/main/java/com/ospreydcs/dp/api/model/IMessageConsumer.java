@@ -156,14 +156,13 @@ public interface IMessageConsumer<T extends GeneratedMessage> {
      * This method is available for producers of <code>T</code> resources to signal a "completion" event
      * and that no more resources will be offered.
      * After invoking this method all internal consumption processing tasks are allowed to finish 
-     * but no new <code>T</code> resources will be accepted.  
+     * but no new <code>T</code> resources will be accepted.  Specifically, the <code>{@link #isAccepting()}</code>
+     * method will returned <code>false</code> internal processing should be allowed to continue.
      * </p>
      * <p>
      * This method will block until all currently executing processing tasks have finished.
      * The queue of <code>T</code> messages may still contain available messages however. 
-     * 
-     * @return <code>true</code> if the message supplier was shutdown,
-     *         <code>false</code> if the message supplier was not active or shutdown operation failed to complete
+     * </p> 
      * <p>
      * To force a hard shutdown of the resource consumer where all internal processing is immediately terminated 
      * and any remaining (uncompleted) products are discarded use method <code>#shutdownNow()</code>.  
@@ -172,7 +171,7 @@ public interface IMessageConsumer<T extends GeneratedMessage> {
      * @return <code>true</code> if the consumer was successfully shutdown,
      *         <code>false</code> if the consumer was not active or shutdown operation failed
      * 
-     * @throws InterruptedException interrupted while waiting for processing threads to complete
+     * @throws InterruptedException interrupted while waiting for all messages to be consumed
      */
     public boolean  shutdown() throws InterruptedException;
     

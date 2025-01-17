@@ -43,7 +43,6 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.IMessageConsumer;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
@@ -62,6 +61,25 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  */
 public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessageSupplier<QueryData> {
 
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new instance of <code>QueryMessageBuffer</code>.
+     * </p>
+     * <p>
+     * Returned instance is an infinite-capacity message buffer tailored to Query Service request
+     * collection from multiple data streams and consumption and further processing.
+     * </p>
+     * 
+     * @return  a new <code>QueryMessageBuffer</code> ready for message collection and distribution
+     */
+    public static QueryMessageBuffer    create() {
+        return new QueryMessageBuffer();
+    }
     
     //
     // Application Resources
@@ -95,8 +113,8 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     private final BlockingQueue<QueryData>  queMsgBuffer = new LinkedBlockingQueue<>();
 
     
-    /** Synchronization lock for memory allocation updates */
-    private final Object            objLock = new Object();
+//    /** Synchronization lock for memory allocation updates */
+//    private final Object            objLock = new Object();
     
     
     /** The message queue buffer empty lock */

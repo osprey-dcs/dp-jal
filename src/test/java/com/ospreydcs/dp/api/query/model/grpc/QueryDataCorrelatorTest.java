@@ -152,7 +152,7 @@ public class QueryDataCorrelatorTest {
     public final void testGetTargetSet() {
 
         // Create new processor and add data stream
-        QueryDataCorrelator prcrTest = QueryDataCorrelator.newInstance();
+        QueryDataCorrelator prcrTest = QueryDataCorrelator.create();
         
         // Get the empty processed data set and try to verify
         SortedSet<CorrelatedQueryData>  setPrcdData = prcrTest.getCorrelatedSet();
@@ -169,7 +169,7 @@ public class QueryDataCorrelatorTest {
         List<QueryDataResponse>  lstRsps = LST_QUERY_RSP;
         
         // Create new processor and add data stream
-        QueryDataCorrelator prcrTest = QueryDataCorrelator.newInstance();
+        QueryDataCorrelator prcrTest = QueryDataCorrelator.create();
         
         try {
             for (QueryDataResponse msgRsp : lstRsps) 

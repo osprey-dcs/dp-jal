@@ -39,33 +39,75 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.google.protobuf.GeneratedMessage;
-import com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**
  * <p>
- * Ingestion message transmission staging buffer and data stream throttling tool.
+ * Protocol Buffers message staging buffer and data stream throttling tool based upon buffer capacity.
  * </p>
  * <p>
- * Class instances act as buffers for producers of <code>IngestDataRequest</code> messages where such produces
- * can stage their output before transmission to the Ingestion Service.  Thus, instances act as a buffering queue
- * to mitigate any spikes in ingestion frame processing and maintain a smooth data flow to the Ingestion Service.
- * Class also implements "back pressure" throttling for the suppliers of processed <code>IngestDataRequest</code> 
- * messages and the consumer utilizing the <code>IMessageSupplier&lt;IngestDataRequest&gt;</code> interface
- * (presumably a channel to the Ingestion Service).  
+ * Class instances act as buffers for producers of <code>T</code> messages which are presented the
+ * <code>IMessageConsumer</code> interface.  Produces can stage their output messages for consumption
+ * by <code>T</code> message consumers which are offered the <code>IMessageSupplier</code> interface.
+ * (Note that <code>T</code> produces utilize the <code>IMessageConsumer</code> interface operations 
+ * while <code>T</code> consumers use the <code>IMessageSupplier</code> interface operations.)
+ * </p>
+ * <p>  
+ * There are essentially 4 functions for class instances:
+ * <ol>
+ * <li>
+ * Universal collection point - Class instances can act as a common collection point for <code>T</code> 
+ * messages through the <code>IMessageConsumer&lt;T&gt;</code> interface.  Multiple clients can supply
+ * <code>T</code> messages to the message buffer.
+ * </li>
+ * <li>
+ * Universal supply point - Class instances can act as a common supply for <code>T</code> messages
+ * through the <code>IMessageSupplier&lt;T&gt;</code> interface.  Multiple clients can consume
+ * <code>T</code> messages from the message buffer.
+ * </li>
+ * <li>
+ * Flow control - The class acts as a buffering queue to mitigate any spikes in the data flow of generic 
+ * Protocol Buffers <code>T</code> type messages, maintaining a smooth data flow from producer to consumer.
+ * </li>
+ * <li>
+ * Message throttling - The class provides "back pressure," or "message throttling" for the suppliers of <code>T</code> 
+ * messages whenever the consumer utilizing the <code>IMessageSupplier&lt;T&gt;</code> interface
+ * falls behind.  
+ * </li>
+ * </ol>
+ * </p>
+ * <p>
+ * <h2>Thread Safety</h2>
+ * All operations should be thread safe.  Many are explicitly synchronized.  Thus, the generic implementation
+ * may not be as efficient as a concrete implementation as performance is chosen over safety.
+ * </p>
+ * <p>
+ * <h2>Flow Control</h2>
+ * One significant use for class instances is message flow control between a producer and consumer.  
+ * With spikes at the producer end can be absorbed by the message buffer allowing the consumer of 
+ * <code>T</code> message to continue at its natural rate.  Additionally, the <code>ProtoMessageBuffer</code> 
+ * class allows clients to set a finite capacity which will block over-active producers if consumers
+ * fall behind, we call this condition "message throttling", or "back pressure." 
  * </p>
  * <p>
  * <h2>Message Throttling</h2>
- * Back pressure, or "throttling", is enforced in a message based fashion.  Specifically, a class instance 
- * can emulate a finite-capacity message buffer (although it is not implemented as such).  Thus, if the 
- * buffer fills to capacity with <code>IngestDataRequest</code> messages, it will not accept additional
- * messages until the buffer drops below capacity due to the activity of message consumers using the back-end
- * <code>IMessageSupplier&lt;IngestDataRequest&gt;</code> interface.
+ * Back pressure, or "message throttling", is enforced in a message based fashion.  Specifically, a class 
+ * instance can emulate a finite-capacity message buffer (although it is not implemented as such).  Thus, if the 
+ * buffer fills to capacity with <code>T</code> messages, it will not accept additional
+ * messages until the buffer size drops below capacity (i.e., due to the activity of message consumers).
+ * There are various configuration methods for enabling/disabling back pressure and setting the queue capacity.
+ * Additionally, there are methods for clients to block on the "queue ready" condition (i.e., the queue drops
+ * below capacity) and the queue empty condition. 
  * </p>
  * <p>
- * For an allocation-based back-pressure implementation see <code>{@link IngestionDataBuffer}</code>.
+ * Note that the back pressure is enforced in a message-based fashion; specifically, message throttling occurs
+ * whenever the number of messages in the buffer increases beyond capacity, regardless of the total memory 
+ * allocation within the buffer.  For an allocation-based back-pressure implementation see 
+ * <code>{@link ProtoMemoryBuffer}</code>.
  * </p>
+ * 
+ * @param   <T>     Protocol Buffers message type
  *
  * @author Christopher K. Allen
  * @since Jul 23, 2024
@@ -106,7 +148,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * Event logging is enabled.
      * </p>
      * 
-     * @param szQueueCapacity     capacity of the message queue buffer
+     * @param szMaxQueCapacity     capacity of the message queue buffer
      * 
      * @return  new <code>ProtoMessageBuffer</code> instance ready for activation
      */
@@ -122,7 +164,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * Event logging is enabled.
      * </p>
      * 
-     * @param szQueueCapacity   capacity of the message queue buffer
+     * @param szMaxQueCapacity   capacity of the message queue buffer
      * @param bolBackPressure   enable/disable back pressure (implicit throttling) at <code>{@link #offer(List)}</code>
      * 
      * @return  new <code>ProtoMessageBuffer</code> instance ready for activation
@@ -139,7 +181,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * Event logging is enabled.
      * </p>
      * 
-     * @param szQueueCapacity   capacity of the message queue buffer
+     * @param szMaxQueCapacity   capacity of the message queue buffer
      * @param bolBackPressure   enable/disable back pressure (implicit throttling) at <code>{@link #offer(List)}</code>
      * @param bolLogging        enable/disable event logging
      * 
@@ -158,7 +200,6 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
     private static final Logger     LOGGER = LogManager.getLogger();
     
     
-    
     //
     // Configuration Parameters
     //
@@ -169,15 +210,13 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
     /** Exert back pressure on clients (from frame buffer) enabled flag */
     private boolean bolBackPressure; 
     
-    /** The capacity of the outgoing message queue (i.e., when back pressure is active) */ 
-    private int     szQueueCapacity; 
+    /** The maximum capacity of the outgoing message queue (i.e., when back pressure is active) */ 
+    private int     szMaxQueCapacity; 
     
 
-    
     //
     // Instance Resources
     //
-    
     
     /** The buffer of messages used for staging before consumption */
     private final BlockingQueue<T>  queMsgBuffer = new LinkedBlockingQueue<>();
@@ -261,7 +300,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * @param bolLogging        enable/disable event logging
      */
     public ProtoMessageBuffer(int szQueCapacity, boolean bolBackPressure, boolean bolLogging) {
-        this.szQueueCapacity = szQueCapacity;
+        this.szMaxQueCapacity = szQueCapacity;
         this.bolBackPressure = bolBackPressure;
         this.bolLogging = bolLogging;
     }
@@ -313,12 +352,12 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * competing threads.
      * </p>
      * 
-     * @param szQueueCapacity  capacity of message buffer before back-pressure blocking
+     * @param szMaxQueCapacity  capacity of message buffer before back-pressure blocking
      */
     synchronized 
     public void enableBackPressure(int szQueueCapacity) {
         this.bolBackPressure = true;
-        this.szQueueCapacity = szQueueCapacity;
+        this.szMaxQueCapacity = szQueueCapacity;
     }
     
     /**
@@ -377,11 +416,11 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * <code>{@link #enableBackPressure(int)}</code>.
      * </p>
      * 
-     * @param szQueueCapacity  capacity of message buffer before back-pressure blocking
+     * @param szMaxQueCapacity  capacity of message buffer before back-pressure blocking
      */
     synchronized
-    public void setQueueCapcity(int szQueueCapacity) {
-        this.szQueueCapacity = szQueueCapacity;
+    public void setMaxQueueCapcity(int szQueueCapacity) {
+        this.szMaxQueCapacity = szQueueCapacity;
     }
     
     
@@ -407,13 +446,13 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
     
     /**
      * <p>
-     * Returns the current maximum message capacity of the request message queue buffer.
+     * Returns the current maximum message capacity of the message queue buffer.
      * </p>
      * 
      * @return  the capacity of the queue buffer before throttling is invoking
      */
-    public int  getQueueCapacity() {
-        return this.szQueueCapacity;
+    public int  getMaxQueueCapacity() {
+        return this.szMaxQueCapacity;
     }
     
     /**
@@ -421,7 +460,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * Returns the current size of the queue buffer.
      * </p>
      * <p>
-     * Returns the number of request messages in the queue buffer at the time of invocation.  Note that this
+     * Returns the number of messages in the queue buffer at the time of invocation.  Note that this
      * is inherently a dynamic quantity.
      * </p>
      *  
@@ -499,14 +538,14 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
         this.lckMsgQueReady.lock();
         try {
             // Return immediately if the queue is not at capacity
-            if (this.queMsgBuffer.size() < this.szQueueCapacity)
+            if (this.queMsgBuffer.size() < this.szMaxQueCapacity)
                 return;
             
             else {
                 
                 // Log event
                 if (bolLogging)
-                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getMethodName(), this.queMsgBuffer.size(), this.szQueueCapacity);
+                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getMethodName(), this.queMsgBuffer.size(), this.szMaxQueCapacity);
             
                 // Wait for queue ready signal
                 this.cndMsgQueReady.await();
@@ -790,11 +829,11 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
         // Enforce back-pressure to the client if processed frame queue is full 
         this.lckMsgQueReady.lock();
         try {
-            if (this.queMsgBuffer.size() >= this.szQueueCapacity) {
+            if (this.queMsgBuffer.size() >= this.szMaxQueCapacity) {
              
                 // Log event
                 if (bolLogging)
-                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getMethodName(), this.queMsgBuffer.size(), this.szQueueCapacity);
+                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getMethodName(), this.queMsgBuffer.size(), this.szMaxQueCapacity);
             
                 // Wait for queue ready signal
                 this.cndMsgQueReady.await();  // throws InterruptedException
@@ -869,11 +908,11 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
         try {
             boolean bolResult = false;
             
-            if (this.queMsgBuffer.size() >= this.szQueueCapacity) {
+            if (this.queMsgBuffer.size() >= this.szMaxQueCapacity) {
              
                 // Log event
                 if (bolLogging)
-                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getMethodName(), this.queMsgBuffer.size(), this.szQueueCapacity);
+                    LOGGER.info("{}: Blocking on queue size {} > capacity {} (back pressure event).", JavaRuntime.getMethodName(), this.queMsgBuffer.size(), this.szMaxQueCapacity);
             
                 // Wait for queue ready signal
                 this.cndMsgQueReady.await(lngTimeout, tuTimeout);  // throws InterruptedException
@@ -913,6 +952,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * @see com.ospreydcs.dp.api.model.IMessageSupplier#isSupplying()
      */
     @Override
+    synchronized
     public boolean isSupplying() {
         return this.bolActive || !this.queMsgBuffer.isEmpty();
     }
@@ -1012,7 +1052,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
         // Signal any threads blocking on the queue ready condition
         this.lckMsgQueReady.lock();
         try {
-            if (this.queMsgBuffer.size() < this.szQueueCapacity)
+            if (this.queMsgBuffer.size() < this.szMaxQueCapacity)
                 this.cndMsgQueReady.signalAll();
             
         } finally {

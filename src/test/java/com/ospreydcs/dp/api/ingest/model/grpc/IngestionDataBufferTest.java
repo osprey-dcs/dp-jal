@@ -172,7 +172,7 @@ public class IngestionDataBufferTest {
         IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity);
         
         Assert.assertNotEquals(null, buffer);
-        Assert.assertEquals(szCapacity, buffer.getQueueCapacity());
+        Assert.assertEquals(szCapacity, buffer.getMaxQueueAllocation());
         Assert.assertFalse(buffer.isSupplying());
     }
 
@@ -189,7 +189,7 @@ public class IngestionDataBufferTest {
         IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
         
         Assert.assertNotEquals(null, buffer);
-        Assert.assertEquals(szCapacity, buffer.getQueueCapacity());
+        Assert.assertEquals(szCapacity, buffer.getMaxQueueAllocation());
         Assert.assertEquals(bolBackPressure, buffer.hasBackPressure());
         Assert.assertFalse(buffer.isSupplying());
     }
@@ -208,9 +208,9 @@ public class IngestionDataBufferTest {
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
-        Assert.assertNotEquals(szCapacity, buffer.getQueueCapacity());
+        Assert.assertNotEquals(szCapacity, buffer.getMaxQueueAllocation());
         buffer.setQueueCapcity(szCapacity);
-        Assert.assertEquals(szCapacity, buffer.getQueueCapacity());
+        Assert.assertEquals(szCapacity, buffer.getMaxQueueAllocation());
     }
 
     /**

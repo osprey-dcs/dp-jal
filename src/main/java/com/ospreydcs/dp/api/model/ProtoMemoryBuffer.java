@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionDataBuffer.java
- * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionDataBuffer
+ * File:	ProtoMemoryBuffer.java
+ * Package: com.ospreydcs.dp.api.model
+ * Type: 	ProtoMemoryBuffer
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -20,12 +20,12 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jul 28, 2024
+ * @since Jul 23, 2024
  *
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.ingest.model.grpc;
+package com.ospreydcs.dp.api.model;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -38,129 +38,168 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
-import com.ospreydcs.dp.api.model.IMessageSupplier;
-import com.ospreydcs.dp.api.model.IMessageConsumer;
+import com.google.protobuf.GeneratedMessage;
+import com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**
  * <p>
- * Ingestion message transmission staging buffer and data stream throttling tool.
+ * Protocol Buffers message allocation staging buffer and data stream throttling tool based upon memory allocation.
  * </p>
  * <p>
- * Class instances act as buffers for producers of <code>IngestDataRequest</code> messages where such produces
- * can stage their output before transmission to the Ingestion Service.  Thus, instances act as a buffering queue
- * to mitigate any spikes in ingestion frame processing and maintain a smooth data flow to the Ingestion Service.
- * Class also implements "back pressure" throttling for the suppliers of processed <code>IngestDataRequest</code> 
- * messages and the consumer utilizing the <code>IMessageSupplier&lt;IngestDataRequest&gt;</code> interface 
- * (presumably a channel to the Ingestion Service).  
+ * Class instances act as buffers for producers of <code>T</code> messages which are presented the
+ * <code>IMessageConsumer</code> interface.  Produces can stage their output messages for consumption
+ * by <code>T</code> message consumers which are offered the <code>IMessageSupplier</code> interface.
+ * (Note that <code>T</code> produces utilize the <code>IMessageConsumer</code> interface operations 
+ * while <code>T</code> consumers use the <code>IMessageSupplier</code> interface operations.)
+ * </p>
+ * <p>  
+ * There are essentially 4 functions for class instances:
+ * <ol>
+ * <li>
+ * Universal collection point - Class instances can act as a common collection point for <code>T</code> 
+ * messages through the <code>IMessageConsumer&lt;T&gt;</code> interface.  Multiple clients can supply
+ * <code>T</code> messages to the message buffer.
+ * </li>
+ * <li>
+ * Universal supply point - Class instances can act as a common supply for <code>T</code> messages
+ * through the <code>IMessageSupplier&lt;T&gt;</code> interface.  Multiple clients can consume
+ * <code>T</code> messages from the message buffer.
+ * </li>
+ * <li>
+ * Flow control - The class acts as a buffering queue to mitigate any spikes in the data flow of generic 
+ * Protocol Buffers <code>T</code> type messages, maintaining a smooth data flow from producer to consumer.
+ * </li>
+ * <li>
+ * Message throttling - The class provides "back pressure," or "message throttling" for the suppliers of <code>T</code> 
+ * messages whenever the consumer utilizing the <code>IMessageSupplier&lt;T&gt;</code> interface
+ * falls behind.  Throttling is based upon the total memory allocation within the message buffer. 
+ * </li>
+ * </ol>
+ * </p>
+ * <p>
+ * <h2>Thread Safety</h2>
+ * All operations should be thread safe.  Many are explicitly synchronized.  Thus, the generic implementation
+ * may not be as efficient as a concrete implementation as performance is chosen over safety.
+ * </p>
+ * <p>
+ * <h2>Flow Control</h2>
+ * One significant use for class instances is message flow control between a producer and consumer.  
+ * With spikes at the producer end can be absorbed by the message buffer allowing the consumer of 
+ * <code>T</code> message to continue at its natural rate.  Additionally, the <code>ProtoMemoryBuffer</code> 
+ * class allows clients to set a finite capacity which will block over-active producers if consumers
+ * fall behind, we call this condition "message throttling", or "back pressure." 
  * </p>
  * <p>
  * <h2>Message Throttling</h2>
- * Back pressure, or "throttling", is enforced in a data-allocation based fashion.  Specifically, a class instance 
- * can emulate a finite-capacity data buffer.  That is, rather than being message-based the buffer is capacity limited
- * in the amount of memory allocation it can hold.  
- * If the buffer fills to memory-allocation capacity with <code>IngestDataRequest</code> messages, it will not accept 
- * additional messages until the buffer drops below capacity due to the activity of message consumers using the back-end
- * <code>IMessageSupplier&lt;IngestDataRequest&gt;</code> interface.
+ * Back pressure, or "message throttling", is enforced based upon the memory allocated within the queue buffer.  
+ * Specifically, a class 
+ * instance can emulate a finite-capacity data buffer (although it is not implemented as such).  Thus, if the 
+ * buffer fills to capacity <em>data</em> within the <code>T</code> messages, it will not accept additional
+ * messages until the memory allocation drops below capacity (i.e., due to the activity of message consumers).
+ * There are various configuration methods for enabling/disabling back pressure and setting the queue capacity.
+ * Additionally, there are methods for clients to block on the "queue ready" condition (i.e., the queue drops
+ * below capacity) and the queue empty condition. 
  * </p>
  * <p>
- * For an message-based back-pressure implementation see <code>{@link IngestionMessageBuffer}</code>.
+ * Note that the back pressure is enforced in a memory allocation fashion; specifically, message throttling occurs
+ * whenever the memory allocation within the buffer increases beyond capacity, regardless of the total number of 
+ * messages within the buffer.  For a message-based back-pressure implementation see 
+ * <code>{@link ProtoMessageBuffer}</code>.
  * </p>
+ * <p>
+ * <h2>WARNING:</h2>
+ * There is significant additional processing to determine the memory allocation within the queue buffer.  Specifically,
+ * the memory allocation of each message entering the queue must be computed and monitored, along with each message 
+ * leaving the queue (i.e., using <code>{@link GeneratedMessage#getSerializedSize()}</code>). If the situation
+ * allows a message-based queue capacity throttling, or no throttling at all, consider using the
+ * <code>ProtoMessageBuffer</code> class.
+ * </p>
+ * 
+ * @param   <T>     Protocol Buffers message type
  *
  * @author Christopher K. Allen
- * @since Jul 28, 2024
+ * @since Jul 23, 2024
  *
  */
-public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>, IMessageSupplier<IngestDataRequest> {
+public class ProtoMemoryBuffer<T extends GeneratedMessage> implements IMessageConsumer<T>, IMessageSupplier<T> {
 
     
     //
     // Creators
     //
-    
-    /**
-     * <p>
-     * Creates a new instance of <code>IngestionDataBuffer</code> with default parameters.
-     * </p>
-     * <p>
-     * Ingestion message queue buffer memory allocation capacity and back-pressure enforcement is taken 
-     * from the default values of the API library configuration.
-     * </p>
-     *
-     * @return  a new ingestion data buffer ready for operation
-     * 
-     * @see #LNG_MAX_ALLOC
-     * @see #BOL_BUFFER_BACKPRESSURE
-     */
-    public static IngestionDataBuffer  create() { 
-        return new IngestionDataBuffer();
-    }
-    
-    /**
-     * <p>
-     * Creates a new instance of <code>IngestionDataBuffer</code> with the given queue buffer max allocation.
-     * </p>
-     * <p>
-     * Back-pressure enforcement is taken from the default values of the API library configuration
-     * </p>
-     *
-     * @param szQueueCapacity     maximum memory allocation capacity of queue buffer
-     *
-     * @return  a new ingestion data buffer ready for operation
-     */
-    public static IngestionDataBuffer   create(long szQueueCapacity) {
-        return new IngestionDataBuffer(szQueueCapacity);
-    }
-    
-    /**
-     * <p>
-     * Creates a new instance of <code>IngestionDataBuffer</code> initialized with the given parameters.
-     * </p>
-     *
-     * @param szQueueCapacity   maximum memory allocation capacity of queue buffer
-     * @param bolBackPressure   enforce back pressure (implicit throttling) at <code>{@link #offer(List)}</code>
-     * 
-     * @return  a new ingestion data buffer ready for operation
-     */
-    public static IngestionDataBuffer   create(long szQueueCapacity, boolean bolBackPressure) {
-        return new IngestionDataBuffer(szQueueCapacity, bolBackPressure);
-    }
-    
-    
-    
-    //
-    // Application Resources
-    //
-    
-    /** The Ingestion Service client API default configuration */
-    private static final DpIngestionConfig  CFG_DEFAULT = DpApiConfig.getInstance().ingest; 
-    
-    
-    //
-    // Class Constants - Default Values
-    //
-    
-    /** Is logging active */
-    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
 
+    /**
+     * <p>
+     * Creates a new instance of <code>ProtoMemoryBuffer</code> with all default parameters.
+     * </p>
+     * <p>
+     * The message buffer has the following configuration:
+     * <ul>
+     * <li>Logging - enabled.</li>
+     * <li>Back pressure - disabled.</li>
+     * <li>Queue capacity - unlimited.</li>
+     * </ul>
+     * </p>
+     * 
+     * @return  new <code>ProtoMemoryBuffer</code> instance ready for activation
+     */
+    public static <T extends GeneratedMessage> ProtoMemoryBuffer<T> create() {
+        return new ProtoMemoryBuffer<T>();
+    }
     
-//    /** Size of the ingestion frame queue buffer - used to create default maximum capacity allocation */
-//    private static final Integer    INT_BUFFER_SIZE = CFG_DEFAULT.stream.buffer.size;
-//    
-//    /** Size of the maximum allowable ingestion frame - used to create default maximum capacity allocation */
-//    private static final Integer    INT_MAX_FRAME_SIZE = CFG_DEFAULT.decompose.maxSize;
+    /**
+     * <p>
+     * Creates a new instance of <code>ProtoMemoryBuffer</code> with the given queue buffer capacity and 
+     * back pressure enforcement enabled.
+     * </p>
+     * <p>
+     * Event logging is enabled.
+     * </p>
+     * 
+     * @param szMaxQueAlloc     maximum memory allocation of the message queue buffer
+     * 
+     * @return  new <code>ProtoMemoryBuffer</code> instance ready for activation
+     */
+    public static <T extends GeneratedMessage> ProtoMemoryBuffer<T> create(long szMaxQueAlloc) {
+        return new ProtoMemoryBuffer<T>(szMaxQueAlloc);
+    }
     
-    /** Default maximum memory allocation */
-//    private static final Long       LNG_MAX_ALLOC = (long) (INT_BUFFER_SIZE * INT_MAX_FRAME_SIZE);
-    private static final Long       LNG_MAX_ALLOC = CFG_DEFAULT.stream.buffer.allocation;
+    /**
+     * <p>
+     * Creates a new instance of <code>ProtoMemoryBuffer</code> with the given parameters.
+     * </p>
+     * <p>
+     * Event logging is enabled.
+     * </p>
+     * 
+     * @param szMaxQueAlloc     maximum memory allocation of the message queue buffer
+     * @param bolBackPressure   enable/disable back pressure (implicit throttling) at <code>{@link #offer(List)}</code>
+     * 
+     * @return  new <code>ProtoMemoryBuffer</code> instance ready for activation
+     */
+    public static <T extends GeneratedMessage> ProtoMemoryBuffer<T> create(long szMaxQueAlloc, boolean bolBackPressure) {
+        return new ProtoMemoryBuffer<T>(szMaxQueAlloc, bolBackPressure);
+    }
     
-    
-    /** Allow back pressure to client from queue buffer */
-    private static final Boolean    BOL_BUFFER_BACKPRESSURE = CFG_DEFAULT.stream.buffer.backPressure;
-    
+    /**
+     * <p>
+     * Creates a new instance of <code>ProtoMemoryBuffer</code> with the given parameters.
+     * </p>
+     * <p>
+     * Event logging is enabled.
+     * </p>
+     * 
+     * @param szMaxQueAlloc     maximum memory allocation of the message queue buffer
+     * @param bolBackPressure   enable/disable back pressure (implicit throttling) at <code>{@link #offer(List)}</code>
+     * @param bolLogging        enable/disable event logging
+     * 
+     * @return  new <code>ProtoMemoryBuffer</code> instance ready for activation
+     */
+    public static <T extends GeneratedMessage> ProtoMemoryBuffer<T> create(int szMaxQueAlloc, boolean bolBackPressure, boolean bolLogging) {
+        return new ProtoMemoryBuffer<T>(szMaxQueAlloc, bolBackPressure, bolLogging);
+    }
     
     
     //
@@ -171,26 +210,26 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     private static final Logger     LOGGER = LogManager.getLogger();
     
     
-    
     //
     // Configuration Parameters
     //
     
+    /** Is logging active */
+    private boolean bolLogging;
+
     /** Exert back pressure on clients (from frame buffer) enabled flag */
-    private boolean bolBackPressure; // = BOL_BUFFER_BACKPRESSURE;
+    private boolean bolBackPressure; 
     
-    /** The maximum memory allocation of the outgoing message queue (i.e., when back pressure is active) */ 
-    private long    szMaxQueueAlloc; // = INT_MAX_ALLOC;
+    /** The memory allocation within the outgoing message queue (i.e., when back pressure is active) */ 
+    private long    szMaxQueueAlloc; 
     
 
-    
     //
     // Instance Resources
     //
     
-    
-    /** The buffer of ingestion data used for staging before transmission */
-    private final BlockingQueue<IngestDataRequest>  queMsgRequests = new LinkedBlockingQueue<>();
+    /** The buffer of messages used for staging before consumption */
+    private final BlockingQueue<T>  queMsgBuffer = new LinkedBlockingQueue<>();
     
     
     /** Synchronization lock for memory allocation updates */
@@ -220,58 +259,69 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     /** Current queue memory allocation */
     private long    szQueueAlloc = 0;
     
-    /** Has the supplier been shutdown */
-    private boolean bolShutdown = false;
-  
     
-    
-    //
-    // Constructors
-    //
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionDataBuffer</code> with default parameters.
+     * Constructs a new instance of <code>ProtoMemoryBuffer</code>.
      * </p>
      * <p>
-     * Ingestion message queue buffer memory allocation capacity and back-pressure enforcement is taken 
-     * from the default values of the API library configuration.
+     * The message buffer has the following configuration:
+     * <ul>
+     * <li>Logging - enabled.</li>
+     * <li>Back pressure - disabled.</li>
+     * <li>Queue capacity - unlimited.</li>
+     * </ul>
      * </p>
-     *
-     * @see #LNG_MAX_ALLOC
-     * @see #BOL_BUFFER_BACKPRESSURE
      */
-    public IngestionDataBuffer() {
-        this(LNG_MAX_ALLOC);
+    public ProtoMemoryBuffer() {
+        this(Long.MAX_VALUE, false, true);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionDataBuffer</code> with the given queue buffer max allocation.
+     * Constructs a new instance of <code>ProtoMemoryBuffer</code> with the given queue buffer capacity.
      * </p>
      * <p>
-     * Back-pressure enforcement is taken from the default values of the API library configuration
+     * Back-pressure enforcement is enabled and event logging is enabled.
      * </p>
      *
-     * @param szQueueCapacity     maximum memory allocation capacity of queue buffer
+     * @param szQueueAlloc      maximum memory allocation of the message queue buffer
      */
-    public IngestionDataBuffer(long szQueueCapacity) {
-        this(szQueueCapacity, BOL_BUFFER_BACKPRESSURE);
+    public ProtoMemoryBuffer(long szQueAlloc) {
+        this(szQueAlloc, true, true);
+    }
+    
+    /**
+     * <p>
+     * Constructs a new instance of <code>ProtoMemoryBuffer</code> initialized with the given configuration.
+     * </p>
+     * <p>
+     * Event logging is enabled.
+     * </p>
+     *
+     * @param szQueueAlloc      maximum memory allocation of the message queue buffer
+     * @param bolBackPressure   enable/disable back pressure (implicit throttling) at <code>{@link #offer(List)}</code>
+     */
+    public ProtoMemoryBuffer(long szQueAlloc, boolean bolBackPressure) {
+        this(szQueAlloc, bolBackPressure, true);
     }
 
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionDataBuffer</code> initialized with the given parameters.
+     * Constructs a new instance of <code>ProtoMemoryBuffer</code> initialized with the given configuration.
      * </p>
      *
-     * @param szMaxQueAlloc     maximum memory allocation capacity of queue buffer
-     * @param bolBackPressure   enforce back pressure (implicit throttling) at <code>{@link #offer(List)}</code>
+     * @param szQueueAlloc      maximum memory allocation of the message queue buffer
+     * @param bolBackPressure   enable/disable back pressure (implicit throttling) at <code>{@link #offer(List)}</code>
+     * @param bolLogging        enable/disable event logging
      */
-    public IngestionDataBuffer(long szMaxQueAlloc, boolean bolBackPressure) {
-        this.szMaxQueueAlloc = szMaxQueAlloc;
+    public ProtoMemoryBuffer(long szQueAlloc, boolean bolBackPressure, boolean bolLogging) {
+        this.szMaxQueueAlloc = szQueAlloc;
         this.bolBackPressure = bolBackPressure;
+        this.bolLogging = bolLogging;
     }
-    
+
     
     //
     // Configuration
@@ -279,42 +329,35 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     
     /**
      * <p>
-     * Sets the memory allocation capacity of the ingest data message queue buffer.
+     * Enables event logging within message buffer operations.
      * </p>
-     * <p>
-     * The queue capacity is the critical parameter for ingestion throttling, either implicit through
-     * back-pressure blocking at <code>{@link #offer(List)}</code> or explicit throttling with
-     * <code>{@link #awaitQueueReady()}</code>.  If the memory allocation within the queue
-     * exceed the given value the throttling is activated.  In that case this <code>IngestionDataBuffer</code> 
-     * instance blocks at <code>{@link #offer(List)}</code> if back-pressure is enabled, and 
-     * <code>{@link #awaitQueueReady()}</code> blocks regardless of back-pressure settings.
-     * </p>
-     * <p>
-     * <h2>Thread Safety</h2>
-     * This method is synchronized for thread safety.  Changing configuration parameters must
-     * be done atomically.  Thus, this configuration parameter 
-     * will not be changed until this method acquires the <code>this</code> lock from any other
-     * competing threads.
-     * </p>
-     * 
-     * @param szMaxQueAlloc  maximum memory allocation capacity of message buffer before back-pressure blocking
      */
-    synchronized
-    public void setQueueCapcity(long szMaxQueAlloc) {
-        this.szMaxQueueAlloc = szMaxQueAlloc;
+    synchronized 
+    public void enableLogging() {
+        this.bolLogging = true;
     }
     
     /**
      * <p>
-     * Enables client back pressure (implicit throttling) from finite capacity ingestion data buffer.
+     * Disables event logging within the message buffer operations.
+     * </p>
+     */
+    synchronized
+    public void disableLogging() {
+        this.bolLogging = false;
+    }
+    
+    /**
+     * <p>
+     * Enables client back pressure (implicit throttling) from finite capacity ingestion message buffer.
      * </p>
      * <p>
-     * This feature is available to tune the streaming of large data amounts from ingest data request messages;
-     * it allows back pressure from the Ingestion Service to be felt at the supplier side.
-     * This buffer class maintains a buffer of ingestion request data message to be transmitted 
-     * in order to cope with transmission spikes from the client.  Enabling this option
-     * prevents clients from adding additional ingestion message when this buffer is full (at capacity).
-     * (A full buffer indicates a backlog of processing within the Ingestion Service.)
+     * This feature is available to tune the streaming of large numbers of messages;
+     * it allows back pressure from the supplier side.
+     * This buffer class maintains a buffer of message to be staged for the supplier
+     * in order to cope with spikes from the client.  Enabling this option
+     * prevents clients from adding additional message when this buffer is full (at capacity).
+     * (A full buffer indicates a backlog of processing from the consumer of supplied messages.)
      * Thus, if the buffer is at capacity the method <code>{@link #offer(List)}</code> will block
      * until space is available in the queue buffer.
      * </p>
@@ -326,11 +369,12 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * competing threads.
      * </p>
      * 
-     * @param szQueueCapacity  memory allocation capacity of frame buffer before back-pressure blocking
+     * @param szMaxQueAlloc     maximum memory allocation of the message queue buffer
      */
     synchronized 
-    public void enableBackPressure() {
+    public void enableBackPressure(long szMaxQueAlloc) {
         this.bolBackPressure = true;
+        this.szMaxQueueAlloc = szMaxQueAlloc;
     }
     
     /**
@@ -338,18 +382,18 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * Disables client back pressure (implicit message throttling).
      * </p>
      * <p>
-     * The back-pressure feature is available to tune the streaming of large data amounts within ingestion messages;
-     * it allows back pressure from the Ingestion Service to be felt at the client side.
-     * The message supplier class maintains a buffer of ingestion messages to be transmitted 
-     * in order to cope with transmission spikes from the client.  Enabling this option
-     * prevents clients from adding additional ingestion messages when this buffer is full.
+     * The back-pressure feature is available to tune the processing of large numbers of messages;
+     * it allows back pressure from the consumers of the supplier to be felt at the client side.
+     * The message supplier class maintains a buffer of messages to be staged
+     * in order to cope with spikes from the client.  Enabling this option
+     * prevents clients from adding additional messages when this buffer is full.
      * (A full buffer indicates a backlog of processing within the Ingestion Service.)
      * </p>
      * <p>
      * <h2>Effect</h2>
      * Disabling client back pressure allows the incoming message buffer to expand indefinitely.
-     * Clients can always add more ingestion messages regardless of any backlog in transmission and
-     * processing at the Ingestion Service.
+     * Clients can always add more messages regardless of any backlog in consumption at the 
+     * supplier processing.
      * </p>
      * <p>
      * <h2>Thread Safety</h2>
@@ -363,6 +407,39 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     public void disableBackPressure() {
         this.bolBackPressure = false;
     }
+    
+    /**
+     * <p>
+     * Sets the maximum message memory allocation of the queue buffer.
+     * </p>
+     * <p>
+     * The queue capacity is the critical parameter for supply throttling, either implicit through
+     * back-pressure blocking at <code>{@link #offer(List)}</code> or explicit throttling with
+     * <code>{@link #awaitQueueReady()}</code>.  If the request message count within the queue
+     * exceed the given value the throttling is activated.  In that case this <code>ProtoMemoryBuffer</code> 
+     * instance blocks at <code>{@link #offer(List)}</code> if back-pressure is enabled, and 
+     * <code>{@link #awaitQueueReady()}</code> blocks regardless of back-pressure settings.
+     * </p>
+     * <p>
+     * <h2>Thread Safety</h2>
+     * This method is synchronized for thread safety.  Changing configuration parameters must
+     * be done atomically.  Thus, this configuration parameter 
+     * will not be changed until this method acquires the <code>this</code> lock from any other
+     * competing threads.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This parameter only has context when back pressure is enabled.  See method
+     * <code>{@link #enableBackPressure(int)}</code>.
+     * </p>
+     * 
+     * @param szQueueAlloc      memory allocation of the message queue buffer
+     */
+    synchronized
+    public void setQueueAllocation(int szQueueAlloc) {
+        this.szMaxQueueAlloc = szQueueAlloc;
+    }
+    
     
     //
     // State Inquiry
@@ -386,40 +463,41 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     
     /**
      * <p>
-     * Returns the current maximum memory allocation capacity of the request message queue buffer.
+     * Returns the current maximum message memory allocation of the message queue buffer.
      * </p>
      * 
-     * @return  the maximum memory allocation capacity of the queue buffer before throttling is invoking
+     * @return  the capacity of the queue buffer before throttling is invoking
      */
-    public long getMaxQueueAllocation() {
+    public long  getMaxQueueCapacity() {
         return this.szMaxQueueAlloc;
     }
-
+    
     /**
      * <p>
      * Returns the current size of the queue buffer.
      * </p>
      * <p>
-     * Returns the number of request messages in the queue buffer at the time of invocation.  Note that this
+     * Returns the number of messages in the queue buffer at the time of invocation.  Note that this
      * is inherently a dynamic quantity.
      * </p>
      *  
      * @return  number of request messages currently in the queue
      */
     public int  getQueueSize() {
-        return this.queMsgRequests.size();
+        return this.queMsgBuffer.size();
     }
     
     /**
      * <p>
-     * Returns the current memory allocation within the queue buffer.
+     * Returns the total memory allocation of all messages within the queue buffer.
      * </p>
      * <p>
-     * Returns the memory allocation (in bytes) of all the request messages within the data buffer at the time
-     * of invocation.  Note that this quantity is inherently a dynamic quantity.
+     * Returns the total allocation currently carried within the queue buffer in bytes.  The value is
+     * computed dynamically using the <code>{@link GeneratedMessage#getSerializedSize()</code> method
+     * of all messages currently within the buffer.
      * </p>
      * 
-     * @return  memory allocation of all request data messages within the queue buffer (in bytes)
+     * @return  the total memory allocation of all messages currently within the buffer
      */
     public long getQueueAllocation() {
         return this.szQueueAlloc;
@@ -432,11 +510,11 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     
     /**
      * <p>
-     * Allows clients to explicitly block until the request queue buffer is ready (below capacity) 
+     * Allows clients to explicitly block until the message queue buffer is ready (below capacity) 
      * and back pressure is relieved.
      * </p>
      * <p>
-     * This method allows clients to explicitly wait for back-pressure relief.  This method blocks
+     * This method allows supplier clients to explicitly wait for back-pressure relief.  This method blocks
      * if the queue buffer is at maximum capacity, or returns immediately if not.
      * </p>
      * <p>
@@ -461,15 +539,10 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * </ul>
      * </p> 
      * 
-     * <s>@throws IllegalStateException    operation invoked while supplier inactive</s>
      * @throws InterruptedException     operation interrupted while waiting for queue ready
      */
-    public void awaitQueueReady() throws /* IllegalStateException,*/ InterruptedException {
+    public void awaitQueueReady() throws InterruptedException {
         
-//        // Check if active - if deactivated will wait forever.
-//        if (!this.bolActive)
-//            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer active.");
-
         // Do this regardless of whether back pressure is active or not
         //  The client wants to wait, we wait
         this.lckMsgQueReady.lock();
@@ -481,8 +554,8 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
             else {
                 
                 // Log event
-                if (BOL_LOGGING)
-                    LOGGER.info("{}: Blocking on queue allocation {} > capacity {} (back pressure event).", 
+                if (bolLogging)
+                    LOGGER.info("{}: Blocking on queue memory allocation {} > maximum {} (back pressure event).", 
                             JavaRuntime.getMethodName(), 
                             this.szQueueAlloc, 
                             this.szMaxQueueAlloc);
@@ -498,12 +571,12 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     
     /**
      * <p>
-     * Allows clients to block until the request message queue buffer completely empties.
+     * Allows clients to block until the message queue queue buffer completely empties.
      * </p>
      * <p>
-     * This method allows clients to wait for the <code>IngestDataRequest</code> queue buffer
-     * to fully empty.  Clients can add a fixed number of ingestion request messages then measure 
-     * the time for messages to be consumed (with known memory allocation).  This activity may be useful
+     * This method allows supplier clients to wait for the message queue buffer
+     * to fully empty.  Clients can add a fixed number of messages then measure 
+     * the time for messages to be consumed.  This activity may be useful
      * when clients wish to due their own performance tuning.
      * </p>
      * <p>
@@ -524,27 +597,24 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * </ul>
      * </p> 
      * 
-     * #@throws IllegalStateException    operation invoked while processor inactive
      * @throws InterruptedException     operation interrupted while waiting for queue ready
      */
-    public void awaitQueueEmpty() throws /* IllegalStateException,*/ InterruptedException {
-
-        // Check if active - if deactivated will wait forever.
-//        if (!this.bolActive)
-//            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer active.");
+    public void awaitQueueEmpty() throws InterruptedException {
 
         // Get the request message queue empty lock 
         this.lckMsgQueEmpty.lock();
         try {
             // Return immediately if all queues are empty and nothing is pending 
-            if (this.queMsgRequests.isEmpty())
+            if (this.queMsgBuffer.isEmpty())
                 return;
             
             else {
                 
                 // Log event
-                if (BOL_LOGGING)
-                    LOGGER.info("{}: Waiting for queue empty, queue size = {}.", JavaRuntime.getMethodName(), this.queMsgRequests.size());
+                if (bolLogging)
+                    LOGGER.info("{}: Waiting for queue empty, queue size = {}.", 
+                            JavaRuntime.getMethodName(), 
+                            this.queMsgBuffer.size());
             
                 // Wait for queue ready signal
                 this.cndMsgQueEmpty.await();
@@ -555,32 +625,31 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
         }
     }
     
-
+    
     //
     // IMessageConsumer<IngestDataRequest> Interface
     //
     
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.ingest.model.IResourceConsumer#isAccepting()
+     * 
+     * @see com.ospreydcs.dp.api.model.IMessageConsumer#isAccepting()
      */
     @Override
     public boolean isAccepting() {
         return this.bolActive;
     }
-
+    
     /**
      * <p>
-     * Activates the <code>IngestionMessageBuffer</code> message queue buffer.
+     * Activates the <code>T</code> message queue buffer.
      * </p>
      * <p>
-     * After invoking this method the message supplier instance is ready for ingestion data request
+     * After invoking this method the message supplier instance is ready for message consumption
      * acceptance via <code>{@link #offer(List)}</code>.  
-     * Ingestion request messages are added to the buffer where they
-     * are staged for transmission via the <code>IMessageSupplier&lt;IngestDataRequest&gt;</code> interface.
-     * (Request messages are available to consumers through the
-     * <code>{@link IMessageSupplier}</code> interface blocking methods <code>{@link IMessageSupplier#take()}</code>,
-     * <code>{@link IMessageSupplier#poll()}</code>, and <code>{@link IMessageSupplier#poll(long, TimeUnit)}</code>.)
+     * <code>T</code> messages are added to the buffer where they
+     * are staged for supply via the <code>IMessageSupplier&lt;T&gt;</code> interface.
+     * Processed messages are available to consumers through the
+     * <code>{@link IMessageSupplier}</code> interface blocking methods.
      * Implicit or explicit throttling operations are available via the queue capacity parameter.
      * </p>
      * <h2>Operation</h2>
@@ -617,8 +686,8 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * </ul>
      * </p>
      * 
-     * @return  <code>true</code> if the ingestion message queue buffer was successfully activated,
-     *          <code>false</code> if the message supplier was already active
+     * @return  <code>true</code> if the message queue buffer was successfully activated,
+     *          <code>false</code> if the message consumer was already activated
      */
     @Override
     synchronized
@@ -636,12 +705,12 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     
     /**
      * <p>
-     * Performs an orderly shut down of the queue buffer and message supplier interface.
+     * Performs an orderly shut down of the queue buffer and message consumer interface.
      * </p>
      * <p>
      * The <code>{@link #bolActive}</code> flag is set <code>false</code> preventing any new
-     * <code>IngestDataRequest</code> to be added to the queue.  However, consumers of the
-     * <code>IMessageSupplier&lt;IngestDataRequest&gt;</code> interface can continue to 
+     * <code>T</code> to be added to the queue.  However, consumers of the
+     * <code>IMessageSupplier&lt;T&gt;</code> interface can continue to 
      * request messages so long as messages are available.
      * That is, consumers of messages can continue to poll for available messages until the supply
      * is exhausted.
@@ -658,8 +727,8 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * and the queue buffer still contains messages.
      * </p>
      * 
-     * @return <code>true</code> if the message supplier was successfully shutdown,
-     *         <code>false</code> if the message supplier was not active or shutdown operation failed
+     * @return <code>true</code> if the message consumer was successfully shutdown,
+     *         <code>false</code> if the message consumer was not active or shutdown operation failed
      * 
      * @throws InterruptedException interrupted while waiting for processing threads to complete
      */
@@ -671,23 +740,21 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
         if (!this.bolActive)
             return false;
         
-        // This will allow ingestion data messages to be consumed until the queue is exhausted
+        // This will allow messages to be consumed until the queue is exhausted
         this.bolActive = false;
         this.awaitQueueEmpty();
-        
-        this.bolShutdown = true;
         
         return true;
     }
     
     /**
      * <p>
-     * Performs a hard shutdown of the queue buffer and message supplier interface.
+     * Performs a hard shutdown of the queue buffer and message consumer interface.
      * </p>
      * <p>
      * The <code>{@link #bolActive}</code> flag is set to <code>false</code> and all
-     * <code>IngestDataRequest</code> messages are cleared from the queue buffer thus
-     * terminating the <code>IMessageSupplier&lt;IngestDataRequest&gt;</code> interface.
+     * <code>T</code> messages are cleared from the queue buffer thus
+     * terminating the <code>IMessageSupplier&lt;T&gt;</code> interface.
      * That is, the outgoing message queue is cleared.  
      * The method returns immediately upon terminating all activity.
      * </p>
@@ -697,14 +764,13 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     public void shutdownNow() {
         
         this.bolActive = false;
-        this.queMsgRequests.clear();
+        this.queMsgBuffer.clear();
         this.szQueueAlloc = 0;
-        this.bolShutdown = true;
     }
     
     /**
      * <p>
-     * Adds the given ingestion data request message to the head of the queue buffer.
+     * Adds the given message to the head of the queue buffer.
      * </p>
      * <p>
      * This is a convenience method for single message enqueueing.  All operations are 
@@ -712,7 +778,7 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * list.
      * </p>
      *  
-     * @param lstMsgRqsts  ordered list of ingest data requests for staging
+     * @param msg   message for consumption staging
      * 
      * @throws IllegalStateException    the queue buffer is currently inactive
      * @throws InterruptedException     interrupted while waiting for message buffer ready (back-pressure enabled)
@@ -721,25 +787,25 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      */
     @Override
     synchronized
-    public void offer(IngestDataRequest msgRqst) throws IllegalStateException, InterruptedException {
-        this.offer(List.of(msgRqst));
+    public void offer(T msg) throws IllegalStateException, InterruptedException {
+        this.offer(List.of(msg));
     }
     
     /**
      * <p>
-     * Add the given list of ingestion request messages to the queue buffer for transmission staging.
+     * Add the given list of messages to the queue buffer for consumption staging (in order).
      * </p>
      * <p>
-     * The given list is added to the queue buffer of ingestion data.  All ingestion data request messages
-     * entering the queue buffer are then are then available for transmission through the 
-     * <code>{@link IMessageSupplier}</code> interface. Note that an exception is thrown if the queue buffer
-     * has not been activated.
+     * The given list is added to the message queue buffer .  All messages
+     * entering the queue buffer are then are then available through the 
+     * <code>{@link IMessageSupplier}</code> interface. Note that an exception is 
+     * thrown if the queue buffer has not been activated.
      * </p>
      * <p>
      * <h2>Back Pressure - Implicit Throttling</h2>
      * If the back-pressure feature is enable this method blocks whenever the outgoing message
      * queue buffer is at capacity.  The method will not return until the consumer of 
-     * <code>IngestDataRequest</code> messages has taken the queue below capacity.
+     * <code>T</code> messages has taken the queue below capacity.
      * </p>
      * <p>
      * <h2>Explicit Throttling</h2>
@@ -750,59 +816,52 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * <ol>
      * <li>Disable the back-pressure feature with <code>{@link #disableBackPressure()}</code>.</li>
      * <li>Invoke the <code>{@link #awaitQueueReady()}</code> method which blocks if necessary.</li>
-     * <li>Invoke the <code>{@link #offer(List)}</code> method to stage ingestion messages.</li>  
+     * <li>Invoke the <code>{@link #offer(List)}</code> method to stage messages for consumption.</li>  
      * </ol>
      * Clearly the first step need only be executed once then steps 2 and 3 are executed repeatedly as required 
      * for all additional data.
      * </p>
      * 
-     * @param lstMsgRqsts  ordered list of ingest data requests for staging
+     * @param lstMsgs    ordered list of messages for consumption staging
      * 
      * @throws IllegalStateException    the queue buffer is currently inactive
      * @throws InterruptedException     interrupted while waiting for message buffer ready (back-pressure enabled)
      */
     @Override
     synchronized
-    public void offer(List<IngestDataRequest> lstMsgRqsts) throws IllegalStateException, InterruptedException {
+    public void offer(List<T> lstMsgs) throws IllegalStateException, InterruptedException {
 
         // Check if active
-        if (!this.bolActive) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.";
-            
-            if (BOL_LOGGING)
-                LOGGER.warn(strMsg);
-            
-            throw new IllegalStateException(strMsg);
-        }
+        if (!this.bolActive)
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.");
         
         // Compute the the memory allocation of the request messages
-        long    szAlloc = lstMsgRqsts.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
+        long    szAlloc = lstMsgs.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
         
         // If no back-presssure enforcement just add all frames to raw frame buffer and return
         if (!this.bolBackPressure) {
-            this.queMsgRequests.addAll(lstMsgRqsts);
+            this.queMsgBuffer.addAll(lstMsgs);
             this.szQueueAlloc += szAlloc;
             
             return;
         }
         
-        // Enforce back-pressure to the client if processed frame queue is full 
+        // Enforce back-pressure to the client if message queue is full 
         this.lckMsgQueReady.lock();
         try {
             if (this.szQueueAlloc >= this.szMaxQueueAlloc) {
              
                 // Log event
-                if (BOL_LOGGING)
+                if (bolLogging)
                     LOGGER.info("{}: Blocking on queue allocation {} > maximum {} (back pressure event).", 
                             JavaRuntime.getMethodName(), 
-                            this.szQueueAlloc, 
-                            this.szMaxQueueAlloc);
+                            this.szQueueAlloc, this.szMaxQueueAlloc);
             
                 // Wait for queue ready signal
                 this.cndMsgQueReady.await();  // throws InterruptedException
             }
 
-            this.queMsgRequests.addAll(lstMsgRqsts);
+            this.queMsgBuffer.addAll(lstMsgs);
             this.szQueueAlloc += szAlloc;
 
         } finally {
@@ -812,19 +871,19 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     
     /**
      * <p>
-     * Add the given list of ingestion request messages to the queue buffer for transmission staging.
+     * Add the given list of messages to the queue buffer for consumption staging.
      * </p>
      * <p>
-     * The given list is added to the queue buffer of ingestion data.  All ingestion data request messages
-     * entering the queue buffer are then are then available for transmission through the 
-     * <code>{@link IMessageSupplier}</code> interface. Note that an exception is thrown if the queue buffer
-     * has not been activated.
+     * The given list is added to the queue buffer of messages.  All messages
+     * entering the queue buffer are then are then available for consumption through the 
+     * <code>{@link IMessageSupplier}</code> interface. Note that an exception is thrown 
+     * if the queue buffer has not been activated.
      * </p>
      * <p>
      * <h2>Back Pressure - Implicit Throttling</h2>
      * If the back-pressure feature is enable this method blocks whenever the outgoing message
      * queue buffer is at capacity.  The method will not return until the consumer of 
-     * <code>IngestDataRequest</code> messages has taken the queue below capacity, or the given
+     * <code>T</code> messages has taken the queue below capacity, or the given
      * timeout limit has elapsed.
      * </p>
      * <p>
@@ -836,45 +895,36 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * <ol>
      * <li>Disable the back-pressure feature with <code>{@link #disableBackPressure()}</code>.</li>
      * <li>Invoke the <code>{@link #awaitQueueReady()}</code> method which blocks if necessary.</li>
-     * <li>Invoke the <code>{@link #offer(List)}</code> method to stage ingestion messages.</li>  
+     * <li>Invoke the <code>{@link #offer(List)}</code> method to stage messages for consumption.</li>  
      * </ol>
      * Clearly the first step need only be executed once then steps 2 and 3 are executed repeatedly as required 
      * for all additional data.
      * </p>
      * 
-     * @param lstMsgRqsts  ordered list of ingest data requests for staging
+     * @param lstMsgs       ordered list of messages for consumption staging
      * @param lngTimeout    timeout limit to wait for message acceptance if back-pressure is enabled
      * @param tuTimeout     timeout units for message acceptance under back pressure.
      * 
-     * @return  <code>true</code> if the ingest data requests were successfully accepted,
+     * @return  <code>true</code> if the messages were successfully accepted,
      *          <code>false</code> if the timeout limit was exceeded (messages were not accepted)
      * 
      * @throws IllegalStateException    the queue buffer is currently inactive
      * @throws InterruptedException     interrupted while waiting for message buffer ready (back-pressure enabled)
-     * @param lstMsgRqsts
-     *
-     * @see com.ospreydcs.dp.api.model.IMessageConsumer#offer(java.util.List, long, java.util.concurrent.TimeUnit)
      */
     @Override
-    public boolean offer(List<IngestDataRequest> lstMsgRqsts, long lngTimeout, TimeUnit tuTimeout)
-            throws IllegalStateException, InterruptedException {
+    synchronized 
+    public boolean offer(List<T> lstMsgs, long lngTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException {
 
         // Check if active
-        if (!this.bolActive) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.";
-            
-            if (BOL_LOGGING)
-                LOGGER.warn(strMsg);
-            
-            throw new IllegalStateException(strMsg);
-        }
+        if (!this.bolActive)
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.");
         
         // Compute the the memory allocation of the request messages
-        long    szAlloc = lstMsgRqsts.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
+        long    szAlloc = lstMsgs.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
         
         // If no back-presssure enforcement just add all frames to raw frame buffer and return
         if (!this.bolBackPressure) {
-            this.queMsgRequests.addAll(lstMsgRqsts);
+            this.queMsgBuffer.addAll(lstMsgs);
             this.szQueueAlloc += szAlloc;
             
             return true;
@@ -888,26 +938,26 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
             if (this.szQueueAlloc >= this.szMaxQueueAlloc) {
              
                 // Log event
-                if (BOL_LOGGING)
+                if (bolLogging)
                     LOGGER.info("{}: Blocking on queue allocation {} > maximum {} (back pressure event).", 
                             JavaRuntime.getMethodName(), 
                             this.szQueueAlloc, 
                             this.szMaxQueueAlloc);
             
                 // Wait for queue ready signal
-                bolResult = this.cndMsgQueReady.await(lngTimeout, tuTimeout);  // throws InterruptedException
+                this.cndMsgQueReady.await(lngTimeout, tuTimeout);  // throws InterruptedException
             }
 
-            this.queMsgRequests.addAll(lstMsgRqsts);
+            bolResult = this.queMsgBuffer.addAll(lstMsgs);
             this.szQueueAlloc += szAlloc;
-            
-            return bolResult;
 
+            return  bolResult;
+            
         } finally {
             this.lckMsgQueReady.unlock();
         }
     }
-    
+
     
     //
     // IMessageSupplier<IngestDataRequest> Interface
@@ -915,7 +965,7 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     
     /**
      * <p>
-     * Determines whether or not <code>IngestDataRequest</code> messages are currently being supplied. 
+     * Determines whether or not <code>T</code> messages are currently being supplied. 
      * </p>
      * <p>
      * This condition indications that messages are available, or not currently available but still being supplied 
@@ -927,14 +977,15 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * </ul>
      * </p>
      *  
-     * @return <code>true</code> if there are currently request messages available or pending
+     * @return <code>true</code> if there are currently messages available or pending
      *         <code>false</code> otherwise
      *
      * @see com.ospreydcs.dp.api.model.IMessageSupplier#isSupplying()
      */
     @Override
+    synchronized
     public boolean isSupplying() {
-        return this.bolActive || !this.queMsgRequests.isEmpty();
+        return this.bolActive || !this.queMsgBuffer.isEmpty();
     }
 
     /**
@@ -942,30 +993,24 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * @see com.ospreydcs.dp.api.model.IMessageSupplier#take()
      */
     @Override
-    public IngestDataRequest take() throws IllegalStateException, InterruptedException {
+    public T    take() throws IllegalStateException, InterruptedException {
         
         // Check states
-        if (!this.bolActive && this.queMsgRequests.isEmpty()) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.";
-            
-            if (BOL_LOGGING)
-                LOGGER.warn(strMsg);
-            
-            throw new IllegalStateException(strMsg);
-        }
+        if (!this.bolActive && this.queMsgBuffer.isEmpty())
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
         
         try {
-            IngestDataRequest   msgRqst = this.queMsgRequests.take();
-            
-            if (msgRqst == null)
+            T msg = this.queMsgBuffer.take();
+        
+            if (msg == null)
                 return null;
             
             // Compute allocation and adjust current capacity
             synchronized (this.objLock) {
-                this.szQueueAlloc -= msgRqst.getSerializedSize();
+                this.szQueueAlloc -= msg.getSerializedSize();
             }
             
-            return msgRqst;
+            return msg;
             
         } finally {
             
@@ -979,30 +1024,24 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll()
      */
     @Override
-    public IngestDataRequest poll() throws IllegalStateException {
+    public T    poll() throws IllegalStateException {
 
         // Check state
-        if (!this.bolActive && this.queMsgRequests.isEmpty()) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.";
-            
-            if (BOL_LOGGING)
-                LOGGER.warn(strMsg);
-            
-            throw new IllegalStateException(strMsg);
-        }
+        if (!this.bolActive && this.queMsgBuffer.isEmpty())
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
         
         try {
-            IngestDataRequest   msgRqst = this.queMsgRequests.poll();
+            T msg = this.queMsgBuffer.poll();
             
-            if (msgRqst == null)
+            if (msg == null)
                 return null;
             
             // Compute allocation and adjust current capacity
             synchronized (this.objLock) {
-                this.szQueueAlloc -= msgRqst.getSerializedSize();
+                this.szQueueAlloc -= msg.getSerializedSize();
             }
             
-            return msgRqst;
+            return msg;
             
         } finally {
             
@@ -1016,31 +1055,25 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
      */
     @Override
-    public IngestDataRequest poll(long cntTimeout, TimeUnit tuTimeout)
+    public T    poll(long cntTimeout, TimeUnit tuTimeout)
             throws IllegalStateException, InterruptedException {
         
         // Check state
-        if (!this.bolActive && this.queMsgRequests.isEmpty()) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.";
-            
-            if (BOL_LOGGING)
-                LOGGER.warn(strMsg);
-            
-            throw new IllegalStateException(strMsg);
-        }
+        if (!this.bolActive && this.queMsgBuffer.isEmpty())
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - supplier is inactive and queue is empty.");
         
         try {
-            IngestDataRequest   msgRqst = this.queMsgRequests.poll(cntTimeout, tuTimeout);
+            T   msg = this.queMsgBuffer.poll(cntTimeout, tuTimeout);
             
-            if (msgRqst == null)
+            if (msg == null)
                 return null;
             
             // Compute allocation and adjust current capacity
             synchronized (this.objLock) {
-                this.szQueueAlloc -= msgRqst.getSerializedSize();
+                this.szQueueAlloc -= msg.getSerializedSize();
             }
             
-            return msgRqst;
+            return msg;
             
         } finally {
             
@@ -1048,7 +1081,7 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
             this.signalRequestQueueConditions();
         }
     }
-
+    
     
     //
     // Support Methods
@@ -1059,12 +1092,12 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * Signals all threads waiting on request message queue conditions.
      * </p>
      * <p>
-     * To be called when a a request queue message removal event occurs. 
-     * Checks the current size of the message queue <code>{@link #queMsgRequests}</code>
+     * To be called when a a queue message removal event occurs. 
+     * Checks the current size of the message queue <code>{@link #queMsgBuffer}</code>
      * and signals all threads with lock <code>{@link #lckMsgQueReady}</code> for the
      * following conditions:
      * <ul>
-     * <li>If queue memory allocation (<code>{@link #szQueueAlloc}</code>) < capacity then signal <code>{@link #cndMsgQueReady}</code>.</li>
+     * <li>If queue size < capacity then signal <code>{@link #cndMsgQueReady}</code>.</li>
      * <li>If queue size = 0 then signal <code>{@link #cndMsgQueEmpty}</code>.</li>
      * </ul>
      * </p>
@@ -1084,7 +1117,7 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
         // Signal any threads blocking on the queue empty condition
         this.lckMsgQueEmpty.lock();
         try {
-            if (this.queMsgRequests.isEmpty())
+            if (this.queMsgBuffer.isEmpty())
                 this.cndMsgQueEmpty.signalAll();
 
         } finally {

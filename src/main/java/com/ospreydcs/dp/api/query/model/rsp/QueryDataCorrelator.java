@@ -320,7 +320,7 @@ public class QueryDataCorrelator {
      * @see #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
      * @see #getCorrelatedSet()
      */
-    public static QueryDataCorrelator newInstance() {
+    public static QueryDataCorrelator create() {
         return new QueryDataCorrelator();
     }
     

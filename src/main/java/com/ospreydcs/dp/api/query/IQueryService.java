@@ -7,7 +7,7 @@ import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.PvMetaRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelator;
+import com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 
 /**
@@ -109,7 +109,7 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  * <h2>GENERAL NOTES</h2>
  * <h3>Data Processing</h3>
  * A single data processor is used for all time-series data requests.  The processor is a single
- * <code>{@link QueryResponseCorrelator}</code> instance maintained by a 
+ * <code>{@link QueryResponseCorrelatorDep}</code> instance maintained by a 
  * <code>DpQuerySerice</code> class object.  The data process performs both the gRPC data 
  * streaming from the Query Service AND the correlation of incoming data.  The data processor
  * offers various configuration options where data can be simultaneously streamed and 
@@ -125,7 +125,7 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  * <li>
  * The data processor can be tuned with various configuration parameters within the 
  * <code>dp-api-config.yml</code> configuration file.  See class documentation on 
- * <code>{@link QueryResponseCorrelator}</code> for more information on performance tuning.
+ * <code>{@link QueryResponseCorrelatorDep}</code> for more information on performance tuning.
  * </li>
  * <li>
  * It is informative to note that the <code>DpQueryServiceImpl</code> class shares its single gRPC 
@@ -242,14 +242,14 @@ public interface IQueryService extends IConnection {
      * <li>
      * The data streaming and reconstruction can be performed simultaneously, with various
      * levels of concurrency, with an internal instance of 
-     * <code>{@link QueryResponseCorrelator}</code>.  See the class documentation for details
+     * <code>{@link QueryResponseCorrelatorDep}</code>.  See the class documentation for details
      * on tuning the instance with the various performance parameters.
      * </li>
      * <br/>
      * <li>
      * The Query Service configuration section within the API configuration parameters 
      * (i.e., those of <code>{@link DpApiConfig}</code> and associated resource file),
-     * provide access to the tuning parameters for this <code>QueryResponseCorrelator</code>
+     * provide access to the tuning parameters for this <code>QueryResponseCorrelatorDep</code>
      * instance and, thus, this method.
      * </li>
      * </ul>

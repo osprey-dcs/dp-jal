@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryResponseCorrelator.java
+ * File:	QueryResponseCorrelatorDep.java
  * Package: com.ospreydcs.dp.api.query.model.grpc
- * Type: 	QueryResponseCorrelator
+ * Type: 	QueryResponseCorrelatorDep
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -46,17 +46,16 @@ import javax.naming.CannotProceedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.request.DataRequestDecompType;
-import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.grpc.QueryStream;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecompParams;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecompType;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
@@ -69,7 +68,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * Class for performing Query Service data requests and correlation of request data.
  * </p>
  * <p>
- * <code>QueryResponseCorrelator</code> objects performs Data Platform Query Service data requests embodied with
+ * <code>QueryResponseCorrelatorDep</code> objects performs Data Platform Query Service data requests embodied with
  * <code>{@link DpDataRequest}</code> objects, then correlate the query responses into sorted sets of 
  * <code>{@link CorrelatedQueryData}</code> objects. That is, class objects take inputs of type 
  * <code>DpDataRequest</code> and then output <code>{@link SortedSet}</code> collections containing the
@@ -90,7 +89,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * interface.
  * </p>
  * <p>
- * All supported Query Service data requests within <code>QueryResponseCorrelator</code> are implemented by 
+ * All supported Query Service data requests within <code>QueryResponseCorrelatorDep</code> are implemented by 
  * methods prefixed with <code>processRequest</code>.  The method suffix methods indicates the gRPC technique
  * used to recover the request data (i.e. "Unary", "Stream", etc.). All data request methods return sorted sets of
  * <code>{@CorrelatedQueryData}</code> objects containing the results set of the offered data query request.
@@ -107,9 +106,9 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * </p>
  * <p>
  * <h2>Final Processing</h2>
- * It is important to note that clients of the <code>QueryResponseCorrelator</code> data request methods must 
+ * It is important to note that clients of the <code>QueryResponseCorrelatorDep</code> data request methods must 
  * perform all final processing of the correlated output BEFORE invoking another data request.  Correlated data
- * output sets are <em>owned</em> by the <code>QueryResponseCorrelator</code> object performing the request.
+ * output sets are <em>owned</em> by the <code>QueryResponseCorrelatorDep</code> object performing the request.
  * Existing correlated data output sets will be destroyed (i.e., cleared by the internal 
  * <code>{@link QueryDataCorrelator}</code> instance) whenever a subsequent data request is performed.
  * Either copy the output data to a new container or fully process the output sets before invoking additional
@@ -118,14 +117,14 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <p>
  * <h2>Streaming/Processing Configuration</h2>
  * For performance considerations, the streaming and processing operations within a 
- * <code>QueryResponseCorrelator</code> object are configurable.  Optimal configurations are determined by
+ * <code>QueryResponseCorrelatorDep</code> object are configurable.  Optimal configurations are determined by
  * the hosting platform and the types (e.g., sizes) of the typical data request.  
  * The default configuration is obtained from the Data Platform API Query Service configuration within 
  * <code>{@link DpApiConfig}</code>.
  * </p>
  * <p>
  * There are several methods that can be used to modify the default streaming/processing configuration of a 
- * <code>QueryResponseCorrelator</code> object.  All configuration methods are prefixed with <code>set</code>
+ * <code>QueryResponseCorrelatorDep</code> object.  All configuration methods are prefixed with <code>set</code>
  * and suffixed by the action they perform.
  * <ul>
  * <li>
@@ -148,11 +147,11 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * </p>
  * <p>
  * <h2>Query Service Connection</h2>
- * A single <code>{@link DpQueryConnection}</code> object is required by a <code>QueryResponseCorrelator</code>
+ * A single <code>{@link DpQueryConnection}</code> object is required by a <code>QueryResponseCorrelatorDep</code>
  * objects, which is provided at construction.  The <code>DpQueryConnection</code> object contains the gRPC 
  * channel connection to the Data Platform Query Service used for all gRPC data query and data streaming 
- * operations. <code>QueryResponseCorrelator</code> objects DO NOT take ownership of the Query Service connection.
- * (Ownership is assumed to be that of the client using the <code>QueryResponseCorrelator</code> object.)
+ * operations. <code>QueryResponseCorrelatorDep</code> objects DO NOT take ownership of the Query Service connection.
+ * (Ownership is assumed to be that of the client using the <code>QueryResponseCorrelatorDep</code> object.)
  * Thus, the <code>DpQueryConnection</code> service connection is NOT shutdown here.  
  * </p>
  * <p>
@@ -210,10 +209,10 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <p>
  * <h2>Data Correlation</h2>
  * All data correlation of the incoming Query Service data is performed by a single 
- * <code>{@link QueryDataCorrelator}</code> instance within each <code>QueryResponseCorrelator</code> object.
+ * <code>{@link QueryDataCorrelator}</code> instance within each <code>QueryResponseCorrelatorDep</code> object.
  * The <code>QueryDataCorrelator</code> attribute is used to correlate all data, regardless of recovery method
  * (e.g., unary request, streaming request, etc.).  The <code>QueryDataCorrelator</code> attribute is reused,
- * that is, the same instance is used for all data requests performed while the <code>QueryResponseCorrelator</code>
+ * that is, the same instance is used for all data requests performed while the <code>QueryResponseCorrelatorDep</code>
  * is alive.
  * </p>
  * <p>
@@ -234,8 +233,11 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * @see CorrelatedQueryData
  * @see QueryStream
  * @see QueryDataCorrelator
+ * 
+ * @deprecated  Replaced by QueryResponseProcessor
  */
-public class QueryResponseCorrelator {
+@Deprecated(since="Jan 15, 2024")
+public class QueryResponseCorrelatorDep {
     
     
     //
@@ -244,19 +246,19 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
-     * Creates a new <code>QueryResponseCorrelator</code> instance connected to the given Data Platform Query
+     * Creates a new <code>QueryResponseCorrelatorDep</code> instance connected to the given Data Platform Query
      * Service.
      * <p>
-     * The returned <code>QueryResponseCorrelator</code> instance is ready for the recovery of data requests.
+     * The returned <code>QueryResponseCorrelatorDep</code> instance is ready for the recovery of data requests.
      * No shutdown operations are required as the instance does not take ownership of the argument.
-     * See the class documentation <code>{@link QueryResponseCorrelator}</code> for instructions and use of the
+     * See the class documentation <code>{@link QueryResponseCorrelatorDep}</code> for instructions and use of the
      * returned object.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The Query Service connection object is provided to the <code>QueryResponseCorrelator</code>
+     * The Query Service connection object is provided to the <code>QueryResponseCorrelatorDep</code>
      * at construction.  This connection is used for all subsequent data request gRPC operations.
      * Since a single gRPC <code>{@link Channel}</code> object can support multiple concurrent data streams, 
      * only one connection is needed. 
@@ -283,10 +285,10 @@ public class QueryResponseCorrelator {
      *  
      * @param connQuery connection to the Data Platform Query Service 
      * 
-     * @return          new <code>QueryResponseCorrelator</code> ready for request and processing operations
+     * @return          new <code>QueryResponseCorrelatorDep</code> ready for request and processing operations
      */
-    public static QueryResponseCorrelator   from(DpQueryConnection connQuery) {
-        return new QueryResponseCorrelator(connQuery);
+    public static QueryResponseCorrelatorDep   from(DpQueryConnection connQuery) {
+        return new QueryResponseCorrelatorDep(connQuery);
     }
     
     
@@ -308,7 +310,7 @@ public class QueryResponseCorrelator {
      * <p> 
      * The <code>{@link #accept(QueryData)}</code> method of this class simply transfers a 
      * <code>BucketData</code> message to a <code>{@link Queue}</code> reference, assumed 
-     * to be the data buffer of a <code>{@link QueryResponseCorrelator}</code> object.
+     * to be the data buffer of a <code>{@link QueryResponseCorrelatorDep}</code> object.
      * The current number of <code>BucketData</code> messages transferred is available through 
      * the <code>{@link #getMessageCount()}</code> method.
      * </p>
@@ -406,7 +408,7 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
-     * Independent data processing threads for the <code>QueryResponseCorrelator</code> class.
+     * Independent data processing threads for the <code>QueryResponseCorrelatorDep</code> class.
      * </p>
      * <p>
      * This task is performed on a separate thread to decouple the gRPC streaming of
@@ -462,7 +464,7 @@ public class QueryResponseCorrelator {
      * can only be used once.
      * </li>
      * <li>
-     * The external <code>{@link QueryResponseCorrelator}</code> object should block on the
+     * The external <code>{@link QueryResponseCorrelatorDep}</code> object should block on the
      * <code>{@link Thread#join()}</code> method to wait for this processing thread to 
      * complete.  <code>{@link Thread#join()}</code> will return once the processing loop
      * exits normally.
@@ -730,7 +732,7 @@ public class QueryResponseCorrelator {
          * </p>
          * <p>
          * Runs a continuous loop that polls the 
-         * <code>{@link QueryResponseCorrelator#queStreamBuffer}</code> data buffer
+         * <code>{@link QueryResponseCorrelatorDep#queStreamBuffer}</code> data buffer
          * for <code>BucketData</code> data messages.  When available, the data messages are
          * passed to the <code>{@link #theCorrelator}</code> for processing.
          * </p>
@@ -923,10 +925,10 @@ public class QueryResponseCorrelator {
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseCorrelator</code> ready for request processing.
+     * Constructs a new instance of <code>QueryResponseCorrelatorDep</code> ready for request processing.
      * </p>
      * <p>
-     * The Query Service connection object is provided to the <code>QueryResponseCorrelator</code>
+     * The Query Service connection object is provided to the <code>QueryResponseCorrelatorDep</code>
      * at construction.  This connection is used for all subsequent data request gRPC operations.
      * Since a single gRPC <code>{@link Channel}</code> object can support multiple concurrent
      * data streams, only one connection is needed. Notes that all request processing methods 
@@ -936,7 +938,7 @@ public class QueryResponseCorrelator {
      * 
      * @param connQuery     the single Query Service connection used for all subsequent data requests 
      */
-    public QueryResponseCorrelator(DpQueryConnection connQuery) {
+    public QueryResponseCorrelatorDep(DpQueryConnection connQuery) {
         this.connQuery = connQuery;
         
         this.theCorrelator.setConcurrency(this.bolCorrelateConcurrency);
@@ -1589,7 +1591,7 @@ public class QueryResponseCorrelator {
      * <p>
      * Attempts a decomposition of the given request into a decompose request collection of no more than
      * <code>{@link #getMultiStreamCount()}</code> elements.  
-     * This method is part of the DEFAULT multi-streaming mechanism within <code>QueryResponseCorrelator</code>.
+     * This method is part of the DEFAULT multi-streaming mechanism within <code>QueryResponseCorrelatorDep</code>.
      * </p>
      * <p>
      * <h2>Request Size</h2>
@@ -1716,7 +1718,7 @@ public class QueryResponseCorrelator {
      * <p>
      * Creates a <code>{@link QueryResponseStreamProcess}</code> task object for each data requests within the 
      * argument.  
-     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelator</code>.
+     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelatorDep</code>.
      * </p>
      * <p>
      * Each task object returned has the following properties:
@@ -1776,7 +1778,7 @@ public class QueryResponseCorrelator {
      * Executes all data streaming tasks within the argument with the maximum concurrency allowed by the
      * fixed-size thread pool executor <code>{@link #exeThreadPool}</code>.  Returns the number of
      * <code>{@link QueryResponse}</code> messages successfully recovered by ALL data streams.
-     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelator</code>.
+     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelatorDep</code>.
      * </p>
      * <p>
      * Under normal operation, this method blocks until all streaming tasks within the argument have completed,

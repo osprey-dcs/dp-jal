@@ -29,11 +29,9 @@ package com.ospreydcs.dp.api.query.model.grpc;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -45,10 +43,12 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
-import com.ospreydcs.dp.api.model.IMessageSupplier;
+import com.ospreydcs.dp.api.model.IMessageConsumer;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
+import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
@@ -63,8 +63,26 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * @since Jan 9, 2025
  *
  */
-public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryData> {
+public class QueryChannel {
 
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Constructs a new instance of <code>QueryChannel</code>.
+     * </p>
+     *
+     * @param connQuery     active connection to the Data Platform Query Service
+     * @param snkRspMsgs    consumer of recovered time-series data request data
+     * 
+     * @return
+     */
+    public static QueryChannel  from(DpQueryConnection connQuery, IMessageConsumer<QueryData> snkRspMsgs) {
+        return new QueryChannel(connQuery, snkRspMsgs);
+    }
     
     //
     // Application Resources
@@ -115,7 +133,10 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
     //
     
     /** The single connection to the Query Service (used for all data requests) */
-    private final DpQueryConnection         connQuery;
+    private final DpQueryConnection             connQuery;
+    
+    /** The consumer of recovered data messages */
+    private final IMessageConsumer<QueryData>   snkRspMsgs;
 
     
 //    //
@@ -135,9 +156,6 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
     //
     // Instance Resources
     //
-    
-    /** The queue buffering all response messages for data correlation processing */
-    private final BlockingQueue<QueryData>  queStreamBuffer = new LinkedBlockingQueue<>();
     
     /** The pool of (multiple) gRPC streaming thread(s) for recovering requests */
     private final ExecutorService           exeThreadPool = Executors.newCachedThreadPool();
@@ -165,9 +183,12 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
      * Constructs a new instance of <code>QueryChannel</code>.
      * </p>
      *
+     * @param connQuery     active connection to the Data Platform Query Service
+     * @param snkRspMsgs    consumer of recovered time-series data request data
      */
-    public QueryChannel(DpQueryConnection connQuery) {
+    public QueryChannel(DpQueryConnection connQuery, IMessageConsumer<QueryData> snkRspMsgs) {
         this.connQuery = connQuery;
+        this.snkRspMsgs = snkRspMsgs;
     }
 
     
@@ -345,7 +366,7 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
      * Recovers the query data using a unary gRPC operation blocking until all data is
      * recovered and processed.  Note that all raw query data is processed post recovery.  
      * The only processing option affecting this operation is 
-     * <code>{@link #setCorrelationConcurrency(boolean)}</code>. 
+     * <code>{@link #enableCorrelateConcurrently(boolean)}</code>. 
      * </p>
      * <p>
      * All data recovery and subsequent correlation is performed within this method.
@@ -382,7 +403,22 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
         try {
             QueryDataResponse   msgRsp = this.connQuery.getStubBlock().queryData(msgRqst);
             
-            this.queStreamBuffer.put(msgRsp.getQueryData());
+            // Check for response exception
+            if (msgRsp.hasExceptionalResult()) {
+                String strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
+                        + " - Query response contained an exception; "
+                        + this.extractExceptionInfo(msgRsp);
+                
+                if (BOL_LOGGING)
+                    LOGGER.error(strMsg);
+                
+                throw new DpQueryException(strMsg);
+            }
+            
+            // Extract response and send to consumer
+            QueryData   msgRspData = msgRsp.getQueryData();
+            
+            this.snkRspMsgs.offer(msgRspData);
             
         } catch (Exception e) {
             if (BOL_LOGGING)
@@ -400,7 +436,7 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
      * Performs the given request using gRPC data streaming and blocks until request and 
      * processing are complete.  The given data request is potentially decomposed to create multiple
      * gRPC data streams unless multi-streaming is explicitly turned off using
-     * <code>{@link #setMultiStreamingResponse(boolean)}</code> before calling this method.
+     * <code>{@link #enableMultiStreaming(boolean)}</code> before calling this method.
      * </p>
      * <p>
      * The type of data stream used, either a unidirectional stream or a bidirectional stream, 
@@ -413,9 +449,9 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
      * Various data streaming and processing options are available for this method.  See the
      * following methods for more information:
      * <ul>
-     * <li><code>{@link #setCorrelateWhileStreaming(boolean)}</code></li>
-     * <li><code>{@link #setCorrelationConcurrency(boolean)}</code></li>
-     * <li><code>{@link #setMultiStreamingResponse(boolean)}</code></li>
+     * <li><code>{@link #enableCorrelateWhileStreaming(boolean)}</code></li>
+     * <li><code>{@link #enableCorrelateConcurrently(boolean)}</code></li>
+     * <li><code>{@link #enableMultiStreaming(boolean)}</code></li>
      * </ul>
      * These are all performance options that should be tuned for specific platforms.
      * The default values for these options are set in the Data Platform API configuration
@@ -425,7 +461,7 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
      * <h2>Multi-Streaming</h2>
      * The method attempts to decompose large data requests into decompose request according to 
      * settings in the default Data Platform API configuration (see <code>{@link DpApiConfig}</code>).  
-     * The <code>{@link #setMultiStreamingResponse(boolean)}</code> operation can be used to turn off 
+     * The <code>{@link #enableMultiStreaming(boolean)}</code> operation can be used to turn off 
      * the default behavior.
      * </p>
      * <p>
@@ -497,11 +533,11 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
      * Various data streaming and processing options are available for this method.  See the
      * following methods for more information:
      * <ul>
-     * <li><code>{@link #setCorrelateWhileStreaming(boolean)}</code></li>
-     * <li><code>{@link #setCorrelationConcurrency(boolean)}</code></li>
-     * <li><code>{@link #setMultiStreamingResponse(boolean)}</code></li>
+     * <li><code>{@link #enableCorrelateWhileStreaming(boolean)}</code></li>
+     * <li><code>{@link #enableCorrelateConcurrently(boolean)}</code></li>
+     * <li><code>{@link #enableMultiStreaming(boolean)}</code></li>
      * </ul>
-     * Note that the <code>{@link #setMultiStreamingResponse(boolean)}</code> has no effect here.
+     * Note that the <code>{@link #enableMultiStreaming(boolean)}</code> has no effect here.
      * These performance options should be tuned for specific platforms.
      * The default values for these options are set in the Data Platform API configuration
      * (see {@link DpApiConfig}</code>).  
@@ -518,14 +554,14 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
      *  
      * @param lstRequests   list of data requests, each to be recovered on separate gRPC data streams
      * 
-     * @return  a sorted set (according to start time) of correlated data obtained from given request 
+     * @return  the number of <code>QueryData</code> messages recovered and passed to the message consumer 
      * 
      * @throws DpQueryException general exception during data recovery and/or processing (see cause)
      * 
-     * @see #setCorrelateWhileStreaming(boolean)
-     * @see #setCorrelationConcurrency(boolean)
+     * @see #enableCorrelateWhileStreaming(boolean)
+     * @see #enableCorrelateConcurrently(boolean)
      */
-    public void recoverRequest(List<DpDataRequest> lstRequests) throws DpQueryException {
+    public int recoverRequest(List<DpDataRequest> lstRequests) throws DpQueryException {
         
         // Create streaming task for each component request
         List<QueryStream>  lstStrmTasks = this.createStreamingTasks(lstRequests);
@@ -535,6 +571,8 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
         
         try {
             cntMsgs = this.executeStreamingTasks(lstStrmTasks);  // this is a blocking operation
+            
+            return cntMsgs;
             
         } catch (InterruptedException e) {
 
@@ -556,74 +594,8 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
                 LOGGER.error("{}: ExecutionException while streaming request results - {}", JavaRuntime.getMethodName(), e.getMessage());
             
             throw new DpQueryException(e);
+            
         }
-    }
-    
-    
-    //
-    // IMessageSupplier<QueryDataResponse.QueryData> Interface
-    //
-
-    /**
-     * @see com.ospreydcs.dp.api.model.IMessageSupplier#isSupplying()
-     */
-    @Override
-    public boolean isSupplying() {
-        return !this.queStreamBuffer.isEmpty();
-    }
-
-    /**
-     * @see com.ospreydcs.dp.api.model.IMessageSupplier#take()
-     */
-    @Override
-    public QueryData take() throws IllegalStateException, InterruptedException {
-        if (!this.isSupplying()) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
-                    + " - Attempt to acquire from a non-supplying supplier.";
-            
-            if (BOL_LOGGING)
-                LOGGER.warn(strMsg);
-            
-            throw new IllegalStateException(strMsg);
-        }
-        
-        return this.queStreamBuffer.take();
-    }
-
-    /**
-     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll()
-     */
-    @Override
-    public QueryData poll() throws IllegalStateException {
-        if (!this.isSupplying()) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
-                    + " - Attempt to acquire from a non-supplying supplier.";
-            
-            if (BOL_LOGGING)
-                LOGGER.warn(strMsg);
-            
-            throw new IllegalStateException(strMsg);
-        }
-        
-        return this.queStreamBuffer.poll();
-    }
-
-    /**
-     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
-     */
-    @Override
-    public QueryData poll(long cntTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException {
-        if (!this.isSupplying()) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
-                    + " - Attempt to acquire from a non-supplying supplier.";
-            
-            if (BOL_LOGGING)
-                LOGGER.warn(strMsg);
-            
-            throw new IllegalStateException(strMsg);
-        }
-        
-        return this.queStreamBuffer.poll(cntTimeout, tuTimeout);
     }
     
     
@@ -638,7 +610,7 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
      * <p>
      * Creates a <code>{@link QueryResponseStreamProcess}</code> task object for each data requests within the 
      * argument.  
-     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelator</code>.
+     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelatorDep</code>.
      * </p>
      * <p>
      * Each task object returned has the following properties:
@@ -674,7 +646,7 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
             DpQueryServiceStub      stubAsync = this.connQuery.getStubAsync();
             Consumer<QueryData>     fncConsumer = (msgData) -> {
                 try {
-                    this.queStreamBuffer.put(msgData);
+                    this.snkRspMsgs.offer(msgData);
                     this.cntMsgsRcvd++;
                     
                 } catch (InterruptedException e) {
@@ -703,7 +675,7 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
      * Executes all data streaming tasks within the argument with the maximum concurrency allowed by the
      * fixed-size thread pool executor <code>{@link #exeThreadPool}</code>.  Returns the number of
      * <code>{@link QueryResponse}</code> messages successfully recovered by ALL data streams.
-     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelator</code>.
+     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelatorDep</code>.
      * </p>
      * <p>
      * Under normal operation, this method blocks until all streaming tasks within the argument have completed,
@@ -776,4 +748,32 @@ public class QueryChannel implements IMessageSupplier<QueryDataResponse.QueryDat
         return cntMsgs;
     }
 
+    /**
+     * <p>
+     * Extract the <code>ExceptionResult</code> from the given message and create a error string.
+     * </p>
+     * <p>
+     * Extracts the exception message from the given argument and creates a string describing the
+     * exception.  If not exceptional result is contained in the argument a <code>null</code> value
+     * is returned.
+     * </p>
+     * 
+     * @param msgRsp    time-series data request message from Query Service 
+     *  
+     * @return  string describing the Query Service exception
+     */
+    private String  extractExceptionInfo(QueryDataResponse msgRsp) {
+        
+        if (!msgRsp.hasExceptionalResult())
+            return null;
+        
+        ExceptionalResult       msgErr = msgRsp.getExceptionalResult();
+        ExceptionalResultStatus enmStatus = msgErr.getExceptionalResultStatus();
+        String                  strErrMsg = msgErr.getMessage();
+        
+        String  strMsg = "Query Service reported exception " + enmStatus + ": " + strErrMsg;
+        
+        return strMsg;
+        
+    }
 }
