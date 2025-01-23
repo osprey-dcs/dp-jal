@@ -48,7 +48,7 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
-import com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;

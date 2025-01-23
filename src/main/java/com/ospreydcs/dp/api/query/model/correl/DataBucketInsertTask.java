@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	BucketDataInsertTask.java
+ * File:	DataBucketInsertTask.java
  * Package: com.ospreydcs.dp.api.query.model.grpc
- * Type: 	BucketDataInsertTask
+ * Type: 	DataBucketInsertTask
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -25,11 +25,16 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.rsp;
+package com.ospreydcs.dp.api.query.model.correl;
 
 import java.util.SortedSet;
 import java.util.concurrent.Callable;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
@@ -73,11 +78,35 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * @since Jan 12, 2024
  *
  */
-public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Runnable {
+public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Runnable {
+
+    
+    //
+    // Application Resources
+    //
+    
+    /** The Data Platform API default configuration parameter set */
+    private static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    
+    
+    //
+    // Class Constants
+    //
+    
+    /** Is logging active */
+    public static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
+    
+    
+    //
+    // Class Resources
+    //
+    
+    /** Event logger */
+    private final Logger    LOGGER = LogManager.getLogger();
 
     
     // 
-    // Resources
+    // Initialization Targets
     //
     
     /** The subject of this data insertion task */
@@ -104,7 +133,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
     
     /**
      * <p>
-     * Creates and returns a new, initialized instances of <code>BucketDataInsertTask</code> 
+     * Creates and returns a new, initialized instances of <code>DataBucketInsertTask</code> 
      * ready for execution.
      * </p>
      * 
@@ -113,8 +142,8 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * 
      * @return  new, initialized thread task ready for execution
      */
-    public static BucketDataInsertTask newTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
-        return new BucketDataInsertTask(msgSubject, setTarget);
+    public static DataBucketInsertTask newTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
+        return new DataBucketInsertTask(msgSubject, setTarget);
     }
 
     
@@ -124,13 +153,13 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
     
     /**
      * <p>
-     * Constructs a new, initialized instance of <code>BucketDataInsertTask</code>.
+     * Constructs a new, initialized instance of <code>DataBucketInsertTask</code>.
      * </p>
      *
      * @param msgSubject    the task subject - a QueryService data bucket message
      * @param setTarget     the data insertion target - collection of <code>CorrelatedQueryData</code> instances
      */
-    public BucketDataInsertTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
+    public DataBucketInsertTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
         this.msgSubject = msgSubject;
         this.setTarget = setTarget;
     }
@@ -205,7 +234,7 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
      * @see java.util.concurrent.Callable#call()
      */
     @Override
-    public BucketDataInsertTask call() throws Exception {
+    public DataBucketInsertTask call() throws Exception {
         
         // Run the task and get result
         this.run();
@@ -245,8 +274,13 @@ public class BucketDataInsertTask implements Callable<BucketDataInsertTask>, Run
         
         // TODO - Remove
         if (!this.bolSuccess) {
-            System.out.println("----------- " + JavaRuntime.getQualifiedMethodNameSimple() + "----------");
-            System.out.println("  A Bucket Insertion FAILED.");
+            
+            String strColName = this.msgSubject.getDataColumn().getName(); 
+            
+            if (BOL_LOGGING)
+                LOGGER.debug("{} - A data bucket insertion task FAILED for source {}.", JavaRuntime.getQualifiedMethodNameSimple(), strColName);
+//            System.out.println("----------- " + JavaRuntime.getQualifiedMethodNameSimple() + "----------");
+//            System.out.println("  A Bucket Insertion FAILED.");
         }
     }
 

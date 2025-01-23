@@ -52,8 +52,8 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
-import com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.rsp.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -143,7 +143,7 @@ public class UniformSamplingBlockTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock#from(com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock#from(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData)}.
      */
     @Test
     public final void testFrom() {
@@ -161,7 +161,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock#UniformSamplingBlock(com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock#UniformSamplingBlock(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData)}.
      */
     @Test
     public final void testUniformSamplingBlock() {

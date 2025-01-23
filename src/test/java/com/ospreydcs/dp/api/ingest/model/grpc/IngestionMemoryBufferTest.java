@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionDataBufferTest.java
+ * File:	IngestionMemoryBufferTest.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionDataBufferTest
+ * Type: 	IngestionMemoryBufferTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -54,14 +54,14 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**
  * <p>
- * JUnit test cases for class <code>IngestionDataBuffer</code>.
+ * JUnit test cases for class <code>IngestionMemoryBuffer</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Aug 6, 2024
  *
  */
-public class IngestionDataBufferTest {
+public class IngestionMemoryBufferTest {
 
     //
     // Class Constants
@@ -149,19 +149,19 @@ public class IngestionDataBufferTest {
     //
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#IngestionDataBuffer()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#IngestionDataBuffer()}.
      */
     @Test
     public final void testIngestionDataBuffer() {
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer();
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#IngestionDataBuffer(long)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#IngestionDataBuffer(long)}.
      */
     @Test
     public final void testIngestionDataBufferLong() {
@@ -169,7 +169,7 @@ public class IngestionDataBufferTest {
         // Parameters
         final   int     szCapacity = 101;     
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity);
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertEquals(szCapacity, buffer.getMaxQueueAllocation());
@@ -177,7 +177,7 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#IngestionDataBuffer(long, boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#IngestionDataBuffer(long, boolean)}.
      */
     @Test
     public final void testIngestionDataBufferLongBoolean() {
@@ -186,7 +186,7 @@ public class IngestionDataBufferTest {
         final int       szCapacity = 101;
         final boolean   bolBackPressure = false;
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertEquals(szCapacity, buffer.getMaxQueueAllocation());
@@ -195,7 +195,7 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#setQueueCapcity(long)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#setQueueCapcity(long)}.
      */
     @Test
     public final void testSetQueueCapcity() {
@@ -203,7 +203,7 @@ public class IngestionDataBufferTest {
         // Parameters
         final int       szCapacity = 42;
         
-        IngestionDataBuffer  buffer = IngestionDataBuffer.create();
+        IngestionMemoryBuffer  buffer = IngestionMemoryBuffer.create();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
@@ -214,12 +214,12 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#enableBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#enableBackPressure()}.
      */
     @Test
     public final void testEnableBackPressure() {
         
-        IngestionDataBuffer  buffer = IngestionDataBuffer.create();
+        IngestionMemoryBuffer  buffer = IngestionMemoryBuffer.create();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
@@ -232,12 +232,12 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#disableBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#disableBackPressure()}.
      */
     @Test
     public final void testDisableBackPressure() {
         
-        IngestionDataBuffer  buffer = IngestionDataBuffer.create();
+        IngestionMemoryBuffer  buffer = IngestionMemoryBuffer.create();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
@@ -250,7 +250,7 @@ public class IngestionDataBufferTest {
     }
 
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#hasBackPressure()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#hasBackPressure()}.
 //     */
 //    @Test
 //    public final void testHasBackPressure() {
@@ -258,7 +258,7 @@ public class IngestionDataBufferTest {
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#getQueueCapacity()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#getQueueCapacity()}.
 //     */
 //    @Test
 //    public final void testGetQueueCapacity() {
@@ -266,7 +266,7 @@ public class IngestionDataBufferTest {
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#getQueueSize()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#getQueueSize()}.
 //     */
 //    @Test
 //    public final void testGetQueueSize() {
@@ -274,7 +274,7 @@ public class IngestionDataBufferTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#activate()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#activate()}.
      */
     @Test
     public final void testActivate() {
@@ -283,7 +283,7 @@ public class IngestionDataBufferTest {
         final int       szCapacity = 101;
         final boolean   bolBackPressure = false;
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -293,7 +293,7 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#shutdown()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#shutdown()}.
      */
     @Test
     public final void testShutdown() {
@@ -302,7 +302,7 @@ public class IngestionDataBufferTest {
         final int       szCapacity = 101;
         final boolean   bolBackPressure = false;
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -320,7 +320,7 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#shutdownNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#shutdownNow()}.
      */
     @Test
     public final void testShutdownNow() {
@@ -329,7 +329,7 @@ public class IngestionDataBufferTest {
         final int       szCapacity = 101;
         final boolean   bolBackPressure = false;
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -352,7 +352,7 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#offer(IngestDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#offer(IngestDataRequest)}.
      */
     @Test
     public final void testEnqueueIngestDataRequest() {
@@ -364,7 +364,7 @@ public class IngestionDataBufferTest {
         final IngestDataRequest msgRqst = LST_MSGS_RQST.get(0);
         final long              lngMsgAlloc = msgRqst.getSerializedSize();
                 
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -387,7 +387,7 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#offer(List)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#offer(List)}.
      */
     @Test
     public final void testEnqueueListOfIngestDataRequest() {
@@ -400,7 +400,7 @@ public class IngestionDataBufferTest {
         final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = true;
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -424,7 +424,7 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#awaitQueueReady()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#awaitQueueReady()}.
      */
     @Test
     public final void testAwaitQueueReady() {
@@ -437,7 +437,7 @@ public class IngestionDataBufferTest {
         final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = false;
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -503,7 +503,7 @@ public class IngestionDataBufferTest {
     }
 
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#awaitQueueEmpty()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#awaitQueueEmpty()}.
 //     */
 //    @Test
 //    public final void testAwaitQueueEmpty() {
@@ -511,7 +511,7 @@ public class IngestionDataBufferTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#isSupplying()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#isSupplying()}.
      */
     @Test
     public final void testIsSupplying() {
@@ -524,7 +524,7 @@ public class IngestionDataBufferTest {
         final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = false;
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -560,7 +560,7 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#take()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#take()}.
      */
     @Test
     public final void testTake() {
@@ -577,7 +577,7 @@ public class IngestionDataBufferTest {
         final long      lngUpdate = 1;
         final TimeUnit  tuUpdate = TimeUnit.SECONDS;
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -627,7 +627,7 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#poll()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#poll()}.
      */
     @Test
     public final void testPoll() {
@@ -642,7 +642,7 @@ public class IngestionDataBufferTest {
         final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = true;
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -680,7 +680,7 @@ public class IngestionDataBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer#poll(long, TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer#poll(long, TimeUnit)}.
      */
     @Test
     public final void testPollLongTimeUnit() {
@@ -695,7 +695,7 @@ public class IngestionDataBufferTest {
         final long      szCapacity = szPayload/2;
         final boolean   bolBackPressure = true;
         
-        IngestionDataBuffer  buffer = new IngestionDataBuffer(szCapacity, bolBackPressure);
+        IngestionMemoryBuffer  buffer = new IngestionMemoryBuffer(szCapacity, bolBackPressure);
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
         
@@ -739,12 +739,12 @@ public class IngestionDataBufferTest {
     
     /**
      * <p>
-     * Creates a <code>IngestionDataBuffer</code> monitoring task that.
+     * Creates a <code>IngestionMemoryBuffer</code> monitoring task that.
      * </p>
      * <p>
      * The returned task does not complete until the given buffer stops supplying ingest data request 
      * messages.  The task continues (indefinitely) polling the buffer using 
-     * <code>{@link IngestionDataBuffer#isSupplying()</code> method until it returns <code>false</code>.
+     * <code>{@link IngestionMemoryBuffer#isSupplying()</code> method until it returns <code>false</code>.
      * </p>
      * 
      * @param buffer        buffer being monitored
@@ -780,7 +780,7 @@ public class IngestionDataBufferTest {
      * 
      * @return  a new buffer update task
      */
-    private Runnable    createBufferUpdateTask(IngestionDataBuffer buffer, PrintStream ps) {
+    private Runnable    createBufferUpdateTask(IngestionMemoryBuffer buffer, PrintStream ps) {
         
         Runnable    task = () -> {
             ps.println("Buffer: isSupplying = " + buffer.isSupplying());
@@ -856,7 +856,7 @@ public class IngestionDataBufferTest {
      * terminate until the the buffer stops supplying.
      * </p>
      * <p>
-     * The consumer task uses the <code>{@link IngestionDataBuffer#take()}</code> blocking method for
+     * The consumer task uses the <code>{@link IngestionMemoryBuffer#take()}</code> blocking method for
      * message retrieval.
      * </p> 
      * <p>
@@ -896,7 +896,7 @@ public class IngestionDataBufferTest {
      * terminate until the the buffer stops supplying.
      * </p>
      * <p>
-     * The consumer task uses the <code>{@link IngestionDataBuffer#poll()}</code> non-blocking method for
+     * The consumer task uses the <code>{@link IngestionMemoryBuffer#poll()}</code> non-blocking method for
      * message retrieval.
      * </p> 
      * <p>
@@ -941,7 +941,7 @@ public class IngestionDataBufferTest {
      * terminate until the the buffer stops supplying.
      * </p>
      * <p>
-     * The consumer task uses the <code>{@link IngestionDataBuffer#poll(long, TimeUnit)}</code> blocking method for
+     * The consumer task uses the <code>{@link IngestionMemoryBuffer#poll(long, TimeUnit)}</code> blocking method for
      * message retrieval.
      * </p> 
      * <p>

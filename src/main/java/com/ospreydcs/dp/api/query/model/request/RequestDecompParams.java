@@ -13,7 +13,7 @@ package com.ospreydcs.dp.api.query.model.request;
  * @param cntVertical       number of sub-divisions for the time range axis.
  * 
  */
-public record DataRequestDecompParams(DataRequestDecompType type, int cntHorizontal, int cntVertical) {
+public record RequestDecompParams(RequestDecompType type, int cntHorizontal, int cntVertical) {
     
     /** Return the total number of domain covering sets */
     public int totalCovers() { return cntHorizontal * cntVertical; };

@@ -46,9 +46,9 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.rsp.QueryDataCorrelator;
-import com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep;
+import com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestQueryCompositeRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
@@ -175,7 +175,7 @@ public class QueryResponseCorrelatorDepTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#QueryResponseCorrelator(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#QueryResponseCorrelator(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
      */
     @Test
     public final void testQueryResponseCorrelator() {
@@ -183,7 +183,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#setMultiStreamingResponse(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#setMultiStreamingResponse(boolean)}.
      * <p>
      * Turns off multi-stream option for default gRPC streaming requests.
      */
@@ -209,7 +209,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#setCorrelationConcurrency(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#setCorrelationConcurrency(boolean)}.
      * <p>
      * Turns off concurrent processing.
      */
@@ -235,7 +235,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#setCorrelateWhileStreaming(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#setCorrelateWhileStreaming(boolean)}.
      * <p>
      * Turns off the stream/correlate concurrently option
      */
@@ -261,7 +261,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#setCorrelateWhileStreaming(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#setCorrelateWhileStreaming(boolean)}.
      * <p>
      * Turns off the stream/correlate concurrently option
      */
@@ -283,7 +283,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#setCorrelationConcurrency(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#setCorrelationConcurrency(boolean)}.
      * <p>
      * Turns off multi-stream option for default gRPC streaming requests.
      * <br/>
@@ -315,7 +315,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestUnaryBucket() {
@@ -337,7 +337,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestUnaryOne() {
@@ -359,7 +359,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestUnaryTwo() {
@@ -381,7 +381,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestUnaryLong() {
@@ -403,7 +403,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestUnaryWide() {
@@ -425,7 +425,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamBucket() {
@@ -448,7 +448,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamOne() {
@@ -470,7 +470,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamTwo() {
@@ -492,7 +492,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamLong() {
@@ -514,7 +514,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamWide() {
@@ -536,7 +536,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamBig() {
@@ -558,7 +558,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
 //    @Test
     public final void testProcessRequestStreamHuge() {
@@ -576,7 +576,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestMultiStream(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestMultiStream(java.util.List)}.
      */
     @Test
     public final void testProcessRequestMultiStreamHor() {
@@ -598,7 +598,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestMultiStream(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestMultiStream(java.util.List)}.
      */
     @Test
     public final void testProcessRequestMultiStreamVer() {
@@ -620,7 +620,7 @@ public class QueryResponseCorrelatorDepTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep#processRequestMultiStream(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#processRequestMultiStream(java.util.List)}.
      */
     @Test
     public final void testProcessRequestMultiStreamGrid() {

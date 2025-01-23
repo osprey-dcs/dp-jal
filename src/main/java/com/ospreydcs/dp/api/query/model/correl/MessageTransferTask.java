@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	MessageTransferTask.java
- * Package: com.ospreydcs.dp.api.query.model.rsp
+ * Package: com.ospreydcs.dp.api.query.model.correl
  * Type: 	MessageTransferTask
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.rsp;
+package com.ospreydcs.dp.api.query.model.correl;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
@@ -38,6 +38,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
+import com.ospreydcs.dp.api.query.impl.QueryResponseProcessor;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;

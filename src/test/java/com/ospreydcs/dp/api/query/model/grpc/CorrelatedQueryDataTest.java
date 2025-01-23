@@ -44,7 +44,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
-import com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
@@ -120,7 +120,7 @@ public class CorrelatedQueryDataTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#create(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#create(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testFrom() {
@@ -132,7 +132,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#CorrelatedQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#CorrelatedQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testCorrelatedQueryData() {
@@ -144,7 +144,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#getSampleCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getSampleCount()}.
      */
     @Test
     public final void testGetSampleCount() {
@@ -165,7 +165,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#getStartInstant()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getStartInstant()}.
      */
     @Test
     public final void testGetStartInstant() {
@@ -187,7 +187,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#getTimeDomain()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getTimeDomain()}.
      * <p> 
      * Within a <code>CorrelatedQueryData</code> instance the time domain is the smallest, connected
      * time interval that contains all sample points. 
@@ -221,7 +221,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#getSourceNames()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getSourceNames()}.
      */
     @Test
     public final void testGetSourceNames() {
@@ -255,7 +255,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#getSamplingMessage()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getSamplingMessage()}.
      */
     @Test
     public final void testGetSamplingMessage() {
@@ -285,7 +285,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#getAllDataMessages()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getAllDataMessages()}.
      */
     @Test
     public final void testGetAllDataMessages() {
@@ -323,7 +323,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#verifySourceUniqueness()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#verifySourceUniqueness()}.
      */
     @Test
     public final void testVerifySourceUniqueness() {
@@ -349,7 +349,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#verifySourceSizes()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#verifySourceSizes()}.
      */
     @Test
     public final void testVerifySourceSizes() {
@@ -375,7 +375,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testInsertBucketData() {
@@ -395,7 +395,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testInsertBucketDataRepeated() {
@@ -411,7 +411,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData#compareTo(com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#compareTo(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData)}.
      */
     @Test
     public final void testCompareTo() {

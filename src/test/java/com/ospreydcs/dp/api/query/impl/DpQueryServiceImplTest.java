@@ -49,7 +49,7 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpMetadataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
-import com.ospreydcs.dp.api.query.model.request.DataRequestDecompType;
+import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -426,7 +426,7 @@ public class DpQueryServiceImplTest {
         final Integer   LNG_ROWS = 1000 * LNG_DURATION.intValue(); // sample rate (1 kHz) times duration
         
         final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        final List<DpDataRequest>   lstRqsts = rqstDecomp.buildCompositeRequest(rqst, DataRequestDecompType.HORIZONTAL, CNT_REQUESTS);
+        final List<DpDataRequest>   lstRqsts = rqstDecomp.buildCompositeRequest(rqst, RequestDecompType.HORIZONTAL, CNT_REQUESTS);
         
         rqst.setStreamType(ENM_STREAM_TYPE);
         
@@ -458,7 +458,7 @@ public class DpQueryServiceImplTest {
         final int               CNT_ROWS = 1000 * Long.valueOf(LNG_DURATION).intValue(); // sample rate (1 kHz) times duration
         
         final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        final List<DpDataRequest>   lstRqsts = rqstDecomp.buildCompositeRequest(rqst, DataRequestDecompType.HORIZONTAL, CNT_REQUESTS);
+        final List<DpDataRequest>   lstRqsts = rqstDecomp.buildCompositeRequest(rqst, RequestDecompType.HORIZONTAL, CNT_REQUESTS);
         
         rqst.setStreamType(ENM_STREAM_TYPE);
         

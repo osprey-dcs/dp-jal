@@ -271,9 +271,9 @@ public class DataRequestDecomposer {
 //     * 
 //     * @return  a collection of sub-queries which, in total, are equivalent to the current data request
 //     * 
-//     * @see #buildCompositeRequest(DataRequestDecompType, int)
+//     * @see #buildCompositeRequest(RequestDecompType, int)
 //     */
-//    public static List<DpDataRequest>   buildCompositeRequest(DpDataRequest rqst, DataRequestDecompType enmType, int cntQueries) {
+//    public static List<DpDataRequest>   buildCompositeRequest(DpDataRequest rqst, RequestDecompType enmType, int cntQueries) {
 //        return rqst.buildCompositeRequest(enmType, cntQueries);
 //    }
     
@@ -312,10 +312,10 @@ public class DataRequestDecomposer {
      * according whichever condition is found (in order):
      * <ol>
      * <code>
-     *   <li>{@link DataRequestDecompType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) </li> 
-     *   <li>{@link DataRequestDecompType#HORIZONTAL} <- cntQueriesHor > 1 </li> 
-     *   <li>{@link DataRequestDecompType#VERTICAL}   <- cntQueriesVer > 1 </li> 
-     *   <li>{@link DataRequestDecompType#GRID}       <- else </li> 
+     *   <li>{@link RequestDecompType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) </li> 
+     *   <li>{@link RequestDecompType#HORIZONTAL} <- cntQueriesHor > 1 </li> 
+     *   <li>{@link RequestDecompType#VERTICAL}   <- cntQueriesVer > 1 </li> 
+     *   <li>{@link RequestDecompType#GRID}       <- else </li> 
      * </code>
      * </ol>
      * </p>
@@ -327,7 +327,7 @@ public class DataRequestDecomposer {
      * @see DpApiConfig
      * @see DpQueryConfig
      */
-    public DataRequestDecompParams decomposeDomainPreferred(DpDataRequest rqst) {
+    public RequestDecompParams decomposeDomainPreferred(DpDataRequest rqst) {
 
         // Determine decompose query domain sizes
         int     cntQueriesHor = rqst.getSourceCount() / this.cntSrcsMax;
@@ -343,22 +343,22 @@ public class DataRequestDecomposer {
         // The overall request is not large enough to invoke decomposition
         if ((cntQueriesHor == 1) && (cntQueriesVer == 1)) {
 
-            return new DataRequestDecompParams(DataRequestDecompType.NONE, 1, 1);
+            return new RequestDecompParams(RequestDecompType.NONE, 1, 1);
 
             // Horizontal decompose request
         } else if (cntQueriesHor > 1) {
             
-            return new DataRequestDecompParams(DataRequestDecompType.HORIZONTAL, cntQueriesHor, 1);
+            return new RequestDecompParams(RequestDecompType.HORIZONTAL, cntQueriesHor, 1);
 
             // Vertical decompose request
         } else if (cntQueriesVer > 1) {
 
-            return new DataRequestDecompParams(DataRequestDecompType.VERTICAL, 1, Long.valueOf(cntQueriesVer).intValue());
+            return new RequestDecompParams(RequestDecompType.VERTICAL, 1, Long.valueOf(cntQueriesVer).intValue());
 
             // Grid decompose request
         } else {
 
-            return new DataRequestDecompParams(DataRequestDecompType.GRID, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
+            return new RequestDecompParams(RequestDecompType.GRID, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
         }
     }
 
@@ -398,10 +398,10 @@ public class DataRequestDecomposer {
      * according to the following:
      * <code>
      * <pre>
-     *   {@link DataRequestDecompType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) 
-     *   {@link DataRequestDecompType#HORIZONTAL} <- (cntQueriesHor > 1) && (cntQueriesVer == 1) 
-     *   {@link DataRequestDecompType#VERTICAL}   <- (cntQueriesHor == 1) && (cntQueriesVer > 1) 
-     *   {@link DataRequestDecompType#GRID}       <- (cntQueriesHor > 1) && (cntQueriesVer > 1) 
+     *   {@link RequestDecompType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) 
+     *   {@link RequestDecompType#HORIZONTAL} <- (cntQueriesHor > 1) && (cntQueriesVer == 1) 
+     *   {@link RequestDecompType#VERTICAL}   <- (cntQueriesHor == 1) && (cntQueriesVer > 1) 
+     *   {@link RequestDecompType#GRID}       <- (cntQueriesHor > 1) && (cntQueriesVer > 1) 
      * </pre>
      * </code>
      * </p>
@@ -413,10 +413,10 @@ public class DataRequestDecomposer {
      * @see DpApiConfig
      * @see DpQueryConfig
      */
-    public DataRequestDecompParams decomposeDomainDefault(DpDataRequest rqst) {
+    public RequestDecompParams decomposeDomainDefault(DpDataRequest rqst) {
 
         // The decompose query type
-        DataRequestDecompType   enmType;
+        RequestDecompType   enmType;
 
         // Determine decompose query domain sizes
         int     cntQueriesHor = rqst.getSourceCount() / this.cntSrcsMax;
@@ -432,26 +432,26 @@ public class DataRequestDecomposer {
         // The overall request is not large enough to invoke decomposition
         if ((cntQueriesHor == 1) && (cntQueriesVer == 1)) {
 
-            enmType = DataRequestDecompType.NONE;
+            enmType = RequestDecompType.NONE;
 
             // Horizontal decompose request
         } else if ((cntQueriesHor > 1) && (cntQueriesVer == 1)) {
 
-            enmType = DataRequestDecompType.HORIZONTAL;
+            enmType = RequestDecompType.HORIZONTAL;
 
             // Vertical decompose request
         } else if ((cntQueriesHor == 1) && (cntQueriesVer > 1)) {
 
-            enmType = DataRequestDecompType.VERTICAL;
+            enmType = RequestDecompType.VERTICAL;
 
             // Grid decompose request
         } else {
 
-            enmType = DataRequestDecompType.GRID;
+            enmType = RequestDecompType.GRID;
 
         }
 
-        return new DataRequestDecompParams(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
+        return new RequestDecompParams(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
     }
 
 
@@ -462,7 +462,7 @@ public class DataRequestDecomposer {
      * <p>
      * <p>
      * Computes the default query domain decomposition using <code>{@link #decomposeDomainPreferred()}</code>
-     * then passes the result to <code>{@link #buildCompositeRequestPreferred(DataRequestDecompParams)}</code>.
+     * then passes the result to <code>{@link #buildCompositeRequestPreferred(RequestDecompParams)}</code>.
      * The current data query request instance is left unchanged.
      * </p>
      * 
@@ -470,14 +470,14 @@ public class DataRequestDecomposer {
      * 
      * @return  an equivalent decompose query request where query domain is decomposed with preferred parameters 
      * 
-     * @see #buildCompositeRequestPreferred(DataRequestDecompParams)
+     * @see #buildCompositeRequestPreferred(RequestDecompParams)
      * @see DpQueryConfig
      * @see DpApiConfig
      */
     public List<DpDataRequest> buildCompositeRequestPreferred(DpDataRequest rqst) {
         
         // Get the preferred domain decomposition 
-        DataRequestDecompParams recDomains = this.decomposeDomainPreferred(rqst);
+        RequestDecompParams recDomains = this.decomposeDomainPreferred(rqst);
 
         return this.buildCompositeRequest(rqst, recDomains);
     }
@@ -498,10 +498,10 @@ public class DataRequestDecomposer {
      * @return              an equivalent decompose query request where query domain is 
      *                      decomposed by argument parameters
      *                      
-     * @see #buildCompositeRequest(DataRequestDecompType, int)
+     * @see #buildCompositeRequest(RequestDecompType, int)
      * @see #buildCompositeRequestGrid(int, int)                      
      */
-    public List<DpDataRequest> buildCompositeRequest(DpDataRequest rqst, DataRequestDecompParams recDomains) {
+    public List<DpDataRequest> buildCompositeRequest(DpDataRequest rqst, RequestDecompParams recDomains) {
         
         return switch (recDomains.type()) {
         case NONE -> List.of(rqst);
@@ -543,7 +543,7 @@ public class DataRequestDecomposer {
      * 
      * @return  a collection of decompose queries which, in total, are equivalent to the given data request
      */
-    public List<DpDataRequest>  buildCompositeRequest(DpDataRequest rqst, DataRequestDecompType enmType, int cntQueries) {
+    public List<DpDataRequest>  buildCompositeRequest(DpDataRequest rqst, RequestDecompType enmType, int cntQueries) {
 
         return switch (enmType) {
         
@@ -785,34 +785,47 @@ public class DataRequestDecomposer {
      * Creates a decompose data query request by decomposing both the data source and time domain axes.
      * </p>
      * <p>
-     * The grid sub-domain is decomposed horizontally and vertically equally by the argument
-     * value divided by 2.  If the argument is odd, then the time axis receives the remainder.
-     * Thus, the result of this method is equivalent to call the method
+     * The grid sub-domain is decomposed horizontally and vertically until the grid domain contains at
+     * least the number of elements given.  An initial grid is taken a square grid where each axis
+     * is divided by the square root of the specified number of queries.  The vertical and horizontal
+     * axis division are incremented by 1 until the total number of domain divisions is greater than
+     * or equal to the given value <code>cntQueries</code>.
      * <code>
      * <pre>
-     *      decomposeDomainGridded(cntQueries/2, cntQueries/2 + cntQueries%2);
+     *      decomposeDomainGridded(&radic;cntQueries + n, &radic;cntQueries + n);
      * </pre>
      * </code>
+     * where n is number of increments required so that (&radic;cntQueries + n)<sup>2</sup> &ge; cntQueries.
      * </p>
      *  
      * @param rqstOrg       the time-series data request to be decomposed
-     * @param cntQueries    total number of queries returned
+     * @param cntQueries    minimum number of queries returned
      * 
-     * @return  a new list of <code>DpDataRequest</code> instances composing the decompose request
+     * @return  a new list of <code>DpDataRequest</code> instances composing the composite request
      * 
      * @see #decomposeDomainGridded(int, int)
      */
     private List<DpDataRequest> decomposeDomainGridded(DpDataRequest rqstOrg, int cntQueries) {
         
-        // Compute the number of queries in each axes
-        int cntQueriesPerAxis = cntQueries / 2;
+        // Initialize the number of queries in each axes
+        double dblQueriesPerAxis = Math.sqrt(cntQueries);
+        int cntQueriesPerAxis = (int)dblQueriesPerAxis;
+        
         int cntQueriesHor = cntQueriesPerAxis;
         int cntQueriesVer = cntQueriesPerAxis;
         
-        // Add any remainder to the cntVer (time) axis
-        if (cntQueries % 2 > 0) 
-            cntQueriesVer = cntQueriesPerAxis + 1;
-
+        // Continue to divide axes until the number of grids is greater than the request count
+        boolean bolVer = true;
+        while (cntQueriesHor*cntQueriesVer < cntQueries) {
+            
+            if (bolVer) 
+                cntQueriesVer++;
+            else
+                cntQueriesHor++;
+            
+            bolVer = !bolVer;
+        }
+        
         return this.decomposeDomainGridded(rqstOrg, cntQueriesHor, cntQueriesVer);
     }
 }

@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.rsp;
+package com.ospreydcs.dp.api.query.model.correl;
 
 import java.time.Duration;
 import java.time.Instant;

@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	QueryResponseProcessor.java
- * Package: com.ospreydcs.dp.api.query.model.rsp
+ * Package: com.ospreydcs.dp.api.query.model.correl
  * Type: 	QueryResponseProcessor
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.rsp;
+package com.ospreydcs.dp.api.query.impl;
 
 import java.util.List;
 import java.util.SortedSet;
@@ -42,11 +42,14 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.MessageTransferTask;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 import com.ospreydcs.dp.api.query.model.grpc.QueryStream;
-import com.ospreydcs.dp.api.query.model.request.DataRequestDecompParams;
-import com.ospreydcs.dp.api.query.model.request.DataRequestDecompType;
+import com.ospreydcs.dp.api.query.model.request.RequestDecompParams;
+import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
@@ -740,8 +743,8 @@ public class QueryResponseProcessor {
      * If the number of data sources within the given data request &ge; <code>{@link #getMultiStreamCount()}</code>
      * then a "horizontal" query domain decomposition is used to generate the returned decompose request.
      * Specifically, the returned value is given by 
-     * <code>{@link DpDataRequest#buildCompositeRequest(DataRequestDecompType, int)}</code> where the arguments are
-     * <code>{@link DataRequestDecompType#HORIZONTAL}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
+     * <code>{@link DpDataRequest#buildCompositeRequest(RequestDecompType, int)}</code> where the arguments are
+     * <code>{@link RequestDecompType#HORIZONTAL}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
      * </li>
      * <li>
      * <h3>Vertical Decomposition</h3>
@@ -749,16 +752,16 @@ public class QueryResponseProcessor {
      * <code>{@link #getMultiStreamCount()}</code> * <code>{@link #geMultiStreamingDomainSize()}</code> then a "vertical"
      * query domain decomposition is used to create the returned decompose request.  Specifically, the returned
      * value is given by 
-     * <code>{@link DpDataRequest#buildCompositeRequest(DataRequestDecompType, int)}</code> where the arguments are
-     * <code>{@link DataRequestDecompType#VERTICAL}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
+     * <code>{@link DpDataRequest#buildCompositeRequest(RequestDecompType, int)}</code> where the arguments are
+     * <code>{@link RequestDecompType#VERTICAL}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
      * </li>
      * <li>
      * <h3>Grid Decomposition</h3>
      * If the number of data sources within the request &le; <code>{@link #getMultiStreamCount()}</code> / 2 then a
      * "grid" query domain decomposition is used to create the returned decompose request.  Specifically, the
      * returned value is given by 
-     * <code>{@link DpDataRequest#buildCompositeRequest(DataRequestDecompType, int)}</code> where the arguments are
-     * <code>{@link DataRequestDecompType#GRID}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
+     * <code>{@link DpDataRequest#buildCompositeRequest(RequestDecompType, int)}</code> where the arguments are
+     * <code>{@link RequestDecompType#GRID}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
      * </li>
      * </ol>
      * If all the above conditions fail, the data request is consider "undecomposable".  
@@ -783,7 +786,7 @@ public class QueryResponseProcessor {
         List<DpDataRequest>     lstCmpRqsts;    // decompose request to be returned
         
         // Try default query domain decomposition will work
-        DataRequestDecompParams recDomain = this.prcrDecomposer.decomposeDomainPreferred(dpRequest);
+        RequestDecompParams recDomain = this.prcrDecomposer.decomposeDomainPreferred(dpRequest);
         
         if (recDomain.totalCovers() < this.cntMaxStreams) {
             lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, recDomain);
@@ -794,7 +797,7 @@ public class QueryResponseProcessor {
         // Try horizontal query domain decomposition (by data sources)
         //  Works when request source count is greater than the stream count
         if (dpRequest.getSourceCount() > this.cntMaxStreams) {
-            lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, DataRequestDecompType.HORIZONTAL, this.cntMaxStreams);
+            lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, RequestDecompType.HORIZONTAL, this.cntMaxStreams);
         
             return lstCmpRqsts;
         }
@@ -808,7 +811,7 @@ public class QueryResponseProcessor {
         szDomPerRqst += (szDomain % this.szDomainMultiStream > 0) ? 1 : 0;
         
         if (szDomPerRqst < this.cntMaxStreams) {
-            lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, DataRequestDecompType.VERTICAL, this.cntMaxStreams);
+            lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, RequestDecompType.VERTICAL, this.cntMaxStreams);
             
             return lstCmpRqsts;
         }
@@ -816,7 +819,7 @@ public class QueryResponseProcessor {
         // Try a grid-based query domain decomposition
         //  Works when the source count is at least half of the stream count
         if (dpRequest.getSourceCount() > (this.cntMaxStreams/2)) {
-            lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, DataRequestDecompType.GRID, this.cntMaxStreams);
+            lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, RequestDecompType.GRID, this.cntMaxStreams);
             
             return lstCmpRqsts;
         }

@@ -145,7 +145,45 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     public QueryMessageBuffer() {
     }
 
+    
+    //
+    // State Inquiry
+    //
+    
+    /**
+     * <p>
+     * Returns the current size of the queue buffer.
+     * </p>
+     * <p>
+     * Returns the number of messages in the queue buffer at the time of invocation.  Note that this
+     * is inherently a dynamic quantity.
+     * </p>
+     *  
+     * @return  number of request messages currently in the queue
+     */
+    public int  getQueueSize() {
+        return this.queMsgBuffer.size();
+    }
+    
+    /**
+     * <p>
+     * Compute and return the number of bytes currently contained in the message queue buffer.
+     * </p>
+     * <p>
+     * Computes the total memory allocation (in bytes) currently within the queue buffer.  This value 
+     * is computed on the fly by iterating over all messages within the buffer and, thus, can require
+     * potentially nontrivial CPU resources.
+     * </p>
+     *
+     * @return  total memory allocation within queue buffer (in bytes) 
+     */
+    public long computeQueueAllocation() {
+        long    lngAlloc = this.queMsgBuffer.stream().mapToLong(QueryData::getSerializedSize).sum();
+        
+        return lngAlloc;
+    }
 
+    
     //
     // Operations
     //

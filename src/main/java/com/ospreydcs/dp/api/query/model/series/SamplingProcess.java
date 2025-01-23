@@ -56,8 +56,8 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.table.StaticDataTable;
-import com.ospreydcs.dp.api.query.model.rsp.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.rsp.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 

@@ -10,10 +10,10 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * Query domain decompositions are used for <em>decompose query</em> construction.
  * </p>
  * 
- * @see DataRequestDecompParams
- * @see DpDataRequest#buildCompositeRequest(DataRequestDecompType, int)
+ * @see RequestDecompParams
+ * @see DpDataRequest#buildCompositeRequest(RequestDecompType, int)
  */
-public enum DataRequestDecompType {
+public enum RequestDecompType {
     
     /**
      * Query domain is decomposed horizontally (by data sources).

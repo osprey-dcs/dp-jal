@@ -262,7 +262,7 @@ public class IngestionChannelEvaluator {
         
         // Create a message buffer
         // - Load buffer with the payload and activate, shutdown thread is returned 
-        IngestionDataBuffer buffer = this.createAndloadMessageBuffer();
+        IngestionMemoryBuffer buffer = this.createAndloadMessageBuffer();
         
         if (buffer == null) {
             this.recStatus = ResultStatus.newFailure("Message buffer failed to load and activate.");
@@ -465,30 +465,30 @@ public class IngestionChannelEvaluator {
      * The buffer is first created so that it accepts the full payload without blocking (no back pressure).  
      * It is then activated so that it accepts <code>IngestDataRequest</code> messages.
      * The payload <code>{@link #LST_MSG_RQSTS}</code> is then offered to the buffer.
-     * The buffer is then shut down using <code>{@link IngestionDataBuffer#shutdown()}</code> on
+     * The buffer is then shut down using <code>{@link IngestionMemoryBuffer#shutdown()}</code> on
      * a separate execution thread <code>{@link #thdSBuffShdn}</code> (shutdown() is a blocking operation).  
      * The buffer will continue to supply messages until exhausted at which time the 
-     * <code>{@link IngestionDataBuffer#isSupplying()}</code> will return <code>false</code> allowing
+     * <code>{@link IngestionMemoryBuffer#isSupplying()}</code> will return <code>false</code> allowing
      * a normal shutdown of the <code>IngestionChannel</code> instance under test.
      * </p>
      * <p>
      * Note that the method sets the instance attribute <code>{@link #thdSBuffShdn}</code> thread 
-     * containing the <code>{@link IngestionDataBuffer#shutdown()}</code> operation so that other methods 
+     * containing the <code>{@link IngestionMemoryBuffer#shutdown()}</code> operation so that other methods 
      * can block on the shutdown operation using <code>{@link Thread#join()}</code>.
      * If the buffer creation operation fails the returned instance will be <code>null</code>.
      * </p>
      * 
      * @return  fully loaded and activated message buffer, or <code>null</code> if the loading operation failed
      */
-    private IngestionDataBuffer createAndloadMessageBuffer() {
+    private IngestionMemoryBuffer createAndloadMessageBuffer() {
         
         // Create a new payload (just in case)
         List<IngestDataRequest>     lstMsgRqsts = this.obtainPayload();
         long                        szPayloadAlloc = lstMsgRqsts.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
         
         // Create a message buffer
-//        IngestionDataBuffer buffer = new IngestionDataBuffer(SZ_PAYLOAD_ALLOC, false);
-        IngestionDataBuffer buffer = new IngestionDataBuffer(szPayloadAlloc, false);
+//        IngestionMemoryBuffer buffer = new IngestionMemoryBuffer(SZ_PAYLOAD_ALLOC, false);
+        IngestionMemoryBuffer buffer = new IngestionMemoryBuffer(szPayloadAlloc, false);
         
         try {
             // Load buffer with the payload and activate 

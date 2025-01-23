@@ -25,7 +25,7 @@
  * TODO:
  * - See documentation
  */
-package com.ospreydcs.dp.api.query.model.rsp;
+package com.ospreydcs.dp.api.query.model.correl;
 
 import java.util.Collection;
 import java.util.List;
@@ -142,7 +142,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * can also steal CPU resources for any other concurrent operations.
  * <ul>
  * <li>
- * The concurrency mechanism utilizes <code>{@link BucketDataInsertTask}</code> instances to
+ * The concurrency mechanism utilizes <code>{@link DataBucketInsertTask}</code> instances to
  * perform thread operations.  Each task attempts to insert a single data bucket message
  * into the current target set of correlated data and can be executed on a separate thread.
  * </li>
@@ -186,6 +186,13 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * </ul>
  * </p>
  * <p>
+ * <h2>WARNING - Data Validation:</h2>
+ * This class contains several methods for various aspects of data validation.  These are static methods
+ * prefixed with <code>verify...()</code> and are available to check the current correlated set.  These
+ * methods can be expensive to perform but are valuable in testing.  It is recommended that once data
+ * validation is confirmed, for performance reasons, use of these methods be limited.
+ * </p>
+ * <p>
  * <h2>NOTES:</h2>
  * <ul>
  * <li>
@@ -217,7 +224,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * @since Jan 11, 2024
  *
  * @see CorrelatedQueryData
- * @see BucketDataInsertTask
+ * @see DataBucketInsertTask
  * @see DpApiConfig
  */
 public class QueryDataCorrelator {
@@ -968,7 +975,7 @@ public class QueryDataCorrelator {
      * the target set of interval references.
      * </p>
      * <p>
-     * The method creates a collection of data insertion tasks <code>BucketDataInsertTask</code>
+     * The method creates a collection of data insertion tasks <code>DataBucketInsertTask</code>
      * (one task for each <code>DataBucket</code> message within the argument)
      * then executes them concurrently.  If a task fails its <code>DataBucket</code> subject is 
      * identified and returned in the set of <code>BucketData</code> messages that were not 
@@ -1000,7 +1007,7 @@ public class QueryDataCorrelator {
     private Collection<QueryDataResponse.QueryData.DataBucket>  attemptDataInsertConcurrent(QueryDataResponse.QueryData msgData) {
         
         // Create the data insertion tasks
-        Collection<BucketDataInsertTask> lstTasks = this.createInsertionTasks(msgData);
+        Collection<DataBucketInsertTask> lstTasks = this.createInsertionTasks(msgData);
 
         // Execute all tasks simultaneously then wait for join
         lstTasks
@@ -1019,7 +1026,7 @@ public class QueryDataCorrelator {
      * the target set of correlated data.
      * </p>
      * <p>
-     * The method creates a collection of data insertion tasks <code>BucketDataInsertTask</code>
+     * The method creates a collection of data insertion tasks <code>DataBucketInsertTask</code>
      * (one task for each <code>DataBucket</code> message within the argument)
      * then executes them concurrently using the instance thread pool executor.  
      * If a task fails its <code>DataBucket</code> subject is 
@@ -1057,7 +1064,7 @@ public class QueryDataCorrelator {
     {
         
         // Create the data insertion tasks
-        Collection<BucketDataInsertTask> lstTasks = this.createInsertionTasks(msgData);
+        Collection<DataBucketInsertTask> lstTasks = this.createInsertionTasks(msgData);
         
 //        // TODO - Remove
 //        int cntBckts = msgData.getDataBucketsCount();
@@ -1172,7 +1179,7 @@ public class QueryDataCorrelator {
      * and the current target set of correlated data.
      * </p>
      * <p>
-     * A separate <code>{@link BucketDataInsertTask}</code> object is create for each 
+     * A separate <code>{@link DataBucketInsertTask}</code> object is create for each 
      * <code>{@link DataBucket}</code> message contained (the subject) within the argument 
      * message.  The object of each task is the current of correlated data set 
      * <code>{@link #setPrcdData}</code>.  Specifically, each task attempts, when activated,
@@ -1189,12 +1196,12 @@ public class QueryDataCorrelator {
      * 
      * @return  collection of data insertion tasks for current target set, one for each data bucket of the argument
      */
-    private Collection<BucketDataInsertTask> createInsertionTasks(QueryDataResponse.QueryData msgData) {
+    private Collection<DataBucketInsertTask> createInsertionTasks(QueryDataResponse.QueryData msgData) {
         
-        List<BucketDataInsertTask> lstTasks = msgData
+        List<DataBucketInsertTask> lstTasks = msgData
                 .getDataBucketsList()
                 .stream()
-                .map(buc -> BucketDataInsertTask.newTask(buc, this.setPrcdData))
+                .map(buc -> DataBucketInsertTask.newTask(buc, this.setPrcdData))
                 .toList();
                 
         return lstTasks;
@@ -1214,7 +1221,7 @@ public class QueryDataCorrelator {
      * 
      * @return  collection of task subjects where task execution failed
      */
-    private Collection<QueryDataResponse.QueryData.DataBucket>  extractFailedTaskBuckets(Collection<BucketDataInsertTask> setTasks) {
+    private Collection<QueryDataResponse.QueryData.DataBucket>  extractFailedTaskBuckets(Collection<DataBucketInsertTask> setTasks) {
         
         List<QueryDataResponse.QueryData.DataBucket>  lstBuckets = setTasks
                 .stream()

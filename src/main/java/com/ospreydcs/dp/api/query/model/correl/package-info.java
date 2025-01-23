@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.api.query.model.rsp
+ * Package: com.ospreydcs.dp.api.query.model.correl
  * Type: 	package-info
  *
  * Copyright 2010-2023 the original author or authors.
@@ -34,4 +34,4 @@
  * @since Jan 12, 2025
  *
  */
-package com.ospreydcs.dp.api.query.model.rsp;
+package com.ospreydcs.dp.api.query.model.correl;

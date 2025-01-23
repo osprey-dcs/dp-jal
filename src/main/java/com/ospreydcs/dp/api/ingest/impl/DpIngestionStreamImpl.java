@@ -52,7 +52,7 @@ import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.api.ingest.model.grpc.IngestionChannel;
-import com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer;
+import com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer;
 import com.ospreydcs.dp.api.ingest.model.grpc.ProviderRegistrationService;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc;
@@ -140,11 +140,11 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  *   </ul>
  * </li>
  * 
- * <li><code>IngestionDataBuffer</code> - Staging buffer used for queuing <code>IngestDataRequest</code> messages before transmission.
+ * <li><code>IngestionMemoryBuffer</code> - Staging buffer used for queuing <code>IngestDataRequest</code> messages before transmission.
  *   <ul>
- *   <li>Note <code>IngestionDataBuffer</code> and <code>IngestionMessageBuffer</code> types are essentially interchangeable.
+ *   <li>Note <code>IngestionMemoryBuffer</code> and <code>IngestionMessageBuffer</code> types are essentially interchangeable.
  *     <ul>
- *     <li><code>IngestionDataBuffer</code> has allocation-limited buffer option (i.e., memory allocation limited).</li>
+ *     <li><code>IngestionMemoryBuffer</code> has allocation-limited buffer option (i.e., memory allocation limited).</li>
  *     <li><code>IngestionMessageBuffer</code> has element-limited buffer option (i.e., message count limited).</li>
  *     <li>Both can also be used as infinite-capacity buffers.</li>
  *     </ul>
@@ -154,7 +154,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  *     <li>Ingestion throttling is seen externally as a finite-capacity buffer controlling ingestion.</li> 
  *     <li>That is, seen as though Ingestion Service is back-logged forcing buffer to capacity.</li>
  *     <li>The actual mechanism is more complex and can be enabled and disabled at will.</li>
- *     <li>The current use of <code>IngestionDataBuffer</code> creates allocation-based ingestion throttling when enabled.</li>
+ *     <li>The current use of <code>IngestionMemoryBuffer</code> creates allocation-based ingestion throttling when enabled.</li>
  *     </ul>
  *   </li>
  *   </ul>
@@ -381,7 +381,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     private final IngestionFrameProcessor   prcrFrames; // = new IngestionFrameProcessor();
     
     /** Intermediate staging buffer for processed messages awaiting transmission (accommodates ingestion throttling) */
-    private final IngestionDataBuffer       buffStaging; // = new IngestionDataBuffer();
+    private final IngestionMemoryBuffer       buffStaging; // = new IngestionMemoryBuffer();
     
     /** Autonomous data channel to DP Ingestion Service */
     private final IngestionChannel          chanIngest; // = IngestionChannel.from(this.buffStaging, super.grpcConn);
@@ -470,7 +470,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
         super(connIngest);
         
         this.prcrFrames = IngestionFrameProcessor.create();
-        this.buffStaging = IngestionDataBuffer.create();
+        this.buffStaging = IngestionMemoryBuffer.create();
         this.chanIngest = IngestionChannel.from(this.buffStaging, super.grpcConn);
         
         // We handle ingestion throttling directly
@@ -672,7 +672,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * The queue capacity is the critical parameter for ingestion throttling, either implicit through
      * back-pressure blocking at <code>{@link #offer(List)}</code> or explicit throttling with
      * <code>{@link #awaitQueueReady()}</code>.  If the memory allocation within the queue
-     * exceed the given value the throttling is activated.  In that case this <code>IngestionDataBuffer</code> 
+     * exceed the given value the throttling is activated.  In that case this <code>IngestionMemoryBuffer</code> 
      * instance blocks at <code>{@link #offer(List)}</code> if back-pressure is enabled, and 
      * <code>{@link #awaitQueueReady()}</code> blocks regardless of back-pressure settings.
      * </p>

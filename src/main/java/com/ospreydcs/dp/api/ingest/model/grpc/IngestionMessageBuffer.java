@@ -66,7 +66,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <code>IMessageSupplier&lt;IngestDataRequest&gt;</code> interface.
  * </p>
  * <p>
- * For an allocation-based back-pressure implementation see <code>{@link IngestionDataBuffer}</code>.
+ * For an allocation-based back-pressure implementation see <code>{@link IngestionMemoryBuffer}</code>.
  * </p>
  *
  * @author Christopher K. Allen
@@ -391,7 +391,7 @@ public class IngestionMessageBuffer implements IMessageConsumer<IngestDataReques
      * <p>
      * <h2>WARNING:</h2>
      * This can be a computationally expensive process as a running allocation count is not maintained with
-     * the buffer instance (as with the <code>IngestionDataBuffer</code> type).  Use with discretion.
+     * the buffer instance (as with the <code>IngestionMemoryBuffer</code> type).  Use with discretion.
      * </p>
      * 
      * @return  the computed total memory allocation of all messages currently within the buffer

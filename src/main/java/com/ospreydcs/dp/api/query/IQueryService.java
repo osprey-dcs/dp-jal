@@ -7,7 +7,7 @@ import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.PvMetaRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.query.model.rsp.QueryResponseCorrelatorDep;
+import com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 
 /**

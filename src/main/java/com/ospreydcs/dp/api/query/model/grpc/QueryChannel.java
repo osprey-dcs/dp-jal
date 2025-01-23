@@ -496,15 +496,17 @@ public class QueryChannel {
      *  
      * @param dpRequest data request to be recovered from Query Service and processed
      * 
+     * @return  the number of <code>QueryData</code> messages recovered and passed to the message consumer 
+     * 
      * @throws DpQueryException general exception during data recovery and/or processing (see cause)
      */
-    public void recoverRequest(DpDataRequest dpRequest) throws DpQueryException {
+    public int recoverRequest(DpDataRequest dpRequest) throws DpQueryException {
 
         // Create request list and defer to recoverRequest(List)
         List<DpDataRequest>     lstRequests = List.of(dpRequest);
         
         // Defer to the multi-streaming processor method
-        this.recoverRequest(lstRequests);
+        return this.recoverRequest(lstRequests);
     }
     
     /**

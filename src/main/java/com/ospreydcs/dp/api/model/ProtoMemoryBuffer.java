@@ -39,7 +39,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.google.protobuf.GeneratedMessage;
-import com.ospreydcs.dp.api.ingest.model.grpc.IngestionDataBuffer;
+import com.ospreydcs.dp.api.ingest.model.grpc.IngestionMemoryBuffer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 

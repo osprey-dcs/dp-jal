@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	IngestionDataBuffer.java
+ * File:	IngestionMemoryBuffer.java
  * Package: com.ospreydcs.dp.api.ingest.model.grpc
- * Type: 	IngestionDataBuffer
+ * Type: 	IngestionMemoryBuffer
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -74,7 +74,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * @since Jul 28, 2024
  *
  */
-public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>, IMessageSupplier<IngestDataRequest> {
+public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest>, IMessageSupplier<IngestDataRequest> {
 
     
     //
@@ -83,7 +83,7 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     
     /**
      * <p>
-     * Creates a new instance of <code>IngestionDataBuffer</code> with default parameters.
+     * Creates a new instance of <code>IngestionMemoryBuffer</code> with default parameters.
      * </p>
      * <p>
      * Ingestion message queue buffer memory allocation capacity and back-pressure enforcement is taken 
@@ -95,13 +95,13 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * @see #LNG_MAX_ALLOC
      * @see #BOL_BUFFER_BACKPRESSURE
      */
-    public static IngestionDataBuffer  create() { 
-        return new IngestionDataBuffer();
+    public static IngestionMemoryBuffer  create() { 
+        return new IngestionMemoryBuffer();
     }
     
     /**
      * <p>
-     * Creates a new instance of <code>IngestionDataBuffer</code> with the given queue buffer max allocation.
+     * Creates a new instance of <code>IngestionMemoryBuffer</code> with the given queue buffer max allocation.
      * </p>
      * <p>
      * Back-pressure enforcement is taken from the default values of the API library configuration
@@ -111,13 +111,13 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      *
      * @return  a new ingestion data buffer ready for operation
      */
-    public static IngestionDataBuffer   create(long szQueueCapacity) {
-        return new IngestionDataBuffer(szQueueCapacity);
+    public static IngestionMemoryBuffer   create(long szQueueCapacity) {
+        return new IngestionMemoryBuffer(szQueueCapacity);
     }
     
     /**
      * <p>
-     * Creates a new instance of <code>IngestionDataBuffer</code> initialized with the given parameters.
+     * Creates a new instance of <code>IngestionMemoryBuffer</code> initialized with the given parameters.
      * </p>
      *
      * @param szQueueCapacity   maximum memory allocation capacity of queue buffer
@@ -125,8 +125,8 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * 
      * @return  a new ingestion data buffer ready for operation
      */
-    public static IngestionDataBuffer   create(long szQueueCapacity, boolean bolBackPressure) {
-        return new IngestionDataBuffer(szQueueCapacity, bolBackPressure);
+    public static IngestionMemoryBuffer   create(long szQueueCapacity, boolean bolBackPressure) {
+        return new IngestionMemoryBuffer(szQueueCapacity, bolBackPressure);
     }
     
     
@@ -147,14 +147,7 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
 
     
-//    /** Size of the ingestion frame queue buffer - used to create default maximum capacity allocation */
-//    private static final Integer    INT_BUFFER_SIZE = CFG_DEFAULT.stream.buffer.size;
-//    
-//    /** Size of the maximum allowable ingestion frame - used to create default maximum capacity allocation */
-//    private static final Integer    INT_MAX_FRAME_SIZE = CFG_DEFAULT.decompose.maxSize;
-    
     /** Default maximum memory allocation */
-//    private static final Long       LNG_MAX_ALLOC = (long) (INT_BUFFER_SIZE * INT_MAX_FRAME_SIZE);
     private static final Long       LNG_MAX_ALLOC = CFG_DEFAULT.stream.buffer.allocation;
     
     
@@ -231,7 +224,7 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionDataBuffer</code> with default parameters.
+     * Constructs a new instance of <code>IngestionMemoryBuffer</code> with default parameters.
      * </p>
      * <p>
      * Ingestion message queue buffer memory allocation capacity and back-pressure enforcement is taken 
@@ -241,13 +234,13 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * @see #LNG_MAX_ALLOC
      * @see #BOL_BUFFER_BACKPRESSURE
      */
-    public IngestionDataBuffer() {
+    public IngestionMemoryBuffer() {
         this(LNG_MAX_ALLOC);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionDataBuffer</code> with the given queue buffer max allocation.
+     * Constructs a new instance of <code>IngestionMemoryBuffer</code> with the given queue buffer max allocation.
      * </p>
      * <p>
      * Back-pressure enforcement is taken from the default values of the API library configuration
@@ -255,19 +248,19 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      *
      * @param szQueueCapacity     maximum memory allocation capacity of queue buffer
      */
-    public IngestionDataBuffer(long szQueueCapacity) {
+    public IngestionMemoryBuffer(long szQueueCapacity) {
         this(szQueueCapacity, BOL_BUFFER_BACKPRESSURE);
     }
 
     /**
      * <p>
-     * Constructs a new instance of <code>IngestionDataBuffer</code> initialized with the given parameters.
+     * Constructs a new instance of <code>IngestionMemoryBuffer</code> initialized with the given parameters.
      * </p>
      *
      * @param szMaxQueAlloc     maximum memory allocation capacity of queue buffer
      * @param bolBackPressure   enforce back pressure (implicit throttling) at <code>{@link #offer(List)}</code>
      */
-    public IngestionDataBuffer(long szMaxQueAlloc, boolean bolBackPressure) {
+    public IngestionMemoryBuffer(long szMaxQueAlloc, boolean bolBackPressure) {
         this.szMaxQueueAlloc = szMaxQueAlloc;
         this.bolBackPressure = bolBackPressure;
     }
@@ -285,7 +278,7 @@ public class IngestionDataBuffer implements IMessageConsumer<IngestDataRequest>,
      * The queue capacity is the critical parameter for ingestion throttling, either implicit through
      * back-pressure blocking at <code>{@link #offer(List)}</code> or explicit throttling with
      * <code>{@link #awaitQueueReady()}</code>.  If the memory allocation within the queue
-     * exceed the given value the throttling is activated.  In that case this <code>IngestionDataBuffer</code> 
+     * exceed the given value the throttling is activated.  In that case this <code>IngestionMemoryBuffer</code> 
      * instance blocks at <code>{@link #offer(List)}</code> if back-pressure is enabled, and 
      * <code>{@link #awaitQueueReady()}</code> blocks regardless of back-pressure settings.
      * </p>
