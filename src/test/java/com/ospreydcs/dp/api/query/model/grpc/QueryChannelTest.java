@@ -179,7 +179,7 @@ public class QueryChannelTest {
     
     
     /** Universal enable/disable correlation concurrency flag */
-    public static final boolean                 BOL_CORR_CONC = false;
+    public static final boolean                 BOL_CORR_CONC = true;
     
     
     /*
@@ -253,6 +253,7 @@ public class QueryChannelTest {
         DateFormat  date = DateFormat.getDateTimeInstance();
         String      strDateTime = date.format(new Date());
         psOutput.println(QueryChannelTest.class.getSimpleName() + ": " + strDateTime);
+        psOutput.println("  Correlate using multiple threads : " + BOL_CORR_CONC);
         psOutput.println();
     }
 

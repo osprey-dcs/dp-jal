@@ -38,7 +38,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
-import com.ospreydcs.dp.api.query.impl.QueryResponseProcessor;
+import com.ospreydcs.dp.api.query.impl.QueryRequestProcessor;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
@@ -46,7 +46,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * <p>
- * Independent processing thread for the <code>QueryResponseProcessor</code> class.
+ * Independent processing thread for the <code>QueryRequestProcessor</code> class.
  * </p>
  * <p>
  * This task is performed on a separate thread to decouple the gRPC streaming of
@@ -98,7 +98,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * task instances can only be used once.
  * </li>
  * <li>
- * The external <code>{@link QueryResponseProcessor}</code> object should block on the
+ * The external <code>{@link QueryRequestProcessor}</code> object should block on the
  * <code>{@link Thread#join()}</code> method to wait for this processing thread to 
  * complete.  <code>{@link Thread#join()}</code> will return once the processing loop
  * exits normally.

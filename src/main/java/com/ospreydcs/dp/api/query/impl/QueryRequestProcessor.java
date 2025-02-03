@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryResponseProcessor.java
+ * File:	QueryRequestProcessor.java
  * Package: com.ospreydcs.dp.api.query.model.correl
- * Type: 	QueryResponseProcessor
+ * Type: 	QueryRequestProcessor
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -27,11 +27,10 @@
  */
 package com.ospreydcs.dp.api.query.impl;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.SortedSet;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,10 +46,9 @@ import com.ospreydcs.dp.api.query.model.correl.MessageTransferTask;
 import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
-import com.ospreydcs.dp.api.query.model.grpc.QueryStream;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompParams;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -64,7 +62,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @since Jan 15, 2025
  *
  */
-public class QueryResponseProcessor {
+public class QueryRequestProcessor {
 
     
     //
@@ -73,7 +71,7 @@ public class QueryResponseProcessor {
     
     /**
      * <p>
-     * Creates a new instance of <code>QueryResponseProcessor</code>.
+     * Creates a new instance of <code>QueryRequestProcessor</code>.
      * </p>
      * <p>
      * The returned instance is configured according to the default configuration specified in the 
@@ -85,10 +83,10 @@ public class QueryResponseProcessor {
      * be currently connected to the Query Servicer and must be shown down externally.
      * </p>
      *
-     * @return  a new <code>QueryResponseProcessor</code> instance ready for correlation of data requests
+     * @return  a new <code>QueryRequestProcessor</code> instance ready for correlation of data requests
      */
-    public static QueryResponseProcessor    from(DpQueryConnection connQuery) {
-        return new QueryResponseProcessor(connQuery);
+    public static QueryRequestProcessor    from(DpQueryConnection connQuery) {
+        return new QueryRequestProcessor(connQuery);
     }
     
     //
@@ -175,7 +173,7 @@ public class QueryResponseProcessor {
     // Instance Resources
     //
     
-    /** The queue buffering all response messages for data correlation processing */
+    /** Response Buffer - The queue buffering all response messages for data correlation processing */
     private final QueryMessageBuffer        queMsgBuffer;
     
     /** The multi-stream channel connection with the Query Service - for request data recovery */
@@ -188,11 +186,25 @@ public class QueryResponseProcessor {
     private final QueryDataCorrelator       prcrCorrelator;
     
     
+    /** The independent task transferring response messages to the recovery buffer */
+    private MessageTransferTask     thdMsgXferTask;
+    
+
     //
     // Process/State Variables
     //
     
-    private MessageTransferTask     thdMsgXferTask;
+    /** The composite request created from the current request (when {@link #processRequest(DpDataRequest)} was invoked) */
+    private List<DpDataRequest>     lstCompRqsts = null;
+    
+    /** The number of messages recovered and processed from the current request */
+    private int                     cntMsgsProcessed = 0;
+    
+//    /** The total memory allocation of the messages recovered and processed from the current request */
+//    private long    szAllocProcessed = 0;
+//    
+//    /** The total data processing rate for the current request */ 
+//    private double  dblRateProcessed = 0;
     
     
     //
@@ -201,7 +213,7 @@ public class QueryResponseProcessor {
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryResponseProcessor</code>.
+     * Constructs a new instance of <code>QueryRequestProcessor</code>.
      * </p>
      * <p>
      * Note that the instance does not assume ownership of the given connection.  It must
@@ -210,7 +222,7 @@ public class QueryResponseProcessor {
      *
      * @param connQuery active connection to the Query Service
      */
-    public QueryResponseProcessor(DpQueryConnection connQuery) {
+    public QueryRequestProcessor(DpQueryConnection connQuery) {
         this.connQuery = connQuery;
         
         this.queMsgBuffer = QueryMessageBuffer.create();
@@ -222,7 +234,7 @@ public class QueryResponseProcessor {
 
 
     //
-    // Configuration and State
+    // Configuration 
     //
     
     /**
@@ -297,6 +309,15 @@ public class QueryResponseProcessor {
      * The default value is taken from the Java API Library configuration parameters and is available at
      * <code>{@link #SIZE_DOMAIN_MULTISTREAM}</code>.
      * </p> 
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
+     * </p>
      *  
      * @param szDomain  the request domain size (in source-count seconds) threshold where multis-treaming is triggered
      */
@@ -309,9 +330,22 @@ public class QueryResponseProcessor {
      * Sets the maximum number of gRPC data stream used for multi-streaming query responses.
      * </p>
      * <p>
+     * The value is used by <code>{@link #processRequest(DpDataRequest)}</code> to limit the number of
+     * composite data requests.  This value is ignored by <code>{@link #processRequests(List)}</code>.
+     * </p>
+     * <p>
      * This method should be called before any query response processing has started, if at all.  The default value
      * in the Java API Library configuration file should be used as a matter of course.  However, this method is
      * available for performance evaluations. 
+     * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
      * </p>
      * 
      * @param cntMaxStreams    maximum number of gRPC data streams to use in multi-streaming data request recovery
@@ -331,6 +365,68 @@ public class QueryResponseProcessor {
         }
         
         this.cntMaxStreams = cntStreams;
+    }
+    
+    /**
+     * <p>
+     * Sets the maximum number of data sources allowed in a composite data request.
+     * </p>
+     * <p>
+     * Time-series data requests are decomposed horizontally (by data source) using this value when invoking
+     * the <code>{@link #processRequest(DpDataRequest)}</code> method and multi-streaming is enabled.  
+     * No composite request will have the number of data sources larger than this value if decomposition 
+     * was successful.
+     * </p>
+     * <p>
+     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
+     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
+     * available at <code>{@link DataRequestDecomposer#CNT_MAX_SOURCES}</code>.
+     * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
+     * </p>
+     * 
+     * @param cntMaxSources maximum number of data sources allowed in composite requests when multi-streaming
+     */
+    public void setMaxDataSourceCount(int cntMaxSources) {
+        this.prcrDecomposer.setMaxDataSources(cntMaxSources);
+    }
+    
+    /**
+     * <p>
+     * Sets the maximum time range allowed in a composite data request.
+     * </p>
+     * <p>
+     * Time-series data requests are decomposed vertically (by time range) using this value when invoking
+     * the <code>{@link #processRequest(DpDataRequest)}</code> method and multi-streaming is enabled.
+     * No composite request will have the time range of the request larger than this value if decomposition
+     * was successful.
+     * </p>
+     * <p>
+     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
+     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
+     * available at <code>{@link DataRequestDecomposer#DUR_MAX}</code>.
+     * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
+     * </p>
+     * 
+     * @param durRange
+     */
+    public void setMaxTimeRange(Duration durRange) {
+        this.prcrDecomposer.setMaxDuration(durRange);
     }
     
     /**
@@ -434,10 +530,19 @@ public class QueryResponseProcessor {
      * The default value is taken from the Java API Library configuration file
      * (see {@link #SIZE_DOMAIN_MULTISTREAM}).
      * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
+     * </p>
      * 
      * @return the minimum query domain size triggering multi-streaming of response data (in data source * seconds)
      */
-    public final long geMultiStreamingDomainSize() {
+    public final long getMultiStreamingDomainSize() {
         return this.szDomainMultiStream;
     }
 
@@ -447,16 +552,86 @@ public class QueryResponseProcessor {
      * </p>
      * <p>
      * The returned value is the number of gRPC data streams always used for a multi-streaming response.
-     * Note that the returned value has context only when multi-streaming is enabled, specificially,
+     * Note that the returned value has context only when multi-streaming is enabled, specifically,
      * <code>{@link #isMultiStreaming()}</code> returns <code>true</code>.
+     * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
      * </p>
      * 
      * @return the maximum number of concurrent gRPC data streams used to recover query responses when enabled
      */
-    public final int getMaxMultiStreamCount() {
+    public final int getMaxStreamCount() {
         return this.cntMaxStreams;
     }
-
+    
+    /**
+     * <p>
+     * Returns the maximum allowable number of data sources in a composite request.
+     * </p>
+     * <p>
+     * The returned value is used in horizontal request decomposition (i.e., by data source) in the
+     * <code>{@link #processRequest(DpDataRequest)}</code> method.  No composite request will have 
+     * a data source count larger than this value if request decomposition was successful and multi-streaming
+     * is enabled.
+     * </p>
+     * <p>
+     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
+     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
+     * available at <code>{@link DataRequestDecomposer#CNT_MAX_SOURCES}</code>.
+     * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
+     * </p>
+     * 
+     * @return  the maximum allowable number of data sources in any composite request when multi-streaming
+     */
+    public final int getMaxDataSourceCount() {
+        return this.prcrDecomposer.getMaxDataSources();
+    }
+    
+    /**
+     * <p>
+     * Returns the maximum allowing time range duration in a composite request.
+     * </p>
+     * <p>
+     * The returned value is used in vertical request decomposition (i.e., by time range) in the 
+     * <code>{@link #processRequest(DpDataRequest)}</code> method.  No composite request will have time range
+     * greater than the given duration if request decomposition is succesful and multi-streaming is enabled.
+     * </p>
+     * <p>
+     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
+     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
+     * available at <code>{@link DataRequestDecomposer#DUR_MAX}</code>.
+     * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
+     * </p>
+     * 
+     * @return  the maximum allowable time range in any composite request when multi-streaming
+     */
+    public final Duration getMaxTimeRange() {
+        return this.prcrDecomposer.getMaxDuration();
+    }
+    
     /**
      * <p>
      * Returns whether or not parallelism (multi-threading) is enabled for request data correlation.
@@ -494,7 +669,76 @@ public class QueryResponseProcessor {
         return this.bolCorrelateMidstream;
     }
 
+
+    //
+    // Process State Inquiry
+    //
     
+    /**
+     * <p>
+     * Returns the list of composite queries generated for the last <code>{@link #processRequest(DpDataRequest)}</code> request.
+     * </p>
+     * <p>
+     * The returned list is the composite requests generated by the <code>{@link #attemptRequestDecomp(DpDataRequest)}</code>
+     * internal method when using the <code>{@link #processRequest(DpDataRequest)}</code> method.  It is the thus the
+     * list of composite queries used in the last invocation of <code>{@link #processRequest(DpDataRequest)}</code>.
+     * If the method has not be invoked the returned value will be <code>null</code>.
+     * </p>
+     * 
+     * @return  the list of composite queries used to process data by {@link #processRequest(DpDataRequest)}, or <code>null</code> 
+     */
+    public List<DpDataRequest>  getProcessedCompositeRequest() {
+        return this.lstCompRqsts;
+    }
+    
+    /**
+     * <p>
+     * Returned the number of bytes the internal correlator has processed for the last request.
+     * </p>
+     * <p>
+     * The returned value is the serialized size of all Protocol Buffers messages recovered from the
+     * Query Service.  It is also the number of bytes processed by the correlator for the last request
+     * if if was successful. 
+     * The value provides an estimate of size of any sampling process or results set from the last data 
+     * request processed.
+     * </p>
+     * <p>
+     * This value has context after a <code>{@link #processRequest(DpDataRequest)}</code> or 
+     * <code>{@link #processRequests(List)}</code> operation upon return.  It is reset after every
+     * request invocation.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>Actual processed data sizes (in bytes) are typically larger than serialized size (> ~110%).</li>
+     * <li>This value is reset to 0 after invoking <code>{@link #reset()}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @return      the number of serialized bytes processed by the correlator 
+     */
+    public final long   getProcessedByteCount() {
+        return this.prcrCorrelator.getBytesProcessed();
+    }
+    
+    /**
+     * <p>
+     * Returns the number of response messages recovered and processed for the last request.
+     * </p>
+     * <p>
+     * The returned value has context after invoking the <code>{@link #processRequest(DpDataRequest)}</code>
+     * or <code>{@link #processRequests(List)}</code> operations.  It is the number of time-series
+     * data messages returned by the Query Service then successfully processed by the internal
+     * correlator.  It is reset after every request invocation.
+     * </p>
+     * 
+     * @return  the number of response messages recovered from the Query Service and processed
+     */
+    public final int    getProcessedMessageCount() {
+        return this.cntMsgsProcessed;
+    }
+
+
     //
     // Operations
     //
@@ -577,22 +821,19 @@ public class QueryResponseProcessor {
      */
     public SortedSet<CorrelatedQueryData>   processRequest(DpDataRequest dpRequest) throws DpQueryException {
 
-        // Reset the data theCorrelator
-        this.prcrCorrelator.reset();
-
-        // Create request list according to multi-streaming configuration
-        List<DpDataRequest>     lstRequests;
+//        // Create request list according to multi-streaming configuration
+//        List<DpDataRequest>     lstRequests;
         
         // If multi-streaming is disabled use a single stream
-        if (!this.bolMultiStream)
-            lstRequests = List.of(dpRequest);
+        if (!this.bolMultiStream || this.cntMaxStreams==1)
+            this.lstCompRqsts = List.of(dpRequest);
         
         // Else attempt to decompose request domain
         else
-            lstRequests = this.attemptRequestDecomp(dpRequest);
+            this.lstCompRqsts = this.attemptRequestDecomp(dpRequest);
         
         // Defer to the multi-streaming processor method
-        return this.processRequests(lstRequests);
+        return this.processRequests(this.lstCompRqsts);
     }
     
     /**
@@ -601,8 +842,10 @@ public class QueryResponseProcessor {
      * </p>
      * <p>
      * This method allows clients to explicitly determine the concurrent gRPC data streams used by the
-     * <code>QueryResponseProcessor</code>.  To use the default multi-streaming mechanism method
-     * <code>{@link #processRequest(DpDataRequest)}</code> is available.
+     * <code>QueryRequestProcessor</code>.  To use the default multi-streaming mechanism with request 
+     * decomposition the method <code>{@link #processRequest(DpDataRequest)}</code> should be used; this is
+     * the intended operation for this class.  Use this method at your own risk.
+     * </p>
      * <p>
      * A separate gRPC data stream is established for each data request within the argument list and concurrent
      * data streams are used to recover the request data.
@@ -651,6 +894,9 @@ public class QueryResponseProcessor {
      */
     public SortedSet<CorrelatedQueryData>   processRequests(List<DpDataRequest> lstRequests) throws DpQueryException {
         
+        // Reset the data theCorrelator
+        this.prcrCorrelator.reset();
+
         // Activate the transfer buffer
         boolean bolActive = this.queMsgBuffer.activate();
         
@@ -671,7 +917,7 @@ public class QueryResponseProcessor {
             this.thdMsgXferTask.start();
 
         // Recover the Query Service response data using the query channel
-        int     cntMsgsRcvd = this.recoverResponses(lstRequests);    // this is a blocking operation
+        this.cntMsgsProcessed = this.recoverResponses(lstRequests);    // this is a blocking operation
         
         // Start the message transfer task if it has not already been started (i.e., via mid-stream processing)
         if (!this.thdMsgXferTask.isStarted())
@@ -682,11 +928,11 @@ public class QueryResponseProcessor {
         int cntMsgsXferred = this.correlateResponseData();      // this is a blocking operation
         
         // Check that all recovered messages were processed
-        if (cntMsgsRcvd != cntMsgsXferred) {
+        if (this.cntMsgsProcessed != cntMsgsXferred) {
             
             if (BOL_LOGGING)
                 LOGGER.warn("{} - INCOMPLETE PROCESSING! Only {} message processed of {} messages received.", 
-                        JavaRuntime.getQualifiedMethodNameSimple(), cntMsgsXferred, cntMsgsRcvd);
+                        JavaRuntime.getQualifiedMethodNameSimple(), cntMsgsXferred, this.cntMsgsProcessed);
         }
         
         // Recover the correlated data and return it
@@ -716,7 +962,7 @@ public class QueryResponseProcessor {
      * The <code>DpDataRequest</code> class provides a request size estimate given by
      * <code>{@link DpDataRequest#approxDomainSize()}</code>.  This method returned the 
      * estimated domain size within the given query request (in data sources * seconds).  If this size
-     * estimate is less than <code>{@link #geMultiStreamingDomainSize()}</code> nothing is done and a list 
+     * estimate is less than <code>{@link #getMultiStreamingDomainSize()}</code> nothing is done and a list 
      * containing the original data request is returned.
      * </p>
      * <p>
@@ -747,25 +993,27 @@ public class QueryResponseProcessor {
      * <code>{@link RequestDecompType#HORIZONTAL}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
      * </li>
      * <li>
-     * <h3>Vertical Decomposition</h3>
-     * If the estimated number of samples within the request &ge; 
-     * <code>{@link #getMultiStreamCount()}</code> * <code>{@link #geMultiStreamingDomainSize()}</code> then a "vertical"
-     * query domain decomposition is used to create the returned decompose request.  Specifically, the returned
-     * value is given by 
-     * <code>{@link DpDataRequest#buildCompositeRequest(RequestDecompType, int)}</code> where the arguments are
-     * <code>{@link RequestDecompType#VERTICAL}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
-     * </li>
-     * <li>
      * <h3>Grid Decomposition</h3>
      * If the number of data sources within the request &le; <code>{@link #getMultiStreamCount()}</code> / 2 then a
      * "grid" query domain decomposition is used to create the returned decompose request.  Specifically, the
      * returned value is given by 
      * <code>{@link DpDataRequest#buildCompositeRequest(RequestDecompType, int)}</code> where the arguments are
      * <code>{@link RequestDecompType#GRID}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
+     * The returned composite list must be checked for size as grid decomposition may add an additional query to
+     * match the grid size if necessary - this condition would be a failure.
+     * </li>
+     * <li>
+     * <h3>Vertical Decomposition</h3>
+     * As a last result, a "vertical" query domain decomposition is used to create the returned decompose request.  
+     * Specifically, the returned value is given by 
+     * <code>{@link DpDataRequest#buildCompositeRequest(RequestDecompType, int)}</code> where the arguments are
+     * <code>{@link RequestDecompType#VERTICAL}</code> and <code>{@link #getMultiStreamCount()}</code>, respectively.
      * </li>
      * </ol>
+     * <s>
      * If all the above conditions fail, the data request is consider "undecomposable".  
-     * The returned value is then a one-element list containing the original data request.  
+     * The returned value is then a one-element list containing the original data request.
+     * </s>  
      * </p>
      * 
      * @param dpRequest data request to be decomposed for multi-streaming 
@@ -785,48 +1033,52 @@ public class QueryResponseProcessor {
         // If we are here - we are doing multiple gRPC streams requiring a decompose query
         List<DpDataRequest>     lstCmpRqsts;    // decompose request to be returned
         
-        // Try default query domain decomposition will work
+        // See if the default configuration query domain decomposition will work
         RequestDecompParams recDomain = this.prcrDecomposer.decomposeDomainPreferred(dpRequest);
         
-        if (recDomain.totalCovers() < this.cntMaxStreams) {
+        if (recDomain.totalCovers() <= this.cntMaxStreams) {
             lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, recDomain);
             
             return lstCmpRqsts;
         }
         
         // Try horizontal query domain decomposition (by data sources)
-        //  Works when request source count is greater than the stream count
-        if (dpRequest.getSourceCount() > this.cntMaxStreams) {
+        //  - Works when request source count is greater than the stream count
+        //  - This should get most requests that fail the above
+        if (dpRequest.getSourceCount() >= this.cntMaxStreams) {
             lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, RequestDecompType.HORIZONTAL, this.cntMaxStreams);
         
             return lstCmpRqsts;
         }
         
-        // Try vertical query domain decomposition (by time domain)
-        //  First compute the number of samples per request
-        long lngDomPerRqst = szDomain / this.szDomainMultiStream;
-        int  szDomPerRqst = Long.valueOf(lngDomPerRqst).intValue();
-        
-        //  Add any remainder (just in case)
-        szDomPerRqst += (szDomain % this.szDomainMultiStream > 0) ? 1 : 0;
-        
-        if (szDomPerRqst < this.cntMaxStreams) {
-            lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, RequestDecompType.VERTICAL, this.cntMaxStreams);
-            
-            return lstCmpRqsts;
-        }
-        
         // Try a grid-based query domain decomposition
-        //  Works when the source count is at least half of the stream count
+        //  - Applies when the source count is at least half of the stream count
+        //  - Must check that composite request count is less that number of streams - will add 1 extra query if necessary
         if (dpRequest.getSourceCount() > (this.cntMaxStreams/2)) {
             lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, RequestDecompType.GRID, this.cntMaxStreams);
             
-            return lstCmpRqsts;
+            if (lstCmpRqsts.size() <= this.cntMaxStreams)
+                return lstCmpRqsts;
         }
         
-        
-        // We cannot find any domain decomposition - Default back to single data request
-        return List.of(dpRequest);
+        // Last choice - Use a vertical query domain decomposition (by time domain)
+        lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, RequestDecompType.VERTICAL, this.cntMaxStreams);
+        return lstCmpRqsts;
+//        long lngDomPerRqst = szDomain / this.szDomainMultiStream;
+//        int  szDomPerRqst = Long.valueOf(lngDomPerRqst).intValue();
+//        
+//        //  Add any remainder (just in case)
+//        szDomPerRqst += (szDomain % this.szDomainMultiStream > 0) ? 1 : 0;
+//        
+//        if (szDomPerRqst < this.cntMaxStreams) {
+//            lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, RequestDecompType.VERTICAL, this.cntMaxStreams);
+//            
+//            return lstCmpRqsts;
+//        }
+//        
+//        
+//        // We cannot find any domain decomposition - Default back to single data request
+//        return List.of(dpRequest);
     }
     
     /**
@@ -930,7 +1182,7 @@ public class QueryResponseProcessor {
         // Wait for the message transfer task to finish
         //  - All response data should be processed at that instant
         try {
-            this.thdMsgXferTask.join( QueryResponseProcessor.timeoutLimitDefaultMillis() );
+            this.thdMsgXferTask.join( QueryRequestProcessor.timeoutLimitDefaultMillis() );
             
         } catch (InterruptedException e) {
 
@@ -959,6 +1211,17 @@ public class QueryResponseProcessor {
         
         return cntMsgsXferred;
     }
+    
+//    /**
+//     * <p>
+//     * Computes the processing (performance) parameters of the current request.
+//     * </p>
+//     * 
+//     */
+//    private void    computeProcessParameters() {
+//        
+//        this.szAllocProcessed = this.prcrCorrelator.getBytesProcessed();
+//    }
     
     /**
      * <p>

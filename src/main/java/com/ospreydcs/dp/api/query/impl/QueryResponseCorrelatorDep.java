@@ -236,7 +236,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * @see QueryStream
  * @see QueryDataCorrelator
  * 
- * @deprecated  Replaced by QueryResponseProcessor
+ * @deprecated  Replaced by QueryRequestProcessor
  */
 @Deprecated(since="Jan 15, 2024")
 public class QueryResponseCorrelatorDep {
@@ -1383,7 +1383,7 @@ public class QueryResponseCorrelatorDep {
      * </p>
      * <p>
      * This method allows clients to explicitly determine the concurrent gRPC data streams used by the
-     * <code>QueryResponseProcessor</code>.  To use the default multi-streaming mechanism method
+     * <code>QueryRequestProcessor</code>.  To use the default multi-streaming mechanism method
      * <code>{@link #processRequestStream(DpDataRequest)}</code> is available.
      * <p>
      * A separate gRPC data stream is established for each data request within the argument list and concurrent

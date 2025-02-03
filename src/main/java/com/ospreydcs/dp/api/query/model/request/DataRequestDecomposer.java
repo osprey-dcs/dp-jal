@@ -116,13 +116,13 @@ public class DataRequestDecomposer {
     //
     
     /** Use decompose queries feature */
-    private static final boolean                BOL_ACTIVE = CFG_RQST.decompose.active;
+    public static final boolean                BOL_ACTIVE = CFG_RQST.decompose.active;
     
     /** Maximum number of data sources for a decompose query */
-    private static final int                    CNT_MAX_SOURCES = CFG_RQST.decompose.maxSources;
+    public static final int                    CNT_MAX_SOURCES = CFG_RQST.decompose.maxSources;
     
     /** Maximum time range duration for a decompose query */
-    private static final Duration               DUR_MAX = Duration.of(
+    public static final Duration               DUR_MAX = Duration.of(
                                                     CFG_RQST.decompose.maxDuration,
                                                     CFG_RQST.decompose.unitDuration.toChronoUnit()
                                                     );
