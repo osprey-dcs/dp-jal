@@ -41,12 +41,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.common.IDataColumn;
+import com.ospreydcs.dp.api.common.ProviderUID;
+import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.IDataColumn;
-import com.ospreydcs.dp.api.model.ProviderUID;
-import com.ospreydcs.dp.api.model.UniformSamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;

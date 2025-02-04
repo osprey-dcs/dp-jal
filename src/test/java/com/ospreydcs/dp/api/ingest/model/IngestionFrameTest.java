@@ -47,10 +47,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.common.DpSupportedType;
+import com.ospreydcs.dp.api.common.IDataColumn;
+import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.IDataColumn;
-import com.ospreydcs.dp.api.model.UniformSamplingClock;
 import com.ospreydcs.dp.api.model.table.StaticDataColumn;
 import com.ospreydcs.dp.api.util.JavaSize;
 
@@ -203,7 +203,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#IngestionFrame(com.ospreydcs.dp.api.model.UniformSamplingClock, java.util.ArrayList)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#IngestionFrame(com.ospreydcs.dp.api.common.UniformSamplingClock, java.util.ArrayList)}.
      */
     @Test
     public final void testIngestionFrameUniformSamplingClockArrayListOfIDataColumnOfObject() {
@@ -239,7 +239,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#IngestionFrame(com.ospreydcs.dp.api.model.UniformSamplingClock, java.util.ArrayList, java.util.Map)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#IngestionFrame(com.ospreydcs.dp.api.common.UniformSamplingClock, java.util.ArrayList, java.util.Map)}.
      */
     @Test
     public final void testIngestionFrameUniformSamplingClockArrayListOfIDataColumnOfObjectMapOfStringString() {
@@ -365,7 +365,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#assignSamplingClock(com.ospreydcs.dp.api.model.UniformSamplingClock)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#assignSamplingClock(com.ospreydcs.dp.api.common.UniformSamplingClock)}.
      */
     @Test
     public final void testAssignSamplingClock() {
@@ -403,7 +403,7 @@ public class IngestionFrameTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#addColumn(com.ospreydcs.dp.api.model.IDataColumn)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.IngestionFrame#addColumn(com.ospreydcs.dp.api.common.IDataColumn)}.
      */
     @Test
     public final void testAddColumn() {

@@ -36,8 +36,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.MissingResourceException;
 
-import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.IDataColumn;
+import com.ospreydcs.dp.api.common.DpSupportedType;
+import com.ospreydcs.dp.api.common.IDataColumn;
 
 /**
  * <p>
@@ -325,7 +325,7 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
      * @throws UnsupportedOperationException    not thrown
      * @throws ArithmeticException              the data column could not be serialized (e.g., too large)
      * 
-     * @see com.ospreydcs.dp.api.model.IDataColumn#allocationSize()
+     * @see com.ospreydcs.dp.api.common.IDataColumn#allocationSize()
      */
     @Override
     public long allocationSize() throws UnsupportedOperationException, ArithmeticException {
@@ -354,7 +354,7 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
     /**
      * Overrides Default Implementation
      *
-     * @see com.ospreydcs.dp.api.model.IDataColumn#getValueTyped(int)
+     * @see com.ospreydcs.dp.api.common.IDataColumn#getValueTyped(int)
      */
     @Override
     public T getValueTyped(int index) throws IndexOutOfBoundsException, ArithmeticException, ClassCastException {
@@ -364,7 +364,7 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
     /**
      * Overrides Default Implementation
      * 
-     * @see com.ospreydcs.dp.api.model.IDataColumn#getValuesTyped()
+     * @see com.ospreydcs.dp.api.common.IDataColumn#getValuesTyped()
      */
     @Override
     public List<T> getValuesTyped() throws ArithmeticException {

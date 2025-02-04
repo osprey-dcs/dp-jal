@@ -50,12 +50,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.ranges.RangeException;
 
+import com.ospreydcs.dp.api.common.DpSupportedType;
+import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.IDataColumn;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
 import com.ospreydcs.dp.api.query.test.TestQueryRecord;

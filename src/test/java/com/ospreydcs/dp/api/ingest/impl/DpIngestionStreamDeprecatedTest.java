@@ -40,6 +40,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.common.IngestRequestUID;
+import com.ospreydcs.dp.api.common.IngestionResponse;
+import com.ospreydcs.dp.api.common.ProviderRegistrar;
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
@@ -48,10 +52,6 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.IngestRequestUID;
-import com.ospreydcs.dp.api.model.IngestionResponse;
-import com.ospreydcs.dp.api.model.ProviderRegistrar;
-import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -382,7 +382,7 @@ public class DpIngestionStreamDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#openStream(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated#openStream(com.ospreydcs.dp.api.common.ProviderRegistrar)}.
      */
     @Test
     public final void testOpenStream() {

@@ -35,15 +35,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.common.AAdvancedApi;
-import com.ospreydcs.dp.api.common.AUnavailable;
-import com.ospreydcs.dp.api.common.AUnavailable.STATUS;
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IIngestionService;
 import com.ospreydcs.dp.api.ingest.IIngestionStream;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
+import com.ospreydcs.dp.api.model.AAdvancedApi;
+import com.ospreydcs.dp.api.model.AUnavailable;
+import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
@@ -276,8 +276,6 @@ public final class DpDataRequest {
     //
     
     
-
-    
     //
     // Class Constants
     //
@@ -383,9 +381,9 @@ public final class DpDataRequest {
 //     * 
 //     * @return  a collection of sub-queries which, in total, are equivalent to the current data request
 //     * 
-//     * @see #buildCompositeRequest(DataRequestDecompType, int)
+//     * @see #buildCompositeRequest(RequestDecompType, int)
 //     */
-//    public static List<DpDataRequest>   buildCompositeRequest(DpDataRequest rqst, DataRequestDecompType enmType, int cntQueries) {
+//    public static List<DpDataRequest>   buildCompositeRequest(DpDataRequest rqst, RequestDecompType enmType, int cntQueries) {
 //        return rqst.buildCompositeRequest(enmType, cntQueries);
 //    }
 //    
@@ -401,20 +399,20 @@ public final class DpDataRequest {
 //     * <p>
 //     * <p>
 //     * Computes the default query domain decomposition using <code>{@link #decomposeDomainDefault()}</code>
-//     * then passes the result to <code>{@link #buildCompositeRequest(DataRequestDecompParams)}</code>.
+//     * then passes the result to <code>{@link #buildCompositeRequest(RequestDecompParams)}</code>.
 //     * The current data query request instance is left unchanged.
 //     * </p>
 //     * 
 //     * @return  an equivalent decompose query request where query domain is decomposed with default parameters 
 //     * 
-//     * @see #buildCompositeRequest(DataRequestDecompParams)
+//     * @see #buildCompositeRequest(RequestDecompParams)
 //     * @see DpQueryConfig
 //     * @see DpApiConfig
 //     */
 //    public List<DpDataRequest> buildCompositeRequest() {
 //        
 //        // Get the default domain decomposition 
-//        DataRequestDecompParams recDomains = this.decomposeDomainDefault();
+//        RequestDecompParams recDomains = this.decomposeDomainDefault();
 //
 //        return this.buildCompositeRequest(recDomains);
 //    }
@@ -434,10 +432,10 @@ public final class DpDataRequest {
 //     * @return              an equivalent decompose query request where query domain is 
 //     *                      decomposed by argument parameters
 //     *                      
-//     * @see #buildCompositeRequest(DataRequestDecompType, int)
+//     * @see #buildCompositeRequest(RequestDecompType, int)
 //     * @see #buildCompositeRequestGrid(int, int)                      
 //     */
-//    public List<DpDataRequest> buildCompositeRequest(DataRequestDecompParams recDomains) {
+//    public List<DpDataRequest> buildCompositeRequest(RequestDecompParams recDomains) {
 //        
 //        return switch (recDomains.type()) {
 //        case NONE -> List.of(this);
@@ -478,7 +476,7 @@ public final class DpDataRequest {
 //     * 
 //     * @return  a collection of sub-queries which, in total, are equivalent to the current data request
 //     */
-//    public List<DpDataRequest>  buildCompositeRequest(DataRequestDecompType enmType, int cntQueries) {
+//    public List<DpDataRequest>  buildCompositeRequest(RequestDecompType enmType, int cntQueries) {
 //
 //        return switch (enmType) {
 //        
@@ -550,6 +548,19 @@ public final class DpDataRequest {
         this.lstSelCmps.clear();
         
         this.lstWhrCmps.clear();
+    }
+    
+    /**
+     * <p>
+     * Creates a shallow copy of the current <code>DpDataRequest</code> instance.
+     * </p>
+     * 
+     * @return  a copy of the current request
+     *
+     * @see java.lang.Object#clone()
+     */
+    public DpDataRequest    clone() {
+        return new DpDataRequest(this.enmStrmType, this.insStart, this.insStop, new LinkedList<String>(this.lstSelCmps));
     }
     
     /**
@@ -965,10 +976,10 @@ public final class DpDataRequest {
 //     * according to the following:
 //     * <code>
 //     * <pre>
-//     *   {@link DataRequestDecompType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) 
-//     *   {@link DataRequestDecompType#HORIZONTAL} <- (cntQueriesHor > 1) && (cntQueriesVer == 1) 
-//     *   {@link DataRequestDecompType#VERTICAL}   <- (cntQueriesHor == 1) && (cntQueriesVer > 1) 
-//     *   {@link DataRequestDecompType#GRID}       <- (cntQueriesHor > 1) && (cntQueriesVer > 1) 
+//     *   {@link RequestDecompType#NONE}       <- (cntQueriesHor == 1) && (cntQueriesVer == 1) 
+//     *   {@link RequestDecompType#HORIZONTAL} <- (cntQueriesHor > 1) && (cntQueriesVer == 1) 
+//     *   {@link RequestDecompType#VERTICAL}   <- (cntQueriesHor == 1) && (cntQueriesVer > 1) 
+//     *   {@link RequestDecompType#GRID}       <- (cntQueriesHor > 1) && (cntQueriesVer > 1) 
 //     * </pre>
 //     * </code>
 //     * </p>
@@ -978,10 +989,10 @@ public final class DpDataRequest {
 //     * @see DpApiConfig
 //     * @see DpQueryConfig
 //     */
-//    public DataRequestDecompParams decomposeDomainDefault() {
+//    public RequestDecompParams decomposeDomainDefault() {
 //
 //        // The decompose query type
-//        DataRequestDecompType   enmType;
+//        RequestDecompType   enmType;
 //
 //        // Determine decompose query domain sizes
 //        int     cntQueriesHor = this.getSourceCount() / CNT_COMPOSITE_MAX_SOURCES;
@@ -997,26 +1008,26 @@ public final class DpDataRequest {
 //        // The overall request is not large enough to invoke decomposition
 //        if ((cntQueriesHor == 1) && (cntQueriesVer == 1)) {
 //
-//            enmType = DataRequestDecompType.NONE;
+//            enmType = RequestDecompType.NONE;
 //
 //            // Horizontal decompose request
 //        } else if ((cntQueriesHor > 1) && (cntQueriesVer == 1)) {
 //
-//            enmType = DataRequestDecompType.HORIZONTAL;
+//            enmType = RequestDecompType.HORIZONTAL;
 //
 //            // Vertical decompose request
 //        } else if ((cntQueriesHor == 1) && (cntQueriesVer > 1)) {
 //
-//            enmType = DataRequestDecompType.VERTICAL;
+//            enmType = RequestDecompType.VERTICAL;
 //
 //            // Grid decompose request
 //        } else {
 //
-//            enmType = DataRequestDecompType.GRID;
+//            enmType = RequestDecompType.GRID;
 //
 //        }
 //
-//        return new DataRequestDecompParams(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
+//        return new RequestDecompParams(enmType, cntQueriesHor, Long.valueOf(cntQueriesVer).intValue());
 //    }
 
 //    /**
@@ -1035,7 +1046,7 @@ public final class DpDataRequest {
 //     * @see DpApiConfig
 //     * @see DpQueryConfig
 //     */
-//    public DataRequestDecompParams  getDecompositionDefault() {
+//    public RequestDecompParams  getDecompositionDefault() {
 //        return this.decomposeDomainDefault();
 //    }
     

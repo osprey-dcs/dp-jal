@@ -39,17 +39,17 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
+import com.ospreydcs.dp.api.common.IngestRequestUID;
+import com.ospreydcs.dp.api.common.IngestionResponse;
+import com.ospreydcs.dp.api.common.ProviderRegistrar;
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.IngestRequestUID;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
-import com.ospreydcs.dp.api.model.IngestionResponse;
-import com.ospreydcs.dp.api.model.ProviderRegistrar;
-import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
@@ -228,7 +228,7 @@ public class IngestionStreamProcessorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#setStreamType(com.ospreydcs.dp.api.model.DpGrpcStreamType)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.model.grpc.IngestionStreamProcessorDep#setStreamType(com.ospreydcs.dp.api.common.DpGrpcStreamType)}.
      */
     @Test
     public final void testSetStreamType() {

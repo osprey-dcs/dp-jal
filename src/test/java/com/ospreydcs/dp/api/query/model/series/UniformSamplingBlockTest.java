@@ -47,13 +47,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.TimeInterval;
+import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
-import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.UniformSamplingClock;
-import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -143,7 +143,7 @@ public class UniformSamplingBlockTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock#from(com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock#from(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData)}.
      */
     @Test
     public final void testFrom() {
@@ -161,7 +161,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock#UniformSamplingBlock(com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock#UniformSamplingBlock(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData)}.
      */
     @Test
     public final void testUniformSamplingBlock() {
@@ -716,7 +716,7 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock#insertEmptyTimeSeries(java.lang.String, com.ospreydcs.dp.api.model.DpSupportedType)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock#insertEmptyTimeSeries(java.lang.String, com.ospreydcs.dp.api.common.DpSupportedType)}.
      */
     @Test
     public final void testInsertEmptyTimeSeries() {

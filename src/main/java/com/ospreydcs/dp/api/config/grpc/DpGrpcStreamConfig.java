@@ -27,9 +27,9 @@
  */
 package com.ospreydcs.dp.api.config.grpc;
 
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
 
 /**
  * <p>

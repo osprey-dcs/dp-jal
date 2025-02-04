@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
+import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**

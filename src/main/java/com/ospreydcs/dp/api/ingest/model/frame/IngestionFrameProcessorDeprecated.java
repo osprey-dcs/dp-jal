@@ -46,11 +46,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.model.ProviderUID;
+import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -1139,7 +1139,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
      * @return <code>true</code> if there are currently request messages available or pending
      *         <code>false</code> otherwise
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#isSupplying()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#isSupplying()
      */
     @Override
     synchronized
@@ -1149,7 +1149,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#take()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#take()
      */
     @Override
 //    synchronized
@@ -1173,7 +1173,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#poll()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll()
      */
     @Override
     public IngestDataRequest poll() throws IllegalStateException {
@@ -1197,7 +1197,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
      */
     @Override
     public IngestDataRequest poll(long cntTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException {

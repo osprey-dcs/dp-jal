@@ -41,6 +41,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ospreydcs.dp.api.common.IngestionResult;
+import com.ospreydcs.dp.api.common.ProviderRegistrar;
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
@@ -50,9 +53,6 @@ import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionService;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
-import com.ospreydcs.dp.api.model.IngestionResult;
-import com.ospreydcs.dp.api.model.ProviderRegistrar;
-import com.ospreydcs.dp.api.model.ProviderUID;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -269,7 +269,7 @@ public class DpIngestionServiceImplTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl#registerProvider(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl#registerProvider(com.ospreydcs.dp.api.common.ProviderRegistrar)}.
      */
     @Test
     public final void testRegisterProvider() {

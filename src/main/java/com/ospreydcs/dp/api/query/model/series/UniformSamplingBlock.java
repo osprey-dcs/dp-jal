@@ -40,15 +40,15 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.common.DpSupportedType;
+import com.ospreydcs.dp.api.common.IDataColumn;
+import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
+import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
-import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.IDataColumn;
-import com.ospreydcs.dp.api.model.IDataTable;
-import com.ospreydcs.dp.api.model.UniformSamplingClock;
-import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
@@ -661,7 +661,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     /**
      * @return always returns <code>true</code> since table is populated at construction
      *
-     * @see com.ospreydcs.dp.api.model.IDataTable#isTableComplete()
+     * @see com.ospreydcs.dp.api.common.IDataTable#isTableComplete()
      */
     @Override
     public boolean isTableComplete() {
@@ -671,7 +671,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     /**
      * @return always returns <code>false</code> since table was populated at construction (throws exception if error)
      * 
-     * @see com.ospreydcs.dp.api.model.IDataTable#hasError()
+     * @see com.ospreydcs.dp.api.common.IDataTable#hasError()
      */
     @Override
     public boolean hasError() {
@@ -707,7 +707,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
 
     /**
      * 
-     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnIndex(java.lang.String)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnIndex(java.lang.String)
      */
     @Override
     public int getColumnIndex(String strName) throws NoSuchElementException {

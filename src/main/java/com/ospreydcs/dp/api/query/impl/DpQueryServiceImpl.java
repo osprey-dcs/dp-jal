@@ -39,24 +39,23 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.ranges.RangeException;
 
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
+import com.ospreydcs.dp.api.common.IDataTable;
+import com.ospreydcs.dp.api.common.PvMetaRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.model.DpGrpcStreamType;
-import com.ospreydcs.dp.api.model.IDataTable;
-import com.ospreydcs.dp.api.model.PvMetaRecord;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpMetadataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IDpQueryStreamObserver;
 import com.ospreydcs.dp.api.query.IQueryService;
-import com.ospreydcs.dp.api.query.model.grpc.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.grpc.QueryDataCorrelator;
-import com.ospreydcs.dp.api.query.model.grpc.QueryResponseCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
@@ -169,7 +168,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * <h1>GENERAL NOTES</h1>
  * <h2>Data Processing</h2>
  * A single data processor is used for all time-series data requests.  The processor is a single
- * <code>{@link QueryResponseCorrelator}</code> instance maintained by a 
+ * <code>{@link QueryResponseCorrelatorDep}</code> instance maintained by a 
  * <code>DpQuerySerice</code> class object.  The data process performs both the gRPC data 
  * streaming from the Query Service AND the correlation of incoming data.  The data processor
  * offers various configuration options where data can be simultaneously streamed and 
@@ -185,7 +184,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * <li>
  * The data processor can be tuned with various configuration parameters within the 
  * <code>dp-api-config.yml</code> configuration file.  See class documentation on 
- * <code>{@link QueryResponseCorrelator}</code> for more information on performance tuning.
+ * <code>{@link QueryResponseCorrelatorDep}</code> for more information on performance tuning.
  * </li>
  * <li>
  * It is informative to note that the <code>DpQueryServiceImpl</code> class shares its single gRPC 
@@ -244,7 +243,7 @@ public final class DpQueryServiceImpl extends DpServiceApiBase<DpQueryServiceImp
     //
     
     /** The single query response correlator (for time-series data) used for all data requests */
-    private final QueryResponseCorrelator   dataProcessor;
+    private final QueryResponseCorrelatorDep   dataProcessor;
     
     
     //
@@ -296,7 +295,7 @@ public final class DpQueryServiceImpl extends DpServiceApiBase<DpQueryServiceImp
     public DpQueryServiceImpl(DpQueryConnection connQuery) {
         super(connQuery);
         
-        this.dataProcessor =  QueryResponseCorrelator.from(connQuery);
+        this.dataProcessor =  QueryResponseCorrelatorDep.from(connQuery);
     }
 
 

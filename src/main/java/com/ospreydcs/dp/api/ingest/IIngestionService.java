@@ -3,11 +3,11 @@ package com.ospreydcs.dp.api.ingest;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.ospreydcs.dp.api.common.IngestRequestUID;
+import com.ospreydcs.dp.api.common.IngestionResult;
+import com.ospreydcs.dp.api.common.ProviderRegistrar;
+import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.model.IngestRequestUID;
-import com.ospreydcs.dp.api.model.IngestionResult;
-import com.ospreydcs.dp.api.model.ProviderRegistrar;
-import com.ospreydcs.dp.api.model.ProviderUID;
 
 public interface IIngestionService extends IConnection {
 

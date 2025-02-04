@@ -35,9 +35,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
 
+import com.ospreydcs.dp.api.common.DpSupportedType;
+import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.IDataColumn;
 
 /**
  * <p>
@@ -481,7 +481,7 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
      * @throws UnsupportedOperationException    not thrown
      * @throws ArithmeticException              the time series could not be serialized (e.g., too large)
      * 
-     * @see com.ospreydcs.dp.api.model.IDataColumn#allocationSize()
+     * @see com.ospreydcs.dp.api.common.IDataColumn#allocationSize()
      */
     @Override
     public long allocationSize() throws UnsupportedOperationException, ArithmeticException {

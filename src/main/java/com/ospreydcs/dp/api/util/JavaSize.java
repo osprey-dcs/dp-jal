@@ -33,7 +33,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.Instant;
 
-import com.ospreydcs.dp.api.model.BufferedImage;
+import com.ospreydcs.dp.api.common.BufferedImage;
 
 
 /**

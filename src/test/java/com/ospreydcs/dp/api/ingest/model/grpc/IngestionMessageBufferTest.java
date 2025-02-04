@@ -46,8 +46,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
 import com.ospreydcs.dp.api.ingest.test.TestIngestDataRequestGenerator;
+import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 

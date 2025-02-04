@@ -40,8 +40,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
-import com.ospreydcs.dp.api.ingest.model.IMessageSupplier;
-import com.ospreydcs.dp.api.ingest.model.IResourceConsumer;
+import com.ospreydcs.dp.api.model.IMessageSupplier;
+import com.ospreydcs.dp.api.model.IMessageConsumer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
@@ -66,14 +66,14 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <code>IMessageSupplier&lt;IngestDataRequest&gt;</code> interface.
  * </p>
  * <p>
- * For an allocation-based back-pressure implementation see <code>{@link IngestionDataBuffer}</code>.
+ * For an allocation-based back-pressure implementation see <code>{@link IngestionMemoryBuffer}</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Jul 23, 2024
  *
  */
-public class IngestionMessageBuffer implements IResourceConsumer<IngestDataRequest>, IMessageSupplier<IngestDataRequest> {
+public class IngestionMessageBuffer implements IMessageConsumer<IngestDataRequest>, IMessageSupplier<IngestDataRequest> {
 
     
     //
@@ -391,7 +391,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
      * <p>
      * <h2>WARNING:</h2>
      * This can be a computationally expensive process as a running allocation count is not maintained with
-     * the buffer instance (as with the <code>IngestionDataBuffer</code> type).  Use with discretion.
+     * the buffer instance (as with the <code>IngestionMemoryBuffer</code> type).  Use with discretion.
      * </p>
      * 
      * @return  the computed total memory allocation of all messages currently within the buffer
@@ -531,12 +531,12 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
     
     
     //
-    // IResourceConsumer<IngestDataRequest> Interface
+    // IMessageConsumer<IngestDataRequest> Interface
     //
     
     /**
      * 
-     * @see com.ospreydcs.dp.api.ingest.model.IResourceConsumer#isAccepting()
+     * @see com.ospreydcs.dp.api.model.IMessageConsumer#isAccepting()
      */
     @Override
     public boolean isAccepting() {
@@ -871,7 +871,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
      * @return <code>true</code> if there are currently request messages available or pending
      *         <code>false</code> otherwise
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#isSupplying()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#isSupplying()
      */
     @Override
     public boolean isSupplying() {
@@ -880,7 +880,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#take()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#take()
      */
     @Override
     public IngestDataRequest take() throws IllegalStateException, InterruptedException {
@@ -903,7 +903,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#poll()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll()
      */
     @Override
     public IngestDataRequest poll() throws IllegalStateException {
@@ -926,7 +926,7 @@ public class IngestionMessageBuffer implements IResourceConsumer<IngestDataReque
 
     /**
      *
-     * @see com.ospreydcs.dp.api.ingest.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
      */
     @Override
     public IngestDataRequest poll(long cntTimeout, TimeUnit tuTimeout)

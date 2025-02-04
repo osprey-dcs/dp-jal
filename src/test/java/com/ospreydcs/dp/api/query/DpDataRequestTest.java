@@ -44,7 +44,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
-import com.ospreydcs.dp.api.query.model.request.DataRequestDecompType;
+import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
@@ -196,7 +196,7 @@ public class DpDataRequestTest {
 //     */
 //    @Test
 //    public final void testBuildCompositeRequestDpDataRequestCompositeTypeInt() {
-//        DataRequestDecompType   ENM_TYPE = DataRequestDecompType.GRID;
+//        RequestDecompType   ENM_TYPE = RequestDecompType.GRID;
 //        final int       CNT_QUERIES = 5;
 //        
 //        List<DpDataRequest> lstSubRqsts1 = DpDataRequest.buildCompositeRequest(this.rqstTest, ENM_TYPE, CNT_QUERIES);
@@ -206,11 +206,11 @@ public class DpDataRequestTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.DataRequestDecompType, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.RequestDecompType, int)}.
      */
     @Test
     public final void testBuildCompositeRequestCompositeTypeIntHorizontal() {
-        DataRequestDecompType   ENM_TYPE = DataRequestDecompType.HORIZONTAL;
+        RequestDecompType   ENM_TYPE = RequestDecompType.HORIZONTAL;
         final int               CNT_QUERIES = 6;
         DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
         
@@ -249,11 +249,11 @@ public class DpDataRequestTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.DataRequestDecompType, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.RequestDecompType, int)}.
      */
     @Test
     public final void testBuildCompositeRequestCompositeTypeIntVertical() {
-        DataRequestDecompType   ENM_TYPE = DataRequestDecompType.VERTICAL;
+        RequestDecompType   ENM_TYPE = RequestDecompType.VERTICAL;
         final int               CNT_QUERIES = 4;
         DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
         
@@ -308,11 +308,11 @@ public class DpDataRequestTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.DataRequestDecompType, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#buildCompositeRequest(com.ospreydcs.dp.api.query.DpDataRequest.RequestDecompType, int)}.
      */
     @Test
     public final void testBuildCompositeRequestCompositeTypeIntGrid() {
-        DataRequestDecompType   ENM_TYPE = DataRequestDecompType.GRID;
+        RequestDecompType   ENM_TYPE = RequestDecompType.GRID;
         final int               CNT_QUERIES = 5;
         DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
         

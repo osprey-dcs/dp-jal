@@ -31,8 +31,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 
+import com.ospreydcs.dp.api.common.IngestRequestUID;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.model.IngestRequestUID;
 
 /**
  * <p>

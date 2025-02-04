@@ -73,9 +73,9 @@ import org.epics.pvdata.pv.StringArrayData;
 import org.epics.pvdata.pv.StructureArrayData;
 
 import com.google.protobuf.ByteString;
-import com.ospreydcs.dp.api.model.ArrayDimension;
-import com.ospreydcs.dp.api.model.DpSupportedType;
-import com.ospreydcs.dp.api.model.IDataColumn;
+import com.ospreydcs.dp.api.common.ArrayDimension;
+import com.ospreydcs.dp.api.common.DpSupportedType;
+import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.model.table.StaticDataColumn;
 
 
