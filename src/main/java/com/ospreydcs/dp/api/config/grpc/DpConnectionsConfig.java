@@ -57,5 +57,9 @@ public final class DpConnectionsConfig extends CfgStructure<DpConnectionsConfig>
     /** Data Platform Query Service connection parameters */
     @ACfgOverride.Struct(pathelem="QUERY")
     public DpGrpcConnectionConfig     query;
+    
+    /** Data Platform Annotation Service connection parameters */
+    @ACfgOverride.Struct(pathelem="ANNOTATION")
+    public DpGrpcConnectionConfig     annotation;
 
 }

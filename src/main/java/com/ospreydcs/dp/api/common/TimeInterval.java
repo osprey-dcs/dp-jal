@@ -21,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * <p>
@@ -48,30 +49,21 @@ import java.util.Comparator;
 public record TimeInterval(Instant begin, Instant end) implements Serializable {
 
     
-    
-    
     //
-    // Class Resources
-    //
-    
-    /** The empty time interval */
-    public static final TimeInterval EMPTY = TimeInterval.from(Instant.EPOCH, Instant.EPOCH);
-    
-    /** The universe - that is, the compliment of the empty interval */
-    public static final TimeInterval UNIVERSE = TimeInterval.from(Instant.MIN, Instant.MAX);
-    
-    
-    //
-    // Comparators
+    // Class Types - Comparators
     //
     
     /**
-     * Returns a <code>Comparator</code> object that compares 
-     * <code>TimeInterval</code>s according to their beginning.
-     * That is, the comparator will order time intervals according to 
-     * their beginning, earliest first - regardless of duration.
+     * <p>
+     * Creates and returns a <code>Comparator</code> object that compares 
+     * <code>TimeInterval</code> instances according to their beginning (left endpoint).
+     * </p>
+     * <p>
+     * When used in collection ordering the comparator orders time intervals according to 
+     * their start instant, earliest first - regardless of duration.
+     * </p>
      * 
-     * @return <code>Comparator</code> of time intervals based upon beginning
+     * @return <code>Comparator</code> of time intervals based upon start instant
      */
     public static Comparator<TimeInterval> comparatorBegin() {
         Comparator<TimeInterval> cmp = (i1, i2) -> {
@@ -82,12 +74,16 @@ public record TimeInterval(Instant begin, Instant end) implements Serializable {
     }
     
     /**
-     * Returns a <code>Comparator</code> object that compares two 
-     * <code>TimeInterval</code> objects according to the length of 
-     * their duration.  That is, the comparator will order time intervals
-     * according to size, regardless of location.
+     * <p>
+     * Creates and returns a <code>Comparator</code> object that compares two 
+     * <code>TimeInterval</code> objects according to the length of their duration.  
+     * </p>
+     * <p>
+     * When used as a collection ordering the comparator orders time intervals
+     * according to their time duration, smallest first, regardless of start times.
+     * </p>
      * 
-     * @return <code>Comparator</code> of time intervals based upon duration
+     * @return <code>Comparator</code> of time intervals based upon time duration
      */
     public static Comparator<TimeInterval> comparatorDuration() {
         Comparator<TimeInterval> cmp = (i1, i2) -> {
@@ -98,91 +94,31 @@ public record TimeInterval(Instant begin, Instant end) implements Serializable {
     }
     
     
-    // 
-    // Set Operations
+    //
+    // Class Constants
     //
     
-    /**
-     * Return the intersection of the two time intervals as a set operation.
-     * The empty interval (<code>EMPTY</code>) is returned if there is no intersection. 
-     * 
-     * @param tvl1    interval set to intersect
-     * @param tvl2    interval set to intersect
-     * 
-     * @return  the time interval representing the intersection of arguments
-     */
-    public static TimeInterval intersection(TimeInterval tvl1, TimeInterval tvl2) {
-        
-        // Treat exception cases
-        if (tvl1.equals(EMPTY) || tvl2.equals(EMPTY))
-            return EMPTY;
-        
-        Instant left = max(tvl1.begin, tvl2.begin);
-        Instant right = min(tvl1.end, tvl2.end);
-        
-        try {
-            return new TimeInterval(left, right);
-            
-        } catch (IllegalArgumentException e) {
-            return EMPTY;
-        }
-    }
+    /** The empty time interval */
+    public static final TimeInterval EMPTY = TimeInterval.from(Instant.EPOCH, Instant.EPOCH);
     
-    /**
-     * Returns the union of the two time intervals assuming
-     * that they have a common intersection.  Under the assumption, the union of the 
-     * two time intervals (as a set) can be represented as a single time interval of
-     * measure at least that of either the two.  If there is no common intersection
-     * between the intervals then an exception is thrown.
-     * 
-     * @param tvl1    time interval with which to create a set union
-     * @param tvl2    time interval with which to create a set union
-     * 
-     * @return          union of the given arguments
-     * 
-     * @throws IllegalArgumentException the arguments contains no intersection 
-     */
-    public static TimeInterval unionCommon(TimeInterval tvl1, TimeInterval tvl2) throws IllegalArgumentException {
-        if (!tvl1.hasIntersectionOpen(tvl2))
-            throw new IllegalArgumentException("TimeInterval:unionCommon - intervals must have a finite intersection to use this method");
-        
-        Instant left = min(tvl1.begin, tvl2.begin);
-        Instant right = max(tvl1.end, tvl2.end);
-        
-        return new TimeInterval(left, right);
-    }
+    /** The universe - that is, the compliment of the empty interval */
+    public static final TimeInterval UNIVERSE = TimeInterval.from(Instant.MIN, Instant.MAX);
     
-    /**
-     * Returns the smallest time interval containing both given intervals, that is,
-     * the support of the two time intervals.
-     * 
-     * @param tvl1  interval under scrutiny  
-     * @param tvl2  interval under scrutiny  
-     * 
-     * @return  the smallest time interval containing both arguments
-     */
-    public static TimeInterval support(TimeInterval tvl1, TimeInterval tvl2) {
-        // Treat exceptional cases
-        if (tvl1.equals(EMPTY))
-            if (tvl2.equals(EMPTY))
-                return EMPTY;
-            else 
-                return tvl2;
-        else
-            if (tvl2.equals(EMPTY))
-                return tvl1;
-                  
-        // Both intervals are non null
-        Instant left  = min(tvl1.begin, tvl2.begin);
-        Instant right = max(tvl1.end, tvl2.end);
-        
-        return new TimeInterval(left, right);
-    }
     
-
     //
     // Creators 
     //
+    
+    /**
+     * Create and return a deep copy of the given <code>TimeInteval</code> instance.
+     * 
+     * @param tvl   <code>TimeInterval</code> to be copied
+     * 
+     * @return      deep copy of the given time instant
+     */
+    public static TimeInterval  from(TimeInterval tvl) {
+        return new TimeInterval(tvl);
+    }
     
     /**
      * Create and return a new <code>TimeInterval</code> instance from the
@@ -222,8 +158,294 @@ public record TimeInterval(Instant begin, Instant end) implements Serializable {
     }
     
 
+    // 
+    // Set Operations
     //
-    // Constructors
+    
+    /**
+     * <p>
+     * Determines whether or not the two arguments have a common intersetion as a set.
+     * </p>
+     * 
+     * @param tvl1  time interval under test
+     * @param tvl2  time interval under test
+     * 
+     * @return  <code>true</code> if two intervals share a common (set-wise) intersection, <code>false</code> otherwise
+     */
+    public static boolean   isDisjoint(TimeInterval tvl1, TimeInterval tvl2) {
+        
+        if (tvl1.hasIntersectionClosed(tvl2))
+            return true;
+        else
+            return false;
+    }
+    
+    /**
+     * Return the intersection of the two time intervals as a set operation.
+     * The empty interval (<code>EMPTY</code>) is returned if there is no intersection. 
+     * 
+     * @param tvl1    interval set to intersect
+     * @param tvl2    interval set to intersect
+     * 
+     * @return  the time interval representing the intersection of arguments
+     */
+    public static TimeInterval intersection(TimeInterval tvl1, TimeInterval tvl2) {
+        
+        // Treat exception cases
+        if (tvl1.equals(EMPTY) || tvl2.equals(EMPTY))
+            return EMPTY;
+        
+        Instant left = max(tvl1.begin, tvl2.begin);
+        Instant right = min(tvl1.end, tvl2.end);
+        
+        try {
+            return new TimeInterval(Instant.from(left), Instant.from(right));
+            
+        } catch (IllegalArgumentException e) {
+            return EMPTY;
+        }
+    }
+    
+    /**
+     * <p>
+     * Returns the union of the two time intervals assuming that they have a common intersection.
+     * </p>
+     * <p>  
+     * Under the assumption, the union of the 
+     * two time intervals (as a set) can be represented as a single time interval of
+     * measure at least that of either the two.  If there is no common intersection
+     * between the intervals then an exception is thrown.
+     * </p>
+     * 
+     * @param tvl1    time interval with which to create a set union
+     * @param tvl2    time interval with which to create a set union
+     * 
+     * @return          union of the given arguments
+     * 
+     * @throws IllegalArgumentException the arguments contains no intersection 
+     */
+    public static TimeInterval unionCommon(TimeInterval tvl1, TimeInterval tvl2) throws IllegalArgumentException {
+        if (!tvl1.hasIntersectionOpen(tvl2))
+            throw new IllegalArgumentException("TimeInterval:unionCommon - intervals must have a finite intersection to use this method");
+        
+        Instant left = min(tvl1.begin, tvl2.begin);
+        Instant right = max(tvl1.end, tvl2.end);
+        
+        return new TimeInterval(Instant.from(left), Instant.from(right));
+    }
+    
+    /**
+     * <p>
+     * Returns the set-wise union of the two time intervals.
+     * </p>
+     * <p>
+     * The returned value is necessarily a list of <code>TimeInterval</code> as the union
+     * can potentially be two disjoint time intervals. There are 3 cases to consider:
+     * <ol>
+     * <li>
+     * The two intervals are disjoint - the returned list contains copies of the original intervals
+     * with the left-most interval first.
+     * </li>
+     * <li>
+     * The two intervals have a common intersection which is a proper subset of each interval - the returned
+     * list contains a single interval with endpoints [min{tvl1.begin, tvl2.begin}, max{tvl1.end, tvl2.end}].
+     * </li>
+     * <li>
+     * One interval is a subset of the other - the returns list contains a single interval which is a copy of
+     * the largest interval.
+     * </ol>
+     * </p>
+     * 
+     * @param tvl1    time interval with which to create a set union
+     * @param tvl2    time interval with which to create a set union
+     * 
+     * @return          union of the given arguments
+     */
+    public static List<TimeInterval>    union(TimeInterval tvl1, TimeInterval tvl2) {
+        
+        // Check if intervals are disjoint - returns left-most interval first
+        if (TimeInterval.isDisjoint(tvl1, tvl2)) {
+            if (TimeInterval.lessThan(tvl1.begin, tvl2.begin))
+                return List.of(TimeInterval.from(tvl1), TimeInterval.from(tvl2));
+            else
+                return List.of(TimeInterval.from(tvl2), TimeInterval.from(tvl1));
+        }
+        
+        // Left endpoint of tvl2 is within tvl1
+        if (tvl1.hasMembershipClosed(tvl2.begin)) {
+            Instant insEnd = TimeInterval.max(tvl1.end, tvl2.end);
+            
+            TimeInterval    tvlUnion = TimeInterval.from(tvl1.begin, insEnd);
+            
+            return List.of(tvlUnion);
+        }
+        
+        // Right endpoint of tvl2 is within tvl1
+        if (tvl1.hasMembershipClosed(tvl2.end)) {
+            Instant insBeg = TimeInterval.min(tvl1.begin, tvl2.begin);
+            
+            TimeInterval    tvlUnion = TimeInterval.from(insBeg, tvl1.end);
+            
+            return List.of(tvlUnion);
+        }
+        
+        // One interval is a subset of the other
+        if (tvl1.contains(tvl2))
+            return List.of(TimeInterval.from(tvl1));
+        else
+            return List.of(TimeInterval.from(tvl2));
+    }
+    
+    /**
+     * Returns the smallest time interval containing both given intervals, that is,
+     * the support of the two time intervals.
+     * 
+     * @param tvl1  interval under scrutiny  
+     * @param tvl2  interval under scrutiny  
+     * 
+     * @return  the smallest time interval containing both arguments
+     */
+    public static TimeInterval support(TimeInterval tvl1, TimeInterval tvl2) {
+        // Treat exceptional cases
+        if (tvl1.equals(EMPTY))
+            if (tvl2.equals(EMPTY))
+                return EMPTY;
+            else 
+                return TimeInterval.from(tvl2);
+        else
+            if (tvl2.equals(EMPTY))
+                return TimeInterval.from(tvl1);
+                  
+        // Both intervals are non null
+        Instant left  = min(tvl1.begin, tvl2.begin);
+        Instant right = max(tvl1.end, tvl2.end);
+        
+        return new TimeInterval(Instant.from(left), Instant.from(right));
+    }
+
+    /**
+     * <p>
+     * Performs a set-wise subtraction of the second interval (subtrahend) from the first interval (minuend).
+     * </p>
+     * <p>
+     * This method performs the set operation on the argument intervals 
+     * <i>I<sub>min</sub></i> and <i>I<sub>sub</sub></i> 
+     * <pre>
+     *   <i>I<sub>diff</sub></i> = <i>I<sub>min</sub></i> \ <i>I<sub>sub</sub></i>
+     * </pre>
+     * where
+     * <ul>
+     * <li><i>I<sub>diff</sub></i> is the returned <em>difference</em></li>
+     * <li><i>I<sub>min</sub></i> = [<i>t</i><sub>1</sub>, <i>t</i><sub>2</sub>] is the target <em>minuend</em></li> 
+     * <li><i>I<sub>sub</sub></i> = [<i>&tau;</i><sub>1</sub>, <i>&tau;</i><sub>2</sub>] is the <em>subtrahend</em> (subtractor)</li>
+     * </ul>
+     * Before considering the results of the operation we make the following definitions:
+     * <pre>
+     *   <i>I</i><sub>1</sub> &#8796; [<i>t</i><sub>1</sub>, <i>&tau;</i><sub>1</sub>)
+     *   <i>I</i><sub>2</sub> &#8796; (<i>t</i><sub>2</sub>, <i>&tau;</i><sub>2</sub>]
+     * </pre>
+     * </p>
+     * <p>
+     * There are essentially 5 cases to consider. The first is the trivial case where   
+     * intervals <i>I<sub>min</sub></i> and <i>I<sub>sub</sub></i> are disjoint, that is
+     * <pre>
+     *   <i>I<sub>min</sub></i> &cap; <i>I<sub>sub</sub></i> = &empty;.  
+     * </pre>
+     * In this case a deep copy of the minuend <i>I<sub>min</sub></i> is returned as a list of one element
+     * (i.e., nothing is subtracted from <i>I<sub>min</sub></i>).
+     * </p>
+     * <p>
+     * In the remaining cases operation <i>I<sub>min</sub></i> &cap; <i>I<sub>sub</sub></i> has a non-empty
+     * intersection <i>I<sub>int</sub></i>; that is,
+     * <pre> 
+     *   <i>I<sub>min</sub></i> &cap; <i>I<sub>sub</sub></i> = <i>I<sub>int</sub></i> &ne; &empty;.
+     * </pre>
+     * The remaining results are as follows:
+     * <ol>
+     * <li>
+     * <i>I<sub>sub</sub></i> has one endpoint to the right of <i>I<sub>min</sub></i> and the other
+     * within <i>I<sub>min</sub></i>.  The result is a list containing the single contiguous interval
+     * <i>I<sub>diff</sub></i> = <i>I<sub>min</sub></i> \ <i>I<sub>sub</sub></i> = <i>I</i><sub>1</sub> 
+     * </li>
+     * <li>
+     * <i>I<sub>sub</sub></i> has one endpoint to the left of <i>I<sub>min</sub></i> and the other
+     * within <i>I<sub>min</sub></i>.  The result is a list containing the single contiguous interval
+     * <i>I<sub>diff</sub></i> = <i>I<sub>min</sub></i> \ <i>I<sub>sub</sub></i> = <i>I</i><sub>2</sub> 
+     * </li>
+     * <li>
+     * <i>I<sub>sub</sub></i> is properly contained within <i>I<sub>min</sub></i>,  
+     * that is, <i>I<sub>sub</sub></i> &sub; <i>I<sub>min</sub></i>.
+     * The result here is a list containing the two disjoint intervals {<i>I</i><sub>1</sub>, <i>I</i><sub>2</sub>}.
+     * That is,
+     * <i>I<sub>diff</sub></i> = <i>I<sub>min</sub></i> \ <i>I<sub>sub</sub></i> = <i>I</i><sub>2</sub> &cup; <i>I</i><sub>2</sub> 
+     * </li> 
+     * <li>
+     * <i>I<sub>sub</sub></i> contains the entire minuend <i>I<sub>min</sub></i>,
+     * that is, <i>I<sub>sub</sub></i> &#8839; <i>I<sub>min</sub></i>.
+     * The result is is the empty set &empty; which is returned as the empty list.
+     * That is,
+     * <i>I<sub>diff</sub></i> = <i>I<sub>min</sub></i> \ <i>I<sub>sub</sub></i> = &empty; 
+     * </li>
+     * </ol>
+     *   
+     * @param tvlMinuend        the minuend to be subtracted from
+     * @param tvlSubtrahend     the subtrahend to subtract from the minuend
+     * 
+     * @return      the set-wise difference of the minuend and subtrahend
+     */
+    public static List<TimeInterval>  subtract(TimeInterval tvlMinuend, TimeInterval tvlSubtrahend) {
+        
+        // Left endpoint of subtrahend is within minuend
+        if (tvlMinuend.hasMembershipClosed(tvlSubtrahend.begin)) {
+            TimeInterval I1 = TimeInterval.from(tvlMinuend.begin, tvlSubtrahend.begin);
+            
+            // Right endpoint of subtrahend is outside minuend 
+            if (TimeInterval.lessThanEqualTo(tvlMinuend.end, tvlSubtrahend.end)) 
+                return List.of( I1 );
+            
+            // Subtrahend is contained within minuend
+            else {
+                TimeInterval I2 = TimeInterval.from(tvlSubtrahend.end, tvlMinuend.end);
+    
+                return List.of(I1, I2); 
+            }
+        }
+        
+        // Right endpoint of subtrahend is within minuend
+        if (tvlMinuend.hasMembershipClosed(tvlSubtrahend.end)) {
+            TimeInterval    I2 = TimeInterval.from(tvlSubtrahend.end, tvlMinuend.end);
+            
+            // Left endpoint of subtrahend is outside minuend
+            if (TimeInterval.greaterThanEqualTo(tvlMinuend.begin, tvlSubtrahend.end))
+                return List.of( I2 );
+            
+            // Subtrahend is contained within minuend
+            else {
+                TimeInterval I1 = TimeInterval.from(tvlMinuend.begin, tvlSubtrahend.begin);
+    
+                return List.of(I1, I2);
+            }
+        }
+        
+        // No endpoints of subtrahend are within minuend ...
+        
+        // Subtrahend is disjoint and to the left of minuend
+        if (TimeInterval.lessThan(tvlSubtrahend.end, tvlMinuend.begin))
+            return List.of( TimeInterval.from(tvlMinuend) );
+        
+        // Subtrahend is disjoint and to the right of minuend
+        if (TimeInterval.greaterThan(tvlSubtrahend.begin, tvlMinuend.end))
+            return List.of( TimeInterval.from(tvlMinuend) );
+        
+        // Only case left - Subtrahend contains minuend
+        return List.of();
+    }
+
+    
+    
+
+    //
+    // Non-Canonical Constructors
     //
     
     /**
@@ -238,6 +460,17 @@ public record TimeInterval(Instant begin, Instant end) implements Serializable {
     public TimeInterval {
         if (end.isBefore(begin))
             throw new IllegalArgumentException("TimeInterval.end must occur after TimeInterval.begin");
+    }
+    
+    /**
+     * <p>
+     * Constructs a new <code>TimeInterval</code> instance as a deep copy of the given instance.
+     * </p>
+     *
+     * @param tvl   <code>TimeInterval</code> to be copied
+     */
+    public TimeInterval(TimeInterval tvl) {
+        this(Instant.from(tvl.begin), Instant.from(tvl.end));
     }
     
     /**
@@ -487,8 +720,8 @@ public record TimeInterval(Instant begin, Instant end) implements Serializable {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TimeInterval ivl) 
-            return this.begin.equals(ivl.begin) && this.end.equals(ivl.end);
+        if (obj instanceof TimeInterval tvl) 
+            return this.begin.equals(tvl.begin) && this.end.equals(tvl.end);
         
         return false;
     }

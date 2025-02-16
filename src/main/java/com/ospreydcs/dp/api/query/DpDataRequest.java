@@ -52,7 +52,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.QuerySpec;
 
 /**
  * <p>
- * Builder class for constructing data requests for the Data Platform <em>Query Service</em>.
+ * Builder class for constructing time-series data requests for the Data Platform <em>Query Service</em>.
  * </p>
  * <p>
  * This class is used to create Query Service data requests without direct knowledge
@@ -66,7 +66,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.QuerySpec;
  * class presenting a consistent interface to clients.
  * </p>
  * <p>
- * There are 4 classes of methods used to create the data query requests:
+ * There are 4 categories of methods used to create the data query requests:
  * <ol>
  * <li>Set methods - prefixed with <code>set</code>: typically used to set data request
  *     metadata.  This is data this is not part of the actual query but does affect

@@ -34,6 +34,9 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.util.JavaRuntime;
+
 import io.grpc.ManagedChannel;
 
 /**
@@ -99,6 +102,7 @@ public class DpGrpcConnection<
     > 
 //    implements IConnection
 {
+
     
     //
     // Class Constants
@@ -112,6 +116,10 @@ public class DpGrpcConnection<
 
     /** Method name within <code>Service</code> class for creating new asynchronous, non-blocking communications stubs */
     public static final String STR_MTHD_NEW_STUB = "newStub";
+    
+
+    /** Event logging enabled flag */
+    private static final boolean    BOL_LOGGING = DpApiConfig.getInstance().connections.logging.active;
     
     
     //
@@ -177,7 +185,8 @@ public class DpGrpcConnection<
         this.stubFuture = this.newFutureStub(grpcChan);
         this.stubAsync = this.newAsyncStub(grpcChan);
         
-        LOGGER.debug("Created new connection {} for gRPC service {}", this.getClass().getSimpleName(), clsService.getSimpleName());
+        if (BOL_LOGGING)
+            LOGGER.debug("Created new connection {} for gRPC service {}", this.getClass().getSimpleName(), clsService.getSimpleName());
     }
 
     /**
@@ -201,7 +210,8 @@ public class DpGrpcConnection<
         this.stubFuture = conn.stubFuture;
         this.stubAsync = conn.stubAsync;
         
-        LOGGER.debug("Cloned new connection {} for gRPC service {}", this.getClass().getSimpleName(), this.clsService.getSimpleName());
+        if (BOL_LOGGING)
+            LOGGER.debug("Cloned new connection {} for gRPC service {}", this.getClass().getSimpleName(), this.clsService.getSimpleName());
     }
     
 //    /**
@@ -255,7 +265,7 @@ public class DpGrpcConnection<
      * <ul>
      * <li>The ultimate result of a shutdown operation is gRPC channel termination.
      * </li>
-     * <li>There may be ongoing gRPC operations and the <code>{@link #isTerminated()}
+     * <li>There may be ongoing gRPC operations and the <code>{@link #isTerminated()}</code>
      *     method will return <code>false</code> until all operations are completed and
      *     the channel is terminated.
      *     </li>
@@ -294,7 +304,9 @@ public class DpGrpcConnection<
 //        if (!bolShutdown) 
 //            return this.shutdownNow();
 //     
-        LOGGER.info("Soft shutdown initiated for connection {}", this.getClass().getName());
+        if (BOL_LOGGING)
+            LOGGER.info("Soft shutdown initiated for connection {}", this.getClass().getName());
+        
         return true;
     }
     
@@ -327,7 +339,9 @@ public class DpGrpcConnection<
         
         this.grpcChan.shutdownNow();
         
-        LOGGER.info("Hard shutdown initiated for connection {}", this.getClass().getName());
+        if (BOL_LOGGING)
+            LOGGER.info("Hard shutdown initiated for connection {}", this.getClass().getName());
+        
         return true;
     }
     
@@ -563,6 +577,11 @@ public class DpGrpcConnection<
             
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             
+            if (BOL_LOGGING)
+                LOGGER.error("{} - Blocking stub {} creation failed with exception {}", 
+                        JavaRuntime.getQualifiedMethodNameSimple(), 
+                        STR_MTHD_NEW_BLOCKING_STUB, e);
+            
             throw new DpGrpcException(e.getMessage(), e);
         }
     };
@@ -601,6 +620,11 @@ public class DpGrpcConnection<
             
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             
+            if (BOL_LOGGING)
+                LOGGER.error("{} - Future stub {} creation failed with exception {}", 
+                        JavaRuntime.getQualifiedMethodNameSimple(), 
+                        STR_MTHD_NEW_FUTURE_STUB, e);
+            
             throw new DpGrpcException(e.getMessage(), e);
         }
     };
@@ -638,6 +662,11 @@ public class DpGrpcConnection<
             return stub;
             
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            
+            if (BOL_LOGGING)
+                LOGGER.error("{} - Asynchronous stub {} creation failed with exception {}", 
+                        JavaRuntime.getQualifiedMethodNameSimple(), 
+                        STR_MTHD_NEW_STUB, e);
             
             throw new DpGrpcException(e.getMessage(), e);
         }
