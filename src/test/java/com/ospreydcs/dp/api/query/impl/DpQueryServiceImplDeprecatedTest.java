@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryServiceImplTest.java
+ * File:	DpQueryServiceImplDeprecatedTest.java
  * Package: com.ospreydcs.dp.api.query
- * Type: 	DpQueryServiceImplTest
+ * Type: 	DpQueryServiceImplDeprecatedTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -43,7 +43,7 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.IDataTable;
-import com.ospreydcs.dp.api.common.PvMetaRecord;
+import com.ospreydcs.dp.api.common.MetadataRecord;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpMetadataRequest;
@@ -57,7 +57,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
- * JUnit test cases for <code>{@link DpQueryServiceImpl}</code> Query Service API interface.
+ * JUnit test cases for <code>{@link DpQueryServiceImplDeprecated}</code> Query Service API interface.
  * </p>
  * <p>
  * <h2>WARNING:</h2>
@@ -75,9 +75,11 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  *
  * @author Christopher K. Allen
  * @since Jan 10, 2024
- *
+ * 
+ * @deprecated DpQueryServiceImplDeprecated is deprecated and not longer unit tested
  */
-public class DpQueryServiceImplTest {
+@Deprecated(since="Feb 16, 2025", forRemoval=true)
+public class DpQueryServiceImplDeprecatedTest {
 
     
     //
@@ -131,7 +133,7 @@ public class DpQueryServiceImplTest {
     //
     
     /** The Data Platform Query Service API interface under test - created in fixture */
-    private static DpQueryServiceImpl   apiQuery;
+    private static DpQueryServiceImplDeprecated   apiQuery;
     
     
     //
@@ -148,7 +150,7 @@ public class DpQueryServiceImplTest {
      */
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        apiQuery = DpQueryServiceFactory.FACTORY.connect();
+        apiQuery = DpQueryServiceFactoryDeprecated.FACTORY.connect();
     }
 
     /**
@@ -184,7 +186,7 @@ public class DpQueryServiceImplTest {
     //
     
     /** 
-     * Test method for {@link DpQueryServiceImpl#queryPvs(DpMetadataReuest)}.
+     * Test method for {@link DpQueryServiceImplDeprecated#queryMeta(DpMetadataReuest)}.
      */
     @Test
     public final void testQueryPvsSingle() {
@@ -197,11 +199,11 @@ public class DpQueryServiceImplTest {
         try {
             System.out.println(JavaRuntime.getQualifiedMethodName());
             
-            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
+            List<MetadataRecord>  lstRecs = apiQuery.queryMeta(rqst);
             
             Assert.assertTrue("Record list should contain 1 record", lstRecs.size() == 1);
             
-            PvMetaRecord        recTest = lstRecs.get(0);
+            MetadataRecord        recTest = lstRecs.get(0);
             
             Assert.assertEquals(strPvName1, recTest.name());
             
@@ -215,7 +217,7 @@ public class DpQueryServiceImplTest {
     }
     
     /** 
-     * Test method for {@link DpQueryServiceImpl#queryPvs(DpMetadataReuest)}.
+     * Test method for {@link DpQueryServiceImplDeprecated#queryMeta(DpMetadataReuest)}.
      */
     @Test
     public final void testQueryPvsMultiple() {
@@ -235,11 +237,11 @@ public class DpQueryServiceImplTest {
         try {
             System.out.println(JavaRuntime.getQualifiedMethodName());
 
-            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
+            List<MetadataRecord>  lstRecs = apiQuery.queryMeta(rqst);
             
             Assert.assertTrue("Record list should contain " + SZ_LIST + " records", lstRecs.size() == SZ_LIST);
 
-            for (PvMetaRecord rec : lstRecs) {
+            for (MetadataRecord rec : lstRecs) {
                 String      strPvName = rec.name();
                 
                 Assert.assertTrue(lstPvNames.contains(strPvName));
@@ -252,7 +254,7 @@ public class DpQueryServiceImplTest {
     }
     
     /** 
-     * Test method for {@link DpQueryServiceImpl#queryPvs(DpMetadataReuest)}.
+     * Test method for {@link DpQueryServiceImplDeprecated#queryMeta(DpMetadataReuest)}.
      */
     @Test
     public final void testQueryPvsList() {
@@ -271,11 +273,11 @@ public class DpQueryServiceImplTest {
         try {
             System.out.println(JavaRuntime.getQualifiedMethodName());
 
-            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
+            List<MetadataRecord>  lstRecs = apiQuery.queryMeta(rqst);
             
             Assert.assertTrue("Record list should contain " + SZ_LIST + " records", lstRecs.size() == SZ_LIST);
 
-            for (PvMetaRecord rec : lstRecs) {
+            for (MetadataRecord rec : lstRecs) {
                 String      strPvName = rec.name();
                 
                 Assert.assertTrue(lstPvNames.contains(strPvName));
@@ -288,7 +290,7 @@ public class DpQueryServiceImplTest {
     }
     
     /** 
-     * Test method for {@link DpQueryServiceImpl#queryPvs(DpMetadataReuest)}.
+     * Test method for {@link DpQueryServiceImplDeprecated#queryMeta(DpMetadataReuest)}.
      */
     @Test
     public final void testQueryPvsRegex() {
@@ -301,12 +303,12 @@ public class DpQueryServiceImplTest {
         try {
             System.out.println(JavaRuntime.getQualifiedMethodName());
 
-            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
+            List<MetadataRecord>  lstRecs = apiQuery.queryMeta(rqst);
             
             Assert.assertTrue("Record list should contain at least 1 record", lstRecs.size() >= 1);
             
             System.out.println(" Regular Expression PV Metadata Records: " + strPvRegex);
-            for (PvMetaRecord rec : lstRecs) {
+            for (MetadataRecord rec : lstRecs) {
                 System.out.println("  name: " + rec.name());
                 System.out.println("  type: " + rec.type());
                 System.out.println("  first tms: " + rec.firstTimestamp());
@@ -326,7 +328,7 @@ public class DpQueryServiceImplTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryDataUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryDataUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testQueryUnary() {
@@ -359,7 +361,7 @@ public class DpQueryServiceImplTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(DpDataRequest)
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryData(DpDataRequest)
      */
     @Test
     public final void testQueryDataUni() {
@@ -386,7 +388,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(DpDataRequest)
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryData(DpDataRequest)
      */
     @Test
     public final void testQueryDataBidi() {
@@ -413,7 +415,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(List)
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryData(List)
      */
     @Test
     public final void testQueryDataListUni() {
@@ -445,7 +447,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(List)
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryData(List)
      */
     @Test
     public final void testQueryDataListBidi() {
@@ -479,7 +481,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryDataStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryDataStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testQueryDataStreamDpDataRequestUni() {
@@ -526,7 +528,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryDataStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryDataStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testQueryDataStreamDpDataRequestBidi() {
@@ -573,7 +575,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
      * 
      * @deprecated
      */
@@ -619,7 +621,7 @@ public class DpQueryServiceImplTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
      * 
      * @deprecated
      */
@@ -667,7 +669,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
      * 
      * @deprecated
      */
@@ -715,7 +717,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryStreamBidi(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryStreamBidi(com.ospreydcs.dp.api.query.DpDataRequest)}.
      * 
      * @deprecated
      */
@@ -763,7 +765,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryStreamBidi(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplDeprecated#queryStreamBidi(com.ospreydcs.dp.api.query.DpDataRequest)}.
      * 
      * @deprecated
      */

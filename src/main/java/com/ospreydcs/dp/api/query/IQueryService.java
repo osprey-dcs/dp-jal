@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.IDataTable;
-import com.ospreydcs.dp.api.common.PvMetaRecord;
+import com.ospreydcs.dp.api.common.MetadataRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
 import com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep;
@@ -20,8 +20,8 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  * interface.
  * </p>
  * <p>
- * <h2>Query Service Requests</h2>
- * The are currently 3 types of operations available from the Query Service:
+ * <h2>Data Platform Request Types</h2>
+ * The are currently 3 types of request operations available from the Data Platform:
  * <br/>
  * <ol>
  * <li>
@@ -31,12 +31,12 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  * available.
  *   <ul>
  *   <li>Metadata requests are made using a <code>{@link DpMetadataRequest}</code> object.</li>
- *   <li>Metadata is returned as a <code>{@link PvMetaRecord}</code> record set, where each 
+ *   <li>Metadata is returned as a <code>{@link MetadataRecord}</code> record set, where each 
  *       record contains information on a single process variable matching the request.</li>
  *   </ul>
  * </li>
  * <li>
- * <b>Data Queries</b> - Correlated, time-series data within the primary Data Archive.
+ * <b>Time-Series Data Queries</b> - Correlated, time-series data within the Data Platform data archive.
  *   <ul>
  *   <li>Time-series data requests are made using a <code>{@link DpDataRequest}</code> object.</li>
  *   <li>Time-series data results are returned as a data table, typically an instance exposing
@@ -44,11 +44,10 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  *   </ul>
  * </li>
  * <li>
- * <b>Annotation Queries</b> - Annotations of the Data Archive provided by Data Platform users.
+ * <b>Annotation Queries</b> - Annotations of the data archive provided by Data Platform users.
  * <br/>
- * The annotations feature of the Data Platform is currently being developed and will be available
- * in future releases.  Thus, the <code>DpQueryServiceImpl</code> class does not currently offer
- * annotation queries.
+ * Annotations and annotation queries are available from the Annotation Service.
+ * Thus, the <code>IQueryService</code> interface does not offer annotation queries.
  * </li>
  * </ol> 
  * </p>
@@ -65,10 +64,10 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  * <ul>
  * <br/>
  * <li>
- *   <b>Process Variable Metadata</b> - methods prefixed with <code>queryPvs</code>.
+ *   <b>Process Variable Metadata</b> - methods prefixed with <code>queryMeta</code>.
  *   <br/>
  *   The methods take a <code>{@link DpMetadataRequest}</code> instance defining the request and
- *   return a list of <code>{@link PvMetaRecord}</code> instances matching the request.
+ *   return a list of <code>{@link MetadataRecord}</code> instances matching the request.
  *   The methods block until all data is available.
  * </li>
  * <br/>
@@ -76,7 +75,7 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  *   <b>Time-Series Data</b> - methods prefixed with <code>queryData</code>. 
  *   <br/>
  *   The methods take a <code>{@link DpDataRequest}</code> instance defining the request and
- *   return an <code>{@link IDataTable}</code> implementation containing the results.
+ *   return an <code>{@link IDataTable}</code> implementation containing the time-series results.
  *   The methods block until all data is available.
  * </li>
  * <br/>
@@ -86,11 +85,13 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  *   These are advanced operations offered to clients that which to do their own data processing
  *   along with some stream management.  Here requests are again made using a 
  *   <code>{@link DpDataRequest}</code> object but the returned object is a 
- *   <code>{@link DpQueryStreamBuffer}</code> instance, not results are yet available. 
+ *   <code>{@link DpQueryStreamBuffer}</code> instance, results are not yet available. 
  *   Instead, the data stream is initiated with a invocation of 
  *   <code>{@link DpQueryStreamBuffer#start()}</code> after which results are dynamically 
- *   available, or <code>{@link DpQueryStreamBuffer#startAndAwaitCompletion()}</code> which does
- *   not returned until the data buffer has received all data from the Query Service. 
+ *   available, or by invocation of <code>{@link DpQueryStreamBuffer#startAndAwaitCompletion()}</code> 
+ *   which blocks until the data buffer has received all data from the Query Service.
+ *   See <code>{@link DpQueryStreamBuffer}</code> documentation for details on using a raw,
+ *   time-series data stream. 
  * </li>
  * </ul>
  * Note that the above methods DO NOT necessarily conform to the gRPC interface operations  
@@ -99,7 +100,7 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  * <p>
  * <h3>Shutdowns</h3>
  * Always shutdown the interface when no long needed.  This action releases all internal resources
- * required of this interface ensuring maximum performance.  Shutdown operations are provided by
+ * required of this interface ensuring library maximum performance.  Shutdown operations are provided by
  * the methods <code>{@link #shutdown()}</code> and <code>{@link #shutdownNow()}</code>.
  * The methods <code>{@link #awaitTermination()}</code> and 
  * <code>{@link #awaitTermination(long, java.util.concurrent.TimeUnit)}</code> are available
@@ -108,9 +109,10 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  * <p>
  * <h2>GENERAL NOTES</h2>
  * <h3>Data Processing</h3>
- * A single data processor is used for all time-series data requests.  The processor is a single
- * <code>{@link QueryResponseCorrelatorDep}</code> instance maintained by a 
- * <code>DpQuerySerice</code> class object.  The data process performs both the gRPC data 
+ * Generally, a single data processor is used for all time-series data requests.  The processor is a single
+ * <code>{@link QueryResponseProcessor}</code> instance maintained by the <code>IQueryService</code>
+ * implementation object. 
+ * The data process performs both the gRPC data 
  * streaming from the Query Service AND the correlation of incoming data.  The data processor
  * offers various configuration options where data can be simultaneously streamed and 
  * correlated, along with other multi-threading capabilities.  The data processor typically
@@ -118,32 +120,32 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  * to note about this implementation situation:
  * <ul>
  * <li>
- * Since a single data processor is used within this Query Service API, all data request
- * operations are synchronized.  Only one time-series data request is performed at any
- * instance and competing threads must wait until completed.
+ * Since a single data processor is used within this Query Service API, all time-series data request operations 
+ * within an <code>IQueryService</code> interface are synchronized.  That is, only one time-series data request 
+ * is performed at any instance and competing threads must wait until completed.
  * </li>
  * <li>
  * The data processor can be tuned with various configuration parameters within the 
  * <code>dp-api-config.yml</code> configuration file.  See class documentation on 
- * <code>{@link QueryResponseCorrelatorDep}</code> for more information on performance tuning.
+ * <code>{@link QueryResponseProcessor}</code> for more information on performance tuning.
  * </li>
  * <li>
- * It is informative to note that the <code>DpQueryServiceImpl</code> class shares its single gRPC 
- * channel connection with its data processor instance.
+ * It is informative to note that the <code>DpQueryResponseProcessor</code> class may use multiple gRPC data
+ * streams for request data recovery but maintains a single gRPC channel connection.
  * </ul>
  * </p>
  * <p>
  * <h3>gRPC Connection</h3>
  * All communication to the Query Service is handled through a single gRPC channel instance.
  * These channel objects supported concurrency and multiple data streams between a client
- * and the targeted service.  However, excessive (thread) concurrency for a single 
- * <code>DpQueryServiceImpl</code> instance may over-burden the single channel.
+ * and the targeted service.  However, excessive (thread) concurrency for a  
+ * <code>IQueryService</code> interface may over-burden the single channel.
  * </p>
  * <p>
  * <h2>Best Practices</h2>
  * <ul>  
  * <li>Due to the conditions addressed above, clients utilizing extensive concurrency should 
- *     create multiple instances of <code>DpQueryServiceImpl</code> (each containing a single gRPC
+ *     create multiple instances of <code>IQueryService</code> (each containing a single gRPC
  *     channel and a data processor).</li>
  * </ul>
  * </p>
@@ -179,7 +181,7 @@ public interface IQueryService extends IConnection {
      * 
      * @throws DpQueryException     the Query Service reported an error (see message)
      */
-    public List<PvMetaRecord> queryPvs(DpMetadataRequest rqst) throws DpQueryException;
+    public List<MetadataRecord> queryMeta(DpMetadataRequest rqst) throws DpQueryException;
 
     /**
      * <p>

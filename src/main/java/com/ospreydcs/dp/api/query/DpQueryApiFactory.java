@@ -32,10 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.IIngestionService;
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceFactory;
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamFactory;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceFactory;
+import com.ospreydcs.dp.api.query.impl.DpQueryServiceFactoryDeprecated;
 
 /**
  * <h2>Connection factory for Data Platform Query Service APIs</h2>
@@ -89,7 +86,7 @@ public class DpQueryApiFactory {
     //
     
     /** The API connection factory for connection to the Query Service */
-    private static final DpQueryServiceFactory      FAC_SERVICE = DpQueryServiceFactory.FACTORY;
+    private static final DpQueryServiceFactoryDeprecated      FAC_SERVICE = DpQueryServiceFactoryDeprecated.FACTORY;
     
     
     //

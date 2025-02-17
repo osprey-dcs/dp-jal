@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryServiceFactory.java
+ * File:	DpQueryServiceFactoryDeprecated.java
  * Package: com.ospreydcs.dp.api.query
- * Type: 	DpQueryServiceFactory
+ * Type: 	DpQueryServiceFactoryDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -43,7 +43,7 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * Connection factory for the <code>DqQueryService</code> Data Platform Query Service API interface.
  * </p>
  * <p>
- * The connection factory is capable of creating <code>{@link DpQueryServiceImpl}</code> interfaces with 
+ * The connection factory is capable of creating <code>{@link DpQueryServiceImplDeprecated}</code> interfaces with 
  * various gRPC connection configurations to the Data Platform Query Service.  These configurations range
  * from fully default to fully user specified, with various combinations as determined by the 
  * <code>connect(...)</code> method arguments.
@@ -51,14 +51,14 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * <p>
  * <h2>Factory Singleton</h2>
  * This class uses the static instance <code>{@link #FACTORY}</code> as the singleton connection factory 
- * for <code>DpQueryServiceImpl</code> creation using the DP API library default configuration.  
+ * for <code>DpQueryServiceImplDeprecated</code> creation using the DP API library default configuration.  
  * Users can use the <code>{@link #FACTORY}</code> instance directory or obtain it indirectly through the 
  * <code>{@link #getInstance()}</code> static method.
  * </p>
  * <p>
  * <h2>Direct Creation</h2>
- * Note that <code>{@link DpQueryServiceImpl}</code> instances can be created directly with a <code>{@link DpQueryConnection}</code>
- * objects using the <code>{@link DpQueryServiceImpl#from(DpGrpcConnection)}</code> method.  
+ * Note that <code>{@link DpQueryServiceImplDeprecated}</code> instances can be created directly with a <code>{@link DpQueryConnection}</code>
+ * objects using the <code>{@link DpQueryServiceImplDeprecated#from(DpGrpcConnection)}</code> method.  
  * <code>DpQueryConnection</code> instances are obtained from the <code>{@link DpQueryConnectionFactory}</code> connection 
  * factory utility which has <code>connect(...)</code> methods analogous to those here.
  * </p>
@@ -72,14 +72,14 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * @author Christopher K. Allen
  * @since Jan 7, 2024
  *
- * @see DpQueryServiceImpl
+ * @see DpQueryServiceImplDeprecated
  * @see DpQueryConnection
  * @see DpQueryConnectionFactory
  * @see DpServiceApiFactoryBase
- * @see DpGrpcConnectionConig
+ * @see DpGrpcConnectionConfig
  */
-public final class DpQueryServiceFactory
-        extends DpServiceApiFactoryBase<DpQueryServiceImpl, DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> {
+public final class DpQueryServiceFactoryDeprecated
+        extends DpServiceApiFactoryBase<DpQueryServiceImplDeprecated, DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> {
     
 
     //
@@ -95,7 +95,7 @@ public final class DpQueryServiceFactory
     //
     
     /** The singleton instance of the connection factory */
-    public static final DpQueryServiceFactory   FACTORY = newFactory(CFG_CONN_DEFAULT);
+    public static final DpQueryServiceFactoryDeprecated   FACTORY = newFactory(CFG_CONN_DEFAULT);
     
     
     //
@@ -104,7 +104,7 @@ public final class DpQueryServiceFactory
     
     /**
      * <p>
-     * Creates a new, initialized instance of the <code>DpQueryServiceFactory</code> 
+     * Creates a new, initialized instance of the <code>DpQueryServiceFactoryDeprecated</code> 
      * Query Service API connection factory.
      * </p>
      * <p>
@@ -114,10 +114,10 @@ public final class DpQueryServiceFactory
      * 
      * @param   cfgDefault  the default connection parameters for the query service used by new factory
      * 
-     * @return  a new Query Service API factory ready for <code>DpQueryServiceImpl</code> creation and connection
+     * @return  a new Query Service API factory ready for <code>DpQueryServiceImplDeprecated</code> creation and connection
      */
-    public static final DpQueryServiceFactory   newFactory(DpGrpcConnectionConfig cfgDefault) {
-        return new DpQueryServiceFactory(cfgDefault);
+    public static final DpQueryServiceFactoryDeprecated   newFactory(DpGrpcConnectionConfig cfgDefault) {
+        return new DpQueryServiceFactoryDeprecated(cfgDefault);
     }
     
     
@@ -130,7 +130,7 @@ public final class DpQueryServiceFactory
      * 
      * @return  the static instance <code>{@link #FACTORY}</code>
      */
-    public static DpQueryServiceFactory getInstance() {
+    public static DpQueryServiceFactoryDeprecated getInstance() {
         return FACTORY;
     }
     
@@ -141,7 +141,7 @@ public final class DpQueryServiceFactory
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpQueryServiceFactory</code>.
+     * Constructs a new instance of <code>DpQueryServiceFactoryDeprecated</code>.
      * </p>
      * <p>
      * Super class requirement for instance construction.   Supplies the Protobuf-generated service interface
@@ -150,7 +150,7 @@ public final class DpQueryServiceFactory
      * 
      * @param   cfgDefault  the default connection parameters for the Query Service used by new factory
      */
-    private DpQueryServiceFactory(DpGrpcConnectionConfig cfgDefault) {
+    private DpQueryServiceFactoryDeprecated(DpGrpcConnectionConfig cfgDefault) {
         super(DpQueryServiceGrpc.class, cfgDefault);
     }
 
@@ -166,11 +166,11 @@ public final class DpQueryServiceFactory
      * @see com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#apiFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
      */
     @Override
-//    protected DpQueryServiceImpl apiFrom(DpGrpcConnection<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> conn) throws DpGrpcException {
-    protected DpQueryServiceImpl apiFrom(DpQueryConnection conn) throws DpGrpcException {
+//    protected DpQueryServiceImplDeprecated apiFrom(DpGrpcConnection<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> conn) throws DpGrpcException {
+    protected DpQueryServiceImplDeprecated apiFrom(DpQueryConnection conn) throws DpGrpcException {
 //        DpQueryConnection   connSub = DpQueryConnection.from(conn);
-//        DpQueryServiceImpl      qsApi = DpQueryServiceImpl.from(connSub);
-        DpQueryServiceImpl      qsApi = DpQueryServiceImpl.from(conn);
+//        DpQueryServiceImplDeprecated      qsApi = DpQueryServiceImplDeprecated.from(connSub);
+        DpQueryServiceImplDeprecated      qsApi = DpQueryServiceImplDeprecated.from(conn);
         
         return qsApi;
     }

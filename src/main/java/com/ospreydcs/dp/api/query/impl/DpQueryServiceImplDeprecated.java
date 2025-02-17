@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryServiceImpl.java
+ * File:	DpQueryServiceImplDeprecated.java
  * Package: com.ospreydcs.dp.api.query
- * Type: 	DpQueryServiceImpl
+ * Type: 	DpQueryServiceImplDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -41,7 +41,7 @@ import org.w3c.dom.ranges.RangeException;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.IDataTable;
-import com.ospreydcs.dp.api.common.PvMetaRecord;
+import com.ospreydcs.dp.api.common.MetadataRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
@@ -90,7 +90,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * available.
  *   <ul>
  *   <li>Metadata requests are made using a <code>{@link DpMetadataRequest}</code> object.</li>
- *   <li>Metadata is returned as a <code>{@link PvMetaRecord}</code> record set, where each 
+ *   <li>Metadata is returned as a <code>{@link MetadataRecord}</code> record set, where each 
  *       record contains information on a single process variable matching the request.</li>
  *   </ul>
  * </li>
@@ -106,7 +106,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * <b>Annotation Queries</b> - Annotations of the Data Archive provided by Data Platform users.
  * <br/>
  * The annotations feature of the Data Platform is currently being developed and will be available
- * in future releases.  Thus, the <code>DpQueryServiceImpl</code> class does not currently offer
+ * in future releases.  Thus, the <code>DpQueryServiceImplDeprecated</code> class does not currently offer
  * annotation queries.
  * </li>
  * </ol> 
@@ -114,20 +114,20 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * <p>
  * <h1>USAGE</h1>
  * <h2>Instance Creation</h2>
- * Instance of <code>DpQueryServiceImpl</code> should be obtained from the Query Service connection
- * factory class <code>{@link DpQueryServiceFactory}</code>.  This is a utility class providing
+ * Instance of <code>DpQueryServiceImplDeprecated</code> should be obtained from the Query Service connection
+ * factory class <code>{@link DpQueryServiceFactoryDeprecated}</code>.  This is a utility class providing
  * various connection options to the Query Service, including a default connection defined in
  * the API configuration parameters.
  * <h2>Query Operations</h2>
  * All Query Service query methods are prefixed with <code>query</code>.  There are currently
- * 3 types of queries offered by class <code>DpQueryServiceImpl</code>:
+ * 3 types of queries offered by class <code>DpQueryServiceImplDeprecated</code>:
  * <ul>
  * <br/>
  * <li>
  *   <b>Process Variable Metadata</b> - methods prefixed with <code>queryPvs</code>.
  *   <br/>
  *   The methods take a <code>{@link DpMetadataRequest}</code> instance defining the request and
- *   return a list of <code>{@link PvMetaRecord}</code> instances matching the request.
+ *   return a list of <code>{@link MetadataRecord}</code> instances matching the request.
  *   The methods block until all data is available.
  * </li>
  * <br/>
@@ -187,7 +187,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * <code>{@link QueryResponseCorrelatorDep}</code> for more information on performance tuning.
  * </li>
  * <li>
- * It is informative to note that the <code>DpQueryServiceImpl</code> class shares its single gRPC 
+ * It is informative to note that the <code>DpQueryServiceImplDeprecated</code> class shares its single gRPC 
  * channel connection with its data processor instance.
  * </ul>
  * </p>
@@ -196,13 +196,13 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * All communication to the Query Service is handled through a single gRPC channel instance.
  * These channel objects supported concurrency and multiple data streams between a client
  * and the targeted service.  However, excessive (thread) concurrency for a single 
- * <code>DpQueryServiceImpl</code> instance may over-burden the single channel.
+ * <code>DpQueryServiceImplDeprecated</code> instance may over-burden the single channel.
  * </p>
  * <p>
  * <h2>Best Practices</h2>
  * <ul>  
  * <li>Due to the conditions addressed above, clients utilizing extensive concurrency should 
- *     create multiple instances of <code>DpQueryServiceImpl</code> (each containing a single gRPC
+ *     create multiple instances of <code>DpQueryServiceImplDeprecated</code> (each containing a single gRPC
  *     channel and a data processor).</li>
  * </ul>
  * </p>
@@ -210,8 +210,10 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * @author Christopher K. Allen
  * @since Jan 5, 2024
  *
+ * @deprecated  Replaced by DpQueryServiceImpl
  */
-public final class DpQueryServiceImpl extends DpServiceApiBase<DpQueryServiceImpl, DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> implements IQueryService {
+@Deprecated(since="Feb 16, 2025", forRemoval=true)
+public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQueryServiceImplDeprecated, DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> implements IQueryService {
 
     
     //
@@ -252,7 +254,7 @@ public final class DpQueryServiceImpl extends DpServiceApiBase<DpQueryServiceImp
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>DpQueryServiceImpl</code> attached to the given connection.
+     * Creates and returns a new instance of <code>DpQueryServiceImplDeprecated</code> attached to the given connection.
      * </p>
      * <p>
      * The argument should be obtained from the appropriate connection factory,
@@ -268,10 +270,10 @@ public final class DpQueryServiceImpl extends DpServiceApiBase<DpQueryServiceImp
      * 
      * @param connQuery  the gRPC channel connection to the desired DP Query Service
      *  
-     * @return new <code>DpQueryServiceImpl</code> interfaces attached to the argument
+     * @return new <code>DpQueryServiceImplDeprecated</code> interfaces attached to the argument
      */
-    public static DpQueryServiceImpl from(DpQueryConnection connQuery) {
-        return new DpQueryServiceImpl(connQuery);
+    public static DpQueryServiceImplDeprecated from(DpQueryConnection connQuery) {
+        return new DpQueryServiceImplDeprecated(connQuery);
     }
     
     
@@ -281,7 +283,7 @@ public final class DpQueryServiceImpl extends DpServiceApiBase<DpQueryServiceImp
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpQueryServiceImpl</code>.
+     * Constructs a new instance of <code>DpQueryServiceImplDeprecated</code>.
      * </p>
      * <p>
      * The argument should be obtained from the appropriate connection factory,
@@ -292,7 +294,7 @@ public final class DpQueryServiceImpl extends DpServiceApiBase<DpQueryServiceImp
      * 
      * @see DpQueryConnectionFactory
      */
-    public DpQueryServiceImpl(DpQueryConnection connQuery) {
+    public DpQueryServiceImplDeprecated(DpQueryConnection connQuery) {
         super(connQuery);
         
         this.dataProcessor =  QueryResponseCorrelatorDep.from(connQuery);
@@ -322,7 +324,7 @@ public final class DpQueryServiceImpl extends DpServiceApiBase<DpQueryServiceImp
      * @see @see com.ospreydcs.dp.api.query.IQueryService#queryPvs(com.ospreydcs.dp.api.query.DpMetadataRequest)
      */
     @Override
-    public List<PvMetaRecord> queryPvs(DpMetadataRequest rqst) throws DpQueryException {
+    public List<MetadataRecord> queryMeta(DpMetadataRequest rqst) throws DpQueryException {
         
         // Get the Protobuf request from the argument
         QueryMetadataRequest    msgRqst = rqst.buildQueryRequest();
@@ -348,11 +350,11 @@ public final class DpQueryServiceImpl extends DpServiceApiBase<DpQueryServiceImp
         
         // Unpack the response and return it
         try {
-        List<PvMetaRecord>      lstRecs = msgRsp
+        List<MetadataRecord>      lstRecs = msgRsp
                 .getMetadataResult()
                 .getPvInfosList()
                 .stream()
-                .<PvMetaRecord>map(ProtoMsg::toPvMetaRecord)
+                .<MetadataRecord>map(ProtoMsg::toPvMetaRecord)
                 .toList();
         
         
@@ -360,7 +362,7 @@ public final class DpQueryServiceImpl extends DpServiceApiBase<DpQueryServiceImp
         
         } catch (IllegalArgumentException | TypeNotPresentException e) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
-                           + " - Could not convert response to PvMetaRecord: "
+                           + " - Could not convert response to MetadataRecord: "
                            + "exception=" + e.getClass().getSimpleName()
                            + ", message=" + e.getMessage();
             

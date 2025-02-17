@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.query;
 
-import static org.junit.Assert.*;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -39,8 +37,6 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceFactory;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl;
 
 /**
  * <p>

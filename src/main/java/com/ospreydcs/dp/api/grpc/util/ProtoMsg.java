@@ -49,7 +49,7 @@ import com.ospreydcs.dp.api.common.IngestionResponse;
 import com.ospreydcs.dp.api.common.IngestionResult;
 import com.ospreydcs.dp.api.common.ProviderRegistrar;
 import com.ospreydcs.dp.api.common.ProviderUID;
-import com.ospreydcs.dp.api.common.PvMetaRecord;
+import com.ospreydcs.dp.api.common.MetadataRecord;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.common.BufferedImage.Format;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
@@ -769,7 +769,7 @@ public final class ProtoMsg {
     
     /**
      * <p>
-     * Creates a new <code>{@link PvMetaRecord}</code> populated from the given Query Service metadata query 
+     * Creates a new <code>{@link MetadataRecord}</code> populated from the given Query Service metadata query 
      * response message.
      * </p>
      * <p>
@@ -812,7 +812,7 @@ public final class ProtoMsg {
      * @throws IllegalArgumentException data type name in the message was not a <code>DataValueType</code> enumeration
      * @throws TypeNotPresentException  data type in message does not map to <code>DpSupportedType</code> 
      */
-    public static PvMetaRecord  toPvMetaRecord(QueryMetadataResponse.MetadataResult.PvInfo msgPvInfo) 
+    public static MetadataRecord  toPvMetaRecord(QueryMetadataResponse.MetadataResult.PvInfo msgPvInfo) 
             throws IllegalArgumentException, TypeNotPresentException {
         
         // Extract the PV name and type information
@@ -838,7 +838,7 @@ public final class ProtoMsg {
         
         
         // Create metadata record
-        PvMetaRecord    recPvInfo = PvMetaRecord.from(strPvName, enmDpType, strDpType, insTmsFirst, insTmsLast, enmDpTmsCase, strTmsType, intSmplCnt, lngSmplPer);
+        MetadataRecord    recPvInfo = MetadataRecord.from(strPvName, enmDpType, strDpType, insTmsFirst, insTmsLast, enmDpTmsCase, strTmsType, intSmplCnt, lngSmplPer);
         
         return recPvInfo;
     }
