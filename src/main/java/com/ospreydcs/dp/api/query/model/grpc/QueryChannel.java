@@ -612,7 +612,7 @@ public class QueryChannel {
      * <p>
      * Creates a <code>{@link QueryResponseStreamProcess}</code> task object for each data requests within the 
      * argument.  
-     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelatorDep</code>.
+     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelatorDeprecated</code>.
      * </p>
      * <p>
      * Each task object returned has the following properties:
@@ -677,7 +677,7 @@ public class QueryChannel {
      * Executes all data streaming tasks within the argument with the maximum concurrency allowed by the
      * fixed-size thread pool executor <code>{@link #exeThreadPool}</code>.  Returns the number of
      * <code>{@link QueryResponse}</code> messages successfully recovered by ALL data streams.
-     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelatorDep</code>.
+     * This method is part of the multi-streaming mechanism within <code>QueryResponseCorrelatorDeprecated</code>.
      * </p>
      * <p>
      * Under normal operation, this method blocks until all streaming tasks within the argument have completed,

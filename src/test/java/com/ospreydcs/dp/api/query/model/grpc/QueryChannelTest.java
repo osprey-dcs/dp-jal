@@ -54,7 +54,7 @@ import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.model.ProtoMessageBuffer;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep;
+import com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryResponseCorrelatorDepTest2.java
+ * File:	QueryResponseCorrelatorDeprecatedTest2.java
  * Package: com.ospreydcs.dp.api.query.model.grpc
- * Type: 	QueryResponseCorrelatorDepTest2
+ * Type: 	QueryResponseCorrelatorDeprecatedTest2
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.grpc;
+package com.ospreydcs.dp.api.query.impl;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -49,20 +49,21 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
- * JUnit Test Cases for performance testing of <code>QueryResponseCorrelatorDep</code> configurations.
+ * JUnit Test Cases for performance testing of <code>QueryResponseCorrelatorDeprecated</code> configurations.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Jan 4, 2025
  *
+ * @deprecated QueryResponseCorrelatorDeprecated is deprecated an no longer in need of unit testing
  */
-public class QueryResponseCorrelatorDepTest2 {
+@Deprecated(since="Feb 17", forRemoval=true)
+public class QueryResponseCorrelatorDeprecatedTest2 {
     
     //
     // Application Resources
@@ -118,8 +119,8 @@ public class QueryResponseCorrelatorDepTest2 {
     // Test Case Resources
     //
     
-    /** The QueryResponseCorrelatorDep under test */
-    private QueryResponseCorrelatorDep     tstRspCorrelator;
+    /** The QueryResponseCorrelatorDeprecated under test */
+    private QueryResponseCorrelatorDeprecated     tstRspCorrelator;
     
     
     //
@@ -136,7 +137,7 @@ public class QueryResponseCorrelatorDepTest2 {
         connQuery = DpQueryConnectionFactory.FACTORY.connect();
         
         // Open the common output file
-        String  strFileName = QueryResponseCorrelatorDepTest2.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
+        String  strFileName = QueryResponseCorrelatorDeprecatedTest2.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
         Path    pathOutput = Paths.get(STR_PATH_OUTPUT, strFileName);
         File    fileOutput = pathOutput.toFile();
         
@@ -157,7 +158,7 @@ public class QueryResponseCorrelatorDepTest2 {
      */
     @Before
     public void setUp() throws Exception {
-        this.tstRspCorrelator = QueryResponseCorrelatorDep.from(connQuery);
+        this.tstRspCorrelator = QueryResponseCorrelatorDeprecated.from(connQuery);
     }
 
     /**
@@ -173,18 +174,18 @@ public class QueryResponseCorrelatorDepTest2 {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#from(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#from(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
      */
     @Test
     public final void testFrom() {
-        QueryResponseCorrelatorDep corTest = QueryResponseCorrelatorDep.from(connQuery);
+        QueryResponseCorrelatorDeprecated corTest = QueryResponseCorrelatorDeprecated.from(connQuery);
         
         Assert.assertNotEquals(null, corTest);
         Assert.assertTrue( corTest.geMultiStreamingDomainSize() > 0 );
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#setMultiStreamingResponse(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#setMultiStreamingResponse(boolean)}.
      */
     @Test
     public final void testSetMultiStreamingResponse() {
@@ -196,7 +197,7 @@ public class QueryResponseCorrelatorDepTest2 {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#setMultiStreamingDomainSize(long)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#setMultiStreamingDomainSize(long)}.
      */
     @Test
     public final void testSetMultiStreamingDomainSize() {
@@ -209,7 +210,7 @@ public class QueryResponseCorrelatorDepTest2 {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#setMultiStreamCount(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#setMultiStreamCount(int)}.
      */
     @Test
     public final void testSetMultiStreamCount() {
@@ -222,7 +223,7 @@ public class QueryResponseCorrelatorDepTest2 {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#setCorrelationConcurrency(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#setCorrelationConcurrency(boolean)}.
      */
     @Test
     public final void testSetCorrelationConcurrency() {
@@ -234,7 +235,7 @@ public class QueryResponseCorrelatorDepTest2 {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep#setCorrelateWhileStreaming(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#setCorrelateWhileStreaming(boolean)}.
      */
     @Test
     public final void testSetCorrelateMidstream() {
@@ -251,7 +252,7 @@ public class QueryResponseCorrelatorDepTest2 {
     //
     
     /**
-     * Test method for {@link QueryResponseCorrelatorDep#processRequestStream(DpDataRequest)}
+     * Test method for {@link QueryResponseCorrelatorDeprecated#processRequestStream(DpDataRequest)}
      */
     @Test
     public final void testProcessRequestStreamDefault() {
@@ -276,7 +277,7 @@ public class QueryResponseCorrelatorDepTest2 {
     }
     
     /**
-     * Performance tests method for {@link QueryResponseCorrelatorDep#processRequestStream(DpDataRequest)}
+     * Performance tests method for {@link QueryResponseCorrelatorDeprecated#processRequestStream(DpDataRequest)}
      */
     @Test 
     public final void testProcessRequestStreamCases() {
@@ -286,7 +287,7 @@ public class QueryResponseCorrelatorDepTest2 {
         DpDataRequest           rqst = RQST_HALF_SRC;
         List<Integer>           lstStrCnt = LST_CNT_STRS;
         List<DpGrpcStreamType>  lstStrType = LST_STR_TYP;
-        QueryResponseCorrelatorDep correl = this.tstRspCorrelator;
+        QueryResponseCorrelatorDeprecated correl = this.tstRspCorrelator;
         
         try {
             os.println(JavaRuntime.getQualifiedMethodName());
@@ -333,7 +334,7 @@ public class QueryResponseCorrelatorDepTest2 {
      * 
      * @throws DpQueryException general exception during data recovery or processing
      */
-    private void    performRequests(PrintStream os, DpDataRequest rqst, QueryResponseCorrelatorDep corr, List<Integer> lstStrCnt, List<DpGrpcStreamType> lstStrType) throws DpQueryException {
+    private void    performRequests(PrintStream os, DpDataRequest rqst, QueryResponseCorrelatorDeprecated corr, List<Integer> lstStrCnt, List<DpGrpcStreamType> lstStrType) throws DpQueryException {
         
         for (DpGrpcStreamType enmType : lstStrType)
             for (Integer cntStrs : lstStrCnt) {
@@ -371,7 +372,7 @@ public class QueryResponseCorrelatorDepTest2 {
      * 
      * @throws DpQueryException general exception during data recovery or processing
      */
-    private Duration    performRequest(DpDataRequest rqst, QueryResponseCorrelatorDep rspCorrelator) throws DpQueryException {
+    private Duration    performRequest(DpDataRequest rqst, QueryResponseCorrelatorDeprecated rspCorrelator) throws DpQueryException {
         
         Instant insStart = Instant.now();
         rspCorrelator.processRequestStream(rqst);
@@ -406,7 +407,7 @@ public class QueryResponseCorrelatorDepTest2 {
      * @param os    print stream receiving output data (i.e., the configuration)
      * @param corr  the correlator whose configuration is to be output
      */
-    private void    printConfiguration(PrintStream os, QueryResponseCorrelatorDep corr) {
+    private void    printConfiguration(PrintStream os, QueryResponseCorrelatorDeprecated corr) {
         
         os.println("  Correlator Properties");
         os.println("    Mutli-streaming Properties");

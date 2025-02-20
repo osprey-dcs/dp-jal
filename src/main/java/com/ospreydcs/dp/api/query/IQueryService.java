@@ -7,7 +7,7 @@ import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.MetadataRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDep;
+import com.ospreydcs.dp.api.query.impl.QueryRequestProcessor;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 
 /**
@@ -211,12 +211,8 @@ public interface IQueryService extends IConnection {
      * <h2>NOTES:</h2>
      * <ul>
      * <li>The <code>{@link DpDataRequest#getStreamType()}</code> property is unused.</li>
-     * <li>If the request is too large there are 2 possible outcomes:
-     *   <ol>
-     *   <li>An exception is thrown.</li>
-     *   <li>The result is truncated. </li>
-     *   </ol>
-     *   TODO: We need to verify which of the above is consistent</li>
+     * <li>If the request is too large an exceptional result is returned.</li>
+     * <li>Since result sets are limited by gRPC message size, implementations will generally return a static data table.</li>
      * </ul>
      * </p>
      * 
@@ -233,7 +229,7 @@ public interface IQueryService extends IConnection {
      * Performs the given data request and returns the results as a table.
      * </p>
      * <p>
-     * This is the primary method for Query Service time-series data requests.  This method 
+     * This is the preferred method for Query Service time-series data requests.  This method 
      * supports query result sets of any size, since the underlying data transport mechanism is
      * through gRPC data streams.  All results set data is transported back to the client,
      * processed into appropriate times-series, then assembled into the returned data table. 
@@ -243,16 +239,15 @@ public interface IQueryService extends IConnection {
      * <ul>
      * <li>
      * The data streaming and reconstruction can be performed simultaneously, with various
-     * levels of concurrency, with an internal instance of 
-     * <code>{@link QueryResponseCorrelatorDep}</code>.  See the class documentation for details
+     * levels of concurrency.  Interface implementations typically employ an internal processor of 
+     * type <code>{@link QueryRequestProcessor}</code>.  See the class documentation for details
      * on tuning the instance with the various performance parameters.
      * </li>
      * <br/>
      * <li>
      * The Query Service configuration section within the API configuration parameters 
      * (i.e., those of <code>{@link DpApiConfig}</code> and associated resource file),
-     * provide access to the tuning parameters for this <code>QueryResponseCorrelatorDep</code>
-     * instance and, thus, this method.
+     * provide access to the tuning parameters for internal processing and, thus, this method.
      * </li>
      * </ul>
      * </p>
@@ -271,8 +266,14 @@ public interface IQueryService extends IConnection {
      * single table.
      * </p>
      * <p>
-     * This data request option is available for clients wishing to perform simultaneous data
-     * requests where results are all returned in the same table. 
+     * This data request option is available for advanced clients wishing to subvert the default multi-streaming
+     * mechanism available with <code>{@link #queryData(DpDataRequest)}</code>.  A this method directly determines
+     * the number of gRPC data streams which is given as the size of the argument list.  
+     * <em>Use this method at your own discretion.</em>
+     * </p>
+     * <p>   
+     * Note that all requested data is returned on simultaneous gRPC data streams regardless of the default
+     * setting in the library configuration.  The query results are returned are all returned in the same table. 
      * Note that a separate gRPC data stream is established for each request within the argument.
      * Thus, <b>DO NOT</b> use large argument lists (although large requests are well supported).  
      * Doing so stresses gRPC resources and can potentially create excessive network traffic.  

@@ -96,12 +96,16 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
         // Configuration Fields
         //
         
-        /** Default parameters for Query Service data request queries */
+        /** Default parameters for Query Service time-series data request queries */
         @ACfgOverride.Struct(pathelem="REQUEST")
         public DpDataRequestConfig      request;
         
-        /** Default parameters for Query Service data request responses */
+        /** Default parameters for Query Service time-series data request responses */
         @ACfgOverride.Struct(pathelem="RESPONSE")
         public DpDataResponseConfig     response;
+        
+        /** Default parameters for Query Service time-series data table results */
+        @ACfgOverride.Struct(pathelem="TABLE")
+        public DpDataTableConfig        table;
     }
 }

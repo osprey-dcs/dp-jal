@@ -46,9 +46,11 @@ import com.ospreydcs.dp.api.query.model.correl.MessageTransferTask;
 import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
+import com.ospreydcs.dp.api.query.model.grpc.QueryStream;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompParams;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
+import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -56,11 +58,187 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * Class for recovering Query Service time-series data requests and correlating the request data.
  * </p>
  * <p>
- * </p> 
+ * <code>QueryResponseCorrelatorDeprecated</code> objects performs Data Platform Query Service data requests embodied with
+ * <code>{@link DpDataRequest}</code> objects, then correlate the query responses into sorted sets of 
+ * <code>{@link CorrelatedQueryData}</code> objects. That is, class objects take inputs of type 
+ * <code>DpDataRequest</code> and then output <code>{@link SortedSet}</code> collections containing the
+ * correlated results sets.  All gRPC data streaming and correlation processing are performed internally.
+ * </p>
+ * <p>
+ * The motivation for combining request data recovery and data correlation operations is both 1) for performance and
+ * 2) for post-processing of query results, if necessary.  
+ * <ol>
+ * <li>
+ * For large data requests gRPC streaming operation can extend over significant real-time.  
+ * By starting the data correlation processing on the request data that is currently available, 
+ * the overall data recovery and correlation time can be reduced.  However, it is important that the data 
+ * correlation operation does not interfere with the gRPC streaming, for example, by allocating too many CPU resources.
+ * </li>
+ * <li>
+ * Although not presently implemented, we may wish to implement the ability to filter the query results according to
+ * parameters within the original data request within the initiating <code>DpDataRequst</code> instance.  Thus, we
+ * require access to the original <code>DpDataRequest</code> instance to do so.
+ * </li>
+ * </ol>
+ * </p>
+ * <p>
+ * <h2>Query Requests</h2>
+ * Within the Query Service API library, time-series data requests are represented by <code>{@link DpDataRequest}</code> 
+ * objects.  These objects contain the defining parameters for a Query Service data request, then transform the 
+ * client request into <code>{@QueryDataRequest}</code> Protocol Buffers messages recognizable by the Query Service gRPC 
+ * interface.
+ * </p>
+ * <p>
+ * All supported Query Service data requests within <code>QueryRequestProcessor</code> are implemented by 
+ * methods prefixed with <code>processRequest</code>.  All data request methods return sorted sets of
+ * <code>{@CorrelatedQueryData}</code> objects containing the results set of the offered data query request.
+ * The sorted set contains all requested time-series data, correlated by single sampling clock, and sorted by
+ * sampling clock start timestamp.
+ * <p>
+ * The ability to treat timestamp lists has not be implemented yet.
+ * </p>
+ * <p>
+ * Once a <code>{@link SortedSet}</code> of <code>{@link CorrelatedQueryData}</code> objects is obtained from
+ * a request method, it is ready for subsequent processing of the results set.  Each <code>CorrelatedQueryData</code>
+ * object contains a sampling clock Protocol Buffers message and all the data column (time-series) messages correlated
+ * to that sampling clock.  
+ * The class <code>{@link SamplingProcess}</code> is available for subsequent processing of request method outputs
+ * into table-like containers for the results set, however, clients may implement their own final processing.
+ * </p>
+ * <p>
+ * <h2>Final Processing</h2>
+ * It is important to note that clients of the <code>QueryRequestProcessor</code> data request methods must 
+ * perform all final processing of the correlated output BEFORE invoking another data request.  Correlated data
+ * output sets are <em>owned</em> by the <code>QueryRequestProcessor</code> object performing the request.
+ * Existing correlated data output sets will be destroyed (i.e., cleared by the internal 
+ * <code>{@link QueryDataCorrelator}</code> instance) whenever a subsequent data request is performed.
+ * Either copy the output data to a new container or fully process the output sets before invoking additional
+ * data requests.   
+ * </p>
+ * <p>
+ * <h2>Streaming/Processing Configuration</h2>
+ * For performance considerations, the streaming and processing operations within a 
+ * <code>QueryRequestProcessor</code> object are configurable.  Optimal configurations are determined by
+ * the hosting platform and the types (e.g., sizes) of the typical data request.  
+ * The default configuration is obtained from the Data Platform API Query Service configuration within 
+ * <code>{@link DpApiConfig}</code>.
+ * </p>
+ * <p>
+ * There are several methods that can be used to modify the default streaming/processing configuration of a 
+ * <code>QueryResultProcessor</code> object.  All configuration methods are prefixed with either an 
+ * <code>enable</code> or <code>set</code> and suffixed by the action they perform.
+ * <ul>
+ * <li>
+ * <code>{@link #enableMultiStreaming(boolean)}</code>: Toggles the use of multiple gRPC data streams for recovering
+ * Query Service request data. Query requests are decomposed for multi-streaming via an internal algorithm. 
+ * </li>
+ * <br/>
+ * <li>
+ * <code>{@link #enableCorrelationConcurrency(boolean)}</code>: Toggles the use of concurrent, multi-threaded processing 
+ * for the results set data correlation.  Parallelism improves correlation performance for large request sets but
+ * can also sequester CPU resources.  
+ * </li>
+ * <br/>
+ * <li>
+ * <code>{@link #enableCorrelateWhileStreaming(boolean)}</code>: Toggles the function of performing data correlation while
+ * concurrently data streaming; otherwise data is correlated separately, after gRPC data stream completion.
+ * </li>
+ * <li>
+ * <code>{{@link #setMaxStreamCount(int)}</code>: Sets the maximum allowable number of gRPC data streams for data recovery
+ * when multi-streaming is enabled.
+ * </li>
+ * </ul>
+ * In each case see the method documentation for details of the operation and its effects.
+ * </p>
+ * <p>
+ * <h2>Query Service Connection</h2>
+ * A single <code>{@link DpQueryConnection}</code> object is required by a <code>QueryResultProcessor</code>
+ * objects, which is provided at construction.  The <code>DpQueryConnection</code> object contains the gRPC 
+ * channel connection to the Data Platform Query Service used for all gRPC data query and data streaming 
+ * operations. <code>QueryResultProcessor</code> objects DO NOT take ownership of the Query Service connection.
+ * (Ownership is assumed to be that of the client using the <code>QueryResultProcessor</code> object.)
+ * Thus, the <code>DpQueryConnection</code> service connection is NOT shutdown here.  
+ * </p>
+ * <p>
+ * <h2>gRPC Unary Requests</h2>
+ * Unary gRPC requests (i.e., standard "RPC" invocation) are available with the method 
+ * <code>{@link #processRequestUnary(DpDataRequest)}</code>.  Unary requests are simple and efficient for small
+ * data requests as they accommodate single message exchanges.  However, they should be used for ONLY for data 
+ * requests where small results sets are expected.  For large results sets always use a gRPC streaming operation.
+ * </p>
+ * <p>
+ * If a results set is larger than the current gRPC message size limit, a unary request operation will fail with
+ * an exception.  The default message size limit for gRPC is 4 MBytes, however, this value is configurable 
+ * within the Data Platform API default configuration for the Query Service connection.  (Note, however, that
+ * the Query Service must also be explicitly configured for message size limits greater than the gRPC default 
+ * value.)  
+ * <p>
+ * <h2>gRPC Data Streaming</h2>
+ * The gRPC data streaming operations should always be used whenever large results sets are expected.  Currently,
+ * the following methods implement gRPC data streaming:
+ * <ul>
+ * <li>
+ * <code>{@link #processRequestStream(DpDataRequest)}</code> - standard gRPC data streaming request method.
+ * Attempts to recovery the query result set using multiple data streams. The request defined in the argument 
+ * is decomposed into smaller decompose requests, each recovered on a separate gRPC data stream.  
+ * The preferred request decomposition is used 
+ * (see <code>{@link DataRequestDecomposer#decomposeDomainPreferred(DpDataRequest)}</code>) unless otherwise
+ * specified.  Multiple response streams are only triggered if the request domain size >= the minimum domain size,
+ * or <code>{@link DpDataRequest#approxDomainSize()} >= {@link #geMultiStreamingDomainSize()}</code>. 
+ * </li>
+ * <br/>
+ * <li>
+ * <code>{@link #processRequests(List)}</code> - Explicitly multi-streaming of data requests according
+ * to client-provided argument list.  The client supplies a list of data requests each of which are recovered
+ * on a separate data stream.
+ * </li>
+ * </ul>
+ * See the documentation for each method for further details.
+ * </p>
+ * <p>
+ * When using method <code>{@link #processRequest(DpDataRequest)}</code> , the number of concurrent data streams will always
+ * be limited by the value of constant <code>{@link #CNT_MULTISTREAM}</code>.  
+ * If a client explicitly requests a stream count larger than that value (i.e., with <code>{@link #processRequests(List)}</code>),
+ * the number of data stream is equal to the number of requests in the argument list.  Use this method at your
+ * own risk.  Method <code>{@link #processRequest(DpDataRequest)}</code> is the preferred request method. 
+ * The maximum number of data streams can be set using the <code>{@link DpApiConfig}</code> default API configuration.  
+ * It is a tuning parameter dependent upon gRPC, the number of platform processor cores, and local network traffic.    
+ * </p>
+ * <p>
+ * The <em>type</em> of data stream used for the above request can be specified by the client using the 
+ * <code>{@link DpDataRequest#setStreamType(com.com.ospreydcs.dp.api.common.DpGrpcStreamType)}</code> method
+ * within the data request object.  See the documentation for the method for further details on available gRPC 
+ * data stream types (or see enumeration <code>{@link com.com.ospreydcs.dp.api.common.DpGrpcStreamType}</code>.
+ * (This is a performance option.)
+ * </p>
+ * <p>
+ * <h2>Data Correlation</h2>
+ * All data correlation of the incoming Query Service data is performed by a single 
+ * <code>{@link QueryDataCorrelator}</code> instance within each <code>QueryResultProcessor</code> object.
+ * The <code>QueryDataCorrelator</code> attribute is used to correlate all data, regardless of recovery method
+ * (e.g., unary request, streaming request, etc.).  The <code>QueryDataCorrelator</code> attribute is reused,
+ * that is, the same instance is used for all data requests performed while the <code>QueryResultProcessor</code>
+ * is alive.
+ * </p>
+ * <p>
+ * Consequently, and because <code>QueryDataCorrelator</code> objects own their processed data sets, output data
+ * sets are destroyed whenever a new data request is performed (i.e., using a <code>processRequest...</code> 
+ * method.  As previously mentioned, any sorted set of correlated output data MUST be fully processed or copied
+ * before invoking another data request. 
+ * </p>
+ * <p>
+ * See the class documentation for <code>{@link QueryDataCorrelator}</code> concerning details about the data
+ * correlation process and the resulting correlated data sets it produces.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Jan 15, 2025
  *
+ * @see DpDataRequest
+ * @see QueryDataCorrelator
+ * @see CorrelatedQueryData
+ * @see QueryStream
+ * @see QueryChannel
  */
 public class QueryRequestProcessor {
 
@@ -955,7 +1133,7 @@ public class QueryRequestProcessor {
      * <p>
      * Attempts a decomposition of the given request into a decompose request collection of no more than
      * <code>{@link #getMultiStreamCount()}</code> elements.  
-     * This method is part of the DEFAULT multi-streaming mechanism within <code>QueryResponseCorrelatorDep</code>.
+     * This method is part of the DEFAULT multi-streaming mechanism within <code>QueryResponseCorrelatorDeprecated</code>.
      * </p>
      * <p>
      * <h2>Request Size</h2>

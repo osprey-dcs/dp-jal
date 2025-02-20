@@ -127,6 +127,14 @@ query:      # Data Platform Query Service client API default configuration param
             active: true             # use multistreamed responses : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_ACTIVE
             maxStreams: 3            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
             sizeDomain: 2000         # rqst domain size (samples-time) triggering ms : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
+      table:         # Default parameters used for time-series data table construction
+         sstatic:                    # static data table properties
+            isDefault: true          # use static table as default  : DP_API_QUERY_DATA_TABLE_STATIC_DEFAULT
+            hasMaxSize: true         # enforce maximum table size   : DP_API_QUERY_DATA_TABLE_STATIC_HAS_MAX_SIZE
+            maxSize: 4000000         # maximum size (bytes) allowed : DP_API_QUERY_DATA_TABLE_STATIC_MAX_SIZE
+         dynamic:                    # dynamic data table properties
+            enable: true             # enable dynamic data tables   : DP_API_QUERY_DATA_TABLE_DYNAMIC_ENABLE
+#            isDefault: false         # use dynamic table as default : DP_API_QUERY_DATA_TABLE_DYNAMIC_DEFAULT
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency            : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE

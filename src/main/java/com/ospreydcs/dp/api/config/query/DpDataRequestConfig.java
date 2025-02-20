@@ -68,15 +68,6 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
     @ACfgOverride.Root(root="DP_API_QUERY_DATA_REQUEST_STREAM")
     public static class Stream extends CfgStructure<Stream> {
         
-//        /** Enumeration of data stream type preferences */
-//        public static enum DpQueryStreamTypeDeprecated {
-//            /** Unidirectional stream - backward stream from Query Service to client */
-//            UNIDIRECTIONAL,
-//
-//            /** Bidirectional data stream */ 
-//            BIDIRECTIONAL;
-//        }
-        
         /** Default constructor required for base structure class */
         public Stream() { super(Stream.class); };
         

@@ -168,7 +168,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * <h1>GENERAL NOTES</h1>
  * <h2>Data Processing</h2>
  * A single data processor is used for all time-series data requests.  The processor is a single
- * <code>{@link QueryResponseCorrelatorDep}</code> instance maintained by a 
+ * <code>{@link QueryResponseCorrelatorDeprecated}</code> instance maintained by a 
  * <code>DpQuerySerice</code> class object.  The data process performs both the gRPC data 
  * streaming from the Query Service AND the correlation of incoming data.  The data processor
  * offers various configuration options where data can be simultaneously streamed and 
@@ -184,7 +184,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * <li>
  * The data processor can be tuned with various configuration parameters within the 
  * <code>dp-api-config.yml</code> configuration file.  See class documentation on 
- * <code>{@link QueryResponseCorrelatorDep}</code> for more information on performance tuning.
+ * <code>{@link QueryResponseCorrelatorDeprecated}</code> for more information on performance tuning.
  * </li>
  * <li>
  * It is informative to note that the <code>DpQueryServiceImplDeprecated</code> class shares its single gRPC 
@@ -245,7 +245,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
     //
     
     /** The single query response correlator (for time-series data) used for all data requests */
-    private final QueryResponseCorrelatorDep   dataProcessor;
+    private final QueryResponseCorrelatorDeprecated   dataProcessor;
     
     
     //
@@ -297,7 +297,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
     public DpQueryServiceImplDeprecated(DpQueryConnection connQuery) {
         super(connQuery);
         
-        this.dataProcessor =  QueryResponseCorrelatorDep.from(connQuery);
+        this.dataProcessor =  QueryResponseCorrelatorDeprecated.from(connQuery);
     }
 
 

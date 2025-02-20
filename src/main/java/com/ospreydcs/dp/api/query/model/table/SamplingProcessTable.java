@@ -49,7 +49,7 @@ import com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock;
 
 /**
  * <p>
- * Extends the <code>{@link SamplingProcess}</code> class to add <code>{@link IDataTable}</code> functionality.
+ * Extends the <code>{@link SamplingProcess}</code> class to add dynamic <code>{@link IDataTable}</code> functionality.
  * </p>
  * <p>
  * This is essentially a wrapper class for <code>{@link SamplingProcess}</code> that adds the 

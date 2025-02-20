@@ -125,6 +125,49 @@ public final class ProtoMsg {
     
     
     //
+    // Exception Messages
+    //
+    
+    /**
+     * <p>
+     * Creates and returns an error message from the given <code>ExceptionalResult</code> Protocol Buffers message.
+     * </p>
+     * <p>
+     * Extracts the status enumeration and error message from the <code>ExceptionalResult</code> argument and
+     * uses them in the returned error message.  The other argument is an optional parameter to be added to
+     * returned message.
+     * </p>
+     * <p>
+     * The format of the returned message is given by the following:
+     * <pre>
+     *   'Qualified Calling Method Name' - {strSource} reported exception: status='STATUS', message='MESSAGE'
+     * </pre>
+     * where 'Qualified Calling Method Name' is the class-qualified method name of the calling method,
+     * {strSource} is the optional name of the offending operation or service, 
+     * STATUS is the status enumeration value within the <code>ExceptionalResult</code> 
+     * and MESSAGE is the error message within the <code>ExceptionalResult</code> argument.
+     * </p>
+     * 
+     * @param strSource    (optional) service name or operation creating the exception 
+     * @param msgExcept
+     * @return
+     */
+    public static String    exceptionMessage(ExceptionalResult msgExcept, String... strSource) {
+        
+        ExceptionalResultStatus enmExcept = msgExcept.getExceptionalResultStatus();
+        String                  strExcept = msgExcept.getMessage();
+        
+        String  strErrMsg = JavaRuntime.getQualifiedCallerNameSimple() + " - "; 
+        if (strSource != null)
+                strErrMsg += strSource + " ";
+        
+        strErrMsg += " reported exception: status=" + enmExcept
+                  + ", message=" + strExcept;
+        
+        return strErrMsg;
+    }
+    
+    //
     // Java Objects to Protobuf Messages
     //
     

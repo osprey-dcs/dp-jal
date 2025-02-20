@@ -61,7 +61,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * <p>
  * Correlates all time-series data within the results set of a Query Service data request into
  * a sorted collection of <code>{@link CorrelatedQueryData}</code> data instances.  Each instance within
- * the sorted collection contains a <code>{@link FixedIntervalTimestampSpec}</code> sampling 
+ * the sorted collection contains a <code>{@link SamplingClock}</code> sampling 
  * clock Protobuf message and collection of <code>{@link DataColumn}</code> Protobuf data 
  * messages all correlated to that sample sampling clock.
  * </p>  
