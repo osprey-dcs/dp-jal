@@ -55,6 +55,7 @@ import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IQueryService;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated;
 import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -195,6 +196,46 @@ public class DpQueryServiceImpl extends
 
     
     //
+    // Creator
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new instance of <code>DpQueryServiceImplDeprecated</code> attached to the given connection.
+     * </p>
+     * <p>
+     * This method is available primarily for unit testing.  Java API Library clients should generally obtain
+     * implementations of <code>IQueryService</code> from the Query Service connection factory.
+     * </p> 
+     * <p>
+     * The argument should be obtained from the appropriate connection factory,
+     * specifically, <code>{@link DpQueryConnectionFactory}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This object takes ownership of the given Query Service connection.  Do not attempt to shut down the connection
+     * externally while using this instance.
+     * </li>
+     * <li>
+     * The returned object should be shut down when no longer needed using 
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * This action is necessary to release unused gRPC resources and maintain 
+     * overall performance.
+     * </li>  
+     * </p>
+     * 
+     * @param connQuery  the gRPC channel connection to the desired DP Query Service
+     *  
+     * @return new <code>DpQueryServiceImplDeprecated</code> interfaces attached to the argument
+     */
+    public static DpQueryServiceImpl from(DpQueryConnection connQuery) {
+        return new DpQueryServiceImpl(connQuery);
+    }
+    
+    
+    //
     // Application Resources
     //
     
@@ -249,42 +290,30 @@ public class DpQueryServiceImpl extends
     /** The single query data correlator used for unary time-series data requests */
     private final QueryDataCorrelator   prcrRspns;
     
-    /** The single query request processor (for time-series data) used for streaming time-series data requests */
-    private final QueryRequestProcessor  prcrRqsts;
+    /** The single query request processor used for streaming time-series data requests */
+    private final QueryRequestProcessor prcrRqsts;
     
     
     //
-    // Creator
+    // Instance Configuration
     //
     
-    /**
-     * <p>
-     * Creates and returns a new instance of <code>DpQueryServiceImplDeprecated</code> attached to the given connection.
-     * </p>
-     * <p>
-     * This method is available primarily for unit testing.  Java API Library clients should generally obtain
-     * implementations of <code>IQueryService</code> from the Query Service connection factory.
-     * </p> 
-     * <p>
-     * The argument should be obtained from the appropriate connection factory,
-     * specifically, <code>{@link DpQueryConnectionFactory}</code>.
-     * </p>
-     * <p>
-     * <h2>NOTE:</h2>
-     * The returned object should be shut down when no longer needed using 
-     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
-     * This action is necessary to release unused gRPC resources and maintain 
-     * overall performance.  
-     * </p>
-     * 
-     * @param connQuery  the gRPC channel connection to the desired DP Query Service
-     *  
-     * @return new <code>DpQueryServiceImplDeprecated</code> interfaces attached to the argument
-     */
-    public static DpQueryServiceImpl from(DpQueryConnection connQuery) {
-        return new DpQueryServiceImpl(connQuery);
-    }
+    /** Is static data table default for time-series data results */
+    private boolean     bolTblStatDef = BOL_TBL_STATIC_DEF;
     
+    /** Do static data table have a maximum size */
+    private boolean     bolTblStatHasMax = BOL_TBL_STATIC_HAS_MAX;
+    
+    /** Static data table maximum size (if applicable) */
+    private int         szTblStatMax = SZ_TBL_STATIC_MAX;
+    
+    /** Enable dynamic data tables for time-series data results */
+    private boolean     bolTblDynEnable = BOL_TBL_DYN_ENABLE;
+
+    
+    //
+    // Constructor
+    //
     
     /**
      * <p>
@@ -293,6 +322,18 @@ public class DpQueryServiceImpl extends
      * <p>
      * The argument should be obtained from the appropriate connection factory,
      * specifically, <code>{@link DpQueryConnectionFactory}</code>.
+     * </p>
+     * <ul>
+     * <li>
+     * This object takes ownership of the given Query Service connection.  Do not attempt to shut down the connection
+     * externally while using this instance.
+     * </li>
+     * <li>
+     * The returned object should be shut down when no longer needed using 
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.  
+     * This action is necessary to release unused gRPC resources and maintain 
+     * overall performance.
+     * </li>  
      * </p>
      * 
      * @param connQuery  the gRPC channel connection to the desired DP Query Service 
@@ -305,7 +346,140 @@ public class DpQueryServiceImpl extends
         this.prcrRspns = QueryDataCorrelator.create();
         this.prcrRqsts = QueryRequestProcessor.from(connQuery);
     }
+    
+    
+    //
+    // Configuration
+    //
+    
+    /**
+     * <p>
+     * Sets/clears the "use static data table as default" flag.
+     * </p>
+     * <p>
+     * Set this value <code>true</code> to first attempt using a static data table as the result of a 
+     * time-series data request.  Note that a dynamic table can be still be created if the result set is 
+     * too large and dynamic data tables are enabled. 
+     * </p>
+     * <p>
+     * Set this value <code>false</code> to use dynamic data tables as the result of a time-series data
+     * request.  Note that dynamic data tables must be enabled (see <code>{@link #enableDynamicTables(boolean)}</code>)
+     * in this case, otherwise a pathological configuration exists and all time-series data requests will
+     * throw exceptions.
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method is provided primarily for unit testing and is not available through the 
+     * <code>IQueryService</code> interface.
+     * </li>
+     * <li>
+     * The default value for this parameter is given by class constant <code>{@link #BOL_TBL_STATIC_DEF}</code>
+     * which is taken from the Java API Library configuration file.
+     * </li>
+     * </ul>
+     * </p>
+     *  
+     * @param bolDefault   set <code>true</code> to use static data tables as default, 
+     *                     set <code>false</code> to use dynamic data tables 
+     */
+    public void setStaticTableDefault(boolean bolDefault) {
+        this.bolTblStatDef = bolDefault;
+    }
+    
+    /**
+     * <p>
+     * Enables static data table maximum size and specifies the size limit.
+     * </p>
+     * <p>
+     * Calling this method enforces a maximum size limitation for all static data tables returning the
+     * results of time-series data requests.  The size limit (in bytes) is given by the argument value.
+     * If the result set size of a data request is larger than the argument value the implementation will
+     * revert to a dynamic data table (assuming dynamic data tables are enabled).
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method is provided primarily for unit testing and is not available through the 
+     * <code>IQueryService</code> interface.
+     * </li>
+     * <li>
+     * The default value for this parameter is given by class constant <code>{@link #szTblStatMax}</code>
+     * which is taken from the Java API Library configuration file.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param szMax maximum allowable size (in bytes) of a static data table
+     */
+    public void enableStaticTableMaxSize(int szMax) {
+        this.bolTblStatHasMax = true;
+        this.szTblStatMax = szMax;
+    }
+    
+    /**
+     * <p>
+     * Disables the enforcement of a size limit for static data tables.
+     * </p>
+     * <p>
+     * Calling this method disables size limitations for static data tables used as the result of a time-series
+     * data request.  Result sets of any size will be returned as a static data table if static tables are the
+     * default (see <code>{@link #setStaticTableDefault(boolean)}</code>).
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method is provided primarily for unit testing and is not available through the 
+     * <code>IQueryService</code> interface.
+     * </li>
+     * <li>
+     * The default value for this condition is given by class constant <code>{@link #bolTblStatHasMax}</code>
+     * which is taken from the Java API Library configuration file.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     */
+    public void disableStaticTableMaxSize() {
+        this.bolTblStatHasMax = false;
+    }
 
+    /**
+     * <p>
+     * Enables/disables the use of dynamic data tables for time-series request results.
+     * </p>
+     * <p>
+     * Setting this value <code>true</code> ensures that dynamic data tables are available for providing the results
+     * of time-series data requests.  Note that static data tables may still be available depending upon the value
+     * of <code>{@link #bolTblStatDef}</code> (see <code>{@link #setStaticTableDefault(boolean)}</code>). 
+     * </p>
+     * <p>
+     * Setting this value <code>false</code> will prevent dynamic data table from being returned.  If there is a
+     * size limit on static data tables an exception will be thrown if that limit is violated.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method is provided primarily for unit testing and is not available through the 
+     * <code>IQueryService</code> interface.
+     * </li>
+     * <li>
+     * The default value for this parameter is given by class constant <code>{@link #bolTblDynEnable}</code>
+     * which is taken from the Java API Library configuration file.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param bolEnable set or clear the use of dynamic data tables for time-series request results
+     */
+    public void enableDynamicTables(boolean bolEnable) {
+        this.bolTblDynEnable = bolEnable;
+    }
+    
     
     //
     // IConnection Interface
@@ -324,7 +498,7 @@ public class DpQueryServiceImpl extends
      */
     @Override
     public boolean shutdownNow() {
-        return super.isShutdown();
+        return super.shutdownNow();
     }
 
     /**
@@ -635,15 +809,15 @@ public class DpQueryServiceImpl extends
      * <p>
      * The <code>StaticDataTable</code> implementation is returned if the following conditions hold:
      * <ol>
-     * <li><code>{@link #BOL_TBL_STATIC_DEF}</code> is <code>true</code> (static tables are the default).</li>
+     * <li><code>{@link #bolTblStatDef}</code> is <code>true</code> (static tables are the default).</li>
      * <li>Either of the two conditions hold: 
      *   <ul>
-     *   <li><code>{@link #BOL_TBL_STATIC_HAS_MAX}</code> = <code>false</code> OR</li>
-     *   <li><code>{@link #BOL_TBL_STATIC_HAS_MAX}</code> = <code>true</code> AND <code>{@link #SZ_TBL_STATIC_MAX}</code> <= <code>szData</code></li>.
+     *   <li><code>{@link #bolTblStatHasMax}</code> = <code>false</code> OR</li>
+     *   <li><code>{@link #bolTblStatHasMax}</code> = <code>true</code> AND <code>{@link #szTblStatMax}</code> &le; <code>szData</code></li>.
      *   </ul>
      * </li>
      * </ol>
-     * Otherwise, a <code>SamplingProcessTable is returned IFF <code>{@link #BOL_TBL_DYN_ENABLE}</code> = <code>true</code>.
+     * Otherwise, a <code>SamplingProcessTable is returned IFF <code>{@link #bolTblDynEnable}</code> = <code>true</code>.
      * An exception is thrown if the value is <code>false</code>.
      * </p>
      * 
@@ -660,22 +834,22 @@ public class DpQueryServiceImpl extends
     private IDataTable  selectTableImpl(SamplingProcess process, long szData) throws UnsupportedOperationException {
 
         // Attempt static data table construction
-        if (BOL_TBL_STATIC_DEF) {
-            if (!BOL_TBL_STATIC_HAS_MAX)
+        if (this.bolTblStatDef) {
+            if (!this.bolTblStatHasMax)
                 return process.createStaticDataTable();
             else
-                if (szData <= SZ_TBL_STATIC_MAX)
+                if (szData <= this.szTblStatMax)
                     return process.createStaticDataTable();
         }
         
         // Static data table creation failed, use dynamic table if enabled
-        if (BOL_TBL_DYN_ENABLE)
+        if (this.bolTblDynEnable)
             return SamplingProcessTable.from(process);
         
         // Could not create data table with the given configuration and table size
         else {
             String strMsg = " Result set size " + szData 
-                        + " greater than maximum static table size " + SZ_TBL_STATIC_MAX
+                        + " greater than maximum static table size " + this.szTblStatMax
                         + " and dynamic tables are DISABLED: Cannot create data table.";
             
             throw new UnsupportedOperationException(strMsg);

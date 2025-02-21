@@ -56,6 +56,7 @@ import com.ospreydcs.dp.api.query.IDpQueryStreamObserver;
 import com.ospreydcs.dp.api.query.IQueryService;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated;
 import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;

@@ -46,9 +46,9 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated;
 import com.ospreydcs.dp.api.query.test.TestQueryCompositeRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
@@ -177,7 +177,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#QueryResponseCorrelator(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#QueryResponseCorrelator(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
      */
     @Test
     public final void testQueryResponseCorrelator() {
@@ -185,7 +185,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#setMultiStreamingResponse(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#setMultiStreamingResponse(boolean)}.
      * <p>
      * Turns off multi-stream option for default gRPC streaming requests.
      */
@@ -211,7 +211,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#setCorrelationConcurrency(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#setCorrelationConcurrency(boolean)}.
      * <p>
      * Turns off concurrent processing.
      */
@@ -237,7 +237,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#setCorrelateWhileStreaming(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#setCorrelateWhileStreaming(boolean)}.
      * <p>
      * Turns off the stream/correlate concurrently option
      */
@@ -263,7 +263,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#setCorrelateWhileStreaming(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#setCorrelateWhileStreaming(boolean)}.
      * <p>
      * Turns off the stream/correlate concurrently option
      */
@@ -285,7 +285,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#setCorrelationConcurrency(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#setCorrelationConcurrency(boolean)}.
      * <p>
      * Turns off multi-stream option for default gRPC streaming requests.
      * <br/>
@@ -317,7 +317,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestUnaryBucket() {
@@ -339,7 +339,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestUnaryOne() {
@@ -361,7 +361,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestUnaryTwo() {
@@ -383,7 +383,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestUnaryLong() {
@@ -405,7 +405,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestUnaryWide() {
@@ -427,7 +427,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamBucket() {
@@ -450,7 +450,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamOne() {
@@ -472,7 +472,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamTwo() {
@@ -494,7 +494,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamLong() {
@@ -516,7 +516,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamWide() {
@@ -538,7 +538,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequestStreamBig() {
@@ -560,7 +560,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
 //    @Test
     public final void testProcessRequestStreamHuge() {
@@ -578,7 +578,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestMultiStream(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestMultiStream(java.util.List)}.
      */
     @Test
     public final void testProcessRequestMultiStreamHor() {
@@ -600,7 +600,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestMultiStream(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestMultiStream(java.util.List)}.
      */
     @Test
     public final void testProcessRequestMultiStreamVer() {
@@ -622,7 +622,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryResponseCorrelatorDeprecated#processRequestMultiStream(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated#processRequestMultiStream(java.util.List)}.
      */
     @Test
     public final void testProcessRequestMultiStreamGrid() {

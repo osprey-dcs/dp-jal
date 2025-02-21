@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.impl;
+package com.ospreydcs.dp.api.query.model.correl;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -52,8 +52,6 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.model.grpc.QueryStream;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompParams;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;

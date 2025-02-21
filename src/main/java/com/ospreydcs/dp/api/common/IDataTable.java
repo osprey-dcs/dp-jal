@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.common;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -378,6 +379,37 @@ public interface IDataTable {
     default public Instant getTimestamp(int indRow) throws IndexOutOfBoundsException {
         return this.getTimestamps().get(indRow);
     };
+    
+    /**
+     * <p>
+     * Returns the time duration of the time series within this data table.
+     * </p>
+     * <p>
+     * <p>
+     * <h2>Default Implementation</h2>
+     * Interface <code>{@link IDataTable}</code> provides a default implementation for this operation.
+     * Implementing classes may wish to override the default implementation if better options are available.
+     * <br/><br/>
+     * <ul>
+     * <b>Uses <code>{@link #getTimestamp(int)}</code></b>.
+     * <br/><br/>
+     * The <code>default</code> implementation provided in <code>{@link IDataTable}</code> interface
+     * calls <code>{@link #getTimestamp(int)}</code> to retrieve the first and last timestamps within the table then
+     * returns the result <code>{@link Duration#between(java.time.temporal.Temporal, java.time.temporal.Temporal)</code>.  
+     * </ul>
+     * </p> 
+     * 
+     * @return  the time duration of the time-series within the data table
+     * 
+     * @throws IndexOutOfBoundsException    table has not been populated
+     */
+    default public Duration getDuration() throws IndexOutOfBoundsException {
+        int     cntRows = this.getRowCount();
+        Instant insFirst = this.getTimestamp(0);
+        Instant insLast = this.getTimestamp(cntRows - 1);
+        
+        return Duration.between(insFirst, insLast);
+    }
     
     /**
      * <p>
