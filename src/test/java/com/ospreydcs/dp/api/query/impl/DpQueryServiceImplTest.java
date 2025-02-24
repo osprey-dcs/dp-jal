@@ -25,8 +25,6 @@
  */
 package com.ospreydcs.dp.api.query.impl;
 
-import static org.junit.Assert.*;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Path;
@@ -53,10 +51,12 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
+import com.ospreydcs.dp.api.model.table.StaticDataTable;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpMetadataRequest;
 import com.ospreydcs.dp.api.query.DpQueryApiFactory;
 import com.ospreydcs.dp.api.query.DpQueryException;
+import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IQueryService;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
@@ -69,7 +69,7 @@ import com.ospreydcs.dp.api.util.JavaSize;
  * JUnit test cases for class <code>DpQueryServiceImpl</code>.
  * </p>
  * <p>
- * <h2>WARNING:</h2>
+ * <h2>WARNINGS:</h2>
  * For test cases to pass the following conditions must be current:
  * <ul>
  * <li>
@@ -80,6 +80,16 @@ import com.ospreydcs.dp.api.util.JavaSize;
  * application within the Data Platform installer.
  * </li>
  * </ul>
+ * Due to the large size of some test requests (RQST_HALF_SRC, RQST_HALF_RNG) heap space issues may arise,
+ * especially with static data tables.  The following are Java command line options to manage heap space
+ * and garbage collection:
+ * <ul>
+ * <li>-XX:GCTimeRatio=19 - sets the garbage collection runtime to 1/20 of the application runtime.</li> 
+ * <li>-XX:MaxHeapFreeRatio=70 - sets the maximum ratio (%) of heap space to live object before garbage collection.</li>
+ * <li>-XX:MinHeapFreeRatio=40 - sets the minimum ratio (%) of heap space to live object before garbage collection.</li>
+ * <li>-Xmx4096m - sets the maximum heap space size to 4 GBytes.</li>
+ * <li>-Xms4096m - sets the minimum heap space size to 4 GBytes.</li>
+ * </ul>
  * <p>
  *
  * @author Christopher K. Allen
@@ -88,6 +98,56 @@ import com.ospreydcs.dp.api.util.JavaSize;
  */
 public class DpQueryServiceImplTest {
 
+    //
+    // Class Types
+    //
+    
+    /**
+     * <p>
+     * Record containing configuration parameters for a <code>DpQueryServiceImpl</code> object.
+     * </p>
+     *
+     * @param name              text name for configuration
+     * @param bolStaticDef      use static data tables as the default
+     * @param bolStaticHasMax   static data tables have a maximum size
+     * @param szStaticMax       maximum size (in bytes) of static data tables
+     * @param bolDynEnable      enable dynamic data tables
+     */
+    public static record Config(String name, boolean bolStaticDef, boolean bolStaticHasMax, int szStaticMax, boolean bolDynEnable) {
+        
+        /**
+         * <p>
+         * Creates a new <code>Config</code> record initialized with the given arguments.
+         * </p>
+         * 
+         * @param name              text name for configuration
+         * @param bolStaticDef      use static data tables as the default
+         * @param bolStaticHasMax   static data tables have a maximum size
+         * @param szStaticMax       maximum size (in bytes) of static data tables
+         * @param bolDynEnable      enable dynamic data tables
+         * 
+         * @return  a new <code>Config</code> record with the given parameters
+         */
+        public static Config from(String name, boolean bolStaticDef, boolean bolStaticHasMax, int szStaticMax, boolean bolDynEnable) {
+            return new Config(name, bolStaticDef, bolStaticHasMax, szStaticMax, bolDynEnable);
+        }
+        
+        /**
+         * <p>
+         * Configures the given <code>DpQueryServiceImpl</code> object according to the record configuration parameters.
+         * </p>
+         * 
+         * @param api   API implementation to be configured
+         */
+        public void configure(DpQueryServiceImpl api) {
+            api.setStaticTableDefault(this.bolStaticDef);
+            if (this.bolStaticHasMax)
+                api.enableStaticTableMaxSize(this.szStaticMax);
+            else
+                api.disableStaticTableMaxSize();
+            api.enableDynamicTables(this.bolDynEnable);
+        }
+    }
     
     //
     // Application Resources
@@ -136,13 +196,39 @@ public class DpQueryServiceImplTest {
     
     /** Common List of all PV names in the test archive */
     public static final List<String>                LST_PV_NAMES = RQST_HALF_SRC.getSourceNames();
+
     
     /** Common List of data requests used for testing */
-    public static final List<DpDataRequest>         LST_RQSTS = List.of(RQST_HALF_SRC, RQST_HALF_RNG);
+    public static final List<DpDataRequest>         LST_RQSTS = List.of(RQST_SMALL, 
+                                                                        RQST_WIDE, 
+                                                                        RQST_BIG, 
+                                                                        RQST_HALF_SRC, 
+                                                                        RQST_HALF_RNG);
     
     /** A map of the common test requests to their (arbitrary) names */
-    public static final Map<DpDataRequest, String>  MAP_RQST_NMS = Map.of(RQST_HALF_SRC, "RQST_HALF_SRC", RQST_HALF_RNG, "RQST_HALF_RNG");
+    public static final Map<DpDataRequest, String>  MAP_RQST_NMS = Map.of(RQST_SMALL, "RQST_SMALL", 
+                                                                          RQST_WIDE, "RQST_WIDE",
+                                                                          RQST_BIG, "RQST_BIG",
+                                                                          RQST_HALF_SRC, "RQST_HALF_SRC", 
+                                                                          RQST_HALF_RNG, "RQST_HALF_RNG");
     
+    public static final Config  CFG_ALL_STATIC = Config.from("All Static Tables", true, false, 0, false);  // use all static tables
+    public static final Config  CFG_STATIC_MAX = Config.from("Static Tables with 4 Mbyte Max", true, true, 4000000, true);
+    public static final Config  CFG_ALL_DYN = Config.from("All Dynamic Tables", false, false, 0, true);
+    
+    /** Common List of <code>DpQueryServiceImpl</code> configuration parameters settings - populated in static block */
+    public static final List<Config>                LST_API_CFGS = List.of(CFG_ALL_STATIC, CFG_STATIC_MAX, CFG_ALL_DYN);
+    
+    
+//    static {
+//        
+//        // Create the list of Query Service API configurations
+//        Config  cfg1 = Config.from("All Static Tables", true, false, 0, false);  // use all static tables
+//        Config  cfg2 = Config.from("Static Tables with 4 Mbyte Max", true, true, 4000000, true);
+//        Config  cfg3 = Config.from("All Dynamic Tables", false, false, 0, true);
+//
+//        LST_API_CFGS = List.of(cfg1, cfg2, cfg3);
+//    }
     
     //
     // Test Fixture Resources
@@ -164,7 +250,7 @@ public class DpQueryServiceImplTest {
      */
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-
+        
         // Create the Query Service connection
         apiTest = DpQueryApiFactory.connectService();
         
@@ -308,22 +394,6 @@ public class DpQueryServiceImplTest {
         }
     }
 
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#isShutdown()}.
-//     */
-//    @Test
-//    public final void testIsShutdown() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#isTerminated()}.
-//     */
-//    @Test
-//    public final void testIsTerminated() {
-//        fail("Not yet implemented"); // TODO
-//    }
-
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#from(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
      */
@@ -368,14 +438,6 @@ public class DpQueryServiceImplTest {
             Assert.fail("Exception " + e.getClass().getSimpleName() + " - Interrupted during shut down: " + e.getMessage());
         }
     }
-
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#awaitTermination()}.
-//     */
-//    @Test
-//    public final void testAwaitTermination() {
-//        fail("Not yet implemented"); // TODO
-//    }
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryMeta(com.ospreydcs.dp.api.query.DpMetadataRequest)}.
@@ -423,21 +485,9 @@ public class DpQueryServiceImplTest {
             Instant     insStart = Instant.now();
             IDataTable  table = apiTest.queryDataUnary(rqst);
             Instant     insFinish = Instant.now();
-            
-            long        szRqst = rqst.approxDomainSize() * 1_000L * JavaSize.SZ_Double;
-            long        szTbl = table.allocationSize();
             Duration    durRqst = Duration.between(insStart, insFinish);
-            double      dblRate = ((double)szTbl*1_000L)/((double)durRqst.toNanos());
-            
-            psOutput.println("  Request PV count      : " + rqst.getSourceCount());
-            psOutput.println("  Request time duration : " + rqst.rangeDuration());
-            psOutput.println("  Approx. request size  : " + szRqst);
-            psOutput.println("  Table column count    : " + table.getColumnCount());
-            psOutput.println("  Table time duration   : " + table.getDuration());
-            psOutput.println("  Table byte allocation : " + szTbl);
-            psOutput.println("  Request duration      : " + durRqst);
-            psOutput.println("  Data rate (Mbps)      : " + dblRate);
-            psOutput.println();
+
+            this.printResults(psOutput, rqst, table, durRqst);
             
             Assert.assertEquals(rqst.getSourceCount(), (int)table.getColumnCount());
             Assert.assertEquals(rqst.rangeDuration(), table.getDuration());
@@ -465,21 +515,9 @@ public class DpQueryServiceImplTest {
             Instant     insStart = Instant.now();
             IDataTable  table = apiTest.queryData(rqst);
             Instant     insFinish = Instant.now();
-            
-            long        szRqst = rqst.approxDomainSize() * 1_000L * JavaSize.SZ_Double;
-            long        szTbl = table.allocationSize();
             Duration    durRqst = Duration.between(insStart, insFinish);
-            double      dblRate = ((double)szTbl*1_000L)/((double)durRqst.toNanos());
-            
-            psOutput.println("  Request PV count      : " + rqst.getSourceCount());
-            psOutput.println("  Request time duration : " + rqst.rangeDuration());
-            psOutput.println("  Approx. request size  : " + szRqst);
-            psOutput.println("  Table column count    : " + table.getColumnCount());
-            psOutput.println("  Table time duration   : " + table.getDuration());
-            psOutput.println("  Table byte allocation : " + szTbl);
-            psOutput.println("  Request duration      : " + durRqst);
-            psOutput.println("  Data rate (Mbps)      : " + dblRate);
-            psOutput.println();
+
+            this.printResults(psOutput, rqst, table, durRqst);
             
             Assert.assertEquals(rqst.getSourceCount(), (int)table.getColumnCount());
             Assert.assertEquals(rqst.rangeDuration(), table.getDuration());
@@ -514,20 +552,9 @@ public class DpQueryServiceImplTest {
             IDataTable  table = apiTest.queryData(lstRqsts);
             Instant     insFinish = Instant.now();
             
-            long        szRqst = rqst.approxDomainSize() * 1_000L * JavaSize.SZ_Double;
-            long        szTbl = table.allocationSize();
             Duration    durRqst = Duration.between(insStart, insFinish);
-            double      dblRate = ((double)szTbl*1_000L)/((double)durRqst.toNanos());
             
-            psOutput.println("  Request PV count      : " + rqst.getSourceCount());
-            psOutput.println("  Request time duration : " + rqst.rangeDuration());
-            psOutput.println("  Approx. request size  : " + szRqst);
-            psOutput.println("  Table column count    : " + table.getColumnCount());
-            psOutput.println("  Table time duration   : " + table.getDuration());
-            psOutput.println("  Table byte allocation : " + szTbl);
-            psOutput.println("  Request duration      : " + durRqst);
-            psOutput.println("  Data rate (Mbps)      : " + dblRate);
-            psOutput.println();
+            this.printResults(psOutput, rqst, table, durRqst);
             
             Assert.assertEquals(rqst.getSourceCount(), (int)table.getColumnCount());
             Assert.assertEquals(rqst.rangeDuration(), table.getDuration());
@@ -546,7 +573,149 @@ public class DpQueryServiceImplTest {
      */
     @Test
     public final void testQueryDataStream() {
-        fail("Not yet implemented"); // TODO
+        // Test Parameters
+        final DpDataRequest rqst = RQST_HALF_SRC;
+        
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
+        
+        DpQueryStreamBuffer bufData = apiTest.queryDataStream(rqst);
+        
+        try {
+            Instant insStart = Instant.now();
+            bufData.startAndAwaitCompletion();
+            Instant insFinish = Instant.now();
+            
+            Duration    durRqst = Duration.between(insStart, insFinish);
+            int         szData = bufData.getBuffer().stream().mapToInt(msg -> msg.getSerializedSize()).sum();
+            long        szRqst = rqst.approxDomainSize() * 1_000L * JavaSize.SZ_Double;
+            double      dblRate = ((double)szData*1_000L)/((double)durRqst.toNanos());
+            
+            psOutput.println("  Request:");
+            psOutput.println("    Data sources          : " + rqst.getSourceCount());
+            psOutput.println("    Time duration         : " + rqst.rangeDuration());
+            psOutput.println("    Approx. size (Mbytes) : " + szRqst/1_000_000L);
+            psOutput.println("  Result Buffer:");
+            psOutput.println("    Buffer type           : " + bufData.getClass().getSimpleName());
+            psOutput.println("    Allocation (Mbytes)   : " + szData/1_000_000L);
+            psOutput.println("  Request Operation:");
+            psOutput.println("    Duration              : " + durRqst);
+            psOutput.println("    Data rate (Mbps)      : " + dblRate);
+            psOutput.println();
+            
+        } catch (IllegalStateException | IllegalArgumentException | InterruptedException e) {
+            String  strMsg = "Streaming time-series request exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
+            
+            psOutput.println(strMsg);
+            psOutput.println();
+            Assert.fail(strMsg);
+        }
     }
 
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * <p>
+     * Uses multiple configuration of <code>DpQueryServiceImpl</code>
+     */
+    @Test
+    public final void testQueryDataConfigurations() {
+        
+        // Test Parameters
+        final DpQueryServiceImpl            apiImpl = DpQueryServiceImpl.class.cast(apiTest);       
+        final List<Config>                  lstCfgs = LST_API_CFGS;
+        final List<DpDataRequest>           lstRqsts = LST_RQSTS;
+        
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
+        psOutput.println();
+        for (Config cfg : lstCfgs) {
+            cfg.configure(apiImpl);
+            System.out.println("Running Configuration=" + cfg.name());
+            
+            psOutput.println("-- Configuration: " + cfg.name() + " ----");
+            psOutput.println();
+            for (DpDataRequest rqst : lstRqsts) 
+                try {
+                    System.out.println("  Running Request=" + MAP_RQST_NMS.get(rqst));
+                    if (cfg.equals(CFG_ALL_STATIC) && (rqst.equals(RQST_HALF_RNG) || rqst.equals(RQST_HALF_SRC))) {
+                        String  strMsg = "  Skipping query for request " + MAP_RQST_NMS.get(rqst) + " in configuration " + cfg.name() + ".";
+                        
+                        System.out.println(strMsg);
+                        psOutput.println(strMsg);
+                        psOutput.println();
+                        continue;
+                    }
+                    
+                    Instant insStart = Instant.now();
+                    IDataTable  table = apiImpl.queryData(rqst);
+                    Instant insFinish = Instant.now();
+                    
+                    Duration    durRqst = Duration.between(insStart, insFinish);
+
+                    this.printResults(psOutput, rqst, table, durRqst);
+                    
+                    // Garbage collect the table to prevent heap errors
+                    table.clear();
+                    System.gc();
+                    Runtime.getRuntime().gc();
+                    
+                } catch (DpQueryException e) {
+                    String  strMsg = "  ERROR Request: " + MAP_RQST_NMS.get(rqst) + "\n"
+                            + "    Configured streaming time-series request exception " + e.getClass().getSimpleName() + "\n" 
+//                            + "    Configuration = " + cfg.name() + "\n"  
+                            + "    Request       = " + MAP_RQST_NMS.get(rqst) + "\n"
+                            + "    Message       = " + e.getMessage() + "\n"
+                            + "    Cause type    = " + e.getCause().getClass().getSimpleName() + "\n"
+                            + "    Cause message = " + e.getCause().getMessage() + "\n";
+                    
+                    psOutput.println(strMsg);
+//                    psOutput.println();
+                    
+                    apiImpl.setDefaultConfiguration();
+//                    Assert.fail(strMsg);
+                }
+            
+        }
+        
+        apiImpl.setDefaultConfiguration();
+    }
+    
+    //
+    // Support Functions
+    //
+    
+    /**
+     * <p>
+     * Prints out text description of the given time-series data results properties to the given print stream.
+     * </p>
+     * 
+     * @param ps        print stream to receive text output
+     * @param rqst      the original time-series data request
+     * @param table     the request results
+     * @param durRqst   duration of the request
+     */
+    private void printResults(PrintStream ps, DpDataRequest rqst, IDataTable table, Duration durRqst) {
+        
+        long        szRqst = rqst.approxDomainSize() * 1_000L * JavaSize.SZ_Double;
+        long        szTbl = table.allocationSize();
+        double      dblRate = ((double)szTbl*1_000L)/((double)durRqst.toNanos());
+        
+        String  strTblType;
+        if (table instanceof StaticDataTable)
+            strTblType = "Static";
+        else
+            strTblType = "Dynamic";
+        
+        ps.println("  Request: " + MAP_RQST_NMS.get(rqst));
+        ps.println("    Data source count       : " + rqst.getSourceCount());
+        ps.println("    Time range duration     : " + rqst.rangeDuration());
+        ps.println("    Estimated size (Mbytes) : " + szRqst/1_000_000L);
+        ps.println("  Result Table:");
+        ps.println("    Table type          : " + strTblType);
+        ps.println("    Column count        : " + table.getColumnCount());
+        ps.println("    Time range duration : " + table.getDuration());
+        ps.println("    Allocation (Mbytes) : " + szTbl/1_000_000L);
+        ps.println("  Request Operation:");
+        ps.println("    Duration         : " + durRqst);
+        ps.println("    Data rate (Mbps) : " + dblRate);
+        ps.println();
+    }
 }

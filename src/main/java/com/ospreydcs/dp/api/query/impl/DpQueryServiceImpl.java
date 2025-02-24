@@ -480,6 +480,38 @@ public class DpQueryServiceImpl extends
         this.bolTblDynEnable = bolEnable;
     }
     
+    /**
+     * <p>
+     * Sets all configuration parameters to their default values.
+     * </p>
+     * <p>
+     * All configuration parameters are set to their default values as defined in the Java API Library
+     * configuration file.  These values are recorded in the following class constants:
+     * <ul>
+     * <li><code>{@link #BOL_TBL_STATIC_DEF}</code></li>
+     * <li><code>{@link #BOL_TBL_STATIC_HAS_MAX}</code></li>
+     * <li><code>{@link #SZ_TBL_STATIC_MAX}</code></li>
+     * <li><code>{@link #BOL_TBL_DYN_ENABLE}</code></li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method is provided primarily for unit testing and is not available through the 
+     * <code>IQueryService</code> interface.
+     * </li>
+     * </ul>
+     * </p>
+     */
+    public void setDefaultConfiguration() {
+        
+        this.bolTblStatDef = BOL_TBL_STATIC_DEF;
+        this.bolTblStatHasMax = BOL_TBL_STATIC_HAS_MAX;
+        this.szTblStatMax = SZ_TBL_STATIC_MAX;
+        this.bolTblDynEnable = BOL_TBL_DYN_ENABLE;
+    }
+    
     
     //
     // IConnection Interface
@@ -844,7 +876,7 @@ public class DpQueryServiceImpl extends
         
         // Static data table creation failed, use dynamic table if enabled
         if (this.bolTblDynEnable)
-            return SamplingProcessTable.from(process);
+            return process.createDynamicDataTable();
         
         // Could not create data table with the given configuration and table size
         else {

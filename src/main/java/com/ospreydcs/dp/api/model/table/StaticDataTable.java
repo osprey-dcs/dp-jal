@@ -350,7 +350,7 @@ public class StaticDataTable implements IDataTable, Serializable {
     //
     
     /**
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#isTableComplete()
+     * @see com.ospreydcs.dp.api.model.IDataTable#isTableComplete()
      */
     @Override
     public boolean isTableComplete() {
@@ -373,17 +373,29 @@ public class StaticDataTable implements IDataTable, Serializable {
     }
 
     /**
-     * 
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getRowCount()
+     * @see com.ospreydcs.dp.api.model.IDataTable#getRowCount()
      */
     @Override
     public Integer getRowCount() {
         return this.vecTms.size();
     }
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#clear()
+     */
+    @Override
+    public void clear() {
+        this.vecCols.forEach(IDataColumn::clear);
+        
+        this.vecTms.clear();
+        this.vecColNms.clear();
+        this.vecCols.clear();
+        this.mapNmToCol.clear();
+        this.mapNmToInd.clear();
+    }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnCount()
+     * @see com.ospreydcs.dp.api.model.IDataTable#getColumnCount()
      */
     @Override
     public Integer getColumnCount() {

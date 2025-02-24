@@ -134,7 +134,6 @@ query:      # Data Platform Query Service client API default configuration param
             maxSize: 4000000         # maximum size (bytes) allowed : DP_API_QUERY_DATA_TABLE_STATIC_MAX_SIZE
          dynamic:                    # dynamic data table properties
             enable: true             # enable dynamic data tables   : DP_API_QUERY_DATA_TABLE_DYNAMIC_ENABLE
-#            isDefault: false         # use dynamic table as default : DP_API_QUERY_DATA_TABLE_DYNAMIC_DEFAULT
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency            : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
@@ -154,7 +153,7 @@ connections:   # All available Data Platform service connections
       
    ingestion:   # Ingestion Service connection
       name: DP Ingestion Service     # (opt) name of connection  : DP_API_CONNECTION_INGESTION_NAME
-      version: 1.5.0                 # (opt) parameters version  : DP_API_CONNECTION_INGESTION_VERSION
+      version: 1.7.0                 # (opt) parameters version  : DP_API_CONNECTION_INGESTION_VERSION
       description: Data Platform Ingestion Service default connection parameters # : DP_API_CONNECTION_INGESTION_DESCRIPTION 
       supplement: None               # (opt) anonymous parameter: DP_API_CONNECTION_INGESTION_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)
@@ -182,7 +181,7 @@ connections:   # All available Data Platform service connections
     
    query:   # Query Service connection
       name: DP Query Service         # (opt) name of connection  : DP_API_CONNECTION_QUERY_NAME
-      version: 1.5.0                 # (opt) parameters version  : DP_API_CONNECTION_QUERY_VERSION
+      version: 1.7.0                 # (opt) parameters version  : DP_API_CONNECTION_QUERY_VERSION
       description: Data Platform Query Service default connection parameters # : DP_API_CONNECTION_QUERY_DESCRIPTION
       supplement: None               # (opt) anonymous parameter : DP_API_CONNECTION_QUERY_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)

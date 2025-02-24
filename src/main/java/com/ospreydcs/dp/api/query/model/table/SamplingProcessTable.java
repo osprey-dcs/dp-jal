@@ -311,6 +311,21 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     public boolean hasError() {
         return false;
     }
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#clear()
+     */
+    @Override
+    public void clear() {
+        this.mapSrcNmToFullColumn.values().forEach(IDataColumn::clear);
+        
+        this.vecTimestamps.clear();
+        this.vecColumnName.clear();
+        this.vecPageRowInd.clear();
+        this.mapIndToSrcNm.clear();
+        this.mapSrcNmToFullColumn.clear();
+        this.mapSrcNmToInd.clear();
+    }
 
     /**
      *

@@ -546,7 +546,7 @@ public class SamplingProcess {
      * </p>
      * <p>
      * The time-series for the given data source is returned for the <em>entire</em> sampling
-     * process.  The returned value is a decompose of all time-series data within component 
+     * process.  The returned value is a composite of all time-series data within component 
      * sampling blocks.
      * </p>
      * <p>
@@ -621,7 +621,7 @@ public class SamplingProcess {
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * Use this method when index operations require performance.
+     * Use this method when index operations require performance and tables are relatively small.
      * </li>
      * <li>
      * The current implementation returns an <code>IDataTable</code> interface backed by class
@@ -631,6 +631,8 @@ public class SamplingProcess {
      * </p>  
      * 
      * @return  a static data table instance exposing <code>{@link IDataTable}</code> backed by this process data
+     * 
+     * @see StaticDataTable
      */
     public IDataTable createStaticDataTable() {
     
@@ -657,6 +659,45 @@ public class SamplingProcess {
         StaticDataTable     tblProcess = new StaticDataTable(lstTms, lstCols);
         
         return tblProcess;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a dynamic data table backed by all data within this process.
+     * </p>
+     * <p>
+     * Creates a <code>IDataTable</code> implementation from this sampling process.
+     * The returned implementation then provides all time-series data using dynamics lookups  
+     * backed by this sampling process data.
+     * Each time-series represented within the sampling blocks has dynamic row indexing for data retrieval.
+     * Sampling blocks without time-series data for a data source will have all their values returned as
+     * <code>null</code> when retrieved by the indexing methods of <code>IDataTable</code>.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * Dynamic indexing can be unnecessary for small sampling processes.  Consider using a static data table 
+     * for these situations, available from <code>{@link #createStaticDataTable()}</code>.
+     * </p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Use this method when sampling processes are large and sparse.
+     * </li>
+     * <li>
+     * The current implementation returns an <code>IDataTable</code> interface backed by class
+     * <code>{@link SamplingProcessTable}</code>
+     * </li>
+     * </ul>
+     * </p>  
+     * 
+     * @return  a static data table instance exposing <code>{@link IDataTable}</code> backed by this process data
+     * 
+     * @see SamplingProcessTable
+     */
+    public IDataTable   createDynamicDataTable() {
+        IDataTable  table = SamplingProcessTable.from(this);
+        
+        return table;
     }
 
     

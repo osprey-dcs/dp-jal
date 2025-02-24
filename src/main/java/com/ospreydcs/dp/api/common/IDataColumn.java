@@ -119,6 +119,25 @@ public interface IDataColumn<T extends Object> extends Iterable<T> {
      */
     public Integer getSize();
     
+    /**
+     * <p>
+     * Clears the data column of all contents.
+     * </p>
+     * <p>
+     * Implementations should free all internal references.  The idea is to mark the contents of the
+     * current data column as eligible for garbage collection by the Java Virtual Machine (VM).  Thus,
+     * this operation it is typically part of an effort to free heap memory and Java VM resources.
+     * </p>
+     * <p>
+     * Typically, this method is invoked from <code>IDataTable</code> implementations and not directly by
+     * clients.  Specifically, implementations should perform this method for all tables column during an
+     * <code>{@link IDataTable#clear()}</code> operation.  See class documentation for 
+     * <code>{@link IDataTable#clear()}</code> for more information.  The method is made available here
+     * for attempts to Java VM memory management and garbage collection.   
+     * </p>
+     */
+    public void clear();
+    
     
     // 
     // Data Queries

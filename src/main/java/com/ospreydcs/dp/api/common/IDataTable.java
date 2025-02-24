@@ -143,6 +143,46 @@ public interface IDataTable {
      *         <code>false</code> if no errors are present
      */
     public boolean hasError();
+    
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Clears the data table of all contents.
+     * </p>
+     * <p>
+     * Implementations should free all internal references.  The idea is to mark the contents of the
+     * current data table as eligible for garbage collection by the Java Virtual Machine (VM).  Thus,
+     * this operation it is typically part of an effort to free heap memory and Java VM resources
+     * with the following commands:
+     * <pre>
+     *   <code>
+     *   table.clear();
+     *   System.gc();
+     *   </code>
+     * </pre>
+     * where <code>table</code> is an instance of <code>IDataTable</code> and the <code>System.gc()</code>
+     * is a request to the Java System (i.e., VM) to perform garbage collection.
+     * </p>
+     * <p>
+     * Since time-series data tables can be large and require significant heap memory this operation is an
+     * attempt at heap management when multiple <code>IDataTable</code> instances are involved.  However,
+     * Java garbage collection is a complex topic and forcing the VM to to garbage collection on demand is
+     * inconsistent at best.  There are multiple Java command line options for managing heap allocation and
+     * garbage collection.  Consider the following:
+     * <ul>
+     * <li>-Xms=<nnn> - sets minimum heap size to nnn</li>
+     * <li>-Xmx=<mmm> - sets maximum heap size to mmm</li>
+     * <li>-XX:GCTimeRatio=nnn - sets ratio 1/(1+nnn) of garbage collection runtime to application runtime</li> 
+     * </ul>
+     * For more on Java VM memory management and garbage collection see the online <a 
+     * href="https://docs.oracle.com/en/java/javase/21/gctuning/ergonomics.html#GUID-DB4CAE94-2041-4A16-90EC-6AE3D91EC1F1">
+     * documentation.</a> 
+     * </p>
+     */
+    public void clear();
 
     
     //

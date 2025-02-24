@@ -410,8 +410,7 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
     //
     
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getName()
+     * @see com.ospreydcs.dp.api.model.IDataColumn#getName()
      */
     @Override
     public String getName() {
@@ -419,8 +418,7 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getType()
+     * @see com.ospreydcs.dp.api.model.IDataColumn#getType()
      */
     @Override
     public DpSupportedType getType() {
@@ -428,17 +426,23 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
     }
     
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getSize()
+     * @see com.ospreydcs.dp.api.model.IDataColumn#getSize()
      */
     @Override
     public final Integer getSize() {
         return this.vecValues.size();
     }
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataColumn#clear()
+     */
+    @Override
+    public final void clear() {
+        this.vecValues.clear();
+    }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getValue(int)
+     * @see com.ospreydcs.dp.api.model.IDataColumn#getValue(int)
      */
     @Override
     public final Object getValue(int index) throws IndexOutOfBoundsException, ArithmeticException {
@@ -446,8 +450,7 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
     }
     
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getValues()
+     * @see com.ospreydcs.dp.api.model.IDataColumn#getValues()
      */
     @Override
     @SuppressWarnings("unchecked")
@@ -456,8 +459,7 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
     }
     
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getValuesTyped()
+     * @see com.ospreydcs.dp.api.model.IDataColumn#getValuesTyped()
      */
     @Override
     public final List<T> getValuesTyped() throws ArithmeticException {
