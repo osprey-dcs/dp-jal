@@ -148,9 +148,10 @@ public final class ProtoMsg {
      * and MESSAGE is the error message within the <code>ExceptionalResult</code> argument.
      * </p>
      * 
-     * @param strSource    (optional) service name or operation creating the exception 
-     * @param msgExcept
-     * @return
+     * @param strSource     (optional) service name or operation creating the exception 
+     * @param msgExcept     the exceptional result Protocol Buffers message
+     * 
+     * @return  error message string created from the exception message information
      */
     public static String    exceptionMessage(ExceptionalResult msgExcept, String... strSource) {
         
@@ -167,8 +168,9 @@ public final class ProtoMsg {
         return strErrMsg;
     }
     
+    
     //
-    // Java Objects to Protobuf Messages
+    // Java Objects to Protocol Buffers Messages
     //
     
     /**

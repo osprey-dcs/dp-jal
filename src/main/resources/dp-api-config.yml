@@ -99,7 +99,7 @@ ingest: # Data Platform Ingestion Service client API default configuration param
       active: true                   # use concurrency            : DP_API_INGEST_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_INGEST_CONCURRENCY_PIVOT_SIZE
       threadCount: 3                 # worker thread count        : DP_API_INGEST_CONCURRENCY_THREAD_COUNT
-   timeout:      # General query timeout properties (e.g., used for ingestion response wait timeout)
+   timeout:      # General ingestion timeout properties (e.g., used for ingestion response wait timeout)
       active: true                   # apply timeout condition    : DP_API_INGEST_TIMEOUT_ACTIVE
       limit: 10                      # request timeout limit      : DP_API_INGEST_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_INGEST_TIMEOUT_UNIT
@@ -138,13 +138,22 @@ query:      # Data Platform Query Service client API default configuration param
       active: true                   # use concurrency            : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
       threadCount: 20                # worker thread count        : DP_API_QUERY_CONCURRENCY_THREAD_COUNT
-   timeout:      # General query timeout properties (e.g., used for query respponse wait timeout)
+   timeout:      # General query timeout properties (e.g., used for query response wait timeout)
       active: true                   # apply timeout condition    : DP_API_QUERY_TIMEOUT_ACTIVE
       limit: 30                      # request timeout limit      : DP_API_QUERY_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_QUERY_TIMEOUT_UNIT
-   logging:      # General Query Service logging services
+   logging:      # General Query Service API logging services
       active: true                   # is logging active              : DP_API_QUERY_LOGGING_ACTIVE
       level: DEBUG                   # logger output level if active  : DP_API_QUERY_LOGGING_LEVEL
+      
+annotation:
+   timeout:      # General query timeout properties (e.g., used for query response wait timeout)
+      active: true                   # apply timeout condition    : DP_API_ANNOTATION_TIMEOUT_ACTIVE
+      limit: 30                      # request timeout limit      : DP_API_ANNOTATION_TIMEOUT_LIMIT
+      unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_ANNOTATION_TIMEOUT_UNIT
+   logging:      # General Annotation Service API logging services
+      active: true                   # is logging active              : DP_API_ANNOTATION_LOGGING_ACTIVE
+      level: DEBUG                   # logger output level if active  : DP_API_ANNOTATION_LOGGING_LEVEL
  
 connections:   # All available Data Platform service connections   
    logging:     # General event logging for all connection operations 

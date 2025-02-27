@@ -42,6 +42,12 @@ import com.ospreydcs.dp.api.common.TimeInterval;
  * of data blocks, termed a "data set" is a collection of basis sets defining an arbitrary 
  * region in the time-series query domain.   
  * </p>
+ * <p>
+ * Data blocks are composed of a list of data source names (Process Variable names) and a contiguous
+ * time range interval within the query domain.  Thus, the entire time-series query domain can be
+ * decomposed into a collection of data blocks.  Or in other words, the set of all data blocks
+ * covers the entire time-series query domain.
+ * </p>
  */
 public class DpDataBlock {
     

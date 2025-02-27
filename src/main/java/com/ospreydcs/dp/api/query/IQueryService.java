@@ -20,7 +20,7 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  * interface.
  * </p>
  * <p>
- * <h2>Data Platform Request Types</h2>
+ * <h2>Query Service Request Types</h2>
  * The are currently 3 types of request operations available from the Data Platform:
  * <br/>
  * <ol>

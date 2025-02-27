@@ -1,10 +1,10 @@
 /*
  * Project: dp-api-common
- * File:	IngestRequestUID.java
- * Package: com.ospreydcs.dp.api.model
- * Type: 	IngestRequestUID
+ * File:	OwnerUID.java
+ * Package: com.ospreydcs.dp.api.common
+ * Type: 	OwnerUID
  *
- * Copyright 2010-2023 the original author or authors.
+ * Copyright 2010-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,42 +20,35 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Apr 16, 2024
+ * @since Feb 25, 2025
  *
- * TODO:
- * - None
  */
 package com.ospreydcs.dp.api.common;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 /**
  * <p>
- * Record for encapsulating an ingestion request unique identifier.
+ * Record encapsulating the Unique Identifier of a Data Platform or Java API Library resource owner.
  * </p>
  * <p>
- * The ingest data request UID, or client request UID, is an identifier provided use by the Ingestion
- * Service to identify each ingest data request it receives from a client.  All data ingestion requests
- * are identified by such an UID and can be used to refer to the status of an ingestion and archiving
- * operation post transmission.
- * This record is intended to abstract this notion since the exact form of the identifier may change in the future.
+ * Owner UIDs may be required for various Data Platform services such as data set creation, and annotation 
+ * creation.  This record is intended to abstract such UID in the event the UID type is modified in the
+ * future.
  * </p>
  * 
- * @param   requestId    the client ingest data request identifier (as a string)
- * 
  * @author Christopher K. Allen
- * @since Apr 16, 2024
+ * @since Feb 25, 2025
  *
  */
-public record IngestRequestUID(String requestId) implements Serializable {
-    
+public record OwnerUID(String ownerUid) {
+
     //
     // Constants
     //
     
     /** The universal null request UID, used when an UID is required but none is specified */
-    public static final IngestRequestUID    NULL = IngestRequestUID.from("null");
+    public static final OwnerUID    NULL = OwnerUID.from("null");
     
     
     /** Prefix given to all randomly generated Java Client API request UIDs */
@@ -68,62 +61,62 @@ public record IngestRequestUID(String requestId) implements Serializable {
     
     /**
      * <p>
-     * Creates a new <code>IngestRequestUID</code> record instance exactly from the given argument.
+     * Creates a new <code>OwnerUID</code> record instance exactly from the given argument.
      * </p>
      * <p>
      * <h2>WARNING</h2>
-     * The given argument must be universally unique within the request space of the Ingestion Service.
-     * All client ingest data requests must contain a unique identifier for later determination of 
-     * successful ingestion.  Thus, it is highly recommended that alternate creators are used for 
-     * generation of client UIDs in normal operations.
+     * The given argument should be universally unique within whatever context it is being used.
+     * Thus, it is highly recommended that alternate creators are used for generation of owner UIDs 
+     * when unique UIDs are required.
      * </p> 
      * 
-     * @param strRequestId  client request ID used for record
+     * @param strOwnerId  client request ID used for record
      * 
-     * @return  new record initialized with the given argument
+     * @return  new owner UID record initialized with the given argument
      */
-    public static IngestRequestUID   from(String strRequestId) {
-        return new IngestRequestUID(strRequestId);
+    public static OwnerUID   from(String strOwnerId) {
+        return new OwnerUID(strOwnerId);
     }
     
     /**
      * <p>
-     * Creates a new <code>IngestRequestUID</code> instance from the given arguments.
+     * Creates a new <code>OwnerUID</code> instance from the given arguments.
      * </p>
      * <p>
-     * The returned client request UUID is assembled from the given request UUID argument
-     * and the given suffix.  Specifically, the returned client request ingestion request
+     * The returned owner UUID is assembled from the given owner UUID argument
+     * and the given suffix.  Specifically, the returned owner 
      * "unique identifier" is formed by appending the <code>String</code> argument to the 
-     * <code>IngestRequestUID</code> argument.
+     * <code>OwnerUID</code> argument.
      * </p>
      *  
      * @param uidMain   the main body of the Universally Unique IDentifier
-     * @param strSuffix the suffix within the returned client request UUID
+     * @param strSuffix the suffix within the returned owner UUID
      * 
      * @return  a new <code>IngestRequestUID</code> instance formed by appending the given string to the given UUID
      */
-    public static IngestRequestUID  from(IngestRequestUID uidMain, String strSuffix) {
-        String  strUid = uidMain.requestId + strSuffix;
+    public static OwnerUID  from(OwnerUID uidMain, String strSuffix) {
+        String  strUid = uidMain.ownerUid + strSuffix;
         
-        return new IngestRequestUID(strUid);
+        return new OwnerUID(strUid);
     }
     
     /**
      * <p>
-     * Creates a pseudo-random unique client request identifier.
+     * Creates a pseudo-random owner unique identifier.
      * </p>
      * <p>
-     * This is the preferred creator for client request UIDs.
+     * This is the preferred creator for owner UIDs.
      * </p>
      * <p>
-     * The returned request UID is built using the Java Universal Unique IDentifier static generation
+     * The returned owner UID is built using the Java Universal Unique IDentifier static generation
      * class <code>{@link UUID}</code>.  Specifically, the method <code>{@link UUID#randomUUID()}</code>
      * is used to create the main body of the request UID.  The prefix of the returned UID is given
      * by the constant <code>{@link #STR_PREFIX}</code>.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * The length of the returned client UID string is 36 plus the length of the class prefix string
+     * This method defers to <code>{@link #random(String)}</code> using the prefix <code>{@link #STR_PREFIX}</code>.
+     * Thus, the length of the returned owner UID string is 36 plus the length of the class prefix string
      * <code>{@link #STR_PREFIX}</code>.  See <code>{@link #random(String)}</code> for further details.
      * </p>
      * 
@@ -132,16 +125,16 @@ public record IngestRequestUID(String requestId) implements Serializable {
      *          
      * @see #random(String)
      */
-    public static IngestRequestUID   random() {
-        return IngestRequestUID.random(STR_PREFIX);
+    public static OwnerUID   random() {
+        return OwnerUID.random(STR_PREFIX);
     }
 
     /**
      * <p>
-     * Creates a pseudo-random unique client request identifier with the given prefix.
+     * Creates a pseudo-random unique owner unique identifier with the given prefix.
      * </p>
      * <p>
-     * The returned request UID is built using the Java Universal Unique IDentifier static generation
+     * The returned owner UID is built using the Java Universal Unique IDentifier static generation
      * class <code>{@link UUID}</code>.  Specifically, the method <code>{@link UUID#randomUUID()}</code>
      * is used to create the main body of the request UID.  The prefix of the returned UID is given
      * by the argument.
@@ -162,19 +155,19 @@ public record IngestRequestUID(String requestId) implements Serializable {
      *   
      * and each character is a hexadecimal digit in { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F}.
      * </pre>
-     * Thus, the string length of the UUID body is 36 characters.  The total string length of the request
+     * Thus, the string length of the UUID body is 36 characters.  The total string length of the owner 
      * UID is 36 plus the argument prefix length. 
      * </p>
      * 
      * @param strPrefix prefix string for the randomly generated UUID string
      * 
-     * @return  a new <code>IngestRequestUID</code> instance with given prefix and randomly generated UUID body
+     * @return  a new <code>OwnerUID</code> instance with given prefix and randomly generated UUID body
      */
-    public static IngestRequestUID   random(String strPrefix) {
+    public static OwnerUID   random(String strPrefix) {
         UUID    uuidRqst = UUID.randomUUID();
         String  strRqstId = strPrefix + uuidRqst.toString();
         
-        return new IngestRequestUID(strRqstId);
+        return new OwnerUID(strRqstId);
     }
 
     
@@ -184,7 +177,7 @@ public record IngestRequestUID(String requestId) implements Serializable {
     
     /**
      * <h1>
-     * Compares the request UID field for equality.
+     * Compares the owner UID field for equality.
      * </h2>
      * <p>
      * This override is required to avoid Java equality comparison as Objects.
@@ -195,8 +188,8 @@ public record IngestRequestUID(String requestId) implements Serializable {
     @Override
     public boolean equals(Object obj) {
         
-        if (obj instanceof IngestRequestUID rec)
-            return this.requestId.equals(rec.requestId);
+        if (obj instanceof OwnerUID rec)
+            return this.ownerUid.equals(rec.ownerUid);
         
         return false;
     }

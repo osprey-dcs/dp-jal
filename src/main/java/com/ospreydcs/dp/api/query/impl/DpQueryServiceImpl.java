@@ -201,7 +201,7 @@ public class DpQueryServiceImpl extends
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>DpQueryServiceImplDeprecated</code> attached to the given connection.
+     * Creates and returns a new instance of <code>DpQueryServiceImpl</code> attached to the given connection.
      * </p>
      * <p>
      * This method is available primarily for unit testing.  Java API Library clients should generally obtain
@@ -216,7 +216,7 @@ public class DpQueryServiceImpl extends
      * <ul>
      * <li>
      * This object takes ownership of the given Query Service connection.  Do not attempt to shut down the connection
-     * externally while using this instance.
+     * externally while using this instance.  Use methods described below.
      * </li>
      * <li>
      * The returned object should be shut down when no longer needed using 
@@ -224,11 +224,12 @@ public class DpQueryServiceImpl extends
      * This action is necessary to release unused gRPC resources and maintain 
      * overall performance.
      * </li>  
+     * </ul>
      * </p>
      * 
      * @param connQuery  the gRPC channel connection to the desired DP Query Service
      *  
-     * @return new <code>DpQueryServiceImplDeprecated</code> interfaces attached to the argument
+     * @return new <code>DpQueryServiceImpl</code> interfaces attached to the argument
      */
     public static DpQueryServiceImpl from(DpQueryConnection connQuery) {
         return new DpQueryServiceImpl(connQuery);
