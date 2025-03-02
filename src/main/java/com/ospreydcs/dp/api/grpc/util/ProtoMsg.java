@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.ospreydcs.dp.api.annotate.model.DpDataBlock;
 import com.ospreydcs.dp.api.common.BufferedImage;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.DpTimestampCase;
@@ -55,6 +56,7 @@ import com.ospreydcs.dp.api.common.BufferedImage.Format;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.annotation.DataBlock;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
@@ -333,6 +335,30 @@ public final class ProtoMsg {
                 .build();
         
         return msgFrame;
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>DataBlock</code> Protocol Buffers message populated with the given argument data.
+     * </p>
+     * <p>
+     * The returned message is essentially a direct replica of the argument value containing all the
+     * equivalent data of the data block.  That is, the <code>DpDataBlock</code> argument is converted to
+     * a <code>DataBlock</code> Protocol Buffers message.
+     * </p> 
+     * 
+     * @param blk   the data block as a <code>DpDataBlock</code> object
+     *  
+     * @return      a <code>DataBlock</code> message equivalent to the argument data block
+     */
+    public static DataBlock   from(DpDataBlock blk) {
+        DataBlock.Builder   bldrMsg = DataBlock.newBuilder();
+        
+        bldrMsg.addAllPvNames(blk.getDataSources());
+        bldrMsg.setBeginTime(ProtoMsg.from( blk.getTimeRange().begin() ));
+        bldrMsg.setEndTime(ProtoMsg.from( blk.getTimeRange().end()) );
+        
+        return bldrMsg.build();
     }
     
     /**
@@ -715,6 +741,29 @@ public final class ProtoMsg {
         List<Instant>   lstIns = lstTms.stream().map( t -> ProtoMsg.toInstant(t) ).toList();
         
         return lstIns;
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>DpDataBlock</code> instance populated from the given <code>DataBlock</code> message.
+     * </p>
+     * <p>
+     * The argument and the returned value are direct equivalents, that is, they contain equivalent data.  The 
+     * message data is extracted and used to create the returned data block type.
+     * </p>
+     * 
+     * @param msgBlock  Protocol Buffers data block message
+     * 
+     * @return  Java API Library data block object populated from the argument
+     */
+    public static DpDataBlock   toDataBlock(DataBlock msgBlock) {
+        List<String>    lstPvNms = msgBlock.getPvNamesList();
+        Instant         insBegin = ProtoMsg.toInstant(msgBlock.getBeginTime());
+        Instant         insEnd = ProtoMsg.toInstant(msgBlock.getEndTime());
+        
+        DpDataBlock blk = DpDataBlock.from(lstPvNms, insBegin, insEnd);
+        
+        return blk;
     }
     
     /**

@@ -25,15 +25,18 @@
  */
 package com.ospreydcs.dp.api.annotate.impl;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.annotate.DpAnnotationException;
-import com.ospreydcs.dp.api.annotate.DpDataset;
+import com.ospreydcs.dp.api.annotate.DpCreateDatasetRequest;
+import com.ospreydcs.dp.api.annotate.DpDatasetsRequest;
 import com.ospreydcs.dp.api.annotate.IAnnotationService;
 import com.ospreydcs.dp.api.common.DatasetUID;
+import com.ospreydcs.dp.api.common.DpDataset;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.annotate.DpAnnotationConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
@@ -52,9 +55,14 @@ import com.ospreydcs.dp.grpc.v1.annotation.DpAnnotationServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.annotation.DpAnnotationServiceGrpc.DpAnnotationServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.annotation.DpAnnotationServiceGrpc.DpAnnotationServiceFutureStub;
 import com.ospreydcs.dp.grpc.v1.annotation.DpAnnotationServiceGrpc.DpAnnotationServiceStub;
+import com.ospreydcs.dp.grpc.v1.annotation.QueryDataSetsRequest;
+import com.ospreydcs.dp.grpc.v1.annotation.QueryDataSetsResponse;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 
 /**
+ * <p>
+ * Implementation class for Annotation Service API <code>IAnnotationService</code>
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Feb 27, 2025
@@ -234,12 +242,12 @@ public class DpAnnotationServiceApiImpl extends
     //
     
     /**
-     * @see com.ospreydcs.dp.api.annotate.IAnnotationService#createDataset(com.ospreydcs.dp.api.annotate.DpDataset)
+     * @see com.ospreydcs.dp.api.annotate.IAnnotationService#createDataset(com.ospreydcs.dp.api.annotate.DpCreateDatasetRequest)
      */
     @Override
-    public DatasetUID createDataset(DpDataset rqst) throws DpAnnotationException {
+    public DatasetUID createDataset(DpCreateDatasetRequest rqst) throws DpAnnotationException {
         
-        // Perform new data set request directly with the Annotation Service API blocking stub
+        // Perform new data set creation request directly with the Annotation Service API blocking stub
         CreateDataSetRequest    msgRqst = rqst.buildDataSetRequest();
         CreateDataSetResponse   msgRsp = super.grpcConn.getStubBlock().createDataSet(msgRqst);
         
@@ -261,6 +269,38 @@ public class DpAnnotationServiceApiImpl extends
         DatasetUID  recUid = DatasetUID.from(strUid);
         
         return recUid;
+    }
+
+
+    /**
+     * @see com.ospreydcs.dp.api.annotate.IAnnotationService#queryDatasets(com.ospreydcs.dp.api.annotate.DpDatasetsRequest)
+     */
+    @Override
+    public List<DpDataset> queryDatasets(DpDatasetsRequest rqst) throws DpAnnotationException {
+        
+        // Perform new data sets request directly on the Annotation Service API blocking stub
+        QueryDataSetsRequest    msgRqst = rqst.build();
+        QueryDataSetsResponse   msgRsp = super.grpcConn.getStubBlock().queryDataSets(msgRqst);
+        
+        // Check for any exception reported by the Annotation Service
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult   msgErr = msgRsp.getExceptionalResult();
+            String              strMsg = ProtoMsg.exceptionMessage(msgErr, "Annotation Service");
+            
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new DpAnnotationException(strMsg);
+        }
+        
+        // Extract the data sets and return them
+        List<DpDataset> lstDatasets = msgRsp.getDataSetsResult()
+                .getDataSetsList()
+                .stream()
+                .<DpDataset>map(DpDataset::from)
+                .toList();
+        
+        return lstDatasets;
     }
 
 }

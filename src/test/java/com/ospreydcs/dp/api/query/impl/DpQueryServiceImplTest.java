@@ -252,7 +252,7 @@ public class DpQueryServiceImplTest {
     public static void setUpBeforeClass() throws Exception {
         
         // Create the Query Service connection
-        apiTest = DpQueryApiFactory.connectService();
+        apiTest = DpQueryApiFactory.connect();
         
         // Open the common output file
         String  strFileName = DpQueryServiceImplTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
@@ -311,7 +311,7 @@ public class DpQueryServiceImplTest {
     @Test
     public final void testShutdown() {
         try {
-            IQueryService   apiQuery = DpQueryApiFactory.connectService();
+            IQueryService   apiQuery = DpQueryApiFactory.connect();
             
             Assert.assertFalse(apiQuery.isShutdown());
             
@@ -335,7 +335,7 @@ public class DpQueryServiceImplTest {
     @Test
     public final void testShutdownNow() {
         try {
-            IQueryService   apiQuery = DpQueryApiFactory.connectService();
+            IQueryService   apiQuery = DpQueryApiFactory.connect();
             
             Assert.assertFalse(apiQuery.isShutdown());
             
@@ -366,7 +366,7 @@ public class DpQueryServiceImplTest {
     @Test
     public final void testAwaitTerminationLongTimeUnit() {
         try {
-            IQueryService   apiQuery = DpQueryApiFactory.connectService();
+            IQueryService   apiQuery = DpQueryApiFactory.connect();
             
             Assert.assertFalse(apiQuery.isShutdown());
             

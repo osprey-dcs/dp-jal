@@ -1,10 +1,10 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryApiFactory.java
- * Package: com.ospreydcs.dp.api.query
- * Type: 	DpQueryApiFactory
+ * File:	DpAnnotationApiFactory.java
+ * Package: com.ospreydcs.dp.api.annotate
+ * Type: 	DpAnnotationApiFactory
  *
- * Copyright 2010-2023 the original author or authors.
+ * Copyright 2010-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,38 +20,38 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Dec 27, 2024
+ * @since Mar 2, 2025
  *
- * TODO:
- * - None
  */
-package com.ospreydcs.dp.api.query;
+package com.ospreydcs.dp.api.annotate;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
+import com.ospreydcs.dp.api.annotate.impl.DpAnnotationServiceApiFactory;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceApiFactory;
+import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.api.query.DpMetadataRequest;
 
 /**
- * <h2>Connection factory for Data Platform Query Service APIs</h2>
+ * <p>Connection factory for Data Platform Annotation Service APIs</p>
  * <p>
- * Connection factory supplying the Java applications programming interfaces to the Data Platform Query Service.
+ * Connection factory supplying the Java applications programming interfaces to the Data Platform Annotation Service.
  * Currently the following interface is available:
  * <ol>
  * <li>
- * <code>{@link IQueryService}</code> - Supports all Query Service requests, time-series and metadata. 
+ * <code>{@link IAnnotationService}</code> - Supports all Annotation Service operations. 
  * </li>
  * </ol>
- * Both RPC unary and gRPC streaming time-series data requests are available within the above interface.
- * Also the interface uses the following classes for Query Service requests:
+ * Both data set creation requests and annotation creation requests are available within the above interface.
+ * Also the interface uses the following classes for Annotation Service requests:
  * <ol>
  * <li> 
- * <code>{@link DpDataRequest}</code> - Supports time-series data requests (both unary and streaming).
+ * <code>{@link DpCreateDatasetRequest}</code> - Creates a data set within the time-series archive.
  * </li>
  * <li>
- * <code>{@link DpMetadataRequest}</code> - Supports archive metadata requests (which are always unary).
+ * <code>{@link DpDatasetsRequest}</code> - Recovers data sets currently within Data Platform archive.
  * </li>
  * </ol>
  * </p>
@@ -61,7 +61,7 @@ import com.ospreydcs.dp.api.query.impl.DpQueryServiceApiFactory;
  * own connection target or API connection parameters.  
  * </p>
  * <p>
- * All other configuration parameters for the created Query Service API instances are taken from the default 
+ * All other configuration parameters for the created Annotation Service API instances are taken from the default 
  * library configuration <code>{@link DpApiConfig}</code>.  Site installations can tune these parameters for
  * specific platforms within the configuration file <code>{@value DpApiConfig#STR_CFG_FILE}</code>.
  * </p>
@@ -75,64 +75,64 @@ import com.ospreydcs.dp.api.query.impl.DpQueryServiceApiFactory;
  *
  *
  * @author Christopher K. Allen
- * @since Dec 27, 2024
+ * @since Mar 2, 2025
  *
  */
-public class DpQueryApiFactory {
+public class DpAnnotationApiFactory {
 
     
     //
     // Class Resources
     //
     
-    /** The API connection factory for connection to the Query Service */
-    private static final DpQueryServiceApiFactory   FAC_SERVICE = DpQueryServiceApiFactory.FACTORY;
+    /** The API connection factory for connection to the Annotation Service */
+    private static final DpAnnotationServiceApiFactory   FAC_SERVICE = DpAnnotationServiceApiFactory.FACTORY;
     
     
     //
-    // IQueryService Connections
+    // IAnnotationService Connections
     //
     
     /**
      * <p>
-     * Create and return a connected Query Service interface with all default parameters.
+     * Create and return a connected Annotation Service interface with all default parameters.
      * </p>
      * <p>
-     * The returned instance is connected to the default Query Service server, has all default connection
+     * The returned instance is connected to the default Annotation Service server, has all default connection
      * parameters, and has all default interface configuration parameters.
      * </p>
      * 
-     * @return  new, connected <code>IQueryService</code> implementation ready for data requests
+     * @return  new, connected <code>IAnnotationService</code> implementation ready for data requests
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connect() throws DpGrpcException {
+    public static IAnnotationService    connect() throws DpGrpcException {
         return FAC_SERVICE.connect();
     }
     
     /**
      * <p>
-     * Create and return a connected Query Service interface connected to given service address.
+     * Create and return a connected Annotation Service interface connected to given service address.
      * </p>
      * <p>
-     * This method allows clients to connect to an Query Service server other than the default.
+     * This method allows clients to connect to an Annotation Service server other than the default.
      * If the server address is invalid an exception will be thrown.
      * </p>
      * 
      * @param strHostUrl    network URL of the desired service
      * @param intHostPort   server port used by the at the above service
      * 
-     * @return  new, connected <code>IQueryService</code> implementation ready for data requests
+     * @return  new, connected <code>IAnnotationService</code> implementation ready for data requests
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connect(String strHostUrl, int intHostPort) throws DpGrpcException {
+    public static IAnnotationService    connect(String strHostUrl, int intHostPort) throws DpGrpcException {
         return FAC_SERVICE.connect(strHostUrl, intHostPort);
     }
     
     /**
      * <p>
-     * Create and return a connected Query Service interface connected to given service address with plain text 
+     * Create and return a connected Annotation Service interface connected to given service address with plain text 
      * transmission option.
      * </p>
      * <p>
@@ -144,17 +144,17 @@ public class DpQueryApiFactory {
      * @param intHostPort   server port used by the at the above service
      * @param bolPlainText  transmit data using plain ASCII (negates any TLS security)
      * 
-     * @return  new, connected <code>IQueryService</code> implementation ready for data requests
+     * @return  new, connected <code>IAnnotationService</code> implementation ready for data requests
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connect(String strHostUrl, int intHostPort, boolean bolPlainText) throws DpGrpcException {
+    public static IAnnotationService    connect(String strHostUrl, int intHostPort, boolean bolPlainText) throws DpGrpcException {
         return FAC_SERVICE.connect(strHostUrl, intHostPort, bolPlainText);
     }
     
     /**
      * <p>
-     * Create and return a connected Query Service interface connected to given service address
+     * Create and return a connected Annotation Service interface connected to given service address
      * with plain text transmission option and service connection timeout parameters.
      * </p>
      * <p>
@@ -162,7 +162,7 @@ public class DpQueryApiFactory {
      * should be avoided due to lack of security and its poor performance.
      * </p>
      * <p>
-     * The timeout parameters allow clients to specify desired Query Service connection timeout limits.
+     * The timeout parameters allow clients to specify desired Annotation Service connection timeout limits.
      * This action may be useful in situations with long pauses between request operations (i.e., hours) and
      * network interruptions.
      * Normally, gRPC pings connections to determine status.  If a ping does not response gRPC shut down operations
@@ -175,17 +175,17 @@ public class DpQueryApiFactory {
      * @param lngTimeout    timeout limit used for connection operations (keepalive ping timeout) 
      * @param tuTimeout     timeout units used for connection operations (keepalive ping timeout)
      * 
-     * @return  new, connected <code>IQueryService</code> implementation ready for data request
+     * @return  new, connected <code>IAnnotationService</code> implementation ready for data request
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connect(String strHostUrl, int intHostPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
+    public static IAnnotationService    connect(String strHostUrl, int intHostPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
         return FAC_SERVICE.connect(strHostUrl, intHostPort, bolPlainText, lngTimeout, tuTimeout);
     }
     
     /**
      * <p>
-     * Create and return a connected Query Service interface with all available connection parameters specified.
+     * Create and return a connected Annotation Service interface with all available connection parameters specified.
      * </p>
      * <p>
      * This method allows clients to specify all gRPC connection parameters.  It also provides the ability to
@@ -247,7 +247,7 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connect(String strHostUrl, 
+    public static IAnnotationService    connect(String strHostUrl, 
                                                       int intHostPort, 
                                                       boolean bolTisActive, 
                                                       boolean bolPlainText, 
@@ -256,21 +256,30 @@ public class DpQueryApiFactory {
                                                       boolean bolGzipCompr, 
                                                       long lngTimeout, 
                                                       TimeUnit tuTimeout) throws DpGrpcException {
-        return FAC_SERVICE.connect(strHostUrl, intHostPort, bolTisActive, bolPlainText, intMsgSizeMax, bolKeepAlive, bolGzipCompr, lngTimeout, tuTimeout);
+        
+        return FAC_SERVICE.connect(strHostUrl, 
+                                    intHostPort, 
+                                    bolTisActive, 
+                                    bolPlainText, 
+                                    intMsgSizeMax, 
+                                    bolKeepAlive, 
+                                    bolGzipCompr, 
+                                    lngTimeout, 
+                                    tuTimeout);
     }
     
     
     //
-    // IQueryService Connections with Explicit Security
+    // IAnnotationService Connections with Explicit Security
     //
     
     /**
      * <p>
-     * Create and return a connected Query Service interface connected to the default Query Service host
+     * Create and return a connected Annotation Service interface connected to the default Annotation Service host
      * using the given explicit security parameters.
      * </p>
      * <p>
-     * The returned instance is connected to the default Query Service server, has all default connection
+     * The returned instance is connected to the default Annotation Service server, has all default connection
      * parameters, has all default interface configuration parameters, and uses the given files defining 
      * TLS security for the communications channel.
      * </p>
@@ -283,17 +292,17 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+    public static IAnnotationService    connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
         return FAC_SERVICE.connect(fileTrustedCerts, fileClientCerts, fileClientKey);
     }
     
     /**
      * <p>
-     * Create and return a connected Query Service interface connected to the given Query Service 
+     * Create and return a connected Annotation Service interface connected to the given Annotation Service 
      * host using the given explicit security parameters.
      * </p>
      * <p>
-     * The returned instance is connected to the Query Service server at the given URL and and port address. 
+     * The returned instance is connected to the Annotation Service server at the given URL and and port address. 
      * It has all default connection parameters, has all default interface configuration parameters, and uses the 
      * given files defining TLS security for the communications channel.
      * </p>
@@ -308,14 +317,14 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService connect(String strHostUrl, int intHostPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+    public static IAnnotationService connect(String strHostUrl, int intHostPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
 
         return FAC_SERVICE.connect(strHostUrl, intHostPort, fileTrustedCerts, fileClientCerts, fileClientKey);
     }
     
     /**
      * <p>
-     * Create and return a connected Query Service interface with all connection parameters specified
+     * Create and return a connected Annotation Service interface with all connection parameters specified
      * and the given explicit TLS security.
      * </p>
      * <p>
@@ -352,7 +361,7 @@ public class DpQueryApiFactory {
      * to large CPU loading of the compression algorithm.
      * </li>
      * <li>
-     * The timeout parameters allow clients to specify desired Query Service connection timeout limits.
+     * The timeout parameters allow clients to specify desired Annotation Service connection timeout limits.
      * This action may be useful in situations with long pauses between query operations (i.e., hours) and
      * network interruptions.
      * Normally, gRPC pings connections to determine status.  If a ping does not response gRPC shut down operations
@@ -388,7 +397,7 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService connect(
+    public static IAnnotationService connect(
             String  strHost, 
             int     intPort, 
             File    fileTrustedCerts,
@@ -406,17 +415,18 @@ public class DpQueryApiFactory {
     }
     
     
+    
+    
     //
     // Support Methods
-    // 
+    //
     
     /**
      * <p>
-     * Prevent construction of <code>DpQueryApiFactory</code> instances.
+     * Prevent construction of <code>DpAnnotationApiFactory</code> instances.
      * </p>
-     *
      */
-    private DpQueryApiFactory() {
+    private DpAnnotationApiFactory() {
     }
 
 }

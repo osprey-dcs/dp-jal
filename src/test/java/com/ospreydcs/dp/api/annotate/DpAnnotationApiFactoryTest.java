@@ -1,10 +1,10 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryApiFactoryTest.java
- * Package: com.ospreydcs.dp.api.query
- * Type: 	DpQueryApiFactoryTest
+ * File:	DpAnnotationApiFactoryTest.java
+ * Package: com.ospreydcs.dp.api.annotate
+ * Type: 	DpAnnotationApiFactoryTest
  *
- * Copyright 2010-2023 the original author or authors.
+ * Copyright 2010-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,10 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Dec 28, 2024
+ * @since Mar 2, 2025
  *
- * TODO:
- * - None
  */
-package com.ospreydcs.dp.api.query;
+package com.ospreydcs.dp.api.annotate;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -40,13 +38,14 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 
 /**
  * <p>
- * JUnit test cases for class <code>DpQueryApiFactory</code>.
+ * JUnit test cases for class <code>DpAnnotationApiFactory</code>.
+ * </p>
  *
  * @author Christopher K. Allen
- * @since Dec 28, 2024
+ * @since Mar 2, 2025
  *
  */
-public class DpQueryApiFactoryTest {
+public class DpAnnotationApiFactoryTest {
 
     
     //
@@ -54,7 +53,7 @@ public class DpQueryApiFactoryTest {
     //
     
     /** Application default parameters for the Data Platform Query Service gRPC connection */
-    public static final DpGrpcConnectionConfig    CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
+    public static final DpGrpcConnectionConfig    CFG_DEFAULT = DpApiConfig.getInstance().connections.annotation;
     
     
     //
@@ -89,21 +88,26 @@ public class DpQueryApiFactoryTest {
     public void tearDown() throws Exception {
     }
 
+    
+    //
+    // Test Cases
+    //
+    
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connect()}.
+     * Test method for {@link com.ospreydcs.dp.api.annotate.DpAnnotationApiFactory#connect()}.
      */
     @Test
-    public final void testConnectService() {
+    public final void testConnect() {
         boolean bolResult = false;
         
         try {
-            IQueryService qs = DpQueryApiFactory.connect();
+            IAnnotationService apiTest = DpAnnotationApiFactory.connect();
             
-            bolResult = qs.shutdown();
+            bolResult = apiTest.shutdown();
             
             Assert.assertTrue("Service API shutdown reported failure", bolResult);
             
-            bolResult = qs.awaitTermination();
+            bolResult = apiTest.awaitTermination();
             
             Assert.assertTrue("Termination wait failure - service API apparently failed to shut down.", bolResult);
             
@@ -117,20 +121,20 @@ public class DpQueryApiFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connect(java.lang.String, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.annotate.DpAnnotationApiFactory#connect(java.lang.String, int)}.
      */
     @Test
-    public final void testConnectServiceStringInt() {
+    public final void testConnectStringInt() {
         boolean bolResult = false;
         
         try {
-            IQueryService   qs = DpQueryApiFactory.connect(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
+            IAnnotationService   apiTest = DpAnnotationApiFactory.connect(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
             
-            bolResult = qs.shutdown();
+            bolResult = apiTest.shutdown();
             
             Assert.assertTrue("Service API shutdown reported failure", bolResult);
             
-            bolResult = qs.awaitTermination();
+            bolResult = apiTest.awaitTermination();
             
             Assert.assertTrue("Termination wait failure - service API apparently failed to shut down.", bolResult);
             
@@ -144,24 +148,24 @@ public class DpQueryApiFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connect(java.lang.String, int, boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.annotate.DpAnnotationApiFactory#connect(java.lang.String, int, boolean)}.
      */
     @Test
-    public final void testConnectServiceStringIntBoolean() {
+    public final void testConnectStringIntBoolean() {
         boolean bolResult = false;
         
         try {
-            IQueryService qs = DpQueryApiFactory.connect(
+            IAnnotationService apiTest = DpAnnotationApiFactory.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.grpc.usePlainText
                     );
             
-            bolResult = qs.shutdown();
+            bolResult = apiTest.shutdown();
             
             Assert.assertTrue("Service API shutdown reported failure", bolResult);
             
-            bolResult = qs.awaitTermination();
+            bolResult = apiTest.awaitTermination();
             
             Assert.assertTrue("Termination wait failure - service API apparently failed to shut down.", bolResult);
             
@@ -175,14 +179,14 @@ public class DpQueryApiFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connect(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.annotate.DpAnnotationApiFactory#connect(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
-    public final void testConnectServiceStringIntBooleanLongTimeUnit() {
+    public final void testConnectStringIntBooleanLongTimeUnit() {
         boolean bolResult = false;
         
         try {
-            IQueryService qs = DpQueryApiFactory.connect(
+            IAnnotationService apiTest = DpAnnotationApiFactory.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.grpc.usePlainText,
@@ -190,11 +194,11 @@ public class DpQueryApiFactoryTest {
                     CFG_DEFAULT.channel.grpc.timeoutUnit
                     );
             
-            bolResult = qs.shutdown();
+            bolResult = apiTest.shutdown();
             
             Assert.assertTrue("Service API shutdown reported failure", bolResult);
             
-            bolResult = qs.awaitTermination();
+            bolResult = apiTest.awaitTermination();
             
             Assert.assertTrue("Termination wait failure - service API apparently failed to shut down.", bolResult);
             
@@ -208,14 +212,14 @@ public class DpQueryApiFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connect(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.annotate.DpAnnotationApiFactory#connect(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
-    public final void testConnectServiceStringIntBooleanBooleanIntBooleanBooleanLongTimeUnit() {
+    public final void testConnectStringIntBooleanBooleanIntBooleanBooleanLongTimeUnit() {
         boolean bolResult = false;
         
         try {
-            IQueryService   qs = DpQueryApiFactory.connect(
+            IAnnotationService   apiTest = DpAnnotationApiFactory.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.tls.active,
@@ -227,11 +231,11 @@ public class DpQueryApiFactoryTest {
                     CFG_DEFAULT.channel.grpc.timeoutUnit
                     );
             
-            bolResult = qs.shutdown();
+            bolResult = apiTest.shutdown();
             
             Assert.assertTrue("Service API shutdown reported failure", bolResult);
             
-            bolResult = qs.awaitTermination();
+            bolResult = apiTest.awaitTermination();
             
             Assert.assertTrue("Termination wait failure - service API apparently failed to shut down.", bolResult);
             
@@ -245,26 +249,26 @@ public class DpQueryApiFactoryTest {
     }
 
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.io.File, java.io.File, java.io.File)}.
+//     * Test method for {@link com.ospreydcs.dp.api.annotate.DpAnnotationApiFactory#connect(java.io.File, java.io.File, java.io.File)}.
 //     */
 //    @Test
-//    public final void testConnectServiceFileFileFile() {
+//    public final void testConnectFileFileFile() {
 //        fail("Not yet implemented"); // TODO
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int, java.io.File, java.io.File, java.io.File)}.
+//     * Test method for {@link com.ospreydcs.dp.api.annotate.DpAnnotationApiFactory#connect(java.lang.String, int, java.io.File, java.io.File, java.io.File)}.
 //     */
 //    @Test
-//    public final void testConnectServiceStringIntFileFileFile() {
+//    public final void testConnectStringIntFileFileFile() {
 //        fail("Not yet implemented"); // TODO
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int, java.io.File, java.io.File, java.io.File, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
+//     * Test method for {@link com.ospreydcs.dp.api.annotate.DpAnnotationApiFactory#connect(java.lang.String, int, java.io.File, java.io.File, java.io.File, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
 //     */
 //    @Test
-//    public final void testConnectServiceStringIntFileFileFileBooleanIntBooleanBooleanLongTimeUnit() {
+//    public final void testConnectStringIntFileFileFileBooleanIntBooleanBooleanLongTimeUnit() {
 //        fail("Not yet implemented"); // TODO
 //    }
 

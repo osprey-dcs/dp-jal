@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpDataset.java
+ * File:	DpCreateDatasetRequest.java
  * Package: com.ospreydcs.dp.api.annotate
- * Type: 	DpDataset
+ * Type: 	DpCreateDatasetRequest
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -52,11 +52,11 @@ import com.ospreydcs.dp.grpc.v1.annotation.DataSet;
  * <p>
  * <h2>Data Set</h2>
  * A "data set" defines a region in query space, specifically, the query space of the Data Platform 
- * time-series data archive.  <code>DpDataset</code> objects are used to identify such a region
+ * time-series data archive.  <code>DpCreateDatasetRequest</code> objects are used to identify such a region
  * of query space, presumably for some type of annotation operation.
  * </p>
  * <p>
- * The <code>DpDataset</code> class contains methods for defining a desired region in the time-series
+ * The <code>DpCreateDatasetRequest</code> class contains methods for defining a desired region in the time-series
  * archive domain.  Once defined, a request can be offered to the Annotation Service for formal
  * data set creation which is then identified by a Unique Identifier (UID) record <code>DatasetUID</code>.  
  * This record is used for subsequent annotation creation and retrieval.
@@ -65,7 +65,7 @@ import com.ospreydcs.dp.grpc.v1.annotation.DataSet;
  * <h2>Annotations</h2>
  * Annotations within the Data Platform time-series archive are attached to regions of the query space
  * described by data sets.  Thus, to create an archive annotation one must first identify the region of
- * query space being annotated.  The <code>DpDataset</code> class identifies the archive region
+ * query space being annotated.  The <code>DpCreateDatasetRequest</code> class identifies the archive region
  * and is used to build the appropriate Annotation Service request for data set definition, creation, and the 
  * return of a unique identifier (UID) for the data set.  With a valid data set UID annotations can be
  * created for the data set.  
@@ -75,7 +75,7 @@ import com.ospreydcs.dp.grpc.v1.annotation.DataSet;
  * Data sets are potentially composed of multiple "data blocks", which form a viable basis set covering 
  * the entire query domain.  Data blocks are composed of data source names and a contiguous time range 
  * interval in the query domain.  Within the Java API Library data blocks are represented by the class
- * <code>DpDataBlock</code>.  Thus, <code>DpDataset</code> objects contain potentially multiple 
+ * <code>DpDataBlock</code>.  Thus, <code>DpCreateDatasetRequest</code> objects contain potentially multiple 
  * instances of <code>DpDataBlock</code> objects for their domain definition.  Typically, clients do not 
  * need to interact directly with data blocks, however, for more information on the subject see the 
  * <code>{@link DpDataBlock}</code> class documentation.
@@ -86,7 +86,7 @@ import com.ospreydcs.dp.grpc.v1.annotation.DataSet;
  *
  * @see DpDataBlock
  */
-public class DpDataset {
+public class DpCreateDatasetRequest {
     
     
     //
@@ -95,7 +95,7 @@ public class DpDataset {
     
     /**
      * <p>
-     * Creates a new, empty <code>DpDataset</code> instance with the given name and owner UID.
+     * Creates a new, empty <code>DpCreateDatasetRequest</code> instance with the given name and owner UID.
      * </p>
      * <p>
      * The new data set request defines an empty region of time-series query space.  That is, there is no
@@ -106,15 +106,15 @@ public class DpDataset {
      * @param strSetName    name of the new data set
      * @param recOwnerUid   UID of the new data set creator
      * 
-     * @return   a new, empty <code>DpDataset</code> with the given name and owner UID
+     * @return   a new, empty <code>DpCreateDatasetRequest</code> with the given name and owner UID
      */
-    public static DpDataset  from(OwnerUID recOwnerUid, String strSetName) {
-        return new DpDataset(recOwnerUid, strSetName);
+    public static DpCreateDatasetRequest  from(OwnerUID recOwnerUid, String strSetName) {
+        return new DpCreateDatasetRequest(recOwnerUid, strSetName);
     }
     
     /**
      * <p>
-     * Creates a new, empty <code>DpDataset</code> instance with the given name, owner UID, and description.
+     * Creates a new, empty <code>DpCreateDatasetRequest</code> instance with the given name, owner UID, and description.
      * </p>
      * <p>
      * The new data set request defines an empty region of time-series query space.  That is, there is no
@@ -127,10 +127,10 @@ public class DpDataset {
      * @param recOwnerUid   UID of the new data set creator
      * @param strDescr      optional description of the new data set
      * 
-     * @return   a new, empty <code>DpDataset</code> with the given name, owner UID, and description
+     * @return   a new, empty <code>DpCreateDatasetRequest</code> with the given name, owner UID, and description
      */
-    public static DpDataset  from(OwnerUID recOwnerUid, String strSetName, String strDescr) {
-        return new DpDataset(recOwnerUid, strSetName, strDescr);
+    public static DpCreateDatasetRequest  from(OwnerUID recOwnerUid, String strSetName, String strDescr) {
+        return new DpCreateDatasetRequest(recOwnerUid, strSetName, strDescr);
     }
     
     
@@ -181,7 +181,7 @@ public class DpDataset {
     
     /**
      * <p>
-     * Constructs a new, empty <code>DpDataset</code> instance.
+     * Constructs a new, empty <code>DpCreateDatasetRequest</code> instance.
      * </p>
      * <p>
      * The new data set request contains no data blocks.  That is, there is no
@@ -192,13 +192,13 @@ public class DpDataset {
      * @param strSetName    name of the new data set
      * @param recOwnerUid   UID of the new data set creator and owner
      */
-    public DpDataset(OwnerUID recOwnerUid, String strSetName) {
+    public DpCreateDatasetRequest(OwnerUID recOwnerUid, String strSetName) {
         this(recOwnerUid, strSetName, null);
     }
     
     /**
      * <p>
-     * Constructs a new, empty <code>DpDataset</code> instance.
+     * Constructs a new, empty <code>DpCreateDatasetRequest</code> instance.
      * </p>
      * <p>
      * The new data set request contains no data blocks.  That is, there is no
@@ -210,7 +210,7 @@ public class DpDataset {
      * @param recOwnerUid   UID of the new data set creator and owner
      * @param strDescr      description of the new data set
      */
-    public DpDataset(OwnerUID recOwnerUid, String strSetName, String strDescr) {
+    public DpCreateDatasetRequest(OwnerUID recOwnerUid, String strSetName, String strDescr) {
         this.strSetName = strSetName;
         this.recOwnerUid = recOwnerUid;
         this.strDescr = strDescr;
@@ -295,7 +295,7 @@ public class DpDataset {
         }
         
         // Create the data block messages
-        List<DataBlock> lstMsgBlks = DpDataset.createDataBlocks(this.lstBlocks);
+        List<DataBlock> lstMsgBlks = DpCreateDatasetRequest.createDataBlocks(this.lstBlocks);
 
         // Create data set message builder and populate
         DataSet.Builder     bldrMsgDset = DataSet.newBuilder()
@@ -373,11 +373,6 @@ public class DpDataset {
         this.addBlock(blkNew);
     }
     
-    
-    //
-    // Support Methods
-    //
-    
     /**
      * <p>
      * Adds the given data block to the current collection of data blocks within the data set.
@@ -399,7 +394,7 @@ public class DpDataset {
      * 
      * @see DpDataBlock#domainDecomposition(DpDataBlock, DpDataBlock)
      */
-    private void addBlock(DpDataBlock blkNew) {
+    public void addBlock(DpDataBlock blkNew) {
         
         // Check if new block is disjoint from all current blocks
         boolean bolDisjoint = this.lstBlocks.stream().allMatch(blk -> blk.isDisjoint(blkNew));
@@ -420,6 +415,11 @@ public class DpDataset {
             this.lstBlocks.addAll(lstBlksDcmp);
         }
     }
+    
+    
+    //
+    // Support Methods
+    //
     
     /**
      * <p>

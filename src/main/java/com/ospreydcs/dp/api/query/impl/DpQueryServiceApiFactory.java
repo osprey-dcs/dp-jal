@@ -31,19 +31,33 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
+import com.ospreydcs.dp.api.query.IQueryService;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceBlockingStub;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceFutureStub;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 
 /**
+ * <p>
+ * Connection factory for the Query Service API <code>IQueryService</code> interface.
+ * </p>
+ * <p>
+ * This is the instance-based connection factory derived directly from <code>DpServiceApiFactoryBase</code>.
+ * It maintains a singleton instance as a class resource for Query Service connections.
+ * </p> 
  *
  * @author Christopher K. Allen
  * @since Feb 19, 2025
  *
  */
-public class DpQueryServiceApiFactory extends
-        DpServiceApiFactoryBase<DpQueryServiceImpl, DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> {
+public class DpQueryServiceApiFactory extends DpServiceApiFactoryBase<
+                                IQueryService, 
+                                DpQueryConnection, 
+                                DpQueryServiceGrpc, 
+                                DpQueryServiceBlockingStub, 
+                                DpQueryServiceFutureStub, 
+                                DpQueryServiceStub> 
+{
 
     //
     // Application Resources
@@ -77,7 +91,7 @@ public class DpQueryServiceApiFactory extends
      * 
      * @param   cfgDefault  the default connection parameters for the query service used by new factory
      * 
-     * @return  a new Query Service API factory ready for <code>DpQueryServiceImplDeprecated</code> creation and connection
+     * @return  a new Query Service API factory ready for <code>DpQueryServiceApiFactory</code> creation and connection
      */
     public static final DpQueryServiceApiFactory   newFactory(DpGrpcConnectionConfig cfgDefault) {
         return new DpQueryServiceApiFactory(cfgDefault);
@@ -99,7 +113,7 @@ public class DpQueryServiceApiFactory extends
     
     
     //
-    // Support Methods
+    // Base Class Requirement
     //
     
     /**
@@ -138,7 +152,7 @@ public class DpQueryServiceApiFactory extends
      * @see com.ospreydcs.dp.api.grpc.model.DpServiceApiFactoryBase#apiFrom(com.ospreydcs.dp.api.grpc.model.DpGrpcConnection)
      */
     @Override
-    protected DpQueryServiceImpl apiFrom(DpQueryConnection conn) throws DpGrpcException {
+    protected IQueryService apiFrom(DpQueryConnection conn) throws DpGrpcException {
         return DpQueryServiceImpl.from(conn);
     }
 
