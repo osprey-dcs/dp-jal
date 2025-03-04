@@ -63,13 +63,67 @@ import com.ospreydcs.dp.api.grpc.model.IConnection;
  */
 public interface IAnnotationService extends IConnection {
     
+    
+    //
+    // Request Objects
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new data set creation request instance ready for data set definition.
+     * </p>
+     * <p>
+     * This is a convenience method for obtaining data set creation requests.  The a data set must 
+     * be defined using the <code>addDomain(...)</code> and <code>addBlock(...)</code> methods of the
+     * return object to create a valid request (empty requests throw exceptions).  See the class documentation
+     * for <code>{@link DpCreateDatasetRequest}</code> for details on data set definition.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The <code>IAnnotationService</code> interfaces provides a default implementation of this method
+     * which simply defers to the <code>{@link DpCreateDatasetRequest#from(OwnerUID, String, String)}</code> method.
+     * Although this action is generally sufficient, implementation classes may wish to override
+     * any default implementation. 
+     * </p>
+     * 
+     * @param recOwner  the owner UID of the new data set 
+     * @param strName   the name of the new data set
+     * @param strDescr  the (optional) description of the new data set (or <code>null</code>)
+     * 
+     * @return  a new data set creation request ready for data set creation
+     */
     default public DpCreateDatasetRequest   newDatasetCreateRequest(OwnerUID recOwner, String strName, String strDescr) {
         return DpCreateDatasetRequest.from(recOwner, strName, strDescr);
     }
     
+    /**
+     * <p>
+     * Creates and returns a new, empty data sets request instance ready for query definition.
+     * </p>
+     * <p>
+     * This is a convenience method for obtaining data sets request objects.  The returned object must
+     * define a data sets query request using the available <code>addCriterion...()</code> methods.
+     * See the class documentation for <code>{@link DpDatasetsRequest}</code> for details on 
+     * defining request criteria.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The <code>IAnnotationService</code> interfaces provides a default implementation of this method
+     * which simply defers to the <code>{@link DpDatasetsRequest#create()}</code> method.
+     * Although this action is generally sufficient, implementation classes may wish to override
+     * any default implementation. 
+     * </p>
+     * 
+     * @return  a new, empty data sets request instance
+     */
     default public DpDatasetsRequest        newDatasetsRequest() {
         return DpDatasetsRequest.create();
     }
+    
+    
+    //
+    // Query Operations
+    //
 
     /**
      * <p>

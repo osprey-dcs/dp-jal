@@ -192,7 +192,7 @@ public class DpQueryServiceImplDeprecatedTest {
     public final void testQueryPvsSingle() {
         String      strPvName1 = STR_PV_PREFIX + Integer.toString(1);
         
-        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
+        final DpMetadataRequest rqst = DpMetadataRequest.create();
         
         rqst.selectPv(strPvName1);
         
@@ -229,7 +229,7 @@ public class DpQueryServiceImplDeprecatedTest {
                 .toList();
         
         
-        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
+        final DpMetadataRequest rqst = DpMetadataRequest.create();
         
         for (String strName : lstPvNames) 
             rqst.selectPv(strName);
@@ -266,7 +266,7 @@ public class DpQueryServiceImplDeprecatedTest {
                 .toList();
         
         
-        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
+        final DpMetadataRequest rqst = DpMetadataRequest.create();
         
         rqst.selectPvs(lstPvNames);
         
@@ -296,7 +296,7 @@ public class DpQueryServiceImplDeprecatedTest {
     public final void testQueryPvsRegex() {
         String      strPvRegex = STR_PV_PREFIX + "111";
         
-        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
+        final DpMetadataRequest rqst = DpMetadataRequest.create();
         
         rqst.setPvRegex(strPvRegex);
         
@@ -589,7 +589,7 @@ public class DpQueryServiceImplDeprecatedTest {
         final DpGrpcStreamType enmType = DpGrpcStreamType.BACKWARD;
         
         // Create request and configure
-        DpDataRequest   rqst = DpDataRequest.newRequest();
+        DpDataRequest   rqst = DpDataRequest.create();
         
         rqst.selectSource(strSrcNm);
         rqst.rangeAfter(insBegin);

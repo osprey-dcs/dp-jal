@@ -155,7 +155,68 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  *
  */
 public interface IQueryService extends IConnection {
+    
+    
+    //
+    // Request Objects
+    // 
+    
+    /**
+     * <p>
+     * Creates and returns a new, empty <code>DpMetadataRequest</code> instance.
+     * </p>
+     * <p>
+     * This is a convenience method for obtaining metadata request.  The returned request
+     * object should be empty and ready for definition of the desired metadata query request
+     * via the request methods.  See class documentation on <code>{@link DpMetadataRequest}</code>
+     * for details.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The <code>IQueryService</code> interfaces provides a default implementation of this method
+     * which simply defers to the <code>{@link DpMetadataRequest#create()}</code> method.
+     * Although this action is generally sufficient, implementation classes may wish to override
+     * any default implementation. 
+     * </p>
+     * 
+     * @return  a new, empty metadata request instance
+     * 
+     * @see DpMetadataRequest
+     */
+    public default DpMetadataRequest     newMetaRequest() {
+        return DpMetadataRequest.create();
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new, empty <code>DpDataRequest</code> instance.
+     * </p>
+     * <p>
+     * This is a convenience method for obtaining time-series data requests.  The returned request
+     * instance should be empty and ready for request definition using the class methods.  See class
+     * documentation on <code>{@link DpDataRequest}</code> for details.  
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The <code>IQueryService</code> interfaces provides a default implementation of this method
+     * which simply defers to the <code>{@link DpMetadataRequest#create()}</code> method.
+     * Although this action is generally sufficient, implementation classes may wish to override
+     * any default implementation. 
+     * </p>
+     * 
+     * @return  a new, empty time-series data request
+     * 
+     * @see DpDataRequest
+     */
+    public default DpDataRequest        newDataRequest() {
+        return DpDataRequest.create();
+    }
 
+    
+    //
+    // Query Operations
+    //
+    
     /**
      * <p>
      * Performs a Process Variable metadata request to the Query Service.

@@ -113,7 +113,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest.QuerySpec;
  * <h2>NOTES:</h2>
  * <ul>
  * <li> 
- * Call the {@link #newRequest()} method to return a <em>Query Service</em> data 
+ * Call the {@link #create()} method to return a <em>Query Service</em> data 
  * request initialized to the "empty request" query.
  * </li>
  * <li> 
@@ -224,7 +224,7 @@ public final class DpDataRequest {
      * 
      * @return  a new "open query" <code>DpDataRequest</code> instance
      */
-    public static DpDataRequest newRequest() {
+    public static DpDataRequest create() {
         DpDataRequest bldr = new DpDataRequest();
         
         return bldr;

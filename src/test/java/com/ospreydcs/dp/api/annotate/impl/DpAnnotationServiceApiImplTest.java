@@ -25,8 +25,6 @@
  */
 package com.ospreydcs.dp.api.annotate.impl;
 
-import static org.junit.Assert.*;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Path;
@@ -35,7 +33,9 @@ import java.text.DateFormat;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.random.RandomGenerator;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -59,12 +59,7 @@ import com.ospreydcs.dp.api.config.annotate.DpAnnotationConfig;
 import com.ospreydcs.dp.api.grpc.annotate.DpAnnotationConnection;
 import com.ospreydcs.dp.api.grpc.annotate.DpAnnotationConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
-import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.DpQueryApiFactory;
-import com.ospreydcs.dp.api.query.IQueryService;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl;
 import com.ospreydcs.dp.api.query.impl.DpQueryServiceImplTest;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
@@ -146,6 +141,10 @@ public class DpAnnotationServiceApiImplTest {
     
     /** Class-based owner UID used for data set creation */
     public static final OwnerUID        REC_OWNER2 = OwnerUID.from(DpCreateDatasetRequestTest.class.getSimpleName() + "_2");
+    
+    
+    /** Random number generator (used for data set names) */
+    public static final Random          RND_NUMBERS = Random.from(RandomGenerator.getDefault());
 
     
     //
@@ -370,11 +369,11 @@ public class DpAnnotationServiceApiImplTest {
      * Test method for {@link com.ospreydcs.dp.api.annotate.impl.DpAnnotationServiceApiImpl#createDataset(com.ospreydcs.dp.api.annotate.DpCreateDatasetRequest)}.
      */
     @Test
-    public final void testCreateDataset() {
+    public final void testCreateDataset1() {
         
         // Parameters
         final OwnerUID  recOwner = REC_OWNER1;
-        final String    strName = DpAnnotationServiceApiImplTest.class.getSimpleName();
+        final String    strName = DpAnnotationServiceApiImplTest.class.getSimpleName() + "-" + RND_NUMBERS.nextInt();
         final String    strDescr = DpAnnotationServiceApiImplTest.class.getName();
         
         // Create the data set creation request
@@ -399,6 +398,45 @@ public class DpAnnotationServiceApiImplTest {
             String strMsg = "Data set creation exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
 
             psOutput.println(strMsg);
+            psOutput.println();
+            Assert.fail(strMsg);
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.annotate.impl.DpAnnotationServiceApiImpl#createDataset(com.ospreydcs.dp.api.annotate.DpCreateDatasetRequest)}.
+     */
+    @Test
+    public final void testCreateDataset2() {
+        
+        // Parameters
+        final OwnerUID  recOwner = REC_OWNER2;
+        final String    strName = DpAnnotationServiceApiImplTest.class.getSimpleName() + "-" + RND_NUMBERS.nextInt();;
+        final String    strDescr = DpAnnotationServiceApiImplTest.class.getName();
+        
+        // Create the data set creation request
+        DpCreateDatasetRequest rqstDset = DpCreateDatasetRequest.from(recOwner, strName, strDescr);
+
+        // New data set parameters
+        final DpDataRequest     rqstData = RQST_WIDE;
+        final TimeInterval      tvlRng = rqstData.range();
+        final List<String>      lstPvNms = rqstData.getSourceNames();
+
+        rqstDset.addDomain(lstPvNms, tvlRng);
+        
+        // Perform data set creation request and verify
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
+        try {
+            DatasetUID recUid = apiTest.createDataset(rqstDset);
+
+            psOutput.println("  Data set UID = " + recUid);
+            psOutput.println();
+            
+        } catch (DpAnnotationException e) {
+            String strMsg = "Data set creation exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
+
+            psOutput.println(strMsg);
+            psOutput.println();
             Assert.fail(strMsg);
         }
     }
@@ -407,7 +445,7 @@ public class DpAnnotationServiceApiImplTest {
      * Test method for {@link com.ospreydcs.dp.api.annotate.impl.DpAnnotationServiceApiImpl#queryDatasets(com.ospreydcs.dp.api.annotate.DpDatasetsRequest)}.
      */
     @Test
-    public final void testQueryDatasetsOwner() {
+    public final void testQueryDatasetsOwner1() {
         
         // Parameters
         final OwnerUID      recOwner = REC_OWNER1;
@@ -417,6 +455,7 @@ public class DpAnnotationServiceApiImplTest {
         rqst.addCriteriaOwner(recOwner);
         
         // Perform request and verify
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
         try {
             List<DpDataset> lstDsets = apiTest.queryDatasets(rqst);
             
@@ -425,14 +464,83 @@ public class DpAnnotationServiceApiImplTest {
             psOutput.println("  Datasets for owner: " + recOwner);
             for (DpDataset dset : lstDsets)
                 psOutput.println("    " + dset);
+            psOutput.println();
             
         } catch (DpAnnotationException e) {
             String strMsg = "Data sets query exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
 
             psOutput.println(strMsg);
+            psOutput.println();
             Assert.fail(strMsg);
         }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.annotate.impl.DpAnnotationServiceApiImpl#queryDatasets(com.ospreydcs.dp.api.annotate.DpDatasetsRequest)}.
+     */
+    @Test
+    public final void testQueryDatasetsOwner2() {
         
+        // Parameters
+        final OwnerUID      recOwner = REC_OWNER2;
+        
+        // Create data sets request and add criteria
+        DpDatasetsRequest   rqst = apiTest.newDatasetsRequest();
+        rqst.addCriteriaOwner(recOwner);
+        
+        // Perform request and verify
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
+        try {
+            List<DpDataset> lstDsets = apiTest.queryDatasets(rqst);
+            
+            Assert.assertTrue("No datasets recovered.", lstDsets.size()>0);
+            
+            psOutput.println("  Datasets for owner: " + recOwner);
+            for (DpDataset dset : lstDsets)
+                psOutput.println("    " + dset);
+            psOutput.println();
+            
+        } catch (DpAnnotationException e) {
+            String strMsg = "Data sets query exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
+
+            psOutput.println(strMsg);
+            psOutput.println();
+            Assert.fail(strMsg);
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.annotate.impl.DpAnnotationServiceApiImpl#queryDatasets(com.ospreydcs.dp.api.annotate.DpDatasetsRequest)}.
+     */
+    @Test
+    public final void testQueryDatasetsName1() {
+        
+        // Parameters
+        final String        strName = DpAnnotationServiceApiImplTest.class.getSimpleName();
+        
+        // Create data sets request and add criteria
+        DpDatasetsRequest   rqst = apiTest.newDatasetsRequest();
+        rqst.addCriterionName(strName);
+        
+        // Perform request and verify
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
+        try {
+            List<DpDataset> lstDsets = apiTest.queryDatasets(rqst);
+            
+            Assert.assertTrue("No datasets recovered.", lstDsets.size()>0);
+            
+            psOutput.println("  Datasets for name: " + strName);
+            for (DpDataset dset : lstDsets)
+                psOutput.println("    " + dset);
+            psOutput.println();
+            
+        } catch (DpAnnotationException e) {
+            String strMsg = "Data sets query exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
+
+            psOutput.println(strMsg);
+            psOutput.println();
+            Assert.fail(strMsg);
+        }
     }
 
 }

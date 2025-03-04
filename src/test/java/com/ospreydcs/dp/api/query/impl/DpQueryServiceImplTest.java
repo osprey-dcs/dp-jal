@@ -449,7 +449,7 @@ public class DpQueryServiceImplTest {
         final int           cntPvs = 10;
         final List<String>  strPvNames = LST_PV_NAMES.subList(0, cntPvs);
         
-        DpMetadataRequest rqst = DpMetadataRequest.newRequest();
+        DpMetadataRequest rqst = DpMetadataRequest.create();
         rqst.selectPvs(strPvNames);
         
         psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());

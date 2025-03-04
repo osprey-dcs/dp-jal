@@ -130,7 +130,7 @@ public class DpMetadataRequest {
      * 
      * @return  a new instance of <code>DpMetadataRequest</code> 
      */
-    public static DpMetadataRequest newRequest() {
+    public static DpMetadataRequest create() {
         return new DpMetadataRequest();
     }
     

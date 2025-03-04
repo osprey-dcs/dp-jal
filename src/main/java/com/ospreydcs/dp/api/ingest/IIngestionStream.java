@@ -3,11 +3,9 @@ package com.ospreydcs.dp.api.ingest;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.common.IngestRequestUID;
-import com.ospreydcs.dp.api.common.IngestionResponse;
 import com.ospreydcs.dp.api.common.IngestionResult;
 import com.ospreydcs.dp.api.common.ProviderRegistrar;
 import com.ospreydcs.dp.api.common.ProviderUID;

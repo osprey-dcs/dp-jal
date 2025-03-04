@@ -437,7 +437,7 @@ public class TestDpDataRequestGenerator {
         }
         
         // Create request and return it
-        DpDataRequest   rqst = DpDataRequest.newRequest();
+        DpDataRequest   rqst = DpDataRequest.create();
         
         List<String>    lstNames = LST_PV_NAMES.subList(indSourceFirst, indSourceLast);
         Instant         insStart = INS_INCEPT.plusNanos(lngStartTime);
