@@ -248,7 +248,7 @@ public class DpAnnotationServiceApiImpl extends
     public DatasetUID createDataset(DpCreateDatasetRequest rqst) throws DpAnnotationException {
         
         // Perform new data set creation request directly with the Annotation Service API blocking stub
-        CreateDataSetRequest    msgRqst = rqst.buildDataSetRequest();
+        CreateDataSetRequest    msgRqst = rqst.buildRequestMessage();
         CreateDataSetResponse   msgRsp = super.grpcConn.getStubBlock().createDataSet(msgRqst);
         
         // Check for any exception reported by the Annotation Service

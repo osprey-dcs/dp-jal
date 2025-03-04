@@ -29,6 +29,7 @@ import java.util.List;
 
 import com.ospreydcs.dp.api.common.DatasetUID;
 import com.ospreydcs.dp.api.common.DpDataset;
+import com.ospreydcs.dp.api.common.OwnerUID;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
 
 /**
@@ -61,6 +62,14 @@ import com.ospreydcs.dp.api.grpc.model.IConnection;
  *
  */
 public interface IAnnotationService extends IConnection {
+    
+    default public DpCreateDatasetRequest   newDatasetCreateRequest(OwnerUID recOwner, String strName, String strDescr) {
+        return DpCreateDatasetRequest.from(recOwner, strName, strDescr);
+    }
+    
+    default public DpDatasetsRequest        newDatasetsRequest() {
+        return DpDatasetsRequest.create();
+    }
 
     /**
      * <p>

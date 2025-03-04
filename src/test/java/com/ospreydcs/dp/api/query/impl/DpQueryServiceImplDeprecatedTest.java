@@ -818,9 +818,9 @@ public class DpQueryServiceImplDeprecatedTest {
 ////    @Test
 //    public final void testSaveQueryDataWide() {
 //        final int   CNT_SOURCES = 100;
-//        final long  LNG_DURATION = 10;
+//        final long  LNG_RANGE = 10;
 //        
-//        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+//        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_RANGE);
 //        final DpQueryStreamBuffer   bufResult;
 //        
 //        try {
@@ -887,9 +887,9 @@ public class DpQueryServiceImplDeprecatedTest {
 ////    @Test
 //    public final void testSaveQueryDataLong() {
 //        final int   CNT_SOURCES = 10;
-//        final long  LNG_DURATION = 60;
+//        final long  LNG_RANGE = 60;
 //        
-//        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+//        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_RANGE);
 //        final DpQueryStreamBuffer   bufResult;
 //        
 //        try {

@@ -256,6 +256,22 @@ public class DpCreateDatasetRequest {
     public String   getDescription() {
         return this.strDescr;
     }
+    
+    /**
+     * <p>
+     * Returns the collection of data blocks defining the data set requested for creation.
+     * </p>
+     * <p>
+     * The returned collection is essentially immutable since there are no methods exposed by the
+     * <code>DpDataBlock</code> class to modify data blocks.  They are created (or constructed) in
+     * their final definition.
+     * </p>
+     * 
+     * @return  collection of data blocks defining the data set to be created
+     */
+    public final List<DpDataBlock>    getDataBlocks() {
+        return this.lstBlocks;
+    }
 
     
     //
@@ -283,7 +299,7 @@ public class DpCreateDatasetRequest {
      * 
      * @throws IllegalStateException    illegal data set, data set is empty
      */
-    public CreateDataSetRequest buildDataSetRequest() throws IllegalStateException {
+    public CreateDataSetRequest buildRequestMessage() throws IllegalStateException {
         
         if (this.lstBlocks.isEmpty()) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - Illegal data set, data set is empty.";
