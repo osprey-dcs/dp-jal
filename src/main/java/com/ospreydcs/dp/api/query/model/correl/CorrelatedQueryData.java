@@ -138,7 +138,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
          * 
          * @return  new  <code>StartTimeComparator</code> instance ready for use
          */
-        public static StartTimeComparator   newInstance() {
+        public static StartTimeComparator   create() {
             return new StartTimeComparator();
         }
         

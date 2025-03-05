@@ -282,7 +282,7 @@ public class QueryDataCorrelator {
     private final ExecutorService   exeThreadPool = Executors.newFixedThreadPool(CNT_CONCURRENCY_THDS);
     
     /** Target set of correlated results set data - Ordered according to sampling interval start time */
-    private final SortedSet<CorrelatedQueryData> setPrcdData = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
+    private final SortedSet<CorrelatedQueryData> setPrcdData = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.create());
 
     
     //
@@ -1157,7 +1157,7 @@ public class QueryDataCorrelator {
     private SortedSet<CorrelatedQueryData>  processDisjointTargets(Collection<QueryDataResponse.QueryData.DataBucket> setBuckets) {
         
         // The returned sampling interval reference - that is, the targets
-        SortedSet<CorrelatedQueryData>  setRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
+        SortedSet<CorrelatedQueryData>  setRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.create());
         
         // Treat each data bucket individually - high probability of modifying target set 
         for (QueryDataResponse.QueryData.DataBucket msgBucket : setBuckets) {
