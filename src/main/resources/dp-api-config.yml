@@ -76,14 +76,6 @@
 #
 #
 
-#platform:
-#   UID: Osprey-Dev
-#   arch: arm64
-#   OS: macOS
-#   cores: 10
-#   location: office
-#   description: development platform
-
 archive:    # Data Platform data archive properties
    inception: 2023-09-01T00:00:00.0Z # ealiest archive timestamp      : DP_API_ARCHIVE_INCEPTION
    
@@ -107,7 +99,7 @@ ingest: # Data Platform Ingestion Service client API default configuration param
       active: true                   # use concurrency            : DP_API_INGEST_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_INGEST_CONCURRENCY_PIVOT_SIZE
       threadCount: 3                 # worker thread count        : DP_API_INGEST_CONCURRENCY_THREAD_COUNT
-   timeout:      # General query timeout properties (e.g., used for ingestion response wait timeout)
+   timeout:      # General ingestion timeout properties (e.g., used for ingestion response wait timeout)
       active: true                   # apply timeout condition    : DP_API_INGEST_TIMEOUT_ACTIVE
       limit: 10                      # request timeout limit      : DP_API_INGEST_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_INGEST_TIMEOUT_UNIT
@@ -135,30 +127,33 @@ query:      # Data Platform Query Service client API default configuration param
             active: true             # use multistreamed responses : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_ACTIVE
             maxStreams: 3            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
             sizeDomain: 2000         # rqst domain size (samples-time) triggering ms : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
-#            pivotPeriod: MILLISECONDS # java.concurrent.TimeUnit (approx samping period)  : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_PERIOD 
-#   stream:       # General gRPC streaming parameter for Query Service operations
-#      active: false                  # use streaming parameters    : DP_API_QUERY_STREAM_ACTIVE
-#      type: BACKWARD                 # preferred- DpGrpcStreamType : DP_API_QUERY_STREAM_TYPE
-#      buffer:              # data buffering and queueing parameters
-#         active: false               # apply data buffering/queue  : DP_API_QUERY_STREAM_BUFFER_ACTIVE
-#         size: 100                   # buffer/queue size (messages): DP_API_QUERY_STREAM_BUFFER_SIZE    
-#         allocation: 400000000       # max buffer allocation (bytes): DP_API_INGEST_STREAM_BUFFER_ALLOCATION   
-#         backPressure : true         # enable query throttling      : DP_API_QUERY_STREAM_BUFFER_BACKPRESSURE
-#      concurrency:         # multiple,concurrent gRPC stream parameters
-#         active: false               # use multiple streams when possible : DP_API_QUERY_STREAM_CONCURRENCY_ACTIVE
-#         pivotSize: 4000000          # currency activation size (bytes)   : DP_API_QUERY_STREAM_CONCURRENCY_PIVOT_SIZE
-#         maxStreams: 3               # maximum number of streams to use   : DP_API_QUERY_STREAM_CONCURRENT_MAX_STREAMS
+      table:         # Default parameters used for time-series data table construction
+         sstatic:                    # static data table properties
+            isDefault: true          # use static table as default  : DP_API_QUERY_DATA_TABLE_STATIC_DEFAULT
+            hasMaxSize: true         # enforce maximum table size   : DP_API_QUERY_DATA_TABLE_STATIC_HAS_MAX_SIZE
+            maxSize: 4000000         # maximum size (bytes) allowed : DP_API_QUERY_DATA_TABLE_STATIC_MAX_SIZE
+         dynamic:                    # dynamic data table properties
+            enable: true             # enable dynamic data tables   : DP_API_QUERY_DATA_TABLE_DYNAMIC_ENABLE
    concurrency:  # General concurrency (multi-threading) properties
       active: true                   # use concurrency            : DP_API_QUERY_CONCURRENCY_ACTIVE
       pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
       threadCount: 20                # worker thread count        : DP_API_QUERY_CONCURRENCY_THREAD_COUNT
-   timeout:      # General query timeout properties (e.g., used for query respponse wait timeout)
+   timeout:      # General query timeout properties (e.g., used for query response wait timeout)
       active: true                   # apply timeout condition    : DP_API_QUERY_TIMEOUT_ACTIVE
       limit: 30                      # request timeout limit      : DP_API_QUERY_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_QUERY_TIMEOUT_UNIT
-   logging:      # General Query Service logging services
+   logging:      # General Query Service API logging services
       active: true                   # is logging active              : DP_API_QUERY_LOGGING_ACTIVE
       level: DEBUG                   # logger output level if active  : DP_API_QUERY_LOGGING_LEVEL
+      
+annotation:
+   timeout:      # General query timeout properties (e.g., used for query response wait timeout)
+      active: true                   # apply timeout condition    : DP_API_ANNOTATION_TIMEOUT_ACTIVE
+      limit: 30                      # request timeout limit      : DP_API_ANNOTATION_TIMEOUT_LIMIT
+      unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_ANNOTATION_TIMEOUT_UNIT
+   logging:      # General Annotation Service API logging services
+      active: true                   # is logging active              : DP_API_ANNOTATION_LOGGING_ACTIVE
+      level: DEBUG                   # logger output level if active  : DP_API_ANNOTATION_LOGGING_LEVEL
  
 connections:   # All available Data Platform service connections   
    logging:     # General event logging for all connection operations 
@@ -167,7 +162,7 @@ connections:   # All available Data Platform service connections
       
    ingestion:   # Ingestion Service connection
       name: DP Ingestion Service     # (opt) name of connection  : DP_API_CONNECTION_INGESTION_NAME
-      version: 1.5.0                 # (opt) parameters version  : DP_API_CONNECTION_INGESTION_VERSION
+      version: 1.7.0                 # (opt) parameters version  : DP_API_CONNECTION_INGESTION_VERSION
       description: Data Platform Ingestion Service default connection parameters # : DP_API_CONNECTION_INGESTION_DESCRIPTION 
       supplement: None               # (opt) anonymous parameter: DP_API_CONNECTION_INGESTION_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)
@@ -195,7 +190,7 @@ connections:   # All available Data Platform service connections
     
    query:   # Query Service connection
       name: DP Query Service         # (opt) name of connection  : DP_API_CONNECTION_QUERY_NAME
-      version: 1.5.0                 # (opt) parameters version  : DP_API_CONNECTION_QUERY_VERSION
+      version: 1.7.0                 # (opt) parameters version  : DP_API_CONNECTION_QUERY_VERSION
       description: Data Platform Query Service default connection parameters # : DP_API_CONNECTION_QUERY_DESCRIPTION
       supplement: None               # (opt) anonymous parameter : DP_API_CONNECTION_QUERY_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)
@@ -220,5 +215,33 @@ connections:   # All available Data Platform service connections
             usePlainText: false         # plain text transmission   : DP_API_CONNECTION_QUERY_CHANNEL_GRPC_XMIT_PLAIN_TEXT   
             keepAliveWithoutCalls: false # channel never idle       : DP_API_CONNECTION_QUERY_CHANNEL_GRPC_KEEP_ALIVE
             gzip: false                 # use gzip compression      : DP_API_CONNECTION_QUERY_CHANNEL_GRPC_COMPRESS_GZIP
+    
+   annotation: # Annotation Service connection
+      name: DP Annotation Service         # (opt) name of connection  : DP_API_CONNECTION_ANNOTATION_NAME
+      version: 1.7.0                 # (opt) parameters version  : DP_API_CONNECTION_ANNOTATION_VERSION
+      description: Data Platform Annotation Service default connection parameters # : DP_API_CONNECTION_ANNOTATION_DESCRIPTION
+      supplement: None               # (opt) anonymous parameter : DP_API_CONNECTION_ANNOTATION_SUPPLEMENT
+      timeout:      # General connection timeout properties (e.g., used in service shutdown)
+         active: true                # apply timeout condition   : DP_API_CONNECTION_ANNOTATION_TIMEOUT_ACTIVE
+         limit: 30                   # timeout limit             : DP_API_CONNECTION_ANNOTATION_TIMEOUT_LIMIT
+         unit: SECONDS               # java.concurrent.TimeUnit  : DP_API_CONNECTION_ANNOTATION_TIMEOUT_UNIT
+      channel:      # gRPC Channel configuration         
+         host:             # host server location 
+            url: localhost              # host server URL           : DP_API_CONNECTION_ANNOTATION_CHANNEL_HOST_URL
+            port: 50053                 # server port address       : DP_API_CONNECTION_ANNOTATION_CHANNEL_HOST_PORT
+         tls:              # HTTP2 Transport Layer Security parameters
+            active: false               # use TLS security          : DP_API_CONNECTION_ANNOTATION_CHANNEL_TLS_ACTIVE
+            defaultTls: true            # use default TLS operation : DP_API_CONNECTION_ANNOTATION_CHANNEL_TLS_DEFAULT
+            filepaths:     # file path locations for TLS certificates and keys (only if defaultTls == false)
+               trustedCerts:            # trusted certs collection  : DP_API_CONNECTION_ANNOTATION_CHANNEL_TLS_FILE_TRUSTED_CERTS
+               clientCerts:             # client certificates chain : DP_API_CONNECTION_ANNOTATION_CHANNEL_TLS_FILE_CLIENT_CERTS
+               clientKey:               # client private key        : DP_API_CONNECTION_ANNOTATION_CHANNEL_TLS_FILE_CLIENT_KEY
+         grpc:             # gRPC parameters
+            timeoutLimit: 20            # channel operation timeout : DP_API_CONNECTION_ANNOTATION_CHANNEL_GRPC_TIMEOUT_LIMIT
+            timeoutUnit: SECONDS        # timeout units             : DP_API_CONNECTION_ANNOTATION_CHANNEL_GRPC_TIMEOUT_UNIT
+            messageSizeMax: 4194304     # (bytes) max message size  : DP_API_CONNECTION_ANNOTATION_CHANNEL_GRPC_MESSAGE_SIZE_MAX
+            usePlainText: false         # plain text transmission   : DP_API_CONNECTION_ANNOTATION_CHANNEL_GRPC_XMIT_PLAIN_TEXT   
+            keepAliveWithoutCalls: false # channel never idle       : DP_API_CONNECTION_ANNOTATION_CHANNEL_GRPC_KEEP_ALIVE
+            gzip: false                 # use gzip compression      : DP_API_CONNECTION_ANNOTATION_CHANNEL_GRPC_COMPRESS_GZIP
     
    

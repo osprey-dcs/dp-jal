@@ -98,10 +98,10 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * </li>
  * <li>
  * The <code>lngDuration</code> and <code>lngStartTime</code> parameters must together create
- * a valid query against the Data Platform test archive, see <code>{@link #LNG_DURATION}</code>.
+ * a valid query against the Data Platform test archive, see <code>{@link #LNG_RANGE}</code>.
  * Specifically, the following condition must hold:
  * <br/><br/>
- *   &nbsp; &nbsp; <code>lngStartTime</code> + <code>lngDuration</code> &le; <code>{@link #LNG_DURATION}</code>
+ *   &nbsp; &nbsp; <code>lngStartTime</code> + <code>lngDuration</code> &le; <code>{@link #LNG_RANGE}</code>
  * <br/>
  * </li>
  * <br/>
@@ -149,16 +149,23 @@ public class TestDpDataRequestGenerator {
     /** 
      * The final time instant of all Data Platform data archive test data set
      * <p>
-     * This is a computed value equal to <code>{@link #INS_INCEPT} + {@link #LNG_DURATION}</code>.
+     * This is a computed value equal to <code>{@link #INS_INCEPT} + {@link #LNG_RANGE}</code>.
      */
     public static final Instant     INS_FINAL = Instant.parse(STR_ISO_ARCHIVE_LAST);
+    
+    /** 
+     * Size of time domain (i.e., range) with Data Platform data archive test data set.
+     * <p>
+     * The value is taken from test default parameters [<code>{@link #INS_INCEPT} and {@link #INS_FINAL}</code>].
+     */ 
+    public static final Duration    DUR_RANGE = Duration.between(INS_INCEPT, INS_FINAL);
 
     /** 
-     * Size of time domain with Data Platform data archive test data set.
+     * Size of time domain (i.e., range) with Data Platform data archive test data set in nanoseconds.
      * <p>
-     * The value is taken from test default parameter [<code>testArchive.duration</code>].
+     * The value is taken from test default parameters [<code>{@link #DUR_RANGE}</code>].
      */ 
-    public static final Long        LNG_DURATION = Duration.between(INS_INCEPT, INS_FINAL).toNanos();
+    public static final Long        LNG_RANGE = DUR_RANGE.toNanos();
  
    
     /** 
@@ -194,7 +201,7 @@ public class TestDpDataRequestGenerator {
     static {
 //        INS_INCEPT = Instant.parse(STR_ISO_ARCHIVE_INCEPT);
 //        
-//        LNG_DURATION = CFG_ARCHIVE.duration;
+//        LNG_RANGE = CFG_ARCHIVE.duration;
 //        INS_INCEPT = Instant.ofEpochSecond(CFG_ARCHIVE.inception);
 //        INS_FINAL = INS_INCEPT.plusSeconds(CFG_ARCHIVE.duration);
 //
@@ -221,7 +228,7 @@ public class TestDpDataRequestGenerator {
      * @return  new <code>DpDataRequest</code> specifying the entire test archive.
      */
     public static DpDataRequest createRequest() {
-        return createRequest(CNT_PV_NAMES, 0, LNG_DURATION, 0L);
+        return createRequest(CNT_PV_NAMES, 0, LNG_RANGE, 0L);
     }
     
     /**
@@ -241,7 +248,7 @@ public class TestDpDataRequestGenerator {
      * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and time range [INS_INCEPT, INS_FINAL]
      */
     public static DpDataRequest createRequest(int cntSources) throws IllegalArgumentException {
-        return createRequest(cntSources, 0, LNG_DURATION, 0L);
+        return createRequest(cntSources, 0, LNG_RANGE, 0L);
     }
     
     /**
@@ -341,7 +348,7 @@ public class TestDpDataRequestGenerator {
      */
     public static DpDataRequest createRequest(int cntSources, int indSourceFirst) throws IllegalArgumentException {
 
-        return createRequest(cntSources, indSourceFirst, LNG_DURATION, 0L);
+        return createRequest(cntSources, indSourceFirst, LNG_RANGE, 0L);
     }
     
     /**
@@ -425,12 +432,12 @@ public class TestDpDataRequestGenerator {
             throw new IllegalArgumentException("Requested data sources final index =" + indSourceLast + " > " + CNT_PV_NAMES + " total number of data sources.");
         }
         
-        if (lngStartTime + lngDuration > LNG_DURATION) {
-            throw new IllegalArgumentException("Requested duration =" + lngDuration + " > " + LNG_DURATION + " total time domain size.");
+        if (lngStartTime + lngDuration > LNG_RANGE) {
+            throw new IllegalArgumentException("Requested duration =" + lngDuration + " > " + LNG_RANGE + " total time domain size.");
         }
         
         // Create request and return it
-        DpDataRequest   rqst = DpDataRequest.newRequest();
+        DpDataRequest   rqst = DpDataRequest.create();
         
         List<String>    lstNames = LST_PV_NAMES.subList(indSourceFirst, indSourceLast);
         Instant         insStart = INS_INCEPT.plusNanos(lngStartTime);

@@ -116,7 +116,7 @@ public class DpDataRequestTest {
     
     
     /** A common request object that can be used for comparison */ 
-    private static final DpDataRequest   DPRQST_EMPTY = DpDataRequest.newRequest();
+    private static final DpDataRequest   DPRQST_EMPTY = DpDataRequest.create();
     
 
     //
@@ -149,7 +149,7 @@ public class DpDataRequestTest {
      */
     @Before
     public void setUp() throws Exception {
-        this.rqstTest = DpDataRequest.newRequest();
+        this.rqstTest = DpDataRequest.create();
     
         this.rqstTest.selectSources(LST_SOURCE_NAMES);
         this.rqstTest.rangeBetween(INS_ARC_START, INS_ARC_STOP);
@@ -168,11 +168,11 @@ public class DpDataRequestTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#newRequest()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpDataRequest#create()}.
      */
     @Test
     public final void testNewRequest() {
-        DpDataRequest dpRqst = DpDataRequest.newRequest();
+        DpDataRequest dpRqst = DpDataRequest.create();
         
         QueryDataRequest msgRqst = dpRqst.buildQueryRequest();
         QuerySpec        msgQry = msgRqst.getQuerySpec();
@@ -375,7 +375,7 @@ public class DpDataRequestTest {
      */
     @Test
     public final void testBuildQueryRequest() {
-        DpDataRequest   rqst = DpDataRequest.newRequest();
+        DpDataRequest   rqst = DpDataRequest.create();
         
         Assert.assertEquals(DPRQST_EMPTY, rqst);
     }
@@ -439,7 +439,7 @@ public class DpDataRequestTest {
     public final void testRangeBetween() {
 
         // Set the request range
-        DpDataRequest rqst = DpDataRequest.newRequest();
+        DpDataRequest rqst = DpDataRequest.create();
         rqst.rangeBetween(INS_ARC_START, INS_ARC_STOP);
 
         // Extract the target timestamp(s) and compare
@@ -466,7 +466,7 @@ public class DpDataRequestTest {
     public final void testRangeDuration() {
 
         // Set the request range
-        DpDataRequest rqst = DpDataRequest.newRequest();
+        DpDataRequest rqst = DpDataRequest.create();
         rqst.rangeDuration(INS_ARC_START, LNG_ARC_DURATION, TM_ARC_DURATION);
 
         // Extract the target timestamp(s) and compare

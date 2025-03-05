@@ -72,7 +72,7 @@ public final class DpQueryConnectionFactoryStatic {
     // Class Resources
     //
 
-    /** The <code>DpGrpcConnectionFactory</code> bound for the Query Service */
+    /** The <code>DpGrpcConnectionFactory</code> bound to the Query Service */
     private static final DpGrpcConnectionFactory<DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> FAC;
     
     
@@ -91,7 +91,7 @@ public final class DpQueryConnectionFactoryStatic {
      * See {@link DpGrpcConnectionFactory#connect()} for details.
      * </p>
      * 
-     * @return new <code>DpQueryConnection</code> instance with given parameters
+     * @return new <code>DpQueryConnection</code> instance with all default parameters
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      * 
@@ -244,7 +244,8 @@ public final class DpQueryConnectionFactoryStatic {
     }
     
     
-    // Private Support
+    //
+    // Support Methods
     //
     
     /**
@@ -253,7 +254,6 @@ public final class DpQueryConnectionFactoryStatic {
      * </p>
      */
     private DpQueryConnectionFactoryStatic(DpGrpcConnectionConfig cfgDefault) {
-//        super(DpQueryServiceGrpc.class, cfgDefault)
     }
 
 }

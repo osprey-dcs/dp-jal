@@ -41,7 +41,6 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
-import com.ospreydcs.dp.api.query.model.DpQueryStreamTypeDeprecated;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
@@ -1268,7 +1267,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
         // Log event
         if (this.bolLogging)
-            LOGGER.info("{}: Stream completed with {} data page(s) received.", JavaRuntime.getMethodName(), this.lstBufferRsps.size());
+            LOGGER.debug("{}: Stream completed with {} data page(s) received.", JavaRuntime.getMethodName(), this.lstBufferRsps.size());
 
         // Update state variables and conditions
         this.monStrmComplete.countDown();

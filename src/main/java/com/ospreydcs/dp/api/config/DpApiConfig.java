@@ -33,6 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
+import com.ospreydcs.dp.api.config.annotate.DpAnnotationConfig;
 import com.ospreydcs.dp.api.config.grpc.DpConnectionsConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
@@ -169,6 +170,10 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
     /** Data Platform Query Service API default parameters */
     @ACfgOverride.Struct(pathelem="QUERY")
     public DpQueryConfig        query;
+    
+    /** Data Platform Annotation Service API default parameters */
+    @ACfgOverride.Struct(pathelem="ANNOTATION")
+    public DpAnnotationConfig   annotation;
     
     /** Data Platform core services connection parameters */
     @ACfgOverride.Struct(pathelem="CONNECTION")

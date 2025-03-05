@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.query;
 
-import static org.junit.Assert.*;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -39,8 +37,6 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceFactory;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl;
 
 /**
  * <p>
@@ -94,14 +90,14 @@ public class DpQueryApiFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connect()}.
      */
     @Test
     public final void testConnectService() {
         boolean bolResult = false;
         
         try {
-            IQueryService qs = DpQueryApiFactory.connectService();
+            IQueryService qs = DpQueryApiFactory.connect();
             
             bolResult = qs.shutdown();
             
@@ -121,14 +117,14 @@ public class DpQueryApiFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connect(java.lang.String, int)}.
      */
     @Test
     public final void testConnectServiceStringInt() {
         boolean bolResult = false;
         
         try {
-            IQueryService   qs = DpQueryApiFactory.connectService(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
+            IQueryService   qs = DpQueryApiFactory.connect(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
             
             bolResult = qs.shutdown();
             
@@ -148,14 +144,14 @@ public class DpQueryApiFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int, boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connect(java.lang.String, int, boolean)}.
      */
     @Test
     public final void testConnectServiceStringIntBoolean() {
         boolean bolResult = false;
         
         try {
-            IQueryService qs = DpQueryApiFactory.connectService(
+            IQueryService qs = DpQueryApiFactory.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.grpc.usePlainText
@@ -179,14 +175,14 @@ public class DpQueryApiFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connect(java.lang.String, int, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
     public final void testConnectServiceStringIntBooleanLongTimeUnit() {
         boolean bolResult = false;
         
         try {
-            IQueryService qs = DpQueryApiFactory.connectService(
+            IQueryService qs = DpQueryApiFactory.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.grpc.usePlainText,
@@ -212,14 +208,14 @@ public class DpQueryApiFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connectService(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.DpQueryApiFactory#connect(java.lang.String, int, boolean, boolean, int, boolean, boolean, long, java.util.concurrent.TimeUnit)}.
      */
     @Test
     public final void testConnectServiceStringIntBooleanBooleanIntBooleanBooleanLongTimeUnit() {
         boolean bolResult = false;
         
         try {
-            IQueryService   qs = DpQueryApiFactory.connectService(
+            IQueryService   qs = DpQueryApiFactory.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.tls.active,

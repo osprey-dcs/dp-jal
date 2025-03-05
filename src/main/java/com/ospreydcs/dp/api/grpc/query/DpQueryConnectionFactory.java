@@ -90,7 +90,7 @@ public final class DpQueryConnectionFactory extends
     //
 
     /** The singleton factory instance using the DP API default parameters for the Query Service */
-    public static final DpQueryConnectionFactory   FACTORY = newFactory(CFG_DEFAULT);
+    public static final DpQueryConnectionFactory   FACTORY = DpQueryConnectionFactory.newFactory(CFG_DEFAULT);
 
     
     //
@@ -111,7 +111,7 @@ public final class DpQueryConnectionFactory extends
    
     
     //
-    // Creator - For Alternate Default Configurations
+    // Creator - Allows Alternate Default Configurations
     //
     
     /**
@@ -120,8 +120,8 @@ public final class DpQueryConnectionFactory extends
      * </p>
      * <p>
      * This creator can be used to create additional connection factors with different default 
-     * parameters for the factory connection instances.  For example, if a separate Data Platform
-     * Query Service is used for testing the default parameters can point to that deployment.
+     * parameters for the connection factory instances.  For example, if a separate Data Platform
+     * Query Service is used for testing, the default parameters can point to that deployment.
      * </p>
      * 
      * @param cfgDefault    the default gRPC connection parameters used for factory connections
@@ -139,8 +139,10 @@ public final class DpQueryConnectionFactory extends
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpQueryConnectionFactory</code>.
+     * Constructs a new instance of <code>DpQueryConnectionFactory</code> with the given default parameters.
      * </p>
+     * 
+     * @param cfgConn   default connection parameters to the Query Service
      */
     protected DpQueryConnectionFactory(DpGrpcConnectionConfig cfgDefault) {
         super(DpQueryServiceGrpc.class, cfgDefault);

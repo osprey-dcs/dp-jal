@@ -1,10 +1,10 @@
 /*
  * Project: dp-api-common
  * File:	DpQueryServiceImplTest.java
- * Package: com.ospreydcs.dp.api.query
+ * Package: com.ospreydcs.dp.api.query.impl
  * Type: 	DpQueryServiceImplTest
  *
- * Copyright 2010-2023 the original author or authors.
+ * Copyright 2010-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,22 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jan 10, 2024
+ * @since Feb 19, 2025
  *
- * TODO:
- * - None
  */
 package com.ospreydcs.dp.api.query.impl;
 
+import java.io.File;
+import java.io.PrintStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.DateFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.IntStream;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -41,102 +44,201 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.IDataTable;
-import com.ospreydcs.dp.api.common.PvMetaRecord;
-import com.ospreydcs.dp.api.common.TimeInterval;
+import com.ospreydcs.dp.api.common.MetadataRecord;
+import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
+import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
+import com.ospreydcs.dp.api.model.table.StaticDataTable;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpMetadataRequest;
+import com.ospreydcs.dp.api.query.DpQueryApiFactory;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
-import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
+import com.ospreydcs.dp.api.query.IQueryService;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
-import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
+import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
+import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.api.util.JavaSize;
 
 /**
  * <p>
- * JUnit test cases for <code>{@link DpQueryServiceImpl}</code> Query Service API interface.
+ * JUnit test cases for class <code>DpQueryServiceImpl</code>.
  * </p>
  * <p>
- * <h2>WARNING:</h2>
+ * <h2>WARNINGS:</h2>
  * For test cases to pass the following conditions must be current:
  * <ul>
  * <li>
- * A Data Platform Query Service must be currently active and running at the default parameter set.
+ * A Query Service must be running at the default port location and with default parameter set.
  * </li>
  * <li>
- * The Data Platform data archive must be populated with test data from the Ingestion Service benchmark 
- * application.
+ * The Data Platform archive must be populated with test data from the <em>app-run-test-data-generator</em>
+ * application within the Data Platform installer.
  * </li>
+ * </ul>
+ * Due to the large size of some test requests (RQST_HALF_SRC, RQST_HALF_RNG) heap space issues may arise,
+ * especially with static data tables.  The following are Java command line options to manage heap space
+ * and garbage collection:
+ * <ul>
+ * <li>-XX:GCTimeRatio=19 - sets the garbage collection runtime to 1/20 of the application runtime.</li> 
+ * <li>-XX:MaxHeapFreeRatio=70 - sets the maximum ratio (%) of heap space to live object before garbage collection.</li>
+ * <li>-XX:MinHeapFreeRatio=40 - sets the minimum ratio (%) of heap space to live object before garbage collection.</li>
+ * <li>-Xmx4096m - sets the maximum heap space size to 4 GBytes.</li>
+ * <li>-Xms4096m - sets the minimum heap space size to 4 GBytes.</li>
  * </ul>
  * <p>
  *
  * @author Christopher K. Allen
- * @since Jan 10, 2024
+ * @since Feb 19, 2025
  *
  */
 public class DpQueryServiceImplTest {
 
+    //
+    // Class Types
+    //
+    
+    /**
+     * <p>
+     * Record containing configuration parameters for a <code>DpQueryServiceImpl</code> object.
+     * </p>
+     *
+     * @param name              text name for configuration
+     * @param bolStaticDef      use static data tables as the default
+     * @param bolStaticHasMax   static data tables have a maximum size
+     * @param szStaticMax       maximum size (in bytes) of static data tables
+     * @param bolDynEnable      enable dynamic data tables
+     */
+    public static record Config(String name, boolean bolStaticDef, boolean bolStaticHasMax, int szStaticMax, boolean bolDynEnable) {
+        
+        /**
+         * <p>
+         * Creates a new <code>Config</code> record initialized with the given arguments.
+         * </p>
+         * 
+         * @param name              text name for configuration
+         * @param bolStaticDef      use static data tables as the default
+         * @param bolStaticHasMax   static data tables have a maximum size
+         * @param szStaticMax       maximum size (in bytes) of static data tables
+         * @param bolDynEnable      enable dynamic data tables
+         * 
+         * @return  a new <code>Config</code> record with the given parameters
+         */
+        public static Config from(String name, boolean bolStaticDef, boolean bolStaticHasMax, int szStaticMax, boolean bolDynEnable) {
+            return new Config(name, bolStaticDef, bolStaticHasMax, szStaticMax, bolDynEnable);
+        }
+        
+        /**
+         * <p>
+         * Configures the given <code>DpQueryServiceImpl</code> object according to the record configuration parameters.
+         * </p>
+         * 
+         * @param api   API implementation to be configured
+         */
+        public void configure(DpQueryServiceImpl api) {
+            api.setStaticTableDefault(this.bolStaticDef);
+            if (this.bolStaticHasMax)
+                api.enableStaticTableMaxSize(this.szStaticMax);
+            else
+                api.disableStaticTableMaxSize();
+            api.enableDynamicTables(this.bolDynEnable);
+        }
+    }
     
     //
     // Application Resources
     //
     
-//    /** The default Query Service configuration parameters */
-//    private static final DpQueryConfig          CFG_QUERY = DpApiConfig.getInstance().query;
-//    
-//    /** The default API Test configuration */
-//    private static final DpApiTestingConfig     CFG_TEST = DpApiTestingConfig.getInstance();
+    /** The default Query Service configuration parameters */
+    public static final DpQueryConfig          CFG_QUERY = DpApiConfig.getInstance().query;
     
     
     //
     // Class Constants
     //
     
-    /** Process Variable prefixes used in the test archive */
-    public static final String  STR_PV_PREFIX = "dpTest_"; // CFG_TEST.testArchive.pvPrefix;
+    /** General timeout limit */
+    public static final long        LNG_TIMEOUT = CFG_QUERY.timeout.limit;
+    
+    /** General timeout units */
+    public static final TimeUnit    TU_TIMEOUT = CFG_QUERY.timeout.unit;
     
     
-    /** Output file for <code>DpQueryStreamQueueBufferDeprecated</code> data buffer results with lots of columns */
-    public static final String  STR_PATH_QUERY_DATA_RESULTS_WIDE = "src/test/resources/data/querydata-results-wide.dat";
-    
-    /** Output file for <code>DpQueryStreamQueueBufferDeprecated</code> data buffer results with largest time interval */
-    public static final String  STR_PATH_QUERY_DATA_RESULTS_LONG = "src/test/resources/data/querydata-results-long.dat";
+    /** Location of performance results output */
+    public static final String          STR_PATH_OUTPUT = "test/output/query/impl/";
     
     
-//    /** The inception time instant of the test Data Platform data archive test data set*/
-//    public static final Instant INS_INCEPT = Instant.ofEpochSecond(1698767462L);
-//    
-//    /** The final time instant of all Data Platform data archive test data set */
-//    public static final Instant INS_FINAL = INS_INCEPT.plusSeconds(60L);
-//    
-//    /** The total number of unique data source names within the Data Platform data archive test data set */
-//    public static final int     CNT_PV_NAMES = 4000;
-//    
-//    /** List of all data source names within the Data Platform data archive test data set */
-//    public static final List<String> LST_PV_NAMES = IntStream.rangeClosed(1, CNT_PV_NAMES).mapToObj( i -> "pv_" + Integer.toString(i)).toList();   
-//    
+    /** "Small" test request  */
+    public static final DpDataRequest   RQST_SMALL = TestQueryResponses.QREC_LONG.createRequest();
     
-    /** Timeout limit */
-    public static final Long        LNG_TMOUT = 5L;
+    /** Wide test request (500 PVs, 5 secs) */
+    public static final DpDataRequest   RQST_WIDE = TestQueryResponses.QREC_WIDE.createRequest();
     
-    /** Timeout units */
-    public static final TimeUnit    TU_TMOUT = TimeUnit.SECONDS;
+    /** Large test request */
+    public static final DpDataRequest   RQST_BIG = TestQueryResponses.QREC_BIG.createRequest();
     
+    /** Huge test request */
+    public static final DpDataRequest   RQST_HUGE = TestQueryResponses.QREC_HUGE.createRequest();
+    
+    /** The data request for the half the test archive - used for timing responses */
+    public static final DpDataRequest   RQST_HALF_SRC = TestQueryResponses.QREC_HALF_SRC.createRequest();
+
+    /** The data request for the half the test archive - used for timing responses */
+    public static final DpDataRequest   RQST_HALF_RNG = TestQueryResponses.QREC_HALF_RNG.createRequest();
+
+    /** The data request for the entire test archive - used for timing responses */
+    public static final DpDataRequest   RQST_ALL = TestQueryResponses.QREC_ALL.createRequest();
+
+    
+    /** Common List of all PV names in the test archive */
+    public static final List<String>                LST_PV_NAMES = RQST_HALF_SRC.getSourceNames();
+
+    
+    /** Common List of data requests used for testing */
+    public static final List<DpDataRequest>         LST_RQSTS = List.of(RQST_SMALL, 
+                                                                        RQST_WIDE, 
+                                                                        RQST_BIG, 
+                                                                        RQST_HALF_SRC, 
+                                                                        RQST_HALF_RNG);
+    
+    /** A map of the common test requests to their (arbitrary) names */
+    public static final Map<DpDataRequest, String>  MAP_RQST_NMS = Map.of(RQST_SMALL, "RQST_SMALL", 
+                                                                          RQST_WIDE, "RQST_WIDE",
+                                                                          RQST_BIG, "RQST_BIG",
+                                                                          RQST_HALF_SRC, "RQST_HALF_SRC", 
+                                                                          RQST_HALF_RNG, "RQST_HALF_RNG");
+    
+    public static final Config  CFG_ALL_STATIC = Config.from("All Static Tables", true, false, 0, false);  // use all static tables
+    public static final Config  CFG_STATIC_MAX = Config.from("Static Tables with 4 Mbyte Max", true, true, 4000000, true);
+    public static final Config  CFG_ALL_DYN = Config.from("All Dynamic Tables", false, false, 0, true);
+    
+    /** Common List of <code>DpQueryServiceImpl</code> configuration parameters settings - populated in static block */
+    public static final List<Config>                LST_API_CFGS = List.of(CFG_ALL_STATIC, CFG_STATIC_MAX, CFG_ALL_DYN);
+    
+    
+//    static {
+//        
+//        // Create the list of Query Service API configurations
+//        Config  cfg1 = Config.from("All Static Tables", true, false, 0, false);  // use all static tables
+//        Config  cfg2 = Config.from("Static Tables with 4 Mbyte Max", true, true, 4000000, true);
+//        Config  cfg3 = Config.from("All Dynamic Tables", false, false, 0, true);
+//
+//        LST_API_CFGS = List.of(cfg1, cfg2, cfg3);
+//    }
     
     //
-    // Class Resources
+    // Test Fixture Resources
     //
     
-    /** The Data Platform Query Service API interface under test - created in fixture */
-    private static DpQueryServiceImpl   apiQuery;
+    /** The common Query Service API used for query test cases */
+    private static IQueryService            apiTest;
     
-    
-    //
-    // Class Methods
-    //
+    /** Print output stream for storing evaluation results to single file */
+    private static PrintStream              psOutput;
     
     
     //
@@ -148,16 +250,40 @@ public class DpQueryServiceImplTest {
      */
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        apiQuery = DpQueryServiceFactory.FACTORY.connect();
+        
+        // Create the Query Service connection
+        apiTest = DpQueryApiFactory.connect();
+        
+        // Open the common output file
+        String  strFileName = DpQueryServiceImplTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
+        Path    pathOutput = Paths.get(STR_PATH_OUTPUT, strFileName);
+        File    fileOutput = pathOutput.toFile();
+        
+        psOutput = new PrintStream(fileOutput);
+        
+        // Write header
+        DateFormat  date = DateFormat.getDateTimeInstance();
+        String      strDateTime = date.format(new Date());
+        psOutput.println(DpQueryServiceImplTest.class.getSimpleName() + ": " + strDateTime);
+        psOutput.println();
     }
 
     /**
      * @throws java.lang.Exception
      */
     @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-        apiQuery.shutdown();
-        apiQuery.awaitTermination();
+    public static void tearDownAfterClass() {
+        try {
+            apiTest.shutdown();
+            
+        } catch (InterruptedException e) {
+            String strMsg = "WARNING: Query Service API interrupted during shut down: " + e.getMessage();
+            
+            System.err.println(strMsg);
+            psOutput.println();
+            psOutput.println(strMsg);
+        }
+        psOutput.close();
     }
 
     /**
@@ -176,305 +302,269 @@ public class DpQueryServiceImplTest {
 
     
     //
-    // ----------- Test Cases ------------
+    // Test Cases
     //
     
-    //
-    // Metadata Queries
-    //
-    
-    /** 
-     * Test method for {@link DpQueryServiceImpl#queryPvs(DpMetadataReuest)}.
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#shutdown()}.
      */
     @Test
-    public final void testQueryPvsSingle() {
-        String      strPvName1 = STR_PV_PREFIX + Integer.toString(1);
-        
-        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
-        
-        rqst.selectPv(strPvName1);
-        
+    public final void testShutdown() {
         try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
+            IQueryService   apiQuery = DpQueryApiFactory.connect();
             
-            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
+            Assert.assertFalse(apiQuery.isShutdown());
             
-            Assert.assertTrue("Record list should contain 1 record", lstRecs.size() == 1);
+            boolean bolShutdown = apiQuery.shutdown();
+            boolean bolIsShutdown = apiQuery.isShutdown();
             
-            PvMetaRecord        recTest = lstRecs.get(0);
+            Assert.assertTrue(bolShutdown);
+            Assert.assertTrue(bolIsShutdown);
             
-            Assert.assertEquals(strPvName1, recTest.name());
+        } catch (DpGrpcException e) {
+            Assert.fail("Exception " + e.getClass().getSimpleName() + " - Unable to create interface: " + e.getMessage());
             
-            System.out.println("Single PV Metadata Record:");
-            System.out.println(recTest);
-            
-        } catch (DpQueryException e) {
-            Assert.fail("Metadata query threw exception: + " + e.getMessage());
-            
-        }
-    }
-    
-    /** 
-     * Test method for {@link DpQueryServiceImpl#queryPvs(DpMetadataReuest)}.
-     */
-    @Test
-    public final void testQueryPvsMultiple() {
-        final int   SZ_LIST = 10;
-        
-        List<String>    lstPvNames = IntStream
-                .rangeClosed(1, SZ_LIST)
-                .mapToObj(i -> STR_PV_PREFIX + Integer.toString(i))
-                .toList();
-        
-        
-        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
-        
-        for (String strName : lstPvNames) 
-            rqst.selectPv(strName);
-        
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
-            
-            Assert.assertTrue("Record list should contain " + SZ_LIST + " records", lstRecs.size() == SZ_LIST);
-
-            for (PvMetaRecord rec : lstRecs) {
-                String      strPvName = rec.name();
-                
-                Assert.assertTrue(lstPvNames.contains(strPvName));
-            }
-            
-        } catch (DpQueryException e) {
-            Assert.fail("Metadata query threw exception: + " + e.getMessage());
-            
-        }
-    }
-    
-    /** 
-     * Test method for {@link DpQueryServiceImpl#queryPvs(DpMetadataReuest)}.
-     */
-    @Test
-    public final void testQueryPvsList() {
-        final int   SZ_LIST = 10;
-        
-        List<String>    lstPvNames = IntStream
-                .rangeClosed(1, SZ_LIST)
-                .mapToObj(i -> STR_PV_PREFIX + Integer.toString(i))
-                .toList();
-        
-        
-        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
-        
-        rqst.selectPvs(lstPvNames);
-        
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
-            
-            Assert.assertTrue("Record list should contain " + SZ_LIST + " records", lstRecs.size() == SZ_LIST);
-
-            for (PvMetaRecord rec : lstRecs) {
-                String      strPvName = rec.name();
-                
-                Assert.assertTrue(lstPvNames.contains(strPvName));
-            }
-            
-        } catch (DpQueryException e) {
-            Assert.fail("Metadata query threw exception: + " + e.getMessage());
-            
-        }
-    }
-    
-    /** 
-     * Test method for {@link DpQueryServiceImpl#queryPvs(DpMetadataReuest)}.
-     */
-    @Test
-    public final void testQueryPvsRegex() {
-        String      strPvRegex = STR_PV_PREFIX + "111";
-        
-        final DpMetadataRequest rqst = DpMetadataRequest.newRequest();
-        
-        rqst.setPvRegex(strPvRegex);
-        
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-            List<PvMetaRecord>  lstRecs = apiQuery.queryPvs(rqst);
-            
-            Assert.assertTrue("Record list should contain at least 1 record", lstRecs.size() >= 1);
-            
-            System.out.println(" Regular Expression PV Metadata Records: " + strPvRegex);
-            for (PvMetaRecord rec : lstRecs) {
-                System.out.println("  name: " + rec.name());
-                System.out.println("  type: " + rec.type());
-                System.out.println("  first tms: " + rec.firstTimestamp());
-                System.out.println("  last tms: " + rec.lastTimestamp());
-                System.out.println();
-            }
-            
-        } catch (DpQueryException e) {
-            Assert.fail("Metadata query threw exception: + " + e.getMessage());
-            
+        } catch (InterruptedException e) {
+            Assert.fail("Exception " + e.getClass().getSimpleName() + " - Interrupted during shut down: " + e.getMessage());
         }
     }
 
-    
-    // 
-    // Data Queries
-    //
-    
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#shutdownNow()}.
+     */
+    @Test
+    public final void testShutdownNow() {
+        try {
+            IQueryService   apiQuery = DpQueryApiFactory.connect();
+            
+            Assert.assertFalse(apiQuery.isShutdown());
+            
+            boolean bolShutdown = apiQuery.shutdownNow();
+            boolean bolIsShutdown = apiQuery.isShutdown();
+            boolean bolIsTerminated = apiQuery.isTerminated();
+            
+            Assert.assertTrue(bolShutdown);
+            Assert.assertTrue(bolIsShutdown);
+            Assert.assertTrue(bolIsTerminated);
+            
+            apiQuery.awaitTermination(LNG_TIMEOUT, TU_TIMEOUT);
+            
+            Assert.assertTrue(apiQuery.isShutdown());
+            Assert.assertTrue(apiQuery.isTerminated());
+            
+        } catch (DpGrpcException e) {
+            Assert.fail("Exception " + e.getClass().getSimpleName() + " - Unable to create interface: " + e.getMessage());
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Exception " + e.getClass().getSimpleName() + " - Interrupted during hard shut down: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#awaitTermination(long, java.util.concurrent.TimeUnit)}.
+     */
+    @Test
+    public final void testAwaitTerminationLongTimeUnit() {
+        try {
+            IQueryService   apiQuery = DpQueryApiFactory.connect();
+            
+            Assert.assertFalse(apiQuery.isShutdown());
+            
+            boolean bolShutdown = apiQuery.shutdown();
+            boolean bolIsTerminated = apiQuery.isTerminated();
+            boolean bolIsShutdown = apiQuery.isShutdown();
+            
+            Assert.assertTrue(bolShutdown);
+            Assert.assertTrue(bolIsShutdown);
+//            Assert.assertFalse(bolIsTerminated);
+            
+            apiQuery.awaitTermination(LNG_TIMEOUT, TU_TIMEOUT);
+            
+            Assert.assertTrue(apiQuery.isTerminated());
+            
+            psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
+            psOutput.println("  isTerminated() before wait = " + bolIsTerminated);
+            psOutput.println("  isTerminated() after wait  = " + apiQuery.isTerminated());
+            
+        } catch (DpGrpcException e) {
+            Assert.fail("Exception " + e.getClass().getSimpleName() + " - Unable to create interface: " + e.getMessage());
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Exception " + e.getClass().getSimpleName() + " - Interrupted during shut down: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#from(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
+     */
+    @Test
+    public final void testFrom() {
+        DpQueryConnection connQuery;
+        try {
+            connQuery = DpQueryConnectionFactory.FACTORY.connect();
+            
+        } catch (DpGrpcException e) {
+            Assert.fail("Unable to obtain Query Service connection, cannot continue: " + e.getMessage());
+            return;
+        }
+        
+        DpQueryServiceImpl apiQuery = DpQueryServiceImpl.from(connQuery);
+        try {
+            apiQuery.shutdown();
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Exception " + e.getClass().getSimpleName() + " - Interrupted during shut down: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#DpQueryServiceImpl(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
+     */
+    @Test
+    public final void testDpQueryServiceImpl() {
+        
+        try {
+            DpQueryConnection   connQuery = DpQueryConnectionFactory.FACTORY.connect();
+            
+            DpQueryServiceImpl  apiQuery = new DpQueryServiceImpl(connQuery);
+            
+            apiQuery.shutdown();
+            
+        } catch (DpGrpcException e) {
+            Assert.fail("Unable to obtain Query Service connection, cannot continue: " + e.getMessage());
+            return;
+            
+        } catch (InterruptedException e) {
+            Assert.fail("Exception " + e.getClass().getSimpleName() + " - Interrupted during shut down: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryMeta(com.ospreydcs.dp.api.query.DpMetadataRequest)}.
+     */
+    @Test
+    public final void testQueryMeta() {
+        
+        // Test Parameters
+        final int           cntPvs = 10;
+        final List<String>  strPvNames = LST_PV_NAMES.subList(0, cntPvs);
+        
+        DpMetadataRequest rqst = DpMetadataRequest.create();
+        rqst.selectPvs(strPvNames);
+        
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
+        try {
+            List<MetadataRecord>    lstRcrds = apiTest.queryMeta(rqst);
+            
+            Assert.assertEquals(cntPvs, lstRcrds.size());
+            
+            for (MetadataRecord rcrd : lstRcrds) 
+                psOutput.println("  " + rcrd.toString());
+            psOutput.println();
+            
+        } catch (DpQueryException e) {
+            String  strMsg = "Metadata request exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
+            
+            psOutput.println(strMsg);
+            psOutput.println();
+            Assert.fail(strMsg);
+        }
+    }
+
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryDataUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
-    public final void testQueryUnary() {
-        final int   CNT_SOURCES = 10;
-        final long  LNG_DURATION = 2L;
+    public final void testQueryDataUnary() {
         
-        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        // Test Parameters
+        final DpDataRequest rqst = RQST_SMALL;
         
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
         try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
+            Instant     insStart = Instant.now();
+            IDataTable  table = apiTest.queryDataUnary(rqst);
+            Instant     insFinish = Instant.now();
+            Duration    durRqst = Duration.between(insStart, insFinish);
 
-            Instant insStart = Instant.now();
-            IDataTable  table = apiQuery.queryDataUnary(rsqst);
-            Instant insStop = Instant.now();
+            this.printResults(psOutput, rqst, table, durRqst);
             
-            Duration    durQuery = Duration.between(insStart, insStop);
-            Long        szQuery = table.allocationSize();
-            Long        cntVals = szQuery/Double.BYTES;
-            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
-            
-            System.out.println("  Unary Query completed in " + durQuery.toMillis() + " milliseconds.");
-            System.out.println("  Total query size = " + szQuery);
-            System.out.println("  Double value count = " + cntVals);
-            System.out.println("  Transmission rate = " + dblRate);
+            Assert.assertEquals(rqst.getSourceCount(), (int)table.getColumnCount());
+            Assert.assertEquals(rqst.rangeDuration(), table.getDuration());
             
         } catch (DpQueryException e) {
-            Assert.fail("Process exception during query operation: type=" + e.getClass().getSimpleName() + ", message=" + e.getMessage());
+            String  strMsg = "Unary time-series request exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
             
-        }
-    }
-    
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(DpDataRequest)
-     */
-    @Test
-    public final void testQueryDataUni() {
-        final Integer   CNT_SOURCES = 500;
-        final Long      LNG_DURATION = 10L;
-        
-        final Integer   LNG_ROWS = 1000 * LNG_DURATION.intValue(); // sample rate (1 kHz) times duration
-        
-        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        rqst.setStreamType(DpGrpcStreamType.BACKWARD);
-        
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-            IDataTable  table = apiQuery.queryData(rqst);
-            
-            Assert.assertEquals(CNT_SOURCES, table.getColumnCount());
-//            Assert.assertEquals(LNG_ROWS, table.getRowCount());  // Buckets in test archive are 1000 values
-            
-        } catch (DpQueryException e) {
-            Assert.fail("queryData() threw exception: "  + e);
-            
+            psOutput.println(strMsg);
+            psOutput.println();
+            Assert.fail(strMsg);
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(DpDataRequest)
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
-    public final void testQueryDataBidi() {
-        final Integer   CNT_SOURCES = 500;
-        final Long      LNG_DURATION = 10L;
+    public final void testQueryDataDpDataRequest() {
         
-        final Integer   LNG_ROWS = 1000 * LNG_DURATION.intValue(); // sample rate (1 kHz) times duration
+        // Test Parameters
+        final DpDataRequest rqst = RQST_HALF_SRC;
         
-        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        rqst.setStreamType(DpGrpcStreamType.BIDIRECTIONAL);
-        
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
         try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
+            Instant     insStart = Instant.now();
+            IDataTable  table = apiTest.queryData(rqst);
+            Instant     insFinish = Instant.now();
+            Duration    durRqst = Duration.between(insStart, insFinish);
 
-            IDataTable  table = apiQuery.queryData(rqst);
+            this.printResults(psOutput, rqst, table, durRqst);
             
-            Assert.assertEquals(CNT_SOURCES, table.getColumnCount());
-//            Assert.assertEquals(LNG_ROWS, table.getRowCount());   // Buckets in test archive are 1000 values
+            Assert.assertEquals(rqst.getSourceCount(), (int)table.getColumnCount());
+            Assert.assertEquals(rqst.rangeDuration(), table.getDuration());
             
         } catch (DpQueryException e) {
-            Assert.fail("queryData() threw exception: "  + e);
+            String  strMsg = "Streaming time-series request exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
             
+            psOutput.println(strMsg);
+            psOutput.println();
+            Assert.fail(strMsg);
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(List)
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(java.util.List)}.
      */
     @Test
-    public final void testQueryDataListUni() {
-        final Integer           CNT_SOURCES = 500;
-        final Long              LNG_DURATION = 10L;
-        final int               CNT_REQUESTS = 3;
-        final DpGrpcStreamType  ENM_STREAM_TYPE = DpGrpcStreamType.BACKWARD;
-        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
-        
-        final Integer   LNG_ROWS = 1000 * LNG_DURATION.intValue(); // sample rate (1 kHz) times duration
-        
-        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        final List<DpDataRequest>   lstRqsts = rqstDecomp.buildCompositeRequest(rqst, RequestDecompType.HORIZONTAL, CNT_REQUESTS);
-        
-        rqst.setStreamType(ENM_STREAM_TYPE);
-        
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
+    public final void testQueryDataListOfDpDataRequest() {
 
-            IDataTable  table = apiQuery.queryData(lstRqsts);
+        // Test Resources
+        DataRequestDecomposer   prcrDcmp = DataRequestDecomposer.create();
+        
+        // Test Parameters
+        final int                   cntRqsts = 4;
+        final RequestDecompType     enmDcmpType = RequestDecompType.HORIZONTAL;
+        final DpDataRequest         rqst = RQST_HALF_SRC;
+        final List<DpDataRequest>   lstRqsts = prcrDcmp.buildCompositeRequest(rqst, enmDcmpType, cntRqsts);
+        
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
+        try {
+            Instant     insStart = Instant.now();
+            IDataTable  table = apiTest.queryData(lstRqsts);
+            Instant     insFinish = Instant.now();
             
-            Assert.assertEquals(CNT_SOURCES, table.getColumnCount());
-//            Assert.assertEquals(LNG_ROWS, table.getRowCount());       // Buckets in test archive are 1000 values
+            Duration    durRqst = Duration.between(insStart, insFinish);
+            
+            this.printResults(psOutput, rqst, table, durRqst);
+            
+            Assert.assertEquals(rqst.getSourceCount(), (int)table.getColumnCount());
+            Assert.assertEquals(rqst.rangeDuration(), table.getDuration());
             
         } catch (DpQueryException e) {
-            Assert.fail("queryData() threw exception: "  + e);
+            String  strMsg = "Streaming time-series request exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
             
-        }
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(List)
-     */
-    @Test
-    public final void testQueryDataListBidi() {
-        final int               CNT_SOURCES = 500;
-        final long              LNG_DURATION = 10L;
-        final int               CNT_REQUESTS = 3;
-        final DpGrpcStreamType  ENM_STREAM_TYPE = DpGrpcStreamType.BIDIRECTIONAL;
-        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
-        
-        final int               CNT_ROWS = 1000 * Long.valueOf(LNG_DURATION).intValue(); // sample rate (1 kHz) times duration
-        
-        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        final List<DpDataRequest>   lstRqsts = rqstDecomp.buildCompositeRequest(rqst, RequestDecompType.HORIZONTAL, CNT_REQUESTS);
-        
-        rqst.setStreamType(ENM_STREAM_TYPE);
-        
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-             IDataTable  table = apiQuery.queryData(lstRqsts);
-             int cntCols = table.getColumnCount();
-             int cntRows = table.getRowCount();
-             
-            Assert.assertEquals(CNT_SOURCES, cntCols);
-//            Assert.assertEquals(CNT_ROWS, cntRows);
-            
-        } catch (DpQueryException e) {
-            Assert.fail("queryData() threw exception: "  + e);
-            
+            psOutput.println(strMsg);
+            psOutput.println();
+            Assert.fail(strMsg);
         }
     }
 
@@ -482,469 +572,150 @@ public class DpQueryServiceImplTest {
      * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryDataStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
-    public final void testQueryDataStreamDpDataRequestUni() {
-        final int   CNT_SOURCES = 100;
-        final long  LNG_DURATION = 10L;
+    public final void testQueryDataStream() {
+        // Test Parameters
+        final DpDataRequest rqst = RQST_HALF_SRC;
         
-        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        rqst.setStreamType(DpGrpcStreamType.BACKWARD);
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
+        
+        DpQueryStreamBuffer bufData = apiTest.queryDataStream(rqst);
         
         try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-            DpQueryStreamBuffer bufResult = apiQuery.queryDataStream(rqst);
-            
             Instant insStart = Instant.now();
-            bufResult.start();
-            bufResult.awaitStreamCompleted();
-            Instant insStop = Instant.now();
+            bufData.startAndAwaitCompletion();
+            Instant insFinish = Instant.now();
             
-            Duration    durQuery = Duration.between(insStart, insStop);
-            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
-            Long        cntVals = szQuery/Double.BYTES;
-            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
+            Duration    durRqst = Duration.between(insStart, insFinish);
+            int         szData = bufData.getBuffer().stream().mapToInt(msg -> msg.getSerializedSize()).sum();
+            long        szRqst = rqst.approxDomainSize() * 1_000L * JavaSize.SZ_Double;
+            double      dblRate = ((double)szData*1_000L)/((double)durRqst.toNanos());
             
-            System.out.println("  Query completed in " + durQuery.toMillis() + " milliseconds.");
-            System.out.println("  Total query size = " + szQuery);
-            System.out.println("  Double value count = " + cntVals);
-            System.out.println("  Transmission rate = " + dblRate);
-            System.out.println(bufResult.toString());
+            psOutput.println("  Request:");
+            psOutput.println("    Data sources          : " + rqst.getSourceCount());
+            psOutput.println("    Time duration         : " + rqst.rangeDuration());
+            psOutput.println("    Approx. size (Mbytes) : " + szRqst/1_000_000L);
+            psOutput.println("  Result Buffer:");
+            psOutput.println("    Buffer type           : " + bufData.getClass().getSimpleName());
+            psOutput.println("    Allocation (Mbytes)   : " + szData/1_000_000L);
+            psOutput.println("  Request Operation:");
+            psOutput.println("    Duration              : " + durRqst);
+            psOutput.println("    Data rate (Mbps)      : " + dblRate);
+            psOutput.println();
             
-            if (bufResult.isStreamError())
-                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
+        } catch (IllegalStateException | IllegalArgumentException | InterruptedException e) {
+            String  strMsg = "Streaming time-series request exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
             
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            Assert.fail("Exception thrown during stream start: " + e.getMessage());
-
-        } catch (InterruptedException e) {
-            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
-            
-        } catch (TimeoutException e) {
-            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
-            
+            psOutput.println(strMsg);
+            psOutput.println();
+            Assert.fail(strMsg);
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryDataStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * <p>
+     * Uses multiple configuration of <code>DpQueryServiceImpl</code>
      */
     @Test
-    public final void testQueryDataStreamDpDataRequestBidi() {
-        final int   CNT_SOURCES = 100;
-        final long  LNG_DURATION = 10L;
+    public final void testQueryDataConfigurations() {
         
-        final DpDataRequest rqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        rqst.setStreamType(DpGrpcStreamType.BIDIRECTIONAL);
+        // Test Parameters
+        final DpQueryServiceImpl            apiImpl = DpQueryServiceImpl.class.cast(apiTest);       
+        final List<Config>                  lstCfgs = LST_API_CFGS;
+        final List<DpDataRequest>           lstRqsts = LST_RQSTS;
         
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
+        psOutput.println(JavaRuntime.getQualifiedMethodNameSimple());
+        psOutput.println();
+        for (Config cfg : lstCfgs) {
+            cfg.configure(apiImpl);
+            System.out.println("Running Configuration=" + cfg.name());
+            
+            psOutput.println("-- Configuration: " + cfg.name() + " ----");
+            psOutput.println();
+            for (DpDataRequest rqst : lstRqsts) 
+                try {
+                    System.out.println("  Running Request=" + MAP_RQST_NMS.get(rqst));
+                    if (cfg.equals(CFG_ALL_STATIC) && (rqst.equals(RQST_HALF_RNG) || rqst.equals(RQST_HALF_SRC))) {
+                        String  strMsg = "  Skipping query for request " + MAP_RQST_NMS.get(rqst) + " in configuration " + cfg.name() + ".";
+                        
+                        System.out.println(strMsg);
+                        psOutput.println(strMsg);
+                        psOutput.println();
+                        continue;
+                    }
+                    
+                    Instant insStart = Instant.now();
+                    IDataTable  table = apiImpl.queryData(rqst);
+                    Instant insFinish = Instant.now();
+                    
+                    Duration    durRqst = Duration.between(insStart, insFinish);
 
-            DpQueryStreamBuffer bufResult = apiQuery.queryDataStream(rqst);
-            
-            Instant insStart = Instant.now();
-            bufResult.start();
-            bufResult.awaitStreamCompleted();
-            Instant insStop = Instant.now();
-            
-            Duration    durQuery = Duration.between(insStart, insStop);
-            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
-            Long        cntVals = szQuery/Double.BYTES;
-            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
-            
-            System.out.println("  Query completed in " + durQuery.toMillis() + " milliseconds.");
-            System.out.println("  Total query size = " + szQuery);
-            System.out.println("  Double value count = " + cntVals);
-            System.out.println("  Transmission rate = " + dblRate);
-            System.out.println(bufResult.toString());
-            
-            if (bufResult.isStreamError())
-                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
-            
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            Assert.fail("Exception thrown during stream start: " + e.getMessage());
-
-        } catch (InterruptedException e) {
-            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
-            
-        } catch (TimeoutException e) {
-            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
+                    this.printResults(psOutput, rqst, table, durRqst);
+                    
+                    // Garbage collect the table to prevent heap errors
+                    table.clear();
+                    System.gc();
+                    Runtime.getRuntime().gc();
+                    
+                } catch (DpQueryException e) {
+                    String  strMsg = "  ERROR Request: " + MAP_RQST_NMS.get(rqst) + "\n"
+                            + "    Configured streaming time-series request exception " + e.getClass().getSimpleName() + "\n" 
+//                            + "    Configuration = " + cfg.name() + "\n"  
+                            + "    Request       = " + MAP_RQST_NMS.get(rqst) + "\n"
+                            + "    Message       = " + e.getMessage() + "\n"
+                            + "    Cause type    = " + e.getCause().getClass().getSimpleName() + "\n"
+                            + "    Cause message = " + e.getCause().getMessage() + "\n";
+                    
+                    psOutput.println(strMsg);
+//                    psOutput.println();
+                    
+                    apiImpl.setDefaultConfiguration();
+//                    Assert.fail(strMsg);
+                }
             
         }
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
-     * 
-     * @deprecated
-     */
-    @Test
-    public final void testQueryStreamUniDpDataRequestOne() {
         
-        // Request parameters
-        final String  strSrcNm = "dpTest_1";
-        final Instant insBegin = Instant.ofEpochSecond(1698767462);
-        final Instant insEnd = Instant.ofEpochSecond(1698767472);
-        final DpGrpcStreamType enmType = DpGrpcStreamType.BACKWARD;
-        
-        // Create request and configure
-        DpDataRequest   rqst = DpDataRequest.newRequest();
-        
-        rqst.selectSource(strSrcNm);
-        rqst.rangeAfter(insBegin);
-        rqst.rangeBefore(insEnd);
-        rqst.setStreamType(enmType);
-        
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-            DpQueryStreamBuffer bufResult = apiQuery.queryStreamUni(rqst);
-        
-            bufResult.startAndAwaitCompletion();
-            
-            List<QueryDataResponse> lstResultSet = bufResult.getBuffer();
-            List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = lstResultSet
-                    .stream()
-                    .map(msgRsp -> msgRsp.getQueryData())
-                    .flatMap(msgData -> msgData.getDataBucketsList().stream())
-                    .toList();
-            
-            System.out.println("  Query for " + strSrcNm + " in " + TimeInterval.from(insBegin, insEnd));
-            System.out.println("  results set size: " + lstResultSet.size());
-            System.out.println("  bucket count: " + lstBuckets.size());
-            
-        } catch (Exception e) {
-            Assert.fail("Process exception while waiting for stream completion: type=" + e.getClass().getSimpleName() + ", message=" + e.getMessage());
-            
-        }
+        apiImpl.setDefaultConfiguration();
     }
     
+    //
+    // Support Functions
+    //
+    
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * <p>
+     * Prints out text description of the given time-series data results properties to the given print stream.
+     * </p>
      * 
-     * @deprecated
+     * @param ps        print stream to receive text output
+     * @param rqst      the original time-series data request
+     * @param table     the request results
+     * @param durRqst   duration of the request
      */
-    @Test
-    public final void testQueryStreamUniDpDataRequest() {
-        final int   CNT_SOURCES = 100;
-        final long  LNG_DURATION = 10L;
+    private void printResults(PrintStream ps, DpDataRequest rqst, IDataTable table, Duration durRqst) {
         
-        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
+        long        szRqst = rqst.approxDomainSize() * 1_000L * JavaSize.SZ_Double;
+        long        szTbl = table.allocationSize();
+        double      dblRate = ((double)szTbl*1_000L)/((double)durRqst.toNanos());
         
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-            DpQueryStreamBuffer bufResult = apiQuery.queryStreamUni(rsqst);
-            
-            Instant insStart = Instant.now();
-            bufResult.start();
-            bufResult.awaitStreamCompleted();
-            Instant insStop = Instant.now();
-            
-            Duration    durQuery = Duration.between(insStart, insStop);
-            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
-            Long        cntVals = szQuery/Double.BYTES;
-            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
-            
-            System.out.println("  Query completed in " + durQuery.toMillis() + " milliseconds.");
-            System.out.println("  Total query size = " + szQuery);
-            System.out.println("  Double value count = " + cntVals);
-            System.out.println("  Transmission rate = " + dblRate);
-            System.out.println(bufResult.toString());
-            
-            if (bufResult.isStreamError())
-                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
-            
-//        } catch (DpQueryException e) {
-//            Assert.fail("Exception thrown during query: " + e.getMessage());
-            
-        } catch (InterruptedException e) {
-            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
-            
-        } catch (TimeoutException e) {
-            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
-            
-        }
+        String  strTblType;
+        if (table instanceof StaticDataTable)
+            strTblType = "Static";
+        else
+            strTblType = "Dynamic";
+        
+        ps.println("  Request: " + MAP_RQST_NMS.get(rqst));
+        ps.println("    Data source count       : " + rqst.getSourceCount());
+        ps.println("    Time range duration     : " + rqst.rangeDuration());
+        ps.println("    Estimated size (Mbytes) : " + szRqst/1_000_000L);
+        ps.println("  Result Table:");
+        ps.println("    Table type          : " + strTblType);
+        ps.println("    Column count        : " + table.getColumnCount());
+        ps.println("    Time range duration : " + table.getDuration());
+        ps.println("    Allocation (Mbytes) : " + szTbl/1_000_000L);
+        ps.println("  Request Operation:");
+        ps.println("    Duration         : " + durRqst);
+        ps.println("    Data rate (Mbps) : " + dblRate);
+        ps.println();
     }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryStreamUni(com.ospreydcs.dp.api.query.DpDataRequest)}.
-     * 
-     * @deprecated
-     */
-//    @Test
-    public final void testQueryStreamUniDpDataRequestBig() {
-        final int   CNT_SOURCES = 1000;
-        final long  LNG_DURATION = 60;
-        
-        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-            DpQueryStreamBuffer bufResult = apiQuery.queryStreamUni(rsqst);
-            
-            Instant insStart = Instant.now();
-            bufResult.start();
-            bufResult.awaitStreamCompleted();
-            Instant insStop = Instant.now();
-            
-            Duration    durQuery = Duration.between(insStart, insStop);
-            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
-            Long        cntVals = szQuery/Double.BYTES;
-            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
-            
-            System.out.println("  Query completed in " + durQuery.toMillis() + " milliseconds.");
-            System.out.println("  Total query size = " + szQuery);
-            System.out.println("  Double value count = " + cntVals);
-            System.out.println("  Transmission rate = " + dblRate);
-            System.out.println(bufResult.toString());
-            
-            if (bufResult.isStreamError())
-                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
-            
-//        } catch (DpQueryException e) {
-//            Assert.fail("Exception thrown during query: " + e.getMessage());
-            
-        } catch (InterruptedException e) {
-            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
-            
-        } catch (TimeoutException e) {
-            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
-            
-        }
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryStreamBidi(com.ospreydcs.dp.api.query.DpDataRequest)}.
-     * 
-     * @deprecated
-     */
-    @Test
-    public final void testQueryStreamBidiDpDataRequest() {
-        final int   CNT_SOURCES = 100;
-        final long  LNG_DURATION = 10;
-        
-        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-            DpQueryStreamBuffer bufResult = apiQuery.queryStreamBidi(rsqst);
-            
-            Instant insStart = Instant.now();
-            bufResult.start();
-            bufResult.awaitStreamCompleted();
-            Instant insStop = Instant.now();
-            
-            Duration    durQuery = Duration.between(insStart, insStop);
-            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
-            Long        cntVals = szQuery/Double.BYTES;
-            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
-            
-            System.out.println("  Query completed in " + durQuery.toMillis() + " milliseconds.");
-            System.out.println("  Total query size = " + szQuery);
-            System.out.println("  Double value count = " + cntVals);
-            System.out.println("  Transmission rate = " + dblRate);
-            System.out.println(bufResult.toString());
-            
-            if (bufResult.isStreamError())
-                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
-            
-//        } catch (DpQueryException e) {
-//            Assert.fail("Exception thrown during query: " + e.getMessage());
-            
-        } catch (InterruptedException e) {
-            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
-            
-        } catch (TimeoutException e) {
-            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
-            
-        }
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryStreamBidi(com.ospreydcs.dp.api.query.DpDataRequest)}.
-     * 
-     * @deprecated
-     */
-//    @Test
-    public final void testQueryStreamBidiDpDataRequestBig() {
-        final int   CNT_SOURCES = 1000;
-        final long  LNG_DURATION = 60;
-        
-        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-        
-        try {
-            System.out.println(JavaRuntime.getQualifiedMethodName());
-
-            DpQueryStreamBuffer bufResult = apiQuery.queryStreamBidi(rsqst);
-            
-            Instant insStart = Instant.now();
-            bufResult.start();
-            bufResult.awaitStreamCompleted();
-            Instant insStop = Instant.now();
-            
-            Duration    durQuery = Duration.between(insStart, insStop);
-            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
-            Long        cntVals = szQuery/Double.BYTES;
-            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
-            
-            System.out.println("  Query completed in " + durQuery.toMillis() + " milliseconds.");
-            System.out.println("  Total query size = " + szQuery);
-            System.out.println("  Double value count = " + cntVals);
-            System.out.println("  Transmission rate = " + dblRate);
-            System.out.println(bufResult.toString());
-            
-            if (bufResult.isStreamError())
-                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
-            
-//        } catch (DpQueryException e) {
-//            Assert.fail("Exception thrown during query: " + e.getMessage());
-            
-        } catch (InterruptedException e) {
-            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
-            
-        } catch (TimeoutException e) {
-            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
-            
-        }
-    }
-
-//    /**
-//     * Writes the results data from a BIDI stream query to the output file.
-//     */
-////    @Test
-//    public final void testSaveQueryDataWide() {
-//        final int   CNT_SOURCES = 100;
-//        final long  LNG_DURATION = 10;
-//        
-//        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-//        final DpQueryStreamBuffer   bufResult;
-//        
-//        try {
-//            bufResult = apiQuery.queryStreamBidi(rsqst);
-//            
-//            Instant insStart = Instant.now();
-//            bufResult.start();
-//            bufResult.awaitStreamCompleted();
-//            Instant insStop = Instant.now();
-//            
-//            Duration    durQuery = Duration.between(insStart, insStop);
-//            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
-//            Long        cntVals = szQuery/Double.BYTES;
-//            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
-//            
-//            System.out.println("Query completed in " + durQuery.toMillis() + " milliseconds.");
-//            System.out.println("  Total query size = " + szQuery);
-//            System.out.println("  Double value count = " + cntVals);
-//            System.out.println("  Transmission rate = " + dblRate);
-//            System.out.println(bufResult.toString());
-//            
-//            if (bufResult.isStreamError())
-//                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
-//            
-//            
-////        } catch (DpQueryException e) {
-////            Assert.fail("Exception thrown during query: " + e.getMessage());
-////            return;
-//            
-//        } catch (InterruptedException e) {
-//            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
-//            return;
-//            
-//        } catch (TimeoutException e) {
-//            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
-//            return;
-//            
-//        }
-//        
-//        // Save the result to an output file
-//        String  strFilePath = STR_PATH_QUERY_DATA_RESULTS_WIDE;
-//        
-//        try {
-//            FileOutputStream    fos = new FileOutputStream(strFilePath);
-//            ObjectOutputStream  oos = new ObjectOutputStream(fos);
-//            
-//            oos.writeObject(bufResult.getBuffer());
-//            
-//            oos.close();
-//            fos.close();
-//
-//        } catch (FileNotFoundException e) {
-//            Assert.fail("Unable to create/open output file " + strFilePath);
-//            
-//        } catch (IOException e) {
-//            Assert.fail("Unable to write data to output file " + strFilePath);
-//            
-//        }
-//    }
-//
-//    /**
-//     * Writes the results data from a BIDI stream query to the output file.
-//     */
-////    @Test
-//    public final void testSaveQueryDataLong() {
-//        final int   CNT_SOURCES = 10;
-//        final long  LNG_DURATION = 60;
-//        
-//        final DpDataRequest rsqst = TestDpDataRequestGenerator.createRequest(CNT_SOURCES, LNG_DURATION);
-//        final DpQueryStreamBuffer   bufResult;
-//        
-//        try {
-//            bufResult = apiQuery.queryStreamBidi(rsqst);
-//            
-//            Instant insStart = Instant.now();
-//            bufResult.start();
-//            bufResult.awaitStreamCompleted();
-//            Instant insStop = Instant.now();
-//            
-//            Duration    durQuery = Duration.between(insStart, insStop);
-//            Long        szQuery = bufResult.getPageSize() * bufResult.getBufferSize();
-//            Long        cntVals = szQuery/Double.BYTES;
-//            Double      dblRate = 1000.0 * Math.floorDiv(szQuery, durQuery.toMillis());
-//            
-//            System.out.println("Query completed in " + durQuery.toMillis() + " milliseconds.");
-//            System.out.println("  Total query size = " + szQuery);
-//            System.out.println("  Double value count = " + cntVals);
-//            System.out.println("  Transmission rate = " + dblRate);
-//            System.out.println(bufResult.toString());
-//            
-//            if (bufResult.isStreamError())
-//                Assert.fail("Stream buffer reported an error - " + bufResult.getStreamError());
-//            
-//            
-////        } catch (DpQueryException e) {
-////            Assert.fail("Exception thrown during query: " + e.getMessage());
-////            return;
-//            
-//        } catch (InterruptedException e) {
-//            Assert.fail("Process interrupted while waiting for stream completion: " + e.getMessage());
-//            return;
-//            
-//        } catch (TimeoutException e) {
-//            Assert.fail("Timeout while waiting for stream completion: " + e.getMessage());
-//            return;
-//            
-//        }
-//        
-//        // Save the result to an output file
-//        String  strFilePath = STR_PATH_QUERY_DATA_RESULTS_LONG;
-//        
-//        try {
-//            FileOutputStream    fos = new FileOutputStream(strFilePath);
-//            ObjectOutputStream  oos = new ObjectOutputStream(fos);
-//            
-//            oos.writeObject(bufResult.getBuffer());
-//            
-//            oos.close();
-//            fos.close();
-//
-//        } catch (FileNotFoundException e) {
-//            Assert.fail("Unable to create/open output file " + strFilePath);
-//            
-//        } catch (IOException e) {
-//            Assert.fail("Unable to write data to output file " + strFilePath);
-//            
-//        }
-//    }
 }

@@ -187,7 +187,7 @@ public record IngestRequestUID(String requestId) implements Serializable {
      * Compares the request UID field for equality.
      * </h2>
      * <p>
-     * This override is required to avoid Java equality comparision as Objects.
+     * This override is required to avoid Java equality comparison as Objects.
      * </p>
      * 
      * @see java.lang.Record#equals(java.lang.Object)

@@ -292,7 +292,6 @@ public abstract class DpGrpcConnectionFactoryBase<
      * 
      * @param strHost       network URL of the desired service
      * @param intPort       server port used by the at the above service
-     * @param bolPlainText  transmit data using plain ASCII (negates any TLS security)
      * 
      * @return new <code>Connection</code> instance connected to the given address
      * 
@@ -462,8 +461,8 @@ public abstract class DpGrpcConnectionFactoryBase<
      * <ul>
      * <li>
      * Note that Transport Layer Security (TLS) is inherently disabled with the <code>bolPlainText</code> 
-     * argument set to <code>true</code>.  Otherwise TLS security is enforced using the argument 
-     * <code>bolTlsActive</code>.
+     * argument set to <code>true</code>.  Otherwise TLS security is enforced when setting the argument 
+     * <code>bolTlsActive</code> to <code>true</code>.
      * </li>
      * <li>
      * No default parameters connection are used.
@@ -678,7 +677,6 @@ public abstract class DpGrpcConnectionFactoryBase<
                 );        
     }
 
-
     /**
      * <p>
      * Creates and returns a new <code>Connection</code> instance connected
@@ -806,6 +804,4 @@ public abstract class DpGrpcConnectionFactoryBase<
         return connBound;
     }
 
-    
-    
 }

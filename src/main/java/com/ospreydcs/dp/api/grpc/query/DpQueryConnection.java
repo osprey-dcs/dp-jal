@@ -27,6 +27,8 @@
  */
 package com.ospreydcs.dp.api.grpc.query;
 
+import java.util.concurrent.TimeUnit;
+
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
@@ -57,11 +59,22 @@ public class DpQueryConnection extends DpGrpcConnection<DpQueryServiceGrpc, DpQu
 
     
     //
-    // Class Resources
+    // Application Resources
     //
     
     /** The Query Service default connection parameters */
     public static final DpGrpcConnectionConfig        CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
+    
+    
+    //
+    // Class Constants
+    //
+    
+    /** Default timeout limit for query service operations */
+    public static final long        LNG_DEF_TIMEOUT_LIMIT = CFG_DEFAULT.timeout.limit;
+    
+    /** Default timeout unit for query service operations */
+    public static final TimeUnit    TU_DEF_TIMEOUT_UNIT = CFG_DEFAULT.timeout.unit;
     
     
     //
@@ -73,14 +86,14 @@ public class DpQueryConnection extends DpGrpcConnection<DpQueryServiceGrpc, DpQu
      * Creates a new <code>DpQueryConnection</code> instance supported by the given gRPC channel.
      * </p>
      * 
-     * @param grpcChan  gRPC channel instance supporting all communications with the Query Service
+     * @param chanGrpc  gRPC channel instance supporting all communications with the Query Service
      * 
      * @return new <code>DpQueryConnection</code> using gRPC channel for Query Service connection
      *
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      */
-    public static DpQueryConnection from(ManagedChannel grpcChan) throws DpGrpcException {
-        return new DpQueryConnection(grpcChan);
+    public static DpQueryConnection from(ManagedChannel chanGrpc) throws DpGrpcException {
+        return new DpQueryConnection(chanGrpc);
     }
 
     /**
@@ -106,22 +119,23 @@ public class DpQueryConnection extends DpGrpcConnection<DpQueryServiceGrpc, DpQu
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpQueryConnection</code> supported from the gRPC managed 
+     * Constructs a new instance of <code>DpQueryConnection</code> supported by the given gRPC managed 
      * channel instance.
      * </p>
      *
-     * @param grpcChan  gRPC channel instance supporting all communications with the Query Service
+     * @param chanGrpc  gRPC channel instance supporting all communications with the Query Service
      * 
      * @throws DpGrpcException general gRPC resource creation error (see message and cause)
      */
-    public DpQueryConnection(ManagedChannel grpcChan) throws DpGrpcException {
-        super(DpQueryServiceGrpc.class, grpcChan);
+    public DpQueryConnection(ManagedChannel chanGrpc) throws DpGrpcException {
+        super(DpQueryServiceGrpc.class, chanGrpc);
     }
     
 
     /**
      * <p>
-     * Constructs a new instance of <code>DpQueryConnection</code> from a bound <code>DpGrpcConnection</code> instance.
+     * Constructs a new instance of <code>DpQueryConnection</code> from the given bound 
+     * <code>DpGrpcConnection</code> instance.
      * </p>
      * <p>
      * Aliases the given <code>DpGrpcConnection</code> instance as the newly created <code>DpQueryConnection</code> 
@@ -146,7 +160,7 @@ public class DpQueryConnection extends DpGrpcConnection<DpQueryServiceGrpc, DpQu
      * Blocks until the connection finishes a shutdown operation and the underlying gRPC channel fully terminates.
      * </p>
      * <p>
-     * Defers to the base class {@link #awaitTermination(long, java.util.concurrent.TimeUnit)} supply the default
+     * Defers to the base class {@link #awaitTermination(long, java.util.concurrent.TimeUnit)} supplying the default
      * timeout parameters for the Query Service connection.
      * </p> 
      * 
@@ -158,7 +172,7 @@ public class DpQueryConnection extends DpGrpcConnection<DpQueryServiceGrpc, DpQu
      * @see #awaitTermination(long, java.util.concurrent.TimeUnit)
      */
     public boolean awaitTermination() throws InterruptedException {
-        return super.awaitTermination(CFG_DEFAULT.timeout.limit, CFG_DEFAULT.timeout.unit);
+        return super.awaitTermination(LNG_DEF_TIMEOUT_LIMIT, TU_DEF_TIMEOUT_UNIT);
     }
 
 }

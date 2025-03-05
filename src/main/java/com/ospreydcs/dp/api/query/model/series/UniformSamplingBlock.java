@@ -677,6 +677,20 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     public boolean hasError() {
         return false;
     }
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#clear()
+     */
+    @Override
+    public void clear() {
+        this.vecSeries.forEach(SampledTimeSeries::clear);
+        
+        this.vecTimestamps.clear();
+        this.vecSeries.clear();
+        this.lstSourceNames.clear();
+        this.mapSrcToIndex.clear();
+        this.mapSrcToSeries.clear();
+    }
 
     /**
      *

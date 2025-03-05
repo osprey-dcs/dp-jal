@@ -260,78 +260,78 @@ public class TestQueryResponses {
      * Query definition record for "long" query  
      * <p>
      * 5 data source(s)<br/>
-     * 20 second(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
+     * 20 second(s) duration (<code>TestDpDataRequestGenerator.LNG_RANGE</code>)
      */
     public static final TestQueryRecord     QREC_LONG = new TestQueryRecord(
                                                 "queryresults-single-long.dat", 
                                                 5, 
                                                 0, 
-                                                TestDpDataRequestGenerator.LNG_DURATION, 
+                                                TestDpDataRequestGenerator.LNG_RANGE, 
                                                 0L);
     
     /**
      * Query definition record for "big" query
      * <p>
      * 500 data source(s)<br/>
-     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
+     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_RANGE</code>)
      */
     public static final TestQueryRecord     QREC_BIG = new TestQueryRecord(
                                                 "queryresults-single-big.dat",
                                                 500,
                                                 0,
-                                                TestDpDataRequestGenerator.LNG_DURATION,
+                                                TestDpDataRequestGenerator.LNG_RANGE,
                                                 0L);
     
     /**
      * Query definition record for "huge" query
      * <p>
      * 1000 data source(s)<br/>
-     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
+     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_RANGE</code>)
      */
     public static final TestQueryRecord     QREC_HUGE = new TestQueryRecord(
                                                 "queryresults-single-huge.dat",
                                                 1000,
                                                 0,
-                                                TestDpDataRequestGenerator.LNG_DURATION,
+                                                TestDpDataRequestGenerator.LNG_RANGE,
                                                 0L);
     
     /**
      * Query definition record for half the text archive
      * <p>
      * 2000 data source(s)<br/>
-     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
+     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_RANGE</code>)
      */
     public static final TestQueryRecord     QREC_HALF_SRC = new TestQueryRecord(
                                                 "queryresults-single-half_src.dat",
                                                 TestDpDataRequestGenerator.CNT_PV_NAMES/2,
                                                 0,
-                                                TestDpDataRequestGenerator.LNG_DURATION,
+                                                TestDpDataRequestGenerator.LNG_RANGE,
                                                 0L);
     
     /**
      * Query definition record for half the text archive
      * <p>
      * All data source(s)<br/>
-     * 10 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
+     * 10 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_RANGE</code>)
      */
     public static final TestQueryRecord     QREC_HALF_RNG = new TestQueryRecord(
                                                 "queryresults-single-half_src.dat",
                                                 TestDpDataRequestGenerator.CNT_PV_NAMES,
                                                 0,
-                                                TestDpDataRequestGenerator.LNG_DURATION/2,
+                                                TestDpDataRequestGenerator.LNG_RANGE/2,
                                                 0L);
     
     /**
      * Query definition record for entire test archive query
      * <p>
      * 100 data source(s)<br/>
-     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_DURATION</code>)
+     * 20 seconds(s) duration (<code>TestDpDataRequestGenerator.LNG_RANGE</code>)
      */
     public static final TestQueryRecord     QREC_ALL = new TestQueryRecord(
                                                 "queryresults-single-all.data",
                                                 TestDpDataRequestGenerator.CNT_PV_NAMES,
                                                 0,
-                                                TestDpDataRequestGenerator.LNG_DURATION,
+                                                TestDpDataRequestGenerator.LNG_RANGE,
                                                 0L
                                                 );
 

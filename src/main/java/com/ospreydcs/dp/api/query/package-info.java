@@ -43,7 +43,7 @@
  * <p>
  * <b>Metadata Requests</b>
  * <br/>
- * Metadata results are returned as lists of metadata records, for example <code>PvMetaRecord</code>.  There will
+ * Metadata results are returned as lists of metadata records, for example <code>MetadataRecord</code>.  There will
  * be one record for every matching criteria within the request.
  * </p>
  * <p>

@@ -418,7 +418,7 @@ public class CorrelatedQueryDataTest {
         List<DataBucket>    lstBuckets = LST_BUCKETS_ONE;
         
         // Create a sorted set of correlated data 
-        SortedSet<CorrelatedQueryData>  setData = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.newInstance());
+        SortedSet<CorrelatedQueryData>  setData = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.create());
         
         lstBuckets.forEach(msgBucket -> setData.add(CorrelatedQueryData.from(msgBucket)));
         

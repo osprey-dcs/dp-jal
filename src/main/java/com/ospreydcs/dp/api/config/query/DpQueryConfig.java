@@ -30,7 +30,6 @@ package com.ospreydcs.dp.api.config.query;
 import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
 import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
 import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
-import com.ospreydcs.dp.api.config.grpc.DpGrpcStreamConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 import com.ospreydcs.dp.api.model.AUnavailable;
@@ -96,12 +95,16 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
         // Configuration Fields
         //
         
-        /** Default parameters for Query Service data request queries */
+        /** Default parameters for Query Service time-series data request queries */
         @ACfgOverride.Struct(pathelem="REQUEST")
         public DpDataRequestConfig      request;
         
-        /** Default parameters for Query Service data request responses */
+        /** Default parameters for Query Service time-series data request responses */
         @ACfgOverride.Struct(pathelem="RESPONSE")
         public DpDataResponseConfig     response;
+        
+        /** Default parameters for Query Service time-series data table results */
+        @ACfgOverride.Struct(pathelem="TABLE")
+        public DpDataTableConfig        table;
     }
 }

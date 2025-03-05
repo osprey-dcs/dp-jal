@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	PvMetaRecord.java
+ * File:	MetadataRecord.java
  * Package: com.ospreydcs.dp.api.model
- * Type: 	PvMetaRecord
+ * Type: 	MetadataRecord
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -64,7 +64,7 @@ import java.time.Instant;
  * @since Mar 14, 2024
  *
  */
-public record PvMetaRecord(
+public record MetadataRecord(
         String                  name,
         DpSupportedType         type,
         String                  dpTypeName,
@@ -82,7 +82,7 @@ public record PvMetaRecord(
     //
     
     /**
-     * <h1>Creates a new <code>PvMetaRecord</code> populated with the given argument data.</h1>
+     * <h1>Creates a new <code>MetadataRecord</code> populated with the given argument data.</h1>
      * 
      * @param   name            data source name
      * @param   type            the type of data the data source last produced
@@ -96,7 +96,7 @@ public record PvMetaRecord(
      * 
      * @return  a new metadata record populated with the given arguments
      */
-    public static PvMetaRecord  from(
+    public static MetadataRecord  from(
             String name, 
             DpSupportedType type,
             String  dpTypeName,
@@ -108,7 +108,7 @@ public record PvMetaRecord(
             long samplePeriod
             ) 
     {
-        return new PvMetaRecord(name, type, dpTypeName, firstTimestamp, lastTimestamp, timestampCase, timestampType, sampleCount, samplePeriod);
+        return new MetadataRecord(name, type, dpTypeName, firstTimestamp, lastTimestamp, timestampCase, timestampType, sampleCount, samplePeriod);
     }
 
 }

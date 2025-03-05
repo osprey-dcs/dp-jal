@@ -32,10 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.IIngestionService;
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceFactory;
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamFactory;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceFactory;
+import com.ospreydcs.dp.api.query.impl.DpQueryServiceApiFactory;
 
 /**
  * <h2>Connection factory for Data Platform Query Service APIs</h2>
@@ -89,7 +86,7 @@ public class DpQueryApiFactory {
     //
     
     /** The API connection factory for connection to the Query Service */
-    private static final DpQueryServiceFactory      FAC_SERVICE = DpQueryServiceFactory.FACTORY;
+    private static final DpQueryServiceApiFactory   FAC_SERVICE = DpQueryServiceApiFactory.FACTORY;
     
     
     //
@@ -109,7 +106,7 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connectService() throws DpGrpcException {
+    public static IQueryService    connect() throws DpGrpcException {
         return FAC_SERVICE.connect();
     }
     
@@ -129,7 +126,7 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connectService(String strHostUrl, int intHostPort) throws DpGrpcException {
+    public static IQueryService    connect(String strHostUrl, int intHostPort) throws DpGrpcException {
         return FAC_SERVICE.connect(strHostUrl, intHostPort);
     }
     
@@ -151,7 +148,7 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connectService(String strHostUrl, int intHostPort, boolean bolPlainText) throws DpGrpcException {
+    public static IQueryService    connect(String strHostUrl, int intHostPort, boolean bolPlainText) throws DpGrpcException {
         return FAC_SERVICE.connect(strHostUrl, intHostPort, bolPlainText);
     }
     
@@ -182,7 +179,7 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connectService(String strHostUrl, int intHostPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
+    public static IQueryService    connect(String strHostUrl, int intHostPort, boolean bolPlainText, long lngTimeout, TimeUnit tuTimeout) throws DpGrpcException {
         return FAC_SERVICE.connect(strHostUrl, intHostPort, bolPlainText, lngTimeout, tuTimeout);
     }
     
@@ -250,7 +247,7 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connectService(String strHostUrl, 
+    public static IQueryService    connect(String strHostUrl, 
                                                       int intHostPort, 
                                                       boolean bolTisActive, 
                                                       boolean bolPlainText, 
@@ -264,7 +261,7 @@ public class DpQueryApiFactory {
     
     
     //
-    // IIngestionService Connections with Explicit Security
+    // IQueryService Connections with Explicit Security
     //
     
     /**
@@ -286,7 +283,7 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService    connectService(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+    public static IQueryService    connect(File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
         return FAC_SERVICE.connect(fileTrustedCerts, fileClientCerts, fileClientKey);
     }
     
@@ -311,7 +308,7 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService connectService(String strHostUrl, int intHostPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
+    public static IQueryService connect(String strHostUrl, int intHostPort, File fileTrustedCerts, File fileClientCerts, File fileClientKey) throws DpGrpcException {
 
         return FAC_SERVICE.connect(strHostUrl, intHostPort, fileTrustedCerts, fileClientCerts, fileClientKey);
     }
@@ -367,7 +364,7 @@ public class DpQueryApiFactory {
      * certificates, and the file containing the client's private key, respectively.  This option is valuable
      * if clients wish to use explicit TLS certification other than the default values of the current platform.  
      * If default values are all that is required consider method 
-     * <code>{@link #connectService(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)}</code>.
+     * <code>{@link #connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)}</code>.
      * </li> 
      * <li>
      * All interface configuration parameters are default values taken from <code>{@link DpApiConfig}</code>.
@@ -391,7 +388,7 @@ public class DpQueryApiFactory {
      * 
      * @throws DpGrpcException  general gRPC resource or connection exception (see detail and cause)
      */
-    public static IQueryService connectService(
+    public static IQueryService connect(
             String  strHost, 
             int     intPort, 
             File    fileTrustedCerts,

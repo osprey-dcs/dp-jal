@@ -65,7 +65,7 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * vertically can yield the same result set for each decompose request.  
  * </p>
  * <p>
- * Due to the design of the <code>QueryResponseCorrelatorDep</code> the above situation will always yield the correct 
+ * Due to the design of the <code>QueryResponseCorrelatorDeprecated</code> the above situation will always yield the correct 
  * result set for the query. However, this situation will significantly degrade performance and should be avoided.
  * Only use vertical and grid decomposition when the structure of the data buckets is known (which requires
  * knowledge of the sampling process for the requested data sources). 

@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.ospreydcs.dp.api.annotate.model.DpDataBlock;
 import com.ospreydcs.dp.api.common.BufferedImage;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.DpTimestampCase;
@@ -49,12 +50,13 @@ import com.ospreydcs.dp.api.common.IngestionResponse;
 import com.ospreydcs.dp.api.common.IngestionResult;
 import com.ospreydcs.dp.api.common.ProviderRegistrar;
 import com.ospreydcs.dp.api.common.ProviderUID;
-import com.ospreydcs.dp.api.common.PvMetaRecord;
+import com.ospreydcs.dp.api.common.MetadataRecord;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.common.BufferedImage.Format;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.annotation.DataBlock;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
@@ -125,7 +127,52 @@ public final class ProtoMsg {
     
     
     //
-    // Java Objects to Protobuf Messages
+    // Exception Messages
+    //
+    
+    /**
+     * <p>
+     * Creates and returns an error message from the given <code>ExceptionalResult</code> Protocol Buffers message.
+     * </p>
+     * <p>
+     * Extracts the status enumeration and error message from the <code>ExceptionalResult</code> argument and
+     * uses them in the returned error message.  The other argument is an optional parameter to be added to
+     * returned message.
+     * </p>
+     * <p>
+     * The format of the returned message is given by the following:
+     * <pre>
+     *   'Qualified Calling Method Name' - {strSource} reported exception: status='STATUS', message='MESSAGE'
+     * </pre>
+     * where 'Qualified Calling Method Name' is the class-qualified method name of the calling method,
+     * {strSource} is the optional name of the offending operation or service, 
+     * STATUS is the status enumeration value within the <code>ExceptionalResult</code> 
+     * and MESSAGE is the error message within the <code>ExceptionalResult</code> argument.
+     * </p>
+     * 
+     * @param strSource     (optional) service name or operation creating the exception 
+     * @param msgExcept     the exceptional result Protocol Buffers message
+     * 
+     * @return  error message string created from the exception message information
+     */
+    public static String    exceptionMessage(ExceptionalResult msgExcept, String... strSource) {
+        
+        ExceptionalResultStatus enmExcept = msgExcept.getExceptionalResultStatus();
+        String                  strExcept = msgExcept.getMessage();
+        
+        String  strErrMsg = JavaRuntime.getQualifiedCallerNameSimple() + " - "; 
+        if (strSource != null)
+                strErrMsg += strSource + " ";
+        
+        strErrMsg += " reported exception: status=" + enmExcept
+                  + ", message=" + strExcept;
+        
+        return strErrMsg;
+    }
+    
+    
+    //
+    // Java Objects to Protocol Buffers Messages
     //
     
     /**
@@ -288,6 +335,30 @@ public final class ProtoMsg {
                 .build();
         
         return msgFrame;
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>DataBlock</code> Protocol Buffers message populated with the given argument data.
+     * </p>
+     * <p>
+     * The returned message is essentially a direct replica of the argument value containing all the
+     * equivalent data of the data block.  That is, the <code>DpDataBlock</code> argument is converted to
+     * a <code>DataBlock</code> Protocol Buffers message.
+     * </p> 
+     * 
+     * @param blk   the data block as a <code>DpDataBlock</code> object
+     *  
+     * @return      a <code>DataBlock</code> message equivalent to the argument data block
+     */
+    public static DataBlock   from(DpDataBlock blk) {
+        DataBlock.Builder   bldrMsg = DataBlock.newBuilder();
+        
+        bldrMsg.addAllPvNames(blk.getDataSources());
+        bldrMsg.setBeginTime(ProtoMsg.from( blk.getTimeRange().begin() ));
+        bldrMsg.setEndTime(ProtoMsg.from( blk.getTimeRange().end()) );
+        
+        return bldrMsg.build();
     }
     
     /**
@@ -674,6 +745,29 @@ public final class ProtoMsg {
     
     /**
      * <p>
+     * Creates a new <code>DpDataBlock</code> instance populated from the given <code>DataBlock</code> message.
+     * </p>
+     * <p>
+     * The argument and the returned value are direct equivalents, that is, they contain equivalent data.  The 
+     * message data is extracted and used to create the returned data block type.
+     * </p>
+     * 
+     * @param msgBlock  Protocol Buffers data block message
+     * 
+     * @return  Java API Library data block object populated from the argument
+     */
+    public static DpDataBlock   toDataBlock(DataBlock msgBlock) {
+        List<String>    lstPvNms = msgBlock.getPvNamesList();
+        Instant         insBegin = ProtoMsg.toInstant(msgBlock.getBeginTime());
+        Instant         insEnd = ProtoMsg.toInstant(msgBlock.getEndTime());
+        
+        DpDataBlock blk = DpDataBlock.from(lstPvNms, insBegin, insEnd);
+        
+        return blk;
+    }
+    
+    /**
+     * <p>
      * Creates a new <code>BufferedImage</code> instance populated from the given <code>Image</code> message.
      * </p>
      * <p>
@@ -769,7 +863,7 @@ public final class ProtoMsg {
     
     /**
      * <p>
-     * Creates a new <code>{@link PvMetaRecord}</code> populated from the given Query Service metadata query 
+     * Creates a new <code>{@link MetadataRecord}</code> populated from the given Query Service metadata query 
      * response message.
      * </p>
      * <p>
@@ -812,7 +906,7 @@ public final class ProtoMsg {
      * @throws IllegalArgumentException data type name in the message was not a <code>DataValueType</code> enumeration
      * @throws TypeNotPresentException  data type in message does not map to <code>DpSupportedType</code> 
      */
-    public static PvMetaRecord  toPvMetaRecord(QueryMetadataResponse.MetadataResult.PvInfo msgPvInfo) 
+    public static MetadataRecord  toPvMetaRecord(QueryMetadataResponse.MetadataResult.PvInfo msgPvInfo) 
             throws IllegalArgumentException, TypeNotPresentException {
         
         // Extract the PV name and type information
@@ -838,7 +932,7 @@ public final class ProtoMsg {
         
         
         // Create metadata record
-        PvMetaRecord    recPvInfo = PvMetaRecord.from(strPvName, enmDpType, strDpType, insTmsFirst, insTmsLast, enmDpTmsCase, strTmsType, intSmplCnt, lngSmplPer);
+        MetadataRecord    recPvInfo = MetadataRecord.from(strPvName, enmDpType, strDpType, insTmsFirst, insTmsLast, enmDpTmsCase, strTmsType, intSmplCnt, lngSmplPer);
         
         return recPvInfo;
     }

@@ -49,7 +49,7 @@ import com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock;
 
 /**
  * <p>
- * Extends the <code>{@link SamplingProcess}</code> class to add <code>{@link IDataTable}</code> functionality.
+ * Extends the <code>{@link SamplingProcess}</code> class to add dynamic <code>{@link IDataTable}</code> functionality.
  * </p>
  * <p>
  * This is essentially a wrapper class for <code>{@link SamplingProcess}</code> that adds the 
@@ -310,6 +310,21 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     @Override
     public boolean hasError() {
         return false;
+    }
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#clear()
+     */
+    @Override
+    public void clear() {
+        this.mapSrcNmToFullColumn.values().forEach(IDataColumn::clear);
+        
+        this.vecTimestamps.clear();
+        this.vecColumnName.clear();
+        this.vecPageRowInd.clear();
+        this.mapIndToSrcNm.clear();
+        this.mapSrcNmToFullColumn.clear();
+        this.mapSrcNmToInd.clear();
     }
 
     /**

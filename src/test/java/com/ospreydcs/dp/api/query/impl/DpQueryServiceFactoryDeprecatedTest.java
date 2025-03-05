@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryServiceFactoryTest.java
+ * File:	DpQueryServiceFactoryDeprecatedTest.java
  * Package: com.ospreydcs.dp.api.query
- * Type: 	DpQueryServiceFactoryTest
+ * Type: 	DpQueryServiceFactoryDeprecatedTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -40,14 +40,16 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 
 /**
  * <p>
- * JUnit test cases for <code>@link DpQueryServiceFactory}</code>.
+ * JUnit test cases for <code>{@link DpQueryServiceFactoryDeprecated}</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Jan 7, 2024
  *
+ * @deprecated DpQueryServiceFactoryDeprecated is deprecated and no longer in need of unit testing
  */
-public class DpQueryServiceFactoryTest {
+@Deprecated(since="Feb 17, 2025", forRemoval=true)
+public class DpQueryServiceFactoryDeprecatedTest {
 
     
     //
@@ -91,15 +93,15 @@ public class DpQueryServiceFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceFactory#getInstance()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceFactoryDeprecated#getInstance()}.
      */
     @Test
     public final void testGetInstance() {
         boolean                 bolResult = false;
-        DpQueryServiceFactory   fac = DpQueryServiceFactory.getInstance();
+        DpQueryServiceFactoryDeprecated   fac = DpQueryServiceFactoryDeprecated.getInstance();
 
         try {
-            DpQueryServiceImpl qsApi = fac.connect();
+            DpQueryServiceImplDeprecated qsApi = fac.connect();
             
             bolResult = qsApi.shutdown();
             
@@ -126,7 +128,7 @@ public class DpQueryServiceFactoryTest {
         boolean bolResult = false;
         
         try {
-            DpQueryServiceImpl qs = DpQueryServiceFactory.FACTORY.connect();
+            DpQueryServiceImplDeprecated qs = DpQueryServiceFactoryDeprecated.FACTORY.connect();
             
             bolResult = qs.shutdown();
             
@@ -153,7 +155,7 @@ public class DpQueryServiceFactoryTest {
         boolean bolResult = false;
         
         try {
-            DpQueryServiceImpl qs = DpQueryServiceFactory.FACTORY.connect(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
+            DpQueryServiceImplDeprecated qs = DpQueryServiceFactoryDeprecated.FACTORY.connect(CFG_DEFAULT.channel.host.url, CFG_DEFAULT.channel.host.port);
             
             bolResult = qs.shutdown();
             
@@ -180,7 +182,7 @@ public class DpQueryServiceFactoryTest {
         boolean bolResult = false;
         
         try {
-            DpQueryServiceImpl qs = DpQueryServiceFactory.FACTORY.connect(
+            DpQueryServiceImplDeprecated qs = DpQueryServiceFactoryDeprecated.FACTORY.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.grpc.usePlainText,
@@ -213,7 +215,7 @@ public class DpQueryServiceFactoryTest {
         boolean bolResult = false;
         
         try {
-            DpQueryServiceImpl qs = DpQueryServiceFactory.FACTORY.connect(
+            DpQueryServiceImplDeprecated qs = DpQueryServiceFactoryDeprecated.FACTORY.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
                     CFG_DEFAULT.channel.tls.active,

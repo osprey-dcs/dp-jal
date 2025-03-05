@@ -274,7 +274,7 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
 
 
     /**
-     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getType()
+     * @see com.ospreydcs.dp.api.model.IDataColumn#getType()
      */
     @Override
     public final DpSupportedType getType() {
@@ -282,7 +282,7 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
     }
 
     /**
-     * @see @see com.ospreydcs.dp.api.model.IDataColumn#getValue(int)
+     * @see com.ospreydcs.dp.api.model.IDataColumn#getValue(int)
      */
     @Override
     public Object getValue(int index) throws IndexOutOfBoundsException {
@@ -296,6 +296,14 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
     @Override
     public Integer getSize() {
         return this.vecValues.size();
+    }
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataColumn#clear()
+     */
+    @Override
+    public void clear() {
+        this.vecValues.clear();
     }
 
 
