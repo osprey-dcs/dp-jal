@@ -27,7 +27,6 @@
  */
 package com.ospreydcs.dp.api.query.model.correl;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -246,13 +245,14 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         this.lstMsgCols.add(msgDataCol);
         
         // Compute time domain
-        int     cntSamples = this.msgSmplClk.getCount();
-        long    lngPeriodNs = this.msgSmplClk.getPeriodNanos();
-        Duration    durPeriod = Duration.ofNanos(lngPeriodNs);
-        Duration    durDomain = durPeriod.multipliedBy(cntSamples - 1);
-        Instant     insStop = this.insStart.plus(durDomain);
-        
-        this.domTimeRange = TimeInterval.from(this.insStart, insStop);
+        this.domTimeRange = ProtoTime.domain(this.msgSmplClk);
+//        int     cntSamples = this.msgSmplClk.getCount();
+//        long    lngPeriodNs = this.msgSmplClk.getPeriodNanos();
+//        Duration    durPeriod = Duration.ofNanos(lngPeriodNs);
+//        Duration    durDomain = durPeriod.multipliedBy(cntSamples - 1);
+//        Instant     insStop = this.insStart.plus(durDomain);
+//        
+//        this.domTimeRange = TimeInterval.from(this.insStart, insStop);
     }
     
     
@@ -583,6 +583,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * If duplicates are present, the data source entry encountered FIRST will be entered into 
      * the correlated data set.
      * </li>
+     * </ul>
      * </p>
      * 
      * @param msgBucket Protobuf message containing sampling interval and column data
@@ -593,7 +594,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * @throws IllegalArgumentException     the <code>DataBucket</code> message did not contain a sampling clock
      */
     synchronized
-    public boolean insertBucketData(QueryDataResponse.QueryData.DataBucket msgBucket) {
+    public boolean insertBucketData(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
         
         // Check argument
         if (!msgBucket.getDataTimestamps().hasSamplingClock())
@@ -643,7 +644,5 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     public int compareTo(CorrelatedQueryData o) {
         return this.insStart.compareTo(o.insStart);
     }
-
-
     
 }

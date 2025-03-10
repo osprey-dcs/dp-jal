@@ -379,19 +379,43 @@ public final class ProtoTime {
      * <p>
      * Computes and returns the time domain of the sampling interval described by the argument.
      * </p>
+     * <p>
+     * The returned value is the following time interval <i>I</i> 
+     * <pre>
+     *   <i>I</i> &#8796; [<i>t</i><sub>1</sub>, <i>t</i><sub>2</sub>]
+     *   <i>t</i><sub>1</sub> = the start time instant of the sampling clock
+     *   <i>t</i><sub>2</sub> = <i>t</i><sub>1</sub> + (<i>N</i> - 1)&times;<i>T</i>
+     * </pre>
+     * where 
+     * <ul>
+     * <li><i>N</i> is the number of clock samples</li>
+     * <li><i>T</i> is the sample period of the clock (in nanoseconds)</li>
+     * </li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The returned time interval only includes the range where samples are present.  Specifically,
+     * <i>t</i><sub>1</sub> is the time instant of the first sample and <i>t</i><sub>2</sub> is the
+     * time instant of the last sample.  That is, we do not include the last sample period <i>T</i>
+     * in the computation of the right end point.
+     * </p>   
      * 
-     * @param msgTms    Protobuf message describing a uniform sampling interval
+     * @param msgClock    Protobuf message describing a uniform sampling clock
      * 
-     * @return  the time domain of the given sampling interval
+     * @return  the time domain of the given sampling clock
      */
-    public static TimeInterval domain(SamplingClock msgTms) {
-        Instant     insStart = ProtoMsg.toInstant(msgTms.getStartTime());
-        Duration    dur = Duration.ofNanos(msgTms.getCount() * msgTms.getPeriodNanos());
+    public static TimeInterval domain(SamplingClock msgClock) {
+        Instant     insStart = ProtoMsg.toInstant(msgClock.getStartTime());
+        int         cntSmpls = msgClock.getCount();
+        long        lngPeriod = msgClock.getPeriodNanos();
+        long        lngDuration = lngPeriod * (cntSmpls - 1);
+        Duration    dur = Duration.ofNanos(lngDuration);
         Instant     insStop = insStart.plus(dur);
         
-        TimeInterval    ivl = TimeInterval.from(insStart, insStop);
+        TimeInterval    tvl = TimeInterval.from(insStart, insStop);
         
-        return ivl;
+        return tvl;
     }
     
     
