@@ -48,6 +48,7 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
@@ -272,7 +273,8 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         List<DataColumn>    lstMsgDataCols = cqdSampleBlock.getAllDataMessages();
         
         // Create the sampling clock and the timestamps for this block
-        this.clkParams = UniformSamplingClock.from(msgClockParams);
+//        this.clkParams = UniformSamplingClock.from(msgClockParams);
+        this.clkParams = ProtoMsg.toUniformSamplingClock(msgClockParams);
         this.vecTimestamps = this.clkParams.createTimestamps();
         
         // Get the set of data source names and create all the time-series data for this block

@@ -229,6 +229,43 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  */
 public class QueryDataCorrelator {
 
+    
+    //
+    // Creator
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>QueryDataCorrelator</code> instance ready for processing.
+     * </p>
+     * <p>
+     * Instances are created in their initial state - ready for processing.  The method 
+     * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
+     * is recommended for query response data processing; that is, it is recommended to process all query and 
+     * streaming errors externally, supplying only <code>BucketData</code> messages to 
+     * <code>QueryDataCorrelator</code> objects.
+     * </p>
+     * <p>
+     * One the entire query results set has be passed to a <code>QueryDataCorrelator</code> object
+     * (e.g., using the above method repeated for each data message), the correlated data is recoverable
+     * with <code>{@link #getCorrelatedSet()}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <code>QueryDataCorrelator</code> objects can be reused for multiple query results sets.
+     * Use the method <code>{@link #reset()}</code> before processing a new results set.
+     * </p>
+     * 
+     * @return  a new <code>QueryDataCorrelator</code> instance ready for processing
+     * 
+     * @see #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
+     * @see #getCorrelatedSet()
+     */
+    public static QueryDataCorrelator create() {
+        return new QueryDataCorrelator();
+    }
+    
+    
     //
     // Application Resources
     //
@@ -296,42 +333,6 @@ public class QueryDataCorrelator {
     private long        lngBytesProcessed = 0;
     
 
-    //
-    // Creator
-    //
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>QueryDataCorrelator</code> instance ready for processing.
-     * </p>
-     * <p>
-     * Instances are created in their initial state - ready for processing.  The method 
-     * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
-     * is recommended for query response data processing; that is, it is recommended to process all query and 
-     * streaming errors externally, supplying only <code>BucketData</code> messages to 
-     * <code>QueryDataCorrelator</code> objects.
-     * </p>
-     * <p>
-     * One the entire query results set has be passed to a <code>QueryDataCorrelator</code> object
-     * (e.g., using the above method repeated for each data message), the correlated data is recoverable
-     * with <code>{@link #getCorrelatedSet()}</code>.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <code>QueryDataCorrelator</code> objects can be reused for multiple query results sets.
-     * Use the method <code>{@link #reset()}</code> before processing a new results set.
-     * </p>
-     * 
-     * @return  a new <code>QueryDataCorrelator</code> instance ready for processing
-     * 
-     * @see #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
-     * @see #getCorrelatedSet()
-     */
-    public static QueryDataCorrelator create() {
-        return new QueryDataCorrelator();
-    }
-    
-    
     //
     // Constructors
     //
