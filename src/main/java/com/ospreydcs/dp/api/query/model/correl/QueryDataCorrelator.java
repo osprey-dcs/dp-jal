@@ -89,7 +89,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * <h2>Operation</h2>
  * Data correlation is performed using the methods prefixed with <code>add</code>.  The preferred
  * method is 
- * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>,
+ * <code>{@link #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>,
  * which processes data messages within the Query Service response stream.  That is, the data
  * messages are extracted from the <code>{@link QueryResponse}</code> messages externally.
  * However, for convenience there are additional <code>add</code> methods that extract the data
@@ -120,7 +120,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * </p>
  * <p>
  * All correlation operations are done ATOMICALLY.  Specifically, the 
- * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
+ * <code>{@link #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
  * method is synchronized with the internal lock <code>{@link #objLock}</code>.  If concurrent
  * threads attempt to add Query Service messages they will block until the previous correlation
  * operation is complete.  Thus condition is necessary to maintain consistency within the
@@ -240,7 +240,7 @@ public class QueryDataCorrelator {
      * </p>
      * <p>
      * Instances are created in their initial state - ready for processing.  The method 
-     * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
+     * <code>{@link #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
      * is recommended for query response data processing; that is, it is recommended to process all query and 
      * streaming errors externally, supplying only <code>BucketData</code> messages to 
      * <code>QueryDataCorrelator</code> objects.
@@ -258,7 +258,7 @@ public class QueryDataCorrelator {
      * 
      * @return  a new <code>QueryDataCorrelator</code> instance ready for processing
      * 
-     * @see #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
+     * @see #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
      * @see #getCorrelatedSet()
      */
     public static QueryDataCorrelator create() {
@@ -343,7 +343,7 @@ public class QueryDataCorrelator {
      * </p>
      * <p>
      * Instances are created in their initial state - ready for processing.  The method 
-     * <code>{@link #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
+     * <code>{@link #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
      * is recommended for query response data processing; that is, it is recommended to process all query and 
      * streaming errors externally, supplying only <code>BucketData</code> messages to 
      * <code>QueryDataCorrelator</code> objects.
@@ -359,7 +359,7 @@ public class QueryDataCorrelator {
      * Use the method <code>{@link #reset()}</code> before processing a new results set.
      * </p>
      * 
-     * @see #addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
+     * @see #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
      * @see #getCorrelatedSet()
      */
     public QueryDataCorrelator() {
@@ -1027,11 +1027,10 @@ public class QueryDataCorrelator {
      * the target set of correlated data.
      * </p>
      * <p>
-     * The method creates a collection of data insertion tasks <code>DataBucketInsertTask</code>
+     * The method creates a collection of data insertion tasks <code>RawDataInsertTask</code>
      * (one task for each <code>DataBucket</code> message within the argument)
      * then executes them concurrently using the instance thread pool executor.  
-     * If a task fails its <code>DataBucket</code> subject is 
-     * identified and returned in the set of <code>BucketData</code> messages that were not 
+     * If a task fails its <code>DataBucket</code> subject is  identified and returned in the set of <code>BucketData</code> messages that were not 
      * successfully inserted into the target reference set. 
      * </p>
      * <p>
@@ -1058,10 +1057,11 @@ public class QueryDataCorrelator {
      * 
      * @return  the collection of <code>DataBucket</code> messages that failed insertion
      * 
-     * @throws CompletionException  error in <code>DataBucket</code> insertion task execution (see cause)
+     * @throws CompletionException       error in <code>DataBucket</code> insertion task execution (see cause)
+     * @throws RejectedExecutedException a data bucket insertion task was rejected
      */
     private Collection<QueryDataResponse.QueryData.DataBucket>  attemptDataInsertThreadPool(QueryDataResponse.QueryData msgData) 
-            throws CompletionException
+            throws CompletionException, RejectedExecutionException
     {
         
         // Create the data insertion tasks

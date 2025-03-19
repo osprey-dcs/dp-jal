@@ -197,7 +197,7 @@ public class QueryDataCorrelatorTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataOne() {
@@ -232,7 +232,7 @@ public class QueryDataCorrelatorTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataTwo() {
@@ -267,7 +267,7 @@ public class QueryDataCorrelatorTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataLong() {
@@ -299,7 +299,7 @@ public class QueryDataCorrelatorTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataWide() {
@@ -336,7 +336,7 @@ public class QueryDataCorrelatorTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
     @Test
     public final void testInsertQueryDataBig() {
@@ -417,7 +417,7 @@ public class QueryDataCorrelatorTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#addQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator#processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}.
      */
 //    @Test
     public final void testInsertQueryDataHuge() {

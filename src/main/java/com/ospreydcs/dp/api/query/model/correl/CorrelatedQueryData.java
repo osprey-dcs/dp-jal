@@ -118,7 +118,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * <p>
      * The comparison here is performed with the start times of the sampling intervals 
      * represented by <code>{@link CorrelatedQueryData}</code> time <code>{@link Instant}</code>
-     * returned from the <code>{@link CorrelatedQueryData#getStartInstant()</code> method.
+     * returned from the <code>{@link CorrelatedQueryData#getStartInstant()}</code> method.
      * Instances are intended for use in Java container construction.
      * </p>
      *
@@ -245,7 +245,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         this.lstMsgCols.add(msgDataCol);
         
         // Compute time domain
-        this.domTimeRange = ProtoTime.domain(this.msgSmplClk);
+        this.domTimeRange = ProtoTime.range(this.msgSmplClk);
 //        int     cntSamples = this.msgSmplClk.getCount();
 //        long    lngPeriodNs = this.msgSmplClk.getPeriodNanos();
 //        Duration    durPeriod = Duration.ofNanos(lngPeriodNs);

@@ -1,10 +1,10 @@
 /*
  * Project: dp-api-common
- * File:	DataBucketInsertTask.java
- * Package: com.ospreydcs.dp.api.query.model.grpc
- * Type: 	DataBucketInsertTask
+ * File:	RawDataInsertTask.java
+ * Package: com.ospreydcs.dp.api.query.model.correl
+ * Type: 	RawDataInsertTask
  *
- * Copyright 2010-2023 the original author or authors.
+ * Copyright 2010-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jan 12, 2024
+ * @since Mar 13, 2025
  *
- * TODO:
- * - None
  */
 package com.ospreydcs.dp.api.query.model.correl;
 
@@ -40,45 +38,62 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
- * Performs the task of <code>DataBucket</code> insertion into a collection of 
- * <code>CorrelatedQueryData</code> instances.
+ * Performs the task of <code>DataBucket</code> insertion into a collection of <code>CorrelatedRawData</code> instances.
  * </p> 
  * <p>
- * Attempts to insert all <code>DataColumn</code> messages of the subject 
- * <code>DataBucket</code> Protobuf message into a target collection of 
- * <code>CorrelatedQueryData</code> instances.
- * The task subject and target are provided at construction.
+ * Attempts to insert the <code>DataColumn</code> message of the initializing task subject 
+ * <code>DataBucket</code> Protocol Buffers message into the initializing target collection of 
+ * <code>CorrelatedRawData</code> instances.
+ * Insertion attempts of the subject are all done serially on the target collection.
+ * That is, this task DOES NOT spawn any sub-threads. 
  * </p>
  * <p>
  * The class implements both the <code>{@link Callable}</code> and <code>{@link Runnable}</code>
- * interfaces for thread execution.  The former simply returns the class instance itself for
- * inspection and does not throw exceptions.  Both implementation perform the same function.
- * Insertion attempts of the subject are all done serially on the target collection.
- * That is, this task DOES NOT spawn any sub-threads. 
+ * interfaces for thread execution.  The former simply defers to the <code>{@link #run()}</code>
+ * method of the latter interface then returns the value of the <code>{@link #bolSuccess}</code>
+ * attribute.
  * <p>
  * <h2>Usage:</h2>
  * <ul>
  * <li>
  * This task is assumed to be executed on a separate thread.
  * </li>
- * <br/>  
  * <li>
- * It is further assumed that multiple threads are executed for different subjects and
- * the same target.
+ * It is further assumed that multiple threads are executed for different subject messages and
+ * the same target correlated set.
  * </li>
- * <br/>
  * <li>
  * Use of this class is most appropriate for large target collections where multiple 
- * subjects can be processed concurrently.
+ * subject messages can be processed concurrently.
  * </li>
  * </ul>
  * </p>
  *
  * @author Christopher K. Allen
- * @since Jan 12, 2024
+ * @since Mar 13, 2025
  *
  */
-public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Runnable {
+public class RawDataInsertTask implements Runnable, Callable<Boolean> {
+
+    
+    //
+    // Creator
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new, initialized instances of <code>RawDataInsertTask</code> 
+     * ready for execution.
+     * </p>
+     * 
+     * @param msgSubject    the subject of the task - a Query Service data bucket message
+     * @param setTarget     the target of the task - collection of <code>CorrelatedRawData</code> instances
+     * 
+     * @return  new, initialized thread task ready for execution
+     */
+    public static RawDataInsertTask from(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedRawData> setTarget) {
+        return new RawDataInsertTask(msgSubject, setTarget);
+    }
 
     
     //
@@ -94,7 +109,7 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
     //
     
     /** Is logging active */
-    public static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
+    private static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
     
     
     //
@@ -113,7 +128,7 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
     private final QueryDataResponse.QueryData.DataBucket    msgSubject;
     
     /** The object of this task - target collection of correlated data */
-    private final SortedSet<CorrelatedQueryData>            setTarget;
+    private final SortedSet<CorrelatedRawData>              setTarget;
     
     
     //
@@ -128,41 +143,22 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
     
     
     //
-    // Creator
-    //
-    
-    /**
-     * <p>
-     * Creates and returns a new, initialized instances of <code>DataBucketInsertTask</code> 
-     * ready for execution.
-     * </p>
-     * 
-     * @param msgSubject    the task subject - a QueryService data bucket message
-     * @param setTarget     the data insertion target - collection of <code>CorrelatedQueryData</code> instances
-     * 
-     * @return  new, initialized thread task ready for execution
-     */
-    public static DataBucketInsertTask newTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
-        return new DataBucketInsertTask(msgSubject, setTarget);
-    }
-
-    
-    //
     // Constructor
     //
     
     /**
      * <p>
-     * Constructs a new, initialized instance of <code>DataBucketInsertTask</code>.
+     * Constructs a new, initialized instance of <code>RawDataInsertTask</code>.
      * </p>
      *
-     * @param msgSubject    the task subject - a QueryService data bucket message
-     * @param setTarget     the data insertion target - collection of <code>CorrelatedQueryData</code> instances
+     * @param msgSubject    the task subject - a Query Service data bucket message
+     * @param setTarget     the task target - collection of <code>CorrelatedRawData</code> instances
      */
-    public DataBucketInsertTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
+    public RawDataInsertTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedRawData> setTarget) {
         this.msgSubject = msgSubject;
         this.setTarget = setTarget;
     }
+    
     
     //
     // State Query
@@ -185,18 +181,18 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
      * <ul>
      * <li>The task has been executed.</li>
      * <li>Data column of data bucket was successfully inserted into the collection of
-     *     <code>CorrelatedQueryData</code> instances.</li>
+     *     <code>CorrelatedRawData</code> instances.</li>
      * </ul>
      * 
      * @return  <code>true</code> if the task was successfully executed,
      *          <code>false</code> otherwise
      */
     public boolean  isSuccess() {
-        return this.bolSuccess;
+        return this.bolExecuted && this.bolSuccess;
     }
     
     /**
-     * Returns the subject of this execution task.
+     * Returns the subject of this raw data insertion task.
      * 
      * @return  the <code>DataBucket</code> Protobuf message subject of task
      */
@@ -205,17 +201,17 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
     }
     
     /**
-     * Returns the target of this execution task.
+     * Returns the target of this raw data insertion task.
      * 
      * @return  the collection of <code>CorrelatedQueryData</code> instances 
      */
-    public final SortedSet<CorrelatedQueryData>    getTarget() {
+    public final SortedSet<CorrelatedRawData>    getTarget() {
         return this.setTarget;
     }
 
     
     //
-    // Callable Interface
+    // Callable<Boolean> Interface
     //
     
     /**
@@ -234,22 +230,22 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
      * @see java.util.concurrent.Callable#call()
      */
     @Override
-    public DataBucketInsertTask call() throws Exception {
+    public Boolean call() throws Exception {
         
         // Run the task and get result
         this.run();
         
-        return this;
+        return this.isSuccess();
     }
 
-
+    
     //
     // Runnable Interface
     //
     
     /**
      * <p>
-     * Performs the data insertion task, presumably on a separate execution thread.
+     * Performs the data insertion task, presumably on an independent execution thread.
      * </p>
      * <p>
      * Attempts to add the data column of the subject data bucket message to the target set of 
@@ -266,9 +262,7 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
         // Attempt bucket insertion for each <code>CorrelatedQueryData</code> instance and get result
         this.bolSuccess = this.setTarget
                 .stream()
-                .anyMatch(cqd -> cqd.insertBucketData(this.msgSubject));
-//                .<Boolean>map(tar -> tar.insertBucketData(this.msgSubject))
-//                .anyMatch( r -> r );
+                .anyMatch(blk -> blk.insertBucketData(this.msgSubject));
         
         this.bolExecuted = true;
         
@@ -279,8 +273,6 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
             
             if (BOL_LOGGING)
                 LOGGER.debug("{} - A data bucket insertion task FAILED for source {}.", JavaRuntime.getQualifiedMethodNameSimple(), strColName);
-//            System.out.println("----------- " + JavaRuntime.getQualifiedMethodNameSimple() + "----------");
-//            System.out.println("  A Bucket Insertion FAILED.");
         }
     }
 

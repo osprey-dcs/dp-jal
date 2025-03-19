@@ -408,7 +408,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * </p>
      * <p>
      * Notifications about stream activities is sent to any registered query stream observers
-     * (see <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserverDeprecated)}</code>).  Query stream observers 
+     * (see <code>{@link #addStreamObserver(IDpQueryStreamObserver)}</code>).  Query stream observers 
      * should spawn independent threads to process incoming data.
      * </p>
      * <p>
@@ -709,6 +709,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * <li>if the <code>{@link #start()}</code> has not been called.</li>
      * <li>if the data stream has already completed.</li>
      * In such cases the method returns <code>false</code>.
+     * </ul>
      * </p>
      * <p>
      * Use this method with caution as it sends an error message to the
