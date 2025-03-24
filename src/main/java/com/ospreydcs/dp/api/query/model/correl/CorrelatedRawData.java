@@ -41,7 +41,6 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData.StartTimeComparator;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
@@ -295,8 +294,11 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
         public int compare(CorrelatedRawData o1, CorrelatedRawData o2) {
             Instant t1 = o1.getStartTime();
             Instant t2 = o2.getStartTime();
-            
-            return t1.compareTo(t2);
+
+            if (t1.isBefore(t2))
+                return -1;
+            else
+                return +1;
         }
     }
 
@@ -336,11 +338,14 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
     // Defining Attributes 
     //
     
+    /** Time-series raw data type - either uniform sampling or timestamp list (spurious) */
+    protected final RawDataType         enmType;
+    
     /** The time range of contained raw time series data */
-    protected final TimeInterval      tvlRange;
+    protected final TimeInterval        tvlRange;
     
     /** List of all data column Protocol Buffers messages correlated within sampling interval - correlated objects */
-    protected final List<DataColumn>  lstMsgCols = new LinkedList<>();
+    protected final List<DataColumn>    lstMsgCols = new LinkedList<>();
     
     
     //
@@ -361,10 +366,14 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      * (sans the timestamps).
      * </p>
      *
+     * @param enmType   the raw time-series data type
      * @param tvlRange  the time range for the new correlated block 
      * @param msgBucket the raw data bucket containing process data (ignore timestamps)
      */
-    protected CorrelatedRawData(TimeInterval tvlRange, QueryData.DataBucket msgBucket) {
+    protected CorrelatedRawData(RawDataType enmType, TimeInterval tvlRange, QueryData.DataBucket msgBucket) {
+        
+        // Set the raw time-series data type
+        this.enmType = enmType;
         
         // Set the time interval for the block (including start time)
         this.tvlRange = tvlRange;
@@ -501,6 +510,27 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
     
     /**
      * <p>
+     * Returns the data type of the raw, time-series data contained in this correlated block.
+     * </p>
+     * <p>
+     * The data correlation is performed against either a uniform sampling clock or an explicit timestamp
+     * list.  The returned value indicates the this correlation mechanism.
+     * <ul>
+     * <li><code>{@link RawDataType#UNIFORM}</code> - uniform sampling clock
+     * <li><code>{@link RawDataType#SPURIOUS}</code> - explicit timestamp list
+     * </ul>
+     * Note that timestamp lists are required to store spurious data or any other time-series data sampled
+     * at non-uniform intervals.
+     * </p>
+     *  
+     * @return  enumeration indicating the correlation mechanism within this correlated block
+     */
+    public final RawDataType    getRawDataType() {
+        return this.enmType;
+    }
+    
+    /**
+     * <p>
      * Returns the starting time instant of the sampling interval for this block.
      * </p>
      * <p>
@@ -511,7 +541,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      * 
      * @return sampling interval start instant
      */
-    public Instant getStartTime() {
+    public final Instant getStartTime() {
         return this.tvlRange.begin();
     };
     
@@ -526,7 +556,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      * </p>
      * <p>
      * The returned interval left end point is the start time of the sampling interval 
-     * returned by <code>{@link #getStartInstant()}</code>.  The right end point is the
+     * returned by <code>{@link #getStartTime()}</code>.  The right end point is the
      * last timestamp of the sampled data within the query data.  Specifically, it 
      * DOES NOT include the sample period duration following the last timestamp.
      * </p>
@@ -536,7 +566,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      *   <i>I</i> = [<i>t</i><sub>0</sub>, <i>t</i><sub>0</sub> + (<i>N</i> - 1)<i>T</i>] 
      * </pre>
      * where <i>t</i><sub>0</sub> is the clock start time 
-     * (returned by <code>{@link #getStartInstant()}</code>), <i>N</i> is the number of 
+     * (returned by <code>{@link #getStartTime()}</code>), <i>N</i> is the number of 
      * samples (returned by <code>{@link #getSampleCount()}</code>), and <i>T</i> is the
      * sampling period (returned by <code>{@link #getSamplingPeriod()}</code>).
      * </p>
@@ -546,14 +576,14 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      *   <i>I</i> = [<i>t</i><sub>0</sub>, <i>t</i><sub><i>N</i>-1</sub>]
      * </pre>
      * where <i>t</i><sub>0</sub> is the first time stamp
-     * (returned by <code>{@link #getStartInstant()}</code>), <i>N</i> is the number of 
+     * (returned by <code>{@link #getStartTime()}</code>), <i>N</i> is the number of 
      * samples (returned by <code>{@link #getSampleCount()}</code>), and <i>t</i><sub><i>N</i>-1</sub> 
      * is the last time stamp.
      * </p>
      * 
      * @return  the time range of correlated query data [first timestamp, last timestamp]
      */
-    public TimeInterval getTimeRange() {
+    public final TimeInterval getTimeRange() {
         return this.tvlRange;
     }
     

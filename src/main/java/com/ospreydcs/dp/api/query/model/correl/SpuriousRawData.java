@@ -66,7 +66,7 @@ public class SpuriousRawData extends CorrelatedRawData {
      * @throws IllegalArgumentException argument does not contains a timestamp list
      */
     protected SpuriousRawData(QueryDataResponse.QueryData.DataBucket msgBucket) {
-        super(ProtoTime.range( msgBucket.getDataTimestamps().getTimestampList() ), msgBucket);
+        super(RawDataType.SPURIOUS, ProtoTime.range( msgBucket.getDataTimestamps().getTimestampList() ), msgBucket);
         
         // Check argument
         if (!msgBucket.getDataTimestamps().hasTimestampList()) {

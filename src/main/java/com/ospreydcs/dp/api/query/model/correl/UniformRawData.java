@@ -65,7 +65,7 @@ public class UniformRawData extends CorrelatedRawData {
      * @throws IllegalArgumentException argument does not contains a sampling clock
      */
     protected UniformRawData(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
-        super(ProtoTime.range(msgBucket.getDataTimestamps().getSamplingClock()), msgBucket);
+        super(RawDataType.UNIFORM, ProtoTime.range(msgBucket.getDataTimestamps().getSamplingClock()), msgBucket);
 
         // Check argument
         if (!msgBucket.getDataTimestamps().hasSamplingClock()) {
