@@ -61,9 +61,7 @@ public class UniformSampledBlock extends SampledBlock {
      * @param datRaw
      */
     public UniformSampledBlock(UniformRawData datRaw) {
-        super(datRaw);
-        
-        this.datRaw = datRaw;
+        super(this.datRaw = datRaw);
     }
 
     /**

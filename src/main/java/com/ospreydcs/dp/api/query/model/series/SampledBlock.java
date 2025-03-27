@@ -48,7 +48,6 @@ import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData;
-import com.ospreydcs.dp.api.query.model.correl.RawDataType;
 import com.ospreydcs.dp.api.query.model.correl.SpuriousRawData;
 import com.ospreydcs.dp.api.query.model.correl.UniformRawData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -80,10 +79,8 @@ import com.ospreydcs.dp.grpc.v1.common.DataColumn;
  * instances.
  * </p>
  *
- *
  * @author Christopher K. Allen
  * @since Mar 19, 2025
- *
  */
 public abstract class SampledBlock implements IDataTable, Comparable<SampledBlock> {
 
@@ -148,8 +145,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      * </p>
      *
      * @author Christopher K. Allen
-     * @since Jan 31, 2024
-     *
+     * @since Mar 19, 2025
      */
     public static class StartTimeComparator implements Comparator<UniformSamplingBlock> {
 
@@ -223,7 +219,6 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     private static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
     
     
-    
     //
     // Class Constants
     //
@@ -244,7 +239,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     //
     
     /** Event logger for class */
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger     LOGGER = LogManager.getLogger();
     
 
     //
@@ -255,7 +250,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     private final   ArrayList<Instant>                      vecTimestamps;
     
     /** The vector of time-series data in this sampling block */
-    private final   ArrayList<SampledTimeSeries<Object>>    vecSeries;
+    private final   ArrayList<SampledTimeSeries<Object>>    vecTimeSeries;
     
     
     /** Set of data source names for sample block - used for IDataTable implementation */
@@ -301,11 +296,11 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
             throws MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException {
         
         // Check the argument for data source name uniqueness
-        ResultStatus    rsltUnique = datRaw.verifySourceUniqueness();
-        if (rsltUnique.isFailure()) {
+        ResultStatus    recUnique = datRaw.verifySourceUniqueness();
+        if (recUnique.isFailure()) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - Correlated data block has non-unique sources: " 
-                    + rsltUnique.message();
+                    + recUnique.message();
             
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);
@@ -314,11 +309,11 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
         }
         
         // Check the argument for data source size consistency
-        ResultStatus    rsltSizes = datRaw.verifySourceSizes();
-        if (rsltSizes.isFailure()) {
+        ResultStatus    recSizes = datRaw.verifySourceSizes();
+        if (recSizes.isFailure()) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - Correlated data block has columns with bad sizes: " 
-                    + rsltSizes.message();
+                    + recSizes.message();
             
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);
@@ -333,15 +328,68 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
         // Extract the relevant Protobuf message from the argument
         List<DataColumn>    lstMsgDataCols = datRaw.getRawDataMessages();
         
-        // Get the set of data source names and create all the time-series data for this block
-        this.vecSeries = this.createTimeSeriesVector(lstMsgDataCols);
+        // Create the time-series data all supporting resources for this block
+        this.vecTimeSeries = this.createTimeSeriesVector(lstMsgDataCols);
         
-        this.lstSourceNames = this.createSourceNameList(this.vecSeries);
-        this.mapSrcToIndex = this.createSrcToIndexMap(this.vecSeries);
-        this.mapSrcToSeries = this.createSrcToSeriesMap(this.vecSeries);
-        
+        this.lstSourceNames = this.createSourceNameList(this.vecTimeSeries);
+        this.mapSrcToIndex = this.createSrcToIndexMap(this.vecTimeSeries);
+        this.mapSrcToSeries = this.createSrcToSeriesMap(this.vecTimeSeries);
     }
 
+    
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Inserts an empty time series of given name and type into the sampled block.
+     * </p>
+     * <p> 
+     * A time series consisting of all <code>null</code> values is inserted into the current
+     * collection of time series.  This action may be required for "filling in" missing data
+     * sources when this <code>SampledBlock</code> is a component within a larger
+     * aggregation containing data sources not represented during construction.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * If the current collection of time series already has a entry for the given data source
+     * name, nothing is done and the method returns <code>false</code>.
+     * </li>
+     * <li>
+     * The new (phantom) time series will have the last index within the <code>IDataTable</code>.
+     * </li>
+     * </p>
+     * 
+     * @param strSourceName name of the "phantom" data source to be added to time series collection
+     * @param enmType       data type of the "phantom" data source to be added
+     * 
+     * @return  <code>true</code> if the time series collection was modified,
+     *          <code>false</code> if the time series collection already has a data source with given name
+     */
+    public boolean  insertNullTimeSeries(String strSourceName, DpSupportedType enmType) {
+        
+        // Check if data source name is already present
+        if (this.hasSourceData(strSourceName))
+            return false;
+        
+        // Create the null series
+        SampledTimeSeries<Object>   stsEmpty = SampledTimeSeries.nullSeries(strSourceName, enmType, this.getSampleCount());
+        
+        // Add null series to collection and lookup maps
+        Integer     indLast = this.vecTimeSeries.size();
+        
+        this.vecTimeSeries.add(stsEmpty);
+
+        this.lstSourceNames.add(strSourceName);
+        this.mapSrcToSeries.put(strSourceName, stsEmpty);
+        this.mapSrcToIndex.put(strSourceName, indLast);
+        
+        return true;
+    }
+    
     
     //
     // Attribute Query
@@ -613,10 +661,10 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      */
     @Override
     public void clear() {
-        this.vecSeries.forEach(SampledTimeSeries::clear);
+        this.vecTimeSeries.forEach(SampledTimeSeries::clear);
         
         this.vecTimestamps.clear();
-        this.vecSeries.clear();
+        this.vecTimeSeries.clear();
         this.lstSourceNames.clear();
         this.mapSrcToIndex.clear();
         this.mapSrcToSeries.clear();
@@ -693,7 +741,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      */
     @Override
     public final IDataColumn<Object> getColumn(int indCol) throws IndexOutOfBoundsException {
-        return this.vecSeries.get(indCol);
+        return this.vecTimeSeries.get(indCol);
     }
 
     /**
@@ -790,17 +838,16 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     
     /**
      * <p>
-     * Creates all <code>{@link SampledTimeSeries}</code> objects and returns as a vector (i.e. array list).
+     * Creates all <code>{@link SampledTimeSeries}</code> objects and returns them as a vector (i.e. array list).
      * </p>
      * <p>
      * Creates all the <code>{@link SampledTimeSeries}</code> instances for this sampling
      * block using the given argument as source data.  The returned object is a vector of
-     * of such objects ordered according to the argument.  It is assumed that the data
-     * sources within the argument are all unique. This condition should, however, be checked.
+     * of such objects respecting the the argument order.  It is assumed that the data
+     * sources within the argument are all unique. Thus, this condition should be checked.
      * </p>
      * <p>
-     * <p>
-     * This method is intended for the creation of attribute <code>{@link #vecSeries}</code>, also needed for the
+     * This method is intended for the creation of attribute <code>{@link #vecTimeSeries}</code>, also needed for the
      * <code>{@link IDataTable}</code> implementation (i.e., for table column indexing).
      * The returned vector is ordered according to the ordering of the argument entries.
      * </p>
@@ -865,7 +912,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      * Creates and returns a map of (source name, time series) pairs from the argument.
      * </p>
      * <p>
-     * This method is used to create a lookup map for data column (i.e., time series) by column name
+     * This method is used to create a lookup map for data columns (i.e., time series) by column name
      * required by the <code>{@link IDataTable}</code> interface.  It is assumed that the argument
      * contains all time series within the sampling block.
      * </p>
@@ -873,7 +920,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The returned collection is mutable.
+     * There are no guarantees as to mutability of the returned collection.
      * </li>
      * </ul>
      * </p>
@@ -952,7 +999,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The returned collection is mutable.
+     * The returned collection is immutable.
      * </li>
      * </ul>
      * </p>

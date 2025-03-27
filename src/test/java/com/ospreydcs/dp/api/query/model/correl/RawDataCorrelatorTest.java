@@ -25,8 +25,6 @@
  */
 package com.ospreydcs.dp.api.query.model.correl;
 
-import static org.junit.Assert.fail;
-
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -87,8 +85,8 @@ public class RawDataCorrelatorTest {
     public static final TimeUnit    TU_TIMEOUT = CFG_QUERY.timeout.unit;
     
     
-    /** Location of performance results output */
-    public static final String          STR_PATH_OUTPUT = "test/output/query/impl/";
+//    /** Location of performance results output */
+//    public static final String          STR_PATH_OUTPUT = "test/output/query/impl/";
     
     
     /** "Small" test request  */

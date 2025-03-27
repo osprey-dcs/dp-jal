@@ -152,6 +152,7 @@ public class UniformSamplingBlockTest {
         CorrelatedQueryData     cqdFirst = this.correlate(lstRawMsgData).first();
         
         try {
+            @SuppressWarnings("unused")
             UniformSamplingBlock    blkTest = UniformSamplingBlock.from(cqdFirst);  // method under test
             
         } catch (Exception e) {
@@ -170,6 +171,7 @@ public class UniformSamplingBlockTest {
         CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
         
         try {
+            @SuppressWarnings("unused")
             UniformSamplingBlock    blkTest = new UniformSamplingBlock(cqdTest); // method under test
             
         } catch (Exception e) {
@@ -623,8 +625,8 @@ public class UniformSamplingBlockTest {
         }
         
         // Compare sampling block time series to raw data
-        String              strSrcNm = msgBucket.getDataColumn().getName();
-        SampledTimeSeries   serPrcd = blkTest.getTimeSeries(strSrcNm);
+        String                      strSrcNm = msgBucket.getDataColumn().getName();
+        SampledTimeSeries<Object>   serPrcd = blkTest.getTimeSeries(strSrcNm);
         Assert.assertNotEquals(null, serPrcd);
         
         List<Object>        lstValsPrcd = serPrcd.getValues();
@@ -742,7 +744,7 @@ public class UniformSamplingBlockTest {
         Assert.assertTrue(strDummy + " empty time series FAILED insertion.", bolInserted);
         
         // Check the empty time series
-        SampledTimeSeries   serDummy = blkTest.getTimeSeries(strDummy);
+        SampledTimeSeries<Object>   serDummy = blkTest.getTimeSeries(strDummy);
         
         Assert.assertNotEquals(strDummy + " empty times series could NOT be recovered.", null, serDummy);
         

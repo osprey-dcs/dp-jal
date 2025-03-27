@@ -61,9 +61,7 @@ public class SpuriousSampledBlock extends SampledBlock {
      * @param datRaw    raw, time-series data correlated to a timestamp list
      */
     public SpuriousSampledBlock(SpuriousRawData datRaw) {
-        super(datRaw);
-
-        this.datRaw = datRaw;
+        super(this.datRaw = datRaw);
     }
 
     /**
