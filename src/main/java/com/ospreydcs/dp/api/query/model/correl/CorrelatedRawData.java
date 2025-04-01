@@ -189,8 +189,8 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      * a uniform sampling clock where a <code>TimestampList</code> message contains explicit timestamps.
      * The returned object type is as follows:
      * <ul>
-     * <li><code>UniformRawData</code> - argument contains a <code>SamplingClock</code> message.</li>
-     * <li><code>SpuriousRawData</code> - argument contains a <code>TimestampList</code> message.</li>
+     * <li><code>RawDataClocked</code> - argument contains a <code>SamplingClock</code> message.</li>
+     * <li><code>RawDataTmsList</code> - argument contains a <code>TimestampList</code> message.</li>
      * </ul>
      * The time-series data is managed in the base class and the timestamps are managed in the returned
      * child class.
@@ -206,12 +206,12 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
         
         // Check argument for sampling clock
         if (msgBucket.getDataTimestamps().hasSamplingClock()) {
-            return new UniformRawData(msgBucket);
+            return new RawDataClocked(msgBucket);
         }
         
         // Check argument for timestamp list
         if (msgBucket.getDataTimestamps().hasTimestampList()) {
-            return new SpuriousRawData(msgBucket); 
+            return new RawDataTmsList(msgBucket); 
         }
         
         // If we are here something is wrong
@@ -510,14 +510,38 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
     
     /**
      * <p>
+     * Determines whether or not the given data set has a time range that is disjoint with this one.
+     * </p>
+     * <p>
+     * This method compares the attributes <code>{@link #tvlRange}</code> of this instance and the argument
+     * instance for any intersection.  If an intersection is detected the two data blocks are NOT
+     * disjoint and a value <code>false</code> is returned.  Otherwise the two data block have an empty
+     * intersection, are therefore disjoint, and a value <code>true</code> is returned.
+     * </p>
+     * 
+     * @param datCmp    the raw correlated data block under comparison with this block
+     *  
+     * @return  <code>true</code> if the time range of this block and the argument block are disjoint,
+     *          <code>false</code> if the two data blocks have a non-empty time range intersection
+     */
+    public boolean hasDisjointTimeRange(CorrelatedRawData datCmp) {
+        TimeInterval    tvlCmp = datCmp.getTimeRange();
+        
+        boolean bolDisjoint = TimeInterval.isDisjoint(this.tvlRange, tvlCmp);
+        
+        return bolDisjoint;
+    }
+    
+    /**
+     * <p>
      * Returns the data type of the raw, time-series data contained in this correlated block.
      * </p>
      * <p>
      * The data correlation is performed against either a uniform sampling clock or an explicit timestamp
      * list.  The returned value indicates the this correlation mechanism.
      * <ul>
-     * <li><code>{@link RawDataType#UNIFORM}</code> - uniform sampling clock
-     * <li><code>{@link RawDataType#SPURIOUS}</code> - explicit timestamp list
+     * <li><code>{@link RawDataType#CLOCKED}</code> - uniform sampling clock
+     * <li><code>{@link RawDataType#TIMESTAMPLIST}</code> - explicit timestamp list
      * </ul>
      * Note that timestamp lists are required to store spurious data or any other time-series data sampled
      * at non-uniform intervals.

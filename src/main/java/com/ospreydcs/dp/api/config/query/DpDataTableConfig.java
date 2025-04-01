@@ -48,6 +48,9 @@ public class DpDataTableConfig extends CfgStructure<DpDataTableConfig> {
     // Configuration Fields
     //
     
+    @ACfgOverride.Struct(pathelem="CONSTRUCTION")
+    public Construction  construction;
+    
     /** Default configuration parameters for time-series query results static data tables */ 
     @ACfgOverride.Struct(pathelem="STATIC")
     public Static       sstatic;
@@ -56,6 +59,20 @@ public class DpDataTableConfig extends CfgStructure<DpDataTableConfig> {
     @ACfgOverride.Struct(pathelem="DYNAMIC")
     public Dynamic      dynamic;
     
+    @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE_RECONSTRUCT")
+    public static class Construction extends CfgStructure<Construction> {
+        
+        /** Default constructor required for base structure class */
+        public Construction() { super(Construction.class); }
+        
+        /** Use advanced error checking and verification */
+        @ACfgOverride.Field(name="ERROR_CHECKING")
+        public Boolean      errorChecking;
+        
+        /** Enable/disable time domain collision within correlated blocks */
+        @ACfgOverride.Field(name="DOMAIN_COLLISION")
+        public Boolean      domainCollision;
+    }
     
     @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE_STATIC")
     public static class Static extends CfgStructure<Static> {
@@ -85,9 +102,5 @@ public class DpDataTableConfig extends CfgStructure<DpDataTableConfig> {
         /** Enable dynamic data tables */
         @ACfgOverride.Field(name="ENABLE")
         public Boolean      enable;
-        
-//        /** Are dynamic data tables the default time-series tables */
-//        @ACfgOverride.Field(name="DEFAULT")
-//        public Boolean      isDefault;
     }
 }

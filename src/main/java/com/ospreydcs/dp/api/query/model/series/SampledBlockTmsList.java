@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	SpuriousSampledBlock.java
+ * File:	SampledBlockTmsList.java
  * Package: com.ospreydcs.dp.api.query.model.series
- * Type: 	SpuriousSampledBlock
+ * Type: 	SampledBlockTmsList
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.query.model.correl.SpuriousRawData;
+import com.ospreydcs.dp.api.query.model.correl.RawDataTmsList;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
 
 /**
@@ -42,7 +42,7 @@ import com.ospreydcs.dp.grpc.v1.common.TimestampList;
  * @since Mar 24, 2025
  *
  */
-public class SpuriousSampledBlock extends SampledBlock {
+public class SampledBlockTmsList extends SampledBlock {
     
     
     //
@@ -50,17 +50,17 @@ public class SpuriousSampledBlock extends SampledBlock {
     //
     
     /** The raw data correlated to a timestamp list */
-    private final SpuriousRawData       datRaw;
+    private final RawDataTmsList       datRaw;
 
     
     /**
      * <p>
-     * Constructs a new <code>SpuriousSampledBlock</code> instance.
+     * Constructs a new <code>SampledBlockTmsList</code> instance.
      * </p>
      *
      * @param datRaw    raw, time-series data correlated to a timestamp list
      */
-    public SpuriousSampledBlock(SpuriousRawData datRaw) {
+    public SampledBlockTmsList(RawDataTmsList datRaw) {
         super(this.datRaw = datRaw);
     }
 

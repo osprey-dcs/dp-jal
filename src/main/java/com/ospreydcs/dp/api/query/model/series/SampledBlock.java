@@ -48,8 +48,8 @@ import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData;
-import com.ospreydcs.dp.api.query.model.correl.SpuriousRawData;
-import com.ospreydcs.dp.api.query.model.correl.UniformRawData;
+import com.ospreydcs.dp.api.query.model.correl.RawDataTmsList;
+import com.ospreydcs.dp.api.query.model.correl.RawDataClocked;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 
@@ -113,13 +113,13 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
         throws UnsupportedOperationException, MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException {
 
         // Check for correlation against an uniform sampling clock
-        if (datRaw instanceof UniformRawData dat) {
-            return new UniformSampledBlock(dat);
+        if (datRaw instanceof RawDataClocked dat) {
+            return new SampledBlockClocked(dat);
         }
         
         // Check for correlation against a timestamp list
-        if (datRaw instanceof SpuriousRawData dat) {
-            return new SpuriousSampledBlock(dat);
+        if (datRaw instanceof RawDataTmsList dat) {
+            return new SampledBlockTmsList(dat);
         }
         
         // If we are here then we have an unsupported situation

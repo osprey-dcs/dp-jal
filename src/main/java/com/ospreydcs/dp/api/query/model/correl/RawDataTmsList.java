@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	SpuriousRawData.java
+ * File:	RawDataTmsList.java
  * Package: com.ospreydcs.dp.api.query.model.correl
- * Type: 	SpuriousRawData
+ * Type: 	RawDataTmsList
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -41,7 +41,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * @since Mar 12, 2025
  *
  */
-public class SpuriousRawData extends CorrelatedRawData {
+public class RawDataTmsList extends CorrelatedRawData {
 
     
     //
@@ -58,15 +58,15 @@ public class SpuriousRawData extends CorrelatedRawData {
     
     /**
      * <p>
-     * Constructs a new <code>SpuriousRawData</code> instance.
+     * Constructs a new <code>RawDataTmsList</code> instance.
      * </p>
      *
      * @param msgBucket Protocol Buffers message containing initializing data
      * 
      * @throws IllegalArgumentException argument does not contains a timestamp list
      */
-    protected SpuriousRawData(QueryDataResponse.QueryData.DataBucket msgBucket) {
-        super(RawDataType.SPURIOUS, ProtoTime.range( msgBucket.getDataTimestamps().getTimestampList() ), msgBucket);
+    protected RawDataTmsList(QueryDataResponse.QueryData.DataBucket msgBucket) {
+        super(RawDataType.TIMESTAMPLIST, ProtoTime.range( msgBucket.getDataTimestamps().getTimestampList() ), msgBucket);
         
         // Check argument
         if (!msgBucket.getDataTimestamps().hasTimestampList()) {

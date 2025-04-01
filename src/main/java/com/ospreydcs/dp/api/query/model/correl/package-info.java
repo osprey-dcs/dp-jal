@@ -48,8 +48,8 @@
  * <li>New Implementation
  *   <ul>
  *   <li><code>CorrelatedRawData</code> - base class replacing <code>CorrelatedQueryData</code>.</li>
- *   <li><code>UniformRawData</code> - child class supporting raw data correlated to a <code>SamplingClock</code> message.</li>
- *   <li><code>SpuriousRawData</code> - child class supporting raw data correlated to a <code>TimestampList</code> message.</li>
+ *   <li><code>RawDataClocked</code> - child class supporting raw data correlated to a <code>SamplingClock</code> message.</li>
+ *   <li><code>RawDataTmsList</code> - child class supporting raw data correlated to a <code>TimestampList</code> message.</li>
  *   <li><code>RawDataInsertTask</code> - thread task replacing <code>DataBucketInsertTask</code>.</li>
  *   <li><code>RawDataCorrelator</code> - main processor of <code>QueryData</code> messages replacing <code>QueryDataCorrelator</code>.</li>
  *   </ul>

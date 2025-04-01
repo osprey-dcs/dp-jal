@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	UniformRawData.java
+ * File:	RawDataClocked.java
  * Package: com.ospreydcs.dp.api.query.model.correl
- * Type: 	UniformRawData
+ * Type: 	RawDataClocked
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -40,7 +40,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * @since Mar 11, 2025
  *
  */
-public class UniformRawData extends CorrelatedRawData {
+public class RawDataClocked extends CorrelatedRawData {
 
     
     //
@@ -57,15 +57,15 @@ public class UniformRawData extends CorrelatedRawData {
     
     /**
      * <p>
-     * Constructs a new <code>UniformRawData</code> instance.
+     * Constructs a new <code>RawDataClocked</code> instance.
      * </p>
      *
      * @param msgBucket Protocol Buffers message containing initializing data
      * 
      * @throws IllegalArgumentException argument does not contains a sampling clock
      */
-    protected UniformRawData(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
-        super(RawDataType.UNIFORM, ProtoTime.range(msgBucket.getDataTimestamps().getSamplingClock()), msgBucket);
+    protected RawDataClocked(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
+        super(RawDataType.CLOCKED, ProtoTime.range(msgBucket.getDataTimestamps().getSamplingClock()), msgBucket);
 
         // Check argument
         if (!msgBucket.getDataTimestamps().hasSamplingClock()) {

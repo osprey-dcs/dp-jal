@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	UniformSampledBlock.java
+ * File:	SampledBlockClocked.java
  * Package: com.ospreydcs.dp.api.query.model.series
- * Type: 	UniformSampledBlock
+ * Type: 	SampledBlockClocked
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -30,7 +30,7 @@ import java.util.ArrayList;
 
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.query.model.correl.UniformRawData;
+import com.ospreydcs.dp.api.query.model.correl.RawDataClocked;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 
 /**
@@ -42,7 +42,7 @@ import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
  * @since Mar 24, 2025
  *
  */
-public class UniformSampledBlock extends SampledBlock {
+public class SampledBlockClocked extends SampledBlock {
     
     
     //
@@ -50,17 +50,17 @@ public class UniformSampledBlock extends SampledBlock {
     //
     
     /** The raw data correlated to a uniform sampling clock */
-    private final UniformRawData        datRaw;
+    private final RawDataClocked        datRaw;
     
 
     /**
      * <p>
-     * Constructs a new <code>UniformSampledBlock</code> instance.
+     * Constructs a new <code>SampledBlockClocked</code> instance.
      * </p>
      *
      * @param datRaw
      */
-    public UniformSampledBlock(UniformRawData datRaw) {
+    public SampledBlockClocked(RawDataClocked datRaw) {
         super(this.datRaw = datRaw);
     }
 

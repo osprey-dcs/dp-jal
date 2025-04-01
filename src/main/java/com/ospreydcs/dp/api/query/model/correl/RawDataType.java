@@ -39,12 +39,12 @@ public enum RawDataType {
     /**
      * Sampling data correlated with a uniforming sampling clock.
      */
-    UNIFORM(UniformRawData.class),
+    CLOCKED(RawDataClocked.class),
     
     /**
      * Sampling data correlated to an explicit list of timestamps (supports spurious process data).
      */
-    SPURIOUS(SpuriousRawData.class);
+    TIMESTAMPLIST(RawDataTmsList.class);
     
     
     //
