@@ -27,7 +27,7 @@ package com.ospreydcs.dp.api.query.model.correl;
 
 /**
  * <p>
- * Enumeration of the <code>CorrelatedRawData</code> subclass types.
+ * Enumeration of the <code>RawCorrelatedData</code> subclass types.
  * </p>
  *
  * @author Christopher K. Allen
@@ -39,12 +39,12 @@ public enum RawDataType {
     /**
      * Sampling data correlated with a uniforming sampling clock.
      */
-    CLOCKED(RawDataClocked.class),
+    CLOCKED(RawClockedData.class),
     
     /**
      * Sampling data correlated to an explicit list of timestamps (supports spurious process data).
      */
-    TIMESTAMPLIST(RawDataTmsList.class);
+    TIMESTAMPLIST(RawTmsListData.class);
     
     
     //
@@ -52,14 +52,14 @@ public enum RawDataType {
     //
     
     /** The class type for the supported data */
-    private final Class<? extends CorrelatedRawData>    clsType;
+    private final Class<? extends RawCorrelatedData>    clsType;
     
     /** Constructs and initializes the enumeration constant. */
-    RawDataType(Class<? extends CorrelatedRawData> clsType) {
+    RawDataType(Class<? extends RawCorrelatedData> clsType) {
         this.clsType = clsType;
     }
     
     /** Return the class type for the correlated data indicated by the constant. */ 
-    Class<? extends CorrelatedRawData>  getClassType() { return this.clsType; };
+    Class<? extends RawCorrelatedData>  getClassType() { return this.clsType; };
 
 }

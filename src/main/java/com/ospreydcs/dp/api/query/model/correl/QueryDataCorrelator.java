@@ -296,7 +296,7 @@ public class QueryDataCorrelator {
     public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
     /** Parallelism tuning parameter - default number of independent processing threads */
-    public static final int        CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.threadCount;
+    public static final int        CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.maxThreads;
     
     
     //

@@ -52,7 +52,7 @@
  * <li>New Implementation
  *   <ul>
  *   <li><code>SampledBlockClocked</code> - Child class supporting uniformly sampled processes.</li>
- *   <li><code>RawDataTmsList</code> - Child class supporting arbitrarily sampled processes.</li>
+ *   <li><code>RawTmsListData</code> - Child class supporting arbitrarily sampled processes.</li>
  *   <li><code>SampledBlock</code> - Base class of the above.</li>
  *   <li><code>SampledProcess</code> - An aggregation of <code>SampledBlock</code> objects.
  *   </ul>

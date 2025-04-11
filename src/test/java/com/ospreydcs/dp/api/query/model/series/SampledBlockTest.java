@@ -52,7 +52,7 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryApiFactory;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IQueryService;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData;
+import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
@@ -118,13 +118,13 @@ public class SampledBlockTest {
     
     
     /** "Small" correlated test data */
-    public static SortedSet<CorrelatedRawData>          SET_CORR_DATA_SMALL;
+    public static SortedSet<RawCorrelatedData>          SET_CORR_DATA_SMALL;
 
     /** Wide correlated test data */
-    public static SortedSet<CorrelatedRawData>          SET_CORR_DATA_WIDE;
+    public static SortedSet<RawCorrelatedData>          SET_CORR_DATA_WIDE;
 
     /** Large correlated test data */
-    public static SortedSet<CorrelatedRawData>          SET_CORR_DATA_BIG;
+    public static SortedSet<RawCorrelatedData>          SET_CORR_DATA_BIG;
 
     
     //
@@ -200,13 +200,13 @@ public class SampledBlockTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#from(com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#from(com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData)}.
      */
     @Test
     public final void testFrom() {
         
         // Parameters
-        final   CorrelatedRawData   blkRaw = SET_CORR_DATA_SMALL.getFirst();
+        final   RawCorrelatedData   blkRaw = SET_CORR_DATA_SMALL.getFirst();
         
         try {
             SampledBlock    blkTest = SampledBlock.from(blkRaw);
@@ -220,7 +220,7 @@ public class SampledBlockTest {
     }
 
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#SampledBlock(com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData)}.
+//     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#SampledBlock(com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData)}.
 //     */
 //    @Test
 //    public final void testSampledBlock() {
@@ -233,7 +233,7 @@ public class SampledBlockTest {
     public final void testInsertNullTimeSeries() {
         
         // Parameters
-        final   CorrelatedRawData   blkRaw = SET_CORR_DATA_SMALL.getFirst();
+        final   RawCorrelatedData   blkRaw = SET_CORR_DATA_SMALL.getFirst();
         final   DpSupportedType     ennType = DpSupportedType.BOOLEAN;
         final   String              strPvNm = "dpTest_Null";
         
@@ -261,11 +261,11 @@ public class SampledBlockTest {
     public final void testGetStartTime() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -302,11 +302,11 @@ public class SampledBlockTest {
     public final void testGetTimeRange() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -343,12 +343,12 @@ public class SampledBlockTest {
     public final void testGetSampleCount() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_BIG;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_BIG;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   int                             cntSmplsAll = setCorrData.getFirst().getSampleCount();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -375,12 +375,12 @@ public class SampledBlockTest {
     public final void testGetDataSourceCount() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_BIG;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_BIG;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   int                             cntSrcsAll = setCorrData.getFirst().getSourceCount();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -407,11 +407,11 @@ public class SampledBlockTest {
     public final void testGetSourceNames() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -439,11 +439,11 @@ public class SampledBlockTest {
     public final void testGetSourceType() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_SMALL;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_SMALL;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -484,13 +484,13 @@ public class SampledBlockTest {
     public final void testGetTimeSeries() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_SMALL;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_SMALL;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   int                             cntSmples = setCorrData.getFirst().getSampleCount();
         
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -532,12 +532,12 @@ public class SampledBlockTest {
     public final void testGetTimeSeriesAll() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_SMALL;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_SMALL;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   int                             cntSmples = setCorrData.getFirst().getSampleCount();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -580,12 +580,12 @@ public class SampledBlockTest {
     public final void testHasSourceData() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   Set<String>                     setSrcNms = setCorrData.getFirst().getSourceNames();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -613,11 +613,11 @@ public class SampledBlockTest {
     public final void testHasDomainIntersection() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -650,11 +650,11 @@ public class SampledBlockTest {
     public final void testIsTableComplete() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_BIG;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_BIG;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -679,11 +679,11 @@ public class SampledBlockTest {
     public final void testHasError() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_BIG;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_BIG;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -708,11 +708,11 @@ public class SampledBlockTest {
     public final void testClear() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_BIG;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_BIG;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -743,12 +743,12 @@ public class SampledBlockTest {
     public final void testGetRowCount() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_SMALL;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_SMALL;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   int                             cntSmples = setCorrData.getFirst().getSampleCount();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -773,12 +773,12 @@ public class SampledBlockTest {
     public final void testGetColumnCount() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   int                             cntSrcs = setCorrData.getFirst().getSourceCount();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -803,12 +803,12 @@ public class SampledBlockTest {
     public final void testGetColumnIndex() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   Set<String>                     setSrcNms = setCorrData.getFirst().getSourceNames();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -839,12 +839,12 @@ public class SampledBlockTest {
     public final void testGetColumnNames() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   Set<String>                     setSrcNms = setCorrData.getFirst().getSourceNames();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -872,12 +872,12 @@ public class SampledBlockTest {
     public final void testGetTimestamps() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   int                             cntSmpls = setCorrData.getFirst().getSampleCount();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -910,13 +910,13 @@ public class SampledBlockTest {
     public final void testGetColumnInt() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   int                             cntSrcs = setCorrData.getFirst().getSourceCount();
         final   int                             cntTms = setCorrData.getFirst().getSampleCount();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -946,13 +946,13 @@ public class SampledBlockTest {
     public final void testGetColumnString() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_WIDE;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_WIDE;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         final   int                             cntTms = setCorrData.getFirst().getSampleCount();
         final   Set<String>                     setSrcNms = setCorrData.getFirst().getSourceNames();
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 
@@ -982,11 +982,11 @@ public class SampledBlockTest {
     public final void testCompareTo() {
         
         // Parameters
-        final   SortedSet<CorrelatedRawData>    setCorrData = SET_CORR_DATA_SMALL;
+        final   SortedSet<RawCorrelatedData>    setCorrData = SET_CORR_DATA_SMALL;
         final   List<SampledBlock>              lstSmplBlks = new ArrayList<>(setCorrData.size());
         
         try {
-            for (CorrelatedRawData blkCorr : setCorrData) {
+            for (RawCorrelatedData blkCorr : setCorrData) {
                 
                 SampledBlock    blkTest = SampledBlock.from(blkCorr);
                 

@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -46,20 +48,21 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.query.model.aggr.RawSuperDomData;
+import com.ospreydcs.dp.api.query.model.aggr.SampledBlockSuperDom;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData;
-import com.ospreydcs.dp.api.query.model.correl.RawDataTmsList;
-import com.ospreydcs.dp.api.query.model.correl.RawDataClocked;
+import com.ospreydcs.dp.api.query.model.correl.RawClockedData;
+import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
+import com.ospreydcs.dp.api.query.model.correl.RawTmsListData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 
 /**
  * <p>
- * Represents a finite-duration block of correlated, sampled, time-series data.
+ * Base class representation of a finite-duration block of correlated, sampled, time-series data.
  * </p>
  * <p>
- * Class instances formalize <code>CorrelatedRawData</code> class instances to the Java API Library format.  
- * Specifically, <code>CorrelatedRawData</code> instances contain Query Service time-series raw data within 
+ * Class instances formalize <code>RawCorrelatedData</code> objects to the Java API Library format.  
+ * Specifically, <code>RawCorrelatedData</code> instances contain Query Service time-series raw data within 
  * Protocol Buffers messages.  The objective of this class is to extract this data and present it in the format
  * of the Java API Library.  After construction, the data is available through the <code>{@link IDataTable}</code>
  * interface.
@@ -78,6 +81,32 @@ import com.ospreydcs.dp.grpc.v1.common.DataColumn;
  * <code>{@link Comparator}</code> interface for explicit comparison of start time
  * instances.
  * </p>
+ * <p>
+ * <h2>Subclasses</h2>
+ * Subclasses implement the specific requirements for subclasses of <code>RawCorrelatedData</code>.  In addition,
+ * raw, correlated super domains (i.e., raw, correlated data with time-domain collisions) is now also implemented with
+ * a new subclass.  The following are subclasses currently recognized and available for creation with the creator
+ * methods <code>from()</code>:
+ * <ul>
+ * <li><code>SampledBlockClocked</code> - supports raw data correlated against a uniform sampling clock.</li>
+ * <li><code>SampledBlockTmsList</code> - supports raw data correlated against explicit timestamp list.</li>
+ * <li><code>SampledBlockSuperDom</code> - supports raw correlated data containing time-domain collisions.</li>
+ * </ul>
+ * <p> 
+ * These subclass instances should be fully initialized once constructed.  The <code>SampledBlock</code> base class provides
+ * the method <code>{@link #initialize()}</code> which must be called before the public methods are accessed.  Thus,
+ * calling this method within the subclass constructor is recommended.  Although, considered not "good programming
+ * practice", the action is warranted here.
+ * </p>
+ * <p>
+ * All subclasses must implement the abstract methods <code>{@link #createTimestampsVector()}</code> and
+ * <code>{@link #createTimeSeriesVector()}</code>, which are called within the <code>{@link #initialize()}</code>
+ * method to assign attributes <code>{@link #vecTimestamps}</code> and <code>{@link #vecTimeSeries}</code>,
+ * respectively.  Thus, all subclass resources necessary for proper invocation of the two abstract methods
+ * must be available before invoking <code>{@link #initialize()}</code>.  See the method documentation for
+ * <code>{@link #createTimestampsVector()}</code> and <code>{@link #createTimeSeriesVector()}</code> for
+ * their requirements.
+ * </p> 
  *
  * @author Christopher K. Allen
  * @since Mar 19, 2025
@@ -86,39 +115,48 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
 
     
     //
-    // Creator
+    // Creators
     //
     
     /**
      * <p>
-     * Creates a new <code>SampledBlock</code> instance initialized from the argument data.
+     * Creates a new <code>SampledBlock</code> instance initialized from the generalized argument data.
      * </p>
      * <p>
      * The returned object is complete and contains all data within the argument.  Specifically,
      * all argument data is extracted from its raw, Protocol Buffers messages and used to populate
-     * the <code>SampledBlock</code> instance.  The data is then immediately available.
+     * the <code>SampledBlock</code> instance.  
+     * The data is then immediately available from the <code>SampledBlock</code> interface.
      * </p> 
+     * <p>
+     * The type of the returned value is determined by the subtype of the argument.  Specifically,
+     * <ul>
+     * <li><code>SampledBlockClocked</code> when argument is instance of <code>RawClockedData</code>.</li>
+     * <li><code>SampledBlockTmsList</code> when argument is instance of <code>RawTmsListData</code>.</li>
+     * </ul>
+     * </p>
      * 
      * @param datRaw    the correlated raw, time-series data
      * 
      * @return  a new <code>SampledBlock</code> instance ready for data access
      * 
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws UnsupportedOperationException   the raw data contained neither a sampling clock or a timestamp list
      * @throws MissingResourceException the argument is has empty data column(s)
-     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
      * @throws TypeNotPresentException  an unsupported time-series data type was detected within the argument
      */
-    public static SampledBlock  from(CorrelatedRawData datRaw) 
-        throws UnsupportedOperationException, MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException {
+    public static SampledBlock  from(RawCorrelatedData datRaw) 
+        throws UnsupportedOperationException, MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException 
+    {
 
         // Check for correlation against an uniform sampling clock
-        if (datRaw instanceof RawDataClocked dat) {
+        if (datRaw instanceof RawClockedData dat) {
             return new SampledBlockClocked(dat);
         }
         
         // Check for correlation against a timestamp list
-        if (datRaw instanceof RawDataTmsList dat) {
+        if (datRaw instanceof RawTmsListData dat) {
             return new SampledBlockTmsList(dat);
         }
         
@@ -132,6 +170,96 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
             
         throw new UnsupportedOperationException(strMsg);
     }
+    
+    /**
+     * <p>
+     * Creates a new <code>SampledBlockClocked</code> instance initialized from the generalized argument data.
+     * </p>
+     * <p>
+     * The returned object is complete and contains all data within the argument.  Specifically,
+     * all argument data is extracted from its raw, Protocol Buffers messages and used to populate
+     * the <code>SampledBlock</code> instance.  
+     * The data is then immediately available from the <code>SampledBlock</code> interface.
+     * </p>
+     *  
+     * @param datRaw    the correlated raw, time-series data
+     * 
+     * @return  a new <code>SampledBlockClocked</code> instance ready for data access
+     * 
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
+     * @throws UnsupportedOperationException   the raw data contained neither a sampling clock or a timestamp list
+     * @throws MissingResourceException the argument is has empty data column(s)
+     * @throws IllegalStateException    the argument contains duplicate data source names
+     * @throws TypeNotPresentException  an unsupported time-series data type was detected within the argument
+     */
+    public static SampledBlockClocked  from(RawClockedData datRaw)
+        throws IllegalArgumentException, MissingResourceException, IllegalStateException, TypeNotPresentException 
+    {
+        return new SampledBlockClocked(datRaw);
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>SampledBlockTmsList</code> instance initialized from the generalized argument data.
+     * </p>
+     * <p>
+     * The returned object is complete and contains all data within the argument.  Specifically,
+     * all argument data is extracted from its raw, Protocol Buffers messages and used to populate
+     * the <code>SampledBlock</code> instance.  
+     * The data is then immediately available from the <code>SampledBlock</code> interface.
+     * </p>
+     *  
+     * @param datRaw    the correlated raw, time-series data
+     * 
+     * @return  a new <code>SampledBlockTmsList</code> instance ready for data access
+     * 
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
+     * @throws UnsupportedOperationException   the raw data contained neither a sampling clock or a timestamp list
+     * @throws MissingResourceException the argument is has empty data column(s)
+     * @throws IllegalStateException    the argument contains duplicate data source names
+     * @throws TypeNotPresentException  an unsupported time-series data type was detected within the argument
+     */
+    public static SampledBlockTmsList   from(RawTmsListData datRaw) 
+            throws IllegalArgumentException, MissingResourceException, IllegalStateException, TypeNotPresentException 
+    {
+        return new SampledBlockTmsList(datRaw);
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>SampledBlockSuperDom</code> instance initialized from the argument data.
+     * </p>
+     * <p>
+     * The returned object is complete and fully initiallized, containing all data within the argument.  
+     * Specifically, all argument data is extracted from its raw, Protocol Buffers messages and used to populate
+     * the <code>SampledBlock</code> instance.  
+     * The data is then immediately available from the <code>SampledBlock</code> interface.
+     * </p> 
+     * 
+     * @param datRaw    the correlated raw, time-series data containing time-domain collisions
+     * 
+     * @return  a new <code>SampledBlockSuperDom</code> instance ready for data access
+     * 
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
+     * @throws MissingResourceException the argument is has empty data column(s)
+     * @throws IllegalStateException    the argument contains duplicate data source names
+     * @throws TypeNotPresentException  an unsupported data type was detected within the argument
+     * @throws ExecutionException       general exception for serial processing (see cause)
+     * @throws RejectedExecutionException a fill task failed execution for concurrent processing
+     * @throws InterruptedException     timeout occurred while waiting for concurrent fill tasks to complete
+     */
+    public static SampledBlockSuperDom  from(RawSuperDomData datRaw) 
+            throws IllegalArgumentException, MissingResourceException, 
+                    IllegalStateException, TypeNotPresentException, 
+                    RejectedExecutionException, ExecutionException, InterruptedException 
+    {
+        return new SampledBlockSuperDom(datRaw);
+    }
+    
+    
+    //
+    // Internal Types
+    //
     
     /**
      * <p>
@@ -216,7 +344,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     //
     
     /** The Data Platform API default configuration parameter set */
-    private static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    protected static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
     
     
     //
@@ -233,109 +361,204 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     /** Concurrency tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
     public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
-
+    
+    /** Use extended error checking during initialization */
+    public static final boolean     BOL_ERROR_CHK = CFG_QUERY.data.table.construction.errorChecking;
+    
+    
     //
     // Class Resources
     //
     
     /** Event logger for class */
-    private static final Logger     LOGGER = LogManager.getLogger();
+    protected static final Logger     LOGGER = LogManager.getLogger();
     
 
     //
     // Instance Attributes
     //
     
+    /** The time range of the sampled block */
+    protected TimeInterval      tvlRange;
+    
+    
     /** The vector of ordered timestamps correspond to this sample block */
-    private final   ArrayList<Instant>                      vecTimestamps;
+    protected ArrayList<Instant>                      vecTimestamps;
     
     /** The vector of time-series data in this sampling block */
-    private final   ArrayList<SampledTimeSeries<Object>>    vecTimeSeries;
+    protected ArrayList<SampledTimeSeries<Object>>    vecTimeSeries;
     
     
     /** Set of data source names for sample block - used for IDataTable implementation */
-    private final   List<String>                            lstSourceNames;
+    protected List<String>                            lstSourceNames;
     
     /** Map of data source name to table column index - used for IDataTable implementation */
-    private final   Map<String, Integer>                    mapSrcToIndex;
+    protected Map<String, Integer>                    mapSrcToIndex;
     
     /** Map of data source name to time series - used for IDataTable implementation */
-    private final   Map<String, SampledTimeSeries<Object>>  mapSrcToSeries;
+    protected Map<String, SampledTimeSeries<Object>>  mapSrcToSeries;
     
     
     //
-    // Instant Attributes
-    //
-    
-    /** The time range of the sampled block */
-    private final TimeInterval      tvlRange;
-    
-    
-    //
-    // Constructor
+    // Constructors
     //
     
     /**
      * <p>
-     * Constructs a new initialized, instance of <code>SampledBlock</code>.
+     * Constructs a new uninitialized, instance of <code>SampledBlock</code>.
      * </p>
      * <p>
-     * After construction the new instance contains the sampling clock and all sampled time series
-     * data as represented by the argument.  If the data within the argument is corrupt or 
-     * inconsistent an exception is thrown.
+     * Child classes should initialize themselves then call the <code>{@link #initialize()}</code>
+     * method to initialize this base class.
      * </p>
-     *
-     * @param cqdSampleBlock    source data for the new instance
-     * 
+     */
+    public SampledBlock() { 
+        
+//        // Check the argument for data source name uniqueness
+//        ResultStatus    recUnique = datRaw.verifySourceUniqueness();
+//        if (recUnique.isFailure()) {
+//            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
+//                    + " - Correlated data block has non-unique sources: " 
+//                    + recUnique.message();
+//            
+//            if (BOL_LOGGING)
+//                LOGGER.error(strMsg);
+//
+//            throw new IllegalArgumentException(strMsg);
+//        }
+//        
+//        // Check the argument for data source size consistency
+//        ResultStatus    recSizes = datRaw.verifySourceSizes();
+//        if (recSizes.isFailure()) {
+//            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
+//                    + " - Correlated data block has columns with bad sizes: " 
+//                    + recSizes.message();
+//            
+//            if (BOL_LOGGING)
+//                LOGGER.error(strMsg);
+//            
+//            throw new IllegalArgumentException(strMsg);
+//        }
+//
+//        // Extract the time domain data
+//        this.tvlRange = datRaw.getTimeRange();
+//        this.vecTimestamps = this.createTimestampsVector();
+//        
+//        // Extract the relevant Protobuf message from the argument
+//        List<DataColumn>    lstMsgDataCols = datRaw.getRawDataMessages();
+//        
+//        // Create the time-series data all supporting resources for this block
+//        this.vecTimeSeries = this.createTimeSeriesVector(lstMsgDataCols);
+//        
+//        this.lstSourceNames = this.createSourceNameList(this.vecTimeSeries);
+//        this.mapSrcToIndex = this.createSrcToIndexMap(this.vecTimeSeries);
+//        this.mapSrcToSeries = this.createSrcToSeriesMap(this.vecTimeSeries);
+    }
+    
+    /**
+     * <p>
+     * Initializes the base class primary and auxiliary data structures.
+     * </p>
+     * <p>
+     * This method must be called from the child class to initialize the base class data structures.  
+     * Once initialized, these data structures support all public method invocations, including those
+     * of the <code>IDataTable</code> interface.
+     * </p>
+     * <p>
+     * It is logical that this method be called from the child class constructor after it has initialized
+     * all its resources according to its supported data.  In general this is not best programming practice,
+     * however, here it makes sense to have the entire sampled block fully populated and ready for client
+     * access after construction.
+     * </p>
+     *  
      * @throws MissingResourceException the argument is has empty data column(s)
-     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      * @throws IllegalStateException    the argument contains duplicate data source names
      * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      */
-    public SampledBlock(CorrelatedRawData datRaw) 
-            throws MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException {
+    protected void initialize() throws MissingResourceException, IllegalStateException, TypeNotPresentException {
         
-        // Check the argument for data source name uniqueness
-        ResultStatus    recUnique = datRaw.verifySourceUniqueness();
-        if (recUnique.isFailure()) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
-                    + " - Correlated data block has non-unique sources: " 
-                    + recUnique.message();
-            
-            if (BOL_LOGGING)
-                LOGGER.error(strMsg);
-
-            throw new IllegalArgumentException(strMsg);
-        }
+        // Create the defining data for the sampled block
+        this.vecTimestamps = this.createTimestampsVector();
+        this.vecTimeSeries = this.createTimeSeriesVector(); // throws exceptions
         
-        // Check the argument for data source size consistency
-        ResultStatus    recSizes = datRaw.verifySourceSizes();
-        if (recSizes.isFailure()) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
-                    + " - Correlated data block has columns with bad sizes: " 
-                    + recSizes.message();
-            
-            if (BOL_LOGGING)
-                LOGGER.error(strMsg);
-            
-            throw new IllegalArgumentException(strMsg);
-        }
-
-        // Extract the time domain data
-        this.tvlRange = datRaw.getTimeRange();
-        this.vecTimestamps = this.createTimestamps();
+        // Create the time range from the timestamp list
+        Instant insStart = this.vecTimestamps.getFirst();
+        Instant insStop = this.vecTimestamps.getLast();
+        this.tvlRange = TimeInterval.from(insStart, insStop);
         
-        // Extract the relevant Protobuf message from the argument
-        List<DataColumn>    lstMsgDataCols = datRaw.getRawDataMessages();
-        
-        // Create the time-series data all supporting resources for this block
-        this.vecTimeSeries = this.createTimeSeriesVector(lstMsgDataCols);
-        
+        // Create the auxiliary data from the times series
         this.lstSourceNames = this.createSourceNameList(this.vecTimeSeries);
         this.mapSrcToIndex = this.createSrcToIndexMap(this.vecTimeSeries);
         this.mapSrcToSeries = this.createSrcToSeriesMap(this.vecTimeSeries);
     }
 
+    
+    //
+    // Abstract Support Methods
+    //
+    
+    /**
+     * <p>
+     * Subclass construction of the timestamp vector for all data within this sampled block.
+     * </p>
+     * <p>
+     * The timestamps are created and saved in the base class attribute <code>{@link #vecTimestamps}</code>.
+     * This method should be called by the base class only once.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * It is unclear if this implementation works as this method is invoked from the base class constructor.
+     * If Java completes the base class constructor before the subclass constructor is invoked then the
+     * local attribute containing the actual (typed) <code>RawCorrelatedData</code> object may not be 
+     * available.  This is certainly the case for C++ which creates a compilation error.
+     * </p>
+     *  
+     * @return  the ordered list (vector) of timestamps for all data within this sampled block
+     */
+    protected abstract ArrayList<Instant> createTimestampsVector();
+
+    /** 
+     * <p>
+     * Creates all <code>{@link SampledTimeSeries}</code> objects and returns them as a vector (i.e. array list).
+     * </p>
+     * <p>
+     * Creates all the <code>{@link SampledTimeSeries}</code> instances for this sampling
+     * block using the given argument as source data.  The returned object is a vector of
+     * of such objects respecting the the argument order.  It is assumed that the data
+     * sources within the argument are all unique. Thus, this condition should be checked.
+     * </p>
+     * <p>
+     * This method is intended for the creation of attribute <code>{@link #vecTimeSeries}</code>, also needed for the
+     * <code>{@link IDataTable}</code> implementation (i.e., for table column indexing).
+     * The returned vector is ordered according to the ordering of the argument entries.
+     * </p>
+     * <h2>Concurrency</h2>
+     * If concurrency is enabled (i.e., <code>{@link #BOL_CONCURRENCY}</code> = <code>true</code>),
+     * this method utilizes streaming parallelism if the argument size is greater than the
+     * pivot number <code>{@link #SZ_CONCURRENCY_PIVOT}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned Java container is mutable, additional entries can be added (e.g., null series).
+     * </li>
+     * <li>
+     * The argument should have already been checked for duplicate data source names using
+     * <code>{@link CorrelatedQueryData#verifySourceUniqueness()}</code>.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @return  vector containing a time series for each data in the constructor argument, ordered by argument
+     * 
+     * @throws MissingResourceException a data column message contained no data
+     * @throws IllegalStateException    the argument contained non-uniform data types
+     * @throws TypeNotPresentException  an unsupported data type was detected within the argument
+     */
+    protected abstract ArrayList<SampledTimeSeries<Object>> createTimeSeriesVector() 
+            throws MissingResourceException, IllegalStateException, TypeNotPresentException;
+    
     
     //
     // Operations
@@ -588,11 +811,11 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     
     /**
      * <p>
-     * Determine whether or not the sampling block contains time-series data for the given 
+     * Determine whether or not the sampled block contains time-series data for the given 
      * data source.
      * </p>
      * <p>
-     * Simply checks the given data source name against the internal set of represented
+     * Simply checks the given data source name for containment within the internal set of represented
      * data sources.
      * </p>
      *  
@@ -603,6 +826,61 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      */
     public final boolean  hasSourceData(String strSourceName) {
         return this.lstSourceNames.contains(strSourceName);
+    }
+    
+    /**
+     * <p>
+     * Determines whether of not the sampled block contains process samples at the given timestamp.
+     * </p>
+     * <p>
+     * Simply checks the given argument for containment within internal collection of sampled process timestamps.
+     * Equality is determined but the <code>{@link Instant#equals(Object)}</code> method.
+     * The timestamp index can be recovered with method <code>{@link #timestampIndex(Instant)}</code>.
+     * </p>
+     *  
+     * @param insTms    timestamp under scrutiny
+     * 
+     * @return  <code>true</code> if the sampled block contains samples for the given timestamp,
+     *          <code>false</code> otherwise
+     *          
+     * @see #timestampIndex(Instant)
+     */
+    public final boolean    hasTimestamp(Instant insTms) {
+        return this.vecTimestamps.contains(insTms);
+    }
+    
+    /**
+     * <p>
+     * Returns the row index of the given timestamp within the sampled block if it exists.
+     * </p>
+     * <p>
+     * The returned value is the index <i>i</i> that would yield the argument value for an invocation
+     * of method <code>{@link #getTimestamp(int)}</code>.
+     * Note that if the sampled block does not contain samples for the given timestamp an exception is thrown.
+     * Use <code>{@link #hasTimestamp(Instant)}</code> to determine timestamp validity.
+     * </p>
+     *  
+     * @param insTms    timestamp for which index is to be retrieved
+     * 
+     * @return  the sampled process timestamp index for the given timestamp
+     * 
+     * @throws IllegalArgumentException there is no process samples for the given timestamp
+     * 
+     * @see {@link #hasTimestamp(Instant)}
+     */
+    public final int    timestampIndex(Instant insTms) throws IllegalArgumentException {
+        int indTms = this.vecTimestamps.indexOf(insTms);
+        
+        if (indTms == -1) {
+            String strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - No process samples for timestamp " + insTms;
+            
+            if (BOL_LOGGING)
+                LOGGER.warn(strMsg);
+            
+            throw new IllegalArgumentException(strMsg);
+        }
+        
+        return indTms;
     }
     
     /**
@@ -807,104 +1085,122 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     }
     
     
-    //
-    // Abstract Support Methods
-    //
+//    /** 
+//     * <p>
+//     * Creates all <code>{@link SampledTimeSeries}</code> objects and returns them as a vector (i.e. array list).
+//     * </p>
+//     * <p>
+//     * Creates all the <code>{@link SampledTimeSeries}</code> instances for this sampling
+//     * block using the given argument as source data.  The returned object is a vector of
+//     * of such objects respecting the the argument order.  It is assumed that the data
+//     * sources within the argument are all unique. Thus, this condition should be checked.
+//     * </p>
+//     * <p>
+//     * This method is intended for the creation of attribute <code>{@link #vecTimeSeries}</code>, also needed for the
+//     * <code>{@link IDataTable}</code> implementation (i.e., for table column indexing).
+//     * The returned vector is ordered according to the ordering of the argument entries.
+//     * </p>
+//     * <h2>Concurrency</h2>
+//     * If concurrency is enabled (i.e., <code>{@link #BOL_CONCURRENCY}</code> = <code>true</code>),
+//     * this method utilizes streaming parallelism if the argument size is greater than the
+//     * pivot number <code>{@link #SZ_CONCURRENCY_PIVOT}</code>.
+//     * </p>
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li>
+//     * The returned Java container is mutable, additional entries can be added (e.g., null series).
+//     * </li>
+//     * <li>
+//     * The argument should have already been checked for duplicate data source names using
+//     * <code>{@link CorrelatedQueryData#verifySourceUniqueness()}</code>.
+//     * </li>
+//     * </ul>
+//     * </p>
+//     * 
+//     * @param lstMsgDataCols   source data for sampled time series creation
+//     * 
+//     * @return  vector containing a time series for each data column in the argument, ordered by argument
+//     * 
+//     * @throws MissingResourceException      a data column message contained no data
+//     * @throws IllegalStateException         the argument contained or non-uniform data types
+//     * @throws TypeNotPresentException an unsupported data type was detected within the argument
+//     */
+//    protected ArrayList<SampledTimeSeries<Object>> createTimeSeriesVector(List<DataColumn> lstMsgDataCols) 
+//            throws MissingResourceException, IllegalStateException, TypeNotPresentException {
+//
+//        // List of time series are created, one for each unique data source name
+//        List<SampledTimeSeries<Object>>  lstCols; // = new ArrayList<>();
+//
+//        // Create processing stream based upon number of data columns
+//        
+//        // TODO 
+//        // - I think there is an IllegalStateException thrown intermittently here
+//        // "End size 99 is less than fixed size 100"
+//        if (BOL_CONCURRENCY && (lstMsgDataCols.size() > SZ_CONCURRENCY_PIVOT)) {
+//            lstCols = lstMsgDataCols
+//                    .parallelStream()
+//                    .<SampledTimeSeries<Object>>map(SampledTimeSeries::from)           // throws MissingResourceException, IllegalStateExcepiont, TypeNotPresentException
+//                    .toList();
+//            
+//        } else {
+//            lstCols = lstMsgDataCols
+//                    .stream()
+//                    .<SampledTimeSeries<Object>>map(SampledTimeSeries::from)           // throws MissingResourceException, IllegalStateExcepiont, TypeNotPresentException
+//                    .toList();
+//        }
+//        
+//        // Create the final ArrayList (vector) for time-series and return
+//        ArrayList<SampledTimeSeries<Object>>  vecCols = new ArrayList<>(lstCols);
+//        
+//        return vecCols;
+//    }
+
     
-    /**
-     * <p>
-     * Superclass construction of the timestamp vector for all data within this sampled block.
-     * </p>
-     * <p>
-     * The timestamps are created and saved in the base class attribute <code>{@link #vecTimestamps}</code>.
-     * This method should be called by the base class only once.
-     * </p>
-     * <p>
-     * <h2>WARNING:</h2>
-     * It is unclear if this implementation works as this method is invoked from the base class constructor.
-     * If Java completes the base class constructor before the subclass constructor is invoked then the
-     * local attribute containing the actual (typed) <code>CorrelatedRawData</code> object may not be 
-     * available.  This is certainly the case for C++ which creates a compilation error.
-     * </p>
-     *  
-     * @return  the ordered list (vector) of timestamps for all data within this sampled block
-     */
-    protected abstract ArrayList<Instant> createTimestamps();
-
-
     //
     // Support Methods
     //
     
     /**
      * <p>
-     * Creates all <code>{@link SampledTimeSeries}</code> objects and returns them as a vector (i.e. array list).
+     * Verifies the consistency of the <code>RawCorrelatedData</code> argument.
      * </p>
      * <p>
-     * Creates all the <code>{@link SampledTimeSeries}</code> instances for this sampling
-     * block using the given argument as source data.  The returned object is a vector of
-     * of such objects respecting the the argument order.  It is assumed that the data
-     * sources within the argument are all unique. Thus, this condition should be checked.
-     * </p>
-     * <p>
-     * This method is intended for the creation of attribute <code>{@link #vecTimeSeries}</code>, also needed for the
-     * <code>{@link IDataTable}</code> implementation (i.e., for table column indexing).
-     * The returned vector is ordered according to the ordering of the argument entries.
-     * </p>
-     * <h2>Concurrency</h2>
-     * If concurrency is enabled (i.e., <code>{@link #BOL_CONCURRENCY}</code> = <code>true</code>),
-     * this method utilizes streaming parallelism if the argument size is greater than the
-     * pivot number <code>{@link #SZ_CONCURRENCY_PIVOT}</code>.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>
-     * The returned Java container is mutable, additional entries can be added (e.g., null series).
-     * </li>
-     * <li>
-     * The argument should have already been checked for duplicate data source names using
-     * <code>{@link CorrelatedQueryData#verifySourceUniqueness()}</code>.
-     * </li>
-     * </ul>
+     * This method is available to child classes for source data verification (i.e., where applicable).  
+     * It checks that all data source names are unique and that all data column messages have the same size.
      * </p>
      * 
-     * @param lstMsgDataCols   source data for sampled time series creation
+     * @param datRaw    raw correlated data under inspection
      * 
-     * @return  vector containing a time series for each data column in the argument, ordered by argument
-     * 
-     * @throws MissingResourceException      a data column message contained no data
-     * @throws IllegalStateException         the argument contained or non-uniform data types
-     * @throws TypeNotPresentException an unsupported data type was detected within the argument
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
      */
-    private ArrayList<SampledTimeSeries<Object>> createTimeSeriesVector(List<DataColumn> lstMsgDataCols) 
-            throws MissingResourceException, IllegalStateException, TypeNotPresentException {
-
-        // List of time series are created, one for each unique data source name
-        List<SampledTimeSeries<Object>>  lstCols; // = new ArrayList<>();
-
-        // Create processing stream based upon number of data columns
+    protected void    verifySourceData(RawCorrelatedData datRaw) throws IllegalArgumentException {
         
-        // TODO 
-        // - I think there is an IllegalStateException thrown intermittently here
-        // "End size 99 is less than fixed size 100"
-        if (BOL_CONCURRENCY && (lstMsgDataCols.size() > SZ_CONCURRENCY_PIVOT)) {
-            lstCols = lstMsgDataCols
-                    .parallelStream()
-                    .<SampledTimeSeries<Object>>map(SampledTimeSeries::from)           // throws MissingResourceException, IllegalStateExcepiont, TypeNotPresentException
-                    .toList();
+        // Check the argument for data source name uniqueness
+        ResultStatus    recUnique = datRaw.verifySourceUniqueness();
+        if (recUnique.isFailure()) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
+                    + " - Correlated data block has non-unique sources: " 
+                    + recUnique.message();
             
-        } else {
-            lstCols = lstMsgDataCols
-                    .stream()
-                    .<SampledTimeSeries<Object>>map(SampledTimeSeries::from)           // throws MissingResourceException, IllegalStateExcepiont, TypeNotPresentException
-                    .toList();
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+
+            throw new IllegalArgumentException(strMsg);
         }
         
-        // Create the final ArrayList (vector) for time-series and return
-        ArrayList<SampledTimeSeries<Object>>  vecCols = new ArrayList<>(lstCols);
-        
-        return vecCols;
+        // Check the argument for data source size consistency
+        ResultStatus    recSizes = datRaw.verifySourceSizes();
+        if (recSizes.isFailure()) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
+                    + " - Correlated data block has columns with bad sizes: " 
+                    + recSizes.message();
+            
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new IllegalArgumentException(strMsg);
+        }
     }
     
     /**

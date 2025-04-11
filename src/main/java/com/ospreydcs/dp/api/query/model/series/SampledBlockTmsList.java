@@ -28,14 +28,16 @@ package com.ospreydcs.dp.api.query.model.series;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.MissingResourceException;
 
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.query.model.correl.RawDataTmsList;
+import com.ospreydcs.dp.api.query.model.correl.RawTmsListData;
+import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
 
 /**
  * <p>
- * Superclass of <code>SampledBlock</code> supporting generalized sampling with timestamp lists.
+ * Subclass of <code>SampledBlock</code> supporting generalized sampling with timestamp lists.
  * </p> 
  *
  * @author Christopher K. Allen
@@ -49,32 +51,91 @@ public class SampledBlockTmsList extends SampledBlock {
     // Initializing Attributes
     //
     
-    /** The raw data correlated to a timestamp list */
-    private final RawDataTmsList       datRaw;
+    /** The raw data correlated to a timestamp list from which this sampled block is built */
+    private final RawTmsListData       datRawTmsLst;
 
+    
+    //
+    // Constructor
+    //
     
     /**
      * <p>
-     * Constructs a new <code>SampledBlockTmsList</code> instance.
+     * Constructs a new, initialized <code>SampledBlockTmsList</code> instance from the given argument.
      * </p>
      *
-     * @param datRaw    raw, time-series data correlated to a timestamp list
+     * @param datRawTmsLst    raw, time-series data correlated to a timestamp list
+     * 
+     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
+     * @throws MissingResourceException the argument is has empty data column(s)
+     * @throws IllegalStateException    the argument contains duplicate data source names
+     * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      */
-    public SampledBlockTmsList(RawDataTmsList datRaw) {
-        super(this.datRaw = datRaw);
+    public SampledBlockTmsList(RawTmsListData datRawTmsLst)             
+            throws IllegalArgumentException, MissingResourceException, IllegalStateException, TypeNotPresentException {
+        super();
+        
+        if (BOL_ERROR_CHK)
+            super.verifySourceData(datRawTmsLst);   // throws IllegalArgument exception
+        
+        this.datRawTmsLst = datRawTmsLst;
+        super.initialize();    // throws exceptions
     }
+    
+    
+    //
+    // Base Class Abstract Methods
+    //
 
     /**
-     * @see com.ospreydcs.dp.api.query.model.series.SampledBlock#createTimestamps()
+     * @see com.ospreydcs.dp.api.query.model.series.SampledBlock#createTimestampsVector()
      */
     @Override
-    protected ArrayList<Instant> createTimestamps() {
-        
-        TimestampList       msgTms = datRaw.getTimestampListMessage();
+    protected ArrayList<Instant> createTimestampsVector() {
+        TimestampList       msgTms = datRawTmsLst.getTimestampListMessage();
         List<Instant>       lstTms = ProtoMsg.toInstantList(msgTms);
         ArrayList<Instant>  vecTms = new ArrayList<>(lstTms);
         
         return vecTms;
     }
 
+    /**
+     * @see com.ospreydcs.dp.api.query.model.series.SampledBlock#createTimeSeriesVector()
+     */
+    @Override
+    protected ArrayList<SampledTimeSeries<Object>> createTimeSeriesVector() 
+            throws MissingResourceException, IllegalStateException, TypeNotPresentException {
+
+        // List of time series are created, one for each unique data source name
+        List<SampledTimeSeries<Object>>  lstCols; // = new ArrayList<>();
+
+        // Create processing stream based upon number of data columns
+        List<DataColumn>    lstMsgDataCols = this.datRawTmsLst.getRawDataMessages();
+        
+        // TODO 
+        // - I think there is an IllegalStateException thrown intermittently here
+        // "End size 99 is less than fixed size 100"
+        if (BOL_CONCURRENCY && (lstMsgDataCols.size() > SZ_CONCURRENCY_PIVOT)) {
+            lstCols = lstMsgDataCols
+                    .parallelStream()
+                    .<SampledTimeSeries<Object>>map(SampledTimeSeries::from)           // throws MissingResourceException, IllegalStateExcepiont, TypeNotPresentException
+                    .toList();
+            
+        } else {
+            lstCols = lstMsgDataCols
+                    .stream()
+                    .<SampledTimeSeries<Object>>map(SampledTimeSeries::from)           // throws MissingResourceException, IllegalStateExcepiont, TypeNotPresentException
+                    .toList();
+        }
+        
+        // Create the final ArrayList (vector) for time-series and return
+        ArrayList<SampledTimeSeries<Object>>  vecCols = new ArrayList<>(lstCols);
+        
+        return vecCols;
+    }
+
+    //
+    //  Support Methods
+    //
+    
 }

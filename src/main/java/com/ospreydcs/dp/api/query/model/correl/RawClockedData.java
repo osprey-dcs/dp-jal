@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	RawDataClocked.java
+ * File:	RawClockedData.java
  * Package: com.ospreydcs.dp.api.query.model.correl
- * Type: 	RawDataClocked
+ * Type: 	RawClockedData
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -25,6 +25,10 @@
  */
 package com.ospreydcs.dp.api.query.model.correl;
 
+import java.time.Instant;
+import java.util.ArrayList;
+
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
@@ -33,14 +37,14 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
- * Subclass of <code>CorrelatedRawData</code> supporting process data that is sampled with a uniform clock.
+ * Subclass of <code>RawCorrelatedData</code> supporting process data that is sampled with a uniform clock.
  * </p>   
  *
  * @author Christopher K. Allen
  * @since Mar 11, 2025
  *
  */
-public class RawDataClocked extends CorrelatedRawData {
+public class RawClockedData extends RawCorrelatedData {
 
     
     //
@@ -52,19 +56,27 @@ public class RawDataClocked extends CorrelatedRawData {
     
     
     //
+    // Instance Attributes
+    //
+    
+    /** The timestamp vector for this correlated data block */
+    private final ArrayList<Instant>    vecTms;
+
+    
+    //
     // Constructor
     //
     
     /**
      * <p>
-     * Constructs a new <code>RawDataClocked</code> instance.
+     * Constructs a new <code>RawClockedData</code> instance.
      * </p>
      *
      * @param msgBucket Protocol Buffers message containing initializing data
      * 
      * @throws IllegalArgumentException argument does not contains a sampling clock
      */
-    protected RawDataClocked(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
+    protected RawClockedData(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
         super(RawDataType.CLOCKED, ProtoTime.range(msgBucket.getDataTimestamps().getSamplingClock()), msgBucket);
 
         // Check argument
@@ -77,8 +89,9 @@ public class RawDataClocked extends CorrelatedRawData {
             throw new IllegalArgumentException();
         }
         
-        // Extract sampling clock
+        // Extract sampling clock and create timestamp vector
         this.msgClock = msgBucket.getDataTimestamps().getSamplingClock();
+        this.vecTms = ProtoMsg.toUniformSamplingClock(this.msgClock).createTimestamps();
     }
     
     
@@ -87,7 +100,7 @@ public class RawDataClocked extends CorrelatedRawData {
     //
 
     /**
-     * @see com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData#getSampleCount()
+     * @see com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData#getSampleCount()
      */
     @Override
     public int getSampleCount() {
@@ -95,7 +108,15 @@ public class RawDataClocked extends CorrelatedRawData {
     }
 
     /**
-     * @see com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket)
+     * @see com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData#getTimestampVector()
+     */
+    @Override
+    public ArrayList<Instant> getTimestampVector() {
+        return this.vecTms;
+    }
+
+    /**
+     * @see com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket)
      */
     @Override
     synchronized

@@ -209,7 +209,7 @@ public class RawDataCorrelatorTest {
         
         // Parameters
         final Boolean   bolConcDef = CFG_QUERY.concurrency.active;
-        final int       cntThreadsDef = CFG_QUERY.concurrency.threadCount;
+        final int       cntThreadsDef = CFG_QUERY.concurrency.maxThreads;
         final int       cntThreads = 11;
         
         // Verify correlator default configuration
@@ -312,7 +312,7 @@ public class RawDataCorrelatorTest {
         }
         
         // Recover the correlated set and inspect
-        SortedSet<CorrelatedRawData>    setRawData = corrTest.getCorrelatedSet();
+        SortedSet<RawCorrelatedData>    setRawData = corrTest.getCorrelatedSet();
         
         System.out.println("  Request #1 PV count       : " + cntPvs1);
         System.out.println("  Request #1 PV names       : " + rqst1.getSourceNames());
@@ -539,7 +539,7 @@ public class RawDataCorrelatorTest {
         }
         
         // Recover the correlated set and inspect
-        SortedSet<CorrelatedRawData>    setRawData = corrTest.getCorrelatedSet();
+        SortedSet<RawCorrelatedData>    setRawData = corrTest.getCorrelatedSet();
         Set<String>                     setPrcdPvNms = corrTest.extractDataSourceNames();
         
         System.out.println("  Request PV count        : " + cntPvs);
@@ -594,14 +594,14 @@ public class RawDataCorrelatorTest {
         }
         
         // Recover the correlated set and inspect
-        SortedSet<CorrelatedRawData>    setRawData = corrTest.getCorrelatedSet();
+        SortedSet<RawCorrelatedData>    setRawData = corrTest.getCorrelatedSet();
         
         System.out.println("  Request PV count       : " + cntPvs);
         System.out.println("  Request PV names       : " + rqstTest.getSourceNames());
         System.out.println("  Response message count : " + cntMsgs);
         System.out.println("  Correlated block count : " + setRawData.size());
         int indBlk = 1;
-        for (CorrelatedRawData data : setRawData) {
+        for (RawCorrelatedData data : setRawData) {
             System.out.println("  Block #" + indBlk);
             System.out.println("    Start time   : " + data.getStartTime());
             System.out.println("    Time range   : " + data.getTimeRange());

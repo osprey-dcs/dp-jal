@@ -272,7 +272,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
 //    private static final Integer    INT_CONCURRENCY_PIVOT_SZ = CFG_DEFAULT.concurrency.pivotSize;
     
     /** Maximum number of concurrent processing threads */
-    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.threadCount;
+    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.maxThreads;
     
     
     /** Perform ingestion frame decomposition (i.e., "binning") */

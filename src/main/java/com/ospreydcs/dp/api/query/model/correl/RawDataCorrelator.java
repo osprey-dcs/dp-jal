@@ -53,12 +53,12 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * </p>
  * <p>
  * Correlates all time-series data within the results set of a Query Service data request into
- * a sorted collection of <code>{@link CorrelatedRawData}</code> data instances.  
+ * a sorted collection of <code>{@link RawCorrelatedData}</code> data instances.  
  * Each instance within the sorted collect contains a correlated collection of <code>{@link DataColumn}</code> 
  * Protocol Buffers time-series data messages.
  * Each instance within the sorted collection also contains either a <code>{@link SamplingClock}</code> sampling 
  * clock Protobuf message or a <code>{@link TimestampList}</code> defining the sampling process timestamps.
- * All data within the <code>CorrelatedRawData</code> instances are correlated to the above message.
+ * All data within the <code>RawCorrelatedData</code> instances are correlated to the above message.
  * </p>  
  * <p>
  * Once processing of a results set is complete, the results are available from the 
@@ -75,10 +75,10 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * equivalent sampling intervals as specified by the sampling clock data message 
  * <code>{@link SamplingClock}</code> or timestamp list message <code>{@link TimestampList}</code>. 
  * The time-series for each data source corresponding to equivalent timestamps are collected
- * into a single <code>{@link CorrelatedRawData}</code> instance.  
- * Once the query results set is fully processed there should be one <code>CorrelatedRawData</code> 
+ * into a single <code>{@link RawCorrelatedData}</code> instance.  
+ * Once the query results set is fully processed there should be one <code>RawCorrelatedData</code> 
  * instance for every unique sampling interval within the result set.  Every data column within the 
- * results set will be associated with one <code>CorrelatedRawData</code> instance.
+ * results set will be associated with one <code>RawCorrelatedData</code> instance.
  * </p>
  * <p>
  * <h2>Operation</h2>
@@ -297,7 +297,7 @@ public class RawDataCorrelator {
     public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
     /** Parallelism tuning parameter - default number of independent processing threads */
-    public static final int        CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.threadCount;
+    public static final int        CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.maxThreads;
     
     
     //
@@ -316,7 +316,7 @@ public class RawDataCorrelator {
     private final Object            objLock = new Object();
     
     /** Target set of correlated results set data - Ordered according to sampling interval start time */
-    private final SortedSet<CorrelatedRawData> setPrcdData = new TreeSet<>(CorrelatedRawData.StartTimeComparator.create());
+    private final SortedSet<RawCorrelatedData> setPrcdData = new TreeSet<>(RawCorrelatedData.StartTimeComparator.create());
 
     /** Manages thread pools of many, short-lived execution tasks */
 //  private final ExecutorService   exeThreadPool = Executors.newCachedThreadPool();
@@ -564,7 +564,7 @@ public class RawDataCorrelator {
      * 
      * @return  the sorted set (by start-time instant) of currently processed data 
      */
-    public final SortedSet<CorrelatedRawData>   getCorrelatedSet() {
+    public final SortedSet<RawCorrelatedData>   getCorrelatedSet() {
         return this.setPrcdData;
     }
     
@@ -703,7 +703,7 @@ public class RawDataCorrelator {
 
             // If the target set is large - pivot to concurrent processing of message data
             Collection<QueryData.DataBucket>    setFreeBuckets = this.attemptDataInsertConcurrent(msgData);
-            SortedSet<CorrelatedRawData>        setDisjointData = this.processDisjointRawData(setFreeBuckets); // done serially
+            SortedSet<RawCorrelatedData>        setDisjointData = this.processDisjointRawData(setFreeBuckets); // done serially
             this.setPrcdData.addAll(setDisjointData);
 
             // Increment byte counter
@@ -724,7 +724,7 @@ public class RawDataCorrelator {
      * <p>
      * This method processes each <code>DataBucket</code> message within the argument serially.
      * An attempt is made to insert its data column into the existing target set of correlated data.
-     * If the attempt fails a new <code>CorrelatedRawData</code> instance is created, the message is associated, 
+     * If the attempt fails a new <code>RawCorrelatedData</code> instance is created, the message is associated, 
      * then the instance is added to the target set.
      * </p>
      * <p>
@@ -760,7 +760,7 @@ public class RawDataCorrelator {
 
             // If the message data was not added we must create a new reference and add it to the current target set
             if (!bolSuccess) {
-                CorrelatedRawData   blkRaw = CorrelatedRawData.from(msgBucket);
+                RawCorrelatedData   blkRaw = RawCorrelatedData.from(msgBucket);
                 
                 this.setPrcdData.add( blkRaw );
             }
@@ -907,11 +907,11 @@ public class RawDataCorrelator {
     
     /**
      * <p>
-     * Correlates the given argument producing a separate <code>CorrelatedRawData</code>
+     * Correlates the given argument producing a separate <code>RawCorrelatedData</code>
      * sorted data, disjoint from the current managed target set.
      * </p>  
      * <p>
-     * Builds and returns a disjoint set of <code>CorrelatedRawData</code> instances 
+     * Builds and returns a disjoint set of <code>RawCorrelatedData</code> instances 
      * corresponding to the given argument collection of <code>DataBucket</code> messages.  
      * That is, the returned collection is a consistent set of correlated data processed from the 
      * given argument and sorted according to timestamp start times.  
@@ -920,13 +920,13 @@ public class RawDataCorrelator {
      * The assumption is that the argument collection is not associated with the current managed 
      * target set returned by <code>{@link #getCorrelatedSet()}</code>.  More specifically, the 
      * arguments have already been processed against the current target set and we KNOW that new 
-     * <code>CorrelatedRawData</code> instances must be created.
+     * <code>RawCorrelatedData</code> instances must be created.
      * </p>
      * <p>
      * A new <code>{@link SortedSet}</code> of <code>CorrelatedQueryData</code> object is created.
      * An attempt is made to insert each <code>{@link DataBucket}</code> message within the argument 
      * into this collection of correlated data (clearly the first attempt will always fail).
-     * If the insertion fails, a new <code>CorrelatedRawData</code> instance is created for the
+     * If the insertion fails, a new <code>RawCorrelatedData</code> instance is created for the
      * message and the new instance is added to the sorted set.
      * </p> 
      * <p>  
@@ -952,10 +952,10 @@ public class RawDataCorrelator {
      * 
      * @return  set of new target references associated with the given argument data
      */
-    private SortedSet<CorrelatedRawData>  processDisjointRawData(Collection<QueryDataResponse.QueryData.DataBucket> setBuckets) {
+    private SortedSet<RawCorrelatedData>  processDisjointRawData(Collection<QueryDataResponse.QueryData.DataBucket> setBuckets) {
         
         // The returned sampling interval reference - that is, the targets
-        SortedSet<CorrelatedRawData>  setRefs = new TreeSet<>(CorrelatedRawData.StartTimeComparator.create());
+        SortedSet<RawCorrelatedData>  setRefs = new TreeSet<>(RawCorrelatedData.StartTimeComparator.create());
         
         // Treat each data bucket individually - high probability of modifying target set 
         for (QueryDataResponse.QueryData.DataBucket msgBucket : setBuckets) {
@@ -965,7 +965,7 @@ public class RawDataCorrelator {
             
             // If insertion failed then create a new sampling interval reference for targets
             if (!bolSuccess) {
-                CorrelatedRawData   blkNew = CorrelatedRawData.from(msgBucket);
+                RawCorrelatedData   blkNew = RawCorrelatedData.from(msgBucket);
                 
                 setRefs.add(blkNew);
             }

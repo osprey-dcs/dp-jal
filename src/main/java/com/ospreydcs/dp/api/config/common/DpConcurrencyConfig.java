@@ -57,6 +57,6 @@ public class DpConcurrencyConfig extends CfgStructure<DpConcurrencyConfig> {
     public Integer  pivotSize;
     
     /** general thread count for concurrent operations */
-    @ACfgOverride.Field(name="THREAD_COUNT")
-    public Integer  threadCount;
+    @ACfgOverride.Field(name="MAX_THREADS")
+    public Integer  maxThreads;
 }

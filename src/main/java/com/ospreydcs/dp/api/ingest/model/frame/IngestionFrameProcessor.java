@@ -340,7 +340,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
     
     /** Maximum number of concurrent processing threads */
-    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.threadCount;
+    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.maxThreads;
     
     
     /** Perform ingestion frame decomposition (i.e., "binning") */

@@ -51,7 +51,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData;
+import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
@@ -73,7 +73,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * Note that <code>SampledProcess</code> instances are created from the processed data
  * sets produced by the class <code>{@link RawDataCorrelator}</code>.
  * This class takes the raw data obtained from a time-series data request of the Query Service then correlates
- * into an ordered sets of <code>{@link CorrelatedRawData}</code> instances, each instance 
+ * into an ordered sets of <code>{@link RawCorrelatedData}</code> instances, each instance 
  * correlated to the same timestamps.  
  * These correlated results sets are obtained from 
  * <code>{@link RawDataCorrelator#getCorrelatedSet()}</code>.  The correlated results sets
@@ -136,7 +136,7 @@ public class SampledProcess {
      * <li>Exception type determines the nature of any data inconsistency. </li>
      * </ul>  
      *
-     * @param setCorrelData sorted set of <code>CorrelatedRawData</code> used to build this process
+     * @param setCorrelData sorted set of <code>RawCorrelatedData</code> used to build this process
      * 
      * @return a new instance of <code>SamplingProcess</code> fully populated and configured with argument data
      *  
@@ -147,7 +147,7 @@ public class SampledProcess {
      * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      * @throws CompletionException      the sampling process was corrupt after creation (see message)
      */
-    public static SampledProcess from(SortedSet<CorrelatedRawData> setCorrelData) 
+    public static SampledProcess from(SortedSet<RawCorrelatedData> setCorrelData) 
             throws  MissingResourceException, 
                     IllegalArgumentException, 
                     IllegalStateException, 
@@ -255,7 +255,7 @@ public class SampledProcess {
      * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      * @throws CompletionException      the sampling process was corrupt after creation (see message)
      */
-    public SampledProcess(SortedSet<CorrelatedRawData> setCorrelData) 
+    public SampledProcess(SortedSet<RawCorrelatedData> setCorrelData) 
             throws  RangeException, 
                     MissingResourceException, 
                     IllegalArgumentException, 
@@ -525,7 +525,7 @@ public class SampledProcess {
      * <p>
      * Extracts all starting times of the sampling clock in order to create the set
      * { <i>t</i><sub>0</sub>, <i>t</i><sub>1</sub>, ..., <i>t</i><sub><i>N</i>-1</sub> } where
-     * <i>t<sub>n</sub></i> is the start time for <code>CorrelatedRawData</code> instance <i>n</i>
+     * <i>t<sub>n</sub></i> is the start time for <code>RawCorrelatedData</code> instance <i>n</i>
      * and <i>N</i> is the size of the argument.   
      * The ordered collection of start times is compared sequentially to check the following 
      * conditions:
@@ -549,12 +549,12 @@ public class SampledProcess {
      * 
      * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
-    private ResultStatus verifyStartTimes(SortedSet<CorrelatedRawData> setRawData) {
+    private ResultStatus verifyStartTimes(SortedSet<RawCorrelatedData> setRawData) {
         
         // Loop through set checking that all start times are in order
         int                 indPrev = 0;
-        CorrelatedRawData   datPrev = null;
-        for (CorrelatedRawData datCurr : setRawData) {
+        RawCorrelatedData   datPrev = null;
+        for (RawCorrelatedData datCurr : setRawData) {
             
             // Initialize the loop - first time through
             if (datPrev == null) {
@@ -592,7 +592,7 @@ public class SampledProcess {
      * <p>
      * Extracts the set of all sampling time range intervals
      * { <i>I</i><sub>0</sub>, <i>I</i><sub>0</sub>, ..., <i>I</i><sub><i>N</i>-1</sub> } where
-     * <i>I<sub>n</sub></i> is the sampling time domain for <code>CorrelatedRawData</code> 
+     * <i>I<sub>n</sub></i> is the sampling time domain for <code>RawCorrelatedData</code> 
      * instance <i>n</i> and <i>N</i> is the size of the argument.  
      * We assume closed intervals of the form 
      * <i>I</i><sub><i>n</i></sub> = [<i>t</i><sub><i>n</i>,start</sub>, <i>t</i><sub><i>n</i>,end</sub>]
@@ -626,13 +626,13 @@ public class SampledProcess {
      * 
      * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
-    private ResultStatus verifyTimeDomains(SortedSet<CorrelatedRawData> setRawData) {
+    private ResultStatus verifyTimeDomains(SortedSet<RawCorrelatedData> setRawData) {
         
         // Check that remaining time domains are disjoint - this works if the argument is ordered correctly
         // Loop through set checking that all start times are in order
         int                 indPrev = 0;
-        CorrelatedRawData   datPrev = null;
-        for (CorrelatedRawData datCurr : setRawData) {
+        RawCorrelatedData   datPrev = null;
+        for (RawCorrelatedData datCurr : setRawData) {
             
             // Initialize the loop - first time through
             if (datPrev == null) {
@@ -702,7 +702,7 @@ public class SampledProcess {
      * throws RangeException           the argument has bad ordering or contains time domain collisions
      * @throws TypeNotPresentException an unsupported data type was detected within the argument
      */
-    private ArrayList<SampledBlock>    buildSampledBlocks(SortedSet<CorrelatedRawData> setQueryData) 
+    private ArrayList<SampledBlock>    buildSampledBlocks(SortedSet<RawCorrelatedData> setQueryData) 
             throws MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException {
         
         // Create the sample blocks, pivoting to concurrency by container size
@@ -711,7 +711,7 @@ public class SampledProcess {
         if (BOL_CONCURRENCY && (setQueryData.size() > SZ_CONCURRENCY_PIVOT) ) {
             // invoke concurrency
             SampledBlock                arrSmplBlocks[] = new SampledBlock[setQueryData.size()];
-            ArrayList<CorrelatedRawData> vecQueryData = new ArrayList<>(setQueryData);
+            ArrayList<RawCorrelatedData> vecQueryData = new ArrayList<>(setQueryData);
             
             IntStream.range(0, setQueryData.size())
                 .parallel()
@@ -729,7 +729,7 @@ public class SampledProcess {
             vecSmplBlocks = new ArrayList<>(setQueryData.size());
 
             int     indBlock = 0;
-            for (CorrelatedRawData cqd : setQueryData) {
+            for (RawCorrelatedData cqd : setQueryData) {
                 SampledBlock    block = SampledBlock.from(cqd);
                 
                 vecSmplBlocks.add(indBlock, block);
@@ -740,9 +740,47 @@ public class SampledProcess {
         return vecSmplBlocks;
     }
     
-    // TODO - Fix this
-    private ArrayList<Instant>  buildTimestamps(SortedSet<CorrelatedRawData> setCorrelData) {
-        return null;
+    /**
+     * <p>
+     * Creates and returns a new, ordered list of timestamps for all time-series data within the argument.
+     * </p>
+     * <p>
+     * The timestamps returned are for the <em>entire</em> sampling process.  It is a composite of all
+     * raw data within the argument. 
+     * <p>
+     * <h2>NOTES</h2>
+     * This method should be called once.
+     * <ul>
+     * <li>
+     * The argument data must be ordered by starting times and have disjoint sampling domains.
+     * </li>
+     * <li>
+     * The returned timestamp list is <em>created</em> dynamically from all the correlated data 
+     * block within the argument.  Thus, avoid repeated calls to this method. 
+     * </li>
+     * <br/>
+     * <li>
+     * If the timestamps are to be used repeatedly, the returned value should be saved locally.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param setCorrelData
+     * 
+     * @return  ordered list of timestamp instants for all time-series data within this sampling process
+     */
+    private ArrayList<Instant>  buildTimestamps(SortedSet<RawCorrelatedData> setCorrelData) {
+        
+        ArrayList<Instant>  lstTms = setCorrelData
+                .stream()
+                .sequential()
+                .collect(
+                        ArrayList::new, 
+                        (c, e) -> c.addAll(e.getTimestampVector()), 
+                        (c1, c2) -> c1.addAll(c2)
+                        );
+        
+        return lstTms;
     }
     
     /**
@@ -760,11 +798,11 @@ public class SampledProcess {
      * the same data.
      * </p>
      * 
-     * @param setCorrelData  set of <code>CorrelatedRawData</code> objects used to initialize process
+     * @param setCorrelData  set of <code>RawCorrelatedData</code> objects used to initialize process
      * 
      * @return  set of all unique data source names within the Query Service correlated data collection 
      */
-    private SortedSet<String>    buildSourceNameSet(SortedSet<CorrelatedRawData> setCorrelData) {
+    private SortedSet<String>    buildSourceNameSet(SortedSet<RawCorrelatedData> setCorrelData) {
         SortedSet<String> setNames = setCorrelData
                 .stream()
                 .collect(

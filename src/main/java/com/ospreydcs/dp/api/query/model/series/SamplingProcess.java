@@ -510,7 +510,7 @@ public class SamplingProcess {
      * Creates and returns a new, ordered list of timestamps for all time-series data within this process.
      * </p>
      * <p>
-     * The timestamps returned are for the <em>entire</em> stampling process.  It is a decompose of all
+     * The timestamps returned are for the <em>entire</em> sampling process.  It is a decompose of all
      * sampling blocks within the sampling process. 
      * <p>
      * <h2>NOTES</h2>

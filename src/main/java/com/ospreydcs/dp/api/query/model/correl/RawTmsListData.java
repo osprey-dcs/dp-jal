@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	RawDataTmsList.java
+ * File:	RawTmsListData.java
  * Package: com.ospreydcs.dp.api.query.model.correl
- * Type: 	RawDataTmsList
+ * Type: 	RawTmsListData
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -25,6 +25,10 @@
  */
 package com.ospreydcs.dp.api.query.model.correl;
 
+import java.time.Instant;
+import java.util.ArrayList;
+
+import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
@@ -34,14 +38,14 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
  * <p>
- * Subclass of <code>CorrelatedRawData</code> supporting sampled data with explicit timestamps.
+ * Subclass of <code>RawCorrelatedData</code> supporting sampled data with explicit timestamps.
  * </p>   
  *
  * @author Christopher K. Allen
  * @since Mar 12, 2025
  *
  */
-public class RawDataTmsList extends CorrelatedRawData {
+public class RawTmsListData extends RawCorrelatedData {
 
     
     //
@@ -53,19 +57,27 @@ public class RawDataTmsList extends CorrelatedRawData {
     
     
     //
+    // Instance Attributes
+    //
+    
+    /** The timestamp vector for this correlated data block */
+    private final ArrayList<Instant>    vecTms;
+    
+    
+    //
     // Constructor
     //
     
     /**
      * <p>
-     * Constructs a new <code>RawDataTmsList</code> instance.
+     * Constructs a new <code>RawTmsListData</code> instance.
      * </p>
      *
      * @param msgBucket Protocol Buffers message containing initializing data
      * 
      * @throws IllegalArgumentException argument does not contains a timestamp list
      */
-    protected RawDataTmsList(QueryDataResponse.QueryData.DataBucket msgBucket) {
+    protected RawTmsListData(QueryDataResponse.QueryData.DataBucket msgBucket) {
         super(RawDataType.TIMESTAMPLIST, ProtoTime.range( msgBucket.getDataTimestamps().getTimestampList() ), msgBucket);
         
         // Check argument
@@ -78,8 +90,9 @@ public class RawDataTmsList extends CorrelatedRawData {
             throw new IllegalArgumentException();
         }
         
-        // Extract the timestamps
+        // Extract the timestamp message and create timestamp vector
         this.msgLstTms = msgBucket.getDataTimestamps().getTimestampList();
+        this.vecTms = new ArrayList<>( ProtoMsg.toInstantList(this.msgLstTms) );
     }
 
     
@@ -88,7 +101,7 @@ public class RawDataTmsList extends CorrelatedRawData {
     //
     
     /**
-     * @see com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData#getSampleCount()
+     * @see com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData#getSampleCount()
      */
     @Override
     public int getSampleCount() {
@@ -96,7 +109,15 @@ public class RawDataTmsList extends CorrelatedRawData {
     }
 
     /**
-     * @see com.ospreydcs.dp.api.query.model.correl.CorrelatedRawData#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket)
+     * @see com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData#getTimestampVector()
+     */
+    @Override
+    public ArrayList<Instant> getTimestampVector() {
+        return this.vecTms;
+    }
+    
+    /**
+     * @see com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket)
      */
     @Override
     public boolean insertBucketData(DataBucket msgBucket) {
@@ -148,6 +169,4 @@ public class RawDataTmsList extends CorrelatedRawData {
         return this.msgLstTms;
     }
 
-
-    
 }

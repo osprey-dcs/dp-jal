@@ -68,28 +68,6 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
     
     
     //
-    // Class Constants
-    //
-    
-    /** <code>Serializable</code> interface serialization ID - used for allocation size estimation */
-    private static final long serialVersionUID = 7510269355880505323L;
-
-    
-    //
-    // Attributes
-    //
-    
-    /** Name of the data source producing time series values */
-    private final String            strSourceName;
-    
-    /** Data type of the time series values */
-    private final DpSupportedType   enmType;
-    
-    /** Sampled data value of the time series - linked list for anticipated modifications */
-    private final ArrayList<T>      vecValues; // = new LinkedList<>();
-
-    
-    //
     // Creators
     //
     
@@ -109,11 +87,6 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
      * @return  a new <code>SampledTimeSeries</code> instance containing <code>null</code> data values
      */
     public static <T extends Object> SampledTimeSeries<T> nullSeries(String strSourceName, DpSupportedType enmType, int cntSize) {
-//        ArrayList<T>    lstNulls = new ArrayList<>(cntSize);
-//        
-//        for (int n=0; n<cntSize; n++) 
-//            lstNulls.add(null);
-        
         SampledTimeSeries<T>   stms = new SampledTimeSeries<T>(strSourceName, enmType, cntSize);
         
         return stms;
@@ -128,6 +101,8 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
      * Protobuf message.  The new instance can be modified post-creation to add more time-series data.
      * </p>
      * 
+     * @param <T>   the Java data type of the time series values
+     *  
      * @param msgDataCol    Protobuf message containing initialization data
      * 
      * @return  new <code>SampledTimeSeries</code> instance populated with argument data
@@ -152,6 +127,108 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
         return stms;
     }
     
+    /**
+     * <p>
+     * Constructs a new, initialized instance of <code>SampledTimeSeries</code>.
+     * </p>
+     * <p>
+     * The returned <code>SampledTimeSeries</code> instance is populated from the argument data.
+     * The sample values are copied from the list argument into a new <code>ArrayList</code> object
+     * for fast indexing.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Do NOT supply an empty data values container, an exception will be thrown.
+     * Use constructor <code>{@link #SampledTimeSeries(String, DpSupportedType)}</code> instead.
+     * </li>
+     * <li>
+     * Copies the values from argument <code>lstValues</code> into a new <code>{@link ArrayList}</code>
+     * for faster indexed access.
+     * </li>
+     * </ul>
+     * </p>
+     *
+     * @param <T>   the Java data type of the time series values
+     * 
+     * @param strSourceName     the name of the data source (PV) producing time series data
+     * @param enmType           the data type of the time series
+     * @param vecValues         ordered list of sampled data values in time series
+     * 
+     * @return  a new, <code>SampledTimeSeries</code> instance fully initialized with the argument data 
+     * 
+     * @throws MissingResourceException the data values container was empty (cannot check type consistency)
+     * @throws IllegalArgumentException the specified data type is incompatible with generic parameter <code>T</code>
+     */
+    public static <T extends Object> SampledTimeSeries<T>   from(String strSourceName, DpSupportedType enmType, List<T> vecValues) 
+            throws MissingResourceException, IllegalArgumentException 
+    {
+        return new SampledTimeSeries<T>(strSourceName, enmType, vecValues);
+    }
+    
+    
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>SampledTimeSeries</code>.
+     * </p>
+     * <p>
+     * The returned <code>SampledTimeSeries</code> instance is populated directly with the argument data.
+     * The returned instance assumes ownership of the given container of time-series values and no
+     * new resources are created.  Thus, this is the most efficient creator. 
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Do NOT supply an empty data values container, an exception will be thrown.
+     * Use constructor <code>{@link #SampledTimeSeries(String, DpSupportedType)}</code> instead.
+     * </li>
+     * <li>
+     * Sets the attribute <code>{@link #vecValues}</code> directly from argument <code>vecValues</code>. 
+     * </li>
+     * </ul>
+     * </p>
+     *
+     * @param <T>   the Java data type of the time series values
+     *  
+     * @param strSourceName     the name of the data source (PV) producing time series data
+     * @param enmType           the data type of the time series
+     * @param vecValues         ordered list of sampled data values in time series
+     * 
+     * @throws MissingResourceException the data values container was empty (cannot check type consistency)
+     * @throws IllegalArgumentException the specified data type is incompatible with generic parameter <code>T</code>
+     * 
+     * @return  a new, <code>SampledTimeSeries</code> instance fully initialized with the argument data 
+     */
+    public static <T extends Object> SampledTimeSeries<T> from(String strSourceName, DpSupportedType enmType, ArrayList<T> vecValues) 
+            throws MissingResourceException, IllegalArgumentException 
+    {
+        return new SampledTimeSeries<T>(strSourceName, enmType, vecValues);
+    }
+    
+    
+    //
+    // Class Constants
+    //
+    
+    /** <code>Serializable</code> interface serialization ID - used for allocation size estimation */
+    private static final long serialVersionUID = 7510269355880505323L;
+
+    
+    //
+    // Attributes
+    //
+    
+    /** Name of the data source producing time series values */
+    private final String            strSourceName;
+    
+    /** Data type of the time series values */
+    private final DpSupportedType   enmType;
+    
+    /** Sampled data value of the time series - linked list for anticipated modifications */
+    private final ArrayList<T>      vecValues; // = new LinkedList<>();
+
     
     //
     // Constructors

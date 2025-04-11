@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	CorrelatedRawData.java
+ * File:	RawCorrelatedData.java
  * Package: com.ospreydcs.dp.api.query.model.correl
- * Type: 	CorrelatedRawData
+ * Type: 	RawCorrelatedData
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -58,7 +58,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * (i.e., data contained in Protocol Buffers <code>{@link QueryData}</code> messages).  
  * Each instance contains the time-series data (i.e., sampling process data) for all data sources active during
  * a specific time interval (i.e., the time range of the data block).  
- * Through inheritance each <code>CorrelatedRawData</code> instance maintains a reference to 
+ * Through inheritance each <code>RawCorrelatedData</code> instance maintains a reference to 
  * <em>either</em> a sampling clock <em>or</em> a timestamp list for all time-series within the block.  
  * In this manner all the raw time-series data is managed by this base class and the timestamps are managed by the 
  * derived classes "correlated" by a sampling clock or a timestamp list.
@@ -83,18 +83,18 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <p>
  * <h2>Operation</h2>
  * An outside entity correlates the Query Service raw time-series data stream by attempting to insert data buckets
- * into a <code>CorrelatedRawData</code> instance using the method 
+ * into a <code>RawCorrelatedData</code> instance using the method 
  * <code>{@link #insertBucketData(QueryDataResponse.QueryData.DataBucket)}</code>.  If the operation is successful
  * the method returns <code>true</code> and all sampled data within the bucket is assigned to the instance.  If the
  * operation fails the <code>DataBucket</code> message is still unprocessed (free) and a new 
- * <code>CorrelatedRawData</code> instance is typically created for the bucket using the 
+ * <code>RawCorrelatedData</code> instance is typically created for the bucket using the 
  * <code>{@link #from(QueryDataResponse.QueryData.DataBucket)}</code> method.  The method chooses the appropriate
  * subclass and creates the new instance populated with the data from the message argument.
  * </p>
  * <p>
  * During normal operations, once the data stream containing the time-series data response is complete, 
  * time-series data within the results set for the specified duration identified by the sampling clock or timestamp list 
- * are then referenced within a single <code>CorrelatedRawData</code> instance.  That is, a <code>CorrelatedRawData</code>
+ * are then referenced within a single <code>RawCorrelatedData</code> instance.  That is, a <code>RawCorrelatedData</code>
  * will contain a correlated block of the raw time-series data for a finite time interval.  
  * </p>
  * <p>
@@ -102,18 +102,18 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <code>{@link RawDataCorrelator}</code>.  The class performs the correlation
  * operation on the stream of <code>{@link QueryData}</code> Protocol Buffers messages produced
  * by a Query Service data request. 
- * Each instance of <code>CorrelatedRawData</code>, in its final form, should contain a finite duration 
+ * Each instance of <code>RawCorrelatedData</code>, in its final form, should contain a finite duration 
  * sampling interval and all time-series data from data sources that were sampled during that interval.
  * </p>
  * <p>
  * <h2>Ordering</h2>
  * The class implements the <code>{@link Comparable}</code> interface for ordering by sample 
  * clock initial start time instant.
- * That is, within collections of <code>CorrelatedRawData</code> objects, instances are ordered 
+ * That is, within collections of <code>RawCorrelatedData</code> objects, instances are ordered 
  * according to the sampling start time.  This is not an equivalence operation; it is possible 
  * that sampling intervals can overlap and this condition should be checked.  That is, the operation
  * <code>{@link Comparable#compareTo(Object)}</code> should never returns 0, as this would clobber a 
- * <code>CorrelatedRawData</code> object within a sorted collection (e.g., a <code>SortedSet</code>).
+ * <code>RawCorrelatedData</code> object within a sorted collection (e.g., a <code>SortedSet</code>).
  * </p>
  * <p>
  * The enclosed class <code>{@link StartTimeComparator}</code>, implementing the 
@@ -132,7 +132,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <br/>
  * <li>
  * If the ultimate product of the <code>RawDataCorrelator</code> applied to a time-series request data stream
- * is a <code>SortedSet</code> of <code>CorrelatedRawData</code> objects, one must be careful when assembling
+ * is a <code>SortedSet</code> of <code>RawCorrelatedData</code> objects, one must be careful when assembling
  * a data table.  There can be many exceptional conditions, consider the following:
  *   <ul>
  *   <li>Multiple data blocks with the same start times but different time ranges.</li>
@@ -157,7 +157,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * @see Comparable
  * @see RawDataCorrelator
  */
-public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>{
+public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>{
 
     
     //
@@ -166,11 +166,11 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
     
     /**
      * <p>
-     * Creates and returns a new <code>CorrelatedRawData</code> subclass initialized with the argument data.
+     * Creates and returns a new <code>RawCorrelatedData</code> subclass initialized with the argument data.
      * </p>
      * <p>
-     * This is the only method available for creating new <code>CorrelatedRawData</code> instances, specifically,
-     * subclasses of this type.  New <code>CorrelatedRawData</code> instances are only created when a 
+     * This is the only method available for creating new <code>RawCorrelatedData</code> instances, specifically,
+     * subclasses of this type.  New <code>RawCorrelatedData</code> instances are only created when a 
      * new set of timestamps is encountered during the time-series data correlation process.  Constructors
      * are not available since instances must be created according to type of timestamps within a 
      * sampled time-series process.
@@ -189,8 +189,8 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      * a uniform sampling clock where a <code>TimestampList</code> message contains explicit timestamps.
      * The returned object type is as follows:
      * <ul>
-     * <li><code>RawDataClocked</code> - argument contains a <code>SamplingClock</code> message.</li>
-     * <li><code>RawDataTmsList</code> - argument contains a <code>TimestampList</code> message.</li>
+     * <li><code>RawClockedData</code> - argument contains a <code>SamplingClock</code> message.</li>
+     * <li><code>RawTmsListData</code> - argument contains a <code>TimestampList</code> message.</li>
      * </ul>
      * The time-series data is managed in the base class and the timestamps are managed in the returned
      * child class.
@@ -198,20 +198,20 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      * 
      * @param msgBucket Protocol Buffers "data bucket" message containing single time-series sampling process
      * 
-     * @return  a new <code>CorrelatedRawData</code> subclass initialized with argument data
+     * @return  a new <code>RawCorrelatedData</code> subclass initialized with argument data
      * 
      * @throws IllegalArgumentException the argument does not contain valid timestamps
      */
-    public static CorrelatedRawData from(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
+    public static RawCorrelatedData from(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
         
         // Check argument for sampling clock
         if (msgBucket.getDataTimestamps().hasSamplingClock()) {
-            return new RawDataClocked(msgBucket);
+            return new RawClockedData(msgBucket);
         }
         
         // Check argument for timestamp list
         if (msgBucket.getDataTimestamps().hasTimestampList()) {
-            return new RawDataTmsList(msgBucket); 
+            return new RawTmsListData(msgBucket); 
         }
         
         // If we are here something is wrong
@@ -232,12 +232,12 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
     /**
      * <p>
      * <code>{@link Comparator}</code> implementation for ordered comparison of two 
-     * <code>CorrelatedRawData</code> instances.
+     * <code>RawCorrelatedData</code> instances.
      * </p>
      * <p>
      * The comparison here is performed with the start times of the sampling intervals 
-     * represented by <code>{@link CorrelatedRawData}</code> time <code>{@link Instant}</code>
-     * returned from the <code>{@link CorrelatedRawData#getStartTime()}</code> method.
+     * represented by <code>{@link RawCorrelatedData}</code> time <code>{@link Instant}</code>
+     * returned from the <code>{@link RawCorrelatedData#getStartTime()}</code> method.
      * Instances are intended for use in Java container construction.
      * </p>
      *
@@ -245,7 +245,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      * @since Jan 12, 2024
      *
      */
-    public static class StartTimeComparator implements Comparator<CorrelatedRawData> {
+    public static class StartTimeComparator implements Comparator<RawCorrelatedData> {
 
         //
         // Creators
@@ -266,7 +266,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
         
         /**
          * <p>
-         * Used for ordering within sets and maps of <code>CorrelatedRawData</code> objects.  Returns
+         * Used for ordering within sets and maps of <code>RawCorrelatedData</code> objects.  Returns
          * -1 if the start time of the first argument is before the start time of the second argument object
          * as dictated by </code>{@link Instant#isBefore(Instant)}</code>.  Otherwise the returned value is 1. 
          * </p>
@@ -291,7 +291,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
          * @see @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
          */
         @Override
-        public int compare(CorrelatedRawData o1, CorrelatedRawData o2) {
+        public int compare(RawCorrelatedData o1, RawCorrelatedData o2) {
             Instant t1 = o1.getStartTime();
             Instant t2 = o2.getStartTime();
 
@@ -362,7 +362,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
     
     /**
      * <p>
-     * Constructs a new <code>CorrelatedRawData</code> instance initialized from the given arguments
+     * Constructs a new <code>RawCorrelatedData</code> instance initialized from the given arguments
      * (sans the timestamps).
      * </p>
      *
@@ -370,7 +370,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      * @param tvlRange  the time range for the new correlated block 
      * @param msgBucket the raw data bucket containing process data (ignore timestamps)
      */
-    protected CorrelatedRawData(RawDataType enmType, TimeInterval tvlRange, QueryData.DataBucket msgBucket) {
+    protected RawCorrelatedData(RawDataType enmType, TimeInterval tvlRange, QueryData.DataBucket msgBucket) {
         
         // Set the raw time-series data type
         this.enmType = enmType;
@@ -392,7 +392,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
     
     /**
      * <p>
-     * Returns the number of samples for each data column as specified in the sampling interval message.
+     * Returns the number of samples for the raw data as specified according to the timestamp message.
      * </p>
      * <p>
      * Obtains the returned value from the Protocol Buffers message identifying the timestamps.
@@ -406,13 +406,31 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
     
     /**
      * <p>
+     * Returns the vector of timestamps for all raw correlated data, generating it if necessary.
+     * </p>
+     * <p>
+     * Each child class must determine its timestamp vector according to the timestamp message against
+     * which it correlated raw data.  It is recommended that the timestamp list is created during
+     * construction and maintains as a class instance so that it is allows available and does not
+     * have to be generated upon request.  This is possible since construction requires an initial
+     * "data bucket" containing the timestamp message (i.e., <code>DataTimestamps</code>) used to
+     * correlate the incoming data columns with 
+     * <code>{@link #insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket)}</code>.
+     * </p>
+     * 
+     * @return  ordered vector of timestamps for this correlated raw data block 
+     */
+    public abstract ArrayList<Instant> getTimestampVector();
+    
+    /**
+     * <p>
      * Adds the <code>DataColumn</code> message within the argument to the collection of 
      * correlated data ONLY IF sampling intervals and timestamp specifications are equivalent 
      * AND the data column is not already referenced.
      * </p>
      * <p>
      * <h2>Operation</h2>
-     * This is the primary processing operation for the <code>CorrelatedRawData</code>
+     * This is the primary processing operation for the <code>RawCorrelatedData</code>
      * class.  It performs the following operations:
      * <ol>
      * <li>
@@ -463,12 +481,12 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
     
 
     //
-    // Comparable<CorrelatedRawData> Interface
+    // Comparable<RawCorrelatedData> Interface
     //
     
     /**
      * <p>
-     * Compares the start time of the given <code>CorrelatedRawData</code> with this one.
+     * Compares the start time of the given <code>RawCorrelatedData</code> with this one.
      * </p>
      * <p>
      * Used for ordering within sets and maps of <code>CorrelatedQueryData</code> objects.  Returns
@@ -496,7 +514,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     @Override
-    public int compareTo(CorrelatedRawData o) {
+    public int compareTo(RawCorrelatedData o) {
         if (this.tvlRange.begin().isBefore(o.tvlRange.begin()))
             return -1;
         else
@@ -524,7 +542,7 @@ public abstract class CorrelatedRawData implements Comparable<CorrelatedRawData>
      * @return  <code>true</code> if the time range of this block and the argument block are disjoint,
      *          <code>false</code> if the two data blocks have a non-empty time range intersection
      */
-    public boolean hasDisjointTimeRange(CorrelatedRawData datCmp) {
+    public boolean hasDisjointTimeRange(RawCorrelatedData datCmp) {
         TimeInterval    tvlCmp = datCmp.getTimeRange();
         
         boolean bolDisjoint = TimeInterval.isDisjoint(this.tvlRange, tvlCmp);

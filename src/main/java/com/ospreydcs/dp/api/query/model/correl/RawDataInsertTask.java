@@ -38,12 +38,12 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
- * Performs the task of <code>DataBucket</code> insertion into a collection of <code>CorrelatedRawData</code> instances.
+ * Performs the task of <code>DataBucket</code> insertion into a collection of <code>RawCorrelatedData</code> instances.
  * </p> 
  * <p>
  * Attempts to insert the <code>DataColumn</code> message of the initializing task subject 
  * <code>DataBucket</code> Protocol Buffers message into the initializing target collection of 
- * <code>CorrelatedRawData</code> instances.
+ * <code>RawCorrelatedData</code> instances.
  * Insertion attempts of the subject are all done serially on the target collection.
  * That is, this task DOES NOT spawn any sub-threads. 
  * </p>
@@ -87,11 +87,11 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
      * </p>
      * 
      * @param msgSubject    the subject of the task - a Query Service data bucket message
-     * @param setTarget     the target of the task - collection of <code>CorrelatedRawData</code> instances
+     * @param setTarget     the target of the task - collection of <code>RawCorrelatedData</code> instances
      * 
      * @return  new, initialized thread task ready for execution
      */
-    public static RawDataInsertTask from(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedRawData> setTarget) {
+    public static RawDataInsertTask from(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<RawCorrelatedData> setTarget) {
         return new RawDataInsertTask(msgSubject, setTarget);
     }
 
@@ -128,7 +128,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
     private final QueryDataResponse.QueryData.DataBucket    msgSubject;
     
     /** The object of this task - target collection of correlated data */
-    private final SortedSet<CorrelatedRawData>              setTarget;
+    private final SortedSet<RawCorrelatedData>              setTarget;
     
     
     //
@@ -152,9 +152,9 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
      * </p>
      *
      * @param msgSubject    the task subject - a Query Service data bucket message
-     * @param setTarget     the task target - collection of <code>CorrelatedRawData</code> instances
+     * @param setTarget     the task target - collection of <code>RawCorrelatedData</code> instances
      */
-    public RawDataInsertTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedRawData> setTarget) {
+    public RawDataInsertTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<RawCorrelatedData> setTarget) {
         this.msgSubject = msgSubject;
         this.setTarget = setTarget;
     }
@@ -181,7 +181,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
      * <ul>
      * <li>The task has been executed.</li>
      * <li>Data column of data bucket was successfully inserted into the collection of
-     *     <code>CorrelatedRawData</code> instances.</li>
+     *     <code>RawCorrelatedData</code> instances.</li>
      * </ul>
      * 
      * @return  <code>true</code> if the task was successfully executed,
@@ -205,7 +205,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
      * 
      * @return  the collection of <code>CorrelatedQueryData</code> instances 
      */
-    public final SortedSet<CorrelatedRawData>    getTarget() {
+    public final SortedSet<RawCorrelatedData>    getTarget() {
         return this.setTarget;
     }
 
