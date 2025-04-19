@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SampledBlockTest.java
- * Package: com.ospreydcs.dp.api.query.model.series
+ * Package: com.ospreydcs.dp.api.query.model.coalesce
  * Type: 	SampledBlockTest
  *
  * Copyright 2010-2025 the original author or authors.
@@ -52,6 +52,8 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryApiFactory;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IQueryService;
+import com.ospreydcs.dp.api.query.model.coalesce.SampledBlock;
+import com.ospreydcs.dp.api.query.model.coalesce.SampledTimeSeries;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
@@ -200,7 +202,7 @@ public class SampledBlockTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#from(com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#from(com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData)}.
      */
     @Test
     public final void testFrom() {
@@ -220,14 +222,14 @@ public class SampledBlockTest {
     }
 
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#SampledBlock(com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData)}.
+//     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#SampledBlock(com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData)}.
 //     */
 //    @Test
 //    public final void testSampledBlock() {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#insertNullTimeSeries(java.lang.String, com.ospreydcs.dp.api.common.DpSupportedType)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#insertNullTimeSeries(java.lang.String, com.ospreydcs.dp.api.common.DpSupportedType)}.
      */
     @Test
     public final void testInsertNullTimeSeries() {
@@ -255,7 +257,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getStartTime()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getStartTime()}.
      */
     @Test
     public final void testGetStartTime() {
@@ -296,7 +298,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getTimeRange()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getTimeRange()}.
      */
     @Test
     public final void testGetTimeRange() {
@@ -337,7 +339,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getSampleCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getSampleCount()}.
      */
     @Test
     public final void testGetSampleCount() {
@@ -369,7 +371,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getDataSourceCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getDataSourceCount()}.
      */
     @Test
     public final void testGetDataSourceCount() {
@@ -401,7 +403,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getSourceNames()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getSourceNames()}.
      */
     @Test
     public final void testGetSourceNames() {
@@ -433,7 +435,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getSourceType(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getSourceType(java.lang.String)}.
      */
     @Test
     public final void testGetSourceType() {
@@ -478,7 +480,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getTimeSeries(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getTimeSeries(java.lang.String)}.
      */
     @Test
     public final void testGetTimeSeries() {
@@ -526,7 +528,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getTimeSeriesAll()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getTimeSeriesAll()}.
      */
     @Test
     public final void testGetTimeSeriesAll() {
@@ -574,7 +576,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#hasSourceData(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#hasSourceData(java.lang.String)}.
      */
     @Test
     public final void testHasSourceData() {
@@ -607,7 +609,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#hasDomainIntersection(com.ospreydcs.dp.api.query.model.series.SampledBlock)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#hasDomainIntersection(com.ospreydcs.dp.api.query.model.coalesce.SampledBlock)}.
      */
     @Test
     public final void testHasDomainIntersection() {
@@ -644,7 +646,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#isTableComplete()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#isTableComplete()}.
      */
     @Test
     public final void testIsTableComplete() {
@@ -673,7 +675,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#hasError()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#hasError()}.
      */
     @Test
     public final void testHasError() {
@@ -702,7 +704,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#clear()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#clear()}.
      */
     @Test
     public final void testClear() {
@@ -737,7 +739,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getRowCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getRowCount()}.
      */
     @Test
     public final void testGetRowCount() {
@@ -767,7 +769,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getColumnCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getColumnCount()}.
      */
     @Test
     public final void testGetColumnCount() {
@@ -797,7 +799,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getColumnIndex(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getColumnIndex(java.lang.String)}.
      */
     @Test
     public final void testGetColumnIndex() {
@@ -833,7 +835,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getColumnNames()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getColumnNames()}.
      */
     @Test
     public final void testGetColumnNames() {
@@ -866,7 +868,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getTimestamps()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getTimestamps()}.
      */
     @Test
     public final void testGetTimestamps() {
@@ -904,7 +906,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getColumn(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getColumn(int)}.
      */
     @Test
     public final void testGetColumnInt() {
@@ -940,7 +942,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#getColumn(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#getColumn(java.lang.String)}.
      */
     @Test
     public final void testGetColumnString() {
@@ -976,7 +978,7 @@ public class SampledBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SampledBlock#compareTo(com.ospreydcs.dp.api.query.model.series.SampledBlock)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#compareTo(com.ospreydcs.dp.api.query.model.coalesce.SampledBlock)}.
      */
     @Test
     public final void testCompareTo() {

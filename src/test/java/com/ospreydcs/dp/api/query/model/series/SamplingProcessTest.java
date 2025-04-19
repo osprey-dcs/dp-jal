@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SamplingProcessTest.java
- * Package: com.ospreydcs.dp.api.query.model.series
+ * Package: com.ospreydcs.dp.api.query.model.coalesce
  * Type: 	SamplingProcessTest
  *
  * Copyright 2010-2023 the original author or authors.
@@ -56,6 +56,8 @@ import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess;
+import com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
@@ -148,7 +150,7 @@ public class SamplingProcessTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SamplingProcess#from(java.util.SortedSet)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess#from(java.util.SortedSet)}.
      */
     @Test
     public final void testFrom() {
@@ -179,7 +181,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SamplingProcess#SamplingProcess(java.util.SortedSet)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess#SamplingProcess(java.util.SortedSet)}.
      */
     @Test
     public final void testSamplingProcess() {
@@ -210,7 +212,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SamplingProcess#getSampleCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess#getSampleCount()}.
      */
     @Test
     public final void testGetSampleCount() {
@@ -243,7 +245,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SamplingProcess#getTimeDomain()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess#getTimeDomain()}.
      */
     @Test
     public final void testGetTimeDomain() {
@@ -302,7 +304,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SamplingProcess#getDataSourceCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess#getDataSourceCount()}.
      */
     @Test
     public final void testGetDataSourceCount() {
@@ -329,7 +331,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SamplingProcess#getDataSourceNames()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess#getDataSourceNames()}.
      */
     @Test
     public final void testGetDataSourceNames() {
@@ -353,7 +355,7 @@ public class SamplingProcessTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.series.SamplingProcess#getSourceType(java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess#getSourceType(java.lang.String)}.
      */
     @Test
     public final void testGetSourceType() {

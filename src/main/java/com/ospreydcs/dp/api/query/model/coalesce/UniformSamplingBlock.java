@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	UniformSamplingBlock.java
- * Package: com.ospreydcs.dp.api.query.model.series
+ * Package: com.ospreydcs.dp.api.query.model.coalesce
  * Type: 	UniformSamplingBlock
  *
  * Copyright 2010-2023 the original author or authors.
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.series;
+package com.ospreydcs.dp.api.query.model.coalesce;
 
 import java.time.Instant;
 import java.util.ArrayList;

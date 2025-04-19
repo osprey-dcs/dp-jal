@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	DomainCollisionProcessor.java
- * Package: com.ospreydcs.dp.api.query.model.series
+ * Package: com.ospreydcs.dp.api.query.model.coalesce
  * Type: 	DomainCollisionProcessor
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,8 +23,9 @@
  * @since Mar 28, 2025
  *
  */
-package com.ospreydcs.dp.api.query.model.aggr;
+package com.ospreydcs.dp.api.query.model.superdom;
 
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -64,7 +65,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * inspected (i.e., that set given at creation time) for time-domain collisions.  Any that are found are
  * extracted and placed into "super domain" collections.  Both the super domains and the correlated raw data
  * without time-domain collisions is available after processing via methods <code>{@link #getSuperDomains()}</code>
- * and <code>{@link #getDisjointData()}</code>, respectively.
+ * and <code>{@link #getDisjointRawData()}</code>, respectively.
  * </p> 
  * <p>
  * <h2>Super Domains</h2>
@@ -119,16 +120,83 @@ public class DomainCollisionProcessor {
     
     /**
      * <p>
-     * Verifies that sampled domains within the argument are disjoint.
+     * Verifies the correct ordering of the sampling start times within the argument set.
+     * </p>
+     * <p>
+     * Extracts all starting times of the sampling clock in order to create the set
+     * { <i>t</i><sub>0</sub>, <i>t</i><sub>1</sub>, ..., <i>t</i><sub><i>N</i>-1</sub> } where
+     * <i>t<sub>n</sub></i> is the start time for <code>RawCorrelatedData</code> instance <i>n</i>
+     * and <i>N</i> is the size of the argument.   
+     * The ordered collection of start times is compared sequentially to check the following 
+     * conditions:
+     * <pre>
+     *   <i>t</i><sub>0</sub> < <i>t</i><sub>1</sub> < ... <  <i>t</i><sub><i>N</i>-1</sub>
+     * </pre>
+     * That is, we verify that the set 
+     * { <i>t</i><sub>0</sub>, <i>t</i><sub>1</sub>, ..., <i>t</i><sub><i>N</i>-1</sub> }
+     * forms a proper net.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This test MUST be run before <code>{@link #verifyDisjointTimeDomains(SortedSet)}</code>.</li>
+     * <li>Failure messages are written to the class logger if logging is enabled.</li>
+     * <li>The <code>ResultStatus</code> contains a message describing any failure.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param setRawData  the target set of processed <code>CorrelatedQueryData</code> objects 
+     * 
+     * @return  <code>ResultStatus</code> containing result of test, with message if failure
+     */
+    public static ResultStatus verifyStartTimeOrdering(SortedSet<RawCorrelatedData> setRawData) {
+        
+        // Loop through set checking that all start times are in order
+        int                 indCurr = 0;
+        RawCorrelatedData   datCurr = null;
+        for (RawCorrelatedData datNext : setRawData) {
+            
+            // Initialize the loop - first time through
+            if (datCurr == null) {
+                datCurr = datNext;
+                continue;
+            }
+            
+            // Compare the two instants
+            Instant     insCurr = datCurr.getStartTime();
+            Instant     insNext = datNext.getStartTime();
+            
+            if (insCurr.compareTo(insNext) >= 0) {
+                String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
+                        + " - Bad start time ordering at argument element " + indCurr + " with start time = "
+                        + insCurr + " compared to next element start time " + insNext;
+                
+                if (BOL_LOGGING)
+                    LOGGER.error(strMsg);
+                
+                return ResultStatus.newFailure(strMsg);
+            }
+            
+            // Update state to next instant
+            indCurr++;
+            insCurr = insNext;
+        }
+        
+        return ResultStatus.SUCCESS;
+    }
+
+    /**
+     * <p>
+     * Verifies that sampled domains within the argument are disjoint (<code>{@link ResultStatus#SUCCESS}</code>).
      * </p>
      * <p>
      * Extracts the set of all sampling time range intervals
-     * { <i>I</i><sub>0</sub>, <i>I</i><sub>0</sub>, ..., <i>I</i><sub><i>N</i>-1</sub> } where
+     * { <i>I</i><sub>0</sub>, <i>I</i><sub>1</sub>, ..., <i>I</i><sub><i>N</i>-1</sub> } where
      * <i>I<sub>n</sub></i> is the sampling time domain for <code>RawCorrelatedData</code> 
      * instance <i>n</i> and <i>N</i> is the size of the argument.  
      * We assume closed intervals of the form 
      * <i>I</i><sub><i>n</i></sub> = [<i>t</i><sub><i>n</i>,start</sub>, <i>t</i><sub><i>n</i>,end</sub>]
-     * where <i>t</i><sub><i>n</i>,start</sub> is the start time for <code>CorrelatedQueryData</code> instance <i>n</i>
+     * where <i>t</i><sub><i>n</i>,start</sub> is the start time for <code>RawCorrelatedData</code> instance <i>n</i>
      * and <i>t</i><sub><i>n</i>,end</sub> is the stop time.
      * </p>
      * <p>  
@@ -151,6 +219,7 @@ public class DomainCollisionProcessor {
      * <li>The argument MUST have correct start time order for this algorithm to work.</li>
      * <li>Failure messages are written to the class logger if logging is enabled.</li>
      * <li>The <code>ResultStatus</code> contains a message describing any failure.</li>
+     * <li>A returned value of <code>{@link ResultStatus#FAIL}</code> indicate presence of time-domain collisions.</li>
      * </ul>
      * </p>
      * 
@@ -158,7 +227,7 @@ public class DomainCollisionProcessor {
      * 
      * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
-    public static ResultStatus  hasDomainCollision(SortedSet<RawCorrelatedData> setRawData) {
+    public static ResultStatus  verfifyDisjointTimeDomains(SortedSet<RawCorrelatedData> setRawData) {
         
         // Check that remaining time domains are disjoint - this works if the argument is ordered correctly
         // Loop through set checking that all start times are in order
@@ -178,9 +247,6 @@ public class DomainCollisionProcessor {
                         + Integer.toString(indPrev)
                         + ", " + datPrev.getTimeRange()
                         + " with " + datCurr.getTimeRange();
-                
-//                if (BOL_LOGGING)
-//                    LOGGER.info(strMsg);
                 
                 return ResultStatus.newFailure(strMsg);
             }
@@ -206,7 +272,7 @@ public class DomainCollisionProcessor {
     //
     
     /** Logging active flag */
-    public static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
     
     
     /** Use advanced error checking and verification flag */
@@ -247,7 +313,7 @@ public class DomainCollisionProcessor {
     private final List<RawCorrelatedData>       lstDataActive = new LinkedList<>();
     
     /** Ordered list of super domains */
-    private final List<RawSuperDomData>             lstSuperDoms = new LinkedList<>();
+    private final List<RawSuperDomData>         lstSuperDoms = new LinkedList<>();
     
     
     //
@@ -256,6 +322,9 @@ public class DomainCollisionProcessor {
     
     /** Flag indicating whether or not data has been processed */
     private boolean bolProcessed;
+    
+    /** Flag indicating whether or not time-domain collisions were encountered */
+    private boolean bolTmDomColl;
     
     /** The index of the currently processed correlated data block within <code>{@link #lstDataActive}</code> */
     private int     indListCurr;
@@ -280,8 +349,56 @@ public class DomainCollisionProcessor {
         this.lstDataActive.addAll( setRawData );
         
         this.bolProcessed = false;
+        this.bolTmDomColl = false;
         this.indListCurr = 0;
         this.indListLast = this.lstDataActive.size();
+    }
+    
+    
+    //
+    // State Query
+    //
+    
+    /**
+     * <p>
+     * Returns whether or not the target set of raw, correlated data has been processed.
+     * </p>
+     * <p>
+     * A returned value of <code>true</code> indicates that the method <code>{@link #process()}</code> has
+     * be invoked.  This method should be invoked only once.
+     * </p>
+     * 
+     * @return  <code>true<code> if method <code>{@link #process()}</code> has been invoked, <code>false</code> otherwise
+     */
+    public boolean hasProcessed() {
+        return this.bolProcessed;
+    }
+    
+    /**
+     * <p>
+     * Determines whether or not the target set or raw, correlated data has super domains after processing.
+     * </p>
+     * <p>
+     * This method should only be called after invoking <code>{@link #process()}</code> otherwise an exception is
+     * thrown.  A returned value of <code>true</code> indicates that the target set contained raw data with
+     * intersecting time domains and the coalesced data forming any super domains is available from method 
+     * <code>{@link #getSuperDomains()}</code>.  
+     * </p>
+     * <p>
+     * The remaining raw, correlated data blocks that did not contain any time domain collisions and were naturally
+     * disjoint are available from the method <code>{@link #getDisjointRawData()}</code> after processing.
+     * 
+     * @return
+     * 
+     * @throws IllegalStateException
+     */
+    public boolean hasSuperDomains() throws IllegalStateException {
+        
+        // Check state
+        if (!this.bolProcessed)
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Target raw, correlated data set has not been processed.");
+        
+        return this.bolTmDomColl;
     }
     
     
@@ -316,7 +433,7 @@ public class DomainCollisionProcessor {
      * 
      * @throws IllegalStateException    the original data set has not yet been processed
      */
-    public List<RawCorrelatedData>  getDisjointData() throws IllegalStateException {
+    public List<RawCorrelatedData>  getDisjointRawData() throws IllegalStateException {
         
         // Check state
         if (!this.bolProcessed) {
@@ -339,7 +456,7 @@ public class DomainCollisionProcessor {
      * The returned list is available after the <code>{@link #process()}</code> method has been invoked,
      * otherwise an exception is thrown.  The list contains all the super domains with disjoint time ranges,
      * moreover, their time ranges are disjoint from all <code>RawCorrelatedData</code> blocks returned
-     * from <code>{@link #getDisjointData()}</code>.  The ordering of the super domains follows the ordering
+     * from <code>{@link #getDisjointRawData()}</code>.  The ordering of the super domains follows the ordering
      * of the original target set presented at creation.
      * </p>
      * 
@@ -362,6 +479,7 @@ public class DomainCollisionProcessor {
         return this.lstSuperDoms;
     }
     
+    
     //
     // Operations
     //
@@ -372,14 +490,15 @@ public class DomainCollisionProcessor {
      * </p>
      * <p>
      * This method should be invoked once and only once, after which the processed data is available via the
-     * methods <code>{@link #getDisjointData()}</code> and <code>{@link #getSuperDomains()}</code>.  
+     * methods <code>{@link #getDisjointRawData()}</code> and <code>{@link #getSuperDomains()}</code>.  Invoking
+     * the method repeatedly has no effect.
      * </p>
      * <p>
      * The method iterates through the target set of <code>RawCorrelatedData</code> instance provided at creation, 
      * identifies the super domains within the collection, and extracts them.  Once complete the set of all disjoint 
      * super domains within the original collection is available from the method <code>{@link #getSuperDomains()}</code>.
      * The collection of remaining correlated raw data block from the original target set is available from
-     * the method <code>{@link #getDisjointData()}</code>.  Note that all super domains and all correlated raw data
+     * the method <code>{@link #getDisjointRawData()}</code>.  Note that all super domains and all correlated raw data
      * blocks returned from the above methods then has disjoint time-range intervals.  The raw data collections are
      * then ready for further processing.
      * </p>
@@ -389,7 +508,8 @@ public class DomainCollisionProcessor {
      * and the remaining follow in order.
      * </p>
      * 
-     * @return  the ordered list of super domains within the original set of correlated raw data blocks
+     * @return  <code>true</code> if time-domain collisions were found and processed, 
+     *          <code>false</code> if no time-time collisions were found 
      * 
      * @throws IllegalStateException     internal processing error: attempt to process data when more super domains existed 
      * @throws IndexOutOfBoundsException internal processing error: attempt to access index beyond current active data list
@@ -398,19 +518,21 @@ public class DomainCollisionProcessor {
         
         if (this.bolProcessed) {
             if (BOL_LOGGING)
-                LOGGER.info("{} - Repeated call, data has already been processed.", JavaRuntime.getQualifiedMethodNameSimple());
+                LOGGER.warn("{} - Repeated call, data has already been processed.", JavaRuntime.getQualifiedMethodNameSimple());
             
-            return false;
+            return this.bolTmDomColl;
         }
         
         while (this.hasNext()) {
             RawSuperDomData domNext = this.extractNext();
         
             this.lstSuperDoms.add(domNext);
+            this.bolTmDomColl = true;
         }
         
         this.bolProcessed = true;
-        return true;
+        
+        return this.bolTmDomColl;
     }
     
     
@@ -531,7 +653,7 @@ public class DomainCollisionProcessor {
         
         // Get the target correlated data block and create next super domain
         RawCorrelatedData   datStart = this.lstDataActive.remove(this.indListCurr);
-        RawSuperDomData  domNext = RawSuperDomData.from(datStart);
+        RawSuperDomData     domNext = RawSuperDomData.from(datStart);
         
         // Adjust processing list indices
         this.indListCurr++;

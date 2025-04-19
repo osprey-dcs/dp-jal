@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SampledBlockSuperDom.java
- * Package: com.ospreydcs.dp.api.query.model.aggr
+ * Package: com.ospreydcs.dp.api.query.model.assem
  * Type: 	SampledBlockSuperDom
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since Apr 10, 2025
  *
  */
-package com.ospreydcs.dp.api.query.model.aggr;
+package com.ospreydcs.dp.api.query.model.superdom;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -46,10 +46,9 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.query.model.aggr.SampledBlockSuperDomDeprecated.RowEntry;
+import com.ospreydcs.dp.api.query.model.coalesce.SampledBlock;
+import com.ospreydcs.dp.api.query.model.coalesce.SampledTimeSeries;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
-import com.ospreydcs.dp.api.query.model.series.SampledBlock;
-import com.ospreydcs.dp.api.query.model.series.SampledTimeSeries;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
@@ -462,7 +461,7 @@ public class SampledBlockSuperDom extends SampledBlock {
     //
     
     /**
-     * @see com.ospreydcs.dp.api.query.model.series.SampledBlock#createTimestampsVector()
+     * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#createTimestampsVector()
      */
     @Override
     protected ArrayList<Instant> createTimestampsVector() {
@@ -475,7 +474,7 @@ public class SampledBlockSuperDom extends SampledBlock {
     }
 
     /**
-     * @see com.ospreydcs.dp.api.query.model.series.SampledBlock#createTimeSeriesVector()
+     * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#createTimeSeriesVector()
      */
     @Override
     protected ArrayList<SampledTimeSeries<Object>> createTimeSeriesVector()

@@ -25,7 +25,7 @@
  * TODO:
  * - See documentation
  */
-package com.ospreydcs.dp.api.query.model.series;
+package com.ospreydcs.dp.api.query.model.coalesce;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SampledBlock.java
- * Package: com.ospreydcs.dp.api.query.model.series
+ * Package: com.ospreydcs.dp.api.query.model.coalesce
  * Type: 	SampledBlock
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since Mar 19, 2025
  *
  */
-package com.ospreydcs.dp.api.query.model.series;
+package com.ospreydcs.dp.api.query.model.coalesce;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -48,12 +48,12 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
-import com.ospreydcs.dp.api.query.model.aggr.RawSuperDomData;
-import com.ospreydcs.dp.api.query.model.aggr.SampledBlockSuperDom;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
 import com.ospreydcs.dp.api.query.model.correl.RawClockedData;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawTmsListData;
+import com.ospreydcs.dp.api.query.model.superdom.RawSuperDomData;
+import com.ospreydcs.dp.api.query.model.superdom.SampledBlockSuperDom;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -61,11 +61,14 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * Base class representation of a finite-duration block of correlated, sampled, time-series data.
  * </p>
  * <p>
- * Class instances formalize <code>RawCorrelatedData</code> objects to the Java API Library format.  
+ * Class instances formalize <code>RawCorrelatedData</code> objects to the Java API Library format.  The most
+ * important property of a collection of <code>SampledBlock</code> instances is that they are intended to be
+ * disjoint in time, whereas <code>RawCorrelatedData</code> instances recovered from a single query can have collisions.
  * Specifically, <code>RawCorrelatedData</code> instances contain Query Service time-series raw data within 
- * Protocol Buffers messages.  The objective of this class is to extract this data and present it in the format
- * of the Java API Library.  After construction, the data is available through the <code>{@link IDataTable}</code>
- * interface.
+ * Protocol Buffers messages correlated to specific timestamps, which may overlap.  The objective of this class is to 
+ * extract the raw data and present it in the format of the Java API Library and with disjoint time ranges.  
+ * After construction, the data is available through the <code>{@link IDataTable}</code> interface and other
+ * public methods specific to <code>SampledBlock</code> (typically used for further processing).
  * </p>
  * <p>
  * Class instances maintain an collection of <code>{@link SampledTimeSeries}</code> objects 
@@ -107,6 +110,15 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <code>{@link #createTimestampsVector()}</code> and <code>{@link #createTimeSeriesVector()}</code> for
  * their requirements.
  * </p> 
+ * <p>
+ * <h2>NOTES:</h2>
+ * Currently comparisons of <code>SampledBlock</code> instances with either the exposed <code>Comparable</code>
+ * interface or the contained class <code>StartTimeComparator</code> implementing the <code>Comparator</code>
+ * interface are <b>not strict</b>.  Both methods provide comparisons against the start time of the
+ * <code>SampledBlock</code> instance but equality is never explicitly indicated (i.e., a zero-value indicating
+ * equality).  This action prevents the clobbering of <code>SampledBlock</code> instances within sorted
+ * collections.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Mar 19, 2025
@@ -275,7 +287,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      * @author Christopher K. Allen
      * @since Mar 19, 2025
      */
-    public static class StartTimeComparator implements Comparator<UniformSamplingBlock> {
+    public static class StartTimeComparator implements Comparator<SampledBlock> {
 
         //
         // Creator
@@ -327,9 +339,9 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
          * @see @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
          */
         @Override
-        public int compare(UniformSamplingBlock o1, UniformSamplingBlock o2) {
-            Instant t1 = o1.getStartInstant();
-            Instant t2 = o2.getStartInstant();
+        public int compare(SampledBlock o1, SampledBlock o2) {
+            Instant t1 = o1.getStartTime();
+            Instant t2 = o2.getStartTime();
 
             if (t1.isBefore(t2))
                 return -1;
@@ -624,15 +636,34 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      * </p>
      * <p>
      * This is a convenience method where the returned value is taken from the 
-     * sampled block timestamps (i.e., the first one).
-     * To obtain the full time domain of the sampling block use method
+     * sampled block timestamps (i.e., the first one) which is subsequently held in 
+     * attribute <code>{@link #tvlRange}</code> available from <code>{@link #getTimeRange()}</code>.
+     * Thus, to obtain the full time domain of the sampling block use method
      * <code>{@link #getTimeRange()}</code>.
-     * <p>
+     * </p>
      * 
-     * @return sampling interval start instant 
+     * @return sampling interval start time instant (equivalent to <code>{@link #getTimeRange()}.begin()</code>)
      */
     public final Instant getStartTime() {
         return this.tvlRange.begin();
+    }
+    
+    /**
+     * <p>
+     * Returns the final time instant of the sampling interval for this sampled block.
+     * </p>
+     * <p>
+     * This is a convenience method where the returned value is taken from the 
+     * sampled block timestamps (i.e., the last one) which is subsequently held in 
+     * attribute <code>{@link #tvlRange}</code> available from <code>{@link #getTimeRange()}</code>.
+     * Thus, to obtain the full time domain of the sampling block use method
+     * <code>{@link #getTimeRange()}</code>.
+     * </p>
+     * 
+     * @return  sampling interval final time instant (equivalent to <code>{@link #getTimeRange()}.end()</code>)
+     */
+    public final Instant getFinalTime() {
+        return this.tvlRange.end();
     }
     
     /**

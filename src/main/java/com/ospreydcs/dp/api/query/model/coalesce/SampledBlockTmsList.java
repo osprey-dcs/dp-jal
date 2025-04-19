@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SampledBlockTmsList.java
- * Package: com.ospreydcs.dp.api.query.model.series
+ * Package: com.ospreydcs.dp.api.query.model.coalesce
  * Type: 	SampledBlockTmsList
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since Mar 24, 2025
  *
  */
-package com.ospreydcs.dp.api.query.model.series;
+package com.ospreydcs.dp.api.query.model.coalesce;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -88,7 +88,7 @@ public class SampledBlockTmsList extends SampledBlock {
     //
 
     /**
-     * @see com.ospreydcs.dp.api.query.model.series.SampledBlock#createTimestampsVector()
+     * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#createTimestampsVector()
      */
     @Override
     protected ArrayList<Instant> createTimestampsVector() {
@@ -100,7 +100,7 @@ public class SampledBlockTmsList extends SampledBlock {
     }
 
     /**
-     * @see com.ospreydcs.dp.api.query.model.series.SampledBlock#createTimeSeriesVector()
+     * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#createTimeSeriesVector()
      */
     @Override
     protected ArrayList<SampledTimeSeries<Object>> createTimeSeriesVector() 

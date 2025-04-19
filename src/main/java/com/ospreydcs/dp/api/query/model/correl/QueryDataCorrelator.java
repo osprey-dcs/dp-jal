@@ -1004,6 +1004,7 @@ public class QueryDataCorrelator {
      * 
      * @Deprecated  Unstable for large target sets - seems to be Java internal TreeMap problem
      */
+    @SuppressWarnings("unused")
     @Deprecated(since="Feb 17, 2024")
     private Collection<QueryDataResponse.QueryData.DataBucket>  attemptDataInsertConcurrent(QueryDataResponse.QueryData msgData) {
         

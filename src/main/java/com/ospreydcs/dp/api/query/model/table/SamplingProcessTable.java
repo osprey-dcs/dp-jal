@@ -43,9 +43,9 @@ import org.w3c.dom.ranges.RangeException;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.IDataTable;
+import com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess;
+import com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
-import com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock;
 
 /**
  * <p>

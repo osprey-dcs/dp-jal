@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SampledBlockSuperDomDeprecated.java
- * Package: com.ospreydcs.dp.api.query.model.series
+ * Package: com.ospreydcs.dp.api.query.model.coalesce
  * Type: 	SampledBlockSuperDomDeprecated
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since Apr 2, 2025
  *
  */
-package com.ospreydcs.dp.api.query.model.aggr;
+package com.ospreydcs.dp.api.query.model.superdom;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
-import com.ospreydcs.dp.api.query.model.series.SampledBlock;
+import com.ospreydcs.dp.api.query.model.coalesce.SampledBlock;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -449,7 +449,7 @@ public class SampledBlockSuperDomDeprecated {
     
 
 //    /**
-//     * @see com.ospreydcs.dp.api.query.model.series.SampledBlock#createTimestampsVector()
+//     * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#createTimestampsVector()
 //     */
 ////    @Override
 //    protected ArrayList<Instant> createTimestamps() {
@@ -461,7 +461,7 @@ public class SampledBlockSuperDomDeprecated {
 //
 //
 //    /**
-//     * @see com.ospreydcs.dp.api.query.model.series.SampledBlock#createTimeSeriesVector(java.util.List)
+//     * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#createTimeSeriesVector(java.util.List)
 //     */
 ////    @Override
 //    protected ArrayList<SampledTimeSeries<Object>> createTimeSeriesVector(List<DataColumn> lstMsgDataCols)

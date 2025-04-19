@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:    RawSuperDomData.java
- * Package: com.ospreydcs.dp.api.query.model.series
+ * Package: com.ospreydcs.dp.api.query.model.coalesce
  * Type:    RawSuperDomData
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,12 +23,10 @@
  * @since Mar 28, 2025
  *
  */
-package com.ospreydcs.dp.api.query.model.aggr;
+package com.ospreydcs.dp.api.query.model.superdom;
 
 import java.time.Instant;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +38,6 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
-import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
@@ -53,7 +50,12 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * Note there can be multiple but separate <code>RawSuperDomData</code> collections within the same query response.  
  * </p>
  * <p>
- * Once the <code>RawSuperDomData</code> collection is established, a "super domain" is defined.  This super domain
+ * Note that this class does not inherit from base class <code>RawCorrelatedData</code>.  Rather it is a collection
+ * of <code>RawCorrelatedData</code> instances that are correlated against separate timestamps that have intersecting
+ * time domains.
+ * </p>
+ * <p>
+ * Once the <code>RawSuperDomData</code> collection is established, the "super domain" is defined.  This super domain
  * is the smallest time range containing all time ranges within the collection.
  * </p>
  * <p>
@@ -130,10 +132,6 @@ public class RawSuperDomData implements Iterable<RawCorrelatedData> {
     //
     // Class Constants
     //
-    
-    /** Serialization Identifier */
-    private static final long serialVersionUID = -4143043367195908267L;
-
     
     /** Is logging active */
     protected static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
