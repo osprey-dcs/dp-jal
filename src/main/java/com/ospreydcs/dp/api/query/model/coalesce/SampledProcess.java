@@ -246,7 +246,7 @@ public class SampledProcess {
      * </ul>  
      * </p>
      *
-     * @param setCorrelData sorted set of <code>CorrelatedQueryData</code> used to build this process
+     * @param setCorrelData sorted set of <code>CorrelatedQueryDataOld</code> used to build this process
      *  
      * @throws RangeException           the argument has bad ordering or contains time domain collisions (see message)
      * @throws MissingResourceException the argument is has empty data column(s)
@@ -545,7 +545,7 @@ public class SampledProcess {
      * </ul>
      * </p>
      * 
-     * @param setRawData  the target set of processed <code>CorrelatedQueryData</code> objects 
+     * @param setRawData  the target set of processed <code>CorrelatedQueryDataOld</code> objects 
      * 
      * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
@@ -596,7 +596,7 @@ public class SampledProcess {
      * instance <i>n</i> and <i>N</i> is the size of the argument.  
      * We assume closed intervals of the form 
      * <i>I</i><sub><i>n</i></sub> = [<i>t</i><sub><i>n</i>,start</sub>, <i>t</i><sub><i>n</i>,end</sub>]
-     * where <i>t</i><sub><i>n</i>,start</sub> is the start time for <code>CorrelatedQueryData</code> instance <i>n</i>
+     * where <i>t</i><sub><i>n</i>,start</sub> is the start time for <code>CorrelatedQueryDataOld</code> instance <i>n</i>
      * and <i>t</i><sub><i>n</i>,end</sub> is the stop time.
      * </p>
      * <p>  
@@ -622,7 +622,7 @@ public class SampledProcess {
      * </ul>
      * </p>
      * 
-     * @param setRawData  the target set of <code>CorrelatedQueryData</code> objects, corrected ordered 
+     * @param setRawData  the target set of <code>CorrelatedQueryDataOld</code> objects, corrected ordered 
      * 
      * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
@@ -669,11 +669,11 @@ public class SampledProcess {
      * Creates all the sampling blocks for this sampling process, according to the argument data.
      * </p>
      * <p>
-     * One <code>UniformSamplingBlock</code> instance is created for each <code>CorrelatedQueryData</code>
+     * One <code>UniformSamplingBlock</code> instance is created for each <code>CorrelatedQueryDataOld</code>
      * object in the argument collection.  The <code>UniformSamplingBlock</code> instances are created
      * in the same order as the argument, which is assumed to be by sampling start time.  The order
      * should have been enforced during query response correlation.
-     * Note that not all data sources need contribute to each <code>CorrelatedQueryData</code> 
+     * Note that not all data sources need contribute to each <code>CorrelatedQueryDataOld</code> 
      * instance in the argument.  The time-series data values (i.e., <code>null</code> values)
      * for missing data sources should be addressed later. 
      * </p>
@@ -692,7 +692,7 @@ public class SampledProcess {
      * </ul>
      * </p>
      * 
-     * @param setQueryData  set of <code>CorrelatedQueryData</code> objects ordered by start time
+     * @param setQueryData  set of <code>CorrelatedQueryDataOld</code> objects ordered by start time
      * 
      * @return  vector of <code>UniformSamplingBlock</code> objects ordered according to argument
      * 
@@ -825,7 +825,7 @@ public class SampledProcess {
      * <p>
      * The returned map contains entries for all data sources represented in the argument.
      * Not that the key set of the returned map should be equal to the set of data source
-     * name obtained from the initializing collection of <code>CorrelatedQueryData</code>
+     * name obtained from the initializing collection of <code>CorrelatedQueryDataOld</code>
      * objects.  Thus, the returned map can be used both to verify the set of data sources
      * within the process, and to verify that all sources have uniform data type. 
      * <p>

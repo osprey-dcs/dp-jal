@@ -7,7 +7,7 @@ import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.MetadataRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.query.impl.QueryRequestProcessor;
+import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorOld;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 
 /**
@@ -55,7 +55,7 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
  * <h2>USAGE</h2>
  * <h3>Instance Creation</h3>
  * Instance of <code>IQueryService</code> should be obtained from the Query Service connection
- * factory class <code>{@link DpQueryApiFactory}</code>.  This is a utility class providing
+ * factory class <code>{@link DpQueryApiFactoryOld}</code>.  This is a utility class providing
  * various connection options to the Query Service, including a default connection defined in
  * the API configuration parameters.
  * <h2>Query Operations</h2>
@@ -301,7 +301,7 @@ public interface IQueryService extends IConnection {
      * <li>
      * The data streaming and reconstruction can be performed simultaneously, with various
      * levels of concurrency.  Interface implementations typically employ an internal processor of 
-     * type <code>{@link QueryRequestProcessor}</code>.  See the class documentation for details
+     * type <code>{@link QueryRequestProcessorOld}</code>.  See the class documentation for details
      * on tuning the instance with the various performance parameters.
      * </li>
      * <br/>

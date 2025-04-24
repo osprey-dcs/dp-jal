@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryApiFactory.java
+ * File:	DpQueryApiFactoryOld.java
  * Package: com.ospreydcs.dp.api.query
- * Type: 	DpQueryApiFactory
+ * Type: 	DpQueryApiFactoryOld
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceApiFactory;
+import com.ospreydcs.dp.api.query.impl.DpQueryServiceApiFactoryOld;
 
 /**
  * <h2>Connection factory for Data Platform Query Service APIs</h2>
@@ -77,8 +77,10 @@ import com.ospreydcs.dp.api.query.impl.DpQueryServiceApiFactory;
  * @author Christopher K. Allen
  * @since Dec 27, 2024
  *
+ * @deprecated Use DpQueryApiFactoryNew when stable
  */
-public class DpQueryApiFactory {
+@Deprecated(since="April 24, 2025")
+public class DpQueryApiFactoryOld {
 
     
     //
@@ -86,7 +88,7 @@ public class DpQueryApiFactory {
     //
     
     /** The API connection factory for connection to the Query Service */
-    private static final DpQueryServiceApiFactory   FAC_SERVICE = DpQueryServiceApiFactory.FACTORY;
+    private static final DpQueryServiceApiFactoryOld   FAC_SERVICE = DpQueryServiceApiFactoryOld.FACTORY;
     
     
     //
@@ -412,11 +414,11 @@ public class DpQueryApiFactory {
     
     /**
      * <p>
-     * Prevent construction of <code>DpQueryApiFactory</code> instances.
+     * Prevent construction of <code>DpQueryApiFactoryOld</code> instances.
      * </p>
      *
      */
-    private DpQueryApiFactory() {
+    private DpQueryApiFactoryOld() {
     }
 
 }

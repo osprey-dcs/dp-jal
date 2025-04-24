@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	ResponseAssembler.java
+ * File:	QueryResponseAssembler.java
  * Package: com.ospreydcs.dp.api.query.model.assem
- * Type: 	ResponseAssembler
+ * Type: 	QueryResponseAssembler
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -31,7 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.SortedSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
@@ -44,9 +43,10 @@ import org.w3c.dom.ranges.RangeException;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.coalesce.SampledBlock;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
-import com.ospreydcs.dp.api.query.model.superdom.DomainCollisionProcessor;
+import com.ospreydcs.dp.api.query.model.superdom.TimeDomainProcessor;
 import com.ospreydcs.dp.api.query.model.superdom.RawSuperDomData;
 import com.ospreydcs.dp.api.query.model.superdom.SampledBlockSuperDom;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -91,7 +91,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @since Apr 13, 2025
  *
  */
-public class ResponseAssembler {
+public class QueryResponseAssembler {
     
     
     //
@@ -100,25 +100,25 @@ public class ResponseAssembler {
     
     /**
      * <p>
-     * Creates and returns a new <code>ResponseAssembler</code> instance ready for configuration and processing.
+     * Creates and returns a new <code>QueryResponseAssembler</code> instance ready for configuration and processing.
      * </p>
      * <p>
      * The returned instance is ready for the processing of raw, correlated data available from <code>RawDataCorrelator</code>
      * instances.  The <code>SortedSet</code> of <code>RawCorrelatedData</code> instances produced from the correlator
-     * is processed into a <code>SampledAggregate</code> instance using the <code>{@link #process(SortedSet)}</code>
+     * is processed into a <code>SampledAggregate</code> instance using the <code>{@link #processExceptions(SortedSet)}</code>
      * method.
      * </p>
      * <p>
      * The returned assembler instance can be configured with various processing options using the <code>enable...()</code>
-     * and <code>set...()</code> methods which should be invoked before using <code>{@link #process(SortedSet)}</code>.
+     * and <code>set...()</code> methods which should be invoked before using <code>{@link #processExceptions(SortedSet)}</code>.
      * The default configuration is set according to the Java API Library configuration file, whose values are available
      * as class constants.
      * </p>
      * 
-     * @return  a new <code>ResponseAssembler</code> instance ready for assembly of raw, correlated response data
+     * @return  a new <code>QueryResponseAssembler</code> instance ready for assembly of raw, correlated response data
      */
-    public static ResponseAssembler create() {
-        return new ResponseAssembler();
+    public static QueryResponseAssembler create() {
+        return new QueryResponseAssembler();
     }
 
     
@@ -197,17 +197,50 @@ public class ResponseAssembler {
 
     /**
      * <p>
-     * Constructs a new <code>ResponseAssembler</code> instance.
+     * Constructs a new <code>QueryResponseAssembler</code> instance.
      * </p>
      *
      */
-    public ResponseAssembler() {
+    public QueryResponseAssembler() {
     }
     
     
     //
     // Configuration
     //
+    
+    /**
+     * <p>
+     * Resets all configuration parameters to the default values.
+     * </p>
+     * <p>
+     * All configuration parameters are set to the default values at creation and specified by
+     * the Java API Library configuration file.  These values are all available individually from the
+     * following methods:
+     * <ul>
+     * <li><code>{@link #hasAdvancedErrorChecking()}</code></li>
+     * <li><code>{@link #hasTimeDomainCollisions()}</code></li>
+     * <li><code>{@link #hasConcurrency()}</code></li>
+     * <li><code>{@link #getMaxThreadCount()}</code></li>
+     * <li><code>{@link #getConcurrencyPivotSize()}</code></li>
+     * </ul>
+     * <p>
+     * 
+     * @see #BOL_ERROR_CHK
+     * @see #BOL_DOM_COLLISION
+     * @see #BOL_CONCURRENCY
+     * @see #CNT_CONCURRENCY_MAX_THRDS
+     * @see #SZ_CONCURRENCY_PIVOT
+     */
+    public void resetDefaultConfiguration() {
+        
+        this.bolErrorChk = BOL_ERROR_CHK;
+        this.bolTmDomColl = BOL_DOM_COLLISION;
+        
+        this.bolConcurrency = BOL_CONCURRENCY;
+        this.cntMaxThreads = CNT_CONCURRENCY_MAX_THRDS;
+        this.szConcPivot = SZ_CONCURRENCY_PIVOT;
+    }
     
     /**
      * <p>
@@ -414,6 +447,60 @@ public class ResponseAssembler {
      * Constructs a new instance of <code>SampledAggregate</code> populated from argument data.
      * </p>
      * <p>
+     * This is a convenience method that defers to <code>{@link #processExceptions(SortedSet)}</code> for
+     * all processing.  Any exception thrown there is caught and packaged as a <code>{@link DpQueryException}</code>
+     * to simplify <code>IQueryService</code> implementations.  The offending exception is available as
+     * the cause attribute within the <code>DpQueryException</code> 
+     * (i.e., see <code>{@link DpQueryException#getCause()}</code>).
+     * </p>
+     * <p>
+     * After construction the new instance is fully populated with coalesced, sampled time-series data from
+     * all data sources contained in the argument.  The returned instance is also configured according
+     * to the order and the correlations within the argument.
+     * The argument data must be consistent for proper time-series data construction or an exception is thrown.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The argument collection is assumed to be sorted in the order of clock starting instants</li>
+     * <li>Advanced data consistency check is performed during construction unless disabled.</li>
+     * <li>Any detected data inconsistencies result in an exception. </li>
+     * <li>Exception type determines the nature of any data inconsistency. </li>
+     * </ul>  
+     * </p>
+     * 
+     * @param setRawData    sorted set of <code>RawCorrelatedData</code> instances used to build aggregate
+     *
+     * @return  ordered, aggregated of coalesced sampled blocks containing the time-series data within the argument
+     *  
+     * @throws DpQueryException general processing exception, see cause
+     */
+    public SampledAggregate process(SortedSet<RawCorrelatedData> setRawData) throws DpQueryException {
+        
+        try {
+            SampledAggregate    aggBlks = this.processExceptions(setRawData);
+            
+            return aggBlks;
+            
+            // Catch any processing exception and package it within a DpQueryException 
+        } catch (IllegalArgumentException | MissingResourceException | IllegalStateException | TypeNotPresentException
+                | RejectedExecutionException | ExecutionException | InterruptedException e) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
+                            + " - Exception " + e.getClass() + " during correlated data coalescing and assembly: "
+                            + e.getMessage();
+            
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new DpQueryException(strMsg, e);
+        }
+    }
+    
+    /**
+     * <p>
+     * Constructs a new instance of <code>SampledAggregate</code> populated from argument data.
+     * </p>
+     * <p>
      * After construction the new instance is fully populated with coalesced, sampled time-series data from
      * all data sources contained in the argument.  The returned instance is also configured according
      * to the order and the correlations within the argument.
@@ -430,6 +517,8 @@ public class ResponseAssembler {
      * </p>
      *
      * @param setRawData    sorted set of <code>RawCorrelatedData</code> instances used to build aggregate
+     *
+     * @return  ordered, aggregated of coalesced sampled blocks containing the time-series data within the argument
      *  
      * @throws RangeException           the argument has bad ordering or contains time domain collisions (see message)
      * @throws UnsupportedOperationException    the raw data contained neither a sampling clock or a timestamp list
@@ -441,10 +530,8 @@ public class ResponseAssembler {
      * @throws ExecutionException       general exception for serial processing for time-domain collision (see cause)
      * @throws RejectedExecutionException a fill task failed execution for concurrent processing in time-domain collisions
      * @throws InterruptedException     timeout occurred while waiting for concurrent fill tasks to complete in time-domain collisions
-     *
-     * @return  ordered, aggregated of coalesced sampled blocks containing the time-series data within the argument
      */
-    public SampledAggregate process(SortedSet<RawCorrelatedData> setRawData) 
+    public SampledAggregate processExceptions(SortedSet<RawCorrelatedData> setRawData) 
             throws IllegalArgumentException, MissingResourceException, IllegalStateException, TypeNotPresentException, 
                    RejectedExecutionException, ExecutionException, InterruptedException 
     {
@@ -454,12 +541,12 @@ public class ResponseAssembler {
             ResultStatus    recResult;
 
             // Start time ordering must be correct for time-domain collision detection
-            recResult = DomainCollisionProcessor.verifyStartTimeOrdering(setRawData);
+            recResult = TimeDomainProcessor.verifyStartTimeOrdering(setRawData);
             if (recResult.isFailure())
                 throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, recResult.message());
             
             // Check for time-domain collisions within argument if time-domain collisions are disabled
-            recResult = DomainCollisionProcessor.verfifyDisjointTimeDomains(setRawData);
+            recResult = TimeDomainProcessor.verfifyDisjointTimeDomains(setRawData);
             if (recResult.isFailure())
                 throw new RangeException(RangeException.BAD_BOUNDARYPOINTS_ERR, recResult.message());
         }
@@ -469,7 +556,7 @@ public class ResponseAssembler {
         List<SampledBlock>  lstBlks = new LinkedList<>();
         
         // Create time-domain collision processor for the target set and process
-        DomainCollisionProcessor    prcrTmDom = DomainCollisionProcessor.from(setRawData);
+        TimeDomainProcessor    prcrTmDom = TimeDomainProcessor.from(setRawData);
         
         boolean bolSuperDoms = prcrTmDom.process();
         
@@ -546,7 +633,7 @@ public class ResponseAssembler {
 //     * </ul>
 //     * </p>
 //     * 
-//     * @param setRawData  the target set of processed <code>CorrelatedQueryData</code> objects 
+//     * @param setRawData  the target set of processed <code>CorrelatedQueryDataOld</code> objects 
 //     * 
 //     * @return  <code>ResultStatus</code> containing result of test, with message if failure
 //     */
@@ -624,7 +711,7 @@ public class ResponseAssembler {
 //     * </ul>
 //     * </p>
 //     * 
-//     * @param setRawData  the target set of <code>CorrelatedQueryData</code> objects, corrected ordered 
+//     * @param setRawData  the target set of <code>CorrelatedQueryDataOld</code> objects, corrected ordered 
 //     * 
 //     * @return  <code>ResultStatus</code> containing result of test, with message if failure
 //     */

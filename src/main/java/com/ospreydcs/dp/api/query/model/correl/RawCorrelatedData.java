@@ -146,7 +146,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <li>
  * <s>This class is only applicable to Query Service data responses whose timestamps are defined by a 
  * sampling clock.  Irregular sampling described with timestamp lists is NOT processed with 
- * <code>CorrelatedQueryData</code> instances.</s> 
+ * <code>CorrelatedQueryDataOld</code> instances.</s> 
  * </li>
  * </ul>
  * </p> 
@@ -261,7 +261,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
         }
         
         //
-        // Comparator<CorrelatedQueryData> Interface
+        // Comparator<CorrelatedQueryDataOld> Interface
         //
         
         /**
@@ -450,7 +450,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * <p>
      * <h2>Concurrency (Thread Safe)</h2>
      * This operation <em>must be</em> atomic and is therefore <em>must be</em> synchronized for thread safety.
-     * Thus, a single instance of <code>CorrelatedQueryData</code> can be processed concurrently for 
+     * Thus, a single instance of <code>CorrelatedQueryDataOld</code> can be processed concurrently for 
      * multiple <code>DataBucket</code> messages on separate execution threads with this method.  
      * Doing so will provide consistent results as NO duplicate data sources within the same 
      * sampling clock are accepted.  
@@ -489,7 +489,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * Compares the start time of the given <code>RawCorrelatedData</code> with this one.
      * </p>
      * <p>
-     * Used for ordering within sets and maps of <code>CorrelatedQueryData</code> objects.  Returns
+     * Used for ordering within sets and maps of <code>CorrelatedQueryDataOld</code> objects.  Returns
      * -1 if the start time of this object is before the start time of the argument object
      * as dictated by </code>{@link Instant#isBefore(Instant)}</code>.  Otherwise the returned value is 1. 
      * </p>
@@ -634,7 +634,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * Returns the number of unique data source names within the current collection of data messages.
      * </p>
      * <p>
-     * <code>CorrelatedQueryData</code> objects maintain a set of unique data source names
+     * <code>CorrelatedQueryDataOld</code> objects maintain a set of unique data source names
      * for all Query Service response data successfully inserted into the correlated collection.
      * All data sources within the collection should be unique for a consistent data archive. 
      * </p>
@@ -653,7 +653,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * associated sampling interval.
      * </p>
      * <p>
-     * <code>CorrelatedQueryData</code> objects maintain a set of unique data source names
+     * <code>CorrelatedQueryDataOld</code> objects maintain a set of unique data source names
      * for all Query Service response data successfully inserted into the correlated collection.
      * All data sources within the collection should be unique for a consistent data archive. 
      * </p>
@@ -672,7 +672,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * <p>
      * The returned collection of data messages are all sampled according to the sampling
      * clock described by <code>{@link #getSamplingMessage()}</code>.  It represents the
-     * correlated data set of this <code>CorrelatedQueryData</code> instance.
+     * correlated data set of this <code>CorrelatedQueryDataOld</code> instance.
      * </p>
      * 
      * @return all correlated data currently associated with the sampling interval 

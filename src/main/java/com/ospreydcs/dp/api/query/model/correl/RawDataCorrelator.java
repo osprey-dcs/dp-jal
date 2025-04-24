@@ -100,7 +100,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * <p>
  * Once the entire results set data is "added" to a <code>RawDataCorrelator</code> object, 
  * it is fully correlated.  The correlated data is then available from the method
- * <code>{@link #getCorrelatedSet()}</code>.  Each <code>{@link CorrelatedQueryData}</code> 
+ * <code>{@link #getCorrelatedSet()}</code>.  Each <code>{@link CorrelatedQueryDataOld}</code> 
  * instance within the returned set contains all the data messages for a single sampling clock.
  * Further, the set is ordered according to the start time instant for each clock.
  * </p>
@@ -324,7 +324,7 @@ public class RawDataCorrelator {
   
     
     //
-    // State Variables
+    // Configuration
     //
     
     /** Toggle the use of concurrency in data processing */
@@ -335,6 +335,11 @@ public class RawDataCorrelator {
     
     /** The size of the correlated set triggering concurrent data processing */
     private int         szSetConcPivot = SZ_CONCURRENCY_PIVOT;
+
+    
+    //
+    // State Variables
+    //
     
     /** Byte counter for processed data - measured results set size */
     private long        lngBytesProcessed = 0;
@@ -356,6 +361,33 @@ public class RawDataCorrelator {
     //
     // Configuration
     //
+    
+    /**
+     * <p>
+     * Resets all configuration parameters to the default values.
+     * </p>
+     * <p>
+     * All configuration parameters are set to the default values at creation and specified by
+     * the Java API Library configuration file.  These values are all available individually from the
+     * following methods:
+     * <ul>
+     * <li><code>{@link #isConcurrencyEnabled()}</code></li>
+     * <li><code>{@link #getConcurrencytMaxThreads()}</code></li>
+     * <li><code>{@link #getConcurrencyPivotSize()}</code></li>
+     * </ul>
+     * </p> 
+     * 
+     * @see #BOL_CONCURRENCY
+     * @see #CNT_CONCURRENCY_THDS
+     * @see #SZ_CONCURRENCY_PIVOT
+     */
+    public void resetDefaultConfiguration() {
+        
+        this.bolConcurrency = BOL_CONCURRENCY;
+        this.cntMaxThreads = CNT_CONCURRENCY_THDS;
+        this.szSetConcPivot = SZ_CONCURRENCY_PIVOT;
+
+    }
     
     /**
      * <p>
@@ -463,14 +495,14 @@ public class RawDataCorrelator {
      * Reset this correlator instance to its original (default) state.
      * </p>
      * <p>
-     * <code>QueryDataCorrelator</code> objects can be reused.  After calling this method the 
+     * <code>QueryDataCorrelatorOld</code> objects can be reused.  After calling this method the 
      * correlator is returned to its initial state and is ready to process another Query Service
      * response results set.
      * </p>
      * <p>
      * This is a thread-safe operation.  Performs the following operations:
      * <ul>
-     * <li>Clears out the target set of all <code>CorrelatedQueryData</code> references.</li>
+     * <li>Clears out the target set of all <code>CorrelatedQueryDataOld</code> references.</li>
      * <li>Returns the concurrency flag to its default state <code>{@link #BOL_CONCURRENCY}</code>.</li>
      * </ul>
      * </p>
@@ -547,7 +579,7 @@ public class RawDataCorrelator {
     
     /**
      * <p>
-     * Returns the target set of <code>CorrelatedQueryData</code> instances in its current 
+     * Returns the target set of <code>CorrelatedQueryDataOld</code> instances in its current 
      * processing state.
      * </p>
      * <p>
@@ -556,7 +588,7 @@ public class RawDataCorrelator {
      * of the data request, ordered according to sampling clock start times.
      * <p>
      * <h2>WARNING:</h2>
-     * This <code>QueryDataCorrelator</code> instance retains ownership of the returned set.
+     * This <code>QueryDataCorrelatorOld</code> instance retains ownership of the returned set.
      * If the <code>{@link #reset()}</code> method is invoked this set is destroyed.
      * All subsequent processing of the returned data set must be completed before invoking
      * <code>{@link #reset()}</code>, or the data set must be copied.
@@ -593,7 +625,7 @@ public class RawDataCorrelator {
     
     /**
      * <p>
-     * Returns the size of the correlated set of <code>CorrelatedQueryData</code> 
+     * Returns the size of the correlated set of <code>CorrelatedQueryDataOld</code> 
      * instances processed so far.
      * </p>
      * 
@@ -608,7 +640,7 @@ public class RawDataCorrelator {
      * Extracts and returns a set of unique data source names for all data within target set.
      * </p>
      * <p>
-     * Extracts all data source names within the target set of <code>CorrelatedQueryData</code> 
+     * Extracts all data source names within the target set of <code>CorrelatedQueryDataOld</code> 
      * objects and collects them to the returned set of unique names.
      * </p>
      * <p>
@@ -646,7 +678,7 @@ public class RawDataCorrelator {
      * </p>
      * <p>
      * Once this method returns all <code>DataBucket</code> messages within the argument are 
-     * processed and its data column is associated with some <code>{@link CorrelatedQueryData}</code>
+     * processed and its data column is associated with some <code>{@link CorrelatedQueryDataOld}</code>
      * instance within the target set.
      * </p>
      * <p>
@@ -657,7 +689,7 @@ public class RawDataCorrelator {
      * For larger target sets the processing technique pivots to a parallel method.  An attempt 
      * is made to insert each data bucket within the argument concurrently into the target set.  
      * (The probability of insertion is higher since the target set is large.) 
-     * Then a <code>CorrelatedQueryData</code> set is created for the collection of data buckets 
+     * Then a <code>CorrelatedQueryDataOld</code> set is created for the collection of data buckets 
      * that failed insertion. The new correlated set is then added to the target set.  Note
      * that the new correlated set is necessary disjoint (i.e., references different sampling
      * clocks) to the current target set.
@@ -923,7 +955,7 @@ public class RawDataCorrelator {
      * <code>RawCorrelatedData</code> instances must be created.
      * </p>
      * <p>
-     * A new <code>{@link SortedSet}</code> of <code>CorrelatedQueryData</code> object is created.
+     * A new <code>{@link SortedSet}</code> of <code>CorrelatedQueryDataOld</code> object is created.
      * An attempt is made to insert each <code>{@link DataBucket}</code> message within the argument 
      * into this collection of correlated data (clearly the first attempt will always fail).
      * If the insertion fails, a new <code>RawCorrelatedData</code> instance is created for the

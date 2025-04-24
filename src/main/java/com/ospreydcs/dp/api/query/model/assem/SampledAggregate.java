@@ -39,14 +39,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.common.DpSupportedType;
+import com.ospreydcs.dp.api.common.IDataColumn;
+import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.model.table.StaticDataTable;
 import com.ospreydcs.dp.api.query.model.coalesce.SampledBlock;
 import com.ospreydcs.dp.api.query.model.coalesce.SampledTimeSeries;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
+import com.ospreydcs.dp.api.query.model.table.SampledAggregateTable;
+import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -69,11 +74,11 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * </p>
  * <p>
  * <h2>Creation and Assembly</h2>
- * The class <code>ResponseAssembler</code> is generally used to create an instance of <code>SampledAggregate</code>.
- * The <code>ResponseAssembler</code> class accepts a sorted set of <code>RawCorrelatedData</code> objects generated
+ * The class <code>QueryResponseAssembler</code> is generally used to create an instance of <code>SampledAggregate</code>.
+ * The <code>QueryResponseAssembler</code> class accepts a sorted set of <code>RawCorrelatedData</code> objects generated
  * by a <code>RawDataCorrelator</code> instance and processes them into <code>SampledBlock</code> instances.
- * Note that any time domain collisions are typically handled within the <code>ResponseAssembler</code> class by a 
- * <code>DomainCollisionProcessor</code> component if they occur.
+ * Note that any time domain collisions are typically handled within the <code>QueryResponseAssembler</code> class by a 
+ * <code>TimeDomainProcessor</code> component if they occur.
  * </p>
  * <p>
  * <code>SampledAggregate</code> instances are created in the empty state, they contain no data at inception.
@@ -949,6 +954,108 @@ public class SampledAggregate {
         return ResultStatus.SUCCESS;
     }
     
+    
+    // 
+    // IDataTable<Object> Creation
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a static data table backed by all data within this process.
+     * </p>
+     * <p>
+     * Copies all time-series data into a static implementation of <code>{@link IDataTable}</code>.
+     * The static table will contain columns for each time-series represented within the sampling blocks.
+     * Sampling blocks without time-series data for a data source will have all their values set to
+     * <code>null</code> within the table column.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This can be a resource intensive operation for large sampling processes.  Consider using a 
+     * <code>{@link SamplingProcessTable}</code> instance for large processes.
+     * </p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Use this method when index operations require performance and tables are relatively small.
+     * </li>
+     * <li>
+     * The current implementation returns an <code>IDataTable</code> interface backed by class
+     * <code>{@link StaticDataTable}</code>
+     * </li>
+     * </ul>
+     * </p>  
+     * 
+     * @return  a static data table instance exposing <code>{@link IDataTable}</code> backed by this process data
+     * 
+     * @see StaticDataTable
+     */
+    public IDataTable createStaticDataTable() {
+    
+        // Create the collection of full time series for each data source
+        List<IDataColumn<Object>>    lstCols;
+        
+        if (BOL_CONCURRENCY && (this.getDataSourceCount() > SZ_CONCURRENCY_PIVOT)) {
+            lstCols = this.setSrcNms
+                    .parallelStream()
+                    .<IDataColumn<Object>>map(strNm -> this.timeSeries(strNm))
+                    .toList();
+            
+        } else {
+            lstCols = this.setSrcNms
+                    .stream()
+                    .<IDataColumn<Object>>map(strNm -> this.timeSeries(strNm))
+                    .toList();
+            
+        }
+        
+        // Create the data table and return it
+        List<Instant>   lstTms = this.timestamps();
+        
+        StaticDataTable     tblProcess = new StaticDataTable(lstTms, lstCols);
+        
+        return tblProcess;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a dynamic data table backed by all data within this process.
+     * </p>
+     * <p>
+     * Creates a <code>IDataTable</code> implementation from this sampling process.
+     * The returned implementation then provides all time-series data using dynamics lookups  
+     * backed by this sampling process data.
+     * Each time-series represented within the sampling blocks has dynamic row indexing for data retrieval.
+     * Sampling blocks without time-series data for a data source will have all their values returned as
+     * <code>null</code> when retrieved by the indexing methods of <code>IDataTable</code>.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * Dynamic indexing can be unnecessary for small sampling processes.  Consider using a static data table 
+     * for these situations, available from <code>{@link #createStaticDataTable()}</code>.
+     * </p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * Use this method when sampling processes are large and sparse.
+     * </li>
+     * <li>
+     * The current implementation returns an <code>IDataTable</code> interface backed by class
+     * <code>{@link SamplingProcessTable}</code>
+     * </li>
+     * </ul>
+     * </p>  
+     * 
+     * @return  a static data table instance exposing <code>{@link IDataTable}</code> backed by this process data
+     * 
+     * @see SamplingProcessTable
+     */
+    public IDataTable   createDynamicDataTable() {
+        IDataTable  table = SampledAggregateTable.from(this);
+        
+        return table;
+    }
+
     
     //
     // Support Methods

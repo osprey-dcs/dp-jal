@@ -27,8 +27,21 @@
 /**
  * <p>
  * Java API Library query API model package containing resources for handling time-domain collisions within
- * recovered time-series data.
+ * recovered raw, time-series data.
  * </p>
+ * <p>
+ * The active class in this package is <code>TimeDomainProcessor</code>.  This class takes raw, response data
+ * (time-series) that has already been correlated and searches for time-domain collisions within the timestamp
+ * messages for each correlated block (i.e., <code>RawCorrelatedData</code> instance).  It then collects the
+ * raw, correlated data containing collisions into "super domains", which are collections of raw data with an 
+ * established time interval where the collisions occur.  
+ * </p>
+ * <p>
+ * The super domains of raw data are represented by the <code>RawSuperDomData</code> class, which DO NOT inherit from
+ * the <code>RawCorrelatedData</code> base class.  A <code>RawSuperDomData</code> instance can be coalesced into a
+ * <code>SampledBlockSuperDom</code> instance which DOES inherit from the <code>SampledBlock</code> class and, thus,
+ * can be aggregated into a <code>SampledAggregate</code> object.
+ * </p> 
  *
  * @author Christopher K. Allen
  * @since Apr 16, 2025

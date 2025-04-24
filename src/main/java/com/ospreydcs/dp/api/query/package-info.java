@@ -49,7 +49,7 @@
  * <p>
  * <h2>Connection Factory</h2>
  * Implementations of <code>IQueryService</code> are obtained from the Query Service API <em>connection factory</em>.
- * Specifically, the class <code>DpQueryApiFactory</code> contains numerous static methods for connecting to the
+ * Specifically, the class <code>DpQueryApiFactoryOld</code> contains numerous static methods for connecting to the
  * Data Platform Query Service and returning an appropriate interface.
  * </p>
  *

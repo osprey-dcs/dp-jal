@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    CorrelatedQueryData.java
+ * File:    CorrelatedQueryDataOld.java
  * Package: com.ospreydcs.dp.api.query.model.grpc
- * Type:    CorrelatedQueryData
+ * Type:    CorrelatedQueryDataOld
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -52,18 +52,18 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * <p>
  * Class instances are used to correlate all time-series data within a data request response 
  * (i.e., data contained in Protobuf <code>{@link DataColumn}</code> messages).  In its
- * intended operation, each <code>CorrelatedQueryData</code> instance maintains a reference to 
+ * intended operation, each <code>CorrelatedQueryDataOld</code> instance maintains a reference to 
  * ONE sampling clock for the entire results set.  Note that sampling clocks are represented
  * by the Protobuf message <code>{@link FixedIntervalTimestampSpec}</code>, which has finite
  * duration.  All time-series data within the results set for that sampling clock and duration
- * are then referenced within a <code>CorrelatedQueryData</code> instance.  
+ * are then referenced within a <code>CorrelatedQueryDataOld</code> instance.  
  * </p>
  * <p>
  * Instances of this class are generated and maintained by the class 
- * <code>{@link QueryDataCorrelator}</code>.  The latter class performs the correlation
+ * <code>{@link QueryDataCorrelatorOld}</code>.  The latter class performs the correlation
  * operation on the stream of <code>{@link QueryResponse}</code> Protobuf messages produced
  * by a Query Service data request. 
- * Each instance of <code>CorrelatedQueryData</code>, in its final form, should contain a uniform 
+ * Each instance of <code>CorrelatedQueryDataOld</code>, in its final form, should contain a uniform 
  * sampling interval and all time-series data from data sources that were sampled during that 
  * interval.
  * </p>
@@ -71,7 +71,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * <h2>Ordering</code>
  * The class implements the <code>{@link Comparable}</code> interface for ordering by sample 
  * clock initial start time instant.
- * That is, within collections of <code>CorrelatedQueryData</code> objects, instances are ordered 
+ * That is, within collections of <code>CorrelatedQueryDataOld</code> objects, instances are ordered 
  * according to the sampling start time.  This is not an equivalence operation; it is possible 
  * that sampling intervals can overlap and this condition should be checked.
  * </p>
@@ -93,7 +93,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * <li>
  * This class is only applicable to Query Service data responses whose timestamps are defined by a 
  * sampling clock.  Irregular sampling described with timestamp lists is NOT processed with 
- * <code>CorrelatedQueryData</code> instances. 
+ * <code>CorrelatedQueryDataOld</code> instances. 
  * </li>
  * </p> 
  *
@@ -101,9 +101,12 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * @since Jan 11, 2024
  *
  * @see Comparable
- * @see QueryDataCorrelator
+ * @see QueryDataCorrelatorOld
+ * 
+ * @deprecated Use RawCorrelatedData to support <code>TimestampList</code> processing
  */
-public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
+@Deprecated(since="April 22, 2025")
+public class CorrelatedQueryDataOld implements Comparable<CorrelatedQueryDataOld> {
     
     
     //
@@ -113,12 +116,12 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     /**
      * <p>
      * <code>{@link Comparator}</code> implementation for ordered comparison of two 
-     * <code>CorrelatedQueryData</code> instances.
+     * <code>CorrelatedQueryDataOld</code> instances.
      * </p>
      * <p>
      * The comparison here is performed with the start times of the sampling intervals 
-     * represented by <code>{@link CorrelatedQueryData}</code> time <code>{@link Instant}</code>
-     * returned from the <code>{@link CorrelatedQueryData#getStartInstant()}</code> method.
+     * represented by <code>{@link CorrelatedQueryDataOld}</code> time <code>{@link Instant}</code>
+     * returned from the <code>{@link CorrelatedQueryDataOld#getStartInstant()}</code> method.
      * Instances are intended for use in Java container construction.
      * </p>
      *
@@ -126,7 +129,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * @since Jan 12, 2024
      *
      */
-    public static class StartTimeComparator implements Comparator<CorrelatedQueryData> {
+    public static class StartTimeComparator implements Comparator<CorrelatedQueryDataOld> {
 
         //
         // Creators
@@ -142,14 +145,14 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
         }
         
         //
-        // Comparator<CorrelatedQueryData> Interface
+        // Comparator<CorrelatedQueryDataOld> Interface
         //
         
         /**
          * @see @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
          */
         @Override
-        public int compare(CorrelatedQueryData o1, CorrelatedQueryData o2) {
+        public int compare(CorrelatedQueryDataOld o1, CorrelatedQueryDataOld o2) {
             Instant t1 = o1.getStartInstant();
             Instant t2 = o2.getStartInstant();
             
@@ -189,10 +192,10 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     
     /**
      * <p>
-     * Creates a new, initialized instance of <code>CorrelatedQueryData</code>.
+     * Creates a new, initialized instance of <code>CorrelatedQueryDataOld</code>.
      * </p>
      * <p>
-     * Initializes the returned <code>CorrelatedQueryData</code> instance with the data
+     * Initializes the returned <code>CorrelatedQueryDataOld</code> instance with the data
      * taken from the argument.  Specifically,
      * <ul>
      * <li>The immutable sampling clock message is set.</li>
@@ -203,13 +206,13 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * 
      * @param msgBucket source of initialization data
      * 
-     * @return  new <code>CorrelatedQueryData</code> instance initialized with data from the argument
+     * @return  new <code>CorrelatedQueryDataOld</code> instance initialized with data from the argument
      * 
      * @throws IllegalArgumentException     the <code>DataBucket</code> message did not contain a sampling clock
      */
-    public static CorrelatedQueryData   from(QueryDataResponse.QueryData.DataBucket msgBucket) 
+    public static CorrelatedQueryDataOld   from(QueryDataResponse.QueryData.DataBucket msgBucket) 
             throws IllegalArgumentException {
-        return new CorrelatedQueryData(msgBucket);
+        return new CorrelatedQueryDataOld(msgBucket);
     }
     
     
@@ -219,14 +222,14 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     
     /**
      * <p>
-     * Constructs a new, initialized instance of <code>CorrelatedQueryData</code>.
+     * Constructs a new, initialized instance of <code>CorrelatedQueryDataOld</code>.
      * </p>
      *
      * @param msgBucket source of initializing data
      * 
      * @throws IllegalArgumentException     the <code>DataBucket</code> message did not contain a sampling clock
      */
-    public CorrelatedQueryData(QueryDataResponse.QueryData.DataBucket msgBucket) {
+    public CorrelatedQueryDataOld(QueryDataResponse.QueryData.DataBucket msgBucket) {
         
         // Check argument
         if (!msgBucket.getDataTimestamps().hasSamplingClock())
@@ -343,7 +346,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * Returns the number of unique data source names within the current collection of data messages.
      * </p>
      * <p>
-     * <code>CorrelatedQueryData</code> objects maintain a set of unique data source names
+     * <code>CorrelatedQueryDataOld</code> objects maintain a set of unique data source names
      * for all Query Service response data successfully inserted into the correlated collection.
      * All data sources within the collection should be unique for a consistent data archive. 
      * </p>
@@ -362,7 +365,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * associated sampling interval.
      * </p>
      * <p>
-     * <code>CorrelatedQueryData</code> objects maintain a set of unique data source names
+     * <code>CorrelatedQueryDataOld</code> objects maintain a set of unique data source names
      * for all Query Service response data successfully inserted into the correlated collection.
      * All data sources within the collection should be unique for a consistent data archive. 
      * </p>
@@ -399,7 +402,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * <p>
      * The returned collection of data messages are all sampled according to the sampling
      * clock described by <code>{@link #getSamplingMessage()}</code>.  It represents the
-     * correlated data set of this <code>CorrelatedQueryData</code> instance.
+     * correlated data set of this <code>CorrelatedQueryDataOld</code> instance.
      * </p>
      * 
      * @return all correlated data currently associated with the sampling interval 
@@ -543,7 +546,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * </p>
      * <p>
      * <h2>Operation</h2>
-     * This is the primary processing operation for the <code>CorrelatedQueryData</code>
+     * This is the primary processing operation for the <code>CorrelatedQueryDataOld</code>
      * class.  It performs the following operations:
      * <ol>
      * <li>
@@ -563,7 +566,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * <p>
      * <h2>Concurrency (Thread Safe)</h2>
      * This operation <em>must be</em> atomic and is therefore synchronized for thread safety.
-     * Thus, a single instance of <code>CorrelatedQueryData</code> can be processed concurrently for 
+     * Thus, a single instance of <code>CorrelatedQueryDataOld</code> can be processed concurrently for 
      * multiple <code>DataBucket</code> messages on separate execution threads with this method.  
      * Doing so will provide consistent results as NO duplicate data sources within the same 
      * sampling clock are accepted.  
@@ -622,7 +625,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
     
     
     //
-    // Comparable<CorrelatedQueryData> Interface
+    // Comparable<CorrelatedQueryDataOld> Interface
     //
     
     /**
@@ -630,7 +633,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * Compares the initial timestamp attribute <code>{@link #insStart}</code>.
      * </p>
      * <p>
-     * Used for ordering Java sets and maps of <code>CorrelatedQueryData</code> objects.
+     * Used for ordering Java sets and maps of <code>CorrelatedQueryDataOld</code> objects.
      * </p>
      * 
      * <h2>NOTE:</h2>
@@ -641,7 +644,7 @@ public class CorrelatedQueryData implements Comparable<CorrelatedQueryData> {
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     @Override
-    public int compareTo(CorrelatedQueryData o) {
+    public int compareTo(CorrelatedQueryDataOld o) {
         return this.insStart.compareTo(o.insStart);
     }
     

@@ -48,7 +48,7 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
 import com.ospreydcs.dp.api.query.model.correl.RawClockedData;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawTmsListData;
@@ -74,7 +74,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * Class instances maintain an collection of <code>{@link SampledTimeSeries}</code> objects 
  * containing the time-series data for the sampled block.
  * The class also maintains all the timestamps (of finite duration) for all time-series data sets within the block. 
- * Instances are intended to be created from <code>{@link CorrelatedQueryData}</code> objects
+ * Instances are intended to be created from <code>{@link CorrelatedQueryDataOld}</code> objects
  * during Data Platform Query Service results set reconstruction.
  * </p>
  * <p>
@@ -557,7 +557,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      * </li>
      * <li>
      * The argument should have already been checked for duplicate data source names using
-     * <code>{@link CorrelatedQueryData#verifySourceUniqueness()}</code>.
+     * <code>{@link CorrelatedQueryDataOld#verifySourceUniqueness()}</code>.
      * </li>
      * </ul>
      * </p>
@@ -1144,7 +1144,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
 //     * </li>
 //     * <li>
 //     * The argument should have already been checked for duplicate data source names using
-//     * <code>{@link CorrelatedQueryData#verifySourceUniqueness()}</code>.
+//     * <code>{@link CorrelatedQueryDataOld#verifySourceUniqueness()}</code>.
 //     * </li>
 //     * </ul>
 //     * </p>

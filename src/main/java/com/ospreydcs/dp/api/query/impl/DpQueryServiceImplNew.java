@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryServiceImpl.java
+ * File:	DpQueryServiceImplNew.java
  * Package: com.ospreydcs.dp.api.query.impl
- * Type: 	DpQueryServiceImpl
+ * Type: 	DpQueryServiceImplNew
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,23 +20,18 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Feb 17, 2025
+ * @since Apr 21, 2025
  *
  */
 package com.ospreydcs.dp.api.query.impl;
 
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.SortedSet;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import javax.naming.CannotProceedException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.w3c.dom.ranges.RangeException;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.IDataTable;
@@ -53,11 +48,11 @@ import com.ospreydcs.dp.api.query.DpMetadataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IQueryService;
-import com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
-import com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated;
-import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
+import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
+import com.ospreydcs.dp.api.query.model.assem.SampledAggregate;
+import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
+import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
+import com.ospreydcs.dp.api.query.model.table.SampledAggregateTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
@@ -66,8 +61,6 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceFutureStu
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryMetadataRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
 
 /**
  * <p>
@@ -75,7 +68,10 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * </p>
  * <p>
  * This class is currently the primary implementation for Query Service clients.  The class implements all
- * the operations of the Query Service API <code>IQueryService</code>.
+ * the operations of the Query Service API <code>IQueryService</code>.  Moreover, it supports both 
+ * timestamp lists and time-domain collisions within result sets.
+ * </p>
+ * <p>
  * Note that the <code>IQueryService</code> interface hides details of the underlying gRPC library 
  * resources and Protocol Buffers interfaces.
  * See the class documentation for <code>{@link IQueryService}</code> for more details.
@@ -83,16 +79,16 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * <p>
  * <h1>USAGE</h1>
  * In general clients should not need direct access to this implementation.  All interactions should be
- * through the <code>IQueryService</code> interface.  However, we list some details below.
+ * through the <code>IQueryService</code> interface.  However, we list some additional details below.
  *  
  * <h2>Instance Creation</h2>
- * Instance of <code>DpQueryServiceApiImpl</code> should be obtained from the Query Service connection
- * factory class <code>{@link DpQueryServiceApiFactory}</code>.  This is a utility class providing
+ * Instance of <code>DpQueryServiceImplNew</code> should be obtained from the Query Service connection
+ * factory class <code>{@link DpQueryServiceApiFactoryOld}</code>.  This is a utility class providing
  * various connection options to the Query Service, including a default connection defined in
  * the API configuration parameters.
  * <h2>Query Operations</h2>
  * All Query Service query methods are prefixed with <code>query</code>.  There are currently
- * 3 types of queries offered by class <code>DpQueryServiceImplDeprecated</code>:
+ * 3 types of queries offered by class <code>DpQueryServiceImplNew</code>:
  * <ul>
  * <br/>
  * <li>
@@ -138,31 +134,65 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * </p>
  * <p>
  * <h1>GENERAL NOTES</h1>
- * <h2>Data Processing</h2>
- * A single data processor is used for all time-series data requests.  For unary data requests this
- * is a single <code>{@link QueryDataCorrelator}</code> instance. 
- * For gRPC streaming request this is a single <code>{@link QueryRequestProcessor}</code> instance .  
+ * <h2>Data Recovery and Correlation</h2>
+ * A single data processor is used for all time-series data request recovery and correlation.  
+ * For unary data requests this is a single <code>{@link RawDataCorrelator}</code> instance. 
+ * For gRPC streaming request this is a single <code>{@link QueryRequestProcessorNew}</code> instance.  
  * For streaming operations the data processor performs both the gRPC data 
- * streaming from the Query Service AND the correlation of incoming data.  It is also designed to handle
- * filtering of request data, however, this feature is not currently implemented.
+ * streaming from the Query Service AND the correlation of incoming data.  
  * The data processor offers various configuration options where data can be simultaneously streamed and 
  * correlated, along with other multi-threading capabilities.  The data processor typically
  * uses multiple, concurrent gRPC data streams to recover results.  There are several points
  * to note about this implementation situation:
+ * </p>
+ * <p>
+ * <h2>Data Coalescing and Assembly</code>
+ * Once the request data is recovered and correlated it is then coalesced and assembled by a single
+ * <code>{@link QueryResponseAssembler}</code> instance.  This class is designed to process any time-
+ * domain collisions within the correlated data and resolve them into time range "super domains".
+ * Once any time-domain issues are resolved the correlated data is coalesced into "sampled blocks"
+ * which each contain a collection of sampled processes (i.e., PVs) all correlated to the same
+ * timestamps.  At this point all data has been extracted from Protocol Buffers messages
+ * and now presented in Java format. The final action of the assembler is to aggregate the blocks into a
+ * <code>SampledAggregate</code> instance which contains all data of the original request in
+ * an aggregated collection of sampled blocks. 
+ * </p>
+ * <p>
+ * <h2>Data Table Creation</h2>
+ * The <code>SampledAggregate</code> class is capable of creating data tables from its internal data.
+ * These are objects exposing the <code>IDataTable</code> interface.  There are 2 types of data tables
+ * available:
+ * <ol>
+ * <li>Static Data Tables - these tables contain all data; access is fast but they require the most heap allocation.</li>
+ * <li>Dynamic Data Tables - data access is done on demand and is slower; however, heap requirements are reduced.</li>
+ * </ol>
+ * The <code>DpQueryServiceImplNew</code> class decides which type of table to return based depending upon its
+ * current configuration.  The default table configuration is taken from the Java API Library configuration file
+ * but can be changed using the configuration methods.
+ * </p>
+ * <p> 
+ * The <code>DpQueryServiceImplNew</code> architecture is also designed to handle the filtering of request data, 
+ * however, this feature is not currently implemented.  Filtering would require a special "Filter" class that 
+ * could recognize numeric types within recovered data and apply numeric value conditions.  The likely location
+ * for request filtering would be in the request data assembly.
+ * </p>
+ * <p>
+ * <h2>Implementation Notes</h2> 
  * <ul>
  * <li>
- * Since a single data processor is used within this Query Service API, all data request
+ * Since a single data correlator and assembler is used within this Query Service API, all data request
  * operations are synchronized.  Only one time-series data request is performed at any
  * instance and competing threads must wait until completed.
  * </li>
  * <li>
  * The data processor can be tuned with various configuration parameters within the 
  * <code>dp-api-config.yml</code> configuration file.  See class documentation on 
- * <code>{@link QueryResponseCorrelatorDeprecated}</code> for more information on performance tuning.
+ * <code>{@link QueryResponseProcessorNew}</code> for more information on performance tuning.
  * </li>
  * <li>
- * It is informative to note that the <code>DpQueryServiceImplDeprecated</code> class shares its single gRPC 
- * channel connection with its data processor instance.
+ * It is informative to note that the <code>DpQueryServiceImplNew</code> class shares its single gRPC 
+ * channel connection with its data processor instance.  Thus, any use of multiple, concurrent data
+ * streams is performed over the single gRPC channel object.
  * </ul>
  * </p>
  * <p>
@@ -170,28 +200,28 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * All communication to the Query Service is handled through a single gRPC channel instance.
  * These channel objects supported concurrency and multiple data streams between a client
  * and the targeted service.  However, excessive (thread) concurrency for a single 
- * <code>DpQueryServiceImplDeprecated</code> instance may over-burden the single channel.
+ * <code>DpQueryServiceImplNew</code> instance may over-burden the single channel.
  * </p>
  * <p>
  * <h2>Best Practices</h2>
  * <ul>  
  * <li>Due to the conditions addressed above, clients utilizing extensive concurrency should 
- *     create multiple instances of <code>DpQueryServiceApiImpl</code> (each containing a single gRPC
+ *     create multiple instances of <code>DpQueryServiceImplNew</code> (each containing a single gRPC
  *     channel and a data processor).</li>
  * </ul>
  * </p>
  *
  * @author Christopher K. Allen
- * @since Feb 17, 2025
+ * @since Apr 21, 2025
  *
  */
-public class DpQueryServiceImpl extends 
-    DpServiceApiBase<DpQueryServiceImpl, 
-                     DpQueryConnection, 
-                     DpQueryServiceGrpc, 
-                     DpQueryServiceBlockingStub, 
-                     DpQueryServiceFutureStub, 
-                     DpQueryServiceStub> 
+public class DpQueryServiceImplNew extends
+                DpServiceApiBase<DpQueryServiceImplNew, 
+                DpQueryConnection, 
+                DpQueryServiceGrpc, 
+                DpQueryServiceBlockingStub, 
+                DpQueryServiceFutureStub, 
+                DpQueryServiceStub> 
     implements IQueryService {
 
     
@@ -201,7 +231,7 @@ public class DpQueryServiceImpl extends
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>DpQueryServiceImpl</code> attached to the given connection.
+     * Creates and returns a new instance of <code>DpQueryServiceImplNew</code> attached to the given connection.
      * </p>
      * <p>
      * This method is available primarily for unit testing.  Java API Library clients should generally obtain
@@ -229,10 +259,10 @@ public class DpQueryServiceImpl extends
      * 
      * @param connQuery  the gRPC channel connection to the desired DP Query Service
      *  
-     * @return new <code>DpQueryServiceImpl</code> interfaces attached to the argument
+     * @return new <code>DpQueryServiceImplOld</code> interfaces attached to the argument
      */
-    public static DpQueryServiceImpl from(DpQueryConnection connQuery) {
-        return new DpQueryServiceImpl(connQuery);
+    public static DpQueryServiceImplNew from(DpQueryConnection connQuery) {
+        return new DpQueryServiceImplNew(connQuery);
     }
     
     
@@ -288,11 +318,17 @@ public class DpQueryServiceImpl extends
     // Instance Resources
     //
     
-    /** The single query data correlator used for unary time-series data requests */
-    private final QueryDataCorrelator   prcrRspns;
+    /** The single raw data correlator used for correlating unary time-series data requests */
+    private final RawDataCorrelator         prcrRspns;
     
-    /** The single query request processor used for streaming time-series data requests */
-    private final QueryRequestProcessor prcrRqsts;
+    /** The single metadata request processor used for recovering and assembling metadata */
+    private final MetadataRequestProcessor  prcrMeta;
+    
+    /** The single query request processor used for recovering and correlating streamed, time-series data requests */
+    private final QueryRequestProcessorNew  prcrRqsts;
+    
+    /** The single query response assembler used for assembling the recovered raw, correlated data */
+    private final QueryResponseAssembler    assmRspns;
     
     
     //
@@ -318,7 +354,7 @@ public class DpQueryServiceImpl extends
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpQueryServiceImpl</code>.
+     * Constructs a new instance of <code>DpQueryServiceImplOld</code>.
      * </p>
      * <p>
      * The argument should be obtained from the appropriate connection factory,
@@ -341,17 +377,55 @@ public class DpQueryServiceImpl extends
      * 
      * @see DpQueryConnectionFactory
      */
-    public DpQueryServiceImpl(DpQueryConnection connQuery) {
+    public DpQueryServiceImplNew(DpQueryConnection connQuery) {
         super(connQuery);
         
-        this.prcrRspns = QueryDataCorrelator.create();
-        this.prcrRqsts = QueryRequestProcessor.from(connQuery);
+        this.prcrRspns = RawDataCorrelator.create();
+        this.prcrMeta = MetadataRequestProcessor.from(connQuery);
+        this.prcrRqsts = QueryRequestProcessorNew.from(connQuery);
+        this.assmRspns = QueryResponseAssembler.create(); 
     }
     
     
     //
     // Configuration
     //
+    
+    /**
+     * <p>
+     * Sets all configuration parameters to their default values.
+     * </p>
+     * <p>
+     * All configuration parameters are set to their default values as defined in the Java API Library
+     * configuration file.  These values are recorded in the following class constants:
+     * <ul>
+     * <li><code>{@link #BOL_TBL_STATIC_DEF}</code></li>
+     * <li><code>{@link #BOL_TBL_STATIC_HAS_MAX}</code></li>
+     * <li><code>{@link #SZ_TBL_STATIC_MAX}</code></li>
+     * <li><code>{@link #BOL_TBL_DYN_ENABLE}</code></li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method is provided primarily for unit testing and is not available through the 
+     * <code>IQueryService</code> interface.
+     * </li>
+     * </ul>
+     * </p>
+     */
+    public void resetDefaultConfiguration() {
+        
+        this.bolTblStatDef = BOL_TBL_STATIC_DEF;
+        this.bolTblStatHasMax = BOL_TBL_STATIC_HAS_MAX;
+        this.szTblStatMax = SZ_TBL_STATIC_MAX;
+        this.bolTblDynEnable = BOL_TBL_DYN_ENABLE;
+        
+        this.prcrRspns.resetDefaultConfiguration();
+        this.prcrRqsts.resetDefaultConfiguration();
+        this.assmRspns.resetDefaultConfiguration();
+    }
     
     /**
      * <p>
@@ -481,38 +555,6 @@ public class DpQueryServiceImpl extends
         this.bolTblDynEnable = bolEnable;
     }
     
-    /**
-     * <p>
-     * Sets all configuration parameters to their default values.
-     * </p>
-     * <p>
-     * All configuration parameters are set to their default values as defined in the Java API Library
-     * configuration file.  These values are recorded in the following class constants:
-     * <ul>
-     * <li><code>{@link #BOL_TBL_STATIC_DEF}</code></li>
-     * <li><code>{@link #BOL_TBL_STATIC_HAS_MAX}</code></li>
-     * <li><code>{@link #SZ_TBL_STATIC_MAX}</code></li>
-     * <li><code>{@link #BOL_TBL_DYN_ENABLE}</code></li>
-     * </ul>
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>
-     * This method is provided primarily for unit testing and is not available through the 
-     * <code>IQueryService</code> interface.
-     * </li>
-     * </ul>
-     * </p>
-     */
-    public void setDefaultConfiguration() {
-        
-        this.bolTblStatDef = BOL_TBL_STATIC_DEF;
-        this.bolTblStatHasMax = BOL_TBL_STATIC_HAS_MAX;
-        this.szTblStatMax = SZ_TBL_STATIC_MAX;
-        this.bolTblDynEnable = BOL_TBL_DYN_ENABLE;
-    }
-    
     
     //
     // IConnection Interface
@@ -547,7 +589,7 @@ public class DpQueryServiceImpl extends
      */
     @Override
     public boolean awaitTermination() throws InterruptedException {
-        return this.awaitTermination(LNG_TIMEOUT, TU_TIMEOUT);
+        return super.awaitTermination(LNG_TIMEOUT, TU_TIMEOUT);
     }
 
     /**
@@ -568,55 +610,18 @@ public class DpQueryServiceImpl extends
 
     
     //
-    // IQueryService Interface
+    // IQueryService Interface Implementation
     //
-    
+
     /**
      * @see com.ospreydcs.dp.api.query.IQueryService#queryMeta(com.ospreydcs.dp.api.query.DpMetadataRequest)
      */
     @Override
     public List<MetadataRecord> queryMeta(DpMetadataRequest rqst) throws DpQueryException {
-        
-        // Get the Protobuf request from the argument
-        QueryMetadataRequest    msgRqst = rqst.buildQueryRequest();
-        
-        // Perform gRPC request
-        QueryMetadataResponse   msgRsp = super.grpcConn.getStubBlock().queryMetadata(msgRqst);
-        
-        // Check for Query Service exception
-        if (msgRsp.hasExceptionalResult()) {
-            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
-            String                  strErrMsg = ProtoMsg.exceptionMessage(msgExcept, "Query Service");
-            
-            if (BOL_LOGGING)
-                LOGGER.error(strErrMsg);
-            
-            throw new DpQueryException(strErrMsg);
-        }
-        
-        // Unpack the response and return it
-        try {
-            List<MetadataRecord>      lstRecs = msgRsp
-                    .getMetadataResult()
-                    .getPvInfosList()
-                    .stream()
-                    .<MetadataRecord>map(ProtoMsg::toPvMetaRecord)
-                    .toList();
 
-
-            return lstRecs;
-
-        } catch (IllegalArgumentException | TypeNotPresentException e) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
-                           + " - Could not convert response to MetadataRecord: "
-                           + "exception=" + e.getClass().getSimpleName()
-                           + ", message=" + e.getMessage();
-            
-            if (BOL_LOGGING)
-                LOGGER.error(strMsg);
-            
-            throw new DpQueryException(strMsg, e);
-        }
+        List<MetadataRecord>    lstRcrds = this.prcrMeta.processRequest(rqst);
+        
+        return lstRcrds;
     }
 
     /**
@@ -629,111 +634,85 @@ public class DpQueryServiceImpl extends
         QueryDataRequest    msgRqst = rqst.buildQueryRequest();
         QueryDataResponse   msgRsp = super.grpcConn.getStubBlock().queryData(msgRqst);
         
-        // Process the response data
-        try {
-            this.prcrRspns.addQueryResponse(msgRsp);
+        // Check for request exception
+        if (msgRsp.hasExceptionalResult()) {
+            ExceptionalResult       msgExcept = msgRsp.getExceptionalResult();
+            String                  strErrMsg = ProtoMsg.exceptionMessage(msgExcept, "Query Service");
             
-        // These exceptions are all from response data processing
-        } catch (CompletionException | CannotProceedException | IllegalArgumentException | ExecutionException e) {
-            if (BOL_LOGGING) 
-                LOGGER.error("{} - Exception while recovering/correlating response: {}, {}}", JavaRuntime.getMethodName(), e.getClass().getSimpleName(), e.getMessage());
-
-            throw new DpQueryException("Exception while recovering/correlating response: " + e.getClass() + ", " + e.getMessage(), e);
+            if (BOL_LOGGING)
+                LOGGER.error(strErrMsg);
+            
+            throw new DpQueryException(strErrMsg);
         }
         
-        SortedSet<CorrelatedQueryData>  setData = this.prcrRspns.getCorrelatedSet();
-        long                            szData = this.prcrRspns.getBytesProcessed();
+        // Process the response data
+        try {
+            QueryDataResponse.QueryData     msgData = msgRsp.getQueryData();
+
+            // Correlate recovered data
+            this.prcrRspns.processQueryData(msgData);   // throws IllegalArgumentException and CompletionException
+            
+            // Extract the correlated, raw data from the processor
+            SortedSet<RawCorrelatedData>    setData = this.prcrRspns.getCorrelatedSet();
+            long                            szData = this.prcrRspns.getBytesProcessed();
+            
+            // Assemble the raw, correlated data into data table and return
+            SampledAggregate    aggBlks = this.assmRspns.process(setData);  // throws DpQueryException
+            IDataTable          table = this.selectTableImpl(aggBlks, szData);
+            
+            // Reset correlator for next invocation 
+            this.prcrRspns.reset();
+            
+            return table;
+            
+            // These exceptions are all from response data correlation
+        } catch (CompletionException | IllegalArgumentException e) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
+                            + "Exception " + e.getClass() 
+                            + " while correlating response data: " + e.getMessage();
+            
+            if (BOL_LOGGING) 
+                LOGGER.error(strMsg);
+            
+            this.prcrRspns.reset();
+
+            throw new DpQueryException(strMsg, e);
+        }
         
-        IDataTable table = this.createTable(setData, szData);
-        this.prcrRspns.reset();
-        
-        return table;
     }
 
     /**
      * @see com.ospreydcs.dp.api.query.IQueryService#queryData(com.ospreydcs.dp.api.query.DpDataRequest)
      */
     @Override
-    synchronized
     public IDataTable queryData(DpDataRequest rqst) throws DpQueryException {
-        
+
         // Perform request and response correlation
-        SortedSet<CorrelatedQueryData>  setData = this.prcrRqsts.processRequest(rqst);
+        SortedSet<RawCorrelatedData>    setData = this.prcrRqsts.processRequest(rqst);
         long                            szData = this.prcrRqsts.getProcessedByteCount();
         
-        return this.createTable(setData, szData);
+        // Time domain processing and data coalescing/aggregation
+        SampledAggregate    aggBlks = this.assmRspns.process(setData);
+        IDataTable          table = this.selectTableImpl(aggBlks, szData);
         
-//        // Recover the sampling process, create data table, and return
-//        // TODO - contains extensive error checking which may be removed when stable
-//        try {
-//            SamplingProcess process = SamplingProcess.from(setPrcdData);
-//            IDataTable      table = this.selectTableImpl(process, szData);
-//            
-//            return table;
-//        
-//        // These exceptions are all from sampling process creation error checking
-//        } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | RangeException | TypeNotPresentException | CompletionException e) {
-//            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
-//                           + " - Failed to create SamplingProcess, exception thrown: type="
-//                           + e.getClass().getSimpleName()
-//                           + ", message=" + e.getMessage();
-//            
-//            if (BOL_LOGGING)
-//                LOGGER.error(strMsg);
-//            
-//            throw new DpQueryException(strMsg, e);
-//            
-//        // Data table creation exception
-//        } catch (UnsupportedOperationException e) {
-//
-//            if (BOL_LOGGING)
-//                LOGGER.error("{} - Exception creating data table: {}", JavaRuntime.getQualifiedMethodNameSimple(), e);
-//
-//            throw new DpQueryException("Exception creating data table.", e);
-//        }
+        return table;
     }
 
     /**
      * @see com.ospreydcs.dp.api.query.IQueryService#queryData(java.util.List)
      */
     @Override
-    synchronized
     public IDataTable queryData(List<DpDataRequest> lstRqsts) throws DpQueryException {
 
         // Perform request and response correlation
-        SortedSet<CorrelatedQueryData>  setData = this.prcrRqsts.processRequests(lstRqsts);
+        SortedSet<RawCorrelatedData>    setData = this.prcrRqsts.processRequests(lstRqsts);
         long                            szData = this.prcrRqsts.getProcessedByteCount();
         
-        return this.createTable(setData, szData);
+        // Time domain processing and data coalescing/aggregation
+        SampledAggregate    aggBlks = this.assmRspns.process(setData);
+        IDataTable          table = this.selectTableImpl(aggBlks, szData);
         
-//        // Recover the sampling process, create data table, and return
-//        // TODO - contains extensive error checking which may be removed when stable
-//        try {
-//            SamplingProcess process = SamplingProcess.from(setData);
-//            IDataTable      table = this.selectTableImpl(process, szData);
-//            
-//            return table;
-//        
-//        // These exceptions are all from sampling process creation error checking
-//        } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | RangeException | TypeNotPresentException | CompletionException e) {
-//            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
-//                           + " - Failed to create SamplingProcess, exception thrown: type="
-//                           + e.getClass().getSimpleName()
-//                           + ", message=" + e.getMessage();
-//            
-//            if (BOL_LOGGING)
-//                LOGGER.error(strMsg);
-//            
-//            throw new DpQueryException(strMsg, e);
-//            
-//        // Data table creation exception
-//        } catch (UnsupportedOperationException e) {
-//
-//            if (BOL_LOGGING)
-//                LOGGER.error("{} - Exception creating data table: {}", JavaRuntime.getQualifiedMethodNameSimple(), e);
-//
-//            throw new DpQueryException("Exception creating data table.", e);
-//        }
+        return table;
     }
 
     /**
@@ -751,90 +730,26 @@ public class DpQueryServiceImpl extends
                 enmStreamType, 
                 super.grpcConn.getStubAsync(),
                 msgRequest,
-                CFG_DEF.logging.active);
+                BOL_LOGGING);
         
         return buf;
     }
-    
-    
+
     //
     // Support Methods
     //
     
     /**
      * <p>
-     * Creates and returns an <code>IDataTable</code> implementation containing for the given data set.
-     * </p>
-     * <p>
-     * The method first creates a <code>SamplingProcess</code> instance from the given data set.  This action
-     * can result in a variety of exceptions, most all due to error checking.  These exceptions are caught here
-     * and all are returned within a <code>DpQueryException</code> instance.
-     * Once the <code>SamplingProcess</code> instance is created, the appropriate <code>IDataTable</code> 
-     * implementation is selected by deferring to internal method 
-     * <code>{@link #selectTableImpl(SamplingProcess, long)}</code>.  This method throws 
-     * </p>
-     * <p>
-     * <h2>WARNING:</h2>
-     * There is extensive error checking within the <code>SamplingProcess</code> class.  To improve performance,
-     * disabling the error checking may be warranted once the API is stabilized.  See class documentation for
-     * <code>{@link SamplingProcess}</code> for further details.
-     * </p>
-     * 
-     * @param setData   processed time-series request data set
-     * @param szData    approximate size (in bytes) of processed data
-     * 
-     * @return  an appropriate <code>IDataTable</code> implementation
-     * 
-     * @throws DpQueryException    table creation failure (see cause - either SamplingProcess failure or failed table creation)
-     * 
-     * @see {@link #selectTableImpl(SamplingProcess, long)}
-     * @see SamplingProcess
-     * @see StaticDataTable
-     * @see SamplingProcessTable
-     */
-    private IDataTable  createTable(SortedSet<CorrelatedQueryData> setData, long szData) throws DpQueryException {
-        
-        // Recover the sampling process, create data table, and return
-        // TODO - contains extensive error checking which may be removed when stable
-        try {
-            SamplingProcess process = SamplingProcess.from(setData);
-            IDataTable      table = this.selectTableImpl(process, szData);
-            
-            return table;
-        
-        // These exceptions are all from sampling process creation error checking
-        } catch (MissingResourceException | IllegalArgumentException | IllegalStateException | RangeException | TypeNotPresentException | CompletionException e) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
-                           + " - Failed to create SamplingProcess, exception thrown: type="
-                           + e.getClass().getSimpleName()
-                           + ", message=" + e.getMessage();
-            
-            if (BOL_LOGGING)
-                LOGGER.error(strMsg);
-            
-            throw new DpQueryException(strMsg, e);
-            
-        // Data table creation exception
-        } catch (UnsupportedOperationException e) {
-
-            if (BOL_LOGGING)
-                LOGGER.error("{} - Exception creating data table: {}", JavaRuntime.getQualifiedMethodNameSimple(), e);
-
-            throw new DpQueryException("Exception creating data table.", e);
-        }
-    }
-    
-    /**
-     * <p>
-     * Selects an <code>IDataTable</code> implementation from the given <code>SamplingProcess</code> according to size.
+     * Selects an <code>IDataTable</code> implementation from the given <code>SampledAggregate</code> according to size.
      * </p>
      * <p>
      * The resulting <code>IDataTable</code> implementation, either <code>StaticDataTable</code> or 
-     * <code>SamplingProcessTable</code> depends upon the size of the sampling process (as specified by the argument)
+     * <code>SampledAggregateTable</code> depends upon the size of the sampling process (as specified by the argument)
      * and the configuration parameters of the Java API Library.  The different implementations are given as follows:
      * <ul>
      * <li><code>StaticDataTable</code> - data table is fully populated with timestamps and data values. </li>
-     * <li><code>SamplingProcessTable</code> - data table can be sparse, timestamps and data values and can be computed
+     * <li><code>SampledAggregateTable</code> - data table can be sparse, timestamps and data values and can be computed
      *                                         on demanded (e.g., missing data values).</li> 
      * </ul>
      * See the class documentation for each data type for further details.
@@ -850,34 +765,34 @@ public class DpQueryServiceImpl extends
      *   </ul>
      * </li>
      * </ol>
-     * Otherwise, a <code>SamplingProcessTable is returned IFF <code>{@link #bolTblDynEnable}</code> = <code>true</code>.
+     * Otherwise, a <code>SampledAggregateTable is returned IFF <code>{@link #bolTblDynEnable}</code> = <code>true</code>.
      * An exception is thrown if the value is <code>false</code>.
      * </p>
      * 
-     * @param process   sampling process created from a set of <code>CorrelatedQueryData</code> objects
-     * @param szData    approximate size (in bytes) of sampling process
+     * @param aggBlks   sampled aggregate created from a set of <code>RawCorrelatedData</code> objects
+     * @param szData    approximate size (in bytes) of sampled aggregate
      * 
      * @return  an appropriate <code>IDataTable</code> implementation
      * 
      * @throws UnsupportedOperationException    library configuration and size requirements are incompatible for table creation
      * 
      * @see StaticDataTable
-     * @see SamplingProcessTable
+     * @see SampledAggregateTable
      */
-    private IDataTable  selectTableImpl(SamplingProcess process, long szData) throws UnsupportedOperationException {
+    private IDataTable  selectTableImpl(SampledAggregate aggBlks, long szData) throws UnsupportedOperationException {
 
         // Attempt static data table construction
         if (this.bolTblStatDef) {
             if (!this.bolTblStatHasMax)
-                return process.createStaticDataTable();
+                return aggBlks.createStaticDataTable();
             else
                 if (szData <= this.szTblStatMax)
-                    return process.createStaticDataTable();
+                    return aggBlks.createStaticDataTable();
         }
         
         // Static data table creation failed, use dynamic table if enabled
         if (this.bolTblDynEnable)
-            return process.createDynamicDataTable();
+            return aggBlks.createDynamicDataTable();
         
         // Could not create data table with the given configuration and table size
         else {

@@ -41,12 +41,12 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 /**
  * <p>
  * Performs the task of <code>DataBucket</code> insertion into a collection of 
- * <code>CorrelatedQueryData</code> instances.
+ * <code>CorrelatedQueryDataOld</code> instances.
  * </p> 
  * <p>
  * Attempts to insert all <code>DataColumn</code> messages of the subject 
  * <code>DataBucket</code> Protobuf message into a target collection of 
- * <code>CorrelatedQueryData</code> instances.
+ * <code>CorrelatedQueryDataOld</code> instances.
  * The task subject and target are provided at construction.
  * </p>
  * <p>
@@ -113,7 +113,7 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
     private final QueryDataResponse.QueryData.DataBucket    msgSubject;
     
     /** The object of this task - target collection of correlated data */
-    private final SortedSet<CorrelatedQueryData>            setTarget;
+    private final SortedSet<CorrelatedQueryDataOld>            setTarget;
     
     
     //
@@ -138,11 +138,11 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
      * </p>
      * 
      * @param msgSubject    the task subject - a QueryService data bucket message
-     * @param setTarget     the data insertion target - collection of <code>CorrelatedQueryData</code> instances
+     * @param setTarget     the data insertion target - collection of <code>CorrelatedQueryDataOld</code> instances
      * 
      * @return  new, initialized thread task ready for execution
      */
-    public static DataBucketInsertTask newTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
+    public static DataBucketInsertTask newTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryDataOld> setTarget) {
         return new DataBucketInsertTask(msgSubject, setTarget);
     }
 
@@ -157,9 +157,9 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
      * </p>
      *
      * @param msgSubject    the task subject - a QueryService data bucket message
-     * @param setTarget     the data insertion target - collection of <code>CorrelatedQueryData</code> instances
+     * @param setTarget     the data insertion target - collection of <code>CorrelatedQueryDataOld</code> instances
      */
-    public DataBucketInsertTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryData> setTarget) {
+    public DataBucketInsertTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<CorrelatedQueryDataOld> setTarget) {
         this.msgSubject = msgSubject;
         this.setTarget = setTarget;
     }
@@ -185,7 +185,7 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
      * <ul>
      * <li>The task has been executed.</li>
      * <li>Data column of data bucket was successfully inserted into the collection of
-     *     <code>CorrelatedQueryData</code> instances.</li>
+     *     <code>CorrelatedQueryDataOld</code> instances.</li>
      * </ul>
      * 
      * @return  <code>true</code> if the task was successfully executed,
@@ -207,9 +207,9 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
     /**
      * Returns the target of this execution task.
      * 
-     * @return  the collection of <code>CorrelatedQueryData</code> instances 
+     * @return  the collection of <code>CorrelatedQueryDataOld</code> instances 
      */
-    public final SortedSet<CorrelatedQueryData>    getTarget() {
+    public final SortedSet<CorrelatedQueryDataOld>    getTarget() {
         return this.setTarget;
     }
 
@@ -225,7 +225,7 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
      * <p>
      * Attempts to add the data column of the subject data bucket message to the target set of 
      * sampling interval references.  If the task is successful the subject data bucket is considered
-     * processed.  If not successful a new <code>CorrelatedQueryData</code> instance must be 
+     * processed.  If not successful a new <code>CorrelatedQueryDataOld</code> instance must be 
      * constructed for the sampling clock referenced in the bucket.
      * </p>
      * 
@@ -254,7 +254,7 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
      * <p>
      * Attempts to add the data column of the subject data bucket message to the target set of 
      * sampling interval references.  If the task is successful the subject data bucket is considered
-     * processed.  If not successful a new <code>CorrelatedQueryData</code> instance must be 
+     * processed.  If not successful a new <code>CorrelatedQueryDataOld</code> instance must be 
      * constructed for the sampling clock referenced in the bucket.
      * </p>
      * 
@@ -263,7 +263,7 @@ public class DataBucketInsertTask implements Callable<DataBucketInsertTask>, Run
     @Override
     public void run() {
         
-        // Attempt bucket insertion for each <code>CorrelatedQueryData</code> instance and get result
+        // Attempt bucket insertion for each <code>CorrelatedQueryDataOld</code> instance and get result
         this.bolSuccess = this.setTarget
                 .stream()
                 .anyMatch(cqd -> cqd.insertBucketData(this.msgSubject));

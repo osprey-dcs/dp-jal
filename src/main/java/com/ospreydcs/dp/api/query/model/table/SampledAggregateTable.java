@@ -1,10 +1,10 @@
 /*
  * Project: dp-api-common
- * File:	SamplingProcessTable.java
+ * File:	SampledAggregateTable.java
  * Package: com.ospreydcs.dp.api.query.model.table
- * Type: 	SamplingProcessTable
+ * Type: 	SampledAggregateTable
  *
- * Copyright 2010-2023 the original author or authors.
+ * Copyright 2010-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Feb 23, 2024
+ * @since Apr 21, 2025
  *
- * TODO:
- * - None
  */
 package com.ospreydcs.dp.api.query.model.table;
 
@@ -33,48 +31,47 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
-import java.util.concurrent.CompletionException;
-
-import org.w3c.dom.ranges.RangeException;
 
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.IDataTable;
-import com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess;
-import com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
+import com.ospreydcs.dp.api.query.model.assem.SampledAggregate;
+import com.ospreydcs.dp.api.query.model.coalesce.SampledBlock;
 
 /**
  * <p>
- * Extends the <code>{@link SamplingProcess}</code> class to add dynamic <code>{@link IDataTable}</code> functionality.
+ * Augments the <code>{@link SampledAggregate}</code> class adding dynamic <code>{@link IDataTable}</code> functionality.
  * </p>
  * <p>
- * This is essentially a wrapper class for <code>{@link SamplingProcess}</code> that adds the 
+ * This is essentially a wrapper class for <code>{@link SampledAggregate}</code> that adds the 
  * <code>{@link IDataTable}</code> operations for use as a data table. See the class documentation for those types 
  * for further information on their use and functionality.
  * </p>
  * <p>
- * This class is provided to reduce the duplication of memory requests, say for large data request results sets.
+ * This class is provided to reduce the duplication of memory requests, say for large time-series data results sets.
  * Almost all table accessing is done dynamically, and thus, is slower than a static table.  For fast table
- * access consider the creation of a static table with method <code>{@link #createStaticDataTable()}</code>.
- * It will shallow copy all superclass <code>SampleProcess</code> data into a static table.
+ * access consider the creation of a static table with method <code>{@link SampledAggregate#createStaticDataTable()}</code>.
+ * It will shallow copy all superclass <code>SampledAggregate</code> data into a static table, filling missing
+ * data values as necessary so that the table is complete.  Thus, although access is faster, a static data table
+ * can be require much larger heap allocation.
  * </p> 
  * <p>
  * <h2>Paged Data Table</h2>
  * This class essentially functions as a paged data table.  The table "pages" are the 
- * <code>{@link UniformSamplingBlock}</code> instances forming the decompose <code>{@link SamplingProcess}</code>.
- * (Note that class <code>{@link UniformSamplingBlock}</code> also implements the <code>{@link IDataTable}</code>
+ * <code>{@link SampledBlock}</code> instances forming the composite <code>{@link SampledAggregate}</code> instance.
+ * (Note that <code>{@link SampledBlock}</code> class also implements the <code>{@link IDataTable}</code>
  * interface.)
  * Thus, any table row lookup must identify both the table page and the page row within the page.  Such the 
- * convenience record <code>{@link PageIndex}</code> is used internally for this action.
+ * convenience record <code>{@link PageIndex}</code> is used internally for this action.  If a data source is missing
+ * within a <code>SampledBlock</code> page but present within the overall <code>SampledAggregate</code>, a <code>null</code>
+ * series is created for that block and saved.
  * </p>  
  * <p>
  * <h2>Dynamic Accessing</h2>
  * No static table data is created for the <code>IDataTable</code> implementation.  All index lookups are done
- * dynamically and data is extracted from the component <code>{@link UniformSamplingBlock}</code> objects.
+ * dynamically and data is extracted from the component <code>{@link SampledBlock}</code> objects.
  * The only exceptions are the methods <code>{@link #getColumn(int)}</code> and <code>{@link #getColumn(String)}</code>
  * where the returned data column is constructed and returned.  Thus, use these methods sparingly.
  * </p>  
@@ -85,13 +82,40 @@ import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
  * <li>Avoid use of <code>{@link #getColumn(int)}</code> and <code>{@link #getColumn(String)}</code>.</li>
  * </ul>
  * </p>
- * 
+ *
  * @author Christopher K. Allen
- * @since Feb 23, 2024
+ * @since Apr 21, 2025
  *
  */
-public class SamplingProcessTable /* extends SamplingProcess */ implements IDataTable {
+public class SampledAggregateTable implements IDataTable {
 
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new, initialized instance of <code>SampledAggregateTable</code> ready for access.
+     * </p>
+     * <p>
+     * The <code>{@link SampledAggregate}</code> instance provided in the argument is used as
+     * source data for the <code>{@link IDataTable}</code> implementation returned.  That is,
+     * the returned <code>SampledAggregate</code> argument instance is attached to the returned table
+     * and performs all table operations required by <code>IDataTable</code>.
+     * </p>
+     * 
+     * @param aggSrcData sampled aggregate used as source data for all table operations
+     * 
+     * @return a new instance of <code>SampledAggregateTable</code> attached to the argument and ready for access
+     * 
+     * @see SampledAggregate
+     * @see SampledBlock
+     */
+    public static SampledAggregateTable from(SampledAggregate aggSrcData) {
+        return new SampledAggregateTable(aggSrcData);
+    }
+    
     
     //
     // Class Types
@@ -107,16 +131,19 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     // Defining Attributes
     //
     
-    /** The <code>SamplingProcess</code> instance providing source for table data, i.e., the target */
-    private final SamplingProcess       prcTarget;
+    /** The <code>SampledAggregate</code> instance providing source data for table, i.e., the target */
+    private final SampledAggregate      aggSrcData;
     
     
     //
     // Table Resources
     //
 
-    /** The vector of timestamps for this sampling process - set at construction */
-    private final ArrayList<Instant>    vecTimestamps;
+    /** The vector of timestamps for this table - built at construction */
+    private final ArrayList<Instant>        vecTimestamps;
+    
+    /** The vector of sampled blocks for this table - built at construction */
+    private final ArrayList<SampledBlock>   vecSampleBlks;
 
     
     /** The vector of data source names - set at construction */
@@ -137,151 +164,34 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     
     
     //
-    // Creators
-    //
-    
-    /**
-     * <p>
-     * Creates a new, initialized instance of <code>SamplingProcessTable</code> ready for access.
-     * </p>
-     * <p>
-     * A new instance of <code>{@link SamplingProcess}</code> is created from the argument and
-     * used internally as a data source for dynamic table lookups.
-     * After creation the new instance is fully populated with sampled time-series data from
-     * all data sources contained in the argument.  The new instance is also configured according to the order 
-     * and the correlations within the argument.
-     * The argument data must be consistent for proper time-series data construction or an exception is thrown.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>The argument collection is assumed to be sorted in the order of clock starting instants</li>
-     * <li>Extensive data consistency check is performed during construction (within <code>SamplingProcess</code> constructor).</li>
-     * <li>Any detected data inconsistencies result in an exception. </li>
-     * <li>Exception type determines the nature of any Data inconsistency. </li>
-     * </ul>  
-     *
-     * @param setTargetData sorted set of <code>CorrelatedQueryDataOld</code> used to build this table
-     * 
-     * @return a new instance of <code>SamplingProcessTable</code> fully populated and ready for table operations
-     *  
-     * @throws MissingResourceException the argument is has empty data column(s)
-     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
-     * @throws IllegalStateException    the argument contains duplicate data source names
-     * @throws RangeException           the argument contains time domain collisions
-     * @throws UnsupportedOperationException an unsupported data type was detected within the argument
-     * @throws CompletionException      the sampling process was corrupt after creation (see message)
-     * 
-     * @see SamplingProcess
-     * @see #SamplingProcessTable(SortedSet)
-     */
-    public static SamplingProcessTable from(SortedSet<CorrelatedQueryDataOld> setTargetData) 
-            throws  MissingResourceException, 
-                    IllegalArgumentException, 
-                    IllegalStateException, 
-                    RangeException, 
-                    UnsupportedOperationException, 
-                    CompletionException 
-    {
-        return new SamplingProcessTable(setTargetData);
-    }
-    
-    /**
-     * <p>
-     * Creates a new, initialized instance of <code>SamplingProcessTable</code> ready for access.
-     * </p>
-     * <p>
-     * The <code>{@link SamplingProcess}</code> instance provided in the argument is used as
-     * source data for the <code>{@link IDataTable}</code> implementation returned.  That is,
-     * the returned <code>SamplingProcessTable</code> instance is attached to the argument
-     * and performs all table operations required by <code>IDataTable</code>.
-     * </p>
-     * 
-     * @param target sampling process used as source data for all table operations
-     * 
-     * @return a new instance of <code>SamplingProcessTable</code> attached to the argument and ready for access
-     * 
-     * @see SamplingProcess
-     * @see #SamplingProcessTable(SamplingProcess)
-     */
-    public static SamplingProcessTable from(SamplingProcess target) {
-        return new SamplingProcessTable(target);
-    }
-    
-    
-    //
     // Constructors
     //
     
     /**
      * <p>
-     * Constructs a new instance of <code>SamplingProcessTable</code>.
+     * Constructs a new, initialized <code>SampledAggregateTable</code> instance ready for access.
      * </p>
      * <p>
-     * The argument is used to create a new <code>{@link SamplingProcess}</code> instance using
-     * constructor <code>{@link SamplingProcess(SortedSet)}</code>,  where
-     * all the time-series data initialization occurs.  All exceptions are thrown
-     * by this sampling process construction process.
-     * </p>
-     * <p>  
-     * Once the <code>SamplingProcess</code> internal instance is created, this constructor then 
-     * initializes the auxiliary data structures used for table access.
-     * The internal sampling process is used for all table lookups. 
+     * The constructed object is built from the given argument data.  The new instance assume
+     * ownership of the argument and uses it for dynamic data lookups.
      * </p>
      *
-     * @param setTargetData sorted set of <code>CorrelatedQueryDataOld</code> used to build internal sampling process
-     * 
-     * @throws MissingResourceException the argument is has empty data column(s)
-     * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
-     * @throws IllegalStateException    the argument contains duplicate data source names
-     * @throws RangeException           the argument contains time domain collisions
-     * @throws TypeNotPresentException  an unsupported data type was detected within the argument
-     * @throws CompletionException      the sampling process was corrupt after creation (see message)
+     * @param aggSrcData    source of the table data
      */
-    public SamplingProcessTable(SortedSet<CorrelatedQueryDataOld> setTargetData)
-            throws RangeException, MissingResourceException, IllegalArgumentException, IllegalStateException,
-            TypeNotPresentException, CompletionException {
+    public SampledAggregateTable(SampledAggregate aggSrcData) {
+        this.aggSrcData = aggSrcData;
         
-        // Create the internal SamplingProcess instance
-        this(SamplingProcess.from(setTargetData));
-
-//        this.vecTimestamps = super.timestamps();
-//        this.vecColumnName = new ArrayList<>(super.setSrcNms);
-//        this.mapSrcNmToInd = this.createSrcNmToIndMap(super.setSrcNms);
-//        this.mapIndToSrcNm = this.createIndToSrcNmMap(super.setSrcNms);
-//        this.vecPageRowInd = this.createPageIndexVector(super.vecSmplBlocks);
-//        
-//        this.mapSrcNmToFullColumn = new HashMap<>();
-    }
-    
-    /**
-     * <p>
-     * Constructs a new, initialized instance of <code>SamplingProcessTable</code> ready for access.
-     * </p>
-     * <p>
-     * Creates a new <code>SamplingProcessTable</code> that uses the given argument as its
-     * source data.  The new instance implements the <code>{@link IDataTable}</code> interface
-     * dynamically.  That is, table value lookups are all done dynamically against the given
-     * <code>SamplingProcess</code>.
-     * </p>
-     *
-     * @param source    sampling process used as source data for all table operations
-     */
-    public SamplingProcessTable(SamplingProcess source) {
-        
-        // Set the target sampling process instance
-        this.prcTarget = source;
-        
-        // Create the timestamps for the table.
-        this.vecTimestamps = this.prcTarget.timestamps();
+        // Create the timestamps and sampled block vector for the table.
+        this.vecTimestamps = this.aggSrcData.timestamps();
+        this.vecSampleBlks = this.createBlockVector(this.aggSrcData);
 
         // Create the auxiliary data structures used for table lookup
-        this.vecColumnName = new ArrayList<>(this.prcTarget.getDataSourceNames());
+        this.vecColumnName = new ArrayList<>(this.aggSrcData.getDataSourceNames());
         this.mapSrcNmToInd = this.createSrcNmToIndMap(this.vecColumnName);
         this.mapIndToSrcNm = this.createIndToSrcNmMap(this.vecColumnName);
         
         // Create the vector of starting table row indices for each page (sampling block)
-        this.vecPageRowInd = this.createPageIndexVector(this.prcTarget.getSamplingBlocks());
+        this.vecPageRowInd = this.createPageIndexVector(this.vecSampleBlks);
         
         // The map of data source name to full table column, which are created as needed.
         this.mapSrcNmToFullColumn = new HashMap<>();
@@ -289,13 +199,11 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
 
     
     //
-    // IDataTable Interface
+    // IDataTable<Object> interface
     //
-
+    
     /**
-     * @return always returns <code>true</code>, table is complete at construction
-     * 
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#isTableComplete()
+     * @see com.ospreydcs.dp.api.common.IDataTable#isTableComplete()
      */
     @Override
     public boolean isTableComplete() {
@@ -303,15 +211,13 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     * @return always returns <code>false</code>, table is complete at construction
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#hasError()
+     * @see com.ospreydcs.dp.api.common.IDataTable#hasError()
      */
     @Override
     public boolean hasError() {
         return false;
     }
-    
+
     /**
      * @see com.ospreydcs.dp.api.common.IDataTable#clear()
      */
@@ -328,31 +234,28 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getRowCount()
+     * @see com.ospreydcs.dp.api.common.IDataTable#getRowCount()
      */
     @Override
     public Integer getRowCount() {
-        return this.prcTarget.getSampleCount();
+        return this.aggSrcData.getSampleCount();
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnCount()
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnCount()
      */
     @Override
     public Integer getColumnCount() {
-        return this.prcTarget.getDataSourceCount();
+        return this.aggSrcData.getDataSourceCount();
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnIndex(java.lang.String)
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnIndex(java.lang.String)
      */
     @Override
     public int getColumnIndex(String strName) throws NoSuchElementException {
-        
         Integer indCol = this.mapSrcNmToInd.get(strName);
+        
         if (indCol == null)
             throw new NoSuchElementException("Table does NOT contain data source " + strName);
         
@@ -360,20 +263,18 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnNames()
+     * @see com.ospreydcs.dp.api.common.IDataTable#getColumnNames()
      */
     @Override
-    public final List<String> getColumnNames() {
+    public List<String> getColumnNames() {
         return this.vecColumnName;
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IDataTable#getTimestamps()
+     * @see com.ospreydcs.dp.api.common.IDataTable#getTimestamps()
      */
     @Override
-    public final List<Instant> getTimestamps() {
+    public List<Instant> getTimestamps() {
         return this.vecTimestamps;
     }
 
@@ -396,10 +297,10 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumn(int)
      */
     @Override
-    public IDataColumn<Object> getColumn(int indCol) throws IndexOutOfBoundsException, ClassCastException {
+    public IDataColumn<Object> getColumn(int indCol) throws IndexOutOfBoundsException {
 
         // Check index
-        int     cntCols = this.prcTarget.getDataSourceCount();
+        int     cntCols = this.aggSrcData.getDataSourceCount();
         
         if (indCol < 0 || indCol >= cntCols)
             throw new IndexOutOfBoundsException("Table column index " + indCol + " out of bounds [0, " + cntCols + "]");
@@ -413,7 +314,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         // Must create the column (and save)
         if (col == null) {
             
-            col = this.prcTarget.timeSeries(strColNm);
+            col = this.aggSrcData.timeSeries(strColNm);
             this.mapSrcNmToFullColumn.put(strColNm, col);
         }
         
@@ -439,10 +340,10 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumn(java.lang.String)
      */
     @Override
-    public IDataColumn<Object> getColumn(String strName) throws NoSuchElementException, ClassCastException {
+    public IDataColumn<Object> getColumn(String strName) throws NoSuchElementException {
         
         // Check the column name
-        if (!this.prcTarget.hasSourceData(strName))
+        if (!this.aggSrcData.hasDataSource(strName))
             throw new NoSuchElementException("Table has no data source with name " + strName);
         
         // Is already created?
@@ -451,7 +352,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         // Must create the column (and save)
         if (col == null) {
             
-            col = this.prcTarget.timeSeries(strName);
+            col = this.aggSrcData.timeSeries(strName);
             this.mapSrcNmToFullColumn.put(strName, col);
         }
         
@@ -464,7 +365,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     //
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumnName(int)
      */
@@ -479,7 +380,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumnType(int)
      */
@@ -487,21 +388,21 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     public DpSupportedType getColumnType(int indCol) throws IndexOutOfBoundsException {
         String   strName = this.getColumnName(indCol);
 
-        return this.prcTarget.getSourceType(strName);
+        return this.aggSrcData.getSourceType(strName);
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumnType(java.lang.String)
      */
     @Override
     public DpSupportedType getColumnType(String strName) throws NoSuchElementException {
-        return this.prcTarget.getSourceType(strName);
+        return this.aggSrcData.getSourceType(strName);
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumnSize(int)
      */
@@ -512,11 +413,11 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         if (indCol < 0 || indCol >= this.getColumnCount())
             throw new IndexOutOfBoundsException("Column index " + indCol + " not in [0, " + this.getColumnCount() + "]");
 
-        return this.prcTarget.getSampleCount();
+        return this.aggSrcData.getSampleCount();
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampedAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumnSize(java.lang.String)
      */
@@ -524,34 +425,34 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     public Integer getColumnSize(String strName) throws NoSuchElementException {
 
         // Check argument value
-        if (!this.prcTarget.hasSourceData(strName))
+        if (!this.aggSrcData.hasDataSource(strName))
             throw new NoSuchElementException("Column name no represented in time-series data: " + strName);
 
-        return this.prcTarget.getSampleCount();
+        return this.aggSrcData.getSampleCount();
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumnSizeMin()
      */
     @Override
     public Integer getColumnSizeMin() {
-        return this.prcTarget.getSampleCount();
+        return this.aggSrcData.getSampleCount();
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumnSizeMax()
      */
     @Override
     public Integer getColumnSizeMax() {
-        return this.prcTarget.getSampleCount();
+        return this.aggSrcData.getSampleCount();
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getTimestamp(int)
      */
@@ -561,7 +462,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      * 
      * @see com.ospreydcs.dp.api.common.IDataTable#getValue(int, int)
      */
@@ -572,21 +473,21 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         PageIndex  recIndex = this.computePageIndex(indRow);
 
         // Get the page
-        UniformSamplingBlock    tblPage = this.prcTarget.getSamplingBlock(recIndex.indPage);
+        SampledBlock    blkPage = this.vecSampleBlks.get(recIndex.indPage);
 
         // Get source name for index and check that page contains data for that source
         String      strColNm = this.getColumnName(indCol);
-        if (!tblPage.hasSourceData(strColNm))
+        if (!blkPage.hasSourceData(strColNm))
             return null;
 
         // Return value
-        Object      objVal = tblPage.getValue(recIndex.indPageRow, strColNm);
+        Object      objVal = blkPage.getValue(recIndex.indPageRow, strColNm);
 
         return objVal;
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      * 
      * @see com.ospreydcs.dp.api.common.IDataTable#getValue(int, String)
      */
@@ -598,20 +499,20 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         PageIndex  recIndex = this.computePageIndex(indRow);
 
         // Get the page
-        UniformSamplingBlock    tblPage = this.prcTarget.getSamplingBlock(recIndex.indPage);
+        SampledBlock    blkPage = this.vecSampleBlks.get(recIndex.indPage);
 
         // Check that page contains data for that source
-        if (!tblPage.hasSourceData(strName))
+        if (!blkPage.hasSourceData(strName))
             return null;
 
         // Return value
-        Object      objVal = tblPage.getValue(recIndex.indPageRow, strName);
+        Object      objVal = blkPage.getValue(recIndex.indPageRow, strName);
 
         return objVal;
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getRowValues(int)
      */
@@ -622,7 +523,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         PageIndex  recIndex = this.computePageIndex(indRow);
 
         // Get the page
-        UniformSamplingBlock    tblPage = this.prcTarget.getSamplingBlock(recIndex.indPage);
+        SampledBlock    blkPage = this.vecSampleBlks.get(recIndex.indPage);
 
         // Allocate the object array and populate it
         Object[]    arrObjs = new Object[this.getColumnCount()];
@@ -631,10 +532,10 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         for (String strName : this.vecColumnName) { // thru ordered vector of column names
             Object  objVal;
 
-            if (!tblPage.hasSourceData(strName))
+            if (!blkPage.hasSourceData(strName))
                 objVal = null;
             else
-                objVal = tblPage.getValue(recIndex.indPageRow, strName);
+                objVal = blkPage.getValue(recIndex.indPageRow, strName);
 
             arrObjs[indCol] = objVal;
             indCol++;
@@ -644,7 +545,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getRowValuesAsList(int)
      */
@@ -654,7 +555,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumnData(int)
      */
@@ -665,16 +566,15 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         String  strName = this.getColumnName(indCol);
         
         // Iterate through all data pages collecting data
-        List<Object>                lstColVals = new ArrayList<>(this.prcTarget.getSampleCount());
-        List<UniformSamplingBlock>  lstPages = this.prcTarget.getSamplingBlocks();
+        List<Object>        lstColVals = new ArrayList<>(this.aggSrcData.getSampleCount());
         
-        for (UniformSamplingBlock page : lstPages) {
+        for (SampledBlock blkPage : this.vecSampleBlks) {
             
-            if (page.hasSourceData(strName))
-                lstColVals.addAll( page.getColumnData(strName) );
+            if (blkPage.hasSourceData(strName))
+                lstColVals.addAll( blkPage.getColumnData(strName) );
             
             else 
-                for (int i=0; i<page.getSampleCount(); ++i)
+                for (int i=0; i<blkPage.getSampleCount(); ++i)
                     lstColVals.add(null);
             
         }
@@ -683,7 +583,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see @see com.ospreydcs.dp.api.model.IDataTable#getColumnData(java.lang.String)
      */
@@ -691,20 +591,19 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     public List<Object> getColumnData(String strName) throws IllegalArgumentException, NoSuchElementException {
         
         // Check argument
-        if (!this.prcTarget.hasSourceData(strName))
+        if (!this.aggSrcData.hasDataSource(strName))
             throw new NoSuchElementException("Data source name not represented within time-series data: " + strName);
         
         // Iterate through all data pages collecting data
-        List<Object>                lstColVals = new ArrayList<>(this.prcTarget.getSampleCount());
-        List<UniformSamplingBlock>  lstPages = this.prcTarget.getSamplingBlocks();
+        List<Object>                lstColVals = new ArrayList<>(this.aggSrcData.getSampleCount());
         
-        for (UniformSamplingBlock page : lstPages) {
+        for (SampledBlock blkPage : this.vecSampleBlks) {
             
-            if (page.hasSourceData(strName))
-                lstColVals.addAll( page.getColumnData(strName) );
+            if (blkPage.hasSourceData(strName))
+                lstColVals.addAll( blkPage.getColumnData(strName) );
             
             else 
-                for (int i=0; i<page.getSampleCount(); ++i)
+                for (int i=0; i<blkPage.getSampleCount(); ++i)
                     lstColVals.add(null);
             
         }
@@ -713,7 +612,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumnDataTyped(int)
      */
@@ -740,7 +639,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#getColumnDataTyped(java.lang.String)
      */
@@ -768,7 +667,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     }
 
     /**
-     * <code>SamplingProcessTable</code> override of default <code>{@link IDataTable}</code> implementation.
+     * <code>SampledAggregateTable</code> override of default <code>{@link IDataTable}</code> implementation.
      *
      * @see com.ospreydcs.dp.api.common.IDataTable#allocationSize()
      */
@@ -778,8 +677,8 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         // Iterate through all data pages collecting running sum
         long    lngSize = 0;
         
-        for (UniformSamplingBlock page : this.prcTarget.getSamplingBlocks()) {
-            lngSize += page.allocationSize();
+        for (SampledBlock blkPage : this.vecSampleBlks) {
+            lngSize += blkPage.allocationSize();
         }
         
         return lngSize;
@@ -789,6 +688,34 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     //
     // Support Methods
     //
+    
+    /**
+     * <p>
+     * Creates and returns a new vector containing the ordered set of sampled blocks within the table.
+     * </p>
+     * <p>
+     * Creates the vector (i.e., <code>ArrayList</code>) containing the ordered list of sampled block data
+     * within the table.  The vector is used for faster indexing of sampled blocks unavailable within a 
+     * <code>SortedSet</code> container offered by the <code>SampledAggregate</code> instance.
+     * </p>
+     * 
+     * @param aggSrcData    sampled aggregate containing the ordered set of composite sampled blocks
+     * 
+     * @return  vector of sampled blocks in given set ordering
+     */
+    private ArrayList<SampledBlock> createBlockVector(SampledAggregate aggSrcData) {
+        
+        // Get the collection of sampled blocks
+        SortedSet<SampledBlock>     setBlks = aggSrcData.getSamplingBlocks();
+    
+        // The returned vector
+        ArrayList<SampledBlock>     vecBlks = new ArrayList<>(setBlks.size());
+        
+        // Populate the vector and return it
+        setBlks.forEach(blk -> vecBlks.add(blk));
+        
+        return vecBlks;
+    }
     
     /**
      * <p>
@@ -855,7 +782,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * </p>
      * <p>
      * Iterates through the argument of data pages (sampling blocks) to determine the the sizes (i.e., the number
-     * of page rows returned by <code>{@link UniformSamplingBlock#getSampleCount()}</code> ).  The starting row
+     * of page rows returned by <code>{@link SampledBlock#getSampleCount()}</code> ).  The starting row
      * index of each data page is computed as the running sum of the page sizes.
      * </p>
      * <p>
@@ -867,17 +794,17 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * Note that due to Java 0-based indexing <i>i</i><sub>page<sub>0</sub></sub> = 0.
      * </p>  
      *    
-     * @param lstBlocks the ordered list of data pages for the table
+     * @param lstBlocks the ordered collection of data pages for the table
      * 
      * @return  ordered vector of data page indices 
      */
-    private ArrayList<Integer>      createPageIndexVector(List<UniformSamplingBlock> lstBlocks) {
+    private ArrayList<Integer>      createPageIndexVector(List<SampledBlock> lstBlocks) {
         
         // Increase table row index in order of sampling block occurrence
         ArrayList<Integer>  vecInds = new ArrayList<>(lstBlocks.size());
         Integer             indTblRow = 0;
         
-        for (UniformSamplingBlock blk : lstBlocks) {
+        for (SampledBlock blk : lstBlocks) {
             vecInds.add(indTblRow);
             
             indTblRow += blk.getSampleCount();
@@ -891,7 +818,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * Computes the table data page indices for the given table row index.
      * </p>
      * <p>
-     * Table data pages consist of <code>UniformSamplingBlock</code>, which themselves implement the 
+     * Table data pages consist of <code>SampledBlock</code> instances, which themselves implement the 
      * <code>{@link IDataTable}</code> interface.  Thus, any (outer table) row index must identify both
      * the data page and the row index within the data page.
      * </p>
@@ -927,7 +854,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     private PageIndex     computePageIndex(int indTblRow) throws IndexOutOfBoundsException, IllegalStateException {
         
         // Check index
-        int     cntTblRows = this.prcTarget.getSampleCount();
+        int     cntTblRows = this.aggSrcData.getSampleCount();
         
         if (indTblRow < 0 || indTblRow >= cntTblRows)
             throw new IndexOutOfBoundsException("Table row index " + indTblRow + " out of bounds [0, " + cntTblRows + "]");
@@ -937,7 +864,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         Integer indPageRow = 0;
         
         Integer indPrev = null;
-        for (Integer indCurr : SamplingProcessTable.this.vecPageRowInd) {
+        for (Integer indCurr : this.vecPageRowInd) {
             
             // Loop initialization 
             // - don't start comparison until second page
@@ -969,11 +896,4 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
         return new PageIndex(indPage, indPageRow); 
     }
     
-//    private boolean checkColumnIndex(int indCol) throws IndexOutOfBoundsException {
-//        
-//        if (indCol < 0 || indCol >= super.getDataSourceCount())
-//            throw new IndexOutOfBoundsException("Table column index " + indCol + " out of bounds [0, " + super.getDataSourceCount() + "]");
-//        
-//        return true;
-//    }
 }

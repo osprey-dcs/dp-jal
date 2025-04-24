@@ -1,10 +1,10 @@
 /*
  * Project: dp-api-common
- * File:	QueryRequestProcessor.java
- * Package: com.ospreydcs.dp.api.query.model.correl
- * Type: 	QueryRequestProcessor
+ * File:	QueryRequestProcessorNew.java
+ * Package: com.ospreydcs.dp.api.query.impl
+ * Type: 	QueryRequestProcessorNew
  *
- * Copyright 2010-2023 the original author or authors.
+ * Copyright 2010-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jan 15, 2025
+ * @since Apr 22, 2025
  *
- * TODO:
- * - None
  */
 package com.ospreydcs.dp.api.query.impl;
 
@@ -41,10 +39,10 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.query.model.correl.MessageTransferTask;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
+import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 import com.ospreydcs.dp.api.query.model.grpc.QueryStream;
@@ -52,17 +50,23 @@ import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompParams;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.common.TimestampList;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 
 /**
  * <p>
- * Class for recovering Query Service time-series data requests and correlating the request data.
+ * Class for recovering Query Service time-series data requests and time correlating the result set.
  * </p>
  * <p>
- * <code>QueryResponseCorrelatorDeprecated</code> objects performs Data Platform Query Service data requests embodied with
- * <code>{@link DpDataRequest}</code> objects, then correlate the query responses into sorted sets of 
- * <code>{@link CorrelatedQueryData}</code> objects. That is, class objects take inputs of type 
- * <code>DpDataRequest</code> and then output <code>{@link SortedSet}</code> collections containing the
- * correlated results sets.  All gRPC data streaming and correlation processing are performed internally.
+ * The <code>QueryRequestProcessorNew</code> class performs 2 functions: 1) time-series data request recovery 
+ * and 2) time correlation of the requested result set.  Internally, 
+ * a <code>QueryChannel</code> object performs Data Platform Query Service data requests embodied with
+ * the offered <code>{@link DpDataRequest}</code> objects, recovering the request data.  
+ * Then a <code>QueryDataCorrelatorOld</code> object correlates the query responses into sorted sets of 
+ * <code>{@link RawCorrelatedData}</code> objects. That is, <code>QueryRequestProcessorNew</code> class 
+ * objects take inputs of type <code>DpDataRequest</code> and then output 
+ * <code>{@link SortedSet}</code> collections containing the correlated results sets.  
+ * All gRPC data streaming and correlation processing are performed internally.
  * </p>
  * <p>
  * The motivation for combining request data recovery and data correlation operations is both 1) for performance and
@@ -85,40 +89,42 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <h2>Query Requests</h2>
  * Within the Query Service API library, time-series data requests are represented by <code>{@link DpDataRequest}</code> 
  * objects.  These objects contain the defining parameters for a Query Service data request, then transform the 
- * client request into <code>{@QueryDataRequest}</code> Protocol Buffers messages recognizable by the Query Service gRPC 
+ * client request into <code>{@link QueryDataRequest}</code> Protocol Buffers messages recognizable by the Query Service gRPC 
  * interface.
  * </p>
  * <p>
- * All supported Query Service data requests within <code>QueryRequestProcessor</code> are implemented by 
+ * All supported Query Service data requests within <code>QueryRequestProcessorNew</code> are implemented by 
  * methods prefixed with <code>processRequest</code>.  All data request methods return sorted sets of
- * <code>{@CorrelatedQueryData}</code> objects containing the results set of the offered data query request.
+ * <code>{@RawCorrelatedData}</code> objects containing the results set of the offered data query request.
  * The sorted set contains all requested time-series data, correlated by single sampling clock, and sorted by
  * sampling clock start timestamp.
  * <p>
- * The ability to treat timestamp lists has not be implemented yet.
+ * The ability to support timestamp lists within <code>{@link QueryDataRequest}</code> message is implemented within
+ * the <code>QueryRequestProcessorNew</code>.  Thus, all timestamp situations are now supported.
  * </p>
  * <p>
- * Once a <code>{@link SortedSet}</code> of <code>{@link CorrelatedQueryData}</code> objects is obtained from
- * a request method, it is ready for subsequent processing of the results set.  Each <code>CorrelatedQueryData</code>
- * object contains a sampling clock Protocol Buffers message and all the data column (time-series) messages correlated
- * to that sampling clock.  
- * The class <code>{@link SamplingProcess}</code> is available for subsequent processing of request method outputs
- * into table-like containers for the results set, however, clients may implement their own final processing.
+ * Once a <code>{@link SortedSet}</code> of <code>{@link RawCorrelatedData}</code> objects is obtained from
+ * a request method, it is ready for subsequent processing of the results set.  Each <code>RawCorrelatedData</code>
+ * object contains either a sampling clock Protocol Buffers message (i.e., <code>{@link SampleClock}</code>) or
+ * an explicit timestamp list (i.e., <code>{@link TimestampList}</code> and all the data column (time-series) 
+ * messages correlated to the timestamps.  
+ * The class <code>{@link QueryResponseAssembler}</code> is available for subsequent processing of request method 
+ * outputs into table-like containers for the results set, however, clients may implement their own final processing.
  * </p>
  * <p>
  * <h2>Final Processing</h2>
- * It is important to note that clients of the <code>QueryRequestProcessor</code> data request methods must 
+ * It is important to note that clients of the <code>QueryRequestProcessorNew</code> data request methods must 
  * perform all final processing of the correlated output BEFORE invoking another data request.  Correlated data
- * output sets are <em>owned</em> by the <code>QueryRequestProcessor</code> object performing the request.
+ * output sets are <em>owned</em> by the <code>QueryRequestProcessorNew</code> instance performing the request.
  * Existing correlated data output sets will be destroyed (i.e., cleared by the internal 
- * <code>{@link QueryDataCorrelator}</code> instance) whenever a subsequent data request is performed.
+ * <code>{@link RawDataCorrelator}</code> instance) whenever a subsequent data request is performed.
  * Either copy the output data to a new container or fully process the output sets before invoking additional
  * data requests.   
  * </p>
  * <p>
  * <h2>Streaming/Processing Configuration</h2>
  * For performance considerations, the streaming and processing operations within a 
- * <code>QueryRequestProcessor</code> object are configurable.  Optimal configurations are determined by
+ * <code>QueryRequestProcessorNew</code> object are configurable.  Optimal configurations are determined by
  * the hosting platform and the types (e.g., sizes) of the typical data request.  
  * The default configuration is obtained from the Data Platform API Query Service configuration within 
  * <code>{@link DpApiConfig}</code>.
@@ -152,11 +158,11 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * </p>
  * <p>
  * <h2>Query Service Connection</h2>
- * A single <code>{@link DpQueryConnection}</code> object is required by a <code>QueryResultProcessor</code>
- * objects, which is provided at construction.  The <code>DpQueryConnection</code> object contains the gRPC 
+ * A single <code>{@link DpQueryConnection}</code> object is required by a <code>QueryRequestProcessorNew</code>
+ * object, which is provided at construction.  The <code>DpQueryConnection</code> object contains the gRPC 
  * channel connection to the Data Platform Query Service used for all gRPC data query and data streaming 
- * operations. <code>QueryResultProcessor</code> objects DO NOT take ownership of the Query Service connection.
- * (Ownership is assumed to be that of the client using the <code>QueryResultProcessor</code> object.)
+ * operations. <code>QueryRequestProcessorNew</code> objects DO NOT take ownership of the Query Service connection.
+ * (Ownership is assumed to be that of the client using the <code>QueryRequestProcessorNew</code> object.)
  * Thus, the <code>DpQueryConnection</code> service connection is NOT shutdown here.  
  * </p>
  * <p>
@@ -198,8 +204,9 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <p>
  * When using method <code>{@link #processRequest(DpDataRequest)}</code> , the number of concurrent data streams will always
  * be limited by the value of constant <code>{@link #CNT_MULTISTREAM}</code>.  
- * If a client explicitly requests a stream count larger than that value (i.e., with <code>{@link #processRequests(List)}</code>),
- * the number of data stream is equal to the number of requests in the argument list.  Use this method at your
+ * If a client explicitly requests a stream count larger than that value (i.e., with 
+ * <code>{@link #processRequests(List)}</code>), the number of data stream is equal to the number of requests 
+ * in the argument list.  Use this method at your
  * own risk.  Method <code>{@link #processRequest(DpDataRequest)}</code> is the preferred request method. 
  * The maximum number of data streams can be set using the <code>{@link DpApiConfig}</code> default API configuration.  
  * It is a tuning parameter dependent upon gRPC, the number of platform processor cores, and local network traffic.    
@@ -214,33 +221,34 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <p>
  * <h2>Data Correlation</h2>
  * All data correlation of the incoming Query Service data is performed by a single 
- * <code>{@link QueryDataCorrelator}</code> instance within each <code>QueryResultProcessor</code> object.
- * The <code>QueryDataCorrelator</code> attribute is used to correlate all data, regardless of recovery method
- * (e.g., unary request, streaming request, etc.).  The <code>QueryDataCorrelator</code> attribute is reused,
- * that is, the same instance is used for all data requests performed while the <code>QueryResultProcessor</code>
+ * <code>{@link RawDataCorrelator}</code> instance within each <code>QueryRequestProcessorNew</code> object.
+ * The <code>RawDataCorrelator</code> attribute is used to correlate all data, regardless of recovery method
+ * (e.g., unary request, streaming request, etc.).  The <code>RawDataCorrelator</code> attribute is reused,
+ * that is, the same instance is used for all data requests performed while the <code>QueryRequestProcessorNew</code>
  * is alive.
  * </p>
  * <p>
- * Consequently, and because <code>QueryDataCorrelator</code> objects own their processed data sets, output data
+ * Consequently, and because <code>RawDataCorrelator</code> objects own their processed data sets, output data
  * sets are destroyed whenever a new data request is performed (i.e., using a <code>processRequest...</code> 
  * method.  As previously mentioned, any sorted set of correlated output data MUST be fully processed or copied
  * before invoking another data request. 
  * </p>
  * <p>
- * See the class documentation for <code>{@link QueryDataCorrelator}</code> concerning details about the data
+ * See the class documentation for <code>{@link RawDataCorrelator}</code> concerning details about the data
  * correlation process and the resulting correlated data sets it produces.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Jan 15, 2025
+ * @since Apr 22, 2025
  *
  * @see DpDataRequest
- * @see QueryDataCorrelator
- * @see CorrelatedQueryData
+ * @see RawDataCorrelator
+ * @see RawCorrelatedData
  * @see QueryStream
  * @see QueryChannel
+ *
  */
-public class QueryRequestProcessor {
+public class QueryRequestProcessorNew {
 
     
     //
@@ -249,7 +257,7 @@ public class QueryRequestProcessor {
     
     /**
      * <p>
-     * Creates a new instance of <code>QueryRequestProcessor</code>.
+     * Creates a new instance of <code>QueryRequestProcessorOld</code>.
      * </p>
      * <p>
      * The returned instance is configured according to the default configuration specified in the 
@@ -258,13 +266,14 @@ public class QueryRequestProcessor {
      * </p>
      * <p>
      * Note that the instance does not assume ownership of the given connection.  It must
-     * be currently connected to the Query Servicer and must be shown down externally.
+     * be currently connected to the Query Service and must be shown down externally when
+     * no longer needed.
      * </p>
      *
-     * @return  a new <code>QueryRequestProcessor</code> instance ready for correlation of data requests
+     * @return  a new <code>QueryRequestProcessorNex</code> instance ready for recovery and correlation of data requests
      */
-    public static QueryRequestProcessor    from(DpQueryConnection connQuery) {
-        return new QueryRequestProcessor(connQuery);
+    public static QueryRequestProcessorNew    from(DpQueryConnection connQuery) {
+        return new QueryRequestProcessorNew(connQuery);
     }
     
     //
@@ -299,6 +308,9 @@ public class QueryRequestProcessor {
     /** Perform data correlation while gRPC streaming - otherwise do it post streaming */
     public static final boolean     BOL_CORRELATE_MIDSTREAM = CFG_QUERY.data.response.correlate.whileStreaming;
     
+    /** Maximum number of processing threads for concurrent query data correlation */
+    public static final int         CNT_CORRELATE_MAX_THRDS = CFG_QUERY.concurrency.maxThreads;
+    
     
     /** Is response multi-streaming active? */
     public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.response.multistream.active;
@@ -323,7 +335,7 @@ public class QueryRequestProcessor {
     //
     
     /** The single connection to the Query Service (used for all data requests) */
-    private final DpQueryConnection         connQuery;
+    private final DpQueryConnection     connQuery;
 
     
     //
@@ -346,6 +358,9 @@ public class QueryRequestProcessor {
     /** Perform query data correlation concurrent while gRPC streaming */
     private boolean bolCorrelateMidstream = BOL_CORRELATE_MIDSTREAM;
     
+    /** Maximum number of execution threads for concurrent query data correlation */
+    private int     cntCorrelateMaxThrds = CNT_CORRELATE_MAX_THRDS;
+    
     
     //
     // Instance Resources
@@ -361,7 +376,7 @@ public class QueryRequestProcessor {
     private final DataRequestDecomposer     prcrDecomposer;
     
     /** The single query data theCorrelator used to process all request data */
-    private final QueryDataCorrelator       prcrCorrelator;
+    private final RawDataCorrelator         prcrCorrelator;
     
     
     /** The independent task transferring response messages to the recovery buffer */
@@ -378,12 +393,6 @@ public class QueryRequestProcessor {
     /** The number of messages recovered and processed from the current request */
     private int                     cntMsgsProcessed = 0;
     
-//    /** The total memory allocation of the messages recovered and processed from the current request */
-//    private long    szAllocProcessed = 0;
-//    
-//    /** The total data processing rate for the current request */ 
-//    private double  dblRateProcessed = 0;
-    
     
     //
     // Constructors
@@ -391,29 +400,68 @@ public class QueryRequestProcessor {
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryRequestProcessor</code>.
+     * Constructs a new instance of <code>QueryRequestProcessorOld</code>.
      * </p>
      * <p>
      * Note that the instance does not assume ownership of the given connection.  It must
-     * be currently connected to the Query Servicer and must be shown down externally.
+     * be currently connected to the Query Service and must be shown down externally when
+     * no longer needed.
      * </p>
      *
      * @param connQuery active connection to the Query Service
      */
-    public QueryRequestProcessor(DpQueryConnection connQuery) {
+    public QueryRequestProcessorNew(DpQueryConnection connQuery) {
         this.connQuery = connQuery;
         
         this.queMsgBuffer = QueryMessageBuffer.create();
         this.prcrDecomposer = DataRequestDecomposer.create();
-        this.prcrCorrelator = QueryDataCorrelator.create();
+        this.prcrCorrelator = RawDataCorrelator.create();
 
         this.chanQuery = QueryChannel.from(this.connQuery, this.queMsgBuffer);
     }
 
-
+    
     //
     // Configuration 
     //
+    
+    /**
+     * <p>
+     * Resets all configuration parameters to the default values.
+     * </p>
+     * <p>
+     * All configuration parameters are set to the default values at creation and specified by
+     * the Java API Library configuration file.  These values are all available individually from the
+     * following methods:
+     * <ul>
+     * <li><code>{@link #isMultiStreaming()}</code></li>
+     * <li><code>{@link #getMultiStreamingDomainSize()}</code></li>
+     * <li><code>{@link #getMaxStreamCount()}</code></li>
+     * <li><code>{@link #getMaxDataSourceCount()}</code></li>
+     * <li><code>{@link #getMaxTimeRange()}</code></li>
+     * <li><code>{@link #isCorrelatingConcurrently()}</code></li>
+     * <li><code>{@link #isCorrelatingWhileStreaming()}</code></li>
+     * <li><code>{@link #getCorrelateMaxThreads()}</code></li>
+     * </ul>
+     * </p>
+     * 
+     * @see #BOL_MULTISTREAM
+     * @see #SIZE_DOMAIN_MULTISTREAM
+     * @see #CNT_MULTISTREAM
+     * @see #BOL_CORRELATE_CONCURRENCY
+     * @see #BOL_CORRELATE_CONCURRENCY
+     * @see #CNT_CORRELATE_MAX_THRDS
+     */
+    public void resetDefaultConfiguration() {
+        
+        this.bolMultiStream = BOL_MULTISTREAM;
+        this.szDomainMultiStream = SIZE_DOMAIN_MULTISTREAM;
+        this.cntMaxStreams = CNT_MULTISTREAM;
+        
+        this.bolCorrelateConcurrenly = BOL_CORRELATE_CONCURRENCY;
+        this.bolCorrelateMidstream = BOL_CORRELATE_MIDSTREAM;
+        this.cntCorrelateMaxThrds = CNT_CORRELATE_MAX_THRDS;
+    }
     
     /**
      * <p>
@@ -609,7 +657,7 @@ public class QueryRequestProcessor {
     
     /**
      * <p>
-     * Toggles the use of concurrency (i.e. multi-threading) for correlation of query data.
+     * Enables/disables the use of concurrency (i.e. multi-threading) for correlation of query data.
      * </p>
      * <p>
      * This is a performance parameter where correlation of query data is performed using
@@ -618,7 +666,7 @@ public class QueryRequestProcessor {
      * CPU cores available.
      * </p> 
      * <p>
-     * The internal <code>{@link QueryDataCorrelator}</code> instance used to correlate the
+     * The internal <code>{@link RawDataCorrelator}</code> instance used to correlate the
      * results set of a Query Service data request has parallel processing capability.  This
      * function can be toggled on or off.  Parallel processing of request data can greatly
      * enhance performance, especially for large results sets.  However, it can also allocates
@@ -638,7 +686,7 @@ public class QueryRequestProcessor {
      */
     public void enableCorrelateConcurrently(boolean bolCorrelateConcurrently) {
         this.bolCorrelateConcurrenly = bolCorrelateConcurrently;
-        this.prcrCorrelator.setConcurrency(bolCorrelateConcurrently);
+        this.prcrCorrelator.enableConcurrency(this.cntMaxStreams);
     }
     
     /**
@@ -668,6 +716,37 @@ public class QueryRequestProcessor {
      */
     public void enableCorrelateWhileStreaming(boolean bolCorrelateMidstream) {
         this.bolCorrelateMidstream = bolCorrelateMidstream;
+    }
+    
+    /**
+     * <p>
+     * Sets the maximum number of allowable processing threads for query data correlation when concurrency is enabled.
+     * </p>
+     * <p>
+     * The argument specifies maximum number of execution threads used by the internal <code>RawDataCorrelator</code>
+     * instance when processing the recovered raw data.  The parameter only has context when concurrent query data
+     * correlation is enabled (see <code>{@link #enableCorrelateConcurrently(boolean)}</code>).
+     * </p>
+     * <p>  
+     * This is a tuning parameter that is likely dependent upon
+     * the host platform and other configuration parameters.  In particular, if concurrent correlation and data
+     * recovery is enabled (see <code>{@link #enableCorrelateWhileStreaming(boolean)}</code>) a large argument
+     * could create a competition between the <code>QueryChannel</code> instance and the <code>RawDataCorrelator</code>
+     * instance.
+     * </p>
+     * <p>
+     * The default value taken from the Java API Library configuration file
+     * (see <code>{@link #CNT_CORRELATE_MAX_THRDS}</code>).  This value can be recovered from 
+     * <code>{@link #getCorrelateMaxThreads()}</code>.  The default value for concurrent processing is available
+     * from <code>{@link #bolCorrelateConcurrenly}</code> while the current configuration value is given by
+     * <code>{@link #isCorrelatingConcurrently()}</code>.  
+     * The default value for the maximum number of gRPC data streams is found at <cod>{@link #CNT_MULTISTREAM}</code>.
+     * </p>
+     * 
+     * @param cntMaxThreads the maximum number of allowable concurrent processing threads for data correlation when enabled  
+     */
+    public void setCorrelateMaxThreads(int cntMaxThreads) {
+        this.cntCorrelateMaxThrds = cntMaxThreads;
     }
     
     
@@ -847,7 +926,22 @@ public class QueryRequestProcessor {
         return this.bolCorrelateMidstream;
     }
 
-
+    /**
+     * <p>
+     * Returns the maximum number of allowable execution threads for concurrent query data correlation when enabled.
+     * </p>
+     * <p>
+     * The returned value is maximum number of execution threads used by the internal <code>RawDataCorrelator</code>
+     * instance when processing the recovered raw data.
+     * </p>
+     * 
+     * @return  maximum number of concurrent processing threads used for raw query data correlation
+     */
+    public final int getCorrelateMaxThreads() {
+        return this.cntCorrelateMaxThrds;
+    }
+    
+    
     //
     // Process State Inquiry
     //
@@ -997,11 +1091,8 @@ public class QueryRequestProcessor {
      * @see #setCorrelationConcurrency(boolean)
      * @see #setMultiStreamingResponse(boolean)
      */
-    public SortedSet<CorrelatedQueryData>   processRequest(DpDataRequest dpRequest) throws DpQueryException {
+    public SortedSet<RawCorrelatedData>   processRequest(DpDataRequest dpRequest) throws DpQueryException {
 
-//        // Create request list according to multi-streaming configuration
-//        List<DpDataRequest>     lstRequests;
-        
         // If multi-streaming is disabled use a single stream
         if (!this.bolMultiStream || this.cntMaxStreams==1)
             this.lstCompRqsts = List.of(dpRequest);
@@ -1020,7 +1111,7 @@ public class QueryRequestProcessor {
      * </p>
      * <p>
      * This method allows clients to explicitly determine the concurrent gRPC data streams used by the
-     * <code>QueryRequestProcessor</code>.  To use the default multi-streaming mechanism with request 
+     * <code>QueryRequestProcessorOld</code>.  To use the default multi-streaming mechanism with request 
      * decomposition the method <code>{@link #processRequest(DpDataRequest)}</code> should be used; this is
      * the intended operation for this class.  Use this method at your own risk.
      * </p>
@@ -1070,7 +1161,7 @@ public class QueryRequestProcessor {
      * @see #setCorrelateWhileStreaming(boolean)
      * @see #setCorrelateConcurrently(boolean)
      */
-    public SortedSet<CorrelatedQueryData>   processRequests(List<DpDataRequest> lstRequests) throws DpQueryException {
+    public SortedSet<RawCorrelatedData>   processRequests(List<DpDataRequest> lstRequests) throws DpQueryException {
         
         // Reset the data theCorrelator
         this.prcrCorrelator.reset();
@@ -1116,7 +1207,7 @@ public class QueryRequestProcessor {
         // Recover the correlated data and return it
         this.thdMsgXferTask = null;
         
-        SortedSet<CorrelatedQueryData>  setPrcdData = this.prcrCorrelator.getCorrelatedSet();
+        SortedSet<RawCorrelatedData>  setPrcdData = this.prcrCorrelator.getCorrelatedSet();
         
         return setPrcdData;
     }
@@ -1131,9 +1222,9 @@ public class QueryRequestProcessor {
      * Attempts to decompose the given data request into a composite request (i.e., for multi-streaming).
      * </p>
      * <p>
-     * Attempts a decomposition of the given request into a decompose request collection of no more than
+     * Attempts a decomposition of the given request into a composite request collection of no more than
      * <code>{@link #getMultiStreamCount()}</code> elements.  
-     * This method is part of the DEFAULT multi-streaming mechanism within <code>QueryResponseCorrelatorDeprecated</code>.
+     * This method is part of the DEFAULT multi-streaming mechanism within <code>QueryResponseProcessorNew</code>.
      * </p>
      * <p>
      * <h2>Request Size</h2>
@@ -1242,21 +1333,6 @@ public class QueryRequestProcessor {
         // Last choice - Use a vertical query domain decomposition (by time domain)
         lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, RequestDecompType.VERTICAL, this.cntMaxStreams);
         return lstCmpRqsts;
-//        long lngDomPerRqst = szDomain / this.szDomainMultiStream;
-//        int  szDomPerRqst = Long.valueOf(lngDomPerRqst).intValue();
-//        
-//        //  Add any remainder (just in case)
-//        szDomPerRqst += (szDomain % this.szDomainMultiStream > 0) ? 1 : 0;
-//        
-//        if (szDomPerRqst < this.cntMaxStreams) {
-//            lstCmpRqsts = this.prcrDecomposer.buildCompositeRequest(dpRequest, RequestDecompType.VERTICAL, this.cntMaxStreams);
-//            
-//            return lstCmpRqsts;
-//        }
-//        
-//        
-//        // We cannot find any domain decomposition - Default back to single data request
-//        return List.of(dpRequest);
     }
     
     /**
@@ -1268,7 +1344,7 @@ public class QueryRequestProcessor {
      * data messages are collected by the <code>{@link #queMsgBuffer}</code> instance initialized at
      * construction.  This method blocks until all request data is recovered by the gRPC data streams
      * (using the <code>{@link #chanQuery}</code> instance) and available in the message queue buffer.
-     * However, data correlation can be active after returning (depending upon the state of the message
+     * However, data correlation can still be active after returning (depending upon the state of the message
      * transfer task).
      * </p>
      * <p>
@@ -1336,7 +1412,6 @@ public class QueryRequestProcessor {
             boolean bolShutdown = this.queMsgBuffer.shutdown(); // this is a blocking operation
 
             if (!bolShutdown) {
-                
                 String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - Message recovery buffer failed to shut down.";
                 
                 if (BOL_LOGGING)
@@ -1346,7 +1421,6 @@ public class QueryRequestProcessor {
             }
             
         } catch (InterruptedException e) {
-            
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                         + " - Message recovery buffer interrupted while shutting down: "
                         + e.getMessage();
@@ -1360,12 +1434,15 @@ public class QueryRequestProcessor {
         // Wait for the message transfer task to finish
         //  - All response data should be processed at that instant
         try {
-            this.thdMsgXferTask.join( QueryRequestProcessor.timeoutLimitDefaultMillis() );
+            this.thdMsgXferTask.join( QueryRequestProcessorNew.timeoutLimitDefaultMillis() );
             
         } catch (InterruptedException e) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
+                    + " - InterruptedException while processing request data: "
+                    + e.getMessage();
 
             if (BOL_LOGGING)
-                LOGGER.error("{} - InterruptedException while processing request data - {}", JavaRuntime.getMethodName(), e.getMessage());
+                LOGGER.error(strMsg);
             
             throw new DpQueryException(e);
         }
@@ -1374,7 +1451,6 @@ public class QueryRequestProcessor {
         ResultStatus    recProcessed = this.thdMsgXferTask.getResult();
         
         if (recProcessed == null || recProcessed.isFailure()) {
-        
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
                         + " - Data correlation processing FAILED: " 
                         + recProcessed.message();
@@ -1389,17 +1465,6 @@ public class QueryRequestProcessor {
         
         return cntMsgsXferred;
     }
-    
-//    /**
-//     * <p>
-//     * Computes the processing (performance) parameters of the current request.
-//     * </p>
-//     * 
-//     */
-//    private void    computeProcessParameters() {
-//        
-//        this.szAllocProcessed = this.prcrCorrelator.getBytesProcessed();
-//    }
     
     /**
      * <p>
@@ -1423,5 +1488,6 @@ public class QueryRequestProcessor {
         
         return lngTimeoutMs;
     }
+    
     
 }

@@ -41,7 +41,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.DpQueryApiFactory;
+import com.ospreydcs.dp.api.query.DpQueryApiFactoryOld;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IQueryService;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
@@ -138,7 +138,7 @@ public class RawDataCorrelatorTest {
     public static void setUpBeforeClass() throws Exception {
         
         // Create the Query Service connection
-        apiTest = DpQueryApiFactory.connect();
+        apiTest = DpQueryApiFactoryOld.connect();
         
         // Recover the raw data from the test archive
         LST_DATA_SMALL = RawDataCorrelatorTest.recoverQueryData(RQST_SMALL);

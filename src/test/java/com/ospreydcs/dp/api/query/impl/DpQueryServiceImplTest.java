@@ -54,7 +54,7 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.model.table.StaticDataTable;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpMetadataRequest;
-import com.ospreydcs.dp.api.query.DpQueryApiFactory;
+import com.ospreydcs.dp.api.query.DpQueryApiFactoryOld;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IQueryService;
@@ -66,7 +66,7 @@ import com.ospreydcs.dp.api.util.JavaSize;
 
 /**
  * <p>
- * JUnit test cases for class <code>DpQueryServiceImpl</code>.
+ * JUnit test cases for class <code>DpQueryServiceImplOld</code>.
  * </p>
  * <p>
  * <h2>WARNINGS:</h2>
@@ -104,7 +104,7 @@ public class DpQueryServiceImplTest {
     
     /**
      * <p>
-     * Record containing configuration parameters for a <code>DpQueryServiceImpl</code> object.
+     * Record containing configuration parameters for a <code>DpQueryServiceImplOld</code> object.
      * </p>
      *
      * @param name              text name for configuration
@@ -134,12 +134,12 @@ public class DpQueryServiceImplTest {
         
         /**
          * <p>
-         * Configures the given <code>DpQueryServiceImpl</code> object according to the record configuration parameters.
+         * Configures the given <code>DpQueryServiceImplOld</code> object according to the record configuration parameters.
          * </p>
          * 
          * @param api   API implementation to be configured
          */
-        public void configure(DpQueryServiceImpl api) {
+        public void configure(DpQueryServiceImplOld api) {
             api.setStaticTableDefault(this.bolStaticDef);
             if (this.bolStaticHasMax)
                 api.enableStaticTableMaxSize(this.szStaticMax);
@@ -216,7 +216,7 @@ public class DpQueryServiceImplTest {
     public static final Config  CFG_STATIC_MAX = Config.from("Static Tables with 4 Mbyte Max", true, true, 4000000, true);
     public static final Config  CFG_ALL_DYN = Config.from("All Dynamic Tables", false, false, 0, true);
     
-    /** Common List of <code>DpQueryServiceImpl</code> configuration parameters settings - populated in static block */
+    /** Common List of <code>DpQueryServiceImplOld</code> configuration parameters settings - populated in static block */
     public static final List<Config>                LST_API_CFGS = List.of(CFG_ALL_STATIC, CFG_STATIC_MAX, CFG_ALL_DYN);
     
     
@@ -252,7 +252,7 @@ public class DpQueryServiceImplTest {
     public static void setUpBeforeClass() throws Exception {
         
         // Create the Query Service connection
-        apiTest = DpQueryApiFactory.connect();
+        apiTest = DpQueryApiFactoryOld.connect();
         
         // Open the common output file
         String  strFileName = DpQueryServiceImplTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
@@ -306,12 +306,12 @@ public class DpQueryServiceImplTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#shutdown()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#shutdown()}.
      */
     @Test
     public final void testShutdown() {
         try {
-            IQueryService   apiQuery = DpQueryApiFactory.connect();
+            IQueryService   apiQuery = DpQueryApiFactoryOld.connect();
             
             Assert.assertFalse(apiQuery.isShutdown());
             
@@ -330,12 +330,12 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#shutdownNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#shutdownNow()}.
      */
     @Test
     public final void testShutdownNow() {
         try {
-            IQueryService   apiQuery = DpQueryApiFactory.connect();
+            IQueryService   apiQuery = DpQueryApiFactoryOld.connect();
             
             Assert.assertFalse(apiQuery.isShutdown());
             
@@ -361,12 +361,12 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#awaitTermination(long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#awaitTermination(long, java.util.concurrent.TimeUnit)}.
      */
     @Test
     public final void testAwaitTerminationLongTimeUnit() {
         try {
-            IQueryService   apiQuery = DpQueryApiFactory.connect();
+            IQueryService   apiQuery = DpQueryApiFactoryOld.connect();
             
             Assert.assertFalse(apiQuery.isShutdown());
             
@@ -395,7 +395,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#from(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#from(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
      */
     @Test
     public final void testFrom() {
@@ -408,7 +408,7 @@ public class DpQueryServiceImplTest {
             return;
         }
         
-        DpQueryServiceImpl apiQuery = DpQueryServiceImpl.from(connQuery);
+        DpQueryServiceImplOld apiQuery = DpQueryServiceImplOld.from(connQuery);
         try {
             apiQuery.shutdown();
             
@@ -418,7 +418,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#DpQueryServiceImpl(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#DpQueryServiceImpl(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
      */
     @Test
     public final void testDpQueryServiceImpl() {
@@ -426,7 +426,7 @@ public class DpQueryServiceImplTest {
         try {
             DpQueryConnection   connQuery = DpQueryConnectionFactory.FACTORY.connect();
             
-            DpQueryServiceImpl  apiQuery = new DpQueryServiceImpl(connQuery);
+            DpQueryServiceImplOld  apiQuery = new DpQueryServiceImplOld(connQuery);
             
             apiQuery.shutdown();
             
@@ -440,7 +440,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryMeta(com.ospreydcs.dp.api.query.DpMetadataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#queryMeta(com.ospreydcs.dp.api.query.DpMetadataRequest)}.
      */
     @Test
     public final void testQueryMeta() {
@@ -472,7 +472,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryDataUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#queryDataUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testQueryDataUnary() {
@@ -502,7 +502,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#queryData(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testQueryDataDpDataRequest() {
@@ -532,7 +532,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#queryData(java.util.List)}.
      */
     @Test
     public final void testQueryDataListOfDpDataRequest() {
@@ -569,7 +569,7 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryDataStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#queryDataStream(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testQueryDataStream() {
@@ -612,15 +612,15 @@ public class DpQueryServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl#queryData(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOld#queryData(com.ospreydcs.dp.api.query.DpDataRequest)}.
      * <p>
-     * Uses multiple configuration of <code>DpQueryServiceImpl</code>
+     * Uses multiple configuration of <code>DpQueryServiceImplOld</code>
      */
     @Test
     public final void testQueryDataConfigurations() {
         
         // Test Parameters
-        final DpQueryServiceImpl            apiImpl = DpQueryServiceImpl.class.cast(apiTest);       
+        final DpQueryServiceImplOld            apiImpl = DpQueryServiceImplOld.class.cast(apiTest);       
         final List<Config>                  lstCfgs = LST_API_CFGS;
         final List<DpDataRequest>           lstRqsts = LST_RQSTS;
         

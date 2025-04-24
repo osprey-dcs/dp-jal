@@ -49,7 +49,7 @@ import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
@@ -63,7 +63,7 @@ import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
  * containing the time-series data for the sampling block.
  * The class also contains a uniform sampling clock <code>{@link UniformSamplingClock}</code>
  * of finite duration producing the timestamps for all time-series data sets within the block. 
- * Instances are intended to be created from <code>{@link CorrelatedQueryData}</code> objects
+ * Instances are intended to be created from <code>{@link CorrelatedQueryDataOld}</code> objects
  * during Data Platform Query Service results set reconstruction.
  * </p>
  * <p>
@@ -219,7 +219,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      * @throws IllegalStateException    the argument contains duplicate data source names
      * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      */
-    public static UniformSamplingBlock  from(CorrelatedQueryData cqdSampleBlock) 
+    public static UniformSamplingBlock  from(CorrelatedQueryDataOld cqdSampleBlock) 
             throws MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException 
     {
         return new UniformSamplingBlock(cqdSampleBlock);
@@ -247,7 +247,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      * @throws IllegalStateException    the argument contains duplicate data source names
      * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      */
-    public UniformSamplingBlock(CorrelatedQueryData cqdSampleBlock) 
+    public UniformSamplingBlock(CorrelatedQueryDataOld cqdSampleBlock) 
             throws MissingResourceException, IllegalArgumentException, IllegalStateException, TypeNotPresentException {
         
         // Check the argument for data source name uniqueness
@@ -836,7 +836,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      * <p>
      * <h2>NOTES:</h2>
      * The argument should have already been checked for duplicate data source names using
-     * <code>{@link CorrelatedQueryData#verifySourceUniqueness()}</code>.
+     * <code>{@link CorrelatedQueryDataOld#verifySourceUniqueness()}</code>.
      * </p>
      * 
      * @param lstMsgDataCols   source data for sampled time series creation
@@ -912,7 +912,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
      * </li>
      * <li>
      * The argument should have already been checked for duplicate data source names using
-     * <code>{@link CorrelatedQueryData#verifySourceUniqueness()}</code>.
+     * <code>{@link CorrelatedQueryDataOld#verifySourceUniqueness()}</code>.
      * </li>
      * </ul>
      * </p>

@@ -58,8 +58,8 @@ import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess;
 import com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelatorOld;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -107,7 +107,7 @@ public class SamplingProcessTest {
     //
     
     /** The query results set correlator - we only need one */
-    private final static QueryDataCorrelator  CORRELATOR = new QueryDataCorrelator();
+    private final static QueryDataCorrelatorOld  CORRELATOR = new QueryDataCorrelatorOld();
     
     
     //
@@ -161,12 +161,12 @@ public class SamplingProcessTest {
                 CORRELATOR.addQueryResponse(msgRsp);
 
         } catch (ExecutionException | CannotProceedException e) {
-            Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
+            Assert.fail(failMessage("QueryDataCorrelatorOld#insertQueryResponse()", e));
             
         }
         
         // Get the processed data and try to create SamplingProcess
-        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getCorrelatedSet();
+        SortedSet<CorrelatedQueryDataOld>  setPrcdData = CORRELATOR.getCorrelatedSet();
         
         try {
             SamplingProcess process = SamplingProcess.from(setPrcdData);
@@ -192,12 +192,12 @@ public class SamplingProcessTest {
                 CORRELATOR.addQueryResponse(msgRsp);
 
         } catch (ExecutionException | CannotProceedException e) {
-            Assert.fail(failMessage("QueryDataCorrelator#insertQueryResponse()", e));
+            Assert.fail(failMessage("QueryDataCorrelatorOld#insertQueryResponse()", e));
             
         }
         
         // Get the processed data and try to create SamplingProcess
-        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getCorrelatedSet();
+        SortedSet<CorrelatedQueryDataOld>  setPrcdData = CORRELATOR.getCorrelatedSet();
         
         try {
             SamplingProcess process = new SamplingProcess(setPrcdData);
@@ -565,7 +565,7 @@ public class SamplingProcessTest {
      * @return  ordered list of sampling blocks processed from given raw data
      */ 
     private SamplingProcess process(List<QueryData> lstRawData) {
-        SortedSet<CorrelatedQueryData>  setPrcdData = correlate(lstRawData);
+        SortedSet<CorrelatedQueryDataOld>  setPrcdData = correlate(lstRawData);
         
         try {
             SamplingProcess process = SamplingProcess.from(setPrcdData);
@@ -590,14 +590,14 @@ public class SamplingProcessTest {
      * 
      * @param lstRawData   raw query results set data to be correlated
      * 
-     * @return  a sorted set of <code>CorrelatedQueryData</code> objects 
+     * @return  a sorted set of <code>CorrelatedQueryDataOld</code> objects 
      */
-    private SortedSet<CorrelatedQueryData>  correlate(List<QueryData> lstRawData) {
+    private SortedSet<CorrelatedQueryDataOld>  correlate(List<QueryData> lstRawData) {
 
         CORRELATOR.reset();
         lstRawData.forEach(msgData -> CORRELATOR.addQueryData(msgData));
 
-        SortedSet<CorrelatedQueryData>  setPrcdData = CORRELATOR.getCorrelatedSet();
+        SortedSet<CorrelatedQueryDataOld>  setPrcdData = CORRELATOR.getCorrelatedSet();
         
         return setPrcdData;
     }

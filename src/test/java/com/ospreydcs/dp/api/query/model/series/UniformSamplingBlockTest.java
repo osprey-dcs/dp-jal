@@ -54,8 +54,8 @@ import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.query.model.coalesce.SampledTimeSeries;
 import com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelatorOld;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -100,7 +100,7 @@ public class UniformSamplingBlockTest {
     //
     
     /** The query results set correlator - we only need one */
-    private final static QueryDataCorrelator  CORRELATOR = new QueryDataCorrelator();
+    private final static QueryDataCorrelatorOld  CORRELATOR = new QueryDataCorrelatorOld();
     
     
     
@@ -145,13 +145,13 @@ public class UniformSamplingBlockTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock#from(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock#from(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld)}.
      */
     @Test
     public final void testFrom() {
         List<QueryData>    lstRawMsgData = LST_QUERY_DATA_WIDE;
 
-        CorrelatedQueryData     cqdFirst = this.correlate(lstRawMsgData).first();
+        CorrelatedQueryDataOld     cqdFirst = this.correlate(lstRawMsgData).first();
         
         try {
             @SuppressWarnings("unused")
@@ -164,13 +164,13 @@ public class UniformSamplingBlockTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock#UniformSamplingBlock(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock#UniformSamplingBlock(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld)}.
      */
     @Test
     public final void testUniformSamplingBlock() {
         DataBucket  msgBucket = BUCKET;
 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         try {
             @SuppressWarnings("unused")
@@ -808,7 +808,7 @@ public class UniformSamplingBlockTest {
      * </p>
      * <p>
      * All exceptions originate from the internal invocation of creator
-     * <code>{@link UniformSamplingBlock#from(CorrelatedQueryData)}</code>.
+     * <code>{@link UniformSamplingBlock#from(CorrelatedQueryDataOld)}</code>.
      * </p>
      * 
      * @param msgBucket <code>DataBucket</code> message containing data for single time series
@@ -824,7 +824,7 @@ public class UniformSamplingBlockTest {
             throws MissingResourceException, IllegalArgumentException, IllegalStateException, UnsupportedOperationException
             {
         
-        CorrelatedQueryData cqdSingle = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdSingle = CorrelatedQueryDataOld.from(msgBucket);
         
         UniformSamplingBlock    blkSingle = UniformSamplingBlock.from(cqdSingle);
 
@@ -844,7 +844,7 @@ public class UniformSamplingBlockTest {
      * </p>
      * <p>
      * All exceptions originate from the internal invocation of creator
-     * <code>{@link UniformSamplingBlock#from(CorrelatedQueryData)}</code>.
+     * <code>{@link UniformSamplingBlock#from(CorrelatedQueryDataOld)}</code>.
      * </p>
      *  
      * @param lstRawData    raw query results set data 
@@ -864,7 +864,7 @@ public class UniformSamplingBlockTest {
         CORRELATOR.reset();
         lstRawData.forEach(msgData -> CORRELATOR.addQueryData(msgData));
         
-        SortedSet<CorrelatedQueryData>   setPrcdData = CORRELATOR.getCorrelatedSet();
+        SortedSet<CorrelatedQueryDataOld>   setPrcdData = CORRELATOR.getCorrelatedSet();
         
         // Convert to ordered list of sampling blocks and return
         List<UniformSamplingBlock>  lstBlocks = setPrcdData
@@ -887,14 +887,14 @@ public class UniformSamplingBlockTest {
      * 
      * @param lstRawData   raw query results set data to be correlated
      * 
-     * @return  a sorted set of <code>CorrelatedQueryData</code> objects 
+     * @return  a sorted set of <code>CorrelatedQueryDataOld</code> objects 
      */
-    private SortedSet<CorrelatedQueryData>  correlate(List<QueryData> lstRawData) {
+    private SortedSet<CorrelatedQueryDataOld>  correlate(List<QueryData> lstRawData) {
         
         CORRELATOR.reset();
         lstRawData.forEach(msgData -> CORRELATOR.addQueryData(msgData));
         
-        SortedSet<CorrelatedQueryData>   setPrcdData = CORRELATOR.getCorrelatedSet();
+        SortedSet<CorrelatedQueryDataOld>   setPrcdData = CORRELATOR.getCorrelatedSet();
         
         return setPrcdData;
     }

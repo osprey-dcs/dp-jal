@@ -203,7 +203,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
     /**
      * Returns the target of this raw data insertion task.
      * 
-     * @return  the collection of <code>CorrelatedQueryData</code> instances 
+     * @return  the collection of <code>CorrelatedQueryDataOld</code> instances 
      */
     public final SortedSet<RawCorrelatedData>    getTarget() {
         return this.setTarget;
@@ -221,7 +221,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
      * <p>
      * Attempts to add the data column of the subject data bucket message to the target set of 
      * sampling interval references.  If the task is successful the subject data bucket is considered
-     * processed.  If not successful a new <code>CorrelatedQueryData</code> instance must be 
+     * processed.  If not successful a new <code>CorrelatedQueryDataOld</code> instance must be 
      * constructed for the sampling clock referenced in the bucket.
      * </p>
      * 
@@ -250,7 +250,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
      * <p>
      * Attempts to add the data column of the subject data bucket message to the target set of 
      * sampling interval references.  If the task is successful the subject data bucket is considered
-     * processed.  If not successful a new <code>CorrelatedQueryData</code> instance must be 
+     * processed.  If not successful a new <code>CorrelatedQueryDataOld</code> instance must be 
      * constructed for the sampling clock referenced in the bucket.
      * </p>
      * 
@@ -259,7 +259,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
     @Override
     public void run() {
         
-        // Attempt bucket insertion for each <code>CorrelatedQueryData</code> instance and get result
+        // Attempt bucket insertion for each <code>CorrelatedQueryDataOld</code> instance and get result
         this.bolSuccess = this.setTarget
                 .stream()
                 .anyMatch(blk -> blk.insertBucketData(this.msgSubject));

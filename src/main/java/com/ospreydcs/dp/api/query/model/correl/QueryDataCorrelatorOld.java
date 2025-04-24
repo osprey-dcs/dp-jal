@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryDataCorrelator.java
+ * File:	QueryDataCorrelatorOld.java
  * Package: com.ospreydcs.dp.api.query.model.grpc
- * Type: 	QueryDataCorrelator
+ * Type: 	QueryDataCorrelatorOld
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -60,7 +60,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * </p>
  * <p>
  * Correlates all time-series data within the results set of a Query Service data request into
- * a sorted collection of <code>{@link CorrelatedQueryData}</code> data instances.  Each instance within
+ * a sorted collection of <code>{@link CorrelatedQueryDataOld}</code> data instances.  Each instance within
  * the sorted collection contains a <code>{@link SamplingClock}</code> sampling 
  * clock Protobuf message and collection of <code>{@link DataColumn}</code> Protobuf data 
  * messages all correlated to that sample sampling clock.
@@ -68,7 +68,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * <p>
  * Once processing of a results set is complete, the results are available from the 
  * <code>{@link #getCorrelatedSet()}</code> method.
- * Note, however, <code>QueryDataCorrelator</code> objects maintain ownership of the returned
+ * Note, however, <code>QueryDataCorrelatorOld</code> objects maintain ownership of the returned
  * sorted set and all data within that set should be further processed (or copied) before 
  * attempting to correlated another results set; specifically, before invoking the 
  * <code>{@link #reset()}</code> method. 
@@ -80,10 +80,10 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * equivalent sampling intervals as specified by the sampling clock data message 
  * <code>{@link FixedIntervalTimestampSpec}</code>. 
  * The time-series for each data source corresponding to equivalent sampling clocks are collected
- * into a single <code>{@link CorrelatedQueryData}</code> instance.  
- * Once the query results set is fully processed there should be one <code>CorrelatedQueryData</code> 
+ * into a single <code>{@link CorrelatedQueryDataOld}</code> instance.  
+ * Once the query results set is fully processed there should be one <code>CorrelatedQueryDataOld</code> 
  * instance for every unique sampling interval within the result set.  Every data column within the 
- * results set will be associated with one <code>CorrelatedQueryData</code> instance.
+ * results set will be associated with one <code>CorrelatedQueryDataOld</code> instance.
  * </p>
  * <p>
  * <h2>Operation</h2>
@@ -103,17 +103,17 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * </ol>
  * </p>
  * <p>
- * Once the entire results set data is "added" to a <code>QueryDataCorrelator</code> object, 
+ * Once the entire results set data is "added" to a <code>QueryDataCorrelatorOld</code> object, 
  * it is fully correlated.  The correlated data is then available from the method
- * <code>{@link #getCorrelatedSet()}</code>.  Each <code>{@link CorrelatedQueryData}</code> 
+ * <code>{@link #getCorrelatedSet()}</code>.  Each <code>{@link CorrelatedQueryDataOld}</code> 
  * instance within the returned set contains all the data messages for a single sampling clock.
  * Further, the set is ordered according to the start time instant for each clock.
  * </p>
  * <p>
- * <code>QueryDataCorrelator</code> objects can be reused.  That is, a single 
- * <code>QueryDataCorrelator</code> instance can be used to process multiple data request
+ * <code>QueryDataCorrelatorOld</code> objects can be reused.  That is, a single 
+ * <code>QueryDataCorrelatorOld</code> instance can be used to process multiple data request
  * results sets (serially, of course).  To reuse a instances invoke the <code>{@link #reset()}</code>
- * method before processing another results set.  WARNING: <code>QueryDataCorrelator</code> 
+ * method before processing another results set.  WARNING: <code>QueryDataCorrelatorOld</code> 
  * objects maintain ownership of the correlated data set returned by 
  * <code>{@link #getCorrelatedSet()}</code>.  Thus, all data returned by that method must be
  * either copied or fully processed before reusing an instance.
@@ -136,7 +136,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * </p>
  * <p>
  * <h2>Concurrency</h2>
- * The correlation operations performed within <code>QueryDataCorrelator</code>
+ * The correlation operations performed within <code>QueryDataCorrelatorOld</code>
  * allow a high-level of multi-threaded, concurrent, data processing.  Using concurrency
  * can significantly reduce processing time for a results set.  However, use of concurrency
  * can also steal CPU resources for any other concurrent operations.
@@ -178,7 +178,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * </li>
  * <br/>
  * <li>
- * The <code>QueryDataCorrelator</code> class uses the default concurrency configuration in the 
+ * The <code>QueryDataCorrelatorOld</code> class uses the default concurrency configuration in the 
  * Query Service API default parameters (@see {@link DpApiConfig}</code>). The concurrency 
  * configuration parameters there can be used to tune performance (or hard-coded into this
  * class).
@@ -223,11 +223,14 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * @author Christopher K. Allen
  * @since Jan 11, 2024
  *
- * @see CorrelatedQueryData
+ * @see CorrelatedQueryDataOld
  * @see DataBucketInsertTask
  * @see DpApiConfig
+ * 
+ * @deprecated Use <code>RawDataCorrelator</code> to support <code>TimestampList</code> processing  
  */
-public class QueryDataCorrelator {
+@Deprecated(since="April 22, 2025")
+public class QueryDataCorrelatorOld {
 
     
     //
@@ -236,33 +239,33 @@ public class QueryDataCorrelator {
     
     /**
      * <p>
-     * Creates and returns a new <code>QueryDataCorrelator</code> instance ready for processing.
+     * Creates and returns a new <code>QueryDataCorrelatorOld</code> instance ready for processing.
      * </p>
      * <p>
      * Instances are created in their initial state - ready for processing.  The method 
      * <code>{@link #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
      * is recommended for query response data processing; that is, it is recommended to process all query and 
      * streaming errors externally, supplying only <code>BucketData</code> messages to 
-     * <code>QueryDataCorrelator</code> objects.
+     * <code>QueryDataCorrelatorOld</code> objects.
      * </p>
      * <p>
-     * One the entire query results set has be passed to a <code>QueryDataCorrelator</code> object
+     * One the entire query results set has be passed to a <code>QueryDataCorrelatorOld</code> object
      * (e.g., using the above method repeated for each data message), the correlated data is recoverable
      * with <code>{@link #getCorrelatedSet()}</code>.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * <code>QueryDataCorrelator</code> objects can be reused for multiple query results sets.
+     * <code>QueryDataCorrelatorOld</code> objects can be reused for multiple query results sets.
      * Use the method <code>{@link #reset()}</code> before processing a new results set.
      * </p>
      * 
-     * @return  a new <code>QueryDataCorrelator</code> instance ready for processing
+     * @return  a new <code>QueryDataCorrelatorOld</code> instance ready for processing
      * 
      * @see #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
      * @see #getCorrelatedSet()
      */
-    public static QueryDataCorrelator create() {
-        return new QueryDataCorrelator();
+    public static QueryDataCorrelatorOld create() {
+        return new QueryDataCorrelatorOld();
     }
     
     
@@ -319,7 +322,7 @@ public class QueryDataCorrelator {
     private final ExecutorService   exeThreadPool = Executors.newFixedThreadPool(CNT_CONCURRENCY_THDS);
     
     /** Target set of correlated results set data - Ordered according to sampling interval start time */
-    private final SortedSet<CorrelatedQueryData> setPrcdData = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.create());
+    private final SortedSet<CorrelatedQueryDataOld> setPrcdData = new TreeSet<>(CorrelatedQueryDataOld.StartTimeComparator.create());
 
     
     //
@@ -339,30 +342,30 @@ public class QueryDataCorrelator {
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryDataCorrelator</code>.
+     * Constructs a new instance of <code>QueryDataCorrelatorOld</code>.
      * </p>
      * <p>
      * Instances are created in their initial state - ready for processing.  The method 
      * <code>{@link #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)}</code>
      * is recommended for query response data processing; that is, it is recommended to process all query and 
      * streaming errors externally, supplying only <code>BucketData</code> messages to 
-     * <code>QueryDataCorrelator</code> objects.
+     * <code>QueryDataCorrelatorOld</code> objects.
      * </p>
      * <p>
-     * One the entire query results set has be passed to a <code>QueryDataCorrelator</code> object
+     * One the entire query results set has be passed to a <code>QueryDataCorrelatorOld</code> object
      * (e.g., using the above method repeated for each data message), the correlated data is recoverable
      * with <code>{@link #getCorrelatedSet()}</code>.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * <code>QueryDataCorrelator</code> objects can be reused for multiple query results sets.
+     * <code>QueryDataCorrelatorOld</code> objects can be reused for multiple query results sets.
      * Use the method <code>{@link #reset()}</code> before processing a new results set.
      * </p>
      * 
      * @see #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData)
      * @see #getCorrelatedSet()
      */
-    public QueryDataCorrelator() {
+    public QueryDataCorrelatorOld() {
     }
     
     
@@ -375,14 +378,14 @@ public class QueryDataCorrelator {
      * Reset this correlator instance to its original (default) state.
      * </p>
      * <p>
-     * <code>QueryDataCorrelator</code> objects can be reused.  After calling this method the 
+     * <code>QueryDataCorrelatorOld</code> objects can be reused.  After calling this method the 
      * correlator is returned to its initial state and is ready to process another Query Service
      * response results set.
      * </p>
      * <p>
      * This is a thread-safe operation.  Performs the following operations:
      * <ul>
-     * <li>Clears out the target set of all <code>CorrelatedQueryData</code> references.</li>
+     * <li>Clears out the target set of all <code>CorrelatedQueryDataOld</code> references.</li>
      * <li>Returns the concurrency flag to its default state <code>{@link #BOL_CONCURRENCY}</code>.</li>
      * </ul>
      * </p>
@@ -414,13 +417,13 @@ public class QueryDataCorrelator {
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The correlation operations performed within <code>QueryDataCorrelator</code>
+     * The correlation operations performed within <code>QueryDataCorrelatorOld</code>
      * allow a high-level of multi-threaded, concurrent, data processing.  Using concurrency
      * can significantly reduce processing time for a results set.
      * </li>
      * <br/>
      * <li>
-     * The <code>QueryDataCorrelator</code> is currently designed to exploit multiple
+     * The <code>QueryDataCorrelatorOld</code> is currently designed to exploit multiple
      * CPU cores for correlation operations (i.e., method prefixed with <code>add</code>).  
      * Thus, for some situations it may be desirable to stop concurrent processing
      * so it does not interfere with other real-time operations (e.g., such as gRPC streaming).
@@ -450,7 +453,7 @@ public class QueryDataCorrelator {
     
     /**
      * <p>
-     * Returns the target set of <code>CorrelatedQueryData</code> instances in its current 
+     * Returns the target set of <code>CorrelatedQueryDataOld</code> instances in its current 
      * processing state.
      * </p>
      * <p>
@@ -459,7 +462,7 @@ public class QueryDataCorrelator {
      * of the data request, ordered according to sampling clock start times.
      * <p>
      * <h2>WARNING:</h2>
-     * This <code>QueryDataCorrelator</code> instance retains ownership of the returned set.
+     * This <code>QueryDataCorrelatorOld</code> instance retains ownership of the returned set.
      * If the <code>{@link #reset()}</code> method is invoked this set is destroyed.
      * All subsequent processing of the returned data set must be completed before invoking
      * <code>{@link #reset()}</code>, or the data set must be copied.
@@ -467,7 +470,7 @@ public class QueryDataCorrelator {
      * 
      * @return  the sorted set (by start-time instant) of currently processed data 
      */
-    public final SortedSet<CorrelatedQueryData>   getCorrelatedSet() {
+    public final SortedSet<CorrelatedQueryDataOld>   getCorrelatedSet() {
         return this.setPrcdData;
     }
     
@@ -496,7 +499,7 @@ public class QueryDataCorrelator {
     
     /**
      * <p>
-     * Returns the size of the correlated set of <code>CorrelatedQueryData</code> 
+     * Returns the size of the correlated set of <code>CorrelatedQueryDataOld</code> 
      * instances processed so far.
      * </p>
      * 
@@ -511,7 +514,7 @@ public class QueryDataCorrelator {
      * Extracts and returns a set of unique data source names for all data within target set.
      * </p>
      * <p>
-     * Extracts all data source names within the target set of <code>CorrelatedQueryData</code> 
+     * Extracts all data source names within the target set of <code>CorrelatedQueryDataOld</code> 
      * objects and collects them to the returned set of unique names.
      * </p>
      * <p>
@@ -584,7 +587,7 @@ public class QueryDataCorrelator {
 
             // If the message data was not added we must create a new reference and add it to the current target set
             if (!bolSuccess) {
-                CorrelatedQueryData refNew = CorrelatedQueryData.from(msgBucket);
+                CorrelatedQueryDataOld refNew = CorrelatedQueryDataOld.from(msgBucket);
 
                 this.setPrcdData.add(refNew);
             }
@@ -606,7 +609,7 @@ public class QueryDataCorrelator {
      * </p>
      * <p>
      * Once this method returns all <code>DataBucket</code> messages within the argument are 
-     * processed and its data column is associated with some <code>{@link CorrelatedQueryData}</code>
+     * processed and its data column is associated with some <code>{@link CorrelatedQueryDataOld}</code>
      * instance within the target set.
      * </p>
      * <p>
@@ -617,7 +620,7 @@ public class QueryDataCorrelator {
      * For larger target sets the processing technique pivots to a parallel method.  An attempt 
      * is made to insert each data bucket within the argument concurrently into the target set.  
      * (The probability of insertion is higher since the target set is large.) 
-     * Then a <code>CorrelatedQueryData</code> set is created for the collection of data buckets 
+     * Then a <code>CorrelatedQueryDataOld</code> set is created for the collection of data buckets 
      * that failed insertion. The new correlated set is then added to the target set.  Note
      * that the new correlated set is necessary disjoint (i.e., references different sampling
      * clocks) to the current target set.
@@ -664,7 +667,7 @@ public class QueryDataCorrelator {
             // If the target set is large - pivot to concurrent processing of message data
 //            Collection<QueryResponse.QueryReport.BucketData.DataBucket>  setFreeBuckets = this.attemptDataInsertConcurrent(msgData);
             Collection<QueryDataResponse.QueryData.DataBucket>  setFreeBuckets = this.attemptDataInsertThreadPool(msgData);
-            SortedSet<CorrelatedQueryData>  setNewTargets = this.processDisjointTargets(setFreeBuckets);
+            SortedSet<CorrelatedQueryDataOld>  setNewTargets = this.processDisjointTargets(setFreeBuckets);
             this.setPrcdData.addAll(setNewTargets);
 
             // Increment byte counter
@@ -774,17 +777,17 @@ public class QueryDataCorrelator {
      * Verifies the correct ordering (i.e., by sampling start time) of the given processed data set.
      * </p>
      * <p>
-     * Loops through the sorted set of <code>CorrelatedQueryData</code> instances checking all adjacent
+     * Loops through the sorted set of <code>CorrelatedQueryDataOld</code> instances checking all adjacent
      * instances for proper ordering.  If a mis-ordered instance is found all further checking stops
      * and a FAILURE result is returned with a message describing the index.
      * </p>
      * 
-     * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelator</code>
+     * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelatorOld</code>
      * 
      * @return  <code>{@link ResultStatus#SUCCESS}</code> if the set is properly ordered,
      *          otherwise a FAILURE result with description message
      */
-    public static ResultStatus    verifyOrdering(SortedSet<CorrelatedQueryData> setProcData) {
+    public static ResultStatus    verifyOrdering(SortedSet<CorrelatedQueryDataOld> setProcData) {
         
         // We need at least one data set
         if (setProcData.isEmpty())
@@ -792,9 +795,9 @@ public class QueryDataCorrelator {
         
         // Loop through all processed data in order
         int                 indPrev = 0;
-        CorrelatedQueryData cqdPrev = null;
+        CorrelatedQueryDataOld cqdPrev = null;
         
-        for (CorrelatedQueryData cqdCurr : setProcData) {
+        for (CorrelatedQueryDataOld cqdCurr : setProcData) {
 
             // Initiate loop
             if (cqdPrev == null) {
@@ -825,12 +828,12 @@ public class QueryDataCorrelator {
      * and a FAILURE result is returned with a message describing the bad columns.
      * </p>
      * 
-     * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelator</code>
+     * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelatorOld</code>
      * 
      * @return  <code>{@link ResultStatus#SUCCESS}</code> if all column sizes are correct,
      *          otherwise a FAILURE result with description message
      */
-    public static ResultStatus    verifyColumnSizes(SortedSet<CorrelatedQueryData> setProcData) {
+    public static ResultStatus    verifyColumnSizes(SortedSet<CorrelatedQueryDataOld> setProcData) {
 
         // We need at least one data set
         if (setProcData.isEmpty())
@@ -838,7 +841,7 @@ public class QueryDataCorrelator {
         
         // Loop through all processed data in order
         int     indCurr = 0;
-        for (CorrelatedQueryData cqdCurr : setProcData) {
+        for (CorrelatedQueryDataOld cqdCurr : setProcData) {
 
             // Get the sample count for each set
             final int cntSamples = cqdCurr.getSamplingMessage().getCount();
@@ -879,12 +882,12 @@ public class QueryDataCorrelator {
      * is accurate ONLY IF the set is ordered correctly, specifically, by sampling start times.
      * </p>
      * 
-     * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelator</code>
+     * @param setProcData   the ordered set of processed data produced by a <code>QueryDataCorrelatorOld</code>
      * 
      * @return  <code>{@link ResultStatus#SUCCESS}</code> if no time domain collisions are detected,
      *          otherwise a FAILURE result with description message
      */
-    public static ResultStatus    verifyTimeDomains(SortedSet<CorrelatedQueryData> setProcData) {
+    public static ResultStatus    verifyTimeDomains(SortedSet<CorrelatedQueryDataOld> setProcData) {
         
         // We need at least one data set
         if (setProcData.isEmpty())
@@ -892,9 +895,9 @@ public class QueryDataCorrelator {
         
         // Loop through all processed data in order
         int                 indPrev = 0;
-        CorrelatedQueryData cqdPrev = null;
+        CorrelatedQueryDataOld cqdPrev = null;
         
-        for (CorrelatedQueryData cqdCurr : setProcData) {
+        for (CorrelatedQueryDataOld cqdCurr : setProcData) {
 
             // Initiate loop
             if (cqdPrev == null) {
@@ -965,7 +968,7 @@ public class QueryDataCorrelator {
 
             // If the message data was not added we must create a new reference and add it to the current target set
             if (!bolSuccess) 
-                this.setPrcdData.add( CorrelatedQueryData.from(msgBucket) );
+                this.setPrcdData.add( CorrelatedQueryDataOld.from(msgBucket) );
             
         }
     }
@@ -1111,11 +1114,11 @@ public class QueryDataCorrelator {
 
     /**
      * <p>
-     * Correlates the given argument producing a separate <code>CorrelatedQueryData</code>
+     * Correlates the given argument producing a separate <code>CorrelatedQueryDataOld</code>
      * sorted data, disjoint from the current target set.
      * </p>  
      * <p>
-     * Builds and returns a disjoint set of <code>CorrelatedQueryData</code> instances 
+     * Builds and returns a disjoint set of <code>CorrelatedQueryDataOld</code> instances 
      * corresponding to the given collection of <code>DataBucket</code> messages.  That is,
      * the returned collection is a consistent set of correlated data processed from the 
      * given argument and sorted according to sampling clock start times.  
@@ -1124,13 +1127,13 @@ public class QueryDataCorrelator {
      * The assumption is that the argument collection is not associated with the current managed 
      * target set returned by <code>{@link #getCorrelatedSet()}</code>.  More specifically, the 
      * arguments have already been checked against the current target set and we KNOW that new 
-     * <code>CorrelatedQueryData</code> instances must be created.
+     * <code>CorrelatedQueryDataOld</code> instances must be created.
      * </p>
      * <p>
-     * A new <code>{@link SortedSet}</code> of <code>CorrelatedQueryData</code> object is created.
+     * A new <code>{@link SortedSet}</code> of <code>CorrelatedQueryDataOld</code> object is created.
      * An attempt is made to insert each <code>{@link DataBucket}</code> message within the argument 
      * into this collection of correlated data (clearly the first attempt will always fail).
-     * If the insertion fails, a new <code>CorrelatedQueryData</code> instance is created for the
+     * If the insertion fails, a new <code>CorrelatedQueryDataOld</code> instance is created for the
      * message and the new instance is added to the sorted set.
      * </p> 
      * <p>  
@@ -1156,10 +1159,10 @@ public class QueryDataCorrelator {
      * 
      * @return  set of new target references associated with the given argument data
      */
-    private SortedSet<CorrelatedQueryData>  processDisjointTargets(Collection<QueryDataResponse.QueryData.DataBucket> setBuckets) {
+    private SortedSet<CorrelatedQueryDataOld>  processDisjointTargets(Collection<QueryDataResponse.QueryData.DataBucket> setBuckets) {
         
         // The returned sampling interval reference - that is, the targets
-        SortedSet<CorrelatedQueryData>  setRefs = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.create());
+        SortedSet<CorrelatedQueryDataOld>  setRefs = new TreeSet<>(CorrelatedQueryDataOld.StartTimeComparator.create());
         
         // Treat each data bucket individually - high probability of modifying target set 
         for (QueryDataResponse.QueryData.DataBucket msgBucket : setBuckets) {
@@ -1169,7 +1172,7 @@ public class QueryDataCorrelator {
             
             // If insertion failed then create a new sampling interval reference for targets
             if (!bolSuccess) 
-                setRefs.add(CorrelatedQueryData.from(msgBucket));
+                setRefs.add(CorrelatedQueryDataOld.from(msgBucket));
         }
         
         return setRefs;

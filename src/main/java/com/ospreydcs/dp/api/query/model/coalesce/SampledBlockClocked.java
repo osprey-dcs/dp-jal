@@ -33,7 +33,7 @@ import java.util.MissingResourceException;
 import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
 import com.ospreydcs.dp.api.query.model.correl.RawClockedData;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
@@ -121,7 +121,7 @@ public class SampledBlockClocked extends SampledBlock {
      * </li>
      * <li>
      * The argument should have already been checked for duplicate data source names using
-     * <code>{@link CorrelatedQueryData#verifySourceUniqueness()}</code>.
+     * <code>{@link CorrelatedQueryDataOld#verifySourceUniqueness()}</code>.
      * </li>
      * </ul>
      * </p>

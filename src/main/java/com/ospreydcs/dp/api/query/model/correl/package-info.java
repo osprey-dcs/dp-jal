@@ -40,18 +40,18 @@
  * <ol>
  * <li>Original Implementation
  *   <ul>
- *   <li><code>CorrelatedQueryData</code> - a block of raw data correlated to a single <code>SamplingClock</code> message.</li>
- *   <li><code>DataBucketInsertTask</code> - thread task for inserting "data bucket" into a set of <code>CorrelatedQueryData</code>.</li>
- *   <li><code>QueryDataCorrelator</code> - main processor of <code>QueryData</code> messages into <code>CorrelatedQueryData</code> sets.</li>
+ *   <li><code>CorrelatedQueryDataOld</code> - a block of raw data correlated to a single <code>SamplingClock</code> message.</li>
+ *   <li><code>DataBucketInsertTask</code> - thread task for inserting "data bucket" into a set of <code>CorrelatedQueryDataOld</code>.</li>
+ *   <li><code>QueryDataCorrelatorOld</code> - main processor of <code>QueryData</code> messages into <code>CorrelatedQueryDataOld</code> sets.</li>
  *   </ul>
  * </li>
  * <li>New Implementation
  *   <ul>
- *   <li><code>RawCorrelatedData</code> - base class replacing <code>CorrelatedQueryData</code>.</li>
+ *   <li><code>RawCorrelatedData</code> - base class replacing <code>CorrelatedQueryDataOld</code>.</li>
  *   <li><code>RawClockedData</code> - child class supporting raw data correlated to a <code>SamplingClock</code> message.</li>
  *   <li><code>RawTmsListData</code> - child class supporting raw data correlated to a <code>TimestampList</code> message.</li>
  *   <li><code>RawDataInsertTask</code> - thread task replacing <code>DataBucketInsertTask</code>.</li>
- *   <li><code>RawDataCorrelator</code> - main processor of <code>QueryData</code> messages replacing <code>QueryDataCorrelator</code>.</li>
+ *   <li><code>RawDataCorrelator</code> - main processor of <code>QueryData</code> messages replacing <code>QueryDataCorrelatorOld</code>.</li>
  *   </ul>
  * </li>
  * </ol>

@@ -56,8 +56,8 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.table.StaticDataTable;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelatorOld;
 import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
@@ -77,12 +77,12 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <p>
  * <h2>Creation</h2>
  * Note that <code>SamplingProcess</code> instances are created from the processed data
- * sets produced by the class <code>{@link QueryDataCorrelator}</code>.
+ * sets produced by the class <code>{@link QueryDataCorrelatorOld}</code>.
  * The raw data obtained from a data request of the Query Service is then correlated
- * into an ordered sets of <code>{@link CorrelatedQueryData}</code> instances, each instance 
+ * into an ordered sets of <code>{@link CorrelatedQueryDataOld}</code> instances, each instance 
  * all represent query results all within the same sampling clock.  
  * These correlated results sets are obtained from 
- * <code>{@link QueryDataCorrelator#getCorrelatedSet()}</code>.  The correlated results sets
+ * <code>{@link QueryDataCorrelatorOld#getCorrelatedSet()}</code>.  The correlated results sets
  * are then used in the creation of <code>SamplingProcess</code> instances. 
  * Thus, this class can be used in the reconstruction process of Data Platform 
  * Query Service data requests.
@@ -191,7 +191,7 @@ public class SamplingProcess {
      * <li>Exception type determines the nature of any Data inconsistency. </li>
      * </ul>  
      *
-     * @param setTargetData sorted set of <code>CorrelatedQueryData</code> used to build this process
+     * @param setTargetData sorted set of <code>CorrelatedQueryDataOld</code> used to build this process
      * 
      * @return a new instance of <code>SamplingProcess</code> fully populated and configured with argument data
      *  
@@ -202,7 +202,7 @@ public class SamplingProcess {
      * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      * @throws CompletionException      the sampling process was corrupt after creation (see message)
      */
-    public static SamplingProcess from(SortedSet<CorrelatedQueryData> setTargetData) 
+    public static SamplingProcess from(SortedSet<CorrelatedQueryDataOld> setTargetData) 
             throws  MissingResourceException, 
                     IllegalArgumentException, 
                     IllegalStateException, 
@@ -239,7 +239,7 @@ public class SamplingProcess {
      * </ul>  
      * </p>
      *
-     * @param setTargetData sorted set of <code>CorrelatedQueryData</code> used to build this process
+     * @param setTargetData sorted set of <code>CorrelatedQueryDataOld</code> used to build this process
      *  
      * @throws RangeException           the argument has bad ordering or contains time domain collisions (see message)
      * @throws MissingResourceException the argument is has empty data column(s)
@@ -248,7 +248,7 @@ public class SamplingProcess {
      * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      * @throws CompletionException      the sampling process was corrupt after creation (see message)
      */
-    public SamplingProcess(SortedSet<CorrelatedQueryData> setTargetData) 
+    public SamplingProcess(SortedSet<CorrelatedQueryDataOld> setTargetData) 
             throws  RangeException, 
                     MissingResourceException, 
                     IllegalArgumentException, 
@@ -712,7 +712,7 @@ public class SamplingProcess {
      * <p>
      * Extracts all starting times of the sampling clock in order to create the set
      * { <i>t</i><sub>0</sub>, <i>t</i><sub>1</sub>, ..., <i>t</i><sub><i>N</i>-1</sub> } where
-     * <i>t<sub>n</sub></i> is the start time for <code>CorrelatedQueryData</code> instance <i>n</i>
+     * <i>t<sub>n</sub></i> is the start time for <code>CorrelatedQueryDataOld</code> instance <i>n</i>
      * and <i>N</i> is the size of the argument.   
      * The ordered collection of start times is compared sequentially to check the following 
      * conditions:
@@ -732,17 +732,17 @@ public class SamplingProcess {
      * </ul>
      * </p>
      * 
-     * @param setPrcdData  the target set of processed <code>CorrelatedQueryData</code> objects 
+     * @param setPrcdData  the target set of processed <code>CorrelatedQueryDataOld</code> objects 
      * 
      * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
-    private ResultStatus verifyStartTimes(SortedSet<CorrelatedQueryData> setPrcdData) {
+    private ResultStatus verifyStartTimes(SortedSet<CorrelatedQueryDataOld> setPrcdData) {
         
         
         // Loop through set checking that all start times are in order
         int                 indPrev = 0;
-        CorrelatedQueryData cqdPrev = null;
-        for (CorrelatedQueryData cqdCurr : setPrcdData) {
+        CorrelatedQueryDataOld cqdPrev = null;
+        for (CorrelatedQueryDataOld cqdCurr : setPrcdData) {
             
             // Initialize the loop - first time through
             if (cqdPrev == null) {
@@ -776,11 +776,11 @@ public class SamplingProcess {
      * <p>
      * Extracts the set of all sampling time domain intervals
      * { <i>I</i><sub>0</sub>, <i>I</i><sub>0</sub>, ..., <i>I</i><sub><i>N</i>-1</sub> } where
-     * <i>I<sub>n</sub></i> is the sampling time domain for <code>CorrelatedQueryData</code> 
+     * <i>I<sub>n</sub></i> is the sampling time domain for <code>CorrelatedQueryDataOld</code> 
      * instance <i>n</i> and <i>N</i> is the size of the argument.  
      * We assume closed intervals of the form 
      * <i>I</i><sub><i>n</i></sub> = [<i>t</i><sub><i>n</i>,start</sub>, <i>t</i><sub><i>n</i>,end</sub>]
-     * where <i>t</i><sub><i>n</i>,start</sub> is the start time for <code>CorrelatedQueryData</code> instance <i>n</i>
+     * where <i>t</i><sub><i>n</i>,start</sub> is the start time for <code>CorrelatedQueryDataOld</code> instance <i>n</i>
      * and <i>t</i><sub><i>n</i>,end</sub> is the stop time.
      * </p>
      * <p>  
@@ -806,17 +806,17 @@ public class SamplingProcess {
      * </ul>
      * </p>
      * 
-     * @param setPrcdData  the target set of <code>CorrelatedQueryData</code> objects, corrected ordered 
+     * @param setPrcdData  the target set of <code>CorrelatedQueryDataOld</code> objects, corrected ordered 
      * 
      * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
-    private ResultStatus verifyTimeDomains(SortedSet<CorrelatedQueryData> setPrcdData) {
+    private ResultStatus verifyTimeDomains(SortedSet<CorrelatedQueryDataOld> setPrcdData) {
         
         // Check that remaining time domains are disjoint - this works if the argument is ordered correctly
         // Loop through set checking that all start times are in order
         int                 indPrev = 0;
-        CorrelatedQueryData cqdPrev = null;
-        for (CorrelatedQueryData cqdCurr : setPrcdData) {
+        CorrelatedQueryDataOld cqdPrev = null;
+        for (CorrelatedQueryDataOld cqdCurr : setPrcdData) {
             
             // Initialize the loop - first time through
             if (cqdPrev == null) {
@@ -849,14 +849,14 @@ public class SamplingProcess {
      * @deprecated replaced by {@link #verifyStartTimes(SortedSet)} and {@link #verifyTimeDomains(SortedSet)}
      */
     @Deprecated(since="Feb 2, 2024", forRemoval=true)
-    private ResultStatus verifyTimeRanges(SortedSet<CorrelatedQueryData> setQueryData) {
+    private ResultStatus verifyTimeRanges(SortedSet<CorrelatedQueryDataOld> setQueryData) {
         
         // Check all query data for correct ordering and time domain collisions
-        CorrelatedQueryData cqdFirst = setQueryData.first();
+        CorrelatedQueryDataOld cqdFirst = setQueryData.first();
         
         setQueryData.remove(cqdFirst);
-        CorrelatedQueryData cqdPrev = cqdFirst;
-        for (CorrelatedQueryData cqdCurr : setQueryData) {
+        CorrelatedQueryDataOld cqdPrev = cqdFirst;
+        for (CorrelatedQueryDataOld cqdCurr : setQueryData) {
             
             // Check sampling start time order
             Instant insPrev = cqdPrev.getStartInstant();
@@ -895,11 +895,11 @@ public class SamplingProcess {
      * Creates all the sampling blocks for this sampling process, according to the argument data.
      * </p>
      * <p>
-     * One <code>UniformSamplingBlock</code> instance is created for each <code>CorrelatedQueryData</code>
+     * One <code>UniformSamplingBlock</code> instance is created for each <code>CorrelatedQueryDataOld</code>
      * object in the argument collection.  The <code>UniformSamplingBlock</code> instances are created
      * in the same order as the argument, which is assumed to be by sampling start time.  The order
      * should have been enforced during query response correlation.
-     * Note that not all data sources need contribute to each <code>CorrelatedQueryData</code> 
+     * Note that not all data sources need contribute to each <code>CorrelatedQueryDataOld</code> 
      * instance in the argument.  The time-series data values (i.e., <code>null</code> values)
      * for missing data sources should be addressed later. 
      * </p>
@@ -918,7 +918,7 @@ public class SamplingProcess {
      * </ul>
      * </p>
      * 
-     * @param setQueryData  set of <code>CorrelatedQueryData</code> objects ordered by start time
+     * @param setQueryData  set of <code>CorrelatedQueryDataOld</code> objects ordered by start time
      * 
      * @return  vector of <code>UniformSamplingBlock</code> objects ordered according to argument
      * 
@@ -928,7 +928,7 @@ public class SamplingProcess {
      * throws RangeException           the argument has bad ordering or contains time domain collisions
      * @throws TypeNotPresentException an unsupported data type was detected within the argument
      */
-    private ArrayList<UniformSamplingBlock>    buildSamplingBlocks(SortedSet<CorrelatedQueryData> setQueryData) 
+    private ArrayList<UniformSamplingBlock>    buildSamplingBlocks(SortedSet<CorrelatedQueryDataOld> setQueryData) 
             throws MissingResourceException, IllegalArgumentException, IllegalStateException, /* RangeException,*/ TypeNotPresentException {
         
         // Create the sample blocks, pivoting to concurrency by container size
@@ -938,7 +938,7 @@ public class SamplingProcess {
             // invoke concurrency
             UniformSamplingBlock           arrSmplBlocks[] = new UniformSamplingBlock[setQueryData.size()];
 //            vecSmplBlocks = new ArrayList<>(setQueryData.size());
-            ArrayList<CorrelatedQueryData> vecQueryData = new ArrayList<>(setQueryData);
+            ArrayList<CorrelatedQueryDataOld> vecQueryData = new ArrayList<>(setQueryData);
             
             IntStream.range(0, setQueryData.size())
                 .parallel()
@@ -958,7 +958,7 @@ public class SamplingProcess {
             vecSmplBlocks = new ArrayList<>(setQueryData.size());
 
             int     indBlock = 0;
-            for (CorrelatedQueryData cqd : setQueryData) {
+            for (CorrelatedQueryDataOld cqd : setQueryData) {
                 UniformSamplingBlock    block = UniformSamplingBlock.from(cqd);
                 
                 vecSmplBlocks.add(indBlock, block);
@@ -990,11 +990,11 @@ public class SamplingProcess {
      * the same data.
      * </p>
      * 
-     * @param setQueryData  set of <code>CorrelatedQueryData</code> objects used to initialize process
+     * @param setQueryData  set of <code>CorrelatedQueryDataOld</code> objects used to initialize process
      * 
      * @return  set of all data source names within the Query Service correlated data collection 
      */
-    private SortedSet<String>    buildSourceNameSet(SortedSet<CorrelatedQueryData> setQueryData) {
+    private SortedSet<String>    buildSourceNameSet(SortedSet<CorrelatedQueryDataOld> setQueryData) {
         SortedSet<String> setNames = setQueryData
                 .stream()
                 .collect(
@@ -1017,7 +1017,7 @@ public class SamplingProcess {
      * <p>
      * The returned map contains entries for all data sources represented in the argument.
      * Not that the key set of the returned map should be equal to the set of data source
-     * name obtained from the initializing collection of <code>CorrelatedQueryData</code>
+     * name obtained from the initializing collection of <code>CorrelatedQueryDataOld</code>
      * objects.  Thus, the returned map can be used both to verify the set of data sources
      * within the process, and to verify that all sources have uniform data type. 
      * <p>
@@ -1420,16 +1420,16 @@ public class SamplingProcess {
 //        int cntTms = vecSmplBlocks.stream().map(usb -> usb.getSampleCount()).reduce(0, Integer::sum);
 //    }
     
-//    private List<SamplingPair>  buildSamplingPairs(SortedSet<CorrelatedQueryData> setRefs) throws IllegalStateException {
+//    private List<SamplingPair>  buildSamplingPairs(SortedSet<CorrelatedQueryDataOld> setRefs) throws IllegalStateException {
 //        List<SamplingPair>  lstPairs = new ArrayList<>(setRefs.size());
 //        
-//        CorrelatedQueryData refFirst = setRefs.first();
+//        CorrelatedQueryDataOld refFirst = setRefs.first();
 //        
 //        setRefs.remove(refFirst);
 //        
 //        UniformSamplingClock  setPrev = UniformSamplingClock.from(refFirst.getSamplingMessage());
 //        lstPairs.add( SamplingPair.of(setPrev, refFirst.getAllDataMessages()) ) ;
-//        for (CorrelatedQueryData ref : setRefs) {
+//        for (CorrelatedQueryDataOld ref : setRefs) {
 //            UniformSamplingClock  setCurr = UniformSamplingClock.from(ref.getSamplingMessage());
 //            
 //            if (setCurr.hasDomainIntersection(setPrev))

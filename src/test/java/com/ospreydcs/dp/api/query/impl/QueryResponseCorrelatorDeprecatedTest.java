@@ -46,8 +46,8 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelatorOld;
 import com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated;
 import com.ospreydcs.dp.api.query.test.TestQueryCompositeRecord;
 import com.ospreydcs.dp.api.query.test.TestQueryRecord;
@@ -115,7 +115,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     private static DpQueryConnection        connQuery;
     
     /** Query data corrTest used for comparisons - this class has been unit tested */
-    private static QueryDataCorrelator      corrData;
+    private static QueryDataCorrelatorOld      corrData;
     
     
     //
@@ -141,7 +141,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
         connQuery = facTest.connect();
         
         // Create the comparison correlater
-        corrData = new QueryDataCorrelator();
+        corrData = new QueryDataCorrelatorOld();
     }
 
     /**
@@ -195,13 +195,13 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
             corrTest.setMultiStreamingResponse(false);  // method under test
             
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -221,13 +221,13 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
             corrTest.setCorrelationConcurrency(false);  // method under test
             
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -247,13 +247,13 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
             corrTest.setCorrelateWhileStreaming(false);  // method under test
             
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -277,7 +277,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
         try {
             corrTest.setCorrelateWhileStreaming(false);  // method under test
             
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
         } catch (DpQueryException e) {
             Assert.fail("Request processing threw exception: message=" + e.getMessage() + ", cause=" + e.getCause());
@@ -299,7 +299,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
@@ -307,7 +307,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
             corrTest.setCorrelationConcurrency(false);  // method under test
             corrTest.setCorrelateWhileStreaming(false);  // method under test
             
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -325,11 +325,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestUnary(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestUnary(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -347,11 +347,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestUnary(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestUnary(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -369,11 +369,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestUnary(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestUnary(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -391,11 +391,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestUnary(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestUnary(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -417,7 +417,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
         try {
             
             // This should fail because result set cannot be returned in one message
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestUnary(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestUnary(dpRequest);
             
             Assert.fail("Result set should be too large to fit in one message.");
             
@@ -435,11 +435,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
 //            Assert.assertEquals(setExpected, setActual);
             Assert.assertTrue( this.verifyResults(dpRequest, setActual) );
@@ -458,11 +458,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -480,11 +480,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -502,11 +502,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -524,11 +524,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -546,11 +546,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         DpDataRequest       dpRequest = recTest.createRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -570,7 +570,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestStream(dpRequest);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestStream(dpRequest);
             
         } catch (DpQueryException e) {
             Assert.fail("Request processing threw exception: message=" + e.getMessage() + ", cause=" + e.getCause());
@@ -586,11 +586,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         List<DpDataRequest>       lstRequests = recTest.createCompositeRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestMultiStream(lstRequests);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestMultiStream(lstRequests);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -608,11 +608,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         List<DpDataRequest>       lstRequests = recTest.createCompositeRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestMultiStream(lstRequests);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestMultiStream(lstRequests);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -630,11 +630,11 @@ public class QueryResponseCorrelatorDeprecatedTest {
         
         List<DpDataRequest>       lstRequests = recTest.createCompositeRequest();
         
-        SortedSet<CorrelatedQueryData>  setExpected = this.processRawData(recTest);
+        SortedSet<CorrelatedQueryDataOld>  setExpected = this.processRawData(recTest);
         
         // Perform request and process response data, then compare
         try {
-            SortedSet<CorrelatedQueryData>  setActual = corrTest.processRequestMultiStream(lstRequests);
+            SortedSet<CorrelatedQueryDataOld>  setActual = corrTest.processRequestMultiStream(lstRequests);
             
             Assert.assertEquals(setExpected, setActual);
             
@@ -661,7 +661,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
      * 
      * @return  ordered, correlated data set from given argument
      */
-    private SortedSet<CorrelatedQueryData>  processRawData(TestQueryRecord recTest) {
+    private SortedSet<CorrelatedQueryDataOld>  processRawData(TestQueryRecord recTest) {
         corrData.reset();
         
         try {
@@ -669,7 +669,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
             
             lstRawData.forEach(msgData -> corrData.addQueryData(msgData));
             
-            SortedSet<CorrelatedQueryData>   setPrcdData = corrData.getCorrelatedSet();
+            SortedSet<CorrelatedQueryDataOld>   setPrcdData = corrData.getCorrelatedSet();
             
             return setPrcdData;
             
@@ -693,7 +693,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
      * 
      * @return  ordered, correlated data set from given argument
      */
-    private SortedSet<CorrelatedQueryData>  processRawData(TestQueryCompositeRecord recTest) {
+    private SortedSet<CorrelatedQueryDataOld>  processRawData(TestQueryCompositeRecord recTest) {
         corrData.reset();
         
         try {
@@ -701,7 +701,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
             
             lstRawData.forEach(msgData -> corrData.addQueryData(msgData));
             
-            SortedSet<CorrelatedQueryData>   lstPrcdData = corrData.getCorrelatedSet();
+            SortedSet<CorrelatedQueryDataOld>   lstPrcdData = corrData.getCorrelatedSet();
             
             return lstPrcdData;
             
@@ -712,12 +712,12 @@ public class QueryResponseCorrelatorDeprecatedTest {
         }
     }
     
-    private boolean verifyResults(DpDataRequest rqst, SortedSet<CorrelatedQueryData> setData) {
+    private boolean verifyResults(DpDataRequest rqst, SortedSet<CorrelatedQueryDataOld> setData) {
         
         List<String>    lstSrcNms = rqst.getSourceNames();
         TimeInterval    ivlRange = rqst.range();
         
-        for (CorrelatedQueryData data : setData) {
+        for (CorrelatedQueryDataOld data : setData) {
             if ( !lstSrcNms.containsAll( data.getSourceNames() ) )
                 return false;
             

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DomainCollisionProcessor.java
+ * File:	TimeDomainProcessor.java
  * Package: com.ospreydcs.dp.api.query.model.coalesce
- * Type: 	DomainCollisionProcessor
+ * Type: 	TimeDomainProcessor
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -60,7 +60,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * The resulting timestamps must be resolved along with the process variable values.
  * </p>
  * <p>
- * Instances of <code>DomainCollisionProcessor</code> perform an intermediate form of data processing when 
+ * Instances of <code>TimeDomainProcessor</code> perform an intermediate form of data processing when 
  * time-domain collisions are detected.  The original set of <code>RawCorrelatedData</code> instances is
  * inspected (i.e., that set given at creation time) for time-domain collisions.  Any that are found are
  * extracted and placed into "super domain" collections.  Both the super domains and the correlated raw data
@@ -93,7 +93,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @since Mar 28, 2025
  *
  */
-public class DomainCollisionProcessor {
+public class TimeDomainProcessor {
 
     
     //
@@ -102,15 +102,15 @@ public class DomainCollisionProcessor {
     
     /**
      * <p>
-     * Creates a new <code>DomainCollisionProcessor</code> instance initialized to the given correlated raw data set.
+     * Creates a new <code>TimeDomainProcessor</code> instance initialized to the given correlated raw data set.
      * </p>
      * 
      * @param setDataOrg    the correlated raw data set under processing
      * 
      * @return  a new time domain collision processor for the given data set
      */
-    public static DomainCollisionProcessor  from(SortedSet<RawCorrelatedData> setRawData) {
-        return new DomainCollisionProcessor(setRawData);
+    public static TimeDomainProcessor  from(SortedSet<RawCorrelatedData> setRawData) {
+        return new TimeDomainProcessor(setRawData);
     }
     
     
@@ -145,7 +145,7 @@ public class DomainCollisionProcessor {
      * </ul>
      * </p>
      * 
-     * @param setRawData  the target set of processed <code>CorrelatedQueryData</code> objects 
+     * @param setRawData  the target set of processed <code>CorrelatedQueryDataOld</code> objects 
      * 
      * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
@@ -223,7 +223,7 @@ public class DomainCollisionProcessor {
      * </ul>
      * </p>
      * 
-     * @param setDataOrg  the target set of <code>CorrelatedQueryData</code> objects, corrected ordered 
+     * @param setDataOrg  the target set of <code>CorrelatedQueryDataOld</code> objects, corrected ordered 
      * 
      * @return  <code>ResultStatus</code> containing result of test, with message if failure
      */
@@ -339,12 +339,12 @@ public class DomainCollisionProcessor {
     
     /**
      * <p>
-     * Constructs a new <code>DomainCollisionProcessor</code> instance for the given set of correlated raw data.
+     * Constructs a new <code>TimeDomainProcessor</code> instance for the given set of correlated raw data.
      * </p>
      *
      * @param setDataOrg    the correlated raw data set under processing
      */
-    public DomainCollisionProcessor(SortedSet<RawCorrelatedData> setRawData) {
+    public TimeDomainProcessor(SortedSet<RawCorrelatedData> setRawData) {
         this.setDataOrg = setRawData;
         this.lstDataActive.addAll( setRawData );
         

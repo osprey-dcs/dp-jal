@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryServiceApiFactory.java
+ * File:	DpQueryServiceApiFactoryOld.java
  * Package: com.ospreydcs.dp.api.query.impl
- * Type: 	DpQueryServiceApiFactory
+ * Type: 	DpQueryServiceApiFactoryOld
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -45,12 +45,22 @@ import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
  * This is the instance-based connection factory derived directly from <code>DpServiceApiFactoryBase</code>.
  * It maintains a singleton instance as a class resource for Query Service connections.
  * </p> 
+ * <p>
+ * <h2>NOTES:</h2>
+ * This connection factory implementation supplies the <code>{@link DpQueryServiceImplOld}</code> implementation
+ * for the <code>IQueryService</code> interface.  The <code>DpQueryServiceImplOld</code> implementation DOES NOT
+ * support timestamp lists or time-domain collisions within recovered data once correlated.  The preferred 
+ * implementation is <code>{@link DpQueryServiceImplNew}</code>; it supports both situations and should be used
+ * once stable.
+ * </p> 
  *
  * @author Christopher K. Allen
  * @since Feb 19, 2025
- *
+ * 
+ * @deprecated  Use DpServiceApiFactoryNew when stable
  */
-public class DpQueryServiceApiFactory extends DpServiceApiFactoryBase<
+@Deprecated(since="April 24, 2025")
+public class DpQueryServiceApiFactoryOld extends DpServiceApiFactoryBase<
                                 IQueryService, 
                                 DpQueryConnection, 
                                 DpQueryServiceGrpc, 
@@ -72,7 +82,7 @@ public class DpQueryServiceApiFactory extends DpServiceApiFactoryBase<
     //
     
     /** The singleton instance of the connection factory */
-    public static final DpQueryServiceApiFactory   FACTORY = newFactory(CFG_CONN_DEFAULT);
+    public static final DpQueryServiceApiFactoryOld   FACTORY = newFactory(CFG_CONN_DEFAULT);
     
     
     //
@@ -81,7 +91,7 @@ public class DpQueryServiceApiFactory extends DpServiceApiFactoryBase<
     
     /**
      * <p>
-     * Creates a new, initialized instance of the <code>DpQueryServiceApiFactory</code> 
+     * Creates a new, initialized instance of the <code>DpQueryServiceApiFactoryOld</code> 
      * Query Service API connection factory.
      * </p>
      * <p>
@@ -91,10 +101,10 @@ public class DpQueryServiceApiFactory extends DpServiceApiFactoryBase<
      * 
      * @param   cfgDefault  the default connection parameters for the query service used by new factory
      * 
-     * @return  a new Query Service API factory ready for <code>DpQueryServiceApiFactory</code> creation and connection
+     * @return  a new Query Service API factory ready for <code>DpQueryServiceImplOld</code> creation and connection
      */
-    public static final DpQueryServiceApiFactory   newFactory(DpGrpcConnectionConfig cfgDefault) {
-        return new DpQueryServiceApiFactory(cfgDefault);
+    public static final DpQueryServiceApiFactoryOld   newFactory(DpGrpcConnectionConfig cfgDefault) {
+        return new DpQueryServiceApiFactoryOld(cfgDefault);
     }
     
     
@@ -107,7 +117,7 @@ public class DpQueryServiceApiFactory extends DpServiceApiFactoryBase<
      * 
      * @return  the static instance <code>{@link #FACTORY}</code>
      */
-    public static DpQueryServiceApiFactory  getInstance() {
+    public static DpQueryServiceApiFactoryOld  getInstance() {
         return FACTORY;
     }
     
@@ -118,7 +128,7 @@ public class DpQueryServiceApiFactory extends DpServiceApiFactoryBase<
     
     /**
      * <p>
-     * Constructs a new <code>DpQueryServiceApiFactory</code> instance.
+     * Constructs a new <code>DpQueryServiceApiFactoryOld</code> instance.
      * </p>
      * <p>
      * Super class requirement for instance construction.   Supplies the Protobuf-generated service interface
@@ -127,7 +137,7 @@ public class DpQueryServiceApiFactory extends DpServiceApiFactoryBase<
      * 
      * @param   cfg the default connection parameters for the Query Service used by new factory
      */
-    protected DpQueryServiceApiFactory(DpGrpcConnectionConfig cfg) {
+    protected DpQueryServiceApiFactoryOld(DpGrpcConnectionConfig cfg) {
         super(DpQueryServiceGrpc.class, cfg);
     }
 
@@ -153,7 +163,7 @@ public class DpQueryServiceApiFactory extends DpServiceApiFactoryBase<
      */
     @Override
     protected IQueryService apiFrom(DpQueryConnection conn) throws DpGrpcException {
-        return DpQueryServiceImpl.from(conn);
+        return DpQueryServiceImplOld.from(conn);
     }
 
 }

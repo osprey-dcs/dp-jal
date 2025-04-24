@@ -515,7 +515,7 @@ public class QueryChannel {
      * </p>
      * <p>
      * This method allows clients to explicitly determine the concurrent gRPC data streams used by the
-     * <code>QueryRequestProcessor</code>.  To use the default multi-streaming mechanism method
+     * <code>QueryRequestProcessorOld</code>.  To use the default multi-streaming mechanism method
      * <code>{@link #processRequestStream(DpDataRequest)}</code> is available.
      * <p>
      * A separate gRPC data stream is established for each data request within the argument list and concurrent

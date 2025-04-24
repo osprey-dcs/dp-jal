@@ -44,7 +44,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
@@ -53,7 +53,7 @@ import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
- * JUnit test cases for <code>{@link CorrelatedQueryData}</code>.
+ * JUnit test cases for <code>{@link CorrelatedQueryDataOld}</code>.
  *
  * @author Christopher K. Allen
  * @since Feb 10, 2024
@@ -120,31 +120,31 @@ public class CorrelatedQueryDataTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#create(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#create(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testFrom() {
         DataBucket  msgBucket = BUCKET;
         
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         Assert.assertTrue("Number of data sources NOT equal to 1.", cqdTest.getSourceCount() == 1);
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#CorrelatedQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#CorrelatedQueryData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testCorrelatedQueryData() {
         DataBucket  msgBucket = BUCKET;
         
-        CorrelatedQueryData cqdTest = new CorrelatedQueryData(msgBucket);
+        CorrelatedQueryDataOld cqdTest = new CorrelatedQueryDataOld(msgBucket);
         
         Assert.assertTrue("Number of data sources NOT equal to 1.", cqdTest.getSourceCount() == 1);
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getSampleCount()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#getSampleCount()}.
      */
     @Test
     public final void testGetSampleCount() {
@@ -158,14 +158,14 @@ public class CorrelatedQueryDataTest {
         final int   cntSamples = msgBucket.getDataTimestamps().getSamplingClock().getCount();
         
         // Create initialized correlated data object 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         // Compare the sample counts
         Assert.assertEquals(cntSamples, cqdTest.getSampleCount());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getStartInstant()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#getStartInstant()}.
      */
     @Test
     public final void testGetStartInstant() {
@@ -180,16 +180,16 @@ public class CorrelatedQueryDataTest {
         Instant     insStart = ProtoMsg.toInstant(tmsStart);
         
         // Create initialized correlated data object 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         // Compare start times
         Assert.assertEquals(insStart, cqdTest.getStartInstant());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getTimeDomain()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#getTimeDomain()}.
      * <p> 
-     * Within a <code>CorrelatedQueryData</code> instance the time domain is the smallest, connected
+     * Within a <code>CorrelatedQueryDataOld</code> instance the time domain is the smallest, connected
      * time interval that contains all sample points. 
      */
     @Test
@@ -214,14 +214,14 @@ public class CorrelatedQueryDataTest {
         TimeInterval    domSamples = TimeInterval.from(insStart, insStop);
         
         // Create initialized correlated data object 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         // Compare time domains
         Assert.assertEquals(domSamples, cqdTest.getTimeDomain());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getSourceNames()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#getSourceNames()}.
      */
     @Test
     public final void testGetSourceNames() {
@@ -229,7 +229,7 @@ public class CorrelatedQueryDataTest {
         DataBucket          msgBucket = lstBuckets.get(0);
         
         // Create initialized correlated data object 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         // Attempt to insert all the data - should be multiple accepted/rejected
         List<DataBucket>    lstInserted = lstBuckets
@@ -255,7 +255,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getSamplingMessage()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#getSamplingMessage()}.
      */
     @Test
     public final void testGetSamplingMessage() {
@@ -263,7 +263,7 @@ public class CorrelatedQueryDataTest {
         DataBucket          msgBucket = lstBuckets.get(0);
         
         // Create initialized correlated data object 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         // Attempt to insert all the data - should be multiple accepted/rejected
         List<DataBucket>    lstInserted = lstBuckets
@@ -285,7 +285,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#getAllDataMessages()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#getAllDataMessages()}.
      */
     @Test
     public final void testGetAllDataMessages() {
@@ -293,7 +293,7 @@ public class CorrelatedQueryDataTest {
         DataBucket          msgBucket = lstBuckets.get(0);
         
         // Create initialized correlated data object 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         // Attempt to insert all the data - should be multiple accepted/rejected
         List<DataBucket>    lstInserted = lstBuckets
@@ -323,7 +323,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#verifySourceUniqueness()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#verifySourceUniqueness()}.
      */
     @Test
     public final void testVerifySourceUniqueness() {
@@ -331,7 +331,7 @@ public class CorrelatedQueryDataTest {
         DataBucket          msgBucket = lstBuckets.get(0);
         
         // Create initialized correlated data object 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         // Attempt to insert all the data - should be multiple accepted/rejected
         List<DataBucket>    lstInserted = lstBuckets
@@ -349,7 +349,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#verifySourceSizes()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#verifySourceSizes()}.
      */
     @Test
     public final void testVerifySourceSizes() {
@@ -357,7 +357,7 @@ public class CorrelatedQueryDataTest {
         DataBucket          msgBucket = lstBuckets.get(0);
         
         // Create initialized correlated data object 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         // Attempt to insert all the data - should be multiple accepted/rejected
         List<DataBucket>    lstInserted = lstBuckets
@@ -375,7 +375,7 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testInsertBucketData() {
@@ -383,7 +383,7 @@ public class CorrelatedQueryDataTest {
         DataBucket          msgBucket = lstBuckets.get(0);
         
         // Create initialized correlated data object 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         // Attempt to insert all the data - should be multiple accepted/rejected
         List<DataBucket>    lstInserted = lstBuckets
@@ -395,14 +395,14 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#insertBucketData(com.ospreydcs.dp.grpc.v1.query.QueryResponse.QueryReport.BucketData.DataBucket)}.
      */
     @Test
     public final void testInsertBucketDataRepeated() {
         DataBucket          msgBucket = BUCKET;
         
         // Create initialized correlated data object 
-        CorrelatedQueryData cqdTest = CorrelatedQueryData.from(msgBucket);
+        CorrelatedQueryDataOld cqdTest = CorrelatedQueryDataOld.from(msgBucket);
         
         // Attempt to insert the same bucket again
         boolean bolInsert = cqdTest.insertBucketData(msgBucket);
@@ -411,28 +411,28 @@ public class CorrelatedQueryDataTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData#compareTo(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld#compareTo(com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld)}.
      */
     @Test
     public final void testCompareTo() {
         List<DataBucket>    lstBuckets = LST_BUCKETS_ONE;
         
         // Create a sorted set of correlated data 
-        SortedSet<CorrelatedQueryData>  setData = new TreeSet<>(CorrelatedQueryData.StartTimeComparator.create());
+        SortedSet<CorrelatedQueryDataOld>  setData = new TreeSet<>(CorrelatedQueryDataOld.StartTimeComparator.create());
         
-        lstBuckets.forEach(msgBucket -> setData.add(CorrelatedQueryData.from(msgBucket)));
+        lstBuckets.forEach(msgBucket -> setData.add(CorrelatedQueryDataOld.from(msgBucket)));
         
         // Compare each element in the set for ordering
         int                     indPrev = 0;
-        CorrelatedQueryData     cqdPrev = null;
-        for (CorrelatedQueryData cqdCurr : setData) {
+        CorrelatedQueryDataOld     cqdPrev = null;
+        for (CorrelatedQueryDataOld cqdCurr : setData) {
             if (cqdPrev == null) {
                 cqdPrev = cqdCurr;
                 continue;
             }
                 
             if (cqdPrev.compareTo(cqdCurr) >= 0) {
-                Assert.fail("Found bad CorrelatedQueryData ordering at index " + Integer.toString(indPrev));
+                Assert.fail("Found bad CorrelatedQueryDataOld ordering at index " + Integer.toString(indPrev));
                 return;
             }
             

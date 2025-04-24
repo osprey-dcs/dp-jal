@@ -55,7 +55,7 @@ import com.ospreydcs.dp.api.model.ProtoMessageBuffer;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelatorOld;
 import com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
@@ -214,7 +214,7 @@ public class QueryChannelTest {
     private static QueryChannel         chanQuery;
     
     /** The query data correlator */
-    private static QueryDataCorrelator  prcrCorrelator;
+    private static QueryDataCorrelatorOld  prcrCorrelator;
     
     /** Print output stream for storing evaluation results to single file */
     private static PrintStream          psOutput;
@@ -240,7 +240,7 @@ public class QueryChannelTest {
         chanQuery = QueryChannel.from(connQuery, queMsgBuffer);
         
         // Create the query request data correlator
-        prcrCorrelator = QueryDataCorrelator.create();
+        prcrCorrelator = QueryDataCorrelatorOld.create();
         
         // Open the common output file
         String  strFileName = QueryChannelTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";

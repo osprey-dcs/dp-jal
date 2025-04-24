@@ -55,8 +55,8 @@ import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IDpQueryStreamObserver;
 import com.ospreydcs.dp.api.query.IQueryService;
 import com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelatorOld;
 import com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
@@ -211,7 +211,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * @author Christopher K. Allen
  * @since Jan 5, 2024
  *
- * @deprecated  Replaced by DpQueryServiceImpl
+ * @deprecated  Replaced by DpQueryServiceImplOld
  */
 @Deprecated(since="Feb 16, 2025", forRemoval=true)
 public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQueryServiceImplDeprecated, DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> implements IQueryService {
@@ -390,12 +390,12 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
         
         QueryDataResponse msgRsp = super.grpcConn.getStubBlock().queryData(qry);
         
-        QueryDataCorrelator correlator = new QueryDataCorrelator();
+        QueryDataCorrelatorOld correlator = new QueryDataCorrelatorOld();
         
         try {
             correlator.addQueryResponse(msgRsp);
             
-            SortedSet<CorrelatedQueryData>  setPrcdData = correlator.getCorrelatedSet();
+            SortedSet<CorrelatedQueryDataOld>  setPrcdData = correlator.getCorrelatedSet();
             
             SamplingProcess process = SamplingProcess.from(setPrcdData);
             IDataTable      table = process.createStaticDataTable();
@@ -419,7 +419,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
     public IDataTable   queryData(DpDataRequest rqst) throws DpQueryException {
         
         // Perform request and response correlation
-        SortedSet<CorrelatedQueryData> setPrcdData = this.dataProcessor.processRequestStream(rqst);
+        SortedSet<CorrelatedQueryDataOld> setPrcdData = this.dataProcessor.processRequestStream(rqst);
         
         
         // Recover the sampling process 
@@ -452,7 +452,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
     public IDataTable   queryData(List<DpDataRequest> lstRqsts) throws DpQueryException {
         
         // Perform request and response correlation
-        SortedSet<CorrelatedQueryData>  setPrcdData = this.dataProcessor.processRequestMultiStream(lstRqsts);
+        SortedSet<CorrelatedQueryDataOld>  setPrcdData = this.dataProcessor.processRequestMultiStream(lstRqsts);
 
         // Recover the sampling process 
         // TODO - contains extensive error checking which may be removed when stable
