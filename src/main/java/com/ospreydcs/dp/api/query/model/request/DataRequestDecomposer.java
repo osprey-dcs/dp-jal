@@ -164,6 +164,30 @@ public class DataRequestDecomposer {
     //
     
     /**
+     * <p>
+     * Resets all configuration parameters to their default values.
+     * </p>
+     * <p>
+     * The default configuration at construction is reestablished after invoking this method.
+     * The default configuration parameters are taken from the Java API Library configuration
+     * file.  The following lists the getter method for retrieving the current configurations values
+     * and the default configuration available from class constants:
+     * <ul>
+     * <li><code>{@link #isActive()}</code> - <code>{@link #BOL_ACTIVE}</code>.
+     * <li><code>{@link #getMaxDataSources()}</code> - <code>{@link #CNT_MAX_SOURCES}</code>.
+     * <li><code>{@link #getMaxDuration()}</code> - <code>{@link #DUR_MAX}</code>.
+     * </ul>
+     * <p>  
+     * 
+     */
+    public final void resetDefaultCofiguration() {
+        
+        this.bolActive = BOL_ACTIVE;
+        this.cntSrcsMax = CNT_MAX_SOURCES;
+        this.durMax = DUR_MAX;
+    }
+    
+    /**
      * @return <code>true</code> if request decomposition is enabled, <code>false</code> if disabled
      */
     public final boolean isActive() {

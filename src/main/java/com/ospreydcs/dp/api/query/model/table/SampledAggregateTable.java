@@ -203,6 +203,14 @@ public class SampledAggregateTable implements IDataTable {
     //
     
     /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#getRequestId()
+     */
+    @Override
+    public String   getRequestId() {
+        return this.aggSrcData.getRequestId();
+    }
+    
+    /**
      * @see com.ospreydcs.dp.api.common.IDataTable#isTableComplete()
      */
     @Override

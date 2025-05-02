@@ -117,7 +117,7 @@ query:      # Data Platform Query Service client API default configuration param
          decompose:        # data request query decomposition default parameters (for multi-streaming)
             active: true            # use query decomposition  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_ACTIVE
             maxSources: 1000        # max data source count    : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_SOURCES
-            maxDuration: 1          # max time range duration  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
+            maxDuration: 1          # max time duration (sec)  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
             unitDuration: SECONDS   # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_UNIT_DURATION
       response:       # Default parameters used for data responses
          correlate:        # Query data correlation parameters

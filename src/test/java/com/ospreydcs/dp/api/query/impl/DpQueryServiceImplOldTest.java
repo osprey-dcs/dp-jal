@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryServiceImplTest.java
+ * File:	DpQueryServiceImplOldTest.java
  * Package: com.ospreydcs.dp.api.query.impl
- * Type: 	DpQueryServiceImplTest
+ * Type: 	DpQueryServiceImplOldTest
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -96,7 +96,7 @@ import com.ospreydcs.dp.api.util.JavaSize;
  * @since Feb 19, 2025
  *
  */
-public class DpQueryServiceImplTest {
+public class DpQueryServiceImplOldTest {
 
     //
     // Class Types
@@ -255,7 +255,7 @@ public class DpQueryServiceImplTest {
         apiTest = DpQueryApiFactoryOld.connect();
         
         // Open the common output file
-        String  strFileName = DpQueryServiceImplTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
+        String  strFileName = DpQueryServiceImplOldTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
         Path    pathOutput = Paths.get(STR_PATH_OUTPUT, strFileName);
         File    fileOutput = pathOutput.toFile();
         
@@ -264,7 +264,7 @@ public class DpQueryServiceImplTest {
         // Write header
         DateFormat  date = DateFormat.getDateTimeInstance();
         String      strDateTime = date.format(new Date());
-        psOutput.println(DpQueryServiceImplTest.class.getSimpleName() + ": " + strDateTime);
+        psOutput.println(DpQueryServiceImplOldTest.class.getSimpleName() + ": " + strDateTime);
         psOutput.println();
     }
 

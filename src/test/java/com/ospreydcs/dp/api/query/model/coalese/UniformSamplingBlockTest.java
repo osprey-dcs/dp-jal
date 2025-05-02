@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.series;
+package com.ospreydcs.dp.api.query.model.coalese;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

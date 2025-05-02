@@ -386,7 +386,6 @@ public class RawDataCorrelator {
         this.bolConcurrency = BOL_CONCURRENCY;
         this.cntMaxThreads = CNT_CONCURRENCY_THDS;
         this.szSetConcPivot = SZ_CONCURRENCY_PIVOT;
-
     }
     
     /**

@@ -690,9 +690,10 @@ public class DpQueryServiceImplNew extends
         // Perform request and response correlation
         SortedSet<RawCorrelatedData>    setData = this.prcrRqsts.processRequest(rqst);
         long                            szData = this.prcrRqsts.getProcessedByteCount();
+        String                          strRqstId = this.prcrRqsts.getRequestId();
         
         // Time domain processing and data coalescing/aggregation
-        SampledAggregate    aggBlks = this.assmRspns.process(setData);
+        SampledAggregate    aggBlks = this.assmRspns.process(strRqstId, setData);
         IDataTable          table = this.selectTableImpl(aggBlks, szData);
         
         return table;

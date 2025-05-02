@@ -183,6 +183,35 @@ public class SampledAggregate {
     public static SampledAggregate  from() {
         return new SampledAggregate();
     }
+    
+    /**
+     * <p>
+     * Creates and returns a new, empty <code>SampledAggregate</code> instance with the given request identifier.
+     * </p>
+     * <p>
+     * <h2>Population</h2>
+     * The returned instance is empty and ready for sampled block population.
+     * <code>SampledAggregate</code> instances are populated using repeated invocations of the 
+     * <code>{@link #add(SampledBlock)}</code> method.  The <code>SampledBlock</code> instances are
+     * ordered within the aggregate as they are added, according to their natural ordering (i.e, the
+     * start time).  Thus, <code>SampledBlock</code> instances can be added in any order.  However,
+     * adding a <code>SampledBlock</code> instance is necessarily an atomic operation and is thus synchronized
+     * for use with multi-threading.
+     * </p>
+     * <p>
+     * <h2>Data Verification</h2>
+     * There are a set of methods for verification of the aggregate data set once populated; these methods 
+     * are suffixed as <code>verify...()</code>.  Although they are intended to verification once fully populated,
+     * they may be called at any time and reflect the current state of the aggregate.
+     * </p>
+     * 
+     * @param strRqstId request ID of the original time-series data request
+     * 
+     * @return  a new, empty <code>SampledAggregate</code> instance ready for data population
+     */
+    public static SampledAggregate  from(String strRqstId) {
+        return new SampledAggregate(strRqstId);
+    }
 
     
     //
@@ -226,6 +255,9 @@ public class SampledAggregate {
     //
     // Attributes
     //
+    
+    /** The optional request identifier of the original time-series data request */
+    private String          strRqstId = null;
 
     /** The number of samples within each time-series */
     private int             cntSamples = 0;
@@ -266,10 +298,50 @@ public class SampledAggregate {
     public SampledAggregate() {
     }
     
+    /**
+     * <p>
+     * Constructs a new <code>SampledAggregate</code> instance with the given time-series data request identifier.
+     * </p>
+     *
+     * @param strRqstId request identifier for the original time-series data request
+     */
+    public SampledAggregate(String strRqstId) {
+        this.strRqstId = strRqstId;
+    }
+    
     
     //
     // Operations
     //
+    
+    /**
+     * <p>
+     * Assigns the (optional) identifier of the original time-series data request.
+     * </p>
+     * <p>
+     * <s>For proper operation invoke this method before assembling the sampled aggregate, that is,
+     * before calling <code>{@link #add(SampledBlock)}</code>.  The given argument will then be
+     * assigned as the request ID for each sampled block in the aggregate.
+     * </s>  
+     * </p>
+     * <p>
+     * This method can be called at any time.  However, in order that the request ID field be 
+     * available for any data tables it must be called before <code>{@link #createDynamicDataTable()}</code>
+     * or <code>{@link #createStaticDataTable()}</code>. 
+     * <p>
+     * Note that the <code>SampledBlock</code> class exposes the <code>IDataTable</code> interface 
+     * through which the request identifier is available.
+     * </p>
+     *  
+     * @param strRqstId identifier of the original time-series data request
+     */
+    public void setRequestId(String strRqstId) {
+        this.strRqstId = strRqstId;
+
+        // Set the original time-series request identifier for each composite sampled block
+        this.setSmplBlocks.forEach(blk -> blk.setRequestId(strRqstId));
+        
+    }
     
     /**
      * <p>
@@ -306,6 +378,10 @@ public class SampledAggregate {
         
         // Extract the data types of the data sources - check for consistency
         this.extractSourceTypes(blkNew);    // throws exception
+        
+        // Set the original time-series request identifier
+        if (this.strRqstId != null)
+            blkNew.setRequestId(this.strRqstId);
         
         // Insert the sampled block at the proper index according to the start time
         this.setSmplBlocks.add(blkNew);
@@ -524,6 +600,26 @@ public class SampledAggregate {
     //
     // Attribute/Property Query
     //
+    
+    /**
+     * <p>
+     * Returns the request ID of the original time-series data request if available.
+     * </p>
+     * <p>
+     * The request ID is an optional parameter within the Java API Library used to associated recovered
+     * data to the original data request.  See <code>{@link IDataTable#getRequestId()}</code> for more
+     * information.  
+     * </p>
+     * <p>
+     * This attribute can be set with method <code>{@link #setRequestId(String)}</code> or during creation.
+     * </p>
+     * 
+     * @return  the (optional) identifier associated with the original time-series data request,
+     *          or <code>null</code> if unassigned 
+     */
+    public String   getRequestId() {
+        return this.strRqstId;
+    }
     
     /**
      * <p>
@@ -1012,9 +1108,12 @@ public class SampledAggregate {
         // Create the data table and return it
         List<Instant>   lstTms = this.timestamps();
         
-        StaticDataTable     tblProcess = new StaticDataTable(lstTms, lstCols);
+        StaticDataTable     tblStat = new StaticDataTable(lstTms, lstCols);
         
-        return tblProcess;
+        if (this.strRqstId != null)
+            tblStat.setRequestId(this.strRqstId);
+        
+        return tblStat;
     }
     
     /**

@@ -387,6 +387,9 @@ public class QueryRequestProcessorNew {
     // Process/State Variables
     //
     
+    /** The request identifier of the original time-series data request */
+    private String                  strRqstId = null;
+    
     /** The composite request created from the current request (when {@link #processRequest(DpDataRequest)} was invoked) */
     private List<DpDataRequest>     lstCompRqsts = null;
     
@@ -461,6 +464,9 @@ public class QueryRequestProcessorNew {
         this.bolCorrelateConcurrenly = BOL_CORRELATE_CONCURRENCY;
         this.bolCorrelateMidstream = BOL_CORRELATE_MIDSTREAM;
         this.cntCorrelateMaxThrds = CNT_CORRELATE_MAX_THRDS;
+        
+        this.prcrCorrelator.resetDefaultConfiguration();
+        this.prcrDecomposer.resetDefaultCofiguration();
     }
     
     /**
@@ -948,6 +954,34 @@ public class QueryRequestProcessorNew {
     
     /**
      * <p>
+     * Returns the (optional) time-series data request identifier associated with the last processed request.
+     * </p>
+     * <p>
+     * The time-series data request identifier is an additional property used to identify requested
+     * data.  It is used solely by the Java API Library; that is, it is not a property of the
+     * Data Platform Query Service.  
+     * </p>
+     * <p>
+     * The returned request identifier is taken from the last request offered to 
+     * <code>{@link #processRequest(DpDataRequest)}</code>.  Thus, this is a convenience method for passing the
+     * value down the processing line.
+     * </p>
+     * <p>
+     * Typically, the request ID is assigned in the original request 
+     * (see <code>{@link DpDataRequest#setRequestId(String)}</code>). 
+     * If assigned it appears here within the final tabular result set once the request is
+     * fully recovered and processed by the API library.  Thus, no special characteristics are 
+     * required of the ID and a string name is typically sufficient.
+     * </p>
+     * 
+     * @return  the (optional) request identifier or <code>null</code> if unassigned
+     */
+    public String   getRequestId() {
+        return this.strRqstId;
+    }
+    
+    /**
+     * <p>
      * Returns the list of composite queries generated for the last <code>{@link #processRequest(DpDataRequest)}</code> request.
      * </p>
      * <p>
@@ -1083,7 +1117,7 @@ public class QueryRequestProcessorNew {
      *  
      * @param dpRequest data request to be recovered from Query Service and processed
      * 
-     * @return  a sorted set (according to start time) of correlated data obtained from given request 
+     * @return  a sorted set (ordered by start time) of correlated data obtained from given request 
      * 
      * @throws DpQueryException general exception during data recovery and/or processing (see cause)
      * 
@@ -1093,13 +1127,18 @@ public class QueryRequestProcessorNew {
      */
     public SortedSet<RawCorrelatedData>   processRequest(DpDataRequest dpRequest) throws DpQueryException {
 
+        // Get the request ID
+        this.strRqstId = dpRequest.getRequestId();
+        
         // If multi-streaming is disabled use a single stream
         if (!this.bolMultiStream || this.cntMaxStreams==1)
             this.lstCompRqsts = List.of(dpRequest);
         
         // Else attempt to decompose request domain
-        else
+        else {
             this.lstCompRqsts = this.attemptRequestDecomp(dpRequest);
+            this.lstCompRqsts.forEach(rqst -> rqst.setRequestId(strRqstId));
+        }
         
         // Defer to the multi-streaming processor method
         return this.processRequests(this.lstCompRqsts);

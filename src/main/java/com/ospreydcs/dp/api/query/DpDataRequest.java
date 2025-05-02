@@ -329,15 +329,18 @@ public final class DpDataRequest {
     @Deprecated
     @SuppressWarnings("unused")
     private int indStartPage = 0;
+    
+    /** Optional request identifier or name */
+    private String              strRqstId = null;
 
-    /** optional gRPC stream type */
-    private DpGrpcStreamType  enmStrmType = ENM_STREAM_PREF;
+    /** Optional gRPC stream type */
+    private DpGrpcStreamType    enmStrmType = ENM_STREAM_PREF;
     
     /** The time range start instant */
-    private Instant insStart = INS_INCEPT;
+    private Instant             insStart = INS_INCEPT;
     
     /** The time range stop instant */
-    private Instant insStop = Instant.now();
+    private Instant             insStop = Instant.now();
     
 
     //
@@ -541,6 +544,7 @@ public final class DpDataRequest {
         this.indStartPage = 0;
         this.szPage = SZ_PAGES;
 
+        this.strRqstId = null;
         this.enmStrmType = ENM_STREAM_PREF;
         this.insStart = INS_INCEPT;
         this.insStop = INS_INCEPT;
@@ -662,6 +666,27 @@ public final class DpDataRequest {
     //
     // Query Properties and Metadata
     //
+    
+    /**
+     * <p>
+     * Returns the (optional) request identifier.
+     * </p>
+     * <p>
+     * The time-series data request identifier is an additional property to identify request
+     * data.  It is used solely by the Java API Library; that is, it is not a property of the
+     * Data Platform Query Service.
+     * </p>
+     * <p>
+     * Typically, the request ID appears within the final tabular result set once the request is
+     * fully recovered and processed by the API library.  Thus, no special characteristics are 
+     * required of the ID and a string name is typically sufficient.
+     * </p>
+     *   
+     * @return  the (optional) request identifier
+     */
+    public String   getRequestId() {
+        return this.strRqstId;
+    }
     
     /**
      * <p>
@@ -1052,8 +1077,29 @@ public final class DpDataRequest {
     
     
     // 
-    // Query Metadata
+    // Request Metadata
     //
+    
+    /**
+     * <p>
+     * Sets the (optional) identifier for the time-series data request.
+     * </p>
+     * <p>
+     * The request identifier is an additional property to identify requested time-series
+     * data.  It is used solely by the Java API Library; that is, it is not a property of the
+     * Data Platform Query Service.
+     * </p>
+     * <p>
+     * Typically, the request ID is assigned by clients and then appears within the final (tabular) 
+     * result set once the request is fully recovered and processed by the API library.  Thus, no special 
+     * characteristics are required of the ID and a string name is typically sufficient.
+     * </p>
+     * 
+     * @param strRqstId the (optional) request identifier used by the Java API Library
+     */
+    public void setRequestId(String strRqstId) {
+        this.strRqstId = strRqstId;
+    }
     
     /**
      * <p>

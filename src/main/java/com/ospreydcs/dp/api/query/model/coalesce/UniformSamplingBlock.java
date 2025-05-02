@@ -176,6 +176,9 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     // Instance Attributes
     //
     
+    /** The optional request identifier of the original time-series data request */
+    private final   String                                  strRqstId = null;
+    
     /** The uniform clock duration for this sample block */
     private final   UniformSamplingClock                    clkParams;
     
@@ -659,6 +662,14 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     //
     // IDataTable Interface
     //
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#getRequestId()
+     */
+    @Override
+    public String getRequestId() {
+        return this.strRqstId;
+    }
     
     /**
      * @return always returns <code>true</code> since table is populated at construction

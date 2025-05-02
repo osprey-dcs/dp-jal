@@ -105,12 +105,12 @@ public class QueryResponseAssembler {
      * <p>
      * The returned instance is ready for the processing of raw, correlated data available from <code>RawDataCorrelator</code>
      * instances.  The <code>SortedSet</code> of <code>RawCorrelatedData</code> instances produced from the correlator
-     * is processed into a <code>SampledAggregate</code> instance using the <code>{@link #processExceptions(SortedSet)}</code>
+     * is processed into a <code>SampledAggregate</code> instance using the <code>{@link #processWithExceptions(SortedSet)}</code>
      * method.
      * </p>
      * <p>
      * The returned assembler instance can be configured with various processing options using the <code>enable...()</code>
-     * and <code>set...()</code> methods which should be invoked before using <code>{@link #processExceptions(SortedSet)}</code>.
+     * and <code>set...()</code> methods which should be invoked before using <code>{@link #processWithExceptions(SortedSet)}</code>.
      * The default configuration is set according to the Java API Library configuration file, whose values are available
      * as class constants.
      * </p>
@@ -447,8 +447,11 @@ public class QueryResponseAssembler {
      * Constructs a new instance of <code>SampledAggregate</code> populated from argument data.
      * </p>
      * <p>
-     * This is a convenience method that defers to <code>{@link #processExceptions(SortedSet)}</code> for
-     * all processing.  Any exception thrown there is caught and packaged as a <code>{@link DpQueryException}</code>
+     * This is a convenience method that defers to <code>{@link #process(String, SortedSet)}</code> for
+     * all processing.  The <code>String</code> argument of that method is set to <code>null</code>.
+     * Note that method <code>{@link #process(String, SortedSet)}</code> defers in turn to 
+     * <code>{@link #processWithExceptions(SortedSet)}</code> which throws a variety of exceptions.
+     * Any exception thrown there is caught and packaged as a <code>{@link DpQueryException}</code>
      * to simplify <code>IQueryService</code> implementations.  The offending exception is available as
      * the cause attribute within the <code>DpQueryException</code> 
      * (i.e., see <code>{@link DpQueryException#getCause()}</code>).
@@ -476,9 +479,51 @@ public class QueryResponseAssembler {
      * @throws DpQueryException general processing exception, see cause
      */
     public SampledAggregate process(SortedSet<RawCorrelatedData> setRawData) throws DpQueryException {
+        return this.process(null, setRawData);
+    }
+    
+    /**
+     * <p>
+     * Constructs a new instance of <code>SampledAggregate</code> populated from argument data.
+     * </p>
+     * <p>
+     * This is a convenience method that defers to <code>{@link #processWithExceptions(SortedSet)}</code> for
+     * all processing.  Any exception thrown there is caught and packaged as a <code>{@link DpQueryException}</code>
+     * to simplify <code>IQueryService</code> implementations.  The offending exception is available as
+     * the cause attribute within the <code>DpQueryException</code> 
+     * (i.e., see <code>{@link DpQueryException#getCause()}</code>).
+     * </p>
+     * <p>
+     * The <code>String</code> argument is the request identifier of the original time-series data request
+     * and is set within the returned value.  Thus, an additional convenience.
+     * <p>
+     * After construction the new instance is fully populated with coalesced, sampled time-series data from
+     * all data sources contained in the argument.  The returned instance is also configured according
+     * to the order and the correlations within the argument.
+     * The argument data must be consistent for proper time-series data construction or an exception is thrown.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The argument collection is assumed to be sorted in the order of clock starting instants</li>
+     * <li>Advanced data consistency check is performed during construction unless disabled.</li>
+     * <li>Any detected data inconsistencies result in an exception. </li>
+     * <li>Exception type determines the nature of any data inconsistency. </li>
+     * </ul>  
+     * </p>
+     * 
+     * @param strRqstId     request identifier of the original time-series data request
+     * @param setRawData    sorted set of <code>RawCorrelatedData</code> instances used to build aggregate
+     *
+     * @return  ordered, aggregated of coalesced sampled blocks containing the time-series data within the argument
+     *  
+     * @throws DpQueryException general processing exception, see cause
+     */
+    public SampledAggregate process(String strRqstId, SortedSet<RawCorrelatedData> setRawData) throws DpQueryException {
         
         try {
-            SampledAggregate    aggBlks = this.processExceptions(setRawData);
+            SampledAggregate    aggBlks = this.processWithExceptions(setRawData);
+            aggBlks.setRequestId(strRqstId);
             
             return aggBlks;
             
@@ -531,7 +576,7 @@ public class QueryResponseAssembler {
      * @throws RejectedExecutionException a fill task failed execution for concurrent processing in time-domain collisions
      * @throws InterruptedException     timeout occurred while waiting for concurrent fill tasks to complete in time-domain collisions
      */
-    public SampledAggregate processExceptions(SortedSet<RawCorrelatedData> setRawData) 
+    public SampledAggregate processWithExceptions(SortedSet<RawCorrelatedData> setRawData) 
             throws IllegalArgumentException, MissingResourceException, IllegalStateException, TypeNotPresentException, 
                    RejectedExecutionException, ExecutionException, InterruptedException 
     {

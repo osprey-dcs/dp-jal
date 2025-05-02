@@ -38,6 +38,7 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.IDataTable;
 
@@ -95,6 +96,9 @@ public class StaticDataTable implements IDataTable, Serializable {
     //
     // Attributes
     //
+    
+    /** The optional request identifier associated with this recovered result set*/
+    private String      strRqstId = null;
     
     /** The ordered vector of timestamps corresponding to each data column (as a data time series) */
     private final ArrayList<Instant>                vecTms;
@@ -189,6 +193,28 @@ public class StaticDataTable implements IDataTable, Serializable {
     //
     // Table Operations
     //
+    
+    /**
+     * <p>
+     * Sets the optional request identifier associated with this recovered result set.
+     * </p>
+     * <p>
+     * The request identifier is an additional property used to identify requested time-series data data.  
+     * It is used solely by the Java API Library; that is, it is not a property of the Data Platform Query Service.  
+     * </p>
+     * <p>
+     * Typically, the request ID is assigned by clients in the original request 
+     * (see <code>{@link DpDataRequest#setRequestId(String)}</code>). 
+     * If assigned it appears here within the final tabular result set once the request is
+     * fully recovered and processed by the API library.  Thus, no special characteristics are 
+     * required of the ID and a string name is typically sufficient.
+     * </p>
+     * 
+     * @param strRqstId the optional identifier of the original time-series data request
+     */
+    public void setRequestId(String strRqstId) {
+        this.strRqstId = strRqstId;
+    }
     
     /**
      * <p>
@@ -349,6 +375,14 @@ public class StaticDataTable implements IDataTable, Serializable {
     // IDataTable Interface
     //
     
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#getRequestId()
+     */
+    @Override
+    public String getRequestId() {
+        return this.strRqstId;
+    }
+
     /**
      * @see com.ospreydcs.dp.api.model.IDataTable#isTableComplete()
      */

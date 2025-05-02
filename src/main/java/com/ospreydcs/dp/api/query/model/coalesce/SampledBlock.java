@@ -390,6 +390,9 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     // Instance Attributes
     //
     
+    /** The (optional) original time-series data request identifier */
+    protected String            strRqstId = null;
+    
     /** The time range of the sampled block */
     protected TimeInterval      tvlRange;
     
@@ -575,6 +578,17 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     //
     // Operations
     //
+    
+    /**
+     * <p>
+     * Sets the optional request identifier of the original time-series data request.
+     * </p>
+     * 
+     * @param strRqstId
+     */
+    public void setRequestId(String strRqstId) {
+        this.strRqstId = strRqstId;
+    }
     
     /**
      * <p>
@@ -945,6 +959,14 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     // IDataTable Interface
     //
     
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#getRequestId()
+     */
+    @Override
+    public String getRequestId() {
+        return this.strRqstId;
+    }
+
     /**
      * @return always returns <code>true</code> since table is populated at construction
      *

@@ -23,7 +23,7 @@
  * @since Mar 25, 2025
  *
  */
-package com.ospreydcs.dp.api.query.model.series;
+package com.ospreydcs.dp.api.query.model.coalese;
 
 import java.io.PrintStream;
 import java.time.Instant;

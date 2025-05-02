@@ -191,6 +191,27 @@ public interface IDataTable {
     
     /**
      * <p>
+     * Returns the optional request identifier associated with this data set.
+     * </p>
+     * <p>
+     * The time-series data request identifier is an additional property used to identify requested
+     * data.  It is used solely by the Java API Library; that is, it is not a property of the
+     * Data Platform Query Service.  
+     * </p>
+     * <p>
+     * Typically, the request ID is assigned in the original request 
+     * (see <code>{@link DpDataRequest#setRequestId(String)}</code>). 
+     * If assigned it appears here within the final tabular result set once the request is
+     * fully recovered and processed by the API library.  Thus, no special characteristics are 
+     * required of the ID and a string name is typically sufficient.
+     * </p>
+     * 
+     * @return  the (optional) request identifier or <code>null</code> if unassigned
+     */
+    public String   getRequestId();
+    
+    /**
+     * <p>
      * Returns the number of rows in the data table. 
      * </p>
      * <p>

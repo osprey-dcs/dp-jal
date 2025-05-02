@@ -293,6 +293,18 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     //
 
     /**
+     * <p>
+     * Returns <code>null</code> as this feature is not implemented.
+     * </p>
+     * 
+     * @see com.ospreydcs.dp.api.common.IDataTable#getRequestId()
+     */
+    @Override
+    public String   getRequestId() {
+        return null;
+    }
+    
+    /**
      * @return always returns <code>true</code>, table is complete at construction
      * 
      * @see @see com.ospreydcs.dp.api.model.IDataTable#isTableComplete()
