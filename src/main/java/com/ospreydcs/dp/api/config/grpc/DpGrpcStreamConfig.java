@@ -62,8 +62,8 @@ public class DpGrpcStreamConfig extends CfgStructure<DpGrpcStreamConfig> {
     //
     
     /** Are stream configuration parameters used */
-    @ACfgOverride.Field(name="ACTIVE")
-    public Boolean              active;
+    @ACfgOverride.Field(name="ENABLED")
+    public Boolean              enabled;
     
     /** preferred gRPC stream type */
     @ACfgOverride.Field(name="TYPE")
@@ -95,9 +95,9 @@ public class DpGrpcStreamConfig extends CfgStructure<DpGrpcStreamConfig> {
         // Configuration Parameters
         //
         
-        /** Is data buffering active */
-        @ACfgOverride.Field(name="ACTIVE")
-        public Boolean      active;
+        /** Is data buffering enabled */
+        @ACfgOverride.Field(name="ENABLE")
+        public Boolean      enabled;
         
         /** Size (number of elements) for fixed-capacity queue buffer (e.g., a blocking queue for back pressure) */
         @ACfgOverride.Field(name="SIZE")
@@ -113,27 +113,27 @@ public class DpGrpcStreamConfig extends CfgStructure<DpGrpcStreamConfig> {
         
     }
     
-    /**
-     * Structure class containing parameters for gRPC stream data binning.
-     */
-    public static final class DataBinning extends CfgStructure<DataBinning> {
-
-        /** Default constructor required for base class */
-        public DataBinning() { super(DataBinning.class);  }
-        
-        // 
-        // Configuration Parameters
-        //
-        
-        /** Is data binning active */
-        @ACfgOverride.Field(name="ACTIVE")
-        public Boolean      active;
-        
-        /** Maximum size of (in bytes) of data bins */
-        @ACfgOverride.Field(name="MAX_SIZE")
-        public Integer      maxSize;
-
-    }
+//    /**
+//     * Structure class containing parameters for gRPC stream data binning.
+//     */
+//    public static final class DataBinning extends CfgStructure<DataBinning> {
+//
+//        /** Default constructor required for base class */
+//        public DataBinning() { super(DataBinning.class);  }
+//        
+//        // 
+//        // Configuration Parameters
+//        //
+//        
+//        /** Is data binning enabled */
+//        @ACfgOverride.Field(name="ACTIVE")
+//        public Boolean      enabled;
+//        
+//        /** Maximum size of (in bytes) of data bins */
+//        @ACfgOverride.Field(name="MAX_SIZE")
+//        public Integer      maxSize;
+//
+//    }
     
     /**
      *  Structure class defining default configuration parameters for multiple, concurrent gRPC streams.  
@@ -149,8 +149,8 @@ public class DpGrpcStreamConfig extends CfgStructure<DpGrpcStreamConfig> {
         //
         
         /** use multiple gRPC data stream for request recovery */
-        @ACfgOverride.Field(name="ACTIVE")
-        public Boolean      active;
+        @ACfgOverride.Field(name="ENABLED")
+        public Boolean      enabled;
         
         /** Optional size parameter activating multiple concurrent streams */
         @ACfgOverride.Field(name="PIVOT_SIZE")

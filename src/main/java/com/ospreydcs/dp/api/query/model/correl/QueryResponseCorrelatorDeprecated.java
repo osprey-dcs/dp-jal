@@ -43,8 +43,10 @@ import java.util.function.Consumer;
 
 import javax.naming.CannotProceedException;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -195,7 +197,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * be limited by the value of constant <code>{@link #CNT_MULTISTREAM}</code>.  If a client explicitly requests
  * a stream count larger than that value (i.e., with <code>{@link #processRequestMultiStream(List)}</code>),
  * the multiple requests will still be streamed independently on separate thread, but no more than
- * <code>{@link #CNT_MULTISTREAM}</code> threads will be active any any given instant.  The maximum number of
+ * <code>{@link #CNT_MULTISTREAM}</code> threads will be enabled any any given instant.  The maximum number of
  * data streams can be set using the <code>{@link DpApiConfig}</code> default API configuration.  It is a 
  * tuning parameter dependent upon gRPC, the number of platform processor cores, and local network traffic.    
  * </p>
@@ -318,7 +320,7 @@ public class QueryResponseCorrelatorDeprecated {
      * Instances are intended to be passed to newly created 
      * <code>{@link QuerResponseStreamProcessor}</code> instances via the creator 
      * <code>{@link QueryStream#from(DpDataRequest, DpQueryServiceStub, Consumer)}</code>.
-     * There should be one instance of this function for every active data stream.
+     * There should be one instance of this function for every enabled data stream.
      * </p>
      *  
      * @author Christopher K. Allen
@@ -419,7 +421,7 @@ public class QueryResponseCorrelatorDeprecated {
      * <p>
      * The method <code>{@link setMaxMessages(int)}</code> must be invoked to set the total
      * number of data messages to be processed.  The method must called be either before
-     * starting the thread or while the thread is active.  The internal processing loop exits 
+     * starting the thread or while the thread is enabled.  The internal processing loop exits 
      * properly whenever the internal message counter <code>{@link #cntMsgsProcessed}</code>
      * is equal to the value supplied to this method.  Otherwise the processing loop
      * continues indefinitely, or until interrupted (e.g., with a call to 
@@ -614,7 +616,7 @@ public class QueryResponseCorrelatorDeprecated {
          * <h2>NOTES:</h2>
          * <ul>
          * <li>
-         * This is the proper way to terminate an active processing thread.  DO NOT use
+         * This is the proper way to terminate an enabled processing thread.  DO NOT use
          * the method <code>{@link Thread#interrupt()}</code> as it will leave a 
          * <code>null</code> valued <code>{@link ResultStatus}</code> potentially corrupting
          * the normal (external) processing operations.
@@ -831,12 +833,15 @@ public class QueryResponseCorrelatorDeprecated {
     // Class Constants - Initialized from API configuration
     //
     
-    /** Is logging active? */
-    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Is event logging enabled? */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
-    /** Is timeout limit active ? */
-    public static final boolean     BOL_TIMEOUT = CFG_QUERY.timeout.active;
+    /** Is timeout limit enabled ? */
+    public static final boolean     BOL_TIMEOUT = CFG_QUERY.timeout.enabled;
     
     /** Timeout limit for query operation */
     public static final long        CNT_TIMEOUT = CFG_QUERY.timeout.limit;
@@ -852,13 +857,13 @@ public class QueryResponseCorrelatorDeprecated {
     public static final boolean     BOL_CORRELATE_MIDSTREAM = CFG_QUERY.data.response.correlate.whileStreaming;
     
     
-    /** Is response multi-streaming active? */
-    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.response.multistream.active;
+    /** Is response multi-streaming enabled? */
+    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.response.multistream.enabled;
     
     /** Maximum number of open data streams to Query Service */
     public static final int         CNT_MULTISTREAM = CFG_QUERY.data.response.multistream.maxStreams;
     
-    /** Query domain size triggering multiple streaming (if active) */
+    /** Query domain size triggering multiple streaming (if enabled) */
     public static final long        SIZE_DOMAIN_MULTISTREAM = CFG_QUERY.data.response.multistream.sizeDomain;
     
     
@@ -868,6 +873,16 @@ public class QueryResponseCorrelatorDeprecated {
     
     /** Class event logger */
     private static final Logger     LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Resource Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //
@@ -1386,7 +1401,7 @@ public class QueryResponseCorrelatorDeprecated {
      * <p>
      * A separate gRPC data stream is established for each data request within the argument list and concurrent
      * data streams are used to recover the request data.
-     * At most <code>{@link #CNT_MULTISTREAM}</code> concurrent data streams are active at any instant.
+     * At most <code>{@link #CNT_MULTISTREAM}</code> concurrent data streams are enabled at any instant.
      * If the number of data requests in the argument is larger than <code>{@link #CNT_MULTISTREAM}</code>
      * then streaming threads are run in a fixed size thread pool until all requests are completed.
      * </p>
@@ -1792,7 +1807,7 @@ public class QueryResponseCorrelatorDeprecated {
      * <ul>
      * <li>
      * The returned value is used to set the number of response messages to be correlated by any 
-     * <code>{@link QueryDataProcessor}</code> thread (currently active or as yet unstarted).
+     * <code>{@link QueryDataProcessor}</code> thread (currently enabled or as yet unstarted).
      * </li>
      * </ul>
      * </p>

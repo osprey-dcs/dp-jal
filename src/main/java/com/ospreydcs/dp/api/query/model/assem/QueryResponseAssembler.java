@@ -36,8 +36,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.w3c.dom.ranges.RangeException;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
@@ -134,8 +136,11 @@ public class QueryResponseAssembler {
     // Class Constants
     //
     
-    /** Logging active flag */
-    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Logging enabled flag */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Logging event level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
     /** Use advanced error checking and verification flag */
@@ -145,8 +150,8 @@ public class QueryResponseAssembler {
     public static final boolean     BOL_DOM_COLLISION = CFG_QUERY.data.table.construction.domainCollision;
     
     
-    /** Concurrency active flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
+    /** Concurrency enabled flag */
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
     
     /** Concurrency maximum thread count */
     public static final int         CNT_CONCURRENCY_MAX_THRDS = CFG_QUERY.concurrency.maxThreads;
@@ -170,8 +175,18 @@ public class QueryResponseAssembler {
     protected static final Logger LOGGER = LogManager.getLogger();
     
 
+    /**
+     * <p>
+     * Class Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
+    
+    
     //
-    // Configuration
+    // Instance Configuration
     //
     
     /** Enable/disable advanced error checking and verification */

@@ -163,18 +163,18 @@ public interface IConnection {
      * Indicates whether or not the connection has been fully terminated.
      * </p>
      * <p>
-     * The "fully terminated" condition indicates that there are no active
+     * The "fully terminated" condition indicates that there are no enabled
      * processes and all channel resources have been released.  This condition
      * differs from that of <code>{@link #isShutdown()}</code> where a 
      * value <code>true</code> may be returned although the connection may still
-     * have active processes and allocated resources. 
+     * have enabled processes and allocated resources. 
      * </p>
      * <p>
      * This method defers to the <code>isTerminated()</code> method of the
      * <code>ManagedChannel</code> resource.
      * </p>
      * 
-     * @return <code>true</code> if there are not active processes and all resources have been releases,
+     * @return <code>true</code> if there are not enabled processes and all resources have been releases,
      *         <code>false</code> otherwise
      */
     public boolean isTerminated();

@@ -31,8 +31,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -71,7 +73,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <s>
  * The method <code>{@link setMaxMessages(int)}</code> must be invoked to set the total
  * number of data messages to be processed.  The method must called be either before
- * starting the thread or while the thread is active.  The internal processing loop exits 
+ * starting the thread or while the thread is enabled.  The internal processing loop exits 
  * properly whenever the internal message counter <code>{@link #cntMsgsXferred}</code>
  * is equal to the value supplied to this method.  Otherwise the processing loop
  * continues indefinitely, or until interrupted (e.g., with a call to 
@@ -86,7 +88,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * message supplier <code>{@link IMessageSupplier#poll(long, TimeUnit)}</code>, blocking until they 
  * become available or a timeout occurs (see <code>{@link #LNG_TIMEOUT}, {@link #TU_TIMEOUT}</code>).
  * Data messages are then passed to the data correlator <code>{@link #prcrCorrelatorOld}</code>
- * for processing.  The loop exits whenever the supplier is no longer active, the task is
+ * for processing.  The loop exits whenever the supplier is no longer enabled, the task is
  * terminated (i.e., with the <code>{@link #terminate()}</code> method), or an exception occurs.
  * </p>
  * <p>
@@ -239,8 +241,11 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
     // Class Constants - Initialized from API Library configuration
     //
     
-    /** Is logging active? */
-    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Is logging enabled? */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
     //
@@ -259,6 +264,19 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
     
     /** Class event logger */
     private static final Logger     LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Initialization
+     * </p>
+     * <p>
+     * Initializes the event logger - sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     // 
@@ -450,7 +468,7 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * This is the proper way to terminate an active processing thread.  DO NOT use
+     * This is the proper way to terminate an enabled processing thread.  DO NOT use
      * the method <code>{@link Thread#interrupt()}</code> as it will leave a 
      * <code>null</code> valued <code>{@link ResultStatus}</code> potentially corrupting
      * the normal (external) processing operations.

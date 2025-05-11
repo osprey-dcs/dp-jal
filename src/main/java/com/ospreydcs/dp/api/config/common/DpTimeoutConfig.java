@@ -18,9 +18,9 @@ public final class DpTimeoutConfig extends CfgStructure<DpTimeoutConfig> {
         super(DpTimeoutConfig.class);
     }
 
-    /** Is timeout active */
-    @ACfgOverride.Field(name="ACTIVE")
-    public Boolean      active;
+    /** Is timeout enabled */
+    @ACfgOverride.Field(name="ENABLED")
+    public Boolean      enabled;
     
     /** Timeout limit */
     @ACfgOverride.Field(name="LIMIT")

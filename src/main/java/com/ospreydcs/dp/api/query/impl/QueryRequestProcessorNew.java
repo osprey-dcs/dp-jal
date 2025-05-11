@@ -30,8 +30,10 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -288,12 +290,15 @@ public class QueryRequestProcessorNew {
     // Class Constants - Initialized from API configuration
     //
     
-    /** Is logging active? */
-    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Event logging enabled flag */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
-    /** Is timeout limit active ? */
-    public static final boolean     BOL_TIMEOUT = CFG_QUERY.timeout.active;
+    /** Is timeout limit enabled ? */
+    public static final boolean     BOL_TIMEOUT = CFG_QUERY.timeout.enabled;
     
     /** Timeout limit for query operation */
     public static final long        CNT_TIMEOUT = CFG_QUERY.timeout.limit;
@@ -312,13 +317,13 @@ public class QueryRequestProcessorNew {
     public static final int         CNT_CORRELATE_MAX_THRDS = CFG_QUERY.concurrency.maxThreads;
     
     
-    /** Is response multi-streaming active? */
-    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.response.multistream.active;
+    /** Is response multi-streaming enabled? */
+    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.response.multistream.enabled;
     
     /** Maximum number of open data streams to Query Service */
     public static final int         CNT_MULTISTREAM = CFG_QUERY.data.response.multistream.maxStreams;
     
-    /** Query domain size triggering multiple streaming (if active) */
+    /** Query domain size triggering multiple streaming (if enabled) */
     public static final long        SIZE_DOMAIN_MULTISTREAM = CFG_QUERY.data.response.multistream.sizeDomain;
     
     
@@ -328,6 +333,12 @@ public class QueryRequestProcessorNew {
     
     /** Class event logger */
     private static final Logger     LOGGER = LogManager.getLogger();
+    
+    
+    /** Class Resource Initialization - Initializes the event logger, sets logging level. */
+    static { 
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel())); 
+    }
     
     
     //
@@ -411,7 +422,7 @@ public class QueryRequestProcessorNew {
      * no longer needed.
      * </p>
      *
-     * @param connQuery active connection to the Query Service
+     * @param connQuery enabled connection to the Query Service
      */
     public QueryRequestProcessorNew(DpQueryConnection connQuery) {
         this.connQuery = connQuery;
@@ -1157,7 +1168,7 @@ public class QueryRequestProcessorNew {
      * <p>
      * A separate gRPC data stream is established for each data request within the argument list and concurrent
      * data streams are used to recover the request data.
-     * At most <code>{@link #CNT_MULTISTREAM}</code> concurrent data streams are active at any instant.
+     * At most <code>{@link #CNT_MULTISTREAM}</code> concurrent data streams are enabled at any instant.
      * If the number of data requests in the argument is larger than <code>{@link #CNT_MULTISTREAM}</code>
      * then streaming threads are run in a fixed size thread pool until all requests are completed.
      * </p>
@@ -1209,7 +1220,7 @@ public class QueryRequestProcessorNew {
         boolean bolActive = this.queMsgBuffer.activate();
         
         if (!bolActive) {
-            String strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - FAILURE cannot active reponse message buffer.";
+            String strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - FAILURE cannot enabled reponse message buffer.";
             
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);
@@ -1383,7 +1394,7 @@ public class QueryRequestProcessorNew {
      * data messages are collected by the <code>{@link #queMsgBuffer}</code> instance initialized at
      * construction.  This method blocks until all request data is recovered by the gRPC data streams
      * (using the <code>{@link #chanQuery}</code> instance) and available in the message queue buffer.
-     * However, data correlation can still be active after returning (depending upon the state of the message
+     * However, data correlation can still be enabled after returning (depending upon the state of the message
      * transfer task).
      * </p>
      * <p>
@@ -1407,7 +1418,7 @@ public class QueryRequestProcessorNew {
         
         // Start all streaming tasks and wait for all data messages to be recovered
         try {
-            cntMsgsRcvd = this.chanQuery.recoverRequest(lstRequests);   // this is a blocking operation
+            cntMsgsRcvd = this.chanQuery.recoverRequests(lstRequests);   // this is a blocking operation
             
         } catch (DpQueryException e) {
             

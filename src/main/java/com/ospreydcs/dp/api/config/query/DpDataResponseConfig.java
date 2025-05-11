@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.config.query;
 
-import java.util.concurrent.TimeUnit;
-
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -98,8 +96,8 @@ public class DpDataResponseConfig extends CfgStructure<DpDataResponseConfig> {
         //
         
         /** use multiple gRPC data stream for request recovery */
-        @ACfgOverride.Field(name="ACTIVE")
-        public Boolean      active;
+        @ACfgOverride.Field(name="ENABLED")
+        public Boolean      enabled;
         
         /** Maximum number of gRPC data stream to use for request recovery */
         @ACfgOverride.Field(name="MAX_STREAMS")

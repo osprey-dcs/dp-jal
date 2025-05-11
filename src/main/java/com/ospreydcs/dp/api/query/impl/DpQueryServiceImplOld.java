@@ -34,8 +34,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.naming.CannotProceedException;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.w3c.dom.ranges.RangeException;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
@@ -271,8 +273,11 @@ public class DpQueryServiceImplOld extends
 //    private static final boolean        BOL_TBL_DYN_DEF = CFG_DEF.data.table.dynamic.isDefault;
     
     
-    /** Logging active flag */
-    private static final boolean        BOL_LOGGING = CFG_DEF.logging.active;
+    /** Event logging enabled flag */
+    private static final boolean        BOL_LOGGING = CFG_DEF.logging.enabled;
+    
+    /** Event logging level */
+    private static final String         STR_LOGGING_LEVEL = CFG_DEF.logging.level;
     
     
     /** General query timeout limit */
@@ -288,6 +293,12 @@ public class DpQueryServiceImplOld extends
     
     /** Class event logger */
     private static final Logger         LOGGER = LogManager.getLogger();
+    
+    
+    /** Class Resource Initialization - Initializes the event logger, sets logging level. */
+    static { 
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel())); 
+    }
     
     
     //
@@ -757,7 +768,7 @@ public class DpQueryServiceImplOld extends
                 enmStreamType, 
                 super.grpcConn.getStubAsync(),
                 msgRequest,
-                CFG_DEF.logging.active);
+                BOL_LOGGING);
         
         return buf;
     }

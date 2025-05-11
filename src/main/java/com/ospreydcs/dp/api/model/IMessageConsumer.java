@@ -64,7 +64,7 @@ public interface IMessageConsumer<T extends GeneratedMessage> {
      * after returning.
      * </p>
      * <h2>Operation</h2>
-     * This method starts all resource acceptance and processing which are continuously active
+     * This method starts all resource acceptance and processing which are continuously enabled
      * until explicitly shut down.  
      * </p>
      * <p>
@@ -86,7 +86,7 @@ public interface IMessageConsumer<T extends GeneratedMessage> {
      * </p>
      * 
      * @return  <code>true</code> if the consumer was successfully activated,
-     *          <code>false</code> if the consumer was already active
+     *          <code>false</code> if the consumer was already enabled
      *          
      * @throws RejectedExecutionException   processing tasks could not be scheduled for execution
      * @return
@@ -169,7 +169,7 @@ public interface IMessageConsumer<T extends GeneratedMessage> {
      * </p>
      * 
      * @return <code>true</code> if the consumer was successfully shutdown,
-     *         <code>false</code> if the consumer was not active or shutdown operation failed
+     *         <code>false</code> if the consumer was not enabled or shutdown operation failed
      * 
      * @throws InterruptedException interrupted while waiting for all messages to be consumed
      */

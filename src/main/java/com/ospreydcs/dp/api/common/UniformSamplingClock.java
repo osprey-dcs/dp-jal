@@ -44,7 +44,7 @@ import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
  * Represents a finite-duration sampling clock with constant sampling period.
  * </h1> 
  * <p>
- * Contains parameters defining a uniform sampling clock active for a finite duration.  Instances can be used
+ * Contains parameters defining a uniform sampling clock enabled for a finite duration.  Instances can be used
  * to identify the sampling times for a uniform, time-series process.
  * The clock can be also used to generate the timestamps for a finite interval of uniform samples.
  * </p>
@@ -308,7 +308,7 @@ public class UniformSamplingClock implements Comparable<Instant>, Serializable {
     /**
      * Returns the number of samples recorded by this clock.
      * 
-     * @return  the total sample count where clock is active
+     * @return  the total sample count where clock is enabled
      */
     public int getSampleCount() {
         return this.intCount;
@@ -360,7 +360,7 @@ public class UniformSamplingClock implements Comparable<Instant>, Serializable {
     
     /**
      * <p>
-     * Returns the time domain over which this clock is active.
+     * Returns the time domain over which this clock is enabled.
      * </p>
      * <p>
      * The returned interval is given by 
@@ -378,7 +378,7 @@ public class UniformSamplingClock implements Comparable<Instant>, Serializable {
      * after the final timestamp.
      * </p>
      *  
-     * @return  the time domain which the clock is active, minus the final period duration
+     * @return  the time domain which the clock is enabled, minus the final period duration
      */
     public TimeInterval getTimeDomain() {
         return this.ivlDomain;

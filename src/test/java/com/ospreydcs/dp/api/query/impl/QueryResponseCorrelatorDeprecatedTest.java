@@ -39,7 +39,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.config.DpApiTestingConfig;
+import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
@@ -71,7 +71,7 @@ public class QueryResponseCorrelatorDeprecatedTest {
     //
     
     /** The configuration for the Query Service connection to the test archive */
-    private static final DpGrpcConnectionConfig  CFG_CONN_TEST  = DpApiTestingConfig.getInstance().testQuery.connection;
+    private static final DpGrpcConnectionConfig  CFG_CONN_TEST  = DpApiUnitTestConfig.getInstance().testQuery.connection;
     
     
     /** Data Platform API Query Service test request/response - (single bucket) 1 data source, 1 seconds */

@@ -9,6 +9,7 @@ import java.time.Duration;
  * <code>QueryRequestProcessorOld</code> object.
  * </p>
  *
+ * @param bolMultistream    enable/disable gRPC multi-streaming
  * @param bolCorrConcurrent correlate using concurrency (multi-threading) enabled/disabled flag
  * @param bolCorrStreaming  correlate while streaming enabled/disabled flag
  * @param cntMaxStreams     maximum number of allowable gRPC data streams allowed for request recovery
@@ -20,6 +21,7 @@ import java.time.Duration;
  *
  */
 public record    TestConfig(
+        boolean bolMultistream,
         boolean bolCorrConcurrent, 
         boolean bolCorrStreaming, 
         int cntMaxStreams, 
@@ -36,6 +38,7 @@ public record    TestConfig(
      * Create a new, initialized <code>TestConfig</code> record according to the given arguments.
      * </p>
      * 
+     * @param bolMultistream    enable/disable gRPC multi-streaming
      * @param bolCorrConcurrent correlate using concurrency (multi-threading) enabled/disabled flag
      * @param bolCorrStreaming  correlate while streaming enabled/disabled flag
      * @param cntMaxStreams     maximum number of allowable gRPC data streams allowed for request recovery
@@ -44,9 +47,16 @@ public record    TestConfig(
      * 
      * @return  new test configuration initialized with the given arguments
      */
-    public static TestConfig    from(boolean bolCorrConcurrent, boolean bolCorrStreaming, int cntMaxStreams, int cntMaxSources, Duration durMaxRange) {
-        return new TestConfig(bolCorrConcurrent, bolCorrStreaming, cntMaxStreams, cntMaxSources, durMaxRange);
+    public static TestConfig    from(boolean bolMultistream,
+                                     boolean bolCorrConcurrent, 
+                                     boolean bolCorrStreaming, 
+                                     int cntMaxStreams, 
+                                     int cntMaxSources, 
+                                     Duration durMaxRange) 
+    {
+        return new TestConfig(bolMultistream, bolCorrConcurrent, bolCorrStreaming, cntMaxStreams, cntMaxSources, durMaxRange);
     }
+    
     
     //
     // Operations
@@ -62,6 +72,7 @@ public record    TestConfig(
     public void configure(QueryRequestProcessorNew prcrQuery) {
         
         // Configure the processor
+        prcrQuery.enableMultiStreaming(this.bolMultistream);
         prcrQuery.enableCorrelateConcurrently(this.bolCorrConcurrent);
         prcrQuery.enableCorrelateWhileStreaming(this.bolCorrStreaming);
         prcrQuery.setMaxStreamCount(this.cntMaxStreams);
@@ -80,11 +91,57 @@ public record    TestConfig(
     public void configure(QueryRequestProcessorOld prcrQuery) {
         
         // Configure the processor
+        prcrQuery.enableMultiStreaming(this.bolMultistream);
         prcrQuery.enableCorrelateConcurrently(this.bolCorrConcurrent);
         prcrQuery.enableCorrelateWhileStreaming(this.bolCorrStreaming);
         prcrQuery.setMaxStreamCount(this.cntMaxStreams);
         prcrQuery.setMaxDataSourceCount(this.cntMaxSources);
         prcrQuery.setMaxTimeRange(this.durMaxRange);
+    }
+    
+    /**
+     * <p>
+     * Extracts the configuration of the given request processor and returns it as a new <code>TestConfig</code> record.
+     * </p
+     * 
+     * @param prcrRqst  request processor under scrutiny
+     * 
+     * @return  the configuration of the given processor
+     */
+    public TestConfig extractConfiguration(QueryRequestProcessorNew prcrRqst) {
+        
+        // Extract configuration parameters from query request processor
+        final boolean   bolMultiStrm = prcrRqst.isMultiStreaming(); 
+        final boolean   bolCorrCon = prcrRqst.isCorrelatingConcurrently();
+        final boolean   bolCorrStrm = prcrRqst.isCorrelatingWhileStreaming();
+        final int       cntMaxStrms = prcrRqst.getMaxStreamCount();
+        final int       cntMaxSrcs = prcrRqst.getMaxDataSourceCount();
+        final Duration  durMaxRng = prcrRqst.getMaxTimeRange();
+        
+        return TestConfig.from(bolMultiStrm, bolCorrCon, bolCorrStrm, cntMaxStrms, cntMaxSrcs, durMaxRng);
+    }
+    
+    /**
+     * <p>
+     * Extracts the configuration of the given request processor and returns it as a new <code>TestConfig</code> record.
+     * </p
+     * 
+     * @param prcrRqst  request processor under scrutiny
+     * 
+     * @return  the configuration of the given processor
+     */
+    @SuppressWarnings("deprecation")
+    public TestConfig extractConfiguration(QueryRequestProcessorOld prcrRqst) {
+        
+        // Extract configuration parameters from query request processor
+        final boolean   bolMultiStrm = prcrRqst.isMultiStreaming(); 
+        final boolean   bolCorrCon = prcrRqst.isCorrelatingConcurrently();
+        final boolean   bolCorrStrm = prcrRqst.isCorrelatingWhileStreaming();
+        final int       cntMaxStrms = prcrRqst.getMaxStreamCount();
+        final int       cntMaxSrcs = prcrRqst.getMaxDataSourceCount();
+        final Duration  durMaxRng = prcrRqst.getMaxTimeRange();
+        
+        return TestConfig.from(bolMultiStrm, bolCorrCon, bolCorrStrm, cntMaxStrms, cntMaxSrcs, durMaxRng);
     }
     
     /**

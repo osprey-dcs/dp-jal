@@ -31,8 +31,10 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -133,8 +135,11 @@ public class RawSuperDomData implements Iterable<RawCorrelatedData> {
     // Class Constants
     //
     
-    /** Is logging active */
-    protected static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Is event logging enabled? */
+    protected static final boolean      BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    protected static final String       STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
     /** General timeout limit  - for parallel thread pool tasks */
@@ -142,6 +147,16 @@ public class RawSuperDomData implements Iterable<RawCorrelatedData> {
     
     /** General timeout units - for parallel thread pool tasks */
     protected static final TimeUnit   TU_TIMEOUT = CFG_QUERY.timeout.unit;
+    
+    
+    /**
+     * <p>
+     * Class Resource Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //

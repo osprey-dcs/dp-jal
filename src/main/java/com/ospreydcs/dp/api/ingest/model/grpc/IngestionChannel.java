@@ -39,8 +39,10 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.IngestRequestUID;
@@ -68,11 +70,11 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataStreamResponse;
  * </p>
  * <p>
  * Class instances transmit processed client ingestion data using a collection of 
- * <code>{@link IngestionStream}</code> instances - one for each active gRPC data stream.  Processed ingestion
+ * <code>{@link IngestionStream}</code> instances - one for each enabled gRPC data stream.  Processed ingestion
  * data is represented as a stream of <code>IngestDataRequest</code> Protobuf messages.
  * The stream classes are executed on separate threads that all compete for the 
  * <code>IngestDataRequest</code> messages produced by the <code>IMessageSupplier&lt;IngestDataRequest&gt;</code>.
- * (If the multiple data streams feature is disabled only one stream will be active.)  
+ * (If the multiple data streams feature is disabled only one stream will be enabled.)  
  * </p>
  * <h2>Operation</h2>
  * After creation instances of <code>IngestionChannel</code> must be activated using
@@ -98,7 +100,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataStreamResponse;
  * </p>
  * <p>
  * Activation starts all transmission tasks which are then 
- * continuously active throughout the lifetime of this instance, or explicitly shut down.  
+ * continuously enabled throughout the lifetime of this instance, or explicitly shut down.  
  * Streaming tasks execute independently in
  * thread pools where they block until ingestion requests become available through the source.
  * </p>
@@ -202,16 +204,19 @@ public class IngestionChannel {
     private static final TimeUnit   TU_TIMEOUT_GENERAL = CFG_DEFAULT.timeout.unit;
     
     
-    /** Event logging active flag */
+    /** Event logging enabled flag */
     @SuppressWarnings("unused")
-    private static final boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
+    private static final boolean    BOL_LOGGING = CFG_DEFAULT.logging.enabled;
+    
+    /** Event logging level */
+    private static final String     STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
     
     
     /** The default gRPC stream type */
     private static final DpGrpcStreamType   ENM_STREAM_TYPE = CFG_DEFAULT.stream.type;
     
     /** Use multiple gRPC data stream to transmit ingestion frames */
-    private static final Boolean            BOL_MULTISTREAM_ACTIVE = CFG_DEFAULT.stream.concurrency.active;
+    private static final Boolean            BOL_MULTISTREAM_ACTIVE = CFG_DEFAULT.stream.concurrency.enabled;
     
     /** The maximum number of gRPC data stream used to transmit ingestion data */
     private static final Integer            CNT_MULTISTREAM_MAX = CFG_DEFAULT.stream.concurrency.maxStreams;
@@ -227,6 +232,16 @@ public class IngestionChannel {
     /** Class event logger instance */
     @SuppressWarnings("unused")
     private static final Logger     LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //
@@ -292,7 +307,7 @@ public class IngestionChannel {
     /** The number of Ingestion Service responses so far */
     private int     cntResponses = 0;
     
-    /** Are streaming tasks active */
+    /** Are streaming tasks enabled */
     private boolean bolActive = false;
     
     
@@ -349,7 +364,7 @@ public class IngestionChannel {
      * 
      * @param enmStreamType gRPC stream type for data transmission
      * 
-     * @throws IllegalStateException            method called while processor is active
+     * @throws IllegalStateException            method called while processor is enabled
      * @throws UnsupportedOperationException    an unsupported stream type was provided
      */
     public void setStreamType(DpGrpcStreamType enmStreamType) throws IllegalStateException, UnsupportedOperationException {
@@ -397,7 +412,7 @@ public class IngestionChannel {
      * 
      * @param cntStreamsMax maximum number of allowable gRPC data streams (>0)
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      * @throws IllegalArgumentException the argument was zero or negative
      * 
      * @see #CNT_MULTISTREAM_MAX
@@ -446,7 +461,7 @@ public class IngestionChannel {
      * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
      * </p>
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      */
     public void disableMultipleStreams() throws IllegalStateException {
 
@@ -467,7 +482,7 @@ public class IngestionChannel {
      * Determines whether or not multiple gRPC data streams are used to transport data to the Ingestion Service.
      * </p>
      *  
-     * @return  <code>true</code> if multi-streaming is active, <code>false</code> otherwise (only a single stream is used)
+     * @return  <code>true</code> if multi-streaming is enabled, <code>false</code> otherwise (only a single stream is used)
      */
     public boolean  hasMultipleStreams() {
         return this.bolMultistream;
@@ -478,7 +493,7 @@ public class IngestionChannel {
      * Returns the maximum number of concurrent gRPC data streams used to transmit data to the Ingestion Service.
      * </p>
      * <p>
-     * If multiple data streaming is active this is the number of concurrent data stream used by the pool to 
+     * If multiple data streaming is enabled this is the number of concurrent data stream used by the pool to 
      * transport data to the Ingestion Service over gRPC.  If multi-streaming is disabled this value should be
      * ignored (i.e., only a single gRPC data stream is used).
      * </p>
@@ -516,7 +531,7 @@ public class IngestionChannel {
      * The returned value is the number of Protocol Buffers messages carrying ingestion
      * data that have been transmitted to the Ingestion Service at the time of invocation.
      * If called after invoking <code>{@link #shutdown()}</code> then the returned value
-     * is the total number of messages transmitted while active.
+     * is the total number of messages transmitted while enabled.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
@@ -525,7 +540,7 @@ public class IngestionChannel {
      * The value returned by this method is not necessary equal to the number of 
      * <code>IngestionFrame</code> instances offered to upstream processing.  
      * If ingestion frame decomposition
-     * is active large ingestion frame exceeding the size limit which be decomposed into
+     * is enabled large ingestion frame exceeding the size limit which be decomposed into
      * smaller ingestion frames before being converted into <code>IngestDataRequest</code>
      * messages.
      * </li>
@@ -627,7 +642,7 @@ public class IngestionChannel {
      * For unidirectional gRPC streaming the Ingestion Service will return at most one response for each data
      * stream.  This response is send only after all data is transmitted and a "half-closed" event is signaled
      * to the Ingestion Service.  Thus, under normal operations the returned value should be 0 while all gRPC
-     * data streams are still active, and the number of data streams used to transmit data after the shutdown 
+     * data streams are still enabled, and the number of data streams used to transmit data after the shutdown 
      * operation is called.
      * </p>
      * <p>
@@ -728,7 +743,7 @@ public class IngestionChannel {
      * </p>
      * <p>
      * For bidirectional streaming the Ingestion Service sends a response for <em>every</em> ingestion request.
-     * The returned list will contain all responses from all currently active <code>IngestionStream</code> tasks.
+     * The returned list will contain all responses from all currently enabled <code>IngestionStream</code> tasks.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
@@ -982,19 +997,19 @@ public class IngestionChannel {
      * </p>
      * <p>
      * The <code>IMessageSupplier&lt;IngestDataRequest&gt;</code> instance provided at construction
-     * <em>must be active</em> for this method to be successful.  Due to the design of the 
+     * <em>must be enabled</em> for this method to be successful.  Due to the design of the 
      * <code>{@link IngestionStream}</code> class, launching the gRPC stream thread task will
      * immediately complete if the supplier is inactive (has no pending messages).
-     * Thus, make sure to active the message supplier before invoking this method.
+     * Thus, make sure to enabled the message supplier before invoking this method.
      * </p> 
      * <p>
-     * Once this method returns all gRPC streaming tasks are created and active.  
+     * Once this method returns all gRPC streaming tasks are created and enabled.  
      * Processed messages available from the message supplier are transmitted to the Ingestion Service 
      * via the gRPC streaming tasks.
      * </p>
      * <h2>Operation</h2>
      * This method starts all ingestion data transmission tasks which are then 
-     * continuously active throughout the lifetime of this instance, or until explicitly shut down.  
+     * continuously enabled throughout the lifetime of this instance, or until explicitly shut down.  
      * Processing and streaming tasks execute independently in
      * thread pools where they block until ingestion messages become available.
      * </p>
@@ -1031,22 +1046,22 @@ public class IngestionChannel {
      * </p>
      * 
      * @return  <code>true</code> if the processor was successfully activated,
-     *          <code>false</code> if the processor was already active
+     *          <code>false</code> if the processor was already enabled
      * 
-     * @throws IllegalStateException            the message supplier is not active
+     * @throws IllegalStateException            the message supplier is not enabled
      * @throws UnsupportedOperationException    an unsupported ingestion stream type was specified
      * @throws RejectedExecutionException       (internal) unable to start a streaming task
      */
     synchronized 
     public boolean activate() throws IllegalStateException, UnsupportedOperationException, RejectedExecutionException {
         
-        // Check our state - already active?
+        // Check our state - already enabled?
         if (this.bolActive)
             return false;
 
-        // Check message supplier state - not active?
+        // Check message supplier state - not enabled?
         if (!this.srcRqstMsgs.isSupplying())
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - IMessageSupplier instance is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - IMessageSupplier instance is not enabled.");
         
         // Set activation flag before launching threads
         this.bolActive = true;
@@ -1153,7 +1168,7 @@ public class IngestionChannel {
         // Wait for all pending streaming tasks to complete - all should be complete at this point
         boolean bolResult = this.xtorStreamTasks.awaitTermination(lngTimeout, tuTimeout);
         
-        // Just in case - terminate any threads still active (timeout occurred)
+        // Just in case - terminate any threads still enabled (timeout occurred)
         this.setStreamFutures.forEach(future -> future.cancel(false));
         
         this.bolActive = false;

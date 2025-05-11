@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 
-import com.ospreydcs.dp.api.config.DpApiTestingConfig;
+import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
@@ -67,7 +67,7 @@ public class TestQueryService {
     //
     
     /** The query configuration for DP API testing */ 
-    public static final DpApiTestingConfig.TestQuery    CFG_QUERY = DpApiTestingConfig.getInstance().testQuery;
+    public static final DpApiUnitTestConfig.TestQuery    CFG_QUERY = DpApiUnitTestConfig.getInstance().testQuery;
     
 
     //
@@ -215,7 +215,7 @@ public class TestQueryService {
      * </p>
      * <p>
      * The returned instance is a Query Service API connected to the test archive
-     * as defined in <code>{@link DpApiTestingConfig.TestQuery}</code>.
+     * as defined in <code>{@link DpApiUnitTestConfig.TestQuery}</code>.
      * <p>
      * <p>
      * <h2>NOTES:</h2>
@@ -302,7 +302,7 @@ public class TestQueryService {
      * @return          result set of query request
      * 
      * @throws CompletionException  an error occurred during the bidirectional streaming
-     * @throws InterruptedException process interrupted by bidirectional stream active
+     * @throws InterruptedException process interrupted by bidirectional stream enabled
      */
     public List<QueryDataResponse>  queryResponseCursor(QueryDataRequest msgRqst) throws CompletionException, InterruptedException {
         CursorResponseBuffer    strmBackward = new CursorResponseBuffer();
@@ -316,7 +316,7 @@ public class TestQueryService {
     
     /**
      * Shuts down the connection to the Query Service.
-     * The instance is no longer active.
+     * The instance is no longer enabled.
      * 
      * @throws InterruptedException process interrupted while waiting for shutdown
      */
@@ -326,7 +326,7 @@ public class TestQueryService {
     
     /**
      * Hard shuts down of the connection to the Query Service.
-     * The instance is no longer active.
+     * The instance is no longer enabled.
      */
     public void shutdownNow() {
         this.connTestArchive.shutdownNow();

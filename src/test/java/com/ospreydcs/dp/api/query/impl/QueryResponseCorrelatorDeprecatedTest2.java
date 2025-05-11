@@ -191,7 +191,7 @@ public class QueryResponseCorrelatorDeprecatedTest2 {
     @Test
     public final void testSetMultiStreamingResponse() {
         Boolean bolMultiStream = this.tstRspCorrelator.isMultiStreamingResponse();
-        Assert.assertEquals(CFG_RSP.multistream.active, bolMultiStream);
+        Assert.assertEquals(CFG_RSP.multistream.enabled, bolMultiStream);
         
         this.tstRspCorrelator.setMultiStreamingResponse(!bolMultiStream);
         Assert.assertEquals(!bolMultiStream, this.tstRspCorrelator.isMultiStreamingResponse());
@@ -412,11 +412,11 @@ public class QueryResponseCorrelatorDeprecatedTest2 {
         
         os.println("  Correlator Properties");
         os.println("    Mutli-streaming Properties");
-        os.println("      multi-streaming active : " + corr.isMultiStreamingResponse());
+        os.println("      multi-streaming enabled : " + corr.isMultiStreamingResponse());
         os.println("      maximum stream count   : " + corr.getMultiStreamCount());
         os.println("      minimum domain size    : " + corr.geMultiStreamingDomainSize());
         os.println("    Correlation Concurrency Properties");
-        os.println("      concurrency active   : " + corr.isCorrelatingConcurrently());
+        os.println("      concurrency enabled   : " + corr.isCorrelatingConcurrently());
         os.println("      while streaming      : " + corr.isCorrelatingWhileStreaming());
     }
 }

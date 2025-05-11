@@ -30,7 +30,7 @@
  * recovered raw, time-series data.
  * </p>
  * <p>
- * The active class in this package is <code>TimeDomainProcessor</code>.  This class takes raw, response data
+ * The enabled class in this package is <code>TimeDomainProcessor</code>.  This class takes raw, response data
  * (time-series) that has already been correlated and searches for time-domain collisions within the timestamp
  * messages for each correlated block (i.e., <code>RawCorrelatedData</code> instance).  It then collects the
  * raw, correlated data containing collisions into "super domains", which are collections of raw data with an 

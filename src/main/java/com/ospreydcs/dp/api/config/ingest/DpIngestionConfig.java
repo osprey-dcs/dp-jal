@@ -31,7 +31,6 @@ import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
 import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
 import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcStreamConfig;
-import com.ospreydcs.dp.api.config.grpc.DpGrpcStreamConfig.DataBinning;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -88,9 +87,9 @@ public class DpIngestionConfig extends CfgStructure<DpIngestionConfig> {
         // Configuration Parameters
         //
         
-        /** Is data binning active */
-        @ACfgOverride.Field(name="ACTIVE")
-        public Boolean      active;
+        /** Is data binning enabled */
+        @ACfgOverride.Field(name="ENABLED")
+        public Boolean      enabled;
         
         /** Maximum size of (in bytes) of data bins */
         @ACfgOverride.Field(name="MAX_SIZE")

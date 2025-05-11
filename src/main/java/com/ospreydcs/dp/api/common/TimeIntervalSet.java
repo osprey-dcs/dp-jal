@@ -32,7 +32,7 @@ import java.util.TreeSet;
  * </p>
  * <p>
  * Practically speaking, the set is a representation of the specific time intervals 
- * when a particular data source was active.
+ * when a particular data source was enabled.
  * </p>
  *
  * @author Christopher K. Allen

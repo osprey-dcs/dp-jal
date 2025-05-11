@@ -61,7 +61,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * </p>
  * <p>
  * The utility also provides methods that create the test data from an actual Query Service
- * data request and saves it to persistent file storage.  To use this method an active Query 
+ * data request and saves it to persistent file storage.  To use this method an enabled Query 
  * Service must be deployed and attached to the Data Platform test archive.
  * </p>
  * 

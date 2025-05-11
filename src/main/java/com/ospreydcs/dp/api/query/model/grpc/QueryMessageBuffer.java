@@ -35,8 +35,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
@@ -93,8 +95,11 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     // Class Constants - Initialized from API configuration
     //
     
-    /** Is logging active? */
-    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Is event logging enabled? */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
     //
@@ -103,6 +108,16 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     
     /** Class event logger */
     private static final Logger     LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Resource Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //
@@ -263,7 +278,7 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     @Override
     public boolean activate() {
         
-        // Check if already active
+        // Check if already enabled
         if (this.bolActive)
             return false;
 
@@ -309,9 +324,9 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     @Override
     public void offer(List<QueryData> lstMsgs) throws IllegalStateException, InterruptedException {
 
-        // Check if active
+        // Check if enabled
         if (!this.bolActive) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.";
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not enabled.";
             
             if (BOL_LOGGING)
                 LOGGER.warn(strMsg);
@@ -337,9 +352,9 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     public boolean offer(List<QueryData> lstMsgs, long lngTimeout, TimeUnit tuTimeout)
             throws IllegalStateException, InterruptedException {
 
-        // Check if active
+        // Check if enabled
         if (!this.bolActive) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.";
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not enabled.";
             
             if (BOL_LOGGING)
                 LOGGER.warn(strMsg);

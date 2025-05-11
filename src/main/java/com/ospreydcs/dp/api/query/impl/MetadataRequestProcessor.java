@@ -28,8 +28,10 @@ package com.ospreydcs.dp.api.query.impl;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.MetadataRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -69,7 +71,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * <h2>Query Service Connection</code>
  * A <code>DpQueryConnection</code> instance must be provided to a <code>MetadataRequestProcessor</code>
  * object upon creation.  The connection instance is used for all communication with the Query Service and must
- * be active at creation.  <code>MetadataRequestProcessor</code> objects DO NOT maintain ownership of the
+ * be enabled at creation.  <code>MetadataRequestProcessor</code> objects DO NOT maintain ownership of the
  * <code>QueryConnection</code> instance and, thus, it must be shut down externally when no longer needed.
  * </p> 
  *
@@ -90,12 +92,12 @@ public class MetadataRequestProcessor {
      * </p>
      * <p>
      * The returned instance is initialized and ready for metadata request processing.  The argument
-     * must be active and connected to the Query Service.  The returned <code>MetadataRequestProcessor</code>
+     * must be enabled and connected to the Query Service.  The returned <code>MetadataRequestProcessor</code>
      * DOES NOT assume ownership of the <code>DpQueryConnection</code> argument instance, thus, it must
      * be shut down externally when no longer required.
      * </p>
      * 
-     * @param connQuery active connection to the Data Platform Query Service
+     * @param connQuery enabled connection to the Data Platform Query Service
      * 
      * @return  a new <code>MetadataRequestProcessor</code> ready for Query Service metadata request processing
      */
@@ -116,8 +118,11 @@ public class MetadataRequestProcessor {
     // Class Constants
     //
     
-    /** Logging active flag */
-    private static final boolean        BOL_LOGGING = CFG_DEF.logging.active;
+    /** Event logging enabled flag */
+    private static final boolean        BOL_LOGGING = CFG_DEF.logging.enabled;
+    
+    /** Event logging level */
+    private static final String         STR_LOGGING_LEVEL = CFG_DEF.logging.level;
     
     
     /** General query timeout limit */
@@ -133,6 +138,12 @@ public class MetadataRequestProcessor {
     
     /** Class event logger */
     private static final Logger         LOGGER = LogManager.getLogger();
+    
+    
+    /** Class Resource Initialization - Initializes the event logger, sets logging level. */
+    static { 
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel())); 
+    }
     
     
     //
@@ -157,12 +168,12 @@ public class MetadataRequestProcessor {
      * </p>
      * <p>
      * The returned instance is initialized and ready for metadata request processing.  The argument
-     * must be active and connected to the Query Service.  The returned <code>MetadataRequestProcessor</code>
+     * must be enabled and connected to the Query Service.  The returned <code>MetadataRequestProcessor</code>
      * DOES NOT assume ownership of the <code>DpQueryConnection</code> argument instance, thus, it must
      * be shut down externally when no longer required.
      * </p>
      * 
-     * @param connQuery active connection to the Data Platform Query Service
+     * @param connQuery enabled connection to the Data Platform Query Service
      */
     public MetadataRequestProcessor(DpQueryConnection connQuery) {
         this.connQuery = connQuery;

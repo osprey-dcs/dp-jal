@@ -128,9 +128,6 @@ public class QueryRequestProcessorNewTest {
     /** Common List of data requests used for testing */
     public static final List<DpDataRequest>         LST_RQSTS = List.of(RQST_HALF_SRC, RQST_HALF_RNG);
     
-//    /** A map of the common test requests to their (arbitrary) names */
-//    public static final Map<DpDataRequest, String>  MAP_RQST_NMS = Map.of(RQST_HALF_SRC, "RQST_HALF_SRC", RQST_HALF_RNG, "RQST_HALF_RNG");
-    
     
     /** Configuration - List of all maximum data stream counts for request recovery */
 //    public static final List<Integer>           LST_CFG_MAX_STRMS = List.of(1, 2, 3, 4, 5);
@@ -148,22 +145,23 @@ public class QueryRequestProcessorNewTest {
     public static final List<TestConfig>        LST_CFG_TEST_CASES = new LinkedList<>();
     
     
+    /** The "target data rate" for the request processor (in MBps) */
+    public static final double                  DBL_DATA_RATE_TARGET = 200.0;
+    
+    
+    /** Test Case - List of gRPC data stream types used for request recovery */
+    public static final List<DpGrpcStreamType>  LST_STRM_TYP = List.of(DpGrpcStreamType.BACKWARD, DpGrpcStreamType.BIDIRECTIONAL);
+
+    
     /** Test Case - List of multi-streaming gRPC data streams */
 //    public static final List<Integer>           LST_MSTRM_CNT_STRMS = List.of(1, 2, 3, 4, 5);
     public static final List<Integer>           LST_MSTRM_CNT_STRMS = List.of(2, 3);
     
-    /** Test Case - List of gRPC data stream types used for request recovery */
-    public static final List<DpGrpcStreamType>  LST_MSTRM_STRM_TYP = List.of(DpGrpcStreamType.BACKWARD, DpGrpcStreamType.BIDIRECTIONAL);
-
     /** Test Case - List of request domain decomposition strategies */
     public static final List<RequestDecompType> LST__MSTRM_DCMP_TYP = List.of(RequestDecompType.HORIZONTAL, RequestDecompType.VERTICAL);
     
     /** Test Case - List of all common test case records - built in static section */
     public static final List<TestCase>          LST_MSTRM_TST_CASES = new LinkedList<>();
-    
-    
-    /** The "target data rate" for the request processor (in MBps) */
-    public static final double                  DBL_DATA_RATE_TARGET = 200.0;
     
     
     /** Universal enable/disable recovery request with multiple gRPC data streams flag */
@@ -176,7 +174,7 @@ public class QueryRequestProcessorNewTest {
     public static final boolean                 BOL_UNIVR_CORR_STRM = true;
     
     /** Universal multi-stream test configuration */
-    public static final TestConfig              REC_UNIVR_MSTRM_CFG = TestConfig.from(BOL_UNIVR_CORR_CONC, BOL_UNIVR_CORR_STRM, 5, 4000, Duration.ofSeconds(5L));
+    public static final TestConfig              REC_UNIVR_MSTRM_CFG = TestConfig.from(BOL_UNIV_RCVR_MULT, BOL_UNIVR_CORR_CONC, BOL_UNIVR_CORR_STRM, 5, 4000, Duration.ofSeconds(5L));
     
     
     /*
@@ -200,14 +198,19 @@ public class QueryRequestProcessorNewTest {
                     for (Boolean bolCorrCon : lstBool) 
                         for (Boolean bolCorrStrm : lstBool) {
 
-                            TestConfig  recCfg = TestConfig.from(bolCorrCon, bolCorrStrm, cntMaxStrms, cntMaxSrcs, durMaxRng);
+                            TestConfig  recCfg = TestConfig.from(BOL_UNIV_RCVR_MULT, 
+                                    bolCorrCon, 
+                                    bolCorrStrm, 
+                                    cntMaxStrms, 
+                                    cntMaxSrcs, 
+                                    durMaxRng);
 
                             LST_CFG_TEST_CASES.add(recCfg);
                         }
         
         // Populate the explicit multi-streaming test cases, building the composite request
         for (DpDataRequest rqst : LST_RQSTS)
-            for (DpGrpcStreamType enmStrType : LST_MSTRM_STRM_TYP)
+            for (DpGrpcStreamType enmStrType : LST_STRM_TYP)
                 for (RequestDecompType enmDcmpType : LST__MSTRM_DCMP_TYP)
                     for (Integer cntStrms : LST_MSTRM_CNT_STRMS) {
                         
@@ -411,7 +414,7 @@ public class QueryRequestProcessorNewTest {
         // Reset to default configuration and confirm
         prcrTest.resetDefaultConfiguration();
         
-        Assert.assertTrue(prcrTest.isMultiStreaming() == CFG_QUERY.data.response.multistream.active);
+        Assert.assertTrue(prcrTest.isMultiStreaming() == CFG_QUERY.data.response.multistream.enabled);
         Assert.assertEquals(CFG_QUERY.data.response.multistream.sizeDomain.longValue(), prcrTest.getMultiStreamingDomainSize());
         Assert.assertEquals(CFG_QUERY.data.response.multistream.maxStreams.intValue(), prcrTest.getMaxStreamCount());
         Assert.assertEquals(CFG_QUERY.data.request.decompose.maxSources.intValue(), prcrTest.getMaxDataSourceCount());
@@ -571,93 +574,6 @@ public class QueryRequestProcessorNewTest {
         prcrQuery.setCorrelateMaxThreads(cntMaxThds);
     }
 
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#isMultiStreaming()}.
-//     */
-//    @Test
-//    public final void testIsMultiStreaming() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#getMultiStreamingDomainSize()}.
-//     */
-//    @Test
-//    public final void testGetMultiStreamingDomainSize() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#getMaxStreamCount()}.
-//     */
-//    @Test
-//    public final void testGetMaxStreamCount() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#getMaxDataSourceCount()}.
-//     */
-//    @Test
-//    public final void testGetMaxDataSourceCount() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#getMaxTimeRange()}.
-//     */
-//    @Test
-//    public final void testGetMaxTimeRange() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#isCorrelatingConcurrently()}.
-//     */
-//    @Test
-//    public final void testIsCorrelatingConcurrently() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#isCorrelatingWhileStreaming()}.
-//     */
-//    @Test
-//    public final void testIsCorrelatingWhileStreaming() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#getCorrelateMaxThreads()}.
-//     */
-//    @Test
-//    public final void testGetCorrelateMaxThreads() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#getProcessedCompositeRequest()}.
-//     */
-//    @Test
-//    public final void testGetProcessedCompositeRequest() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#getProcessedByteCount()}.
-//     */
-//    @Test
-//    public final void testGetProcessedByteCount() {
-//        fail("Not yet implemented"); // TODO
-//    }
-//
-//    /**
-//     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#getProcessedMessageCount()}.
-//     */
-//    @Test
-//    public final void testGetProcessedMessageCount() {
-//        fail("Not yet implemented"); // TODO
-//    }
 
     /**
      * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#processRequest(com.ospreydcs.dp.api.query.DpDataRequest)}.
@@ -667,14 +583,14 @@ public class QueryRequestProcessorNewTest {
         
         // Test Parameters
         final PrintStream   ps = psOutput;
-        final boolean       bolMultStrm = BOL_UNIV_RCVR_MULT;
+//        final boolean       bolMultStrm = BOL_UNIV_RCVR_MULT;
         final int           cntCases = LST_RQSTS.size() * LST_CFG_TEST_CASES.size();  
         
         // Test resource - we are changing configuration so we use an independent processor
         final QueryRequestProcessorNew  prcrTest = QueryRequestProcessorNew.from(connQuery);
         final SortedSet<ConfigResult>   setResults = new TreeSet<>(ConfigResult.ResultOrder.create());
         
-        prcrTest.enableMultiStreaming(bolMultStrm);
+//        prcrTest.enableMultiStreaming(bolMultStrm);
         
         // Print Header
         ps.println(JavaRuntime.getQualifiedMethodNameSimple());
@@ -694,23 +610,6 @@ public class QueryRequestProcessorNewTest {
                     
                     ConfigResult    recResult = ConfigResult.evaluate(prcrTest, rqst, recCfg);
                     setResults.add(recResult);
-
-//                    Instant insStart = Instant.now();
-//                    SortedSet<RawCorrelatedData>  setData = prcrTest.processRequest(rqst);
-//                    Instant insFinish = Instant.now();
-//
-//                    // Compute results
-//                    Duration    durRqst = Duration.between(insStart, insFinish);
-//                    int         cntMsgs = prcrTest.getProcessedMessageCount();
-//                    int         cntBlks = setData.size();
-//                    long        szAlloc = prcrTest.getProcessedByteCount();
-//                    List<DpDataRequest> lstCmpRqsts = prcrTest.getProcessedCompositeRequest();
-//
-//                    double      dblRateXmit  = ( ((double)szAlloc) * 1000 )/durRqst.toNanos();
-//
-//                    // Create result record and save
-//                    ConfigResult    recResult = ConfigResult.from(dblRateXmit, cntMsgs, szAlloc, cntBlks, durRqst, recCfg, rqst, lstCmpRqsts);
-//                    setResults.add(recResult);
 
                 } catch (DpQueryException e) {
                     Assert.fail("Exception " + e.getClass().getSimpleName() + " thrown during test case #" + indCase + " : " + e.getMessage());
@@ -748,8 +647,8 @@ public class QueryRequestProcessorNewTest {
         int     indCase = 1;
         for (TestCase recCase : LST_MSTRM_TST_CASES) {
             System.out.println("Test Case #" + indCase + " of " + cntCases);
-        
             ps.println("Test Case #" + indCase + " of " + cntCases);
+
             try {
 
                 ConfigResult    recResult = recCase.evaluate(prcrQuery, REC_UNIVR_MSTRM_CFG);
@@ -786,6 +685,7 @@ public class QueryRequestProcessorNewTest {
             indCase++;
         }
     }
+    
 
     // 
     // Support Methods
@@ -854,18 +754,23 @@ public class QueryRequestProcessorNewTest {
         ResultSummary   recSummary  = ResultSummary.summarize(setResults);
         recSummary.printOut(os);
         
-        // Score results and print them
-//        ConfigResultScore   scoreAll = new ConfigResultScore(LST_RQSTS);
-//        ConfigResultScore   scoreAboveAvg = new ConfigResultScore(LST_RQSTS);
-//        ConfigResultScore   scoreAbove200 = new ConfigResultScore(LST_RQSTS);
-        double  dblRateAvg = recSummary.dblRateAvg();
-        double  dblRateTgt = DBL_DATA_RATE_TARGET;
-        double  dblRateBoth = Math.max(dblRateAvg, dblRateTgt);
-        
+        // Get the data rates of interest 
+        final double  dblRateAvg = recSummary.dblRateAvg();
+        final double  dblRateTgt = DBL_DATA_RATE_TARGET;
+        final double  dblRateBoth = Math.max(dblRateAvg, dblRateTgt);
+
+        // Count results and print them
         int     cntAboveAvg = ConfigResult.countRatesGreaterEqual(setResults, dblRateAvg);
         int     cntAboveTgt = ConfigResult.countRatesGreaterEqual(setResults, dblRateTgt);
         int     cntBoth = ConfigResult.countRatesGreaterEqual(setResults, dblRateBoth);
 
+        os.println();
+        os.println("    Number of cases over average : " + cntAboveAvg);
+        os.println("    Number of cases over target  : " + cntAboveTgt);
+        os.println("    Number of cases over both    : " + cntBoth);
+        
+        
+        // Score results and print them
         ConfigResultScore   scoreAll = ConfigResultScore.from(LST_RQSTS, setResults);
         ConfigResultScore   scoreAboveAvg = ConfigResultScore.from(LST_RQSTS, setResults, dblRateAvg);
         ConfigResultScore   scoreAboveTgt = ConfigResultScore.from(LST_RQSTS, setResults, dblRateTgt);
@@ -873,6 +778,7 @@ public class QueryRequestProcessorNewTest {
         ConfigResultScore.Score scoreBest = scoreAll.getScoreWithBestAvgRate();
         double                  dblRateMinBestConfig = scoreBest.getDataRateMin();
         ConfigResultScore       scoreBestAboveMin = ConfigResultScore.from(LST_RQSTS, setResults, dblRateMinBestConfig);
+        os.println("    Minimum rate for best config : " + dblRateMinBestConfig);
         
 //        int     cntAboveAvg = 0;
 //        int     cntAbove200 = 0;
@@ -900,12 +806,6 @@ public class QueryRequestProcessorNewTest {
 //            // All cases
 //            scoreAll.score(recResult);
 //        }
-        
-        os.println();
-        os.println("    Number of cases over average : " + cntAboveAvg);
-        os.println("    Number of cases over target  : " + cntAboveTgt);
-        os.println("    Number of cases over both    : " + cntBoth);
-        os.println("    Minimum rate for best config : " + dblRateMinBestConfig);
         
         
 //        for (ConfigResult recResult : setResults) {

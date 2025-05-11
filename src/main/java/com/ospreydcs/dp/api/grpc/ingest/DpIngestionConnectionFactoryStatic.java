@@ -245,7 +245,7 @@ public final class DpIngestionConnectionFactoryStatic{
      * @param fileClientKey file containing client private key
      * @param bolPlainText transmit data using plain ASCII (negates all TLS security)
      * @param intMsgSizeMax maximum message size for gRPC transmission (bytes)
-     * @param bolKeepAlive force connection to remain active (otherwise idle after timeout)
+     * @param bolKeepAlive force connection to remain enabled (otherwise idle after timeout)
      * @param bolGzipCompr enable GZIP compression for data transmission
      * @param lngTimeout   timeout limit used for channel operations (keepalive ping)
      * @param tuTimeout    timeout units used for channel operations (Keepalive ping)

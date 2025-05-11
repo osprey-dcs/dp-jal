@@ -403,7 +403,7 @@ public interface IQueryService extends IConnection {
      * 
      * @param rqst  configured <code>{@link DpDataRequest]</code> request builder instance
      * 
-     * @return      an active query stream buffer ready to accumulate the results set
+     * @return      an enabled query stream buffer ready to accumulate the results set
      * 
      * @see DpQueryStreamBuffer
      * @see DpQueryStreamBuffer#start()

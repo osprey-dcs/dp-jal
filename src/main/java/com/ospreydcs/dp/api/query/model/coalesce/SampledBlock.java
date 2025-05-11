@@ -37,8 +37,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
@@ -363,12 +365,15 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     // Class Constants
     //
     
-    /** Logging active flag */
-    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Logging enabled flag */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Logging event level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
-    /** Concurrency active flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
+    /** Concurrency enabled flag */
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
     
     /** Concurrency tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
     public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
@@ -386,6 +391,16 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     protected static final Logger     LOGGER = LogManager.getLogger();
     
 
+    /**
+     * <p>
+     * Class Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
+    
+    
     //
     // Instance Attributes
     //
@@ -708,7 +723,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      * after the final timestamp.
      * </p>
      *  
-     * @return  the time domain which the clock is active, minus the final period duration
+     * @return  the time domain which the clock is enabled, minus the final period duration
      * 
      * @see UniformSamplingClock#getTimeDomain()
      */

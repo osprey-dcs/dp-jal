@@ -31,8 +31,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.IngestRequestUID;
 import com.ospreydcs.dp.api.common.IngestionResult;
@@ -180,8 +182,11 @@ public final class DpIngestionServiceImpl extends
     // Class Constants
     //
     
-    /** Logging active flag */
-    private static final boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
+    /** Logging enabled flag */
+    private static final boolean    BOL_LOGGING = CFG_DEFAULT.logging.enabled;
+    
+    /** Event logging level */
+    private static final String     STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
 
     
 //    /** General operation timeout limit */
@@ -196,7 +201,7 @@ public final class DpIngestionServiceImpl extends
     //
     
     /** Perform ingestion frame decomposition (i.e., "binning") */
-    private static final Boolean    BOL_DECOMP_ACTIVE = CFG_DEFAULT.decompose.active;
+    private static final Boolean    BOL_DECOMP_ACTIVE = CFG_DEFAULT.decompose.enabled;
     
     /** Maximum size limit (in bytes) of decomposed ingestion frame */
     private static final Integer    LNG_DECOMP_MAX_SIZE = CFG_DEFAULT.decompose.maxSize;
@@ -208,6 +213,16 @@ public final class DpIngestionServiceImpl extends
     
     /** Class event logger */
     private static final Logger     LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //
@@ -288,7 +303,7 @@ public final class DpIngestionServiceImpl extends
      * </p>
      * <p>
      * Enables the automatic decomposition of ingestion frames (i.e., "frame binning").
-     * When frame decomposition is active any ingestion frame added to this supplier
+     * When frame decomposition is enabled any ingestion frame added to this supplier
      * is decomposed so that the total memory allocation is less than the given size.
      * </p>
      * <p> 
@@ -342,7 +357,7 @@ public final class DpIngestionServiceImpl extends
      * </p>
      * <p>
      * Disables the automatic decomposition of ingestion frames (i.e., "frame binning").
-     * When frame decomposition is active any ingestion frame added to this supplier
+     * When frame decomposition is enabled any ingestion frame added to this supplier
      * is decomposed so that the total memory allocation is less than the given size.
      * </p>
      * <p> 
@@ -418,7 +433,7 @@ public final class DpIngestionServiceImpl extends
      * The returned value is the number of Protocol Buffers messages carrying ingestion
      * data that have been transmitted to the Ingestion Service at the time of invocation.
      * If called after invoking <code>{@link #shutdown()}</code> then the returned value
-     * is the total number of messages transmitted while active.
+     * is the total number of messages transmitted while enabled.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
@@ -427,7 +442,7 @@ public final class DpIngestionServiceImpl extends
      * The value returned by this method is not necessary equal to the number of 
      * <code>IngestionFrame</code> instances offered to upstream processing.  
      * If ingestion frame decomposition
-     * is active large ingestion frame exceeding the size limit which be decomposed into
+     * is enabled large ingestion frame exceeding the size limit which be decomposed into
      * smaller ingestion frames before being converted into <code>IngestDataRequest</code>
      * messages.
      * </li>
@@ -439,7 +454,7 @@ public final class DpIngestionServiceImpl extends
      * </li> 
      * <br/>
      * <li>
-     * If the <code>active()</code> method is called after a shutdown the returned value 
+     * If the <code>enabled()</code> method is called after a shutdown the returned value 
      * resets.
      * </li>
      * </ul>

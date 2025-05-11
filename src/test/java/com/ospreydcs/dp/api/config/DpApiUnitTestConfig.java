@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpApiTestingConfig.java
+ * File:	DpApiUnitTestConfig.java
  * Package: com.ospreydcs.dp.api.config.test
- * Type: 	DpApiTestingConfig
+ * Type: 	DpApiUnitTestConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -42,22 +42,27 @@ import com.ospreydcs.dp.api.config.test.TestQueryDataConfig;
 
 /**
  * <p>
- * Contains configuration and common parameters for Data Platform API library testing.
+ * Contains configuration and common parameters for Java API Library unit testing.
  * </p> 
+ * <p>
+ * The Java API Library tools configuration parameters are contained in the file with name given
+ * by <code>{@link #STR_CFG_FILE_NAME}</code>.  The location of the file should be in the resources
+ * sub-directory of the project unit testing directory.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Jan 13, 2024
  *
  */
 @ACfgOverride.Root(root="DP_API_TEST")
-public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
+public class DpApiUnitTestConfig extends CfgStructure<DpApiUnitTestConfig> {
     
     
     //
-    // Application Resources
+    // Class Constants
     //
     
-    /** File name of the Data Platform testing configuration file */
+    /** Name of file containing the Java API Library unit testing configuration parameters */
     public static final String  STR_CFG_FILE_NAME = "dp-api-test-config.yml";
     
 
@@ -74,31 +79,34 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
     //
     
     /** Singleton instance of this class */
-    private static DpApiTestingConfig   cfgInstance = null;
+    private static DpApiUnitTestConfig   cfgInstance = null;
+    
+    
+    //
+    // Operations
+    //
     
     /**
      * <p>
-     * Returns the singleton instance of the <code>DpApiTestingConfig</code> class.  
+     * Returns the singleton instance of the <code>DpApiUnitTestConfig</code> class.  
      * </p>
      * <p>
-     * If this is the first call to this method the instance is created using the
-     * <code>CfgLoaderYaml</code> utility class.  The properties loader reads
-     * the properties file, creates the instance, and populates it.
-     * Any properties that are annotated as override capable (using the 
-     * <code>ACfgOverride</code> annotation class) are then overridden
-     * with any environment variables that have been set.
+     * If this is the first call to this method, the instance <code>{@link #cfgInstance}</code> is created using the
+     * <code>CfgLoaderYaml</code> utility class.  The properties loader reads the properties file, creates the instance, 
+     * then populates it. Any properties that are annotated as override capable (using the <code>ACfgOverride</code> 
+     * annotation class) are then overridden with any environment variables that have been set.
      * </p>
      * 
-     * @return singleton instance of <code>DpApiTestingCnofig</code> containing initialization parameters
+     * @return singleton instance of <code>DpApiUnitTestingConfig</code> containing initialization parameters
      *          for application
      */
-    public static DpApiTestingConfig getInstance() {
-        if (DpApiTestingConfig.cfgInstance == null) {
+    public static DpApiUnitTestConfig getInstance() {
+        if (DpApiUnitTestConfig.cfgInstance == null) {
             try {
-                DpApiTestingConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE_NAME, DpApiTestingConfig.class);
+                DpApiUnitTestConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE_NAME, DpApiUnitTestConfig.class);
                 
-                CfgOverrideUtility.overrideRoot(DpApiTestingConfig.cfgInstance, CfgOverrideUtility.SOURCE.ENVIRONMENT);
-                CfgOverrideUtility.overrideRoot(DpApiTestingConfig.cfgInstance, CfgOverrideUtility.SOURCE.PROPERTIES);
+                CfgOverrideUtility.overrideRoot(DpApiUnitTestConfig.cfgInstance, CfgOverrideUtility.SOURCE.ENVIRONMENT);
+                CfgOverrideUtility.overrideRoot(DpApiUnitTestConfig.cfgInstance, CfgOverrideUtility.SOURCE.PROPERTIES);
                 
             } catch (FileNotFoundException e) {
                 LOGGER.error("Unable to load properties from file: {}", STR_CFG_FILE_NAME);
@@ -107,7 +115,7 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
                 System.exit(1);
                 
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                LOGGER.error("The {} class was not properly annotated for property overrides", DpApiTestingConfig.class.getName());
+                LOGGER.error("The {} class was not properly annotated for property overrides", DpApiUnitTestConfig.class.getName());
                 LOGGER.error("  Cause: ", e.getClass().getName());
                 LOGGER.error("  Message: {}", e.getMessage());
                 LOGGER.error("  Irrecoverable error. Exiting...");
@@ -117,7 +125,7 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
                 
         }
         
-        return DpApiTestingConfig.cfgInstance;
+        return DpApiUnitTestConfig.cfgInstance;
     }
     
 
@@ -134,8 +142,9 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
     
     
     /**
-     * Defines test archive parameters
-     *
+     * <p>
+     * Structure class defining Data Platform test archive parameters.
+     * </p>
      */
     @ACfgOverride.Root(root="DP_API_TEST_ARCHIVE")
     public static class TestArchive extends CfgStructure<TestArchive>{
@@ -186,7 +195,7 @@ public class DpApiTestingConfig extends CfgStructure<DpApiTestingConfig> {
     
     
     /** Default constructor required for base class */
-    public DpApiTestingConfig() {
-        super(DpApiTestingConfig.class);
+    public DpApiUnitTestConfig() {
+        super(DpApiUnitTestConfig.class);
     }
 }

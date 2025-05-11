@@ -1,0 +1,92 @@
+#
+# Project: dp-api-java
+# File:    dp-api-tools-config.yml
+# Type:    YAML
+#
+# Configuration parameters for the Java API Library tools.
+#
+# The tool set included with the Java API Library interface to the Data Platform requires some configuration
+# parameters for proper operations.  All configuration parameters for all tools are included here.
+#
+# Some configuration parameters are available for performance tuning, especially for tools that measure
+# Java API Library performance or Data Platform Core Services performance. 
+#
+# Author: Christopher K. Allen
+# Since: May 4, 2025
+#
+#
+# NOTES:
+#
+# - This parameter set can be modified according to the Data Platform cnofiguration and installations requirements.
+# - These parameters are available programmatically within the Java structure class 'DpApiToolsConfig'.
+# - The name indexing for the PV within the Data Platform test archive is 1-based, opposed to Java standard 0-basing.
+# - The data source (PV) names are formed by appending the PV index (1-based) to the pvPrefix value.
+# - The indexes within the query/testArchive YAML block are 0-based Java indexes (they are incremented by 1 to form the PV names)
+# - Data sources pvPrefix+pvIndexStartClock through pvPrefix+(pvIndexStartClock+pvCountClock) utilize a uniform sampling clock
+# - Data sources pvPrefix+pvIndexStartTmsList through pvPrefix+(pvIndexStartTmsList+pvCountTmsList) utilize explicit timestamp lists
+# - Explicit timestamp lists are only available after Data Platform release 1.8 and its accompanying app-run-test-data-generator
+#  
+
+query:
+   logging:      # General Query Service tools logging services configuration
+      enabled: true                  # is logging active              : DP_API_TOOLS_QUERY_LOGGING_ENABLED
+      level: DEBUG                   # logger output level if active  : DP_API_TOOLS_QUERY_LOGGING_LEVEL
+      
+   testArchive:   # Data Platform test archive properties (generated with utility 'app-run-test-data-generator') 
+      firstTimestamp: 2023-10-31T15:51:02.000+00:00 # first timestap w/in archive : DP_API_TOOLS_QUERY_ARCHIVE_FIRST_TIMESTAMP     
+      lastTimestamp: 2023-10-31T15:52:01.999+00:00  # last timestamp w/in archive : DP_API_TOOLS_QUERY_ARCHIVE_LAST_TIMESTAMP
+      pvPrefix: "dpTest_"        # the prefix of all data source names         : DP_API_TOOLS_QUERY_ARCHIVE_PV_PREFIX
+      pvCountTotal: 4000         # total number of data sources (PV names)     : DP_API_TOOLS_QUERY_ARCHIVE_PV_COUNT_TOTAL
+      pvCountClock: 3800         # number of data sources using sampling clock : DP_API_TOOLS_QUERY_ARCHIVE_PV_COUNT_CLOCK
+      pvCountTmsList: 200        # number of data source using timestamp list (rel >=1.8) : DP_API_TOOLS_QUERY_ARCHIVE_PV_COUNT_TMS_LIST
+      pvIndexStartClock: 0       # index of first clocked data source                     : DP_API_TOOLS_QUERY_ARCHIVE_PV_INDEX_CLOCK 
+      pvIndexStartTmsList: 3800  # index of first timestamp list data source (rel >=1.8)  : DP_API_TOOLS_QUERY_ARCHIVE_PV_INDEX_START_TMS_LIST
+      
+   testRequests:
+      testSuites:     
+      - testSuite:
+          name: "Clocked 1000 PVs, 1 and 5 seconds"   # Test suite name
+          requestIds:                 # List<TestArchiveRequest> enumerations
+          - EMPTY_REQUEST  
+          - CLOCKED_1000PVSx1SEC
+          - CLOCKED_1000PVSx5SEC
+          requestComposites:          # List<RequestDecompType> enumerations   
+          - NONE
+          - HORIZONTAL
+          streamCounts:               # List<Integer> of composite requests counts
+          - 1
+          - 2
+          - 3
+          streamTypes:                # List<DpGrpcStreamType> enumerations
+          - BACKWARD
+          - BIDIRECTIONAL
+    
+   recovery:         # Configuration parameters for time-series data requests and recovery
+      request:        # Default parameters used in data requests
+         stream:           # gRPC streaming default parameters
+            preference: BACKWARD        # {BACKWARD, BIDRECTIONAL} : DP_API_TOOLS_DATA_REQUEST_STREAM_PREFERENCE
+         decompose:        # data request query decomposition default parameters (for multi-streaming)
+            enabled: true           # use query decomposition  : DP_API_TOOLS_DATA_REQUEST_COMPOSITE_ENABLED
+            maxSources: 1000        # max data source count    : DP_API_TOOLS_DATA_REQUEST_COMPOSITE_MAX_SOURCES
+            maxDuration: 1          # max time duration (unit) : DP_API_TOOLS_DATA_REQUEST_COMPOSITE_MAX_DURATION
+            durationUnit: SECONDS   # java.concurrent.TimeUnit : DP_API_TOOLS_DATA_REQUEST_COMPOSITE_DURATION_UNIT
+      response:       # Default parameters used for data responses
+         correlate:        # Query data correlation parameters
+            useConcurrency: true    # use mult-thread correlation : DP_API_TOOLS_DATA_RESPONSE_CORRELATE_USE_CONCURRENCY
+            whileStreaming: true    # correlate during gRPC stream: DP_API_TOOLS_DATA_RESPONSE_CORRELATE_WHILE_STREAMING
+         multistream:      # Multiple gRPC data stream parameters
+            enabled: true            # use multistreamed responses : DP_API_TOOLS_DATA_RESPONSE_MULTISTREAM_ENABLED
+            maxStreams: 3            # maximum stream count        : DP_API_TOOLS_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
+            sizeDomain: 2000         # rqst domain size (samples-time) triggering ms : DP_API_TOOLS_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
+      table:         # Default parameters used for time-series data table construction
+         construction:      # General data table reconstruction parameters
+            errorChecking: true      # use advanced error checking : DP_API_TOOLS_DATA_TABLE_CONSTRUCTION_ERROR_CHECKING
+            domainCollision: false   # allow/disallow time domain collision : DP_API_TOOLS_DATA_TABLE_CONSTRUCTION_DOMAIN_COLLISION 
+         sstatic:           # static data table properties 
+            isDefault: true          # use static table as default  : DP_API_TOOLS_DATA_TABLE_STATIC_DEFAULT
+            hasMaxSize: true         # enforce maximum table size   : DP_API_TOOLS_DATA_TABLE_STATIC_HAS_MAX_SIZE
+            maxSize: 4000000         # maximum size (bytes) allowed : DP_API_TOOLS_DATA_TABLE_STATIC_MAX_SIZE
+         dynamic:           # dynamic data table properties
+            enable: true             # enable dynamic data tables   : DP_API_TOOLS_DATA_TABLE_DYNAMIC_ENABLE
+    
+   

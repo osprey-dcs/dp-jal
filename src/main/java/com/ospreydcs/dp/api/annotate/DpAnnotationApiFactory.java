@@ -212,8 +212,8 @@ public class DpAnnotationApiFactory {
      * maximum message size values must be a power of 2.
      * </li>
      * <li>
-     * The "keep alive" parameter allows clients to maintain the gRPC connection in "active mode".  Normally,
-     * gRPC will switch to "idle mode" after it detects no client activity.  Note that forcing active mode allows
+     * The "keep alive" parameter allows clients to maintain the gRPC connection in "enabled mode".  Normally,
+     * gRPC will switch to "idle mode" after it detects no client activity.  Note that forcing enabled mode allows
      * faster response to client activity but may consume unneeded gRPC resources.
      * </li>
      * <li>
@@ -352,8 +352,8 @@ public class DpAnnotationApiFactory {
      * maximum message size values must be a power of 2.
      * </li>
      * <li>
-     * The "keep alive" parameter allows clients to maintain the gRPC connection in "active mode".  Normally,
-     * gRPC will switch to "idle mode" after it detects no client activity.  Note that forcing active mode allows
+     * The "keep alive" parameter allows clients to maintain the gRPC connection in "enabled mode".  Normally,
+     * gRPC will switch to "idle mode" after it detects no client activity.  Note that forcing enabled mode allows
      * faster response to client activity but may consume unneeded gRPC resources.
      * </li>
      * <li>

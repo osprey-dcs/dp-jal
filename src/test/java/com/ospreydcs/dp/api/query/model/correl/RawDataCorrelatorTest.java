@@ -208,7 +208,7 @@ public class RawDataCorrelatorTest {
     public final void testEnableConcurrency() {
         
         // Parameters
-        final Boolean   bolConcDef = CFG_QUERY.concurrency.active;
+        final Boolean   bolConcDef = CFG_QUERY.concurrency.enabled;
         final int       cntThreadsDef = CFG_QUERY.concurrency.maxThreads;
         final int       cntThreads = 11;
         

@@ -226,7 +226,7 @@ public class IngestionFrameProcessorDepTest {
         try {
             this.processor.enableConcurrency(CNT_CONCURRENT_THREADS);
             
-            Assert.fail("Attempting to enable concurrency while active should throw exception.");
+            Assert.fail("Attempting to enable concurrency while enabled should throw exception.");
             
         } catch (IllegalStateException e) {
             Assert.assertTrue(this.processor.isSupplying());
@@ -246,7 +246,7 @@ public class IngestionFrameProcessorDepTest {
         try {
             this.processor.disableConcurrency();
             
-            Assert.fail("Attempting to disable concurrency while active should throw exception.");
+            Assert.fail("Attempting to disable concurrency while enabled should throw exception.");
             
         } catch (IllegalStateException e) {
             Assert.assertTrue(this.processor.isSupplying());
@@ -624,7 +624,7 @@ public class IngestionFrameProcessorDepTest {
         try {
             this.processor.shutdown();
             
-            // Still message in buffer - should be active after soft shutdown
+            // Still message in buffer - should be enabled after soft shutdown
             Assert.assertTrue(this.processor.isSupplying());
             
             // Clear the buffer then true again
@@ -659,7 +659,7 @@ public class IngestionFrameProcessorDepTest {
         try {
             this.processor.shutdown();
             
-            // Still message in buffer - should be active after soft shutdown
+            // Still message in buffer - should be enabled after soft shutdown
             Assert.assertTrue(this.processor.isSupplying());
             
             // Clear the buffer then try again
@@ -712,7 +712,7 @@ public class IngestionFrameProcessorDepTest {
         try {
             this.processor.shutdown();
             
-            // Still message in buffer - should be active after soft shutdown
+            // Still message in buffer - should be enabled after soft shutdown
             Assert.assertTrue(this.processor.isSupplying());
             
             // Clear the buffer with polling until exception is thrown

@@ -77,17 +77,17 @@ public class TestQueryServiceTest {
     //
     
     /** 
-     * Record containing a data source and the range of time which it is active.
+     * Record containing a data source and the range of time which it is enabled.
      * 
      * @param   pvName  name of the data source
-     * @param   range   time interval over which data source was active
+     * @param   range   time interval over which data source was enabled
      *
      */
     public static record PvActivityRange(String pvName, TimeInterval range) {
         
         /**
          * @param strName       name of the data source
-         * @param domActive     time interval over which it is active
+         * @param domActive     time interval over which it is enabled
          * 
          * @return  new <code>PvActivityRange</code> instance initialized with arguments
          */
@@ -791,9 +791,9 @@ public class TestQueryServiceTest {
      * </p>
      * <p>
      * Extracts the time range specified in the data request message argument.   
-     * Then extracts the time ranges where each data source within the results set is active 
+     * Then extracts the time ranges where each data source within the results set is enabled 
      * using method <code>{@link #extractActivityRanges(List)}</code>.
-     * Compares the time domain of each active data source against that specified within
+     * Compares the time domain of each enabled data source against that specified within
      * the original data request.  If any time range is different, the method returns
      * a FAILURE result with a message describing all offending data source names.
      * </p>
@@ -1056,7 +1056,7 @@ public class TestQueryServiceTest {
 
     /**
      * <p>
-     * Extracts and returns the time ranges over which each PV in the results set is active.
+     * Extracts and returns the time ranges over which each PV in the results set is enabled.
      * </p>
      * 
      * @param lstResultsSet list of <code>QueryRespoonse</code> messages representing a data query results set

@@ -28,6 +28,7 @@
  */
 package com.ospreydcs.dp.api.query;
 
+import java.io.PrintStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -1790,6 +1791,31 @@ public final class DpDataRequest {
         this.lstWhrCmps.add(strWhrCmp);
     }
     
+    /**
+     * <p>
+     * Prints out a text description of general properties of this time-series data request to the given output.
+     * </p>
+     * <p>
+     * The high-level properties of the current request are printed out in a line-by-line format with an
+     * optional padding at the left-hand side.  The <code>strPad</code> argument is assumed to be a sequence
+     * of white spaces (or <code>null</code>) that is used to pad the left-hand side before each line
+     * heading.  This format is useful when the description is used as part of a larger output series.
+     * </p>
+     * 
+     * @param ps        output stream to receive time-series data request properties description
+     * @param strPad    optional left-hand side whitespace padding for line headers
+     */
+    public void printOutProperties(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        ps.println(strPad + this.getClass().getSimpleName() + " " + this.getRequestId());
+        ps.println(strPad + "  Data source count : " + this.getSourceCount());
+        ps.println(strPad + "  Start time        : " + this.getInitialTime());
+        ps.println(strPad + "  Request duration  : " + this.rangeDuration());
+        ps.println(strPad + "  Domain size (byte-sec) : " + this.approxDomainSize());
+    }
+    
 
     //
     // Private Methods
@@ -2354,6 +2380,7 @@ public final class DpDataRequest {
         StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClass());
         
         buf.append(" contents:\n");
+        buf.append("  request UD = " + this.strRqstId + "\n");
         buf.append("  source name(s) = " + this.lstSelCmps + "\n");
         buf.append("  start time = " + this.insStart + "\n");
         buf.append("  stop time = " + this.insStop + "\n");

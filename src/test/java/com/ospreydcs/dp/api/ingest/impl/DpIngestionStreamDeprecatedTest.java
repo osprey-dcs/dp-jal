@@ -113,7 +113,7 @@ public class DpIngestionStreamDeprecatedTest {
     /** A list of test data frames that have moderate allocation */
     private static final List<IngestionFrame>   LST_FRAMES_MOD = createDoubleFrames(INT_FRAMES_COUNT, 100, 100);
     
-    /** A list of test data frames that have moderate allocation - this can only be used once if decomposition active */
+    /** A list of test data frames that have moderate allocation - this can only be used once if decomposition enabled */
     private static final List<IngestionFrame>   LST_FRAMES_LARGE = createDoubleFrames(INT_FRAMES_COUNT, 1000, 1000);
     
 

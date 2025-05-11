@@ -188,7 +188,7 @@ public class DpQueryConnectionFactoryDeprecatedTest {
         String  strUrl = CFG_DEFAULT.host.url;
         int     intPort = CFG_DEFAULT.host.port;
         
-        boolean bolTlsActive = CFG_DEFAULT.tls.active;
+        boolean bolTlsActive = CFG_DEFAULT.tls.enabled;
         boolean bolPlainText = CFG_DEFAULT.grpc.usePlainText;
         int     intMaxSz = CFG_DEFAULT.grpc.messageSizeMax;
         boolean bolKeepAlive = CFG_DEFAULT.grpc.keepAliveWithoutCalls;

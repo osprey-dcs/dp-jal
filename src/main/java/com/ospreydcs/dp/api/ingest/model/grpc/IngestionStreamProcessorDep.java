@@ -75,8 +75,8 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataStreamResponse;
  * </p>
  * <p>
  * Class instances transmit all processed client ingestion data using a collection of 
- * <code>{@link IngestionStream}</code> instances - one for each active gRPC data stream.
- * (If the multiple data streams feature is disabled only one stream will be active.)  
+ * <code>{@link IngestionStream}</code> instances - one for each enabled gRPC data stream.
+ * (If the multiple data streams feature is disabled only one stream will be enabled.)  
  * The stream classes are executed on separate threads which compete for the 
  * <code>IngestDataRequest</code> messages produced by the <code>IngestionFrameProcessorDeprecated</code>.
  * </p>
@@ -107,7 +107,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataStreamResponse;
  * </p>
  * <p>
  * Activation starts all ingestion frame processing and transmission tasks which are then 
- * continuously active throughout the lifetime of this instance, or explicitly shut down.  
+ * continuously enabled throughout the lifetime of this instance, or explicitly shut down.  
  * Processing and streaming tasks execute independently in
  * thread pools where they block until ingestion frames become available.
  * </p>
@@ -215,7 +215,7 @@ public final class IngestionStreamProcessorDep {
 //        // Initialization Targets
 //        //
 //        
-//        /** The active frame decomposition processing */
+//        /** The enabled frame decomposition processing */
 //        private final IngestionFrameDecomposer       binner;
 //        
 //        /** The target ingestion frame to be decomposed */
@@ -246,11 +246,11 @@ public final class IngestionStreamProcessorDep {
     // Class Constants
     //
     
-//    /** Is logging active */
+//    /** Is logging enabled */
 //    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
 //
 //    
-//    /** Are general concurrency active - used for ingestion frame decomposition */
+//    /** Are general concurrency enabled - used for ingestion frame decomposition */
 //    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
 //    
 //    /** Thresold in which to pivot to concurrent processing */
@@ -260,7 +260,7 @@ public final class IngestionStreamProcessorDep {
 //    private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.threadCount;
 //    
 //    
-//    /** Are general timeout active */
+//    /** Are general timeout enabled */
 //    private static final Boolean    BOL_TIMEOUT_ACTIVE = CFG_DEFAULT.timeout.active;
 //    
 //    /** General timeout limit for operations */
@@ -308,7 +308,7 @@ public final class IngestionStreamProcessorDep {
     
     
     /** Use multiple gRPC data stream to transmit ingestion frames */
-    private static final Boolean    BOL_MULTISTREAM_ACTIVE = CFG_DEFAULT.stream.concurrency.active;
+    private static final Boolean    BOL_MULTISTREAM_ACTIVE = CFG_DEFAULT.stream.concurrency.enabled;
     
 //    /** When the number of frames available exceeds this value multiple gRPC data streams are used */ 
 //    private static final Long       LNG_MULTISTREAM_PIVOT = CFG_DEFAULT.stream.concurrency.pivotSize;
@@ -358,7 +358,7 @@ public final class IngestionStreamProcessorDep {
     // State Variables
     //
     
-    /** Is processor active */
+    /** Is processor enabled */
     private boolean bolActive = false;
     
     
@@ -473,7 +473,7 @@ public final class IngestionStreamProcessorDep {
      * 
      * @param enmStreamType gRPC stream type for data transmission
      * 
-     * @throws IllegalStateException            method called while processor is active
+     * @throws IllegalStateException            method called while processor is enabled
      * @throws UnsupportedOperationException    an unsupported stream type was provided
      */
     public void setStreamType(DpGrpcStreamType enmStreamType) throws IllegalStateException, UnsupportedOperationException {
@@ -521,7 +521,7 @@ public final class IngestionStreamProcessorDep {
      * 
      * @param cntStreamsMax maximum number of allowable gRPC data streams (>0)
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      * @throws IllegalArgumentException the argument was zero or negative
      */
     synchronized
@@ -569,7 +569,7 @@ public final class IngestionStreamProcessorDep {
      * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
      * </p>
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      */
     synchronized
     public void disableMultipleStreams() throws IllegalStateException {
@@ -608,7 +608,7 @@ public final class IngestionStreamProcessorDep {
      * 
      * @param intQueueCapacity  capacity of frame buffer before back-pressure blocking
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      */
     synchronized 
     public void enableBackPressure(int intQueueCapacity) throws IllegalStateException, IllegalArgumentException {
@@ -655,7 +655,7 @@ public final class IngestionStreamProcessorDep {
      * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
      * </p>
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      */
     synchronized 
     public void disableBackPressure() throws IllegalStateException {
@@ -677,7 +677,7 @@ public final class IngestionStreamProcessorDep {
      * Determines whether or not multiple gRPC data streams are used to transport data to the Ingestion Service.
      * </p>
      *  
-     * @return  <code>true</code> if multi-streaming is active, <code>false</code> otherwise (only a single stream is used)
+     * @return  <code>true</code> if multi-streaming is enabled, <code>false</code> otherwise (only a single stream is used)
      */
     public boolean  hasMultiStream() {
         return this.bolMultistream;
@@ -688,7 +688,7 @@ public final class IngestionStreamProcessorDep {
      * Returns the maximum number of concurrent gRPC data streams used to transmit data to the Ingestion Service.
      * </p>
      * <p>
-     * If multi-streaming is active this is the number of concurrent data stream used by the processor to 
+     * If multi-streaming is enabled this is the number of concurrent data stream used by the processor to 
      * transport data to the Ingestion Service over gRPC.  If multi-streaming is disabled this value should be
      * ignored.
      * </p>
@@ -730,7 +730,7 @@ public final class IngestionStreamProcessorDep {
     
     /**
      * <p>
-     * Returns whether or not the processor is currently active.
+     * Returns whether or not the processor is currently enabled.
      * </p>
      * <p>
      * The returned value indicates the current <em>state</em> of the this processor instance.
@@ -808,7 +808,7 @@ public final class IngestionStreamProcessorDep {
      * The returned value is the number of Protocol Buffers messages carrying ingestion
      * data that have been transmitted to the Ingestion Service at the time of invocation.
      * If called after invoking <code>{@link #shutdown()}</code> then the returned value
-     * is the total number of messages transmitted while active.
+     * is the total number of messages transmitted while enabled.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
@@ -816,7 +816,7 @@ public final class IngestionStreamProcessorDep {
      * <li>
      * The value returned by this method is not necessary equal to the number of 
      * <code>IngestionFrame</code> instances ingested.  If ingestion frame decomposition
-     * is active large ingestion frame exceeding the size limit which be decomposed into
+     * is enabled large ingestion frame exceeding the size limit which be decomposed into
      * smaller ingestion frames before being converted into <code>IngestDataRequest</code>
      * messages.
      * </li>
@@ -1114,7 +1114,7 @@ public final class IngestionStreamProcessorDep {
 //     * @param recProviderId the data provider UID used in all ingest data request messages 
 //     * 
 //     * @return  <code>true</code> if the processor was successfully activated,
-//     *          <code>false</code> if the processor was already active
+//     *          <code>false</code> if the processor was already enabled
 //     * 
 //     * @throws RejectedExecutionException (internal) unable to start a streaming task
 //     * 
@@ -1131,8 +1131,8 @@ public final class IngestionStreamProcessorDep {
      * </p>
      * <p>
      * Once this method returns all ingestion frame processing tasks and gRPC streaming
-     * tasks are active.  All <code>IngestionFrame</code> instances offered to the
-     * active stream processor will be assigned the given data provider UID.
+     * tasks are enabled.  All <code>IngestionFrame</code> instances offered to the
+     * enabled stream processor will be assigned the given data provider UID.
      * </p> 
      * <p>
      * After invoking this method the processor instance is ready for ingestion frame
@@ -1144,7 +1144,7 @@ public final class IngestionStreamProcessorDep {
      * </p>
      * <h2>Operation</h2>
      * This method starts all ingestion frame processing and transmission tasks which are then 
-     * continuously active throughout the lifetime of this instance, or explicitly shut down.  
+     * continuously enabled throughout the lifetime of this instance, or explicitly shut down.  
      * Processing and streaming tasks execute independently in
      * thread pools where they block until ingestion frames become available.
      * </p>
@@ -1175,7 +1175,7 @@ public final class IngestionStreamProcessorDep {
      * @param recProviderId the data provider UID used in all ingest data request messages 
      * 
      * @return  <code>true</code> if the processor was successfully activated,
-     *          <code>false</code> if the processor was already active
+     *          <code>false</code> if the processor was already enabled
      * 
      * @throws RejectedExecutionException (internal) unable to start a streaming task
      */
@@ -1330,7 +1330,7 @@ public final class IngestionStreamProcessorDep {
         
         // Check current state
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not enabled.");
         
         this.fncFrameProcessor.awaitQueueReady();
     }
@@ -1367,7 +1367,7 @@ public final class IngestionStreamProcessorDep {
 
         // Check current state
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not enabled.");
         
         this.fncFrameProcessor.awaitRequestQueueEmpty();
     }

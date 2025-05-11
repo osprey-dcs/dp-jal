@@ -62,11 +62,7 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
     
     /** Default parameters for Query Service time-series data requests and responses */
     @ACfgOverride.Struct(pathelem="DATA")
-    public TimeSeriesDataConfig data;
-    
-//    /** Default parameters for general Query Service gRPC streaming operations */
-//    @ACfgOverride.Struct(pathelem="STREAM")
-//    public DpGrpcStreamConfig   stream;
+    public DpQueryRecoveryConfig    data;
     
     /** Default concurrency parameters for Query Service operations */
     @ACfgOverride.Struct(pathelem="CONCURRENCY")
@@ -79,32 +75,4 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
     /** Default logging configuration for Query Service operations */
     @ACfgOverride.Struct(pathelem="LOGGING")
     public DpLoggingConfig      logging;
-    
-    
-    /**
-     * Structure class defining default configuration parameters for time-series data requests and responses
-     */
-    @ACfgOverride.Root(root="DP_API_QUERY_DATA")
-    public static class TimeSeriesDataConfig extends CfgStructure<TimeSeriesDataConfig> {
-        
-        /** Default constructor required for base structure class */
-        public TimeSeriesDataConfig() { super(TimeSeriesDataConfig.class); };
-        
-        
-        //
-        // Configuration Fields
-        //
-        
-        /** Default parameters for Query Service time-series data request queries */
-        @ACfgOverride.Struct(pathelem="REQUEST")
-        public DpDataRequestConfig      request;
-        
-        /** Default parameters for Query Service time-series data request responses */
-        @ACfgOverride.Struct(pathelem="RESPONSE")
-        public DpDataResponseConfig     response;
-        
-        /** Default parameters for Query Service time-series data table results */
-        @ACfgOverride.Struct(pathelem="TABLE")
-        public DpDataTableConfig        table;
-    }
 }

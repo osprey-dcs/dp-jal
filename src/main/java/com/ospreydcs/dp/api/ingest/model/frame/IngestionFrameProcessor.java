@@ -41,8 +41,10 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -68,7 +70,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <h2>Activation</h2>
  * A <code>IngestionFrameProcessor</code> instance must be activated before attempting
  * to add ingestion frames; use the method <code>{@link #activate()}</code>.  Likewise,
- * an active processor should be shutdown when no longer needed; use methods
+ * an enabled processor should be shutdown when no longer needed; use methods
  * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code>.
  * </p>
  * <p>
@@ -132,7 +134,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <p>
  * <h2>Automatic Ingestion Frame Decomposition</h2>
  * <p>
- * When frame decomposition is active any ingestion frame added to this supplier
+ * When frame decomposition is enabled any ingestion frame added to this supplier
  * is decomposed whenever its total memory allocation is larger than the current gRPC message
  * size limitation (default is identified in the client API configuration parameters).  
  * Thus, a single, large ingestion frame added to this supplier will be decomposed into multiple smaller ingestion
@@ -167,7 +169,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * </li>
  * <br/>
  * <li>
- * If automatic ingestion frame decomposition is active then any frame with memory allocation larger than
+ * If automatic ingestion frame decomposition is enabled then any frame with memory allocation larger than
  * the gRPC message size limit are decomposed into smaller ingestion frames.  This action destroys the original
  * ingestion frame.
  * </li>
@@ -328,23 +330,26 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     private static final TimeUnit   TU_TIMEOUT_GENERAL = CFG_DEFAULT.timeout.unit;
     
     
-    /** Is logging active */
-    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
+    /** Is logging enabled */
+    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.enabled;
+    
+    /** Event logging level */
+    private static final String     STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
 
     
     //
     // Class Constants - Default Values
     //
     
-    /** Are general concurrency active - used for ingestion frame decomposition */
-    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
+    /** Are general concurrency enabled - used for ingestion frame decomposition */
+    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.enabled;
     
     /** Maximum number of concurrent processing threads */
     private static final Integer    INT_CONCURRENCY_CNT_THREADS = CFG_DEFAULT.concurrency.maxThreads;
     
     
     /** Perform ingestion frame decomposition (i.e., "binning") */
-    private static final Boolean    BOL_DECOMP_ACTIVE = CFG_DEFAULT.decompose.active;
+    private static final Boolean    BOL_DECOMP_ACTIVE = CFG_DEFAULT.decompose.enabled;
     
     /** Maximum size limit (in bytes) of decomposed ingestion frame */
     private static final Integer    LNG_DECOMP_MAX_ALLOC = CFG_DEFAULT.decompose.maxSize;
@@ -367,6 +372,16 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
 //    /** The locking object for synchronizing access to class resources */ 
 //    private static final Object   objClassLock = new Object();
 
+    
+    /**
+     * <p>
+     * Class Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
+    
     
     //
     // Configuration Parameters
@@ -394,7 +409,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     // State Variables
     //
     
-    /** Is supplier active (not been shutdown) */
+    /** Is supplier enabled (not been shutdown) */
     private boolean bolActive = false;
     
     /** Has the supplier been shutdown */
@@ -555,7 +570,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * 
      * @param cntThreads    the number of independent processing threads each concurrent operation
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      */
     synchronized 
     public void setConcurrency(int cntThreads) throws IllegalStateException {
@@ -573,7 +588,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </p>
      * <p>
      * Enables the automatic decomposition of ingestion frames (i.e., "frame binning").
-     * When frame decomposition is active any ingestion frame added to this supplier
+     * When frame decomposition is enabled any ingestion frame added to this supplier
      * is decomposed so that the total memory allocation is less than the given size.
      * </p>
      * <p> 
@@ -621,7 +636,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </p>
      * <p>
      * Disables the automatic decomposition of ingestion frames (i.e., "frame binning").
-     * When frame decomposition is active any ingestion frame added to this processor
+     * When frame decomposition is enabled any ingestion frame added to this processor
      * is decomposed so that the total memory allocation is less than the given size.
      * </p>
      * <p> 
@@ -654,7 +669,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * <li>
      * <s>The maximum ingestion frame size can only be modified <em>before</em> the processor is 
      * activated with <code>{@link #activate()}</code>.  This method will disable frame
-     * decomposition if already active, but the maximum frame size cannot be changed post
+     * decomposition if already enabled, but the maximum frame size cannot be changed post
      * activation.</s>
      * </li>
      * </p>
@@ -691,7 +706,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
      * </p>
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      */
     synchronized
     public void disableConcurrency() throws IllegalStateException {
@@ -860,7 +875,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      */
     public boolean hasNext() {
         
-        // If we are not active there is nothing
+        // If we are not enabled there is nothing
         if (!this.bolActive)
             return false;
         
@@ -985,7 +1000,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * <code>{@link IMessageSupplier}</code> interface.
      * </p>
      * <h2>Operation</h2>
-     * This method starts all ingestion frame processing thread tasks which are continuously active
+     * This method starts all ingestion frame processing thread tasks which are continuously enabled
      * until explicitly shut down.  
      * Processing tasks execute independently in
      * thread pools where they block until ingestion frames become available.
@@ -1015,14 +1030,14 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </p>
      * 
      * @return  <code>true</code> if the ingestion frame processor was successfully activated,
-     *          <code>false</code> if the message supplier was already active
+     *          <code>false</code> if the message supplier was already enabled
      *          
      * @throws RejectedExecutionException   processing tasks could not be scheduled for execution
      */
     synchronized
     public boolean activate() throws RejectedExecutionException {
         
-        // Check if already active
+        // Check if already enabled
         if (this.bolActive)
             return false;
 
@@ -1086,7 +1101,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * </p>
      * 
      * @return <code>true</code> if the frame processor was shutdown,
-     *         <code>false</code> if the processor was not active or shutdown operation failed to complete
+     *         <code>false</code> if the processor was not enabled or shutdown operation failed to complete
      * 
      * @throws InterruptedException interrupted while waiting for processing threads to complete
      */
@@ -1142,7 +1157,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     synchronized
     public void shutdownNow() {
         
-        // If we are not active just return
+        // If we are not enabled just return
         if (!this.bolActive)
             return;
         
@@ -1204,9 +1219,9 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     synchronized
     public void submit(IngestionFrame frame) throws IllegalStateException {
 
-        // Check if active
+        // Check if enabled
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not enabled.");
         
         // No concurrency - Process on main thread 
         if (!this.bolConcurrency) {
@@ -1262,9 +1277,9 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     synchronized
     public void submit(List<IngestionFrame> lstFrames) throws IllegalStateException {
 
-        // Check if active
+        // Check if enabled
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - processor is not enabled.");
         
         // No concurrency - Process on main thread
         if (!this.bolConcurrency) {
@@ -1464,7 +1479,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * <p>
      * <h2>Ingestion Frame Decomposition</h2>
      * <p>
-     * When frame decomposition is active any ingestion frame added to this supplier
+     * When frame decomposition is enabled any ingestion frame added to this supplier
      * is decomposed whenever its total memory allocation is larger than the current gRPC message
      * size limitation (default is identified in the client API configuration parameters).  
      * Thus, a single, large ingestion frame added to this supplier will be decomposed into multiple smaller ingestion
@@ -1499,7 +1514,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
             // Create a new frame binner processor for this thread
             IngestionFrameDecomposer binner = IngestionFrameDecomposer.from(this.szMaxFrmAlloc);
 
-            // While active - Continuously process frames from raw frame buffer
+            // While enabled - Continuously process frames from raw frame buffer
             // - remaining OR conditional(s) allow for soft shutdowns
             while (this.bolActive || this.hasPendingTasks()) {
 //            while (this.bolActive || this.hasPendingTasks() || !this.queFramesRaw.isEmpty()) {
@@ -1612,7 +1627,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
             // Ingestion frame converter used for all message creation
             IngestionFrameConverter converter = IngestionFrameConverter.create(this.recProviderUid);
             
-            // While active - Continuously convert frames in processed frame buffer to gRPC messages 
+            // While enabled - Continuously convert frames in processed frame buffer to gRPC messages 
             // - second OR conditionals allows for soft shutdowns
             while (this.bolActive || this.hasPendingTasks()) {
 //            while (this.bolActive || this.hasPendingTasks() || !this.queFramesPrcd.isEmpty()) {
@@ -1683,7 +1698,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * to acknowledge a the given processing exception for the given ingestion frame.
      * At current nothing is done with the frame itself, however, future version may wish
      * to implement a callback function for clients to immediately receive notifications.
-     * The event is logged if logging is active.
+     * The event is logged if logging is enabled.
      * </p>
      * 
      * @param frame     the offending ingestion frame
@@ -1708,7 +1723,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * to acknowledge a the given processing exception for the given ingestion frame.
      * At current nothing is done with the frame itself, however, future version may wish
      * to implement a callback function for clients to immediately receive notifications.
-     * The event is logged if logging is active.
+     * The event is logged if logging is enabled.
      * </p>
      * 
      * @param frame     the offending ingestion frame

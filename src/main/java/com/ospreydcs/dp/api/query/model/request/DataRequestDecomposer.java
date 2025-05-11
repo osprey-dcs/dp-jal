@@ -116,7 +116,7 @@ public class DataRequestDecomposer {
     //
     
     /** Use decompose queries feature */
-    public static final boolean                BOL_ACTIVE = CFG_RQST.decompose.active;
+    public static final boolean                BOL_ACTIVE = CFG_RQST.decompose.enabled;
     
     /** Maximum number of data sources for a decompose query */
     public static final int                    CNT_MAX_SOURCES = CFG_RQST.decompose.maxSources;
@@ -124,7 +124,7 @@ public class DataRequestDecomposer {
     /** Maximum time range duration for a decompose query */
     public static final Duration               DUR_MAX = Duration.of(
                                                     CFG_RQST.decompose.maxDuration,
-                                                    CFG_RQST.decompose.unitDuration.toChronoUnit()
+                                                    CFG_RQST.decompose.durationUnit.toChronoUnit()
                                                     );
     
     //
@@ -566,8 +566,10 @@ public class DataRequestDecomposer {
      * @param   cntQueries  the number of sub-queries in the returned decompose query
      * 
      * @return  a collection of decompose queries which, in total, are equivalent to the given data request
+     * 
+     * @throws  UnsupportedOperationException   an unexpected <code>RequestDecompType</code> enumeration was encountered    
      */
-    public List<DpDataRequest>  buildCompositeRequest(DpDataRequest rqst, RequestDecompType enmType, int cntQueries) {
+    public List<DpDataRequest>  buildCompositeRequest(DpDataRequest rqst, RequestDecompType enmType, int cntQueries) throws UnsupportedOperationException {
 
         return switch (enmType) {
         

@@ -90,9 +90,9 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
         // Configuration Fields
         //
         
-        /** Is decompose query decomposition active */
-        @ACfgOverride.Field(name="ACTIVE")
-        public Boolean      active;
+        /** Is decompose query decomposition enabled */
+        @ACfgOverride.Field(name="ENABLED")
+        public Boolean      enabled;
         
         /** Maximum number of data sources per query - query domain horizontal "width" */
         @ACfgOverride.Field(name="MAX_SOURCES")
@@ -103,8 +103,8 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
         public long         maxDuration;
         
         /** Maximum duration time units */
-        @ACfgOverride.Field(name="UNIT_DURATION")
-        public TimeUnit     unitDuration;
+        @ACfgOverride.Field(name="DURATION_UNIT")
+        public TimeUnit     durationUnit;
         
     }
     

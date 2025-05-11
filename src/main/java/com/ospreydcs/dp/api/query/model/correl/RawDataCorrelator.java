@@ -36,8 +36,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
@@ -279,25 +281,28 @@ public class RawDataCorrelator {
     // Class Constants
     //
     
-    /** Is logging active */
-    public static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Is event logging enabled */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
     /** Parallelism timeout limit  - for parallel thread pool tasks */
-    public static final long       LNG_TIMEOUT = CFG_QUERY.timeout.limit;
+    public static final long        LNG_TIMEOUT = CFG_QUERY.timeout.limit;
     
     /** Parallelism timeout units - for parallel thread pool tasks */
-    public static final TimeUnit   TU_TIMEOUT = CFG_QUERY.timeout.unit;
+    public static final TimeUnit    TU_TIMEOUT = CFG_QUERY.timeout.unit;
     
     
-    /** Concurrency active flag */
-    public static final boolean    BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
+    /** Concurrency enabled flag */
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
     
     /** Parallelism tuning parameter - pivot to parallel processing when target set size hits this limit */
-    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
     /** Parallelism tuning parameter - default number of independent processing threads */
-    public static final int        CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.maxThreads;
+    public static final int         CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.maxThreads;
     
     
     //
@@ -306,6 +311,16 @@ public class RawDataCorrelator {
     
     /** Event logger */
     private static final Logger    LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Resource Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //
@@ -471,7 +486,7 @@ public class RawDataCorrelator {
      * This is a thread-safe operation and will not interrupt any current processing.
      * </p>
      * <p>
-     * This parameter is active only if concurrent processing is enabled (see <code>{@link #enableConcurrency(int)}</code>).
+     * This parameter is enabled only if concurrent processing is enabled (see <code>{@link #enableConcurrency(int)}</code>).
      * This is a tuning parameter which prevent concurrent processing for correlated data set sizes below the
      * given value.  The intent is to prevent the allocation of independent thread resources if none are required.
      * A value of 1 will ensure concurrent processing for all situations.

@@ -244,7 +244,7 @@ public record ResultSummary(
      * <p>
      * All the fields of a <code>ResultSummary</code> record are computed from the given 
      * <code>ConfigResult</code> collection.  The computed values are then returned in a 
-     * new <code>ConfigResult</code> instance.
+     * new <code>ResultSummary</code> instance.
      * </p>
      *  
      * @param setResults    collection of request processor results

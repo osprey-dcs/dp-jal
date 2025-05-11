@@ -31,8 +31,10 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.SortedSet;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -56,7 +58,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * Whenever time-domain collisions occur in a recovered time-series data set special processing is required.
  * Sampling processes are all correlated to either sample clocks or timestamp lists after collection into 
  * correlated data blocks by the <code>RawDataCorrelator</code> class instances.  For a time-domain collision 
- * there are at least two different sampling clocks or timestamp lists active during the same time interval.  
+ * there are at least two different sampling clocks or timestamp lists enabled during the same time interval.  
  * The resulting timestamps must be resolved along with the process variable values.
  * </p>
  * <p>
@@ -70,7 +72,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <p>
  * <h2>Super Domains</h2>
  * Super domain are collections of <code>RawCorrelatedData</code> instances that have sampling processes that are
- * active during the same time interval.  Note that not all correlated data blocks within the collection have
+ * enabled during the same time interval.  Note that not all correlated data blocks within the collection have
  * finite time-domain intersections, that is, there can be disjoint data blocks within the collection.  However,
  * all correlated raw data blocks within the collection have at least one finite time-domain intersection with
  * another block.  For more information on super domains see the class documentation for <code>{@link RawSuperDomData}</code>.  
@@ -271,8 +273,11 @@ public class TimeDomainProcessor {
     // Class Constants
     //
     
-    /** Logging active flag */
-    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Event logging enabled flag */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
     /** Use advanced error checking and verification flag */
@@ -282,8 +287,8 @@ public class TimeDomainProcessor {
     public static final boolean     BOL_DOM_COLLISION = CFG_QUERY.data.table.construction.domainCollision;
     
     
-    /** Concurrency active flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
+    /** Concurrency enabled flag */
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
     
     /** Parallelism tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
     public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
@@ -297,6 +302,16 @@ public class TimeDomainProcessor {
     private static final Logger LOGGER = LogManager.getLogger();
     
 
+    /**
+     * <p>
+     * Class Resource Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
+    
+    
     //
     // Defining Attributes
     //
@@ -512,7 +527,7 @@ public class TimeDomainProcessor {
      *          <code>false</code> if no time-time collisions were found 
      * 
      * @throws IllegalStateException     internal processing error: attempt to process data when more super domains existed 
-     * @throws IndexOutOfBoundsException internal processing error: attempt to access index beyond current active data list
+     * @throws IndexOutOfBoundsException internal processing error: attempt to access index beyond current enabled data list
      */
     public boolean process() throws IllegalStateException, IndexOutOfBoundsException {
         
@@ -570,7 +585,7 @@ public class TimeDomainProcessor {
         if (this.indListCurr >= this.indListLast)
             return false;
         
-        // Check each list element at or greater than current active list index
+        // Check each list element at or greater than current enabled list index
         while (this.indListCurr < this.indListLast) {
             RawCorrelatedData               datSubject = this.lstDataActive.get(this.indListCurr);
             ListIterator<RawCorrelatedData> iterData = this.lstDataActive.listIterator(this.indListCurr+1);

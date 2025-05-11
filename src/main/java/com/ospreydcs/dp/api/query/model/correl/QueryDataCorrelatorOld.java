@@ -41,8 +41,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.naming.CannotProceedException;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
@@ -281,8 +283,11 @@ public class QueryDataCorrelatorOld {
     // Class Constants
     //
     
-    /** Is logging active */
-    public static final boolean    BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Is event logging enabled */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
     /** Parallelism timeout limit  - for parallel thread pool tasks */
@@ -292,8 +297,8 @@ public class QueryDataCorrelatorOld {
     public static final TimeUnit   TU_TIMEOUT = CFG_QUERY.timeout.unit;
     
     
-    /** Concurrency active flag */
-    public static final boolean    BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
+    /** Concurrency enabled flag */
+    public static final boolean    BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
     
     /** Parallelism tuning parameter - pivot to parallel processing when target set size hits this limit */
     public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
@@ -307,7 +312,17 @@ public class QueryDataCorrelatorOld {
     //
     
     /** Event logger */
-    private final Logger    LOGGER = LogManager.getLogger();
+    private static final Logger    LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Resource Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //
@@ -557,7 +572,7 @@ public class QueryDataCorrelatorOld {
      * </p>
      * <p>
      * <h2>Concurrency</h2>
-     * If concurrency is active (i.e., <code>{@link #BOL_CONCONCURRENCY}</code> = <code>true</code>),
+     * If concurrency is enabled (i.e., <code>{@link #BOL_CONCONCURRENCY}</code> = <code>true</code>),
      * this method pivots from serial processing to parallel processing when the target set size
      * is greater than {@link #SZ_CONCURRENCY_PIVOT} = {@value #SZ_CONCURRENCY_PIVOT}.
      * </p>

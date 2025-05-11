@@ -81,50 +81,50 @@ archive:    # Data Platform data archive properties
    
 ingest: # Data Platform Ingestion Service client API default configuration parameters
    decompose:    # IngestionFrame decomposition parameters
-      active: true                # use data binning            : DP_API_INGEST_DECOMPOSE_ACTIVE
+      enabled: true               # use data binning            : DP_API_INGEST_DECOMPOSE_ACTIVE
       maxSize: 4000000            # max bin size (bytes)        : DP_API_INGEST_DECOMPOSE_MAX_SIZE
    stream:       # General gRPC streaming parameter for Ingestion Service operations
-      active: true                 # use streaming parameters    : DP_API_INGEST_STREAM_ACTIVE
+      enabled: true                 # use streaming parameters    : DP_API_INGEST_STREAM_ENABLED
       type: BIDIRECTIONAL           # preferred- {FORWARD, BIDIRECTIONAL} : DP_API_INGEST_STREAM_TYPE
       buffer:              # data buffering and queueing parameters (transmission staging)
-         active: true                # apply data buffering/queue  : DP_API_INGEST_STREAM_BUFFER_ACTIVE
+         enabled: true               # enable data buffering/queue : DP_API_INGEST_STREAM_BUFFER_ENABLED
          size: 100                   # buffer/queue size (messages): DP_API_INGEST_STREAM_BUFFER_SIZE
          allocation: 400000000       # max buffer allocation (bytes): DP_API_INGEST_STREAM_BUFFER_ALLOCATION   
          backPressure : true         # enable ingestion throttling : DP_API_INGEST_STREAM_BUFFER_BACKPRESSURE
       concurrency:         # multiple,concurrent gRPC stream parameters
-         active: true                # use multiple streams when possible : DP_API_INGEST_STREAM_CONCURRENCY_ACTIVE
+         enabled: true               # use multiple streams when possible : DP_API_INGEST_STREAM_CONCURRENCY_ENABLED
          pivotSize: 10               # currency activation size (frames)  : DP_API_INGEST_STREAM_CONCURRENCY_PIVOT_SIZE
          maxStreams: 3               # maximum number of streams to use   : DP_API_INGEST_STREAM_CONCURRENT_MAX_STREAMS
    concurrency:  # General concurrency (multi-threading) properties
-      active: true                   # use concurrency            : DP_API_INGEST_CONCURRENCY_ACTIVE
+      enabled: true                  # use concurrency            : DP_API_INGEST_CONCURRENCY_ENABLED
       pivotSize: 10                  # size inducing concurrency  : DP_API_INGEST_CONCURRENCY_PIVOT_SIZE
       maxThreads: 3                  # max worker thread count    : DP_API_INGEST_CONCURRENCY_MAX_THREADS
    timeout:      # General ingestion timeout properties (e.g., used for ingestion response wait timeout)
-      active: true                   # apply timeout condition    : DP_API_INGEST_TIMEOUT_ACTIVE
+      enabled: true                   # apply timeout condition    : DP_API_INGEST_TIMEOUT_ENABLED
       limit: 10                      # request timeout limit      : DP_API_INGEST_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_INGEST_TIMEOUT_UNIT
    logging:      # General Ingestion Service logging services
-      active: true                   # is logging active              : DP_API_INGEST_LOGGING_ACTIVE
+      enabled: true                  # is logging active              : DP_API_INGEST_LOGGING_ACTIVE
       level: DEBUG                   # logger output level if active  : DP_API_INGEST_LOGGING_LEVEL
 
 query:      # Data Platform Query Service client API default configuration parameters
    pageSize: 100      # UNUSED       # default bucket count per page  : DP_API_QUERY_PAGE_SIZE
    
-   data:         # Parameters for time-series data queries
+   data:         # Configuration parameters for time-series data requests and recoveries
       request:        # Default parameters used in data requests
          stream:           # gRPC streaming default parameters
             preference: BACKWARD        # {BACKWARD, BIDRECTIONAL} : DP_API_QUERY_DATA_REQUEST_STREAM_PREFERENCE
          decompose:        # data request query decomposition default parameters (for multi-streaming)
-            active: true            # use query decomposition  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_ACTIVE
+            enabled: true           # use query decomposition  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_ENABLED
             maxSources: 1000        # max data source count    : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_SOURCES
-            maxDuration: 1          # max time duration (sec)  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
-            unitDuration: SECONDS   # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_UNIT_DURATION
+            maxDuration: 1          # max time duration (unit)  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
+            durationUnit: SECONDS   # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_DURATION_UNIT
       response:       # Default parameters used for data responses
          correlate:        # Query data correlation parameters
             useConcurrency: true    # use mult-thread correlation : DP_API_QUERY_DATA_RESPONSE_CORRELATE_USE_CONCURRENCY
             whileStreaming: true    # correlate during gRPC stream: DP_API_QUERY_DATA_RESPONSE_CORRELATE_WHILE_STREAMING
          multistream:      # Multiple gRPC data stream parameters
-            active: true             # use multistreamed responses : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_ACTIVE
+            enabled: true            # use multistreamed responses : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_ENABLED
             maxStreams: 3            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
             sizeDomain: 2000         # rqst domain size (samples-time) triggering ms : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
       table:         # Default parameters used for time-series data table construction
@@ -138,29 +138,29 @@ query:      # Data Platform Query Service client API default configuration param
          dynamic:           # dynamic data table properties
             enable: true             # enable dynamic data tables   : DP_API_QUERY_DATA_TABLE_DYNAMIC_ENABLE
    concurrency:  # General concurrency (multi-threading) properties
-      active: true                   # use concurrency            : DP_API_QUERY_CONCURRENCY_ACTIVE
+      enabled: true                  # use concurrency            : DP_API_QUERY_CONCURRENCY_ENABLED
       pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
       maxThreads: 20                 # max worker thread count    : DP_API_QUERY_CONCURRENCY_MAX_THREADS
    timeout:      # General query timeout properties (e.g., used for query response wait timeout)
-      active: true                   # apply timeout condition    : DP_API_QUERY_TIMEOUT_ACTIVE
+      enabled: true                  # apply timeout condition    : DP_API_QUERY_TIMEOUT_ENABLED
       limit: 30                      # request timeout limit      : DP_API_QUERY_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_QUERY_TIMEOUT_UNIT
    logging:      # General Query Service API logging services
-      active: true                   # is logging active              : DP_API_QUERY_LOGGING_ACTIVE
+      enabled: true                  # is logging active              : DP_API_QUERY_LOGGING_ENABLED
       level: DEBUG                   # logger output level if active  : DP_API_QUERY_LOGGING_LEVEL
       
 annotation:
    timeout:      # General query timeout properties (e.g., used for query response wait timeout)
-      active: true                   # apply timeout condition    : DP_API_ANNOTATION_TIMEOUT_ACTIVE
+      enabled: true                  # apply timeout condition    : DP_API_ANNOTATION_TIMEOUT_ENABLED
       limit: 30                      # request timeout limit      : DP_API_ANNOTATION_TIMEOUT_LIMIT
       unit: SECONDS                  # java.concurrent.TimeUnit   : DP_API_ANNOTATION_TIMEOUT_UNIT
    logging:      # General Annotation Service API logging services
-      active: true                   # is logging active              : DP_API_ANNOTATION_LOGGING_ACTIVE
+      enabled: true                  # is logging active              : DP_API_ANNOTATION_LOGGING_ENABLED
       level: DEBUG                   # logger output level if active  : DP_API_ANNOTATION_LOGGING_LEVEL
  
 connections:   # All available Data Platform service connections   
    logging:     # General event logging for all connection operations 
-      active: true                   # is logging active              : DP_API_CONNECTION_LOGGING_ACTIVE
+      enabled: true                  # is logging active              : DP_API_CONNECTION_LOGGING_ENABLED
       level: INFO                    # logger output level if active  : DP_API_CONNECTION_LOGGING_LEVEL
       
    ingestion:   # Ingestion Service connection
@@ -169,7 +169,7 @@ connections:   # All available Data Platform service connections
       description: Data Platform Ingestion Service default connection parameters # : DP_API_CONNECTION_INGESTION_DESCRIPTION 
       supplement: None               # (opt) anonymous parameter: DP_API_CONNECTION_INGESTION_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)
-         active: true                # apply timeout condition   : DP_API_CONNECTION_INGESTION_TIMEOUT_ACTIVE
+         enabled: true               # timeout condition enabled : DP_API_CONNECTION_INGESTION_TIMEOUT_ENABLED
          limit: 30                   # timeout limit             : DP_API_CONNECTION_INGESTION_TIMEOUT_LIMIT
          unit: SECONDS               # java.concurrent.TimeUnit  : DP_API_CONNECTION_INGESTION_TIMEOUT_UNIT
       channel:      # gRPC Channel configuration         
@@ -177,7 +177,7 @@ connections:   # All available Data Platform service connections
             url: localhost              # host server URL           : DP_API_CONNECTION_INGESTION_CHANNEL_HOST_URL
             port: 50051                 # server port address       : DP_API_CONNECTION_INGESTION_CHANNEL_HOST_PORT
          tls:              # HTTP2 Transport Layer Security parameters
-            active: false               # use TLS security          : DP_API_CONNECTION_INGESTION_CHANNEL_TLS_ACTIVE
+            enabled: false              # use TLS security          : DP_API_CONNECTION_INGESTION_CHANNEL_TLS_ENABLED
             defaultTls: true            # use default TLS operation : DP_API_CONNECTION_INGESTION_CHANNEL_TLS_DEFAULT
             filepaths:     # file path locations for TLS certificates and keys (only if defaultTls == false)
                trustedCerts:            # trusted certs collection  : DP_API_CONNECTION_INGESTION_CHANNEL_TLS_FILE_TRUSTED_CERTS
@@ -197,7 +197,7 @@ connections:   # All available Data Platform service connections
       description: Data Platform Query Service default connection parameters # : DP_API_CONNECTION_QUERY_DESCRIPTION
       supplement: None               # (opt) anonymous parameter : DP_API_CONNECTION_QUERY_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)
-         active: true                # apply timeout condition   : DP_API_CONNECTION_QUERY_TIMEOUT_ACTIVE
+         enabled: true               # apply timeout condition   : DP_API_CONNECTION_QUERY_TIMEOUT_ENABLED
          limit: 30                   # timeout limit             : DP_API_CONNECTION_QUERY_TIMEOUT_LIMIT
          unit: SECONDS               # java.concurrent.TimeUnit  : DP_API_CONNECTION_QUERY_TIMEOUT_UNIT
       channel:      # gRPC Channel configuration         
@@ -205,7 +205,7 @@ connections:   # All available Data Platform service connections
             url: localhost              # host server URL           : DP_API_CONNECTION_QUERY_CHANNEL_HOST_URL
             port: 50052                 # server port address       : DP_API_CONNECTION_QUERY_CHANNEL_HOST_PORT
          tls:              # HTTP2 Transport Layer Security parameters
-            active: false               # use TLS security          : DP_API_CONNECTION_QUERY_CHANNEL_TLS_ACTIVE
+            enabled: false              # use TLS security          : DP_API_CONNECTION_QUERY_CHANNEL_TLS_ENABLED
             defaultTls: true            # use default TLS operation : DP_API_CONNECTION_QUERY_CHANNEL_TLS_DEFAULT
             filepaths:     # file path locations for TLS certificates and keys (only if defaultTls == false)
                trustedCerts:            # trusted certs collection  : DP_API_CONNECTION_QUERY_CHANNEL_TLS_FILE_TRUSTED_CERTS
@@ -225,7 +225,7 @@ connections:   # All available Data Platform service connections
       description: Data Platform Annotation Service default connection parameters # : DP_API_CONNECTION_ANNOTATION_DESCRIPTION
       supplement: None               # (opt) anonymous parameter : DP_API_CONNECTION_ANNOTATION_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)
-         active: true                # apply timeout condition   : DP_API_CONNECTION_ANNOTATION_TIMEOUT_ACTIVE
+         enabled: true               # apply timeout condition   : DP_API_CONNECTION_ANNOTATION_TIMEOUT_ENABLED
          limit: 30                   # timeout limit             : DP_API_CONNECTION_ANNOTATION_TIMEOUT_LIMIT
          unit: SECONDS               # java.concurrent.TimeUnit  : DP_API_CONNECTION_ANNOTATION_TIMEOUT_UNIT
       channel:      # gRPC Channel configuration         
@@ -233,7 +233,7 @@ connections:   # All available Data Platform service connections
             url: localhost              # host server URL           : DP_API_CONNECTION_ANNOTATION_CHANNEL_HOST_URL
             port: 50053                 # server port address       : DP_API_CONNECTION_ANNOTATION_CHANNEL_HOST_PORT
          tls:              # HTTP2 Transport Layer Security parameters
-            active: false               # use TLS security          : DP_API_CONNECTION_ANNOTATION_CHANNEL_TLS_ACTIVE
+            enabled: false              # use TLS security          : DP_API_CONNECTION_ANNOTATION_CHANNEL_TLS_ENABLED
             defaultTls: true            # use default TLS operation : DP_API_CONNECTION_ANNOTATION_CHANNEL_TLS_DEFAULT
             filepaths:     # file path locations for TLS certificates and keys (only if defaultTls == false)
                trustedCerts:            # trusted certs collection  : DP_API_CONNECTION_ANNOTATION_CHANNEL_TLS_FILE_TRUSTED_CERTS

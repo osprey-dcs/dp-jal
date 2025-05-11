@@ -739,7 +739,7 @@ public class DpIngestionStreamImplTest {
         System.out.println("  Transmission time (open stream) : " + Duration.between(insStart, insClosed));
         System.out.println("  Shutdown time                   : " + Duration.between(insClosed, insShutdown));
         System.out.println("  Termination time                : " + Duration.between(insShutdown, insTerminated));
-        System.out.println("  Total API active time           : " + Duration.between(insStart, insTerminated));
+        System.out.println("  Total API enabled time           : " + Duration.between(insStart, insTerminated));
         System.out.println("  Messages transmitted            : " + cntXmissions);
         System.out.println("  Messages accepted               : " + recResult.acceptedRequestCount());
         System.out.println("  Acknowledgments received        : " + recResult.acknowledgments().size());

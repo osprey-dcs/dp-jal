@@ -143,7 +143,7 @@ public final class IngestionFrameProcessorEvaluator {
     /** Duration required for processor shutdown */
     private Duration durShutdown = null;
 
-    /** Duration processor was active (between activate() and shutdown()) */
+    /** Duration processor was enabled (between activate() and shutdown()) */
     private Duration durActive = null;
 
     /** Total duration of performance test (between test start and shutdown() operation) */
@@ -621,7 +621,7 @@ public final class IngestionFrameProcessorEvaluator {
     }
 
     /**
-     * @return  the duration while the processor was active (between activate() and shutdown())
+     * @return  the duration while the processor was enabled (between activate() and shutdown())
      * 
      * @throws  IllegalStateException   test results were not computed - invoke {@link #computeResults()} before invoking
      */
@@ -752,7 +752,7 @@ public final class IngestionFrameProcessorEvaluator {
         os.println("    Total bytes produced    : " + this.szProducedTotalBytes);
         os.println("    Time processing         : " + this.getDurationProcessing());
         os.println("    Time for shutdown       : " + this.getDurationShutdown());
-        os.println("    Time processor active   : " + this.getDurationActive());
+        os.println("    Time processor enabled   : " + this.getDurationActive());
         os.println("    Time for total test     : " + this.getDurationTotal());
     }
 

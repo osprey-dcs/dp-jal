@@ -222,7 +222,7 @@ public class DpAnnotationApiFactoryTest {
             IAnnotationService   apiTest = DpAnnotationApiFactory.connect(
                     CFG_DEFAULT.channel.host.url, 
                     CFG_DEFAULT.channel.host.port,
-                    CFG_DEFAULT.channel.tls.active,
+                    CFG_DEFAULT.channel.tls.enabled,
                     CFG_DEFAULT.channel.grpc.usePlainText,
                     CFG_DEFAULT.channel.grpc.messageSizeMax,
                     CFG_DEFAULT.channel.grpc.keepAliveWithoutCalls,

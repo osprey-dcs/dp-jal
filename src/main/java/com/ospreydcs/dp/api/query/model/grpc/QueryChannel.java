@@ -36,8 +36,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -56,12 +58,64 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * <p>
- * Class for recovering time-series data requests using multiple gRPC data streams.
+ * Class for recovering time-series data requests using a single gRPC Channel and (potentially multiple) gRPC data streams.
  * </p>
+ * <p>
+ * Class instances utilize a single gRPC Channel object, contained with a <code>{@link DpQueryConnection}</code> object to
+ * perform time-series data request recoveries from the Data Platform Query Service.  The <code>QueryChannel</code>
+ * class is capable of managing multiple <code>QueryStream</code> instances for expedited data recoveries.  All
+ * <code>QueryStream</code> instances are generated from the single gRPC Channel.
+ * </p>
+ * <p>
+ * <h2>Operation</h2>
+ * The interface to <code>QueryChannel</code> is intentionally narrow and simple.  There are 3 data recovery operations,
+ * 1 unary and 2 streaming operations.
+ * <ul>
+ * <li><code>{@link #recoverRequestUnary(DpDataRequest)}</code> - a unary gRPC time-series data request recovery.</li>
+ * <li><code>{@link #recoverRequest(DpDataRequest)}</code> - a single-streaming time-series data request recovery.</li>
+ * <li><code>{@link #recoverRequests(List)}</code> - a multiple-streaming time-series data request recovery.</li>
+ * </ul> 
+ * These are all blocking operations and do not return until all requested data has been recovered and passed to the
+ * message consumer provided at construction.
+ * </p>
+ * <p> 
+ * There are configuration operations for setting timeout limits for the data recovery operations 
+ * (default values are used if not explicitly specified).  Recall that these are blocking operations and if the
+ * recovery exceeds the timeout the data recovery fails with exception.
+ * </p>
+ * <p>
+ * <h2>gRPC Channel</h2>
+ * The <code>DpQueryConnection</code> instance provided at construction must be active and connected to a Data Platform
+ * Query Service server.
+ * <code>QueryChannel</code> class instances do not assume ownership of the gRPC Channel provided at construction.  That is,
+ * the <code>DpQueryConnection</code> object is not owned by any <code>QueryChannel</code> object.  It is only used to
+ * create <code>{@link QueryStream}</code> stream instances with finite lifetimes.  Thus, the <code>DpQueryConnection</code>
+ * must be shutdown externally when no longer required.
+ * </p>
+ * <p>
+ * <h2>Query Streams</h2>
+ * All streaming operations execute on independent threads.  Even the single-stream recovery operation 
+ * <code>{@link #recoverRequest(DpDataRequest)}</code> utilizes an independent execution thread for the recovery
+ * of request data.  See the class documentation on <code>{@link QueryStream}</code> for additional details.
+ * </p>
+ * <p>
+ * <h2>Message Consumer</h2>
+ * All <code>QueryData</code> Protocol Buffers messages for a request operation are passed to the 
+ * <code>{@link IMessageConsumer}</code> interface provided at construction.  The performance of the interface 
+ * implementation necessary affects the performance of any streaming recovery operation.  If the 
+ * <code>IMessageConsumer</code> fills or otherwise blocks during recovery,
+ * the independent gRPC streaming tasks will likewise block until the <code>QueryData</code> message is accepted.
+ * Thus, choice of <code>IMessageConsumer</code> implementation and operation is important for the upstream operations
+ * here.
+ * </p>
+ * 
  *
  * @author Christopher K. Allen
  * @since Jan 9, 2025
  *
+ * @see DpQueryConnection
+ * @see IMessageConsumer
+ * @see QueryStream
  */
 public class QueryChannel {
 
@@ -72,17 +126,43 @@ public class QueryChannel {
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryChannel</code>.
+     * Creates a new instance of <code>QueryChannel</code> ready for time-series data request recovery.
+     * </p>
+     * <p>
+     * Creates and returns a new <code>QueryChannel</code> instance ready for time-series data request recovery.
+     * Note that all recovery operations are blocking operations.  Timeout limits for streaming recovery operations
+     * can be assigned with <code>{@link #setTimeout(long, TimeUnit)}</code>, otherwise default timeout limits
+     * are used.
+     * </p> 
+     * <p>
+     * <h2>gRPC Channel</h2>
+     * The <code>DpQueryConnection</code> instance provided here must be active and connected to a Data Platform
+     * Query Service server.
+     * <code>QueryChannel</code> class instances do not assume ownership of the gRPC Channel provided at construction.  That is,
+     * the <code>DpQueryConnection</code> object is not owned by any <code>QueryChannel</code> object.  It is only used to
+     * create <code>{@link QueryStream}</code> stream instances with finite lifetimes.  Thus, the given 
+     * <code>DpQueryConnection</code> must be shutdown externally when no longer required.
+     * </p>
+     * <p>
+     * <h2>Message Consumer</h2>
+     * All <code>QueryData</code> Protocol Buffers messages for a request operation are passed to the 
+     * <code>{@link IMessageConsumer}</code> interface provided here.  The performance of the interface 
+     * implementation necessary affects the performance of any streaming recovery operation.  If the 
+     * <code>IMessageConsumer</code> fills or otherwise blocks during recovery,
+     * the independent gRPC streaming tasks will likewise block until the <code>QueryData</code> messages are accepted.
+     * Thus, choice of <code>IMessageConsumer</code> implementation and operation is important for the upstream operations
+     * here.
      * </p>
      *
-     * @param connQuery     active connection to the Data Platform Query Service
+     * @param connQuery     enabled connection to the Data Platform Query Service
      * @param snkRspMsgs    consumer of recovered time-series data request data
      * 
-     * @return
+     * @return a new <code>QueryChannel</code> object ready for time-series data request recovery
      */
     public static QueryChannel  from(DpQueryConnection connQuery, IMessageConsumer<QueryData> snkRspMsgs) {
         return new QueryChannel(connQuery, snkRspMsgs);
     }
+    
     
     //
     // Application Resources
@@ -96,28 +176,21 @@ public class QueryChannel {
     // Class Constants - Initialized from API configuration
     //
     
-    /** Is logging active? */
-    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Is event logging enabled? */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
-    /** Is timeout limit active ? */
-    public static final boolean     BOL_TIMEOUT = CFG_QUERY.timeout.active;
+    /** Is timeout limit enabled ? */
+    public static final boolean     BOL_TIMEOUT = CFG_QUERY.timeout.enabled;
     
     /** Timeout limit for query operation */
-    public static final long        CNT_TIMEOUT = CFG_QUERY.timeout.limit;
+    public static final long        LNG_TIMEOUT = CFG_QUERY.timeout.limit;
     
     /** Timeout unit for query operation */
     public static final TimeUnit    TU_TIMEOUT = CFG_QUERY.timeout.unit;
-    
-    
-//    /** Is response multi-streaming active? */
-//    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.response.multistream.active;
-//    
-//    /** Maximum number of open data streams to Query Service */
-//    public static final int         CNT_MULTISTREAM = CFG_QUERY.data.response.multistream.maxStreams;
-//    
-//    /** Query domain size triggering multiple streaming (if active) */
-//    public static final long        SIZE_DOMAIN_MULTISTREAM = CFG_QUERY.data.response.multistream.sizeDomain;
     
     
     //
@@ -126,6 +199,16 @@ public class QueryChannel {
     
     /** Class event logger */
     private static final Logger     LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Resource Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //
@@ -139,20 +222,6 @@ public class QueryChannel {
     private final IMessageConsumer<QueryData>   snkRspMsgs;
 
     
-//    //
-//    //  Configuration
-//    //
-//    
-//    /** Multi-streaming query response toggle */
-//    private boolean bolMultiStream = BOL_MULTISTREAM;
-//    
-//    /** The request domain size (PV count - time) triggering multi-streaming */
-//    private long    szRqstDomain = SIZE_DOMAIN_MULTISTREAM;
-//    
-//    /** Number of data streams for multi-streaming response recovery */
-//    private int     cntMultiStreams = CNT_MULTISTREAM;
-
-    
     //
     // Instance Resources
     //
@@ -162,10 +231,21 @@ public class QueryChannel {
     
     
     //
+    //  Configuration
+    //
+    
+    /** Timeout limit to wait for (data recovery) streaming tasks execution */
+    private long        lngTimeout = LNG_TIMEOUT;
+    
+    /** Timeout unit for timeout operation */
+    private TimeUnit    tuTimeout = TU_TIMEOUT;
+    
+    
+    //
     // State Variables
     //
     
-    /** Activated flag */
+    /** Activated flag - no longer needed, now all blocking operations */
     private boolean     bolActivated = false;
     
     /** Activation lock */ 
@@ -183,7 +263,7 @@ public class QueryChannel {
      * Constructs a new instance of <code>QueryChannel</code>.
      * </p>
      *
-     * @param connQuery     active connection to the Data Platform Query Service
+     * @param connQuery     enabled connection to the Data Platform Query Service
      * @param snkRspMsgs    consumer of recovered time-series data request data
      */
     public QueryChannel(DpQueryConnection connQuery, IMessageConsumer<QueryData> snkRspMsgs) {
@@ -196,162 +276,72 @@ public class QueryChannel {
     // Configuration and State
     //
     
-//    /**
-//     * <p>
-//     * Toggles the use of multiple query response gRPC data streams in
-//     * <code>{@link #processRequestStream(DpDataRequest)}</code>.
-//     * </p>
-//     * <p>
-//     * The method <code>{@link #processRequestStream(DpDataRequest)}</code>
-//     * is capable of using multiple gRPC data streams.  The method attempts to decompose
-//     * large data requests into decompose request according to settings in the default
-//     * Data Platform API configuration (see <code>{@link DpApiConfig}</code>).  This
-//     * operation can turn off the default behavior.
-//     * </p>
-//     * <p>
-//     * This is a performance parameter where a potentially large results set can be recovered
-//     * from the Query Service on concurrent gRPC data streams.  Any performance increase is
-//     * dependent upon the size of the results set, the network and its current traffic, and
-//     * the host platform configuration.
-//     * </p> 
-//     * <p>
-//     * Query data can be recovered using multiple gRPC data streams.  There, the domain of the
-//     * data  request is decomposed using the default decompose query mechanism.  The components
-//     * of the decompose request are then separate performed on independent gRPC data streams.
-//     * The full result set is then assembled from the multiple data streams.
-//     * </p>
-//     * <p>
-//     * The default value is taken from the Java API Library configuration file
-//     * (see <code>{@link #BOL_MULTISTREAM}</code>).  This value can be recovered from 
-//     * <code>{@link #isMultiStreamingResponse()}</code>.
-//     * </p>
-//     * <p>
-//     * <h2>NOTES:</h2>
-//     * <ul>
-//     * <li>Only affects the operation of <code>{@link #processRequestStream(DpDataRequest)}</code>.</li>
-//     * <li>All decompose query configuration parameters are taken from the default API parameters.</li>
-//     * <li>All gRPC multi-streaming parameters are taken from the default API parameters.</li>
-//     * </ul>
-//     * </p>  
-//     * 
-//     * @param bolMultiStream    turn on/off the use of multiple gRPC streams for query response recovery
-//     */
-//    public void setMultiStreamingResponse(boolean bolMultiStream) {
-//        this.bolMultiStream = bolMultiStream;
-//    }
-//    
-//    /**
-//     * <p>
-//     * Sets the request domain size threshold to trigger multi-streaming of request results.
-//     * </p>
-//     * <p>
-//     * If the multi-streaming feature is turned on (see <code>{@link #isMultiStreamingResponse()}</code>)
-//     * it will only be triggered if the request domain size is greater than the given value.
-//     * The approximate domain size of a request is given by the method 
-//     * <code>{@link DpDataRequest#approxDomainSize()}</code>.  
-//     * </p>
-//     * <p>
-//     * Requiring that data requests have a given domain size is a performance issue and the given value is
-//     * thus a performance parameter.  The ideal is to limit the use of multiple, concurrent data streams for
-//     * large requests.  Creating multiple gRPC data streams for a small request can usurp unnecessary 
-//     * resources.
-//     * </p>
-//     *  
-//     * @param szDomain  the request domain size (in source-count seconds) threshold where multis-treaming is triggered
-//     */
-//    public void setMultiStreamingDomainSize(long szDomain) {
-//        this.szRqstDomain = szDomain;
-//    }
-//    
-//    /**
-//     * <p>
-//     * Sets the number of gRPC data stream used for multi-streaming query responses.
-//     * </p>
-//     * <p>
-//     * This method should be called before any query response processing has started, if at all.  The default value
-//     * in the Java API Library configuration file should be used as a matter of course.  However, this method is
-//     * available for performance evaluations. 
-//     * </p>
-//     * 
-//     * @param cntMultiStreams    number of gRPC data streams to use in multi-streaming data request recovery
-//     * 
-//     * @throws IllegalStateException    method called while actively processing
-//     */
-//    synchronized 
-//    public void setMultiStreamCount(int cntStreams) throws IllegalStateException {
-////        if (this.theCorrelator.sizeCorrelatedSet() > 0 || (this.thdDataProcessor!=null && this.thdDataProcessor.isStarted())) {
-//        if (this.thdDataProcessor!=null && this.thdDataProcessor.isStarted()) {
-//            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change stream count while processing.";
-//            
-//            if (BOL_LOGGING)
-//                LOGGER.warn(strMsg);
-//            
-//            throw new IllegalStateException(strMsg);
-//        }
-//        
-//        this.cntMultiStreams = cntStreams;
-//    }
-//    
-//    
-//    /**
-//     * <p>
-//     * Specifies whether or not multi-streaming of query responses is enabled.
-//     * </p>
-//     * <p>
-//     * The default value is taken from the Java API Library configuration file
-//     * (see {@link #BOL_MULTISTREAM}).
-//     * </p>
-//     * 
-//     * @return <code>true</code> if multi-streaming is enabled, <code>false</code> if disabled
-//     * 
-//     * @see #BOL_MULTISTREAM
-//     */
-//    public final boolean isMultiStreamingResponse() {
-//        return this.bolMultiStream;
-//    }
-//
-//    /**
-//     * <p>
-//     * Returns the minimum request domain size which triggers query response multi-streaming.
-//     * </p>
-//     * <p>
-//     * The returned value has context only if query response multi-streaming has context, specifically,
-//     * <code>{@link #isMultiStreamingResponse()}</code> returns <code>true</code>.  Otherwise a single
-//     * response stream is always used.  If multi-streaming responses are enabled then multiple gRPC
-//     * data streams will only be used if the returned value is greater than the size of the 
-//     * query request domain, which is given by <code>{@link DpDataRequest#approxDomainSize()}</code>.
-//     * </p>
-//     * <p>
-//     * The requirement for a minimum domain size is used as a performance criterion.  Minimum domain
-//     * sizes prevent the use of multiple gRPC data streams for small data requests, preventing unnecessary 
-//     * resource allocation.
-//     * </p>
-//     * <p>
-//     * The default value is taken from the Java API Library configuration file
-//     * (see {@link #SIZE_DOMAIN_MULTISTREAM}).
-//     * </p>
-//     * 
-//     * @return the minimum query domain size triggering multi-streaming of response data (in data source * seconds)
-//     */
-//    public final long geMultiStreamingDomainSize() {
-//        return this.szRqstDomain;
-//    }
-//
-//    /**
-//     * <p>
-//     * Returns the number of gRPC data streams used for multi-streaming of query responses.
-//     * </p>
-//     * <p>
-//     * The returned value is the number of gRPC data streams always used for a multi-streaming response.
-//     * Note that the returned value has context only when multi-streaming is enabled, specificially,
-//     * <code>{@link #isMultiStreamingResponse()}</code> returns <code>true</code>.
-//     * </p>
-//     * 
-//     * @return the number of concurrent gRPC data streams used to recover query responses when enabled
-//     */
-//    public final int getMultiStreamCount() {
-//        return this.cntMultiStreams;
-//    }
+    /**
+     * <p>
+     * Sets the timeout limit for streaming data recovery operations.
+     * </p>
+     * <p>
+     * Sets the maximum time limit for operations <code>{@link #recoverRequests(List)}</code> and
+     * <code>{@link #recoverRequests(List)}</code>.  These are blocking operations that will fail
+     * if the recovery operation exceeds the given limit.
+     * </p>
+     * <p>
+     * The default values for the given arguments are specified in the Java API Library configuration
+     * file and available as the class constants <code>{@link #LNG_TIMEOUT}</code> and
+     * <code>{@link #TU_TIMEOUT}</code>, respectively.
+     * </p>
+     * 
+     * @param lngTimeout    the timeout duration for recovery operations
+     * @param tuTimeout     the timeout units used for the timeout duration
+     */
+    public void setTimeout(long lngTimeout, TimeUnit tuTimeout) {
+        this.lngTimeout = lngTimeout;
+        this.tuTimeout = tuTimeout;
+    }
+    
+    /**
+     * <p>
+     * Returns the (unitless) timeout duration for execution of streaming request recoveries.
+     * </p>
+     * <p>
+     * The time units for the timeout duration can be recovered from method <code>{@link #getTimeoutUnit()}</code>.
+     * </p>
+     * 
+     * @return  the timeout duration for all data recovery operations
+     */
+    public long getTimeoutDuration() {
+        return this.lngTimeout;
+    }
+    
+    /**
+     * <p>
+     * Returns the time units used to express the timeout length returned by <code>{@link #getTimeoutDuration()}</code>.
+     * </p>
+     * 
+     * @return  the timeout units associated with the timeout duration
+     */
+    public TimeUnit getTimeoutUnit() {
+        return this.tuTimeout;
+    }
+    
+    /**
+     * <p>
+     * Returns the number of <code>QueryData</code> Protocol Buffers messages received during the last streaming 
+     * recovery operation.
+     * </p>
+     * <p>
+     * The returned value is obtained from an internal counter which is reset at each invocation to 
+     * <code>{@link #recoverRequest(DpDataRequest)}</code> or <code>{@link #recoverRequests(List)}</code>.
+     * It should be equal to the value returned by those methods, however, <em>this is an independent calculation</em>.
+     * Thus, the returned value here can be compared against the returned value of the above operations for
+     * validation checking. 
+     * </p>
+     * 
+     * @return the number of data messages returned in the last streaming data recovery operation
+     */
+    public int  getReceivedMessageCount() {
+        return this.cntMsgsRcvd;
+    }
     
     
     //
@@ -369,10 +359,10 @@ public class QueryChannel {
      * <code>{@link #enableCorrelateConcurrently(boolean)}</code>. 
      * </p>
      * <p>
-     * All data recovery and subsequent correlation is performed within this method.
+     * All data recovery is performed within this method.
      * Due to the nature of unary gRPC requests all request data is recovered first,
      * blocking until the single <code>{@link QueryResponse}</code> data message is returned.
-     * The request data is extracted and then correlated to produce the returned data set. 
+     * The request data is extracted and sent to the <code>IMessageConsumer</code>. 
      * <p>
      * <h2>WARNINGS:</h2>
      * <ul>
@@ -381,12 +371,6 @@ public class QueryChannel {
      * The method will fail (with exception) if the data request is larger than the 
      * default gRPC message size.  Use a streaming request for large results sets.
      * </li>
-     * <br/>
-     * <li>
-     * The returned data set is owned by the internal data theCorrelator of this object and will
-     * be destroyed whenever a subsequent data request is made.
-     * Do not make additional data requests until the returned object is fully processed.
-     * </li>
      * </ul>
      * </p>
      * 
@@ -394,7 +378,7 @@ public class QueryChannel {
      * 
      * @throws DpQueryException general exception during data recovery and/or processing (see cause)
      */
-    public void recoveryRequestUnary(DpDataRequest dpRequest) throws DpQueryException {
+    public void recoverRequestUnary(DpDataRequest dpRequest) throws DpQueryException {
 
         // Create the data request message
         QueryDataRequest    msgRqst = dpRequest.buildQueryRequest();
@@ -433,11 +417,11 @@ public class QueryChannel {
      * Use gRPC data streaming to recover the given request.
      * </p>
      * <p>
-     * Performs the given request using gRPC data streaming and blocks until request and 
-     * processing are complete.  The given data request is potentially decomposed to create multiple
-     * gRPC data streams unless multi-streaming is explicitly turned off using
-     * <code>{@link #enableMultiStreaming(boolean)}</code> before calling this method.
-     * </p>
+     * Performs the given request using gRPC data stream and blocks until request and 
+     * processing are complete.  
+     * As a blocking operation it will not return until all requested data is recovered and available
+     * from the <code>IMessageConsumer</code> provided at construction.
+     * </p>  
      * <p>
      * The type of data stream used, either a unidirectional stream or a bidirectional stream, 
      * is determined by the value of <code>{@link DpDataRequest#getStreamType()}</code> provided
@@ -446,6 +430,13 @@ public class QueryChannel {
      * </p>
      * <p> 
      * <h2>Configuration Options</h2>
+     * The <code>QueryChannel</code> class instances are no longer configurable.  Use of multiple gRPC data
+     * streams is now done explicitly with methods <code>{@link #recoverRequest(DpDataRequest)}</code>
+     * and <code>{@link #recoverRequests(List)}</code>.  
+     * Correlation has been moved downstream to separate classes.
+     * </p>
+     * <p>  
+     * <s>
      * Various data streaming and processing options are available for this method.  See the
      * following methods for more information:
      * <ul>
@@ -464,41 +455,34 @@ public class QueryChannel {
      * The <code>{@link #enableMultiStreaming(boolean)}</code> operation can be used to turn off 
      * the default behavior.
      * </p>
+     * </s>
      * <p>
+     * All data processing is now done downstream of data recovery.  The following commments
+     * no longer apply.
+     * </p>
+     * <s>
      * <h2>WARNINGS:</h2>
      * The returned data set is owned by the internal data theCorrelator of this object and will
      * be destroyed whenever a subsequent data request is made.
      * Do not make additional data requests until the returned object is fully processed.
+     * </s>
      * </p>
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The data request and subsequent data correlation are done in method
-     * <code>{@link #processRequestMultiStream(List)}</code>.  If the default multi-streaming
-     * option is turned off a list containing the single request <code>dpRequest</code> is
-     * passed, otherwise a default query decomposition is attempted.
+     * This method defers to method <code>{@link #processRequestMultiStream(List)}</code> for 
+     * the actual data request operation.  
      * </li>
-     * <br/>
-     * <li>
-     * The default query decomposition attempt is performed by the support method
-     * <code>{@link #attemptRequestDecomposition(DpDataRequest)}</code>.  If this method
-     * fails to find an adequate decomposition (e.g., the request size is too small)
-     * it simply returns a list containing only the original request.
-     * </li>
-     * <br/>
-     * <li>
-     * The sorted set of correlated request data returned here should be fully processed, or copied,
-     * before invoking another data request.  This instance retains ownership of the returned data set and
-     * will destroy it to provide resources for the next data request.
-     * </ul>
      * </p> 
-     *  
+     * 
      * @param dpRequest data request to be recovered from Query Service and processed
      * 
      * @return  the number of <code>QueryData</code> messages recovered and passed to the message consumer 
      * 
-     * @throws DpQueryException general exception during data recovery and/or processing (see cause)
+     * @throws DpQueryException general exception during data recovery (see message and cause)
+     * 
+     * @see #recoverRequests(List)
      */
     public int recoverRequest(DpDataRequest dpRequest) throws DpQueryException {
 
@@ -506,7 +490,7 @@ public class QueryChannel {
         List<DpDataRequest>     lstRequests = List.of(dpRequest);
         
         // Defer to the multi-streaming processor method
-        return this.recoverRequest(lstRequests);
+        return this.recoverRequests(lstRequests);
     }
     
     /**
@@ -514,15 +498,31 @@ public class QueryChannel {
      * Use multiple gRPC data streams explicitly described by argument list (to recover request data).
      * </p>
      * <p>
-     * This method allows clients to explicitly determine the concurrent gRPC data streams used by the
-     * <code>QueryRequestProcessorOld</code>.  To use the default multi-streaming mechanism method
-     * <code>{@link #processRequestStream(DpDataRequest)}</code> is available.
+     * This method allows clients to explicitly determine the use of concurrent gRPC data streams 
+     * (e.g., used by request processors/correlators).
+     * </p>
+     * <p>
+     * This is a blocking operation.  It will not return until all requested data is recovered and available
+     * from the <code>IMessageConsumer</code> provided at construction.
+     * </p>  
      * <p>
      * A separate gRPC data stream is established for each data request within the argument list and concurrent
      * data streams are used to recover the request data.
-     * At most <code>{@link #CNT_MULTISTREAM}</code> concurrent data streams are active at any instant.
+     * The number of gRPC data streams is determined by the number of time-series data requests in the argument
+     * list; there is no limit.
+     * </p>
+     * <p>
+     * The type of data stream used, either a unidirectional stream or a bidirectional stream, 
+     * is determined by the value of <code>{@link DpDataRequest#getStreamType()}</code> provided
+     * within the argument.  
+     * Note that performance can be affected by choice of data stream type. 
+     * </p>
+     * <p>
+     * <s>
+     * At most <code>{@link #CNT_MULTISTREAM}</code> concurrent data streams are enabled at any instant.
      * If the number of data requests in the argument is larger than <code>{@link #CNT_MULTISTREAM}</code>
      * then streaming threads are run in a fixed size thread pool until all requests are completed.
+     * </s>
      * </p>
      * <p>
      * The type of data stream used, either a unidirectional stream or a bidirectional stream, 
@@ -532,6 +532,13 @@ public class QueryChannel {
      * </p>
      * <p> 
      * <h2>Configuration Options</h2>
+     * The <code>QueryChannel</code> class instances are no longer configurable.  Use of multiple gRPC data
+     * streams is now done explicitly with methods <code>{@link #recoverRequest(DpDataRequest)}</code>
+     * and <code>{@link #recoverRequests(List)}</code>.  
+     * Correlation has been moved downstream to separate classes.
+     * </p>
+     * <p>  
+     * <s>
      * Various data streaming and processing options are available for this method.  See the
      * following methods for more information:
      * <ul>
@@ -542,15 +549,18 @@ public class QueryChannel {
      * Note that the <code>{@link #enableMultiStreaming(boolean)}</code> has no effect here.
      * These performance options should be tuned for specific platforms.
      * The default values for these options are set in the Data Platform API configuration
-     * (see {@link DpApiConfig}</code>).  
+     * (see {@link DpApiConfig}</code>).
+     * </s>  
      * </p>
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * The sorted set of correlated request data returned here should be fully processed, or copied,
-     * before invoking another data request.  This instance retains ownership of the returned data set and
-     * will destroy it to provide resources for the next data request.
+     * All recovered data messages will be passed to the <code>IMessageConsumer</code> instance provided at construction.
+     * </li>
+     * <li>
+     * The returned value (returned message count) emphasizes that this is a blocking operation.
+     * </li>
      * </ul>
      * </p> 
      *  
@@ -558,12 +568,9 @@ public class QueryChannel {
      * 
      * @return  the number of <code>QueryData</code> messages recovered and passed to the message consumer 
      * 
-     * @throws DpQueryException general exception during data recovery and/or processing (see cause)
-     * 
-     * @see #enableCorrelateWhileStreaming(boolean)
-     * @see #enableCorrelateConcurrently(boolean)
+     * @throws DpQueryException general exception during data recovery (see message and cause)
      */
-    public int recoverRequest(List<DpDataRequest> lstRequests) throws DpQueryException {
+    public int recoverRequests(List<DpDataRequest> lstRequests) throws DpQueryException {
         
         // Create streaming task for each component request
         List<QueryStream>  lstStrmTasks = this.createStreamingTasks(lstRequests);
@@ -572,6 +579,7 @@ public class QueryChannel {
         int     cntMsgs;    // returns number of response messages streamed
         
         try {
+            this.cntMsgsRcvd = 0;
             cntMsgs = this.executeStreamingTasks(lstStrmTasks);  // this is a blocking operation
             
             return cntMsgs;
@@ -691,7 +699,7 @@ public class QueryChannel {
      * <ul>
      * <li>
      * The returned value is used to set the number of response messages to be correlated by any 
-     * <code>{@link QueryDataProcessor}</code> thread (currently active or as yet unstarted).
+     * <code>{@link QueryDataProcessor}</code> thread (currently enabled or as yet unstarted).
      * </li>
      * </ul>
      * </p>
@@ -708,13 +716,13 @@ public class QueryChannel {
             throws InterruptedException, TimeoutException, CompletionException {
         
         // Start all data stream tasks and wait for completion
-        this.exeThreadPool.invokeAll(lstStrmTasks, CNT_TIMEOUT, TU_TIMEOUT);
+        this.exeThreadPool.invokeAll(lstStrmTasks, this.lngTimeout, this.tuTimeout);
         
         // Check for timeout - not all data streams will have completed.
         boolean bolCompleted = lstStrmTasks.stream().allMatch(p -> p.isCompleted());
         
         if (!bolCompleted) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - Timeout limit expired while gRPC data streaming: " + CNT_TIMEOUT + " " + TU_TIMEOUT;
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - Timeout limit expired while gRPC data streaming: " + LNG_TIMEOUT + " " + TU_TIMEOUT;
             
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);

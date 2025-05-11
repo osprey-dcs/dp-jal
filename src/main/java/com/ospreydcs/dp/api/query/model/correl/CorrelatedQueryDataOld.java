@@ -182,7 +182,7 @@ public class CorrelatedQueryDataOld implements Comparable<CorrelatedQueryDataOld
     /** The time domain of contained time series data - computed from <code>msgSmpClk</code> */
     private final TimeInterval                  domTimeRange;
     
-    /** Set of all unique data source names active within sampling interval - taken from incoming data messages */
+    /** Set of all unique data source names enabled within sampling interval - taken from incoming data messages */
     private final Set<String>                   setSrcNms = new TreeSet<>();
     
     
@@ -361,7 +361,7 @@ public class CorrelatedQueryDataOld implements Comparable<CorrelatedQueryDataOld
     
     /**
      * <p>
-     * Returns the set of unique names for all the data sources that are active within the
+     * Returns the set of unique names for all the data sources that are enabled within the
      * associated sampling interval.
      * </p>
      * <p>

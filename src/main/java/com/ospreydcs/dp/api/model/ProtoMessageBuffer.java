@@ -87,7 +87,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * One significant use for class instances is message flow control between a producer and consumer.  
  * With spikes at the producer end can be absorbed by the message buffer allowing the consumer of 
  * <code>T</code> message to continue at its natural rate.  Additionally, the <code>ProtoMessageBuffer</code> 
- * class allows clients to set a finite capacity which will block over-active producers if consumers
+ * class allows clients to set a finite capacity which will block over-enabled producers if consumers
  * fall behind, we call this condition "message throttling", or "back pressure." 
  * </p>
  * <p>
@@ -204,13 +204,13 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
     // Configuration Parameters
     //
     
-    /** Is logging active */
+    /** Is logging enabled */
     private boolean bolLogging;
 
     /** Exert back pressure on clients (from frame buffer) enabled flag */
     private boolean bolBackPressure; 
     
-    /** The maximum capacity of the outgoing message queue (i.e., when back pressure is active) */ 
+    /** The maximum capacity of the outgoing message queue (i.e., when back pressure is enabled) */ 
     private int     szMaxQueCapacity; 
     
 
@@ -239,7 +239,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
     // State Variables
     //
     
-    /** Is supplier active (not been shutdown) */
+    /** Is supplier enabled (not been shutdown) */
     private boolean bolActive = false;
     
     
@@ -533,7 +533,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      */
     public void awaitQueueReady() throws InterruptedException {
         
-        // Do this regardless of whether back pressure is active or not
+        // Do this regardless of whether back pressure is enabled or not
         //  The client wants to wait, we wait
         this.lckMsgQueReady.lock();
         try {
@@ -638,7 +638,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * Implicit or explicit throttling operations are available via the queue capacity parameter.
      * </p>
      * <h2>Operation</h2>
-     * This method enables all queue buffer tasks which are then continuously active
+     * This method enables all queue buffer tasks which are then continuously enabled
      * throughout the lifetime of this instance, or until explicitly shut down.  The method
      * <code>{@link #isSupplying()}</code> will return <code>true</code> after invocation, regardless
      * of whether or not messages are available.  This condition remains in effect until a shutdown operation
@@ -678,7 +678,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
     synchronized
     public boolean activate() {
         
-        // Check if already active
+        // Check if already enabled
         if (this.bolActive)
             return false;
 
@@ -703,7 +703,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * <p>
      * <h2>WARNING:</h2>
      * This method will block until all the message queue is completely exhausted.
-     * Thus, message consumers <em>must remain active after invoking this method</em> as any remaining messages
+     * Thus, message consumers <em>must remain enabled after invoking this method</em> as any remaining messages
      * left in the queue will cause this method to block indefinitely. 
      * </p>
      * <p>
@@ -713,7 +713,7 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
      * </p>
      * 
      * @return <code>true</code> if the message consumer was successfully shutdown,
-     *         <code>false</code> if the message consumer was not active or shutdown operation failed
+     *         <code>false</code> if the message consumer was not enabled or shutdown operation failed
      * 
      * @throws InterruptedException interrupted while waiting for processing threads to complete
      */
@@ -815,9 +815,9 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
     synchronized
     public void offer(List<T> lstMsgs) throws IllegalStateException, InterruptedException {
 
-        // Check if active
+        // Check if enabled
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not enabled.");
         
         // If no back-presssure enforcement just add all frames to raw frame buffer and return
         if (!this.bolBackPressure) {
@@ -892,9 +892,9 @@ public class ProtoMessageBuffer<T extends GeneratedMessage> implements IMessageC
     synchronized 
     public boolean offer(List<T> lstMsgs, long lngTimeout, TimeUnit tuTimeout) throws IllegalStateException, InterruptedException {
 
-        // Check if active
+        // Check if enabled
         if (!this.bolActive)
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.");
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not enabled.");
         
         // If no back-presssure enforcement just add all frames to raw frame buffer and return
         if (!this.bolBackPressure) {

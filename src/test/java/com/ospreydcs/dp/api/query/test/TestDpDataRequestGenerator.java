@@ -32,7 +32,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import com.ospreydcs.dp.api.config.DpApiTestingConfig;
+import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 
 /**
@@ -65,7 +65,7 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * </li>
  * </ul>
  * All <code>createRequest(...)</code> methods with fewer parameters use default values taken
- * from the <code>{@link DpApiTestingConfig#testArchive}</code> parameter set, 
+ * from the <code>{@link DpApiUnitTestConfig#testArchive}</code> parameter set, 
  * or zero - whichever is appropriate.
  * </p> 
  * <p>
@@ -90,10 +90,10 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * <li>
  * The <code>cntSources</code> and <code>indSourceFirst</code> parameters must together create 
  * a valid query against the Data Platform test archive, 
- * see <code>{@link #CNT_PV_NAMES}</code> and <code>{@link #LST_PV_NAMES}</code>.
+ * see <code>{@link #CNT_PV_NAMES_TOTAL}</code> and <code>{@link #LST_PV_NAMES_TOTAL}</code>.
  * Specifically, the following condition must hold:
  * <br/><br/>
- *   &nbsp; &nbsp; <code>cntSources</code> + <code>indSourceFirst</code> &lt; <code>{@link #CNT_PV_NAMES}</code>
+ *   &nbsp; &nbsp; <code>cntSources</code> + <code>indSourceFirst</code> &lt; <code>{@link #CNT_PV_NAMES_TOTAL}</code>
  * <br/><br/>
  * </li>
  * <li>
@@ -124,7 +124,7 @@ public class TestDpDataRequestGenerator {
     //
     
     /** Default DP API library testing parameters */
-    public static final DpApiTestingConfig.TestArchive      CFG_ARCHIVE = DpApiTestingConfig.getInstance().testArchive;
+    public static final DpApiUnitTestConfig.TestArchive      CFG_ARCHIVE = DpApiUnitTestConfig.getInstance().testArchive;
 
     
     //
@@ -163,7 +163,7 @@ public class TestDpDataRequestGenerator {
     /** 
      * Size of time domain (i.e., range) with Data Platform data archive test data set in nanoseconds.
      * <p>
-     * The value is taken from test default parameters [<code>{@link #DUR_RANGE}</code>].
+     * The value is taken from test default parameters [<code>{@link #DUR_RNG_TOTAL}</code>].
      */ 
     public static final Long        LNG_RANGE = DUR_RANGE.toNanos();
  
@@ -205,7 +205,7 @@ public class TestDpDataRequestGenerator {
 //        INS_INCEPT = Instant.ofEpochSecond(CFG_ARCHIVE.inception);
 //        INS_FINAL = INS_INCEPT.plusSeconds(CFG_ARCHIVE.duration);
 //
-//        CNT_PV_NAMES = CFG_ARCHIVE.pvCount;
+//        CNT_PV_NAMES_TOTAL = CFG_ARCHIVE.pvCount;
 //        STR_PV_PREFIX = CFG_ARCHIVE.pvPrefix;
         
         LST_PV_NAMES = IntStream
@@ -245,7 +245,7 @@ public class TestDpDataRequestGenerator {
      * 
      * @param cntSources    number of data sources in the query
      * 
-     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and time range [INS_INCEPT, INS_FINAL]
+     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES_TOTAL and time range [INS_INCEPT, INS_FINAL]
      */
     public static DpDataRequest createRequest(int cntSources) throws IllegalArgumentException {
         return createRequest(cntSources, 0, LNG_RANGE, 0L);
@@ -268,7 +268,7 @@ public class TestDpDataRequestGenerator {
      * @param cntSources        number of data sources in the query
      * @param lngDuration       time duration of query (in nanoseconds), range = [INS_INCEPT, INS_INCEPT + lngDuration]
      * 
-     * @return  new <code>DpDataRequest</code> for the all data source in LST_PV_NAMES and the specified time range
+     * @return  new <code>DpDataRequest</code> for the all data source in LST_PV_NAMES_TOTAL and the specified time range
      * 
      * @throws IllegalArgumentException  the arguments create a query request outside the test archive
      */
@@ -292,7 +292,7 @@ public class TestDpDataRequestGenerator {
      * @param lngDuration       time duration of query (in seconds), range = [INS_INCEPT, INS_INCEPT + lngDuration]
      * @param lngStartTime      start time of the query (in seconds) - actually an offset from <code>{@link #INS_INCEPT}</code>
      * 
-     * @return  new <code>DpDataRequest</code> for the all data source in LST_PV_NAMES and the specified time range
+     * @return  new <code>DpDataRequest</code> for the all data source in LST_PV_NAMES_TOTAL and the specified time range
      * 
      * @throws IllegalArgumentException  the arguments create a query request outside the test archive
      */
@@ -318,7 +318,7 @@ public class TestDpDataRequestGenerator {
      * @param lngDuration       time duration of query (in nanoseconds), range = [INS_INCEPT, INS_INCEPT + lngDuration]
      * @param lngStartTime      start time of the query (in nanoseconds) - actually an offset from <code>{@link #INS_INCEPT}</code>
      * 
-     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and the specified time range
+     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES_TOTAL and the specified time range
      * 
      * @throws IllegalArgumentException  the arguments create a query request outside the test archive
      */
@@ -342,7 +342,7 @@ public class TestDpDataRequestGenerator {
      * @param cntSources        number of data sources in the query
      * @param indSourceFirst    index of the first data source within the list of source names
      * 
-     * @return  new <code>DpDataRequest</code> for the cntSources in LST_PV_NAMES starting at index indSourceFirst, and entire duration of the archive
+     * @return  new <code>DpDataRequest</code> for the cntSources in LST_PV_NAMES_TOTAL starting at index indSourceFirst, and entire duration of the archive
      * 
      * @throws IllegalArgumentException  the arguments create a query request outside the test archive
      */
@@ -368,7 +368,7 @@ public class TestDpDataRequestGenerator {
      * @param indSourceFirst    index of the first data source within the list of source names
      * @param lngDuration       time duration of query (in nanoseconds)
      * 
-     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES and the specified time range
+     * @return  new <code>DpDataRequest</code> for the first cntSources in LST_PV_NAMES_TOTAL and the specified time range
      * 
      * @throws IllegalArgumentException  the arguments create a query request outside the test archive
      */

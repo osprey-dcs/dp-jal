@@ -289,8 +289,8 @@ public class SampledBlockSuperDom extends SampledBlock {
     public static final TimeUnit    TU_TIMEOUT = CFG_QUERY.timeout.unit;
     
     
-    /** Concurrency active flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.active;
+    /** Concurrency enabled flag */
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
     
     /** Maximum number of concurrent processing threads */
     public static final int         CNT_MAX_THREADS = CFG_QUERY.concurrency.maxThreads;
