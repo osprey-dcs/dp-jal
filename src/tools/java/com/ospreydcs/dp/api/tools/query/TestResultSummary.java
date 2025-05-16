@@ -31,8 +31,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.tools.query.channel.QueryChannelTestResult;
+import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
 
 /**
  * <p>
@@ -96,7 +96,7 @@ public record TestResultSummary(
         Duration    durRqstMax,
         Duration    durRqstAvg,
         Duration    durRqstStd,
-        Map<DpDataRequest, Integer> mapRqstHits
+        Map<TestArchiveRequest, Integer> mapRqstHits
         ) 
 {
     
@@ -175,7 +175,7 @@ public record TestResultSummary(
                 durRqstMax,
                 durRqstAvg, 
                 durRqstStd,
-                new HashMap<DpDataRequest, Integer>());
+                new HashMap<TestArchiveRequest, Integer>());
     }
     
     /**
@@ -226,7 +226,7 @@ public record TestResultSummary(
             Duration    durRqstMax,
             Duration    durRqstAvg,
             Duration    durRqstStd,
-            Map<DpDataRequest, Integer> mapRqstHits) 
+            Map<TestArchiveRequest, Integer> mapRqstHits) 
     {
         return new TestResultSummary(
                 cntResultsTot, 
@@ -290,7 +290,7 @@ public record TestResultSummary(
      *  
      * @param setResults    collection of request processor results
      * 
-     * @return  a new <code>ResultSummary</code> record containing a summary of the argument results
+     * @return  a new <code>TestResultSummary</code> record containing a summary of the argument results
      */
     public static TestResultSummary summarize(Collection<QueryChannelTestResult> setResults) {
         
@@ -327,11 +327,11 @@ public record TestResultSummary(
         Duration    durRqstStd = Duration.ofNanos(Double.valueOf(dblRqstNsStd).longValue());
         
         // Compute request hit counts
-        Map<DpDataRequest, Integer>     mapRqstHits = new HashMap<>();
+        Map<TestArchiveRequest, Integer>    mapRqstHits = new HashMap<>();
         
         for (QueryChannelTestResult recResult : setResults) {
-            DpDataRequest   rqst = recResult.recTestCase().rqstOrg();
-            Integer         intCnt = mapRqstHits.get(rqst);
+            TestArchiveRequest  rqst = recResult.recTestCase().enmRqstOrg();
+            Integer             intCnt = mapRqstHits.get(rqst);
             
             if (intCnt == null) {
                 Integer intFirst = 1;
@@ -384,7 +384,7 @@ public record TestResultSummary(
             strPad = "";
         
         // Print out results  
-        ps.println(strPad + "Result Summary ");
+        ps.println(strPad + "Tests Result Summary ");
         ps.println(strPad + "  Total number of result cases   : " + this.cntResultsTot);
         ps.println(strPad + "  Cases w/ rates >= Avg Rate     : " + this.cntRatesGtAvg);
         ps.println(strPad + "  Cases w/ rates >= Target       : " + this.cntRatesGtTgt);
@@ -405,8 +405,8 @@ public record TestResultSummary(
         ps.println(strPad + "  Request duration stand. dev.   : " + this.durRqstStd);
         
         // Print out the request hit counts
-        for (Map.Entry<DpDataRequest, Integer> entry : mapRqstHits.entrySet()) {
-            String  strRqstId = entry.getKey().getRequestId();
+        for (Map.Entry<TestArchiveRequest, Integer> entry : mapRqstHits.entrySet()) {
+            String  strRqstId = entry.getKey().name();
             Integer cntHits = entry.getValue();
             
             ps.println(strPad + "  Number of " + strRqstId + " requests : " + cntHits);

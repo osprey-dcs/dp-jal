@@ -177,16 +177,16 @@ public class DpGrpcConnection<
     private final Class<ServiceGrpc> clsService;
     
     /** The single gRPC data channel supporting all communications stubs */
-    private final ManagedChannel    grpcChan;
+    private final ManagedChannel    chanGrpc;
     
     /** Blocking, synchronous communications stub (no streaming operations)*/
-    private final BlockStub         stubBlock;
+    private BlockStub         stubBlock;
     
     /** Non-blocking communications stub (no streaming operations) */
-    private final FutureStub        stubFuture;
+    private FutureStub        stubFuture;
 
     /** Full Stub - Nonblocking, asynchronous communications stub with all streaming operations */
-    private final AsyncStub         stubAsync;
+    private AsyncStub         stubAsync;
     
     
     /** The timeout limit for channel shutdown and termination operations */
@@ -212,17 +212,17 @@ public class DpGrpcConnection<
      *
      * @param <Service>     Protocol Buffers generated gRPC service class
      * 
-     * @param grpcChan       gRPC managed channel backing the synchronous blocking stub
+     * @param chanGrpc       gRPC managed channel backing the synchronous blocking stub
      * @param clsService    class object of the <code>Service</code> class
      * 
      * @throws DpGrpcException a Java reflection error occurred during communication stubs creation (see message and cause)
      */
-    public DpGrpcConnection(Class<ServiceGrpc> clsService, ManagedChannel grpcChan) throws DpGrpcException {
+    public DpGrpcConnection(Class<ServiceGrpc> clsService, ManagedChannel chanGrpc) throws DpGrpcException {
         this.clsService = clsService;
-        this.grpcChan = grpcChan;
-        this.stubBlock = this.newBlockStub(grpcChan);
-        this.stubFuture = this.newFutureStub(grpcChan);
-        this.stubAsync = this.newAsyncStub(grpcChan);
+        this.chanGrpc = chanGrpc;
+        this.stubBlock = this.newBlockStub(chanGrpc);
+        this.stubFuture = this.newFutureStub(chanGrpc);
+        this.stubAsync = this.newAsyncStub(chanGrpc);
         
         if (BOL_LOGGING)
             LOGGER.debug("Created new connection {} for gRPC service {}", this.getClass().getSimpleName(), clsService.getSimpleName());
@@ -244,7 +244,7 @@ public class DpGrpcConnection<
      */
     protected DpGrpcConnection(DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>  conn) {
         this.clsService = conn.clsService;
-        this.grpcChan = conn.grpcChan;
+        this.chanGrpc = conn.chanGrpc;
         this.stubBlock = conn.stubBlock;
         this.stubFuture = conn.stubFuture;
         this.stubAsync = conn.stubAsync;
@@ -294,8 +294,15 @@ public class DpGrpcConnection<
      * Sets the timeout limit for gRPC connection operations.
      * </p>
      * <p>
+     * The method new sets the timeout limits for all channel operations by creating new communication stubs
+     * with the given deadline.  The default shut down timeout limit for <code>{@link #awaitTermination()}</code>
+     * is also set here.  
+     * </p>
+     * <p>
+     * <s>
      * Currently this timeout limit applies only to method <code>{@link #awaitTermination()}</code>,
      * that is, the method will wait at most the given duration specified by the arguments.
+     * </s>
      * </p>
      * <p>
      * The default value is taken from class constants <code>{@link #LNG_TIMEOUT}</code> and
@@ -309,6 +316,14 @@ public class DpGrpcConnection<
     public void setTimeoutLimit(long lngTimeout, TimeUnit tuTimeout) {
         this.lngTimeout = lngTimeout;
         this.tuTimeout = tuTimeout;
+        
+        this.stubBlock = stubBlock.withDeadlineAfter(lngTimeout, tuTimeout);
+        this.stubFuture = stubFuture.withDeadlineAfter(lngTimeout, tuTimeout);
+        this.stubAsync = stubAsync.withDeadlineAfter(lngTimeout, tuTimeout);
+        
+        if (BOL_LOGGING) {
+            LOGGER.info("Operation timeout limit set to {} {} for gRPC connect {} communication stubs.", lngTimeout, tuTimeout, this.getClass());
+        }
     }
     
     /**
@@ -379,10 +394,10 @@ public class DpGrpcConnection<
 //    @Override
     public boolean shutdownSoft() throws InterruptedException {
 
-        if (this.grpcChan.isShutdown())
+        if (this.chanGrpc.isShutdown())
             return false;
         
-        this.grpcChan.shutdown();
+        this.chanGrpc.shutdown();
         
 //        boolean bolShutdown = this.chnGprc.awaitTermination(this.cntTimeout, this.tuTimeout);
 //        
@@ -419,10 +434,10 @@ public class DpGrpcConnection<
 //    @Override
     public boolean shutdownNow() {
         
-        if (this.grpcChan.isShutdown())
+        if (this.chanGrpc.isShutdown())
             return false;
         
-        this.grpcChan.shutdownNow();
+        this.chanGrpc.shutdownNow();
         
         if (BOL_LOGGING)
             LOGGER.info("Hard shutdown initiated for connection {}", this.getClass().getName());
@@ -482,7 +497,7 @@ public class DpGrpcConnection<
         if (!this.isShutdown())
             return false;
         
-        boolean bolResult = this.grpcChan.awaitTermination(cntTimeout, tuTimeout);
+        boolean bolResult = this.chanGrpc.awaitTermination(cntTimeout, tuTimeout);
         
         return bolResult;
     }
@@ -515,7 +530,7 @@ public class DpGrpcConnection<
      */
 //    @Override
     public boolean isShutdown() {
-        return this.grpcChan.isShutdown();
+        return this.chanGrpc.isShutdown();
     }
 
     /**
@@ -539,7 +554,7 @@ public class DpGrpcConnection<
      */
 //    @Override
     public boolean isTerminated() {
-        return this.grpcChan.isTerminated();
+        return this.chanGrpc.isTerminated();
     }
     
     
@@ -569,7 +584,7 @@ public class DpGrpcConnection<
      * @return the gRPC managed channel supporting this connection
      */
     public ManagedChannel getChannel() {
-        return this.grpcChan;
+        return this.chanGrpc;
     }
     
     /**

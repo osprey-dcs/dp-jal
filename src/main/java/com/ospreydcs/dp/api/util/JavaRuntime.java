@@ -79,6 +79,21 @@ public class JavaRuntime {
         
         return strCallerClass;
     }
+    
+    /**
+     * <p>
+     * Returns the class type instance of the method calling this method.
+     * 
+     * @return  the class type in the call stack at depth {@value #INT_STACK_DEPTH_CALLER}
+     */
+    public static Class<?>  getCallerClassType() {
+        StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
+        StackTraceElement   lvlStackTrace = arrStackTrace[INT_STACK_DEPTH_CALLER];
+        
+        Class<?> clsCaller = lvlStackTrace.getClass();
+        
+        return clsCaller;
+    }
 
     /**
      * Returns the simple class name of the current method calling this method.

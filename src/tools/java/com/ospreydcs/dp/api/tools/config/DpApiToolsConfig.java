@@ -34,7 +34,7 @@ import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.tools.config.query.DpToolsQueryConfig;
+import com.ospreydcs.dp.api.tools.config.query.DpApiToolsQueryConfig;
 
 /**
  * <p>
@@ -132,8 +132,13 @@ public class DpApiToolsConfig extends CfgStructure<DpApiToolsConfig> {
     // Configuration Parameters
     //
     
+//    /** Default output locations of Java API Library tools */
+//    @ACfgOverride.Struct(pathelem="OUTPUT")
+//    public DpApiQueryOutputConfig   output;
+    
+    /** Default configuration parameters for Java API Library query service tools */
     @ACfgOverride.Struct(pathelem="QUERY")
-    public DpToolsQueryConfig    query;
+    public DpApiToolsQueryConfig    query;
     
 
 }

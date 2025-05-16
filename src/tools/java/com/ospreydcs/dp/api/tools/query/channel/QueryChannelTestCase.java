@@ -29,14 +29,20 @@ import java.io.PrintStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
+import com.ospreydcs.dp.api.common.ResultStatus;
+import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
+import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
@@ -56,7 +62,7 @@ import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
  * explicitly supplied.
  *
  * @param   indCase     the test case index
- * @param   rqstOrg     the original time-series data request
+ * @param   enmRqstOrg  the original time-series data request
  * @param   enmDcmpType the request domain decomposition type
  * @param   enmStrType  the gRPC data stream type used to recover the request data
  * @param   cntStrms    the number of gRPC streams used for request data recovery
@@ -68,7 +74,7 @@ import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
  */
 public record QueryChannelTestCase(
         int                 indCase,
-        DpDataRequest       rqstOrg, 
+        TestArchiveRequest  enmRqstOrg, 
         RequestDecompType   enmDcmpType, 
         DpGrpcStreamType    enmStrmType, 
         int                 cntStrms, 
@@ -85,7 +91,7 @@ public record QueryChannelTestCase(
      * Creates a new instances of <code>TestCase</code> from the given parameters.
      * </p>
      * 
-     * @param   rqstOrg     the original time-series data request
+     * @param   enmRqstOrg  the original time-series data request
      * @param   enmDcmpType the request domain decomposition type
      * @param   enmStrType  the gRPC data stream type used to recover the request data
      * @param   cntStrms    the number of gRPC streams used for request data recovery
@@ -95,17 +101,17 @@ public record QueryChannelTestCase(
      * @throws  UnsupportedOperationException   an unexpected <code>RequestDecompType</code> enumeration was encountered    
      */
     public static QueryChannelTestCase  from(
-                                            DpDataRequest rqstOrg, 
+                                            TestArchiveRequest enmRqstOrg, 
                                             RequestDecompType enmRqstDcmp, 
                                             DpGrpcStreamType enmStrmType, 
                                             int cntStrms) 
             throws UnsupportedOperationException {
     
-        List<DpDataRequest> lstRqsts = PRCR_DECOMP.buildCompositeRequest(rqstOrg, enmRqstDcmp, cntStrms);   // throws exception
+        List<DpDataRequest> lstRqsts = PRCR_DECOMP.buildCompositeRequest(enmRqstOrg.create(), enmRqstDcmp, cntStrms);   // throws exception
         
         lstRqsts.forEach(r -> r.setStreamType(enmStrmType));
         
-        return new QueryChannelTestCase(IND_CASE, rqstOrg, enmRqstDcmp, enmStrmType, cntStrms, lstRqsts);
+        return new QueryChannelTestCase(IND_CASE, enmRqstOrg, enmRqstDcmp, enmStrmType, cntStrms, lstRqsts);
     }
     
     
@@ -121,6 +127,231 @@ public record QueryChannelTestCase(
     
     
     //
+    // Record Types
+    //
+    
+    /**
+     * <p>
+     * Task implementation that consumes <code>{@link QueryDataResponse.QueryData}</code> messages from a supplier.
+     * </p> 
+     * <p>
+     * The task simply consumes <code>QueryData</code> Protocol Buffers message from an attached 
+     * <code>{@link IMessageSupplier}</code> instance supplying them.  The message are recorded then
+     * discarded so as to avoid heap space issues for large data streams.
+     * </p>
+     * <p>
+     * <h2>Operation</h2>
+     * When activated, the task enters a continuous loop guarded by <code>{@link IMessageSupplier#isSupplying()}</code>
+     * and begins a timed polling of the supplier using <code>{@link IMessageSupplier#poll(long, TimeUnit)}</code>.
+     * The timeout limits are given by class constants <code>{@link #LNG_TIMEOUT}</code> and 
+     * <code>{@link #TU_TIMEOUT}</code>.  The timed polling is used to avoid indefinite block on a 
+     * <code>{@link IMessageSupplier#take()}</code> that would occur if the state of the supplier changed while
+     * waiting.
+     * </p> 
+     *
+     * @author Christopher K. Allen
+     * @since May 16, 2025
+     *
+     */
+    public static class BufferConsumerTask implements Runnable {
+
+        //
+        // Creators
+        //
+        
+        /**
+         * <p>
+         * Creates a new <code>BufferConsumerTask</code> instance attached to the given message supplier.
+         * </p>
+         * <p>
+         * The returned instance is ready for activation as an independent thread task.  The given message
+         * supplier must be active before the returned task is run.  Specifically, the value returned
+         * by <code>{@link IMessageSupplier#isSupplying()}</code> must be <code>true</code> before 
+         * executing the returned task.
+         * </p>
+         * 
+         * @param fncSupplier   the supplier (source) of <code>QueryData</code> Protocol Buffers messages
+         * 
+         * @return  a new <code>BufferConsumerTask</code> ready for task execution 
+         */
+        public static BufferConsumerTask    from(IMessageSupplier<QueryDataResponse.QueryData> fncSupplier) {
+            return new BufferConsumerTask(fncSupplier);
+        }
+        
+        /**
+         * <p>
+         * Creates a new <code>Thread</code> instance for independent execution of a <code>BufferConsumerTask</code> task.
+         * </p>
+         * <p>
+         * This is a convenience creator that creates a new <code>{@link Thread}</code> instance that executes
+         * a new <code>{@link BufferConsumerTask}</code> instance.  That is, a <code>BufferConsumerTask</code>
+         * is first created then supplied to the constructor <code>{@link Thread#Thread(Runnable)}</code>.
+         * </p>
+         * 
+         * @param fncSupplier   the supplier (source) of <code>QueryData</code> Protocol Buffers messages
+         * 
+         * @return  a new <code>Thread</code> instance supporting a <code>BufferConsumerTask</code>
+         * 
+         * @see #from(IMessageSupplier)
+         */
+        public static Thread    threadFrom(IMessageSupplier<QueryDataResponse.QueryData> fncSupplier) {
+            BufferConsumerTask  task = new BufferConsumerTask(fncSupplier);
+            Thread              thdTask = new Thread(task);
+            
+            return thdTask;
+        }
+        
+        //
+        // Class Constants
+        //
+        
+        /** The polling timeout limit */
+        private static final long       LNG_TIMEOUT = 15;
+        
+        /** the polling timeout units */
+        private static final TimeUnit   TU_TIMEOUT = TimeUnit.MILLISECONDS;
+        
+        
+        //
+        // Initializing Attributes
+        //
+        
+        /** The supplier of Query Service data messages - typically a <code>QueryMessageBuffer</code> */
+        private final IMessageSupplier<QueryDataResponse.QueryData> fncSupplier;
+        
+        
+        //
+        // State Variables
+        //
+        
+        /** The number of messages recovered */
+        private int     cntMsgs = 0;
+        
+        /** The total memory allocation recovered */
+        private long    szAlloc = 0;
+        
+        
+        /** The executed flag */
+        private boolean         bolRun = false;
+        
+        /** The task success flag */
+        private ResultStatus    recStatus;
+        
+        
+        
+        //
+        // Constructors
+        //
+        
+        /**
+         * <p>
+         * Constructs a new <code>BufferConsumerTask</code> instance attached to the given message supplier.
+         * </p>
+         *
+         * @param fncSupplier   the supplier (source) of <code>QueryData</code> Protocol Buffers messages
+         */
+        public BufferConsumerTask(IMessageSupplier<QueryDataResponse.QueryData> fncSupplier) {
+            this.fncSupplier = fncSupplier;
+        }
+        
+        
+        //
+        // State and Status Inquiry
+        //
+        
+        /**
+         * <p>
+         * Returns the number of <code>QueryData</code> messages recovered during task execution.
+         * </p>
+         * 
+         * @return  the message count obtained by the buffer consumption task
+         * 
+         * @throws IllegalStateException    the task has not been executed
+         */
+        public int   getMessageCount() throws IllegalStateException {
+            
+            // Check state
+            if (!this.bolRun)
+                throw new IllegalStateException("Task has not been executed.");
+            
+            return this.cntMsgs;
+        }
+        
+        /**
+         * <p>
+         * Returns the total memory allocation recovered during task execution.
+         * </p>
+         * 
+         * @return  the memory size (in Bytes) obtained by the buffer consumption task
+         * 
+         * @throws IllegalStateException    the task has not been executed
+         */
+        public long getMemoryAllocation() throws IllegalStateException {
+            
+            // Check state
+            if (!this.bolRun)
+                throw new IllegalStateException("Task has not been executed.");
+            
+            return this.szAlloc;
+        }
+        
+        /**
+         * <p
+         * Returns the result of the buffer consumption task.
+         * </p>
+         * 
+         * @return  <code>{@link ResultStatus#SUCCESS}</code> if successful, 
+         *          otherwise a failure message and exception cause
+         *          
+         * @throws IllegalStateException    the task has not been executed
+         */
+        public ResultStatus getResult() throws IllegalStateException {
+            
+            // Check state
+            if (!this.bolRun)
+                throw new IllegalStateException("Task has not been executed.");
+
+            return this.recStatus;
+        }
+        
+        
+        //
+        // Runnable Interface
+        //
+        
+        /**
+         * @see java.lang.Thread#run()
+         */
+        @Override
+        public void run() {
+            
+            while (fncSupplier.isSupplying()) {
+                try {
+                    QueryDataResponse.QueryData msgData = fncSupplier.poll(LNG_TIMEOUT, TU_TIMEOUT);
+                    
+                    if (msgData == null)
+                        continue;
+                    
+                    this.szAlloc += msgData.getSerializedSize();
+                    this.cntMsgs++;
+                    
+                } catch (IllegalStateException e) {
+                    this.recStatus = ResultStatus.newFailure("The message supplier reported NOT READY.", e);
+                    return;
+                    
+                } catch (InterruptedException e) {
+                    this.recStatus = ResultStatus.newFailure("Polling was interrupted while waiting for message.", e);
+                    return;
+                }
+            }
+            
+            this.bolRun = true;
+            this.recStatus = ResultStatus.SUCCESS;
+        }
+        
+    }
+    
+    //
     // Constructors
     //
     
@@ -133,7 +364,7 @@ public record QueryChannelTestCase(
      * </p>
      *
      * @param   indCase     the test case index
-     * @param   rqstOrg     the original time-series data request
+     * @param   enmRqstOrg     the original time-series data request
      * @param   enmDcmpType the request domain decomposition type
      * @param   enmStrType  the gRPC data stream type used to recover the request data
      * @param   cntStrms    the number of gRPC streams used for request data recovery
@@ -175,22 +406,38 @@ public record QueryChannelTestCase(
      * 
      * @return  the results of this test case performance evaluation
      * 
-     * @throws DpQueryException general exception during data recovery (see message and cause)
+     * @throws DpQueryException     general exception during data recovery (see message and cause)
+     * @throws InterruptedException the evaluation was interrupted while waiting for completion
+     * @throws CompletionException  the message buffer consumer failed (see message and cause)
      */
-    public QueryChannelTestResult   evaluate(QueryChannel chanQuery, QueryMessageBuffer bufMsgs) throws DpQueryException {
+    public QueryChannelTestResult   evaluate(QueryChannel chanQuery, QueryMessageBuffer bufMsgs) 
+            throws DpQueryException, InterruptedException, CompletionException {
         
         // Activate the message consumer in order to receive recovered data without blocking
+        BufferConsumerTask  tskCnsmr = BufferConsumerTask.from(bufMsgs);
+        Thread              thdMsgCnsmr = new Thread(tskCnsmr);
+        
         bufMsgs.activate();
+        thdMsgCnsmr.start();
         
         // Perform timed data recovery
         Instant insStart = Instant.now();
-        int     cntMsgs = chanQuery.recoverRequests(this.lstCmpRqsts);
+        int     cntMsgs = chanQuery.recoverRequests(this.lstCmpRqsts);  // throws DpQueryException
         Instant insFinish = Instant.now();
+        
+        // Wait for message consumer to complete and check status
+        bufMsgs.shutdown();
+        thdMsgCnsmr.join();                         // throws InterruptedException
+        if (tskCnsmr.getResult().isFailure()) {
+            ResultStatus    recStatus = tskCnsmr.getResult();
+            
+            throw new CompletionException(recStatus.message(), recStatus.cause());
+        }
         
         // Recover/Compute performance parameters
         Duration    durRecovery = Duration.between(insStart, insFinish);
-//        int         cntMsgs = bufMsgs.getQueueSize();
-        long        szRecovery = bufMsgs.computeQueueAllocation();
+        long        szRecovery = tskCnsmr.getMemoryAllocation();
+//        long        szRecovery = bufMsgs.computeQueueAllocation();
         double      dblRate = ( ((double)szRecovery) * 1000 )/durRecovery.toNanos();
         
         // Shut down message consumer hard, throws away all recovered data
@@ -220,12 +467,17 @@ public record QueryChannelTestCase(
             strPad = "";
         
         ps.println(strPad + this.getClass().getSimpleName() + " " + this.indCase + ":");
-        ps.println(strPad + "  Original request ID : " + this.rqstOrg.getRequestId());
+        ps.println(strPad + "  Original request ID : " + this.enmRqstOrg.name());
         ps.println(strPad + "  Request decomposition type : " + this.enmDcmpType);
         ps.println(strPad + "  gRPC stream type           : " + this.enmStrmType);
-        ps.println(strPad + "  gRPC stream count          : " + this.cntStrms);
-        ps.println(strPad + "  Original Request Properties:");
-        this.rqstOrg.printOutProperties(ps, strPad + strPad);
+        ps.print(  strPad + "  gRPC stream count          : " + this.cntStrms);
+        if (this.enmDcmpType == RequestDecompType.NONE)
+            ps.println(" (decomposition NONE, only 1 used)");
+        else
+            ps.println();
+        
+//        ps.println(strPad + "  Original Request Properties:");
+//        this.enmRqstOrg.create().printOutProperties(ps, strPad + strPad);
     }
     
     

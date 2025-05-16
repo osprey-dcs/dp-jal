@@ -25,11 +25,15 @@
  */
 package com.ospreydcs.dp.api.tools.query.channel;
 
+import java.io.PrintStream;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeSet;
+
+import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -37,10 +41,10 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.tools.config.DpApiToolsConfig;
-import com.ospreydcs.dp.api.tools.config.query.DpToolsQueryConfig;
+import com.ospreydcs.dp.api.tools.config.query.DpApiToolsQueryConfig;
+import com.ospreydcs.dp.api.tools.config.request.DpRequestSuiteConfig;
 import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
@@ -54,6 +58,45 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  *
  */
 public class QueryChannelTestSuite {
+    
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates a new <code>QueryChannelTestSuite</code> initialized from the given configuration object.
+     * </p>
+     * <p>
+     * The <code>DpRequestSuiteConfig</code> structure class is parsed for configuration parameters which
+     * are used to populate the returned test suite.  Note that there must be at least one named
+     * <code>TestArchiveRequest</code> enumeration within the argument for valid <code>QueryChannelTestSuite</code>
+     * creation.
+     * </p>  
+     * 
+     * @param cfgSuite  request suite configuration structure class containing initialization parameters
+     * 
+     * @return  a new <code>QueryChannelTestSuite</code> instance configured according to the argument
+     */
+    public static QueryChannelTestSuite from(DpRequestSuiteConfig cfgSuite) {
+        
+        QueryChannelTestSuite   suite = new QueryChannelTestSuite(cfgSuite.testSuite.name);
+        
+        if (cfgSuite.testSuite.requestIds != null)
+            cfgSuite.testSuite.requestIds.forEach(enmRqst -> suite.addTestRequest(enmRqst));
+        
+        if (cfgSuite.testSuite.streamCounts != null)
+            cfgSuite.testSuite.streamCounts.forEach(cntStrms -> suite.addStreamCount(cntStrms));
+        
+        if (cfgSuite.testSuite.requestComposites != null)
+            cfgSuite.testSuite.requestComposites.forEach(enmCmp -> suite.addRequestDecomposition(enmCmp));
+        
+        if (cfgSuite.testSuite.streamTypes != null)
+            cfgSuite.testSuite.streamTypes.forEach(enmType -> suite.addStreamType(enmType));
+        
+        return suite;
+    }
 
     
     //
@@ -61,7 +104,7 @@ public class QueryChannelTestSuite {
     //
     
     /** Query tools default configuration parameters */
-    private static final DpToolsQueryConfig     CFG_DEF = DpApiToolsConfig.getInstance().query;
+    private static final DpApiToolsQueryConfig     CFG_DEF = DpApiToolsConfig.getInstance().query;
     
     
     //
@@ -98,6 +141,14 @@ public class QueryChannelTestSuite {
     
     
     //
+    // Defining Attributes
+    //
+    
+    /** The test suite name */
+    private final String        strName;
+    
+    
+    //
     // Instance Resources
     //
     
@@ -120,11 +171,13 @@ public class QueryChannelTestSuite {
     
     /**
      * <p>
-     * Constructs a new <code>QueryChannelTestSuite</code> instance.
+     * Constructs a new, emtpy <code>QueryChannelTestSuite</code> instance with the given name.
      * </p>
      *
+     * @param strName   name of the test suite
      */
-    public QueryChannelTestSuite() {
+    public QueryChannelTestSuite(String strName) {
+        this.strName = strName;
     }
     
     
@@ -210,14 +263,20 @@ public class QueryChannelTestSuite {
      * </p>
      * <p>
      * If no test data request was added to the test suite an exception is thrown.  If a test suite configuration
-     * parameter was not assigned then a singled default value is assigned for that parameter.
+     * parameter was not assigned then a singled default value is assigned for that parameter.  See the following 
+     * class constants for test suite default configuration values.
+     * <ul>
+     * <li><code>{@link #INT_STRM_CNT_DEF}</code> - default stream count.</li> 
+     * <li><code>{@link #ENM_RQST_DCMP_DEF}</code> - default request decomposition strategy.</li>
+     * <li><code>{@link #ENM_STRM_TYPE_DEF}</code> - default gRPC stream type.</li>
+     * </ul>
      * </p>
      * 
      * @return  an enumerated collection of test cases for the test suite parameters
      * 
-     * @throws IllegalStateException    there are no test requests in the current test suite
+     * @throws ConfigurationException    there are no test requests in the current test suite
      */
-    public Collection<QueryChannelTestCase> createTestSuite() throws IllegalStateException {
+    public Collection<QueryChannelTestCase> createTestSuite() throws ConfigurationException {
         
         // Check state
         this.defaultConfiguration();
@@ -229,13 +288,83 @@ public class QueryChannelTestSuite {
             for (DpGrpcStreamType enmStrmType : this.setStrmType)
                 for (RequestDecompType enmDcmpType : this.setDcmpType)
                     for (Integer cntStrms : this.setStrmCnts) {
-                        DpDataRequest   rqst = enmRqst.create();
                         
-                        QueryChannelTestCase    recCase = QueryChannelTestCase.from(rqst, enmDcmpType, enmStrmType, cntStrms);
+                        QueryChannelTestCase    recCase = QueryChannelTestCase.from(enmRqst, enmDcmpType, enmStrmType, cntStrms);
                         lstCases.add(recCase);
                     }
         
         return lstCases;
+    }
+    
+    /**
+     * <p>
+     * Prints out text description of the current test suite configuration to the given output stream.
+     * </p>
+     * <p>
+     * The <code>strPad</code> is assumed to be optional white space characters providing left-hand
+     * side padding to the field headers.
+     * </p>
+     * 
+     * @param ps        output stream to receive text description
+     * @param strPad    optional left-hand side white space padding (or <code>null</code>)
+     */
+    public void printOut(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        ps.println(strPad + "Name    : " + this.strName);
+        
+        ps.println(strPad + "Request IDs:");
+        for (TestArchiveRequest enmRqst : this.setTestRqsts)
+            ps.println(strPad + "- " + enmRqst.name());
+        
+        ps.println(strPad + "Request Decomposition Strategies:");
+        for (RequestDecompType enmType : this.setDcmpType)
+            ps.println(strPad + "- " + enmType.name());
+        
+        ps.println(strPad + "gRPC Stream Counts:");
+        for (Integer intCnt : this.setStrmCnts)
+            ps.println(strPad + "- " + intCnt);
+        
+        ps.println(strPad + "gRPC Stream Types:");
+        for (DpGrpcStreamType enmType : this.setStrmType)
+            ps.println(strPad + "- " + enmType.name());
+    }
+
+    
+    //
+    // Tools
+    //
+    
+    /**
+     * <p>
+     * Returns the number of records within the argument collection with data rates greater than or equal to the given rate.
+     * </p>
+     * <p>
+     * The method inspects the field <code>{@link QueryChannelTestResult#dblDataRate()}</code> of the argument collection for 
+     * the condition <code>{@link #dblDataRate}</code> &ge; <code>dblRateMin</code>.  The number of records satisfying this 
+     * condition are counted and that value is returned.
+     * </p>
+     * 
+     * @param setResults    collection of <code>QueryChannelTestResult</code> records under inspection
+     * @param dblRateMin    the minimum data rate 
+     * 
+     * @return  the number of <code>ConfigResult</code> records within the collection with data rates >= to the given rate 
+     */
+    public static int   countRatesGreaterEqual(Collection<QueryChannelTestResult> setResults, double dblRateMin) {
+        int intCnt = setResults
+                .stream()
+                .filter(rec -> rec.dblDataRate() >= dblRateMin)
+                .mapToInt(rec -> 1)
+                .sum();
+        
+        return intCnt;
+    }
+    
+    public static int   computeBestStreamCount(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
+        final int   intMaxStrms = setResults.stream().mapToInt(rec -> rec.recTestCase().cntStrms()).max().getAsInt();
+        
+        return 0;
     }
     
     
@@ -257,9 +386,9 @@ public class QueryChannelTestSuite {
      * </ul>
      * </p>
      *  
-     * @throws IllegalStateException    there are no test requests within the test suite
+     * @throws ConfigurationException    there are no test requests within the test suite
      */
-    private void    defaultConfiguration() throws IllegalStateException {
+    private void    defaultConfiguration() throws ConfigurationException {
         
         if (this.setTestRqsts.isEmpty()) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
@@ -268,7 +397,7 @@ public class QueryChannelTestSuite {
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);
             
-            throw new IllegalStateException(strMsg);
+            throw new ConfigurationException(strMsg);
         }
         
         if (this.setDcmpType.isEmpty())

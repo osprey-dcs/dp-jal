@@ -131,7 +131,7 @@ public class QueryChannel {
      * <p>
      * Creates and returns a new <code>QueryChannel</code> instance ready for time-series data request recovery.
      * Note that all recovery operations are blocking operations.  Timeout limits for streaming recovery operations
-     * can be assigned with <code>{@link #setTimeout(long, TimeUnit)}</code>, otherwise default timeout limits
+     * can be assigned with <code>{@link #setTimeoutLimit(long, TimeUnit)}</code>, otherwise default timeout limits
      * are used.
      * </p> 
      * <p>
@@ -294,9 +294,13 @@ public class QueryChannel {
      * @param lngTimeout    the timeout duration for recovery operations
      * @param tuTimeout     the timeout units used for the timeout duration
      */
-    public void setTimeout(long lngTimeout, TimeUnit tuTimeout) {
+    public void setTimeoutLimit(long lngTimeout, TimeUnit tuTimeout) {
         this.lngTimeout = lngTimeout;
         this.tuTimeout = tuTimeout;
+        
+        if (BOL_LOGGING) {
+            LOGGER.info("Request recover timeout limit set to {} {}", lngTimeout, tuTimeout);
+        }
     }
     
     /**

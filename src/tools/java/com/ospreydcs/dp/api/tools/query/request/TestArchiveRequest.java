@@ -887,7 +887,7 @@ public enum TestArchiveRequest {
      * <li>Request Start Time = 0 second(s)</li>
      * </ul>
      */
-    GENERAL_2000PVSx5SEC(TestRequestType.GENERAL, 20000, 0, Duration.ofSeconds(5L), Duration.ZERO),
+    GENERAL_2000PVSx5SEC(TestRequestType.GENERAL, 2000, 0, Duration.ofSeconds(5L), Duration.ZERO),
     
     /**
      * Specifies a time-series data request with the following properties:
@@ -899,7 +899,7 @@ public enum TestArchiveRequest {
      * <li>Request Start Time = 0 second(s)</li>
      * </ul>
      */
-    GENERAL_2000PVSx10SEC(TestRequestType.GENERAL, 20000, 0, Duration.ofSeconds(10L), Duration.ZERO),
+    GENERAL_2000PVSx10SEC(TestRequestType.GENERAL, 2000, 0, Duration.ofSeconds(10L), Duration.ZERO),
     
     /**
      * Specifies a time-series data request with the following properties:
@@ -911,7 +911,43 @@ public enum TestArchiveRequest {
      * <li>Request Start Time = 0 second(s)</li>
      * </ul>
      */
-    GENERAL_2000PVSx20SEC(TestRequestType.GENERAL, 20000, 0, Duration.ofSeconds(20L), Duration.ZERO),
+    GENERAL_2000PVSx20SEC(TestRequestType.GENERAL, 2000, 0, Duration.ofSeconds(20L), Duration.ZERO),
+    
+    /**
+     * Specifies a time-series data request with the following properties:
+     * <ul>
+     * <li>Request Type = <code>{@link TestRequestType#GENERAL}</code></li>
+     * <li>Data Source (PV) Count = 3000</li>
+     * <li>Data Source 1st Index = 0</li>
+     * <li>Request Duration = 5 second(s)</li>
+     * <li>Request Start Time = 0 second(s)</li>
+     * </ul>
+     */
+    GENERAL_3000PVSx5SEC(TestRequestType.GENERAL, 3000, 0, Duration.ofSeconds(5L), Duration.ZERO),
+    
+    /**
+     * Specifies a time-series data request with the following properties:
+     * <ul>
+     * <li>Request Type = <code>{@link TestRequestType#GENERAL}</code></li>
+     * <li>Data Source (PV) Count = 3000</li>
+     * <li>Data Source 1st Index = 0</li>
+     * <li>Request Duration = 10 second(s)</li>
+     * <li>Request Start Time = 0 second(s)</li>
+     * </ul>
+     */
+    GENERAL_3000PVSx10SEC(TestRequestType.GENERAL, 3000, 0, Duration.ofSeconds(10L), Duration.ZERO),
+    
+    /**
+     * Specifies a time-series data request with the following properties:
+     * <ul>
+     * <li>Request Type = <code>{@link TestRequestType#GENERAL}</code></li>
+     * <li>Data Source (PV) Count = 3000</li>
+     * <li>Data Source 1st Index = 0</li>
+     * <li>Request Duration = 20 second(s)</li>
+     * <li>Request Start Time = 0 second(s)</li>
+     * </ul>
+     */
+    GENERAL_3000PVSx20SEC(TestRequestType.GENERAL, 3000, 0, Duration.ofSeconds(20L), Duration.ZERO),
     
     /**
      * Specifies a time-series data request with the following properties:
@@ -923,7 +959,7 @@ public enum TestArchiveRequest {
      * <li>Request Start Time = 0 second(s)</li>
      * </ul>
      */
-    GENERAL_4000PVSx5SEC(TestRequestType.GENERAL, 40000, 0, Duration.ofSeconds(5L), Duration.ZERO),
+    GENERAL_4000PVSx5SEC(TestRequestType.GENERAL, 4000, 0, Duration.ofSeconds(5L), Duration.ZERO),
     
     /**
      * Specifies a time-series data request with the following properties:
@@ -935,7 +971,7 @@ public enum TestArchiveRequest {
      * <li>Request Start Time = 0 second(s)</li>
      * </ul>
      */
-    GENERAL_4000PVSx10SEC(TestRequestType.GENERAL, 40000, 0, Duration.ofSeconds(10L), Duration.ZERO),
+    GENERAL_4000PVSx10SEC(TestRequestType.GENERAL, 4000, 0, Duration.ofSeconds(10L), Duration.ZERO),
     
     /**
      * Specifies a time-series data request with the following properties:
@@ -947,7 +983,7 @@ public enum TestArchiveRequest {
      * <li>Request Start Time = 0 second(s)</li>
      * </ul>
      */
-    GENERAL_4000PVSx20SEC(TestRequestType.GENERAL, 40000, 0, Duration.ofSeconds(20L), Duration.ZERO)
+    GENERAL_4000PVSx20SEC(TestRequestType.GENERAL, 4000, 0, Duration.ofSeconds(20L), Duration.ZERO)
     
     ;
     

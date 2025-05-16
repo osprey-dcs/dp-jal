@@ -27,8 +27,10 @@ package com.ospreydcs.dp.api.tools.query.channel;
 
 import java.io.PrintStream;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.Comparator;
+
+import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
+import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 
 
 /**
@@ -129,32 +131,6 @@ public record QueryChannelTestResult(
     
     /**
      * <p>
-     * Returns the number of records within the argument collection with data rates greater than or equal to the given rate.
-     * </p>
-     * <p>
-     * The method inspects the field <code>{@link QueryChannelTestResult#dblDataRate()}</code> of the argument collection for 
-     * the condition <code>{@link #dblDataRate}</code> &ge; <code>dblRateMin</code>.  The number of records satisfying this 
-     * condition are counted and that value is returned.
-     * </p>
-     * 
-     * @param setResults    collection of <code>QueryChannelTestResult</code> records under inspection
-     * @param dblRateMin    the minimum data rate 
-     * 
-     * @return  the number of <code>ConfigResult</code> records within the collection with data rates >= to the given rate 
-     */
-    public static int   countRatesGreaterEqual(Collection<QueryChannelTestResult> setResults, double dblRateMin) {
-        int intCnt = setResults
-                .stream()
-                .filter(rec -> rec.dblDataRate >= dblRateMin)
-                .mapToInt(rec -> 1)
-                .sum();
-        
-        return intCnt;
-    }
-    
-    
-    /**
-     * <p>
      * Prints out a text description of the record fields to the given output stream.
      * </p>
      * <p>
@@ -176,7 +152,7 @@ public record QueryChannelTestResult(
         ps.println(strPad + "  Recovered data size     : " + this.szRecovery);
         ps.println(strPad + "  Recovery duration       : " + this.durRecovery);
         ps.println(strPad + "  Test Case Parameters:");
-        this.recTestCase.printOut(ps, strPad + strPad);
+        this.recTestCase.printOut(ps, strPad + "  ");
     }
 
 

@@ -26,8 +26,16 @@
 # - Data sources pvPrefix+pvIndexStartTmsList through pvPrefix+(pvIndexStartTmsList+pvCountTmsList) utilize explicit timestamp lists
 # - Explicit timestamp lists are only available after Data Platform release 1.8 and its accompanying app-run-test-data-generator
 #  
-
+#output:
+#   query:
+#      channel:
+#         path: test/output/query/channel   # QueryChannelEvaluator output location : DP_API_TOOLS_OUTPUT__QUERY_CHANNEL_PATH
+         
 query:
+   output:
+      channel:
+         path: test/output/query/channel   # QueryChannelEvaluator output location : DP_API_TOOLS_QUERY_OUTPUT_CHANNEL_PATH
+         
    logging:      # General Query Service tools logging services configuration
       enabled: true                  # is logging active              : DP_API_TOOLS_QUERY_LOGGING_ENABLED
       level: DEBUG                   # logger output level if active  : DP_API_TOOLS_QUERY_LOGGING_LEVEL
@@ -45,18 +53,47 @@ query:
    testRequests:
       testSuites:     
       - testSuite:
-          name: "Clocked 1000 PVs, 1 and 5 seconds"   # Test suite name
+          name: "Clocked PVs"   # Test suite name
           requestIds:                 # List<TestArchiveRequest> enumerations
-          - EMPTY_REQUEST  
           - CLOCKED_1000PVSx1SEC
           - CLOCKED_1000PVSx5SEC
           requestComposites:          # List<RequestDecompType> enumerations   
           - NONE
           - HORIZONTAL
           streamCounts:               # List<Integer> of composite requests counts
-          - 1
           - 2
           - 3
+          streamTypes:                # List<DpGrpcStreamType> enumerations
+          - BACKWARD
+          - BIDIRECTIONAL
+      - testSuite:
+          name: "The Big One"   # Test suite name
+          requestIds:                 # List<TestArchiveRequest> enumerations
+          - GENERAL_3000PVSx20SEC
+          requestComposites:          # List<RequestDecompType> enumerations   
+          - NONE
+          - HORIZONTAL
+#          - VERTICAL
+          streamCounts:               # List<Integer> of composite requests counts
+          - 2
+          - 3
+          - 4
+          streamTypes:                # List<DpGrpcStreamType> enumerations
+          - BACKWARD
+          - BIDIRECTIONAL
+      - testSuite:
+          name: "Several Large Queries"   # Test suite name
+          requestIds:                 # List<TestArchiveRequest> enumerations
+          - CLOCKED_2000PVSx10SEC
+          - CLOCKED_2000PVSx20SEC
+          - GENERAL_4000PVSx20SEC
+          requestComposites:          # List<RequestDecompType> enumerations   
+          - NONE
+          - HORIZONTAL
+          streamCounts:               # List<Integer> of composite requests counts
+          - 2
+          - 3
+          - 4
           streamTypes:                # List<DpGrpcStreamType> enumerations
           - BACKWARD
           - BIDIRECTIONAL

@@ -39,7 +39,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.tools.config.query.DpToolsQueryConfig;
+import com.ospreydcs.dp.api.tools.config.query.DpApiToolsQueryConfig;
 import com.ospreydcs.dp.api.tools.config.request.DpRequestSuiteConfig;
 import com.ospreydcs.dp.api.tools.config.request.DpTestRequestConfig;
 import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
