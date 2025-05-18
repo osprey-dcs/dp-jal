@@ -664,7 +664,7 @@ public class DataRequestDecomposer {
             
             List<String>    lstRqstSrcs = rqstOrg.getSourceNames().subList(indRqstStart, indRqstStop);
             
-            DpDataRequest rqstCmp = DpDataRequest.from(rqstOrg.getStreamType(), rqstOrg.getInitialTime(), rqstOrg.getFinalTime(), lstRqstSrcs);
+            DpDataRequest rqstCmp = DpDataRequest.from(rqstOrg.getRequestId(), rqstOrg.getStreamType(), rqstOrg.getInitialTime(), rqstOrg.getFinalTime(), lstRqstSrcs);
             
             lstRequests.add(rqstCmp);
             
@@ -716,7 +716,7 @@ public class DataRequestDecomposer {
             if (n == (cntQueries - 1))
                 insRqstTmStop = insRqstTmStop.plus(durRemain);
             
-            DpDataRequest   rqstCmp = DpDataRequest.from(rqstOrg.getStreamType(), insRqstTmStart, insRqstTmStop, rqstOrg.getSourceNames());
+            DpDataRequest   rqstCmp = DpDataRequest.from(rqstOrg.getRequestId(), rqstOrg.getStreamType(), insRqstTmStart, insRqstTmStop, rqstOrg.getSourceNames());
             
             lstRequests.add(rqstCmp);
             
@@ -791,7 +791,7 @@ public class DataRequestDecomposer {
                 if (n == (cntQueriesVer - 1))
                     insRqstTmStop = insRqstTmStop.plus(durRemain);
                 
-                DpDataRequest   rqstCmp = DpDataRequest.from(rqstOrg.getStreamType(), insRqstTmStart, insRqstTmStop, lstRqstSrcs);
+                DpDataRequest   rqstCmp = DpDataRequest.from(rqstOrg.getRequestId(), rqstOrg.getStreamType(), insRqstTmStart, insRqstTmStop, lstRqstSrcs);
                 
                 lstRequests.add(rqstCmp);
                 

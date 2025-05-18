@@ -96,12 +96,12 @@ public record QueryChannelTestResult(
     
     
     //
-    // Operations
+    // Tools
     //
     
     /**
      * <p>
-     * Creates and returns a new <code>Comparator</code> provide a reverse ordering according to data rates.
+     * Creates and returns a new <code>Comparator</code> provide a descending (reverse) ordering according to data rates.
      * </p>
      * <p>
      * The returned comparator instance compares the <code>{@link #dblDataRate}</code> fields of two 
@@ -116,7 +116,7 @@ public record QueryChannelTestResult(
      * 
      * @return  a new <code>Comparator</code> instance providing a reverse ordering by record data rates
      */
-    public static Comparator<QueryChannelTestResult>   reverseRateOrdering() {
+    public static Comparator<QueryChannelTestResult>   descendingRateOrdering() {
     
         Comparator<QueryChannelTestResult>   cmp = (r1, r2) -> {
 
@@ -128,6 +128,40 @@ public record QueryChannelTestResult(
         
         return cmp;
     }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>Comparator</code> provide an ascending (natural) ordering according to data rates.
+     * </p>
+     * <p>
+     * The returned comparator instance compares the <code>{@link #dblDataRate}</code> fields of two 
+     * <code>QueryChannelTestResult</code> records.  It provides a natural ordering of records according
+     * to the data rate fields.  Specifically, the lowest data rate will appear first in any ordered
+     * Java collection.
+     * </p>
+     * <p>
+     * Note that the comparator provided here is the equivalent of the natural order of 
+     * <code>QueryChannelTestResult</code> records provided by the exposed <code>Comparable</code> interface.
+     * </p>  
+     * 
+     * @return  a new <code>Comparator</code> instance providing a natural ordering by record data rates
+     */
+    public static Comparator<QueryChannelTestResult>    ascendingRateOrdering() {
+
+        Comparator<QueryChannelTestResult>  cmp = (r1, r2) -> {
+
+            if (r1.dblDataRate < r2.dblDataRate)
+                return -1;
+            else
+                return +1;
+        };
+        return cmp;  
+    }
+
+    
+    //
+    // Operations
+    //
     
     /**
      * <p>

@@ -69,7 +69,7 @@ query:
       - testSuite:
           name: "The Big One"   # Test suite name
           requestIds:                 # List<TestArchiveRequest> enumerations
-          - GENERAL_3000PVSx20SEC
+          - GENERAL_4000PVSx20SEC
           requestComposites:          # List<RequestDecompType> enumerations   
           - NONE
           - HORIZONTAL

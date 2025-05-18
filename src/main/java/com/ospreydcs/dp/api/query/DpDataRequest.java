@@ -248,6 +248,47 @@ public final class DpDataRequest {
      * Thus, <b>use at your own risk</b>.
      * </p>
      *  
+     * @param strId         the request identifier used by Java API Library
+     * @param enmStreamType the preferred gRPC stream type for the  
+     * @param insStart      the start time of the data request
+     * @param insEnd        the final time of the data request
+     * @param lstPvNames    the data source names (i.e., process variable names) of the data request
+     * 
+     * @return  a new Query Service data request initialized with the given arguments
+     * 
+     * @throws  IllegalArgumentException    the given stream type is out of context
+     */
+    public static DpDataRequest from(String strId, DpGrpcStreamType enmStreamType, Instant insStart, Instant insEnd, List<String> lstPvNames) 
+            throws IllegalArgumentException {
+        
+        return new DpDataRequest(strId, enmStreamType, insStart, insEnd, lstPvNames);
+    }
+    
+    /**
+     * <p>
+     * Creates a new, initialized <code>DpDataRequest</code> instance defining a time-series data requests 
+     * from the <em>Query Service</em>.
+     * </p>
+     * <p>
+     * Note that the returned data request is defined by the given parameters. 
+     * The returned request can be further modified using the "selection" and "restrictor" methods to narrow 
+     * the returned data request based upon specific PV names, timestamps ranges, and other data filters.
+     * </p>
+     * <h2>NOTES:</h2>
+     * <p>
+     * <ul>
+     * <li>
+     * The request identifier parameter is set to <code>null</code>.  This parameter is used only by the 
+     * Java API Library and essentially means the request is unnamed.
+     * </li>
+     * <li>
+     * Invocation of this method for time-series data request creation assumes familiarity with the internal
+     * structure and operation of the <code>DpDataRequest</code> class.
+     * Thus, <b>use at your own risk</b>.
+     * </li>
+     * </ul>
+     * </p>
+     *  
      * @param enmStreamType the preferred gRPC stream type for the  
      * @param insStart      the start time of the data request
      * @param insEnd        the final time of the data request
@@ -260,7 +301,7 @@ public final class DpDataRequest {
     public static DpDataRequest from(DpGrpcStreamType enmStreamType, Instant insStart, Instant insEnd, List<String> lstPvNames) 
             throws IllegalArgumentException {
         
-        return new DpDataRequest(enmStreamType, insStart, insEnd, lstPvNames);
+        return new DpDataRequest(null, enmStreamType, insStart, insEnd, lstPvNames);
     }
     
 
@@ -565,7 +606,7 @@ public final class DpDataRequest {
      * @see java.lang.Object#clone()
      */
     public DpDataRequest    clone() {
-        return new DpDataRequest(this.enmStrmType, this.insStart, this.insStop, new LinkedList<String>(this.lstSelCmps));
+        return new DpDataRequest(this.strRqstId, this.enmStrmType, this.insStart, this.insStop, new LinkedList<String>(this.lstSelCmps));
     }
     
     /**
@@ -1848,6 +1889,7 @@ public final class DpDataRequest {
      * identified in their declaration.
      * </p>
      *
+     * @param strId         the request identifier
      * @param enmType       the preferred gRPC data stream type
      * @param insStart      starting instant of time range
      * @param insStop       final instant of time range
@@ -1855,7 +1897,7 @@ public final class DpDataRequest {
      * 
      * @throws  IllegalArgumentException    the given stream type is out of context
      */
-    private DpDataRequest(DpGrpcStreamType enmType, Instant insStart, Instant insStop, List<String> lstSources) throws IllegalArgumentException {
+    private DpDataRequest(String strId, DpGrpcStreamType enmType, Instant insStart, Instant insStop, List<String> lstSources) throws IllegalArgumentException {
         
         // Check stream type
         if (enmType == DpGrpcStreamType.FORWARD)
@@ -1864,6 +1906,7 @@ public final class DpDataRequest {
         this.indStartPage = 0;
         this.szPage = SZ_PAGES;
 
+        this.strRqstId = strId;
         this.enmStrmType = enmType;
         this.insStart = insStart;
         this.insStop = insStop;

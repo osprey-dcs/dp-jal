@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.lang.module.FindException;
+import java.lang.module.ResolutionException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -195,7 +196,7 @@ public class QueryChannelEvaluator {
 
         } catch (IllegalStateException e) {
             if (BOL_LOGGING)
-                LOGGER.error(strLogErr, e);
+                LOGGER.error(strLogErr, e.getClass(), e);
             
             QueryChannelEvaluator.reportException(e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
@@ -203,7 +204,7 @@ public class QueryChannelEvaluator {
 
         } catch (DpQueryException e) {
             if (BOL_LOGGING)
-                LOGGER.error(strLogErr, e);
+                LOGGER.error(strLogErr, e.getClass(), e);
 
             QueryChannelEvaluator.reportException(e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
@@ -211,7 +212,23 @@ public class QueryChannelEvaluator {
 
         } catch (InterruptedException e) {
             if (BOL_LOGGING)
-                LOGGER.error(strLogErr, e);
+                LOGGER.error(strLogErr, e.getClass(), e);
+
+            QueryChannelEvaluator.reportException(e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            return;
+
+        } catch (CompletionException e) {
+            if (BOL_LOGGING)
+                LOGGER.error(strLogErr, e.getClass(), e);
+
+            QueryChannelEvaluator.reportException(e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            return;
+
+        } catch (ResolutionException e) {
+            if (BOL_LOGGING)
+                LOGGER.error(strLogErr, e.getClass(), e);
 
             QueryChannelEvaluator.reportException(e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
@@ -362,8 +379,12 @@ public class QueryChannelEvaluator {
     // Defining Attributes
     //
     
-//    /** The test suite configuration for <code>QueryChannel</code> evaluation */
-//    private final DpRequestSuiteConfig      cfgSuite;
+    /** Name of the input configuration for the test suite */
+    private final String                    strInputName;
+    
+    /** Output report location */
+    private final String                    strOutputLoc;
+    
     
     /** The test suite used for <code>QueryChannel</code> evaluations */
     private final QueryChannelTestSuite     suiteEvals;
@@ -419,20 +440,25 @@ public class QueryChannelEvaluator {
      * Constructs a new <code>QueryChannelEvaluator</code> instance.
      * </p>
      *
-     * @param cfgSuite  the test suite configuration record 
-     * @param psOutput  output stream to receive evaluation report
+     * @param strInputName  name of the input configuration
+     * @param strOutputLoc  location of the output report
+     * @param cfgSuite      the test suite configuration record 
+     * @param psOutput      output stream to receive evaluation report
      * 
      * @throws ConfigurationException   there are no test requests in the given configuration
      * @throws DpGrpcException          unable to establish connection to the Data Platform Query Service
      */
-    public QueryChannelEvaluator(DpRequestSuiteConfig cfgSuite, PrintStream psOutput) throws ConfigurationException, DpGrpcException {
-//        this.cfgSuite = cfgSuite;
+    public QueryChannelEvaluator(String strInputName, String strOutputLoc, DpRequestSuiteConfig cfgSuite, PrintStream psOutput) throws ConfigurationException, DpGrpcException {
+        this.strInputName = strInputName;
+        this.strOutputLoc = strOutputLoc;
         this.psOutput = psOutput;
         
+        // Create the test suite and results container from the configuration record
         this.suiteEvals = QueryChannelTestSuite.from(cfgSuite);
         this.setCases = this.suiteEvals.createTestSuite();          // throws ConfigurationException
-        this.setResults = new TreeSet<>(QueryChannelTestResult.reverseRateOrdering());
+        this.setResults = new TreeSet<>(QueryChannelTestResult.descendingRateOrdering());
         
+        // Create the channel resources and channel
         this.bufDataMsgs = QueryMessageBuffer.create();
         this.connQuery = DpQueryConnectionFactoryStatic.connect();  // throws DpGrpcException
         this.chanQuery = QueryChannel.from(connQuery, bufDataMsgs);
@@ -553,8 +579,9 @@ public class QueryChannelEvaluator {
      * @throws DpQueryException         a Query Service exception was encountered during the evaluations
      * @throws InterruptedException     the evaluation was interrupted while waiting for completion
      * @throws CompletionException      the message buffer consumer failed (see message and cause)
+     * @throws ResolutionException      the message buffer failed to empty upon completion
      */
-    public void run() throws IllegalStateException, DpQueryException, InterruptedException, CompletionException {
+    public void run() throws IllegalStateException, DpQueryException, InterruptedException, CompletionException, ResolutionException {
         
         // Check state
         if (this.bolRun) 
@@ -568,10 +595,10 @@ public class QueryChannelEvaluator {
         // Run all test cases on  QueryChannel subject
         int indCase = 1;
        
+        LOGGER.info("Running {} test cases for test suite {}...", CNT_CASES, this.strInputName);
         Instant insStart = Instant.now();
         for (QueryChannelTestCase recCase : this.setCases) {
-            System.out.println("Running test case #" + indCase + " of " + CNT_CASES + "...");
-//            this.updateTestCase(CNT_CASES, indCase);
+            LOGGER.info("Running test case #{} of {} (with index {}) ...", indCase, CNT_CASES, recCase.indCase());
             
             QueryChannelTestResult recResult = recCase.evaluate(this.chanQuery, this.bufDataMsgs); // throws exceptions
             
@@ -579,10 +606,11 @@ public class QueryChannelEvaluator {
             indCase++;
         }
         Instant insFinish = Instant.now();
-        System.out.println("Evaluations complete.");
-        
+
         this.durEval = Duration.between(insStart, insFinish);
         this.bolCompleted = true;
+
+        LOGGER.info("Evaluations complete. Time to completion {}.", this.durEval);
     }
     
     /**
@@ -603,6 +631,7 @@ public class QueryChannelEvaluator {
      */
     public void writeReport() throws IllegalStateException {
         this.writeReport(this.psOutput);
+        LOGGER.info("Evaluation report stored at location {}.", this.strOutputLoc);
     }
     
     /**
@@ -627,6 +656,7 @@ public class QueryChannelEvaluator {
         
         // Print out header
         String  strHdr = this.createReportHeader();
+        ps.println();
         ps.println(strHdr);
         
         // Print out evaluation summary
@@ -645,6 +675,11 @@ public class QueryChannelEvaluator {
         TestResultSummary.assignTargetDataRate(DBL_RATE_TARGET);
         TestResultSummary  recSummary = TestResultSummary.summarize(this.setResults);
         recSummary.printOut(ps, null);
+        ps.println();
+        
+        // Print out results extremes
+        TestResultExtremes  recExtremes = TestResultExtremes.computeExtremes(setResults);
+        recExtremes.printOut(ps, null);
         ps.println();
         
         // Print out each test result
@@ -822,7 +857,7 @@ public class QueryChannelEvaluator {
         Log4j.attachAppender(LOGGER, appdrOstr);
         
         // Create and return new evaluator
-        QueryChannelEvaluator   evaluator = new QueryChannelEvaluator(cfgRqst, psOutput);   // throws ConfigurationException, DpGrpcException
+        QueryChannelEvaluator   evaluator = new QueryChannelEvaluator(strCfgName, strOutputLoc, cfgRqst, psOutput);   // throws ConfigurationException, DpGrpcException
         
         return evaluator;
     }
@@ -954,6 +989,9 @@ public class QueryChannelEvaluator {
         // Check if argument is directory - if so create unique file name
         Path    pathOutput = Path.of(strPath);
         
+        // TODO - Remove
+//        System.out.println("pathOutput = " + pathOutput);
+//        System.out.println("Files.isDiretory(pathOutput) = " + Files.isDirectory(pathOutput));
         if (Files.isDirectory(pathOutput)) {
             String  strFileName = createUniqueOutputFileName();
             
@@ -963,12 +1001,6 @@ public class QueryChannelEvaluator {
         // Open the common output file
         File        fileOutput = pathOutput.toFile();       // throws UnsupportedOperationException
         PrintStream psOutput = new PrintStream(fileOutput); // throws FileNotFoundException, SecurityException
-        
-//        // Write header
-//        DateFormat  date = DateFormat.getDateTimeInstance();
-//        String      strDateTime = date.format(new Date());
-//        psOutput.println(QueryChannelEvaluator.class.getSimpleName() + " Ouput Results: " + strDateTime);
-//        psOutput.println();
         
         // Return new stream connected to new output file
         return psOutput;

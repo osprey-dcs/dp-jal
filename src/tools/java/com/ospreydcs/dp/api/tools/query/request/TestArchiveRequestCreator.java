@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpTestArchiveRequestCreator.java
+ * File:	TestArchiveRequestCreator.java
  * Package: com.ospreydcs.dp.api.tools.query.request
- * Type: 	DpTestArchiveRequestCreator
+ * Type: 	TestArchiveRequestCreator
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -46,7 +46,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * Utility class for generating time-series data requests appropriate for the Data Platform test archive.
  * </p>
  * <p>
- * The <code>DpTestArchiveRequestCreator</code> class is a utility containing all static method for creating
+ * The <code>TestArchiveRequestCreator</code> class is a utility containing all static method for creating
  * <code>DpDataRequest</code> instances specific to the Data Platform test archive.  That is, all 
  * <code>DpDataRequest</code> instances generated here will query for time-series data within the test archive.  
  * The Data Platform test archive is populated with sample time-series data using the utility 
@@ -109,7 +109,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @since May 4, 2025
  *
  */
-public class DpTestArchiveRequestCreator {
+public class TestArchiveRequestCreator {
 
     
     //
@@ -291,7 +291,7 @@ public class DpTestArchiveRequestCreator {
         
         // Set the logging level according to configuration
         Level   lvlLogging = Level.toLevel(STR_LOG_LEVEL, LOGGER.getLevel());
-//        Configurator.setLevel(LogManager.getLogger(DpTestArchiveRequestCreator.class).getName(), lvlLoggin);
+//        Configurator.setLevel(LogManager.getLogger(TestArchiveRequestCreator.class).getName(), lvlLoggin);
         Configurator.setLevel(LOGGER, lvlLogging);
     }
     
@@ -356,9 +356,9 @@ public class DpTestArchiveRequestCreator {
         
         return switch (enmType) {
         case GENERAL -> createRequest(cntPvs, indPvOffset, durRequest, durOffset);
-        case CLOCKED -> DpTestArchiveRequestCreator.createClockedRequest(cntPvs, indPvOffset, durRequest, durOffset);
-        case TMS_LIST -> DpTestArchiveRequestCreator.createTmsListRequest(cntPvs, indPvOffset, durRequest, durOffset);
-        case BOTH -> DpTestArchiveRequestCreator.createBothPvsRequest(cntPvs, indPvOffset, durRequest, durOffset);
+        case CLOCKED -> TestArchiveRequestCreator.createClockedRequest(cntPvs, indPvOffset, durRequest, durOffset);
+        case TMS_LIST -> TestArchiveRequestCreator.createTmsListRequest(cntPvs, indPvOffset, durRequest, durOffset);
+        case BOTH -> TestArchiveRequestCreator.createBothPvsRequest(cntPvs, indPvOffset, durRequest, durOffset);
         };
     }
     
@@ -1409,10 +1409,10 @@ public class DpTestArchiveRequestCreator {
     
     /**
      * <p>
-     * Prevent construction <code>DpTestArchiveRequestCreator</code> instances.
+     * Prevent construction <code>TestArchiveRequestCreator</code> instances.
      * </p>
      */
-    private DpTestArchiveRequestCreator() {
+    private TestArchiveRequestCreator() {
     }
 
 }

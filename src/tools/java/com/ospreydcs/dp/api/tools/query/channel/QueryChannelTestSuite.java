@@ -27,11 +27,15 @@ package com.ospreydcs.dp.api.tools.query.channel;
 
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 
 import javax.naming.ConfigurationException;
 
@@ -286,12 +290,21 @@ public class QueryChannelTestSuite {
         
         for (TestArchiveRequest enmRqst : this.setTestRqsts)
             for (DpGrpcStreamType enmStrmType : this.setStrmType)
-                for (RequestDecompType enmDcmpType : this.setDcmpType)
-                    for (Integer cntStrms : this.setStrmCnts) {
+                for (RequestDecompType enmDcmpType : this.setDcmpType) {
+                    
+                    if (enmDcmpType == RequestDecompType.NONE) {
+                        QueryChannelTestCase    recCase = QueryChannelTestCase.from(enmRqst, enmDcmpType, enmStrmType, 1);
                         
-                        QueryChannelTestCase    recCase = QueryChannelTestCase.from(enmRqst, enmDcmpType, enmStrmType, cntStrms);
                         lstCases.add(recCase);
+                        
+                    } else {
+                        for (Integer cntStrms : this.setStrmCnts) {
+
+                            QueryChannelTestCase    recCase = QueryChannelTestCase.from(enmRqst, enmDcmpType, enmStrmType, cntStrms);
+                            lstCases.add(recCase);
+                        }
                     }
+                }
         
         return lstCases;
     }
@@ -331,41 +344,6 @@ public class QueryChannelTestSuite {
             ps.println(strPad + "- " + enmType.name());
     }
 
-    
-    //
-    // Tools
-    //
-    
-    /**
-     * <p>
-     * Returns the number of records within the argument collection with data rates greater than or equal to the given rate.
-     * </p>
-     * <p>
-     * The method inspects the field <code>{@link QueryChannelTestResult#dblDataRate()}</code> of the argument collection for 
-     * the condition <code>{@link #dblDataRate}</code> &ge; <code>dblRateMin</code>.  The number of records satisfying this 
-     * condition are counted and that value is returned.
-     * </p>
-     * 
-     * @param setResults    collection of <code>QueryChannelTestResult</code> records under inspection
-     * @param dblRateMin    the minimum data rate 
-     * 
-     * @return  the number of <code>ConfigResult</code> records within the collection with data rates >= to the given rate 
-     */
-    public static int   countRatesGreaterEqual(Collection<QueryChannelTestResult> setResults, double dblRateMin) {
-        int intCnt = setResults
-                .stream()
-                .filter(rec -> rec.dblDataRate() >= dblRateMin)
-                .mapToInt(rec -> 1)
-                .sum();
-        
-        return intCnt;
-    }
-    
-    public static int   computeBestStreamCount(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
-        final int   intMaxStrms = setResults.stream().mapToInt(rec -> rec.recTestCase().cntStrms()).max().getAsInt();
-        
-        return 0;
-    }
     
     
     //

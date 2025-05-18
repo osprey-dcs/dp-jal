@@ -25,7 +25,7 @@ NOTES:
 
 	<!-- Java API LIbrary Project Identification -->
 	<name>Data Platform Java Client API</name>
-	<description>Java language API for the Data Platform services.</description>
+	<description>Java language API for the Data Platform core services.</description>
     <groupId>com.ospreydcs</groupId>
     <artifactId>dp-api-java</artifactId>
     <packaging>jar</packaging>
@@ -43,7 +43,8 @@ NOTES:
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
-        <maven-shade-plugin-version>3.6.0</maven-shade-plugin-version>
+        <maven-plugin-build-helper.version>3.6.0</maven-plugin-build-helper.version>
+        <maven-plugin-shade.version>3.6.0</maven-plugin-shade.version>
         
         <!-- Java - Override Version -->
         <java.version>16</java.version>
@@ -51,6 +52,8 @@ NOTES:
 
         <!-- Java API Library Properties -->
         <dp-api-java.uber-jar>dp-api-java-shaded-${project.version}</dp-api-java.uber-jar>
+        <dp-api-java.main-class>com.ospreydcs.dp.api.tools.query.channel.QueryChannelEvaluator</dp-api-java.main-class>
+        <dp-api-java.build-number>1</dp-api-java.build-number>
         
 		<!-- Data Platform Properties-->        
         <dp-grpc.version>1.7.0</dp-grpc.version>
@@ -220,11 +223,12 @@ NOTES:
         
     </dependencies>
 
-
+	<!-- Builds JAR, Fat Jar, and Tools -->
     <build>
         <plugins>
+        
             <!-- Maven compiler plugin: compile for Java 8 -->
-            <!-- CKA: We don't need explicit Maven comilation -->
+            <!-- CKA: We don't need explicit Maven comilation plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -234,6 +238,43 @@ NOTES:
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
+            
+            <!-- Maven "Add Source" Plugin -->
+            <!-- CKA: We need to add the source and resources directories for the Java API Library tools -->
+            <plugin>
+    	        <groupId>org.codehaus.mojo</groupId>
+    	        <artifactId>build-helper-maven-plugin</artifactId>
+                <version>${maven-plugin-build-helper.version}</version>
+                <executions>
+                    <execution>
+                        <id>add-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/src/tools/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>add-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                            		<directory>${project.basedir}/src/tools/resources</directory>
+                            		<targetPath>.</targetPath>
+                            	</resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+           </plugin>
 
             <!--
             Maven shade plugin configuration: this is required so that if you build a single JAR file (an "uber-jar")
@@ -243,11 +284,12 @@ NOTES:
             mvn package
             cd target
             java -cp dp-api-java com.ospreydcs.dp.api.JUnitTestExample
+            -->
 
             <plugin>
             	<groupId>org.apache.maven.plugins</groupId>
             	<artifactId>maven-shade-plugin</artifactId>
-            	<version>${maven-shade-plugin.version}</version>
+            	<version>${maven-plugin-shade.version}</version>
             	
             	<executions>
             		<execution>
@@ -261,10 +303,10 @@ NOTES:
 		            		<transformers>
             					<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
         		    				<manifestEntries>
-		            					<Main-Class>${injestion.scenario.main-class}</Main-Class>
+		            					<Main-Class>${dp-api-java.main-class}</Main-Class>
 										<Multi-Release>true</Multi-Release>
 										<Release-Number>${project.version}</Release-Number>
-            							<Build-Number>${ingestion.scenario.build-number}</Build-Number>
+            							<Build-Number>${dp-api-java.build-number}</Build-Number>
 									</manifestEntries>
         		    			</transformer>
 					  		</transformers>
@@ -285,8 +327,6 @@ NOTES:
             		</execution>
             	</executions>
             </plugin>
-            
-            -->
             
         </plugins>
     </build>

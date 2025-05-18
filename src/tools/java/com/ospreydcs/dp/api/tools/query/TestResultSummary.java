@@ -99,10 +99,7 @@ public record TestResultSummary(
         Map<TestArchiveRequest, Integer> mapRqstHits
         ) 
 {
-    
-    //
-    // Creators
-    //
+
     
     //
     // Creators

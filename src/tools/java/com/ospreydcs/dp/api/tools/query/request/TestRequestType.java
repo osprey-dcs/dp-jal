@@ -28,7 +28,7 @@ package com.ospreydcs.dp.api.tools.query.request;
 /**
  * <p>
  * Enumeration of all time-series data request types available from the utility class 
- * <code>DpTestArchiveRequestCreator</code>.
+ * <code>TestArchiveRequestCreator</code>.
  * </p>
  */
 public enum TestRequestType {
