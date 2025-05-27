@@ -1,10 +1,9 @@
-# dp-api-common
+# dp-api-java
 Java API Library for the Data Platform Core Services
 
 ## Overview
 This library isolates clients from the Data Platform gRPC communications framework by providing Java language interfaces
-for the Core Services.  Interaction with the Core Services is simplified and clients require little or no knowledge of 
-the gRPC library and the Protocol Buffers RPC interfaces.
+for the Core Services.  Interaction with the Core Services is simplified and clients require little or no knowledge of the gRPC library and the Protocol Buffers RPC interfaces.
 
 Provides basic connection and communications services to the following Data Platform services:
 - Query Service 
@@ -13,26 +12,76 @@ Provides basic connection and communications services to the following Data Plat
 
 Also contains utilities and resources for manipulating and processing data.
 
+## API Library Build
+The Java API Library source and resources are available from the online repository [dp-api-java](https://github.com/osprey-dcs/dp-api-common).  The library should be downloaded into an appropriate location within the client host platform.  The Java API Library is then built as a ##Maven## project with all build parameters in the `pom.xml` file within the installation directory.
+
+The Maven utility is based upon the notation of software "lifecycle", which is reflected in its build commands.  The life stage commands that are appropriate here are the "package" and "install" commands.  
+
+### Maven Package Build
+Maven can be used to package the Java API library into Java Archive files (i.e., 'JARs') that can be used directly on the client platform.  The command is given by
+
+`% mvn package`
+
+executed in the library installation directory (i.e., where 'pom.xml' is located).  As instructed by the `pom.xml` file, the Maven package build creates two JARs
+- `dp-api-java-1.x.x.jar`
+- `dp-api-java-shaded-1.x.x.jar`
+
+Note that the library version is included in the name suffix.  The build products are located in the standard target location of the Maven utility, which is given as
+
+`jal_install/target`
+
+where 'jal_install' is the installation directory of the Java API Library. The first JAR file contains all compiled byte code and resources from the library code base.  The second JAR is a "fat JAR" containing all library byte code plus all compiled dependencies required for library execution.  The fat JAR is likely the most useful; direct inclusion in the Java class path allows access to all library function.
+
+### Maven Install
+The Java API Library can be "installed" into the local client platform for use as a dependency within another Maven project.  This situation is much the same as requirement that the Data Platform [communications framework](https://github.com/osprey-dcs/dp-grpc) must be installed locally in the client as a dependency of this library.  The command is given by
+
+`% mvn install`
+
+executed in the library installation directory (i.e., where the library `pom.xml` file is located).  Once completed the Java API Library will be install locally on the client platform (typically in the `~/.m2` directory).  All library resources are then available to any Maven project by including the Java API Library Maven properties within as a dependency in the `pom.xml` file (i.e., populating the `<groupId>`, `<artifactId>`, and `<version>` XML attributes).    Specifically, the dependency is stipulated with the `pom.xml` inclusion
+
+`<dependencies>`
+
+    `...` 
+    `<dependency>` 
+    `<groupID>com.ospreydcs</groupId>` 
+    `<artifactId>dp-api-java</artifactId>`
+    `<version>1.x.x</version>`
+    `</dependency>`
+    `...`
+    
+`</dependencies>`
+
+
 ## Library Configuration
-The Java API Library requires the configuration file `dp-api-config.yml` which contains all the default configuration
-parameters for the library.  Most parameters are set to their optimal values but users are able to tune parameters
-for optimal performance on the host platform.  However, it is necessary that the address of the Data Platform 
-Core Service **must** be correctly specified in the configuration file.  These addresses (the URL and port) are 
-found in the `connections` section of the configuration file.
+The Java API Library requires the configuration file `dp-api-config.yml` which contains all the default configuration parameters for the library.  Most parameters are set to their optimal values but users are able to tune parameters
+for optimal performance on the host platform.  However, it is necessary that the address of the Data Platform Core Service **must** be correctly specified in the configuration file.  These addresses (the URL and port) are found in the `connections` section of the configuration file.
+
+Currently all configuration parameters should be set **before** the library build - the configuration file is built directly into any Java API Library build products.  The library thus refers to the configuration within its local resource section (i.e., rather than external resources).  Clearly this is not optimal and dynamic configuration will be available in the future.
+
+### Dynamic Configuration
+The Java API Library configuration can be established "on the fly," specifically, at the time of the library start up.  Thus, any modification to the `dp-api-config.yml` file will be effective post build.  However, once the Java API Library has been started all library configurations are loaded at the time of first access, and any modifications will not be noticed until the library has shut down and re-started.
+
+#### <a id="dp_api_java_home"> The `DP_API_JAVA_HOME` Environment Variable </a>
+The dynamic library configuration described above is facilitated using the environment variable `DP_API_JAVA_HOME`. The Java API Library installation directory contains the sub-directory `config` which will hold all up-to-date configuration files.  Any configuration required by the library will then refer to file in that directory.  In order that this mechanism function correctly the `DP_API_JAVA_HOME` environment variable must be set to the location of the Java API Library install, say `jal_install`.  This is most easily accomplished by modifying the `~/.dp.env` Data Platform environment file to include the additional line
+
+`export DP_API_JAVA_HOME=jal_install`,
+
+where again `jal_install` is the location of the local Java API Library installation.  (Recall that the primary function for file `~/.dp.env` is to set the environment variable `DP_HOME` to the location of the Data Platform core services installation.)  Of course setting the environment variable `DP_API_JAVA_HOME` to the proper location any time before invoking the Java API Library will also allow dynamic library configuration.
+
+#### Java Virtual Machine Arguments
+The Java Virtual Machine (VM) allows command-line arguments starting with the `-D` option which appear as "system properties" within the Java VM.  The Java API Library will also check the Java VM system property `DP_API_JAVA_HOME` to see if it has been set to the installation location `jal_install`.  Thus, the `DP_API_JAVA_HOME` is also a Java VM property that can be set when starting a Java application from the command line (i.e., one that uses the JAVA API Library).  For example say an application `my_app` uses the Java API Library, the follow command sets the Java VM system property to the proper value for dynamic library configuration:
+
+`%java -cp dp-api-java-shaded-1.x.x.jar -DDP_API_JAVA_HOME=jal_install my_app`
+
+To conform to the Java standard for system properties, the property `dp.api.java.home` is also a valid identifier for the Java API Library installation location (i.e., in addition to `DP_API_JAVA_HOME`).  For example, for an executable Java archive (JAR) `my-exec-jar.jar` with main class `org.package.my-app` the following command sets the Java VM system property for dynamic library configuration
+
+`%java -jar my-exec-jar.jar -cp dp-api-java-shaded-1.x.x.jar -Ddp.api.java.home=jal_install org.package.my_app`
 
 ## Connection Factories
-Connection to the Data Platform Core Services are facilitated using "connection factories."  Typically these are
-static classes (instance classes are also available but not recommended) that provide a collection of methods
-for connecting to a Data Platform service and returning a Java interface to the service.  The methods contain
-argument signatures that specify various connection parameters, including the default connection which contains
-no arguments.  Note that the default connection is specified completely in the configuration file `dp-api-config.yml`.
-See the class documentation for each connection factory for additional information.
+Connection to the Data Platform Core Services are facilitated using "connection factories."  Typically these are static classes (instance classes are also available but not recommended) that provide a collection of methods for connecting to a Data Platform service and returning a Java interface to the service.  The methods contain argument signatures that specify various connection parameters, including the default connection which contains no arguments.  Note that the default connection is specified completely in the configuration file `dp-api-config.yml`. See the class documentation for each connection factory for additional information.
 
 ### Interface Shut Down
-All interfaces are returned by the connection factories connected to the intended Data Platform Core Service and
-are ready for use.  Whenever an interface is no longer needed it should be shut down using a `shutdown()`
-operation.  The `shutdown()` operation releases all gRPC resources used by the interface, which is necessary to
-maintain performance.
+All interfaces are returned by the connection factories connected to the intended Data Platform Core Service and are ready for use.  Whenever an interface is no longer needed it should be shut down using a `shutdown()` operation.  The `shutdown()` operation releases all gRPC resources used by the interface, which is necessary to maintain performance.
 
 ## Ingestion Service API
 The client Ingestion Service API resources are available in the package `com.ospreydcs.dp.api.ingest`.  The connection factory 
@@ -127,3 +176,34 @@ There are 3 supported annotation types:
 3. Calculations - stored post-ingestion calculations obtained from time-series data within the archive
 
 Annotations are attached to regions of the time-series data archive defined by 'data sets' (see above).  Data Platform clients create annotations within the data archive to provide a "value-added" data processing mechanism available to all other clients.  For example, a Data Platform client may identify a correlation between two data sets; the client can then create an association between the two data sets which is then retrievable by other clients for further processing (e.g., creating calculations based upon the correlation).
+
+## Java API Library Tools
+The Java API Library ships with a set of tools and utilities.  These are executables used for performance and evaluations measurements, as well as testing the operation of individual API Library components.  The tools are implemented as "main classes" within the Java API Library and can be executed directly from the `dp-api-java-shaded-1.x.x.jar`.  However, the library ships with a collection of shell scripts to ease tool execution.  The shell scripts are located in directory
+
+`jal_install/bin`
+
+where `jal_install` is the location of the Java API Library installation.  
+
+### Tools Configuration
+The environment variable `DP_API_JAVA_HOME` must be set to the location of the local installation (i.e., "`jal_install`") to ensure that the above scripts run correctly. Recall that modifying the Data Platform environment file `~/.dp.env` is the straightforward method for setting this variable; see the section (The `DP_API_JAVA_HOME` Environment Variable)[#dp_api_home].    
+
+Additionally, there are other environment variables that should be set for some tools to operate correctly.  Many Java API Library tools require an output location.  Specifically, they create reports summarizing their results and require an output file to deposit these reports.  The environment variable `DP_API_JAVA_TOOLS_OUTPUT` should be set to the output location on the local platform for all Java API Library tools.  
+
+### Tools Output Locations
+The directories for Java API Library tools output must be created in advance.  Thus, the following line should be included in the `~/.dp.env` file:
+
+`export DP_API_TOOLS_OUTPUT=my-local-output-directory`
+
+where `my-local-output-directory` is the location for tools outputs.
+
+Typically each tools has a separate sub-directory structure where it deposits its results.  For example, the `QueryChannelEvalutor` application, which can be started with script `app-run-querychannel-evaluator` has the sub-directory `query/channel` as its output location.  Thus, the directory
+
+`my-local-output-directory/query/channel`
+
+must exist on the location platform.
+
+### Execution
+Java API Library tools execution is performed using the usual (bash) shell script execution for the local platform.  For example, to execute the `QueryChannelEvaluator` tool execute the following from the `jal_install/bin` directory:
+
+`%./app-run-querychannel-evaluator`
+
