@@ -45,7 +45,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
- * Record containing all the parameters of a time-series data request streaming data recovery.
+ * Record containing parameters for a time-series data request streaming recovery.
  * </p>
  * <p>
  * The record fields encapsulate the parameters of a <code>QueryChannel</code> streaming time-series 
@@ -59,6 +59,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * The <code>{@link #lstCmpRqsts}</code> field is created within creator 
  * <code>{@link #from(DpDataRequest, RequestDecompType, DpGrpcStreamType, int)}</code> and should not be 
  * explicitly supplied.
+ * </p>
  *
  * @param   indCase     the test case index
  * @param   enmRqstOrg  the original time-series data request
@@ -123,7 +124,7 @@ public record QueryChannelTestCase(
     private static final    DataRequestDecomposer   PRCR_DECOMP = DataRequestDecomposer.create();
     
     /** Internal test case index (counter) */
-    private static          int IND_CASE = 0;
+    private static          int IND_CASE = 1;
     
     
     //

@@ -56,24 +56,25 @@ executed in the library installation directory (i.e., where the library `pom.xml
 The Java API Library requires the configuration file `dp-api-config.yml` which contains all the default configuration parameters for the library.  Most parameters are set to their optimal values but users are able to tune parameters
 for optimal performance on the host platform.  However, it is necessary that the address of the Data Platform Core Service **must** be correctly specified in the configuration file.  These addresses (the URL and port) are found in the `connections` section of the configuration file.
 
-Currently all configuration parameters should be set **before** the library build - the configuration file is built directly into any Java API Library build products.  The library thus refers to the configuration within its local resource section (i.e., rather than external resources).  Clearly this is not optimal and dynamic configuration will be available in the future.
+### Static Configuration
+There are a default configuration files in the `..main/resources` directories of the project which are built into the Java archive products.  Any configuration parameters within the `/resources` directories should be set **before** the library build - as the result is built directly into any Java API Library build products.  If no external configuration resources are found (see 'Dynamic Configuration' below), the library then refers to the configuration within its local resource section.  Clearly this is not optimal and dynamic configuration is generally preferred.
 
 ### Dynamic Configuration
 The Java API Library configuration can be established "on the fly," specifically, at the time of the library start up.  Thus, any modification to the `dp-api-config.yml` file will be effective post build.  However, once the Java API Library has been started all library configurations are loaded at the time of first access, and any modifications will not be noticed until the library has shut down and re-started.
 
-#### <a id="dp_api_java_home"> The `DP_API_JAVA_HOME` Environment Variable </a>
-The dynamic library configuration described above is facilitated using the environment variable `DP_API_JAVA_HOME`. The Java API Library installation directory contains the sub-directory `config` which will hold all up-to-date configuration files.  Any configuration required by the library will then refer to file in that directory.  In order that this mechanism function correctly the `DP_API_JAVA_HOME` environment variable must be set to the location of the Java API Library install, say `jal_install`.  This is most easily accomplished by modifying the `~/.dp.env` Data Platform environment file to include the additional line
+#### <a id="dp_api_java_home"> The `DP_JAL_HOME` Environment Variable </a>
+The dynamic library configuration described above is facilitated using the environment variable `DP_JAL_HOME`. The Java API Library installation directory contains the sub-directory `config` which will hold all up-to-date configuration files.  Any configuration required by the library will then refer to file in that directory.  In order that this mechanism function correctly the `DP_JAL_HOME` environment variable must be set to the location of the Java API Library install, say `jal_install`.  This is most easily accomplished by modifying the `~/.dp.env` Data Platform environment file to include the additional line
 
-`export DP_API_JAVA_HOME=jal_install`,
+`export DP_JAL_HOME=jal_install`,
 
-where again `jal_install` is the location of the local Java API Library installation.  (Recall that the primary function for file `~/.dp.env` is to set the environment variable `DP_HOME` to the location of the Data Platform core services installation.)  Of course setting the environment variable `DP_API_JAVA_HOME` to the proper location any time before invoking the Java API Library will also allow dynamic library configuration.
+where again `jal_install` is the location of the local Java API Library installation.  (Recall that the primary function for file `~/.dp.env` is to set the environment variable `DP_HOME` to the location of the Data Platform core services installation.)  Of course setting the environment variable `DP_JAL_HOME` to the proper location any time before invoking the Java API Library will also allow dynamic library configuration.
 
 #### Java Virtual Machine Arguments
-The Java Virtual Machine (VM) allows command-line arguments starting with the `-D` option which appear as "system properties" within the Java VM.  The Java API Library will also check the Java VM system property `DP_API_JAVA_HOME` to see if it has been set to the installation location `jal_install`.  Thus, the `DP_API_JAVA_HOME` is also a Java VM property that can be set when starting a Java application from the command line (i.e., one that uses the JAVA API Library).  For example say an application `my_app` uses the Java API Library, the follow command sets the Java VM system property to the proper value for dynamic library configuration:
+The Java Virtual Machine (VM) allows command-line arguments starting with the `-D` option which appear as "system properties" within the Java VM.  The Java API Library will also check the Java VM system property `DP_JAL_HOME` to see if it has been set to the installation location `jal_install`.  Thus, the `DP_JAL_HOME` is also a Java VM property that can be set when starting a Java application from the command line (i.e., one that uses the JAVA API Library).  For example say an application `my_app` uses the Java API Library, the follow command sets the Java VM system property to the proper value for dynamic library configuration:
 
-`%java -cp dp-api-java-shaded-1.x.x.jar -DDP_API_JAVA_HOME=jal_install my_app`
+`%java -cp dp-api-java-shaded-1.x.x.jar -DDP_JAL_HOME=jal_install my_app`
 
-To conform to the Java standard for system properties, the property `dp.api.java.home` is also a valid identifier for the Java API Library installation location (i.e., in addition to `DP_API_JAVA_HOME`).  For example, for an executable Java archive (JAR) `my-exec-jar.jar` with main class `org.package.my-app` the following command sets the Java VM system property for dynamic library configuration
+To conform to the Java standard for system properties, the property `dp.jal.home` is also a valid identifier for the Java API Library installation location (i.e., in addition to `DP_JAL_HOME`).  For example, for an executable Java archive (JAR) `my-exec-jar.jar` with main class `org.package.my-app` the following command sets the Java VM system property for dynamic library configuration
 
 `%java -jar my-exec-jar.jar -cp dp-api-java-shaded-1.x.x.jar -Ddp.api.java.home=jal_install org.package.my_app`
 
@@ -185,16 +186,16 @@ The Java API Library ships with a set of tools and utilities.  These are executa
 where `jal_install` is the location of the Java API Library installation.  
 
 ### Tools Configuration
-The environment variable `DP_API_JAVA_HOME` must be set to the location of the local installation (i.e., "`jal_install`") to ensure that the above scripts run correctly. Recall that modifying the Data Platform environment file `~/.dp.env` is the straightforward method for setting this variable; see the section (The `DP_API_JAVA_HOME` Environment Variable)[#dp_api_home].    
+The environment variable `DP_JAL_HOME` must be set to the location of the local installation (i.e., "`jal_install`") to ensure that the above scripts run correctly. Recall that modifying the Data Platform environment file `~/.dp.env` is the straightforward method for setting this variable; see the section (The `DP_JAL_HOME` Environment Variable)[#dp_api_home].    
 
 Additionally, there are other environment variables that should be set for some tools to operate correctly.  Many Java API Library tools require an output location.  Specifically, they create reports summarizing their results and require an output file to deposit these reports.  The environment variable `DP_API_JAVA_TOOLS_OUTPUT` should be set to the output location on the local platform for all Java API Library tools.  
 
 ### Tools Output Locations
 The directories for Java API Library tools output must be created in advance.  Thus, the following line should be included in the `~/.dp.env` file:
 
-`export DP_API_TOOLS_OUTPUT=my-local-output-directory`
+`export DP_JAL_OUTPUT=my-local-output-directory`
 
-where `my-local-output-directory` is the location for tools outputs.
+where `my-local-output-directory` is the location for tools outputs.  As with the `DP_JAL_HOME` variable, the `DP_JAL_OUTPUT` can be included in the Java command-line, where it also has the synonym `dp.jal.output`.
 
 Typically each tools has a separate sub-directory structure where it deposits its results.  For example, the `QueryChannelEvalutor` application, which can be started with script `app-run-querychannel-evaluator` has the sub-directory `query/channel` as its output location.  Thus, the directory
 

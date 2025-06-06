@@ -758,7 +758,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
         
         // Check argument
         if (!this.hasSourceData(strName))
-            throw new NoSuchElementException(JavaRuntime.getMethodClassSimple() + " does NOT contain source " + strName);
+            throw new NoSuchElementException(JavaRuntime.getMethodClassNameSimple() + " does NOT contain source " + strName);
             
         return this.mapSrcToIndex.get(strName);
 //        OptionalInt index = IntStream.range(0, this.getDataSourceCount()).filter(i -> this.vecSeriess.get(i).getName().equals(strName)).findAny();
@@ -835,7 +835,7 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
 
         // Check argument
         if (!this.hasSourceData(strName))
-            throw new NoSuchElementException(JavaRuntime.getMethodClassSimple() + " does NOT contain source " + strName);
+            throw new NoSuchElementException(JavaRuntime.getMethodClassNameSimple() + " does NOT contain source " + strName);
             
         return this.mapSrcToSeries.get(strName);
     }

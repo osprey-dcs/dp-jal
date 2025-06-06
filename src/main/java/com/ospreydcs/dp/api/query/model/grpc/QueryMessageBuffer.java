@@ -197,6 +197,29 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
         
         return lngAlloc;
     }
+    
+    /**
+     * <p>
+     * Returns all the data messages within the message queue buffer in its current state.
+     * </p>
+     * <p>
+     * This is a non-blocking but non-synchronized operation.  All the data message within the
+     * queue buffer at the time of this calling are returned, in order.  The queue buffer configuration
+     * or state is not changed (unlike a <code>{@link #offer(List)}, {@link #take()}, {@link #poll()}</code>).  
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method should not be used for transfer operations, as the buffer state is not managed here.
+     * It is provided as a convenience to observe buffer operations.
+     * </p>
+     * 
+     * @return  the message queue buffer data state at the time of the method invocation
+     */
+    public List<QueryData>    peakAtQueueData() {
+        List<QueryData> lstMsgsCurr = this.queMsgBuffer.stream().toList();
+        
+        return lstMsgsCurr;
+    }
 
     
     //
@@ -318,7 +341,6 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     }
     
     /**
-     *
      * @see @see com.ospreydcs.dp.api.model.IMessageConsumer#offer(java.util.List)
      */
     @Override

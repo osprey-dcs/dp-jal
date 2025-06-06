@@ -56,10 +56,9 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryStatic;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
-import com.ospreydcs.dp.api.tools.config.DpApiToolsConfig;
-import com.ospreydcs.dp.api.tools.config.query.DpApiToolsQueryConfig;
-import com.ospreydcs.dp.api.tools.config.request.DpRequestSuiteConfig;
-import com.ospreydcs.dp.api.tools.query.TestResultSummary;
+import com.ospreydcs.dp.api.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.api.tools.config.query.JalToolsQueryConfig;
+import com.ospreydcs.dp.api.tools.config.request.JalRequestSuiteConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 
@@ -77,7 +76,7 @@ import com.ospreydcs.dp.api.util.Log4j;
  * where 
  * <ul>
  * <li><code>name</code> = name of a pre-defined test suite configuration within the Java API Tools configuration.</li>
- * <li><code>name</code> = file path of a YAML file containing <code>DpRequestSuiteConfig</code> formatted test suite.</li>
+ * <li><code>name</code> = file path of a YAML file containing <code>JalRequestSuiteConfig</code> formatted test suite.</li>
  * <li><code>output</code> = path for evaluation output file (unique file is created). </li>
  * <li><code>output</code> = file path for evaluation output (any existing file is clobbered).</li> 
  * <li><code>output</code> = the string "console" - evaluation output is sent directly to console. 
@@ -88,7 +87,7 @@ import com.ospreydcs.dp.api.util.Log4j;
  * </p>
  * <p>
  * <h2>Test Suites</h2>
- * The <code>QueryChannelEvaluator</code> runs "test suites" described by the <code>{@link DpRequestSuiteConfig}</code>
+ * The <code>QueryChannelEvaluator</code> runs "test suites" described by the <code>{@link JalRequestSuiteConfig}</code>
  * structure class.  The structure class is used to instantiate a <code>{@link QueryChannelTestSuite}</code>
  * object.  The <code>QueryChannelTestSuite</code> object generates collections of 
  * <code>{@link QueryChannelTestCase}</code> instances according to the configuration in the original structure class.
@@ -244,7 +243,7 @@ public class QueryChannelEvaluator {
     //
     
     /** Query tools default configuration parameters */
-    private static final DpApiToolsQueryConfig     CFG_DEF = DpApiToolsConfig.getInstance().query;
+    private static final JalToolsQueryConfig     CFG_DEF = JalToolsConfig.getInstance().query;
     
     
     //
@@ -448,7 +447,7 @@ public class QueryChannelEvaluator {
      * @throws ConfigurationException   there are no test requests in the given configuration
      * @throws DpGrpcException          unable to establish connection to the Data Platform Query Service
      */
-    public QueryChannelEvaluator(String strInputName, String strOutputLoc, DpRequestSuiteConfig cfgSuite, PrintStream psOutput) throws ConfigurationException, DpGrpcException {
+    public QueryChannelEvaluator(String strInputName, String strOutputLoc, JalRequestSuiteConfig cfgSuite, PrintStream psOutput) throws ConfigurationException, DpGrpcException {
         this.strInputName = strInputName;
         this.strOutputLoc = strOutputLoc;
         this.psOutput = psOutput;
@@ -674,7 +673,7 @@ public class QueryChannelEvaluator {
         // Print out results summary
         TestResultSummary.assignTargetDataRate(DBL_RATE_TARGET);
         TestResultSummary  recSummary = TestResultSummary.summarize(this.setResults);
-        recSummary.printOut(ps, null);
+        recSummary.printOutChannelSummary(ps, null);
         ps.println();
         
         // Print out results extremes
@@ -752,7 +751,7 @@ public class QueryChannelEvaluator {
 //     * 
 //     * @throws ConfigurationException    there are no test requests in the given configuration
 //     */
-//    private Collection<QueryChannelTestCase>    initTestCases(DpRequestSuiteConfig cfgSuite) throws ConfigurationException {
+//    private Collection<QueryChannelTestCase>    initTestCases(JalRequestSuiteConfig cfgSuite) throws ConfigurationException {
 //        QueryChannelTestSuite   suite = QueryChannelTestSuite.from(cfgSuite);
 //        
 //        Collection<QueryChannelTestCase>    setCases = suite.createTestSuite(); // throws exception
@@ -849,7 +848,7 @@ public class QueryChannelEvaluator {
             strOutputLoc = STR_OUTPUT_PATH_DEF;
         
         // Recovery/create input and output resources for the QueryChannelEvaluator instance
-        DpRequestSuiteConfig    cfgRqst = recoverTestSuiteConfig(strCfgName);   // throws FindException
+        JalRequestSuiteConfig    cfgRqst = recoverTestSuiteConfig(strCfgName);   // throws FindException
         PrintStream             psOutput = createOutputStream(strOutputLoc);    // throws UnsupportedOperationException, FileNotFoundException, SecurityException
 
         // Direct the logging output to the output stream
@@ -870,7 +869,7 @@ public class QueryChannelEvaluator {
      * The argument is assumed to be either a named, pre-defined test suite configuration within the Java API Tools
      * configuration file, or a separate file containing a test suite configuration.  In the case of the latter,
      * the file must be a YAML file containing the test suite configuration in a valid format for the structure
-     * class <code>{@link DpRequestSuiteConfig}</code>.  In the former case, the structure class obtained from the
+     * class <code>{@link JalRequestSuiteConfig}</code>.  In the former case, the structure class obtained from the
      * tools library configuration file is returned.  In the latter case, the YAML file is loaded and the structure
      * class is populated from the file parameters then returned.
      * </p>
@@ -886,27 +885,27 @@ public class QueryChannelEvaluator {
      * thrown.
      * </li>
      * <li>
-     * An attempt is made to read the (valid) file into a new <code>DpRequestSuiteConfig</code> structure class.
+     * An attempt is made to read the (valid) file into a new <code>JalRequestSuiteConfig</code> structure class.
      * If that fails an exception is thrown.
      * </li>
      * <li>
-     * If operation arrives here then the new <code>DpRequestSuiteConfig</code> instance is valid and it
+     * If operation arrives here then the new <code>JalRequestSuiteConfig</code> instance is valid and it
      * is returned.
      * </li>
      * </ol>
      * 
      * @param strName   named, pre-defined test suite or path containing file with test suite configuration
      *  
-     * @return  a new <code>DpRequestSuiteConfig</code> structure class with test suite configuration
+     * @return  a new <code>JalRequestSuiteConfig</code> structure class with test suite configuration
      * 
      * @throws FindException the argument was neither a pre-defined test suite nor a valid configuration file
      */
-    private static DpRequestSuiteConfig recoverTestSuiteConfig(String strName) throws FindException {
+    private static JalRequestSuiteConfig recoverTestSuiteConfig(String strName) throws FindException {
         
         // Check if name is a pre-defined test suite (in the API Tools configuration)
-        List<DpRequestSuiteConfig>  lstCfgsAll = CFG_DEF.testRequests.testSuites;
+        List<JalRequestSuiteConfig>  lstCfgsAll = CFG_DEF.testRequests.testSuites;
         
-        List<DpRequestSuiteConfig>  lstCfgTarget = lstCfgsAll.stream().filter(cfg -> strName.equals( cfg.testSuite.name) ).toList();
+        List<JalRequestSuiteConfig>  lstCfgTarget = lstCfgsAll.stream().filter(cfg -> strName.equals( cfg.testSuite.name) ).toList();
         if (!lstCfgTarget.isEmpty())
             return lstCfgTarget.getFirst();
         
@@ -937,7 +936,7 @@ public class QueryChannelEvaluator {
        
         // Attempt to load test suite configuration from file (name is a valid file)
         try {
-            DpRequestSuiteConfig cfg = CfgLoaderYaml.load(file, DpRequestSuiteConfig.class);
+            JalRequestSuiteConfig cfg = CfgLoaderYaml.load(file, JalRequestSuiteConfig.class);
             
             return cfg;
             
@@ -1012,7 +1011,7 @@ public class QueryChannelEvaluator {
      * </p>
      * <p>
      * The returned file name is constructed from the class simple name, the current time instant,
-     * and the output file extension <code>{@link #STR_OUTPUT_FILE_EXT}</code>.
+     * and the output file extension <code>{@link #STR_FILE_EXT_DEF}</code>.
      * </p>
      * 
      * @return  new, unique, file name for output file

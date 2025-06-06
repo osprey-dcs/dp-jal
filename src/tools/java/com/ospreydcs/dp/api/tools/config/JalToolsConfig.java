@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpApiToolsConfig.java
+ * File:	JalToolsConfig.java
  * Package: com.ospreydcs.dp.api.tools.config
- * Type: 	DpApiToolsConfig
+ * Type: 	JalToolsConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -34,7 +34,7 @@ import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.tools.config.query.DpApiToolsQueryConfig;
+import com.ospreydcs.dp.api.tools.config.query.JalToolsQueryConfig;
 
 /**
  * <p>
@@ -50,8 +50,8 @@ import com.ospreydcs.dp.api.tools.config.query.DpApiToolsQueryConfig;
  * @since May 4, 2025
  *
  */
-@ACfgOverride.Root(root="DP_API_TOOLS")
-public class DpApiToolsConfig extends CfgStructure<DpApiToolsConfig> {
+@ACfgOverride.Root(root="JAL_TOOLS")
+public class JalToolsConfig extends CfgStructure<JalToolsConfig> {
 
     
     //
@@ -59,7 +59,7 @@ public class DpApiToolsConfig extends CfgStructure<DpApiToolsConfig> {
     //
     
     /** Name of file containing the Java API Library tools configuration parameters */
-    public static final String  STR_CFG_FILE_NAME = "dp-api-tools-config.yml";
+    public static final String  STR_CFG_FILE_NAME = "jal-tools-config.yml";
     
 
     // 
@@ -75,7 +75,7 @@ public class DpApiToolsConfig extends CfgStructure<DpApiToolsConfig> {
     //
     
     /** Singleton instance of this class */
-    private static DpApiToolsConfig   cfgInstance = null;
+    private static JalToolsConfig   cfgInstance = null;
 
     
     //
@@ -84,7 +84,7 @@ public class DpApiToolsConfig extends CfgStructure<DpApiToolsConfig> {
     
     /**
      * <p>
-     * Returns the singleton instance of the <code>DpApiToolsConfig</code> class.  
+     * Returns the singleton instance of the <code>JalToolsConfig</code> class.  
      * </p>
      * <p>
      * If this is the first call to this method, the instance <code>{@link #cfgInstance}</code> is created using the
@@ -93,16 +93,16 @@ public class DpApiToolsConfig extends CfgStructure<DpApiToolsConfig> {
      * annotation class) are then overridden with any environment variables that have been set.
      * </p>
      * 
-     * @return singleton instance of <code>DpApiToolsConfig</code> containing initialization parameters
+     * @return singleton instance of <code>JalToolsConfig</code> containing initialization parameters
      *          for application
      */
-    public static DpApiToolsConfig getInstance() {
-        if (DpApiToolsConfig.cfgInstance == null) {
+    public static JalToolsConfig getInstance() {
+        if (JalToolsConfig.cfgInstance == null) {
             try {
-                DpApiToolsConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE_NAME, DpApiToolsConfig.class);
+                JalToolsConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE_NAME, JalToolsConfig.class);
                 
-                CfgOverrideUtility.overrideRoot(DpApiToolsConfig.cfgInstance, CfgOverrideUtility.SOURCE.ENVIRONMENT);
-                CfgOverrideUtility.overrideRoot(DpApiToolsConfig.cfgInstance, CfgOverrideUtility.SOURCE.PROPERTIES);
+                CfgOverrideUtility.overrideRoot(JalToolsConfig.cfgInstance, CfgOverrideUtility.SOURCE.ENVIRONMENT);
+                CfgOverrideUtility.overrideRoot(JalToolsConfig.cfgInstance, CfgOverrideUtility.SOURCE.PROPERTIES);
                 
             } catch (FileNotFoundException e) {
                 LOGGER.error("Unable to load properties from file: {}", STR_CFG_FILE_NAME);
@@ -111,7 +111,7 @@ public class DpApiToolsConfig extends CfgStructure<DpApiToolsConfig> {
                 System.exit(1);
                 
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                LOGGER.error("The {} class was not properly annotated for property overrides", DpApiToolsConfig.class.getName());
+                LOGGER.error("The {} class was not properly annotated for property overrides", JalToolsConfig.class.getName());
                 LOGGER.error("  Cause: ", e.getClass().getName());
                 LOGGER.error("  Message: {}", e.getMessage());
                 LOGGER.error("  Irrecoverable error. Exiting...");
@@ -121,11 +121,11 @@ public class DpApiToolsConfig extends CfgStructure<DpApiToolsConfig> {
                 
         }
         
-        return DpApiToolsConfig.cfgInstance;
+        return JalToolsConfig.cfgInstance;
     }
     
     /** Default constructor required for super class */
-    public DpApiToolsConfig() { super(DpApiToolsConfig.class); }
+    public JalToolsConfig() { super(JalToolsConfig.class); }
 
     
     //
@@ -134,11 +134,11 @@ public class DpApiToolsConfig extends CfgStructure<DpApiToolsConfig> {
     
 //    /** Default output locations of Java API Library tools */
 //    @ACfgOverride.Struct(pathelem="OUTPUT")
-//    public DpApiQueryOutputConfig   output;
+//    public JalQueryOutputConfig   output;
     
     /** Default configuration parameters for Java API Library query service tools */
     @ACfgOverride.Struct(pathelem="QUERY")
-    public DpApiToolsQueryConfig    query;
+    public JalToolsQueryConfig    query;
     
 
 }

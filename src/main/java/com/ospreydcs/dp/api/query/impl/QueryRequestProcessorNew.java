@@ -608,6 +608,7 @@ public class QueryRequestProcessorNew {
         }
         
         this.cntMaxStreams = cntStreams;
+        this.prcrCorrelator.setMaxThreadCount(cntStreams);
     }
     
     /**
@@ -703,7 +704,8 @@ public class QueryRequestProcessorNew {
      */
     public void enableCorrelateConcurrently(boolean bolCorrelateConcurrently) {
         this.bolCorrelateConcurrenly = bolCorrelateConcurrently;
-        this.prcrCorrelator.enableConcurrency(this.cntMaxStreams);
+        this.prcrCorrelator.enableConcurrency(bolCorrelateConcurrently);
+//        this.prcrCorrelator.setMaxThreadCount(this.cntMaxStreams);
     }
     
     /**

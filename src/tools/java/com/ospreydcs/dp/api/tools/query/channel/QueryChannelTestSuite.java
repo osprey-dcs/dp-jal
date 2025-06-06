@@ -27,34 +27,27 @@ package com.ospreydcs.dp.api.tools.query.channel;
 
 import java.io.PrintStream;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.Predicate;
 
 import javax.naming.ConfigurationException;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.tools.config.DpApiToolsConfig;
-import com.ospreydcs.dp.api.tools.config.query.DpApiToolsQueryConfig;
-import com.ospreydcs.dp.api.tools.config.request.DpRequestSuiteConfig;
+import com.ospreydcs.dp.api.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.api.tools.config.query.JalToolsQueryConfig;
+import com.ospreydcs.dp.api.tools.config.request.JalRequestSuiteConfig;
 import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.api.util.Log4j;
 
 /**
  * <p>
- * Generator for collections of <code>QueryChannelTestCase</code> instances.
+ * Configurable generator for collections of <code>QueryChannelTestCase</code> instances.
  * </p> 
  *
  * @author Christopher K. Allen
@@ -73,7 +66,7 @@ public class QueryChannelTestSuite {
      * Creates a new <code>QueryChannelTestSuite</code> initialized from the given configuration object.
      * </p>
      * <p>
-     * The <code>DpRequestSuiteConfig</code> structure class is parsed for configuration parameters which
+     * The <code>JalRequestSuiteConfig</code> structure class is parsed for configuration parameters which
      * are used to populate the returned test suite.  Note that there must be at least one named
      * <code>TestArchiveRequest</code> enumeration within the argument for valid <code>QueryChannelTestSuite</code>
      * creation.
@@ -83,7 +76,7 @@ public class QueryChannelTestSuite {
      * 
      * @return  a new <code>QueryChannelTestSuite</code> instance configured according to the argument
      */
-    public static QueryChannelTestSuite from(DpRequestSuiteConfig cfgSuite) {
+    public static QueryChannelTestSuite from(JalRequestSuiteConfig cfgSuite) {
         
         QueryChannelTestSuite   suite = new QueryChannelTestSuite(cfgSuite.testSuite.name);
         
@@ -108,7 +101,7 @@ public class QueryChannelTestSuite {
     //
     
     /** Query tools default configuration parameters */
-    private static final DpApiToolsQueryConfig     CFG_DEF = DpApiToolsConfig.getInstance().query;
+    private static final JalToolsQueryConfig     CFG_DEF = JalToolsConfig.getInstance().query;
     
     
     //
@@ -119,7 +112,7 @@ public class QueryChannelTestSuite {
     public static final boolean     BOL_LOGGING = CFG_DEF.logging.enabled;
     
     /** Event logging level */
-    public static final String      BOL_LOGGING_LEVEL = CFG_DEF.logging.level;
+    public static final String      STR_LOGGING_LEVEL = CFG_DEF.logging.level;
     
     
     /** Default gRPC stream type */
@@ -137,11 +130,7 @@ public class QueryChannelTestSuite {
     //
     
     /** Class event logger */
-    private static final Logger     LOGGER = LogManager.getLogger();
-    
-    static {
-        Configurator.setLevel(LOGGER, Level.toLevel(BOL_LOGGING_LEVEL, LOGGER.getLevel()));
-    }
+    private static final Logger     LOGGER = Log4j.getLogger(QueryChannelTestSuite.class, STR_LOGGING_LEVEL);
     
     
     //
@@ -267,7 +256,7 @@ public class QueryChannelTestSuite {
      * </p>
      * <p>
      * If no test data request was added to the test suite an exception is thrown.  If a test suite configuration
-     * parameter was not assigned then a singled default value is assigned for that parameter.  See the following 
+     * parameter was not assigned then a single default value is assigned for that parameter.  See the following 
      * class constants for test suite default configuration values.
      * <ul>
      * <li><code>{@link #INT_STRM_CNT_DEF}</code> - default stream count.</li> 

@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.api.query.model.grpc;
+package com.ospreydcs.dp.api.query.model.correl;
 
 import java.util.List;
 import java.util.Set;

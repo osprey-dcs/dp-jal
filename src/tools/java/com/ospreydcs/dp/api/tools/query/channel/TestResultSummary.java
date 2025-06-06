@@ -23,7 +23,7 @@
  * @since May 9, 2025
  *
  */
-package com.ospreydcs.dp.api.tools.query;
+package com.ospreydcs.dp.api.tools.query.channel;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.ospreydcs.dp.api.tools.query.channel.QueryChannelTestResult;
 import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
 
 /**
@@ -50,6 +49,11 @@ import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
  * collection.
  * </p> 
  * <p>
+ * The "allocation size" fields have different meaning in different context.  For correlator test the allocation
+ * size is the number of bytes processed.  For query channel tests the allocation size is the total memory allocation
+ * (in bytes) of the recovered data.
+ * </p>
+ * <p>
  * The "block count" fields have different meanings for different situations.  For example, in data correlator
  * tests the block count is the number of correlated blocks.  For query channel tests the block count is the
  * number of recovered <code>QueryData</code> messages.
@@ -62,12 +66,12 @@ import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
  * @param dblRateMax    the maximum data rate seen in the result collection 
  * @param dblRateAvg    the average data rate within the result collection
  * @param dblRateStd    the data rate standard deviation of the result collection
- * @param szRqstMin     the minimum memory allocation size seen in a recovery (in bytes)
- * @param szRqstMax     the maximum memory allocation size seen in a recovery (in bytes)
- * @param szRqstAvg     average size (in bytes) of recovered data per recovery
- * @param cntBlksMin    the minimum number of correlated data blocks seen in a recovery
- * @param cntBlksMax    the maximum number of correlated data blocks seen in a recovery
- * @param cntBlksAvg    average number of correlated data blocks recovered per request
+ * @param cntMsgsMin    the minimum number of recovered data messages seen in a test
+ * @param cntMsgsMax    the maximum number of recovered data messages seen in a test
+ * @param cntMsgsAvg    average number of correlated data blocks per test
+ * @param szRcvryMin    the minimum recovered allocation size (in bytes)
+ * @param szRcvryMax    the maximum recovered allocation size (in bytes)
+ * @param szRcvryAvg    average allocation size (in bytes) of recovered for each request 
  * @param durRqstMin    the minimum request time duration observed within the result collection
  * @param durRqstMax    the maximum request time duration observed within the result collection
  * @param durRqstAvg    the average request time duration within the result collection
@@ -86,12 +90,12 @@ public record TestResultSummary(
         double      dblRateMax,
         double      dblRateAvg,
         double      dblRateStd,
-        long        szRqstMin,
-        long        szRqstMax,
-        long        szRqstAvg,
-        int         cntBlksMin,
-        int         cntBlksMax,
-        int         cntBlksAvg,
+        int         cntMsgsMin,
+        int         cntMsgsMax,
+        int         cntMsgsAvg,
+        long        szRcvryMin,
+        long        szRcvryMax,
+        long        szRcvryAvg,
         Duration    durRqstMin,
         Duration    durRqstMax,
         Duration    durRqstAvg,
@@ -121,18 +125,18 @@ public record TestResultSummary(
      * @param dblRateMax    the maximum data rate seen in the result collection 
      * @param dblRateAvg    the average data rate within the result collection
      * @param dblRateStd    the data rate standard deviation of the result collection
-     * @param szRqstMin    the minimum memory allocation size seen in a recovery (in bytes)
-     * @param szRqstMin    the maximum memory allocation size seen in a recovery (in bytes)
-     * @param szRqstAvg     average size (in bytes) of recovered data per request
-     * @param cntBlksMin    the minimum number of correlated data blocks seen in a recovery
-     * @param cntBlksMax    the maximum number of correlated data blocks seen in a recovery
-     * @param cntBlksAvg    average number of correlated data blocks recovered per request
-     * @param durRqstMin    the minimum request time duration observed within the result collection
+     * @param cntMsgsMin    the minimum number of correlated data blocks seen in a test
+     * @param cntMsgsMax    the maximum number of correlated data blocks seen in a test
+     * @param cntMsgsAvg    average number of correlated data blocks per test
+     * @param szRcvryMin   the minimum memory allocation size (in bytes)
+     * @param szRcvryMax   the maximum memory allocation size (in bytes)
+     * @param szRcvryAvg    average allocation size (in bytes) of recovered/processed data 
+     * @param durRqstMin    the minimum request time duration observed for all test operations
      * @param durRqstMax    the maximum request time duration observed within the result collection
      * @param durRqstAvg    the average request time duration within the result collection
      * @param durRqstStd    the request duration standard deviation of the result collection
      * 
-     * @return  a new <code>ResultSummary</code> record populated with the given arguments
+     * @return  a new <code>TestResultSummary</code> record populated with the given arguments
      */
     public static TestResultSummary from(
             int         cntResultsTot,
@@ -142,12 +146,12 @@ public record TestResultSummary(
             double      dblRateMax,
             double      dblRateAvg,
             double      dblRateStd,
-            long        szRqstMin,
-            long        szRqstMax,
-            long        szRqstAvg,
-            int         cntBlksMin,
-            int         cnttBlksMax,
-            int         cntBlksAvg,
+            int         cntMsgsMin,
+            int         cntMsgsMax,
+            int         cntMsgsAvg,
+            long        szRcvryMin,
+            long        szRcvryMax,
+            long        szRcvryAvg,
             Duration    durRqstMin,
             Duration    durRqstMax,
             Duration    durRqstAvg,
@@ -155,22 +159,22 @@ public record TestResultSummary(
             ) 
     {
         return new TestResultSummary(
-                cntResultsTot, 
-                cntRatesGtAvg, 
-                cntRatesGtTgt, 
-                dblRateMin, 
-                dblRateMax, 
-                dblRateAvg, 
-                dblRateStd, 
-                szRqstMin,
-                szRqstMax,
-                szRqstAvg,
-                cntBlksMin,
-                cnttBlksMax,
-                cntBlksAvg,
+                cntResultsTot,
+                cntRatesGtAvg,
+                cntRatesGtTgt,
+                dblRateMin,
+                dblRateMax,
+                dblRateAvg,
+                dblRateStd,
+                cntMsgsMin,
+                cntMsgsMax,
+                cntMsgsAvg,
+                szRcvryMin,
+                szRcvryMax,
+                szRcvryAvg,
                 durRqstMin,
                 durRqstMax,
-                durRqstAvg, 
+                durRqstAvg,
                 durRqstStd,
                 new HashMap<TestArchiveRequest, Integer>());
     }
@@ -191,16 +195,16 @@ public record TestResultSummary(
      * @param dblRateMax    the maximum data rate seen in the result collection 
      * @param dblRateAvg    the average data rate within the result collection
      * @param dblRateStd    the data rate standard deviation of the result collection
-     * @param szRqstMin     the minimum memory allocation size seen in a recovery (in bytes)
-     * @param szRqstMin     the maximum memory allocation size seen in a recovery (in bytes)
-     * @param szRqstAvg     average size (in bytes) of recovered data per request
-     * @param cntBlksMin    the minimum number of correlated data blocks seen in a recovery
-     * @param cntBlksMax    the maximum number of correlated data blocks seen in a recovery
-     * @param cntBlksAvg    average number of correlated data blocks recovered per request
-     * @param durRqstMin    the minimum request recovery time duration observed within the result collection
-     * @param durRqstMax    the maximum request recovery time duration observed within the result collection
-     * @param durRqstAvg    the average request recovery time duration within the result collection
-     * @param durRqstStd    the request recovery duration standard deviation of the result collection
+     * @param cntMsgsMin    the minimum number of correlated data blocks seen in a test
+     * @param cntMsgsMax    the maximum number of correlated data blocks seen in a test
+     * @param cntMsgsAvg    average number of correlated data blocks per test
+     * @param szRcvryMin   the minimum memory allocation size (in bytes)
+     * @param szRcvryMax   the maximum memory allocation size (in bytes)
+     * @param szRcvryAvg    average allocation size (in bytes) of recovered/processed data 
+     * @param durRqstMin    the minimum request time duration observed for all test operations
+     * @param durRqstMax    the maximum request time duration observed within the result collection
+     * @param durRqstAvg    the average request time duration within the result collection
+     * @param durRqstStd    the request duration standard deviation of the result collection
      * @param mapRqstHits   map of (request, hit count) pairs specifying the number of times a request appears in the collection
      * 
      * @return  a new <code>ResultSummary</code> record populated with the given arguments
@@ -213,12 +217,12 @@ public record TestResultSummary(
             double      dblRateMax,
             double      dblRateAvg,
             double      dblRateStd,
-            long        szRqstMin,
-            long        szRqstMax,
-            long        szRqstAvg,
-            int         cntBlksMin,
-            int         cntBlksMax,
-            int         cntBlksAvg,
+            int         cntMsgsMin,
+            int         cntMsgsMax,
+            int         cntMsgsAvg,
+            long        szRcvryMin,
+            long        szRcvryMax,
+            long        szRcvryAvg,
             Duration    durRqstMin,
             Duration    durRqstMax,
             Duration    durRqstAvg,
@@ -226,22 +230,22 @@ public record TestResultSummary(
             Map<TestArchiveRequest, Integer> mapRqstHits) 
     {
         return new TestResultSummary(
-                cntResultsTot, 
-                cntRatesGtAvg, 
-                cntRatesGtTgt, 
-                dblRateMin, 
-                dblRateMax, 
-                dblRateAvg, 
-                dblRateStd, 
-                szRqstMin,
-                szRqstMax,
-                szRqstAvg,
-                cntBlksMin,
-                cntBlksMax,
-                cntBlksAvg,
+                cntResultsTot,
+                cntRatesGtAvg,
+                cntRatesGtTgt,
+                dblRateMin,
+                dblRateMax,
+                dblRateAvg,
+                dblRateStd,
+                cntMsgsMin,
+                cntMsgsMax,
+                cntMsgsAvg,
+                szRcvryMin,
+                szRcvryMax,
+                szRcvryAvg,
                 durRqstMin,
                 durRqstMax,
-                durRqstAvg, 
+                durRqstAvg,
                 durRqstStd,
                 mapRqstHits);
     }
@@ -285,7 +289,7 @@ public record TestResultSummary(
      * new <code>TestResultSummary</code> instance.
      * </p>
      *  
-     * @param setResults    collection of request processor results
+     * @param setResults    collection of test results
      * 
      * @return  a new <code>TestResultSummary</code> record containing a summary of the argument results
      */
@@ -303,15 +307,15 @@ public record TestResultSummary(
         double      dblRateSqrd = setResults.stream().mapToDouble(rec -> rec.dblDataRate()).map(r -> (r-dblRateAvg)*(r-dblRateAvg)).sum();
         double      dblRateStd = Math.sqrt(dblRateSqrd/cntResults); // compute standard deviation
         
-        // Compute the recovered memory size statistics
-        long        szRqstAvg = setResults.stream().mapToLong(rec -> rec.szRecovery()).sum()/cntResults;
-        long        szRqstMin = setResults.stream().mapToLong(rec -> rec.szRecovery()).reduce(szRqstAvg, (s1, s2) -> { if (s1<s2) return s1; else return s2;} );
-        long        szRqstMax = setResults.stream().mapToLong(rec -> rec.szRecovery()).reduce(szRqstAvg, (s1, s2) -> { if (s1>s2) return s1; else return s2;} );
+        // Compute the recovered message count statistics
+        int         cntMsgsAvg = setResults.stream().mapToInt(rec -> rec.cntMessages()).sum()/cntResults;
+        int         cntMsgsMin = setResults.stream().mapToInt(rec -> rec.cntMessages()).reduce(cntMsgsAvg, (b1, b2) -> { if (b1<b2) return b1; else return b2; } );
+        int         cntMsgsMax = setResults.stream().mapToInt(rec -> rec.cntMessages()).reduce(cntMsgsMin, (b1, b2) -> { if (b1>b2) return b1; else return b2; } );
         
-        // Compute the recovered block count (message count) statistics
-        int         cntBlksAvg = setResults.stream().mapToInt(rec -> rec.cntMessages()).sum()/cntResults;
-        int         cntBlksMin = setResults.stream().mapToInt(rec -> rec.cntMessages()).reduce(cntBlksAvg, (b1, b2) -> { if (b1<b2) return b1; else return b2; } );
-        int         cntBlksMax = setResults.stream().mapToInt(rec -> rec.cntMessages()).reduce(cntBlksMin, (b1, b2) -> { if (b1>b2) return b1; else return b2; } );
+        // Compute the recovered memory size statistics
+        long        szRcvryAvg = setResults.stream().mapToLong(rec -> rec.szRecovery()).sum()/cntResults;
+        long        szRcvryMin = setResults.stream().mapToLong(rec -> rec.szRecovery()).reduce(szRcvryAvg, (s1, s2) -> { if (s1<s2) return s1; else return s2;} );
+        long        szRcvryMax = setResults.stream().mapToLong(rec -> rec.szRecovery()).reduce(szRcvryAvg, (s1, s2) -> { if (s1>s2) return s1; else return s2;} );
         
         // Compute the request duration summary results
         Duration    durRqstAvg = setResults.stream().<Duration>map(rec -> rec.durRecovery()).reduce(Duration.ZERO, (d1,d2) -> d1.plus(d2)).dividedBy(cntResults);
@@ -348,12 +352,12 @@ public record TestResultSummary(
                 dblRateMax, 
                 dblRateAvg, 
                 dblRateStd, 
-                szRqstMin,
-                szRqstMax,
-                szRqstAvg,
-                cntBlksMin,
-                cntBlksMax,
-                cntBlksAvg,
+                cntMsgsMin,
+                cntMsgsMax,
+                cntMsgsAvg,
+                szRcvryMin,
+                szRcvryMax,
+                szRcvryAvg,
                 durRqstMin,
                 durRqstMax,
                 durRqstAvg,
@@ -363,6 +367,94 @@ public record TestResultSummary(
         return recSummary;
     }
     
+//    /**
+//     * <p>
+//     * Computes a summary of the performance results for the given collection and returns them.
+//     * </p>
+//     * <p>
+//     * All the fields of a <code>TestResultSummary</code> record are computed from the given 
+//     * collection of test result records.  The computed values are then returned in a 
+//     * new <code>TestResultSummary</code> instance.
+//     * </p>
+//     *  
+//     * @param setResults    collection of test results
+//     * 
+//     * @return  a new <code>TestResultSummary</code> record containing a summary of the argument results
+//     */
+//    public static TestResultSummary summarizeCorrelatorResults(Collection<CorrelatorTestResult> setResults) {
+//        
+//        // Compute general summary results 
+//        int         cntResults = setResults.size();
+//        
+//        double      dblRateAvg = setResults.stream().mapToDouble(rec -> rec.dblDataRate()).sum()/cntResults;
+//        int         cntRatesGtAvg = setResults.stream().filter(rec -> rec.dblDataRate() >= dblRateAvg).mapToInt(rec -> 1).sum();
+//        int         cntRatesGtTgt = setResults.stream().filter(rec -> rec.dblDataRate() >= DBL_RATE_TARGET).mapToInt(rec -> 1).sum();
+//        
+//        double      dblRateMin = setResults.stream().mapToDouble(rec -> rec.dblDataRate()).reduce(dblRateAvg, (r1, r2) -> { if (r1<r2) return r1; else return r2; } );
+//        double      dblRateMax = setResults.stream().mapToDouble(rec -> rec.dblDataRate()).reduce(dblRateAvg, (r1, r2) -> { if (r1>r2) return r1; else return r2; } );
+//        double      dblRateSqrd = setResults.stream().mapToDouble(rec -> rec.dblDataRate()).map(r -> (r-dblRateAvg)*(r-dblRateAvg)).sum();
+//        double      dblRateStd = Math.sqrt(dblRateSqrd/cntResults); // compute standard deviation
+//        
+//        // Compute the recovered memory size statistics
+//        long        szPrcdAvg = setResults.stream().mapToLong(rec -> rec.szProcessed()).sum()/cntResults;
+//        long        szPrcdMin = setResults.stream().mapToLong(rec -> rec.szProcessed()).reduce(szPrcdAvg, (s1, s2) -> { if (s1<s2) return s1; else return s2;} );
+//        long        szPrcdMax = setResults.stream().mapToLong(rec -> rec.szProcessed()).reduce(szPrcdAvg, (s1, s2) -> { if (s1>s2) return s1; else return s2;} );
+//        
+//        // Compute the recovered block count (message count) statistics
+//        int         cntMsgsAvg = setResults.stream().mapToInt(rec -> rec.cntCorrelSet()).sum()/cntResults;
+//        int         cntMsgsMin = setResults.stream().mapToInt(rec -> rec.cntCorrelSet()).reduce(cntMsgsAvg, (b1, b2) -> { if (b1<b2) return b1; else return b2; } );
+//        int         cntMsgsMax = setResults.stream().mapToInt(rec -> rec.cntCorrelSet()).reduce(cntMsgsMin, (b1, b2) -> { if (b1>b2) return b1; else return b2; } );
+//        
+//        // Compute the request duration summary results
+//        Duration    durPrcdAvg = setResults.stream().<Duration>map(rec -> rec.durProcessed()).reduce(Duration.ZERO, (d1,d2) -> d1.plus(d2)).dividedBy(cntResults);
+//        Duration    durPrcdMin = setResults.stream().<Duration>map(rec -> rec.durProcessed()).reduce(durPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) < 0) return d1; else return d2; } );
+//        Duration    durPrcdMax = setResults.stream().<Duration>map(rec -> rec.durProcessed()).reduce(durPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) > 1) return d1; else return d2; } );
+//        
+//        double      dblPrcdNsSqrd = setResults.stream().<Duration>map(rec -> rec.durProcessed()).mapToLong(dur -> dur.toNanos()).mapToDouble(l -> Long.valueOf(l).doubleValue()).map(ns -> ns*ns).sum()/cntResults;
+//        double      dblPrcdNsAvg = Long.valueOf(durPrcdAvg.toNanos() ).doubleValue();
+//        double      dblPrcdNsStd = Math.sqrt(dblPrcdNsSqrd - dblPrcdNsAvg*dblPrcdNsAvg);
+//        Duration    durPrcdStd = Duration.ofNanos(Double.valueOf(dblPrcdNsStd).longValue());
+//        
+//        // Compute request hit counts
+//        Map<TestArchiveRequest, Integer>    mapRqstHits = new HashMap<>();
+//        
+//        for (CorrelatorTestResult recResult : setResults) {
+//            TestArchiveRequest  rqst = recResult.recTestCase().enmRqst();
+//            Integer             intCnt = mapRqstHits.get(rqst);
+//            
+//            if (intCnt == null) {
+//                Integer intFirst = 1;
+//                mapRqstHits.put(rqst, intFirst);
+//            } else {
+//                Integer intNewCnt = ++intCnt;
+//                mapRqstHits.put(rqst, intNewCnt);
+//            }
+//        }
+//        
+//        // Create summary record and return it
+//        TestResultSummary   recSummary = TestResultSummary.from(
+//                cntResults, 
+//                cntRatesGtAvg, 
+//                cntRatesGtTgt, 
+//                dblRateMin, 
+//                dblRateMax, 
+//                dblRateAvg, 
+//                dblRateStd, 
+//                szPrcdMin,
+//                szPrcdMax,
+//                szPrcdAvg,
+//                cntMsgsMin,
+//                cntMsgsMax,
+//                cntMsgsAvg,
+//                durPrcdMin,
+//                durPrcdMax,
+//                durPrcdAvg,
+//                durPrcdStd,
+//                mapRqstHits);
+//        
+//        return recSummary;
+//    }
+//    
     /**
      * <p>
      * Prints out a text description of the record contents to the given output.
@@ -376,7 +468,7 @@ public record TestResultSummary(
      * @param ps        output stream to receive text description of record fields
      * @param strPad    white space padding for left-hand side line headings (or <code>null</code>.
      */ 
-    public void printOut(PrintStream ps, String strPad) {
+    public void printOutChannelSummary(PrintStream ps, String strPad) {
         if (strPad == null)
             strPad = "";
         
@@ -390,12 +482,12 @@ public record TestResultSummary(
         ps.println(strPad + "  Maximum data rate (MBps)       : " + this.dblRateMax);
         ps.println(strPad + "  Average data rate (MBps)       : " + this.dblRateAvg);
         ps.println(strPad + "  Rate standard dev. (MBps)      : " + this.dblRateStd);
-        ps.println(strPad + "  Minimum recovery size (MBytes) : " + ((double)this.szRqstMin)/1.0e6);
-        ps.println(strPad + "  Maximum recovery size (MBytes) : " + ((double)this.szRqstMax)/1.0e6);
-        ps.println(strPad + "  Average recovery size (MBytes) : " + ((double)this.szRqstAvg)/1.0e6);
-        ps.println(strPad + "  Minimum recovered block count  : " + this.cntBlksMin);
-        ps.println(strPad + "  Maximum recovered block count  : " + this.cntBlksMax);
-        ps.println(strPad + "  Average recovered block count  : " + this.cntBlksAvg);
+        ps.println(strPad + "  Minimum recovered msg count    : " + this.cntMsgsMin);
+        ps.println(strPad + "  Maximum recovered msg count    : " + this.cntMsgsMax);
+        ps.println(strPad + "  Average recovered msg count    : " + this.cntMsgsAvg);
+        ps.println(strPad + "  Minimum recovery size (MBytes) : " + ((double)this.szRcvryMin)/1.0e6);
+        ps.println(strPad + "  Maximum recovery size (MBytes) : " + ((double)this.szRcvryMax)/1.0e6);
+        ps.println(strPad + "  Average recovery size (MBytes) : " + ((double)this.szRcvryAvg)/1.0e6);
         ps.println(strPad + "  Minimum request duration       : " + this.durRqstMin);
         ps.println(strPad + "  Maximum request duration       : " + this.durRqstMax);
         ps.println(strPad + "  Average request duration       : " + this.durRqstAvg);

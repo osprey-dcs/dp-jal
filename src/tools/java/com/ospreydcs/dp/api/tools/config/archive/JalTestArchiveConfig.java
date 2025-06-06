@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    DpApiToolsConfig.java
+ * File:    JalToolsConfig.java
  * Package: com.ospreydcs.dp.api.tools.config
- * Type:    DpTestArchiveConfig
+ * Type:    JalTestArchiveConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -33,11 +33,11 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  * Structure class defining Data Platform test archive parameters.
  * </p>
  */
-@ACfgOverride.Root(root="DP_API_TEST_ARCHIVE")
-public class DpTestArchiveConfig extends CfgStructure<DpTestArchiveConfig>{
+@ACfgOverride.Root(root="JAL_TEST_ARCHIVE")
+public class JalTestArchiveConfig extends CfgStructure<JalTestArchiveConfig>{
 
     /** Default constructor required for base class */
-    public DpTestArchiveConfig() { super(DpTestArchiveConfig.class); }
+    public JalTestArchiveConfig() { super(JalTestArchiveConfig.class); }
     
     /** The first timestamp of all data sources within the Data Platform test archive, i.e., the archive inception instant */
     @ACfgOverride.Field(name="FIRST_TIMESTAMP")

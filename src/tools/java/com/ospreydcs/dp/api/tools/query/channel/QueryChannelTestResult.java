@@ -72,7 +72,8 @@ public record QueryChannelTestResult(
      * Returns a new <code>QueryChannelTestResult</code> record populated with the given arguments.
      * </p>
      * <p>
-     * The returned record is assumed to be created by the <code>QueryChannelTest.evaluate()</code> method.
+     * The returned record is assumed to be created by the 
+     * <code>{@link QueryChannelTestCase#evaluate(QueryChannel, QueryMessageBuffer)</code> method.
      * </p>
      * 
      * @param dblDataRate   the data rate seen during the request recovery (in MBps)
@@ -155,6 +156,7 @@ public record QueryChannelTestResult(
             else
                 return +1;
         };
+        
         return cmp;  
     }
 

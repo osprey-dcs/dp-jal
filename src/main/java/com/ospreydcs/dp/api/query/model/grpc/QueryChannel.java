@@ -478,6 +478,10 @@ public class QueryChannel {
      * This method defers to method <code>{@link #processRequestMultiStream(List)}</code> for 
      * the actual data request operation.  
      * </li>
+     * <li>
+     * Again, <em>this is a blocking operation</em> and does not return until all requested data
+     * is recovered and transfered to the <code>{@link IMessageConsumer}</code> provided to the 
+     * creator/constructor. 
      * </p> 
      * 
      * @param dpRequest data request to be recovered from Query Service and processed

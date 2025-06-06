@@ -1681,7 +1681,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
      */
     @Override
     public String toString() {
-        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClass() + "\n");
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClassName() + "\n");
         
         // Write out contents
         buf.append("  List of page requests: " + this.lstPgsRequested + "\n");

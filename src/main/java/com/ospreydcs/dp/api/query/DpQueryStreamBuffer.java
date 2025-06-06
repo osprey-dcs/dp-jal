@@ -1098,7 +1098,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      */
     @Override
     public String toString() {
-        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClass() + "\n");
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClassName() + "\n");
         
         // Write out contents
         buf.append("  List of page request indices: " + this.lstIndPageRequested + "\n");

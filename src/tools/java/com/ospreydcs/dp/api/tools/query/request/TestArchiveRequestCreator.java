@@ -37,8 +37,8 @@ import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.tools.config.DpApiToolsConfig;
-import com.ospreydcs.dp.api.tools.config.archive.DpTestArchiveConfig;
+import com.ospreydcs.dp.api.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.api.tools.config.archive.JalTestArchiveConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -117,10 +117,10 @@ public class TestArchiveRequestCreator {
     //
     
     /** Default DP API library testing parameters */
-    public static final DpTestArchiveConfig     CFG_ARCHIVE = DpApiToolsConfig.getInstance().query.testArchive;
+    public static final JalTestArchiveConfig     CFG_ARCHIVE = JalToolsConfig.getInstance().query.testArchive;
 
     /** General Query Service tools logging configuration */
-    public static final DpLoggingConfig         CFG_LOGGING = DpApiToolsConfig.getInstance().query.logging;
+    public static final DpLoggingConfig         CFG_LOGGING = JalToolsConfig.getInstance().query.logging;
     
     
     //
@@ -166,7 +166,7 @@ public class TestArchiveRequestCreator {
     /**
      * The prefix for each data source name within the Data Platform test archive.
      * <p>
-     * The value is taken from default configuration parameter <code>{@link DpTestArchiveConfig#pvPrefix}</code>.
+     * The value is taken from default configuration parameter <code>{@link JalTestArchiveConfig#pvPrefix}</code>.
      */
     public static final String      STR_PV_PREFIX = CFG_ARCHIVE.pvPrefix; // "dpTest_";
 
@@ -174,21 +174,21 @@ public class TestArchiveRequestCreator {
     /** 
      * The total number of unique data source within the Data Platform data archive test data set.
      * <p>
-     * The value is taken from default configuration parameter <code>{@link DpTestArchiveConfig#pvCountTotal}</code>.
+     * The value is taken from default configuration parameter <code>{@link JalTestArchiveConfig#pvCountTotal}</code>.
      */
     public static final int         CNT_PVS_TOTAL = CFG_ARCHIVE.pvCountTotal; // 4000;
     
     /**
      * The number of unique data sources that are sampled with a uniform sampling clock
      * <p>
-     * The value is taken from the default configuration parameter <code>{@link DpTestArchiveConfig#pvCountClock}</code>.
+     * The value is taken from the default configuration parameter <code>{@link JalTestArchiveConfig#pvCountClock}</code>.
      */
     public static final int         CNT_PVS_CLOCKED = CFG_ARCHIVE.pvCountClock;
     
     /**
      * The number of unique data sources that are sampled using an explicit timestamp list
      * <p>
-     * The value is taken from the default configuration parameter <code>{@link DpTestArchiveConfig#pvCountTmsList}</code>.
+     * The value is taken from the default configuration parameter <code>{@link JalTestArchiveConfig#pvCountTmsList}</code>.
      */
     public static final int         CNT_PVS_TMS_LIST = CFG_ARCHIVE.pvCountTmsList;
     
@@ -196,7 +196,7 @@ public class TestArchiveRequestCreator {
     /**
      * The starting index (i.e., first index) of the data sources using a uniform sampling clock
      * <p>
-     * The value is taken from the default configuration parameter <code>{@link DpTestArchiveConfig#pvIndexStartClock}</code>
+     * The value is taken from the default configuration parameter <code>{@link JalTestArchiveConfig#pvIndexStartClock}</code>
      */
     public static final int         IND_FIRST_PV_CLOCKED = CFG_ARCHIVE.pvIndexStartClock;
     
@@ -210,7 +210,7 @@ public class TestArchiveRequestCreator {
     /**
      * The starting index (i.e., first index) of the data sources using an explicit timestamp list
      * <p>
-     * The value is taken from the default configuration parameter <code>{@link DpTestArchiveConfig#pvIndexStartTmsList}</code>
+     * The value is taken from the default configuration parameter <code>{@link JalTestArchiveConfig#pvIndexStartTmsList}</code>
      */
     public static final int         IND_FIRST_PV_TMS_LIST = CFG_ARCHIVE.pvIndexStartTmsList;
     

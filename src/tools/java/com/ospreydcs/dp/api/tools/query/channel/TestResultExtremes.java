@@ -143,42 +143,6 @@ public record TestResultExtremes(
     
     /**
      * <p>
-     * Prints out a text description of the current record (field-by-field) to the given output stream.
-     * </p>
-     * <p>
-     * A line-by-line text description of each record field is written to the given output.
-     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
-     * left-hand side header for each line description.
-     * </p>
-     *   
-     * @param ps        output stream to receive text description of record fields
-     * @param strPad    white-space padding for each line header (or <code>null</code>)
-     */
-    public void printOut(PrintStream ps, String strPad) {
-        if (strPad == null)
-            strPad = "";
-        
-        // Print out results  
-        ps.println(strPad + "Tests Result Extremes");
-        ps.println(strPad + "  Best test case  = #" + this.recResultBest.recTestCase().indCase() + ": data rate = " + this.recResultBest.dblDataRate() + " (MBps)");
-        ps.println(strPad + "  Worst test case = #" + this.recResultWorst.recTestCase().indCase() + ": data rate = " + this.recResultWorst.dblDataRate() + " (MBps)");
-        ps.println(strPad + "  Best test request  = " + this.pairRqstTypeBest.getValue() + ": avg. rate = " + this.pairRqstTypeBest.getKey() + " (MBps)");
-        ps.println(strPad + "  Worst test request = " + this.pairRqstTypeWorst.getValue() + ": avg. rate = " + this.pairRqstTypeWorst.getKey() + " (MBps)");
-        ps.println(strPad + "  Best decomposition strategy  = " + this.pairDcmpTypeBest.getValue() + ": avg. rate = " + this.pairDcmpTypeBest.getKey() + " (MBps)");
-        ps.println(strPad + "  Worst decomposition strategy = " + this.pairDcmpTypeWorst.getValue() + ": avg. rate = " + this.pairDcmpTypeWorst.getKey() + " (MBps)");
-        ps.println(strPad + "  Best gRPC stream count  = " + this.pairStrmCntBest.getValue() + ": avg. rate = " + this.pairStrmCntBest.getKey() + " (MBps)");
-        ps.println(strPad + "  Worst gRPC stream count = " + this.pairStrmCntWorst.getValue() + ": avg. rate = " + this.pairStrmCntWorst.getKey() + " (MBps)");
-        ps.println(strPad + "  Best gRPC stream type  = " + this.pairStrmTypeBest.getValue() + ": avg. rate = " + this.pairStrmTypeBest.getKey() + " (MBps)");
-        ps.println(strPad + "  Worst gRPC stream type = " + this.pairStrmTypeWorst.getValue() + ": avg. rate = " + this.pairStrmTypeWorst.getKey() + " (MBps)");
-    }
-    
-
-    //
-    // Tools
-    //
-    
-    /**
-     * <p>
      * Computes and returns the extreme values ("best" and "worst") for each record field within the given record collection.
      * </p>
      * <p>
@@ -221,7 +185,7 @@ public record TestResultExtremes(
         TreeMap<Double, DpGrpcStreamType>       mapRateToStrmType = computeBestStreamTypes(setResults);
         
         // Pick off the best and worst values saving them to a new record
-        TestResultExtremes  recExtrm = TestResultExtremes.from(
+        TestResultExtremes  recExtremes = TestResultExtremes.from(
                 mapRateToRslt.lastEntry().getValue(),       mapRateToRslt.firstEntry().getValue(), 
                 mapRateToRqstType.lastEntry(),              mapRateToRqstType.firstEntry(), 
                 mapRateToDcmpType.lastEntry(),              mapRateToDcmpType.firstEntry(), 
@@ -229,7 +193,7 @@ public record TestResultExtremes(
                 mapRateToStrmType.lastEntry(),              mapRateToStrmType.firstEntry()
                 );
         
-        return recExtrm;
+        return recExtremes;
     }
     
     /**
@@ -257,7 +221,38 @@ public record TestResultExtremes(
         return intCnt;
     }
     
+    /**
+     * <p>
+     * Prints out a text description of the current record (field-by-field) to the given output stream.
+     * </p>
+     * <p>
+     * A line-by-line text description of each record field is written to the given output.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white-space padding for each line header (or <code>null</code>)
+     */
+    public void printOut(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        // Print out results  
+        ps.println(strPad + "Tests Result Extremes");
+        ps.println(strPad + "  Best test case  = #" + this.recResultBest.recTestCase().indCase() + ": data rate = " + this.recResultBest.dblDataRate() + " (MBps)");
+        ps.println(strPad + "  Worst test case = #" + this.recResultWorst.recTestCase().indCase() + ": data rate = " + this.recResultWorst.dblDataRate() + " (MBps)");
+        ps.println(strPad + "  Best test request  = " + this.pairRqstTypeBest.getValue() + ": avg. rate = " + this.pairRqstTypeBest.getKey() + " (MBps)");
+        ps.println(strPad + "  Worst test request = " + this.pairRqstTypeWorst.getValue() + ": avg. rate = " + this.pairRqstTypeWorst.getKey() + " (MBps)");
+        ps.println(strPad + "  Best decomposition strategy  = " + this.pairDcmpTypeBest.getValue() + ": avg. rate = " + this.pairDcmpTypeBest.getKey() + " (MBps)");
+        ps.println(strPad + "  Worst decomposition strategy = " + this.pairDcmpTypeWorst.getValue() + ": avg. rate = " + this.pairDcmpTypeWorst.getKey() + " (MBps)");
+        ps.println(strPad + "  Best gRPC stream count  = " + this.pairStrmCntBest.getValue() + ": avg. rate = " + this.pairStrmCntBest.getKey() + " (MBps)");
+        ps.println(strPad + "  Worst gRPC stream count = " + this.pairStrmCntWorst.getValue() + ": avg. rate = " + this.pairStrmCntWorst.getKey() + " (MBps)");
+        ps.println(strPad + "  Best gRPC stream type  = " + this.pairStrmTypeBest.getValue() + ": avg. rate = " + this.pairStrmTypeBest.getKey() + " (MBps)");
+        ps.println(strPad + "  Worst gRPC stream type = " + this.pairStrmTypeWorst.getValue() + ": avg. rate = " + this.pairStrmTypeWorst.getKey() + " (MBps)");
+    }
     
+
     //
     // Support Methods
     //
@@ -276,7 +271,7 @@ public record TestResultExtremes(
      * 
      * @return  the pairs (avg rate, test result) found to be the "best" amount the argument collection
      */
-    public static TreeMap<Double, QueryChannelTestResult>   computeBestTestResults(Collection<QueryChannelTestResult> setResults) {
+    private static TreeMap<Double, QueryChannelTestResult>   computeBestTestResults(Collection<QueryChannelTestResult> setResults) {
         
         TreeMap<Double, QueryChannelTestResult> mapRateToResult = new TreeMap<>();
 
@@ -314,7 +309,7 @@ public record TestResultExtremes(
      * 
      * @throws NoSuchElementException   either the argument was empty or no valid request type existed (error)
      */
-    public static TreeMap<Double, TestArchiveRequest> computeBestTestArchiveRequests(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
+    private static TreeMap<Double, TestArchiveRequest> computeBestTestArchiveRequests(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
 
         // Get the test request used - avoid iterating through all TestArchiveRequest constants
         List<TestArchiveRequest>    lstRqsts = setResults
@@ -327,6 +322,10 @@ public record TestResultExtremes(
 
         for (TestArchiveRequest enmRqst : lstRqsts) {
             try {
+                // Check if we have already processed request
+                if (mapRateToRqst.containsValue(enmRqst))
+                    continue;
+                
                 Double  dblRate = setResults
                         .stream()
                         .filter(rec -> rec.recTestCase().enmRqstOrg() == enmRqst)
@@ -347,7 +346,6 @@ public record TestResultExtremes(
         //        return entryBestRqst;
         return mapRateToRqst;
     }
-
 
     /**
      * <p>
@@ -379,12 +377,16 @@ public record TestResultExtremes(
      * 
      * @throws NoSuchElementException   either the argument was empty or no valid decomposition strategy existed (error)
      */
-    public static TreeMap<Double, RequestDecompType>  computeBestDecompTypes(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
+    private static TreeMap<Double, RequestDecompType>  computeBestDecompTypes(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
 
         // Get the average data rate for each request decomposition strategy
         TreeMap<Double, RequestDecompType>  mapRateToDcmp = new TreeMap<>();
 
         for (RequestDecompType enmType : RequestDecompType.values()) {
+            
+            if (mapRateToDcmp.containsValue(enmType))
+                continue;
+            
             try {
                 Double dblRate = setResults
                         .stream()
@@ -396,17 +398,12 @@ public record TestResultExtremes(
                 mapRateToDcmp.put(dblRate, enmType);
 
             } catch (NoSuchElementException e) {
-                // No entry
+                // No entry - maybe a decomposition type was not used considered
             }
         }
 
-        //        // Get the request decomposition strategy with the best average data rate and return it
-        //        Map.Entry<Double, RequestDecompType>    entryBestDcmp = mapRateToDcmp.lastEntry();
-        //        
-        //        return entryBestDcmp;
         return mapRateToDcmp;
     }
-
 
     /**
      * <p>
@@ -436,7 +433,7 @@ public record TestResultExtremes(
      * 
      * @throws NoSuchElementException   either the argument was empty or no maximum stream count existed (error)
      */
-    public static TreeMap<Double, Integer> computeBestStreamCounts(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
+    private static TreeMap<Double, Integer> computeBestStreamCounts(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
         
         // Get the maximum stream count within the result set
         final int   intMaxStrms = setResults
@@ -502,7 +499,7 @@ public record TestResultExtremes(
      * 
      * @throws NoSuchElementException   either the argument was empty or no valid stream type existed (error)
      */
-    public static TreeMap<Double, DpGrpcStreamType>   computeBestStreamTypes(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
+    private static TreeMap<Double, DpGrpcStreamType>   computeBestStreamTypes(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
 
         // Get the average data rate for each gRPC stream type
         TreeMap<Double, DpGrpcStreamType>   mapRateToType = new TreeMap<>();

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpRequestSuiteConfig.java
+ * File:	JalRequestSuiteConfig.java
  * Package: com.ospreydcs.dp.api.tools.config.request
- * Type: 	DpRequestSuiteConfig
+ * Type: 	JalRequestSuiteConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -41,10 +41,10 @@ import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
  * @since May 9, 2025
  *
  */
-public class DpRequestSuiteConfig extends CfgStructure<DpRequestSuiteConfig> {
+public class JalRequestSuiteConfig extends CfgStructure<JalRequestSuiteConfig> {
 
     /** Default constructor required for super class */
-    public DpRequestSuiteConfig() { super(DpRequestSuiteConfig.class); }
+    public JalRequestSuiteConfig() { super(JalRequestSuiteConfig.class); }
 
     
     //

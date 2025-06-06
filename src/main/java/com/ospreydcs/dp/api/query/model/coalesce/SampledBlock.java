@@ -1040,7 +1040,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
         
         // Check argument
         if (!this.hasSourceData(strName)) {
-            String strMsg = JavaRuntime.getMethodClassSimple() + " does NOT contain source " + strName;
+            String strMsg = JavaRuntime.getMethodClassNameSimple() + " does NOT contain source " + strName;
             
             if (BOL_LOGGING)
                 LOGGER.warn(strMsg);
@@ -1098,7 +1098,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
 
         // Check argument
         if (!this.hasSourceData(strName)) {
-            String strMsg = JavaRuntime.getMethodClassSimple() + " does NOT contain source " + strName;
+            String strMsg = JavaRuntime.getMethodClassNameSimple() + " does NOT contain source " + strName;
             
             if (BOL_LOGGING)
                 LOGGER.warn(strMsg);

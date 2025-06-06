@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpApiToolsConfigTest.java
+ * File:	JalToolsConfigTest.java
  * Package: com.ospreydcs.dp.api.tools.config
- * Type: 	DpApiToolsConfigTest
+ * Type: 	JalToolsConfigTest
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -39,22 +39,22 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.tools.config.query.DpApiToolsQueryConfig;
-import com.ospreydcs.dp.api.tools.config.request.DpRequestSuiteConfig;
-import com.ospreydcs.dp.api.tools.config.request.DpTestRequestConfig;
+import com.ospreydcs.dp.api.tools.config.query.JalToolsQueryConfig;
+import com.ospreydcs.dp.api.tools.config.request.JalRequestSuiteConfig;
+import com.ospreydcs.dp.api.tools.config.request.JalTestRequestConfig;
 import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
- * JUnit test cases for class <code>DpApiToolsConfig</code>.
+ * JUnit test cases for class <code>JalToolsConfig</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since May 7, 2025
  *
  */
-public class DpApiToolsConfigTest {
+public class JalToolsConfigTest {
 
     //
     // Test Fixture
@@ -131,11 +131,11 @@ public class DpApiToolsConfigTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.tools.config.DpApiToolsConfig#getInstance()}.
+     * Test method for {@link com.ospreydcs.dp.api.tools.config.JalToolsConfig#getInstance()}.
      */
     @Test
     public final void testGetInstance() {
-        DpApiToolsConfig    cfgTest = DpApiToolsConfig.getInstance();
+        JalToolsConfig    cfgTest = JalToolsConfig.getInstance();
         
         boolean bolLogEnabled = cfgTest.query.logging.enabled;
         String  strLogLevel = cfgTest.query.logging.level;
@@ -143,28 +143,28 @@ public class DpApiToolsConfigTest {
         // Announce test method
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
 
-        System.out.println(DpApiToolsConfig.class.getSimpleName() + " Parameters:");
+        System.out.println(JalToolsConfig.class.getSimpleName() + " Parameters:");
         System.out.println("  query.logging.enabled = " + bolLogEnabled);
         System.out.println("  query.logging.level = " + strLogLevel);
         System.out.println();
     }
     
     /**
-     * Test method for inspection of <code>{@link DpTestRequestConfig}</code> class recovered by <code>DpApiToolsConfig</code>.
+     * Test method for inspection of <code>{@link JalTestRequestConfig}</code> class recovered by <code>JalToolsConfig</code>.
      */
     @Test
     public final void testGetQuery() {
-        final DpTestRequestConfig    cfgRequests = DpApiToolsConfig.getInstance().query.testRequests;
+        final JalTestRequestConfig    cfgRequests = JalToolsConfig.getInstance().query.testRequests;
         
         // Parameters
-        final List<DpRequestSuiteConfig>    lstRqstSuites = cfgRequests.testSuites;
+        final List<JalRequestSuiteConfig>    lstRqstSuites = cfgRequests.testSuites;
         
         // Announce test method
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
 
         System.out.println("Request Test Suites:");
         int indSuite = 1;
-        for (DpRequestSuiteConfig cfg : lstRqstSuites) {
+        for (JalRequestSuiteConfig cfg : lstRqstSuites) {
             System.out.println("  Test Suite #" + indSuite);
             
             this.printOut(System.out, "    ", cfg);
@@ -190,7 +190,7 @@ public class DpApiToolsConfigTest {
      * @param strPad    optional left-hand side white space padding (or <code>null</code>)
      * @param cfg       the structure class containing configuration parameters
      */
-    private void printOut(PrintStream ps, String strPad, DpRequestSuiteConfig cfg) {
+    private void printOut(PrintStream ps, String strPad, JalRequestSuiteConfig cfg) {
         if (strPad == null)
             strPad = "";
         

@@ -2420,7 +2420,7 @@ public final class DpDataRequest {
      */
     @Override
     public String toString() {
-        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClass());
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClassName());
         
         buf.append(" contents:\n");
         buf.append("  request UD = " + this.strRqstId + "\n");

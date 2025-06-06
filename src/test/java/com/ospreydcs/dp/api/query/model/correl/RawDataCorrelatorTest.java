@@ -211,20 +211,21 @@ public class RawDataCorrelatorTest {
         final Boolean   bolConcDef = CFG_QUERY.concurrency.enabled;
         final int       cntThreadsDef = CFG_QUERY.concurrency.maxThreads;
         final int       cntThreads = 11;
+        final boolean   bolConcNot = !bolConcDef;
         
         // Verify correlator default configuration
         Assert.assertEquals(bolConcDef, corrTest.isConcurrencyEnabled());
         Assert.assertEquals(cntThreadsDef, corrTest.getConcurrencytMaxThreads());
         
         // Set the correlator concurrency and verify
-        corrTest.enableConcurrency(cntThreads);
-        Assert.assertTrue(corrTest.isConcurrencyEnabled());
+        corrTest.enableConcurrency(bolConcNot);
+        corrTest.setMaxThreadCount(cntThreads);
+        Assert.assertTrue(corrTest.isConcurrencyEnabled() == bolConcNot);
         Assert.assertEquals(cntThreads, corrTest.getConcurrencytMaxThreads());
         
         // Return the correlator configuration
-        corrTest.enableConcurrency(cntThreadsDef);
-        if (!bolConcDef)
-            corrTest.disableConcurrency();
+        corrTest.enableConcurrency(bolConcDef);
+        corrTest.setMaxThreadCount(cntThreadsDef);
     }
 
     /**
@@ -235,15 +236,13 @@ public class RawDataCorrelatorTest {
         
         // Get correlator configuration
         boolean bolConc = corrTest.isConcurrencyEnabled();
-        int     cntThreads = corrTest.getConcurrencytMaxThreads();
 
         // Disable concurrency and verify
         corrTest.disableConcurrency();
         Assert.assertFalse(corrTest.isConcurrencyEnabled());
         
         // Restore configuration
-        if (bolConc)
-            corrTest.enableConcurrency(cntThreads);
+        corrTest.enableConcurrency(bolConc);
     }
 
     /**

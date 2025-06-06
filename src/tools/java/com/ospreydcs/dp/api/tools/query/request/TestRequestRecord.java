@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.config.query.DpDataRequestConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.tools.config.DpApiToolsConfig;
+import com.ospreydcs.dp.api.tools.config.JalToolsConfig;
 
 /**
  * <p>
@@ -289,7 +289,7 @@ public record TestRequestRecord(
     //
 
     /** Default time-series data request configuration parameters */
-    private static final DpDataRequestConfig    CFG_RQST_DEF = DpApiToolsConfig.getInstance().query.recovery.request;
+    private static final DpDataRequestConfig    CFG_RQST_DEF = JalToolsConfig.getInstance().query.recovery.request;
     
     
     //

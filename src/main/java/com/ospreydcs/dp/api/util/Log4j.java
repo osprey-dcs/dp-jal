@@ -170,6 +170,40 @@ public class Log4j {
         return logger;
     }
     
+    /**
+     * <p>
+     * Gets the logger for the calling method class or creates a new logger for that class if none exists, then
+     * set the logging level according to the argument.
+     * </p>
+     * <p>
+     * This is a convenience method which is essentially a combination of methods <code>{@link #getLogger()}</code> 
+     * and <code>{@link #setLevel(Logger, String)}</code>, although it is not implemented that way.  
+     * The <code>{@link Logger}</code> instance is first* created by determining the caller's class type then the 
+     * logging level is set before it is returned.
+     * </p>
+     * <p>
+     * The caller class type is obtained from the call stack on the current thread.  Once obtained the method
+     * defers to <code>{@link #getLogger(Class)}</code> to create the logger instance.
+     * The method <code>{@link #setLevel(Logger, String)}</code> is then called on the new <code>Logger</code>
+     * instance using the argument value.  
+     * </p>
+     * 
+     * @param strLevel  name of a <code{@link Level}</code> sub-class specifying level
+     * 
+     * @return  the <code>Logger</code> instances for the caller's class type and given logging level
+     */
+    public static Logger    getLoggerSetLevel(String strLevel) {
+        StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
+        StackTraceElement   lvlStackTrace = arrStackTrace[INT_STACK_DEPTH_CALLER];
+        
+        Class<?> clsCaller = lvlStackTrace.getClass();
+
+        Logger  logger = Log4j.getLogger(clsCaller);
+        Log4j.setLevel(logger, strLevel);
+        
+        return logger;
+    }
+    
     
     //
     // Logging Level Modification

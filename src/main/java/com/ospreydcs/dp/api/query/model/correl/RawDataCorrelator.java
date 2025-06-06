@@ -102,7 +102,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
  * <p>
  * Once the entire results set data is "added" to a <code>RawDataCorrelator</code> object, 
  * it is fully correlated.  The correlated data is then available from the method
- * <code>{@link #getCorrelatedSet()}</code>.  Each <code>{@link CorrelatedQueryDataOld}</code> 
+ * <code>{@link #getCorrelatedSet()}</code>.  Each <code>{@link RawCorrelatedData}</code> 
  * instance within the returned set contains all the data messages for a single sampling clock.
  * Further, the set is ordered according to the start time instant for each clock.
  * </p>
@@ -405,7 +405,7 @@ public class RawDataCorrelator {
     
     /**
      * <p>
-     * Enables the use of concurrent data processing and sets the maximum number of processing threads. 
+     * Enables/disables the use of concurrent data processing and sets the maximum number of processing threads. 
      * </p>
      * <p>
      * This is a thread-safe operation and will not interrupt any current processing.
@@ -436,21 +436,20 @@ public class RawDataCorrelator {
      * </p>
      * <p>
      * The default value for concurrency is given by the constant <code>{@link #BOL_CONCURRENCY}</code> which
-     * is taken from the Java API Library configuration parameters.  The default value for the maximum
-     * number of processing threads is <code>{@link #CNT_CONCURRENCY_THDS}</code> which is also taken
-     * from the library configuration parameters. 
+     * is taken from the Java API Library configuration parameters.  
      * </p>   
      * 
-     * @param cntMaxThreads    the maximum number of processing threads to use
+     * @param bolEnable <code>true</code> enables multi-threading in correlation processing, 
+     *                  <code>false</code> disables concurrency
      * 
      * @see #disableConcurrency()
      */
-    public void enableConcurrency(int cntMaxThreads) {
+    public void enableConcurrency(boolean bolEnable) {
         synchronized (this.objLock) {
-            this.bolConcurrency = true;
-            this.cntMaxThreads = cntMaxThreads;
-            
-            this.exeInsertTasks = Executors.newFixedThreadPool(this.cntMaxThreads);
+            this.bolConcurrency = bolEnable;
+//            this.cntMaxThreads = cntMaxThreads;
+//            
+//            this.exeInsertTasks = Executors.newFixedThreadPool(this.cntMaxThreads);
         }
     }
     
@@ -475,6 +474,54 @@ public class RawDataCorrelator {
     public void disableConcurrency() {
         synchronized (this.objLock) {
             this.bolConcurrency = false;
+        }
+    }
+    
+    /**
+     * <p>
+     * Sets the maximum number of processing threads (when concurrency is enabled). 
+     * </p>
+     * <p>
+     * This is a thread-safe operation and will not interrupt any current processing.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The correlation operations performed within <code>RawDataCorrelator</code>
+     * allow a high-level of multi-threaded, concurrent, data processing.  Using concurrency
+     * can significantly reduce processing time for a results set.
+     * </li>
+     * <br/>
+     * <li>
+     * The <code>RawDataCorrelator</code> is currently designed to exploit multiple
+     * CPU cores for correlation operations (i.e., method prefixed with <code>add</code>).  
+     * Thus, for some situations it may be desirable to stop concurrent processing
+     * so it does not interfere with other real-time operations (e.g., such as gRPC streaming).
+     * </li>
+     * <br/>
+     * <li>
+     * For to thread safety this method is synchronized internally. Concurrency processing will not be 
+     * toggled until a correlation operation 
+     * (i.e., <code>{@link #processQueryData(com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData)}</code>) 
+     * has completed.
+     * </li>
+     * </ul>
+     * </p>
+     * <p>
+     * The default value for the maximum number of processing threads is 
+     * <code>{@link #CNT_CONCURRENCY_THDS}</code> which is also taken from the library configuration parameters. 
+     * </p>   
+     * 
+     * @param cntMaxThreads    the maximum number of processing threads to use
+     * 
+     * @see #disableConcurrency()
+     */
+    public void setMaxThreadCount(int cntMaxThreads) {
+        synchronized (this.objLock) {
+            this.cntMaxThreads = cntMaxThreads;
+            
+            this.exeInsertTasks = Executors.newFixedThreadPool(this.cntMaxThreads);
         }
     }
     
@@ -509,14 +556,14 @@ public class RawDataCorrelator {
      * Reset this correlator instance to its original (default) state.
      * </p>
      * <p>
-     * <code>QueryDataCorrelatorOld</code> objects can be reused.  After calling this method the 
+     * <code>RawDataCorrelator</code> objects can be reused.  After calling this method the 
      * correlator is returned to its initial state and is ready to process another Query Service
      * response results set.
      * </p>
      * <p>
      * This is a thread-safe operation.  Performs the following operations:
      * <ul>
-     * <li>Clears out the target set of all <code>CorrelatedQueryDataOld</code> references.</li>
+     * <li>Clears out the target set of all <code>RawCorrelatedData</code> references.</li>
      * <li>Returns the concurrency flag to its default state <code>{@link #BOL_CONCURRENCY}</code>.</li>
      * </ul>
      * </p>
@@ -593,7 +640,7 @@ public class RawDataCorrelator {
     
     /**
      * <p>
-     * Returns the target set of <code>CorrelatedQueryDataOld</code> instances in its current 
+     * Returns the target set of <code>RawCorrelatedData</code> instances in its current 
      * processing state.
      * </p>
      * <p>
@@ -602,7 +649,7 @@ public class RawDataCorrelator {
      * of the data request, ordered according to sampling clock start times.
      * <p>
      * <h2>WARNING:</h2>
-     * This <code>QueryDataCorrelatorOld</code> instance retains ownership of the returned set.
+     * This <code>RawDataCorrelator</code> instance retains ownership of the returned set.
      * If the <code>{@link #reset()}</code> method is invoked this set is destroyed.
      * All subsequent processing of the returned data set must be completed before invoking
      * <code>{@link #reset()}</code>, or the data set must be copied.
@@ -639,7 +686,7 @@ public class RawDataCorrelator {
     
     /**
      * <p>
-     * Returns the size of the correlated set of <code>CorrelatedQueryDataOld</code> 
+     * Returns the size of the correlated set of <code>RawCorrelatedData</code> 
      * instances processed so far.
      * </p>
      * 
@@ -654,7 +701,7 @@ public class RawDataCorrelator {
      * Extracts and returns a set of unique data source names for all data within target set.
      * </p>
      * <p>
-     * Extracts all data source names within the target set of <code>CorrelatedQueryDataOld</code> 
+     * Extracts all data source names within the target set of <code>RawCorrelatedData</code> 
      * objects and collects them to the returned set of unique names.
      * </p>
      * <p>
@@ -686,24 +733,25 @@ public class RawDataCorrelator {
      * </p>
      * <p>
      * The preferred method for correlating results sets from Query Service data requests.
-     * Correlates all data columns within the <code>BucketData</code> message, adding the 
+     * Correlates all data columns within the <code>QueryData</code> message, adding the 
      * data into the current target set of correlated data instances, creating new instances 
      * if needed.  (No data stream error checking is enforced.)
      * </p>
      * <p>
-     * Once this method returns all <code>DataBucket</code> messages within the argument are 
-     * processed and its data column is associated with some <code>{@link CorrelatedQueryDataOld}</code>
+     * This is a blocking operation and will not return until all raw data within the argument is processed. 
+     * Once this method returns all <code>DataBucket</code> messages within the <code>QueryData</code> argument are 
+     * processed and its data column is associated with some <code>{@link RawCorrelatedData}</code>
      * instance within the target set.
      * </p>
      * <p>
      * <h2>Concurrency</h2>
      * The data processing operation pivots upon the size of the current target set.
-     * For target set size less than <code>{@link #SZ_CONCURRENCY_PIVOT}</code> data buckets are 
+     * For target set size less than <code>{@link #getConcurrencyPivotSize()}</code> data buckets are 
      * processed serially, as frequent additions to the target reference set are expected.  
      * For larger target sets the processing technique pivots to a parallel method.  An attempt 
      * is made to insert each data bucket within the argument concurrently into the target set.  
      * (The probability of insertion is higher since the target set is large.) 
-     * Then a <code>CorrelatedQueryDataOld</code> set is created for the collection of data buckets 
+     * Then a <code>RawCorrelatedData</code> set is created for the collection of data buckets 
      * that failed insertion. The new correlated set is then added to the target set.  Note
      * that the new correlated set is necessary disjoint (i.e., references different sampling
      * clocks) to the current target set.
@@ -715,13 +763,27 @@ public class RawDataCorrelator {
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * This is the preferred method of data processing.  It processes all data within a 
-     * <code>QueryResponse.QueryReport.BucketData</code> message without error checking.
+     * <ul>
+     * <li>
+     * This is the preferred method of data processing.  It processes all data within each 
+     * <code>QueryResponse.QueryReport.BucketData</code> message without error checking; however,
+     * timestamps within the bucket are verified.
+     * </li>
+     * <li>
+     * Again, this is a blocking operation and will not return until all raw, time-series data within
+     * the given argument is processed and added to the result set available with method
+     * <code>{@link #getCorrelatedSet()}</code>.
+     * <li>
+     * Each time this method is called the data within the argument is processed and added to the correlated
+     * set available with <code>{@link #getCorrelatedSet()}</code>.  The target set of correlated data will
+     * continue to grow until the method <code>{@link #reset()}</code> is invoked.
+     * </li> 
+     * </ul>
      * </p>
      *  
      * @param msgData   data message extracted from response data message
      * 
-     * @throws IllegalArgumentException a <code>DataBucket</code> message did not contain a sampling clock
+     * @throws IllegalArgumentException the argument contained invalid timestamps
      * @throws CompletionException      error in <code>DataBucket</code> insertion task execution (see cause)
      */
     public void processQueryData(QueryDataResponse.QueryData msgData) throws IllegalArgumentException, CompletionException {
@@ -748,7 +810,7 @@ public class RawDataCorrelator {
             }
 
             // If the target set is large - pivot to concurrent processing of message data
-            Collection<QueryData.DataBucket>    setFreeBuckets = this.attemptDataInsertConcurrent(msgData);
+            Collection<QueryData.DataBucket>    setFreeBuckets = this.attemptDataInsertConcurrent(msgData); // throws CompletionException
             SortedSet<RawCorrelatedData>        setDisjointData = this.processDisjointRawData(setFreeBuckets); // done serially
             this.setPrcdData.addAll(setDisjointData);
 
@@ -794,8 +856,10 @@ public class RawDataCorrelator {
      * </p>
      * 
      * @param msgData   Query Service data message to be processed into this collection
+     * 
+     * @throws IllegalArgumentException the argument contained invalid timestamps
      */
-    private void processDataSerial(QueryDataResponse.QueryData msgData) {
+    private void processDataSerial(QueryDataResponse.QueryData msgData) throws IllegalArgumentException {
 
         for (QueryDataResponse.QueryData.DataBucket msgBucket : msgData.getDataBucketsList()) {
             
@@ -851,10 +915,9 @@ public class RawDataCorrelator {
      * @return  the collection of <code>DataBucket</code> messages that failed insertion
      * 
      * @throws CompletionException       error in <code>DataBucket</code> insertion task execution (see cause)
-     * @throws RejectedExecutedException a data bucket insertion task was rejected
      */
     private Collection<QueryDataResponse.QueryData.DataBucket>  attemptDataInsertConcurrent(QueryDataResponse.QueryData msgData) 
-            throws CompletionException, RejectedExecutionException
+            throws CompletionException
     {
         
         // Create the data insertion tasks
@@ -969,7 +1032,7 @@ public class RawDataCorrelator {
      * <code>RawCorrelatedData</code> instances must be created.
      * </p>
      * <p>
-     * A new <code>{@link SortedSet}</code> of <code>CorrelatedQueryDataOld</code> object is created.
+     * A new <code>{@link SortedSet}</code> of <code>RawCorrelatedData</code> object is created.
      * An attempt is made to insert each <code>{@link DataBucket}</code> message within the argument 
      * into this collection of correlated data (clearly the first attempt will always fail).
      * If the insertion fails, a new <code>RawCorrelatedData</code> instance is created for the

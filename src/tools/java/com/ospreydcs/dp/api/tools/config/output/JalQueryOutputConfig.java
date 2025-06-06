@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpApiQueryOutputConfig.java
+ * File:	JalQueryOutputConfig.java
  * Package: com.ospreydcs.dp.api.tools.config
- * Type: 	DpApiQueryOutputConfig
+ * Type: 	JalQueryOutputConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -37,39 +37,24 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  * @since May 11, 2025
  *
  */
-@ACfgOverride.Root(root="DP_API_TOOLS_QUERY_OUTPUT")
-public class DpApiQueryOutputConfig extends CfgStructure<DpApiQueryOutputConfig> {
+@ACfgOverride.Root(root="JAL_TOOLS_QUERY_OUTPUT")
+public class JalQueryOutputConfig extends CfgStructure<JalQueryOutputConfig> {
 
     /** Default constructor require for super class */
-    public DpApiQueryOutputConfig() { super(DpApiQueryOutputConfig.class); }
+    public JalQueryOutputConfig() { super(JalQueryOutputConfig.class); }
 
     
-    //
-    // Record Fields
-    //
-    
-//    /** Output locations for the query tools */
-//    @ACfgOverride.Struct(pathelem="QUERY")
-//    public Query    query;
-//    
-//    /**
-//     * <p>
-//     * Structure class containing query tools output locations.
-//     * </p>
-//     */
-//    public static class Query extends CfgStructure<Query> {
-//
-//        /** Default constructor required for super class */
-//        public Query() { super(Query.class); };
-        
-        
         //
         // Record Fields
         //
         
         /** Output locations for the QueryChannel evaluations */
         @ACfgOverride.Struct(pathelem="CHANNEL")
-        public Channel  channel;
+        public Channel      channel;
+        
+        /** Output locations for raw data correlation evaluations */
+        @ACfgOverride.Struct(pathelem="CORREL")
+        public Correlation  correl;
         
         
         /**
@@ -77,11 +62,25 @@ public class DpApiQueryOutputConfig extends CfgStructure<DpApiQueryOutputConfig>
          * Structure class containing QueryChannel evaluation output locations.
          * </p>
          */
-        public static class Channel {
+        @ACfgOverride.Root(root="JAL_TOOLS_QUERY_OUTPUT_CHANNEL")
+        public static class Channel extends CfgStructure<Channel>{
+
+            /** Required constructor for base class */
+            public Channel() { super(Channel.class); }
 
             /** Location of QueryChannel evaluation outputs */
             @ACfgOverride.Field(name="PATH")
             public String   path;
         }
-//    }
+        
+        @ACfgOverride.Root(root="JAL_TOOLS_QUERY_OUTPUT_CORREL")
+        public static class Correlation extends CfgStructure<Correlation> {
+            
+            /** Required constructor for structure base class */
+            public Correlation() { super(Correlation.class); };
+            
+            /** Location of raw dat correlation evaluation outputs */
+            @ACfgOverride.Field(name="CORREL")
+            public String   path;
+        }
 }
