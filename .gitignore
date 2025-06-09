@@ -17,5 +17,4 @@ buildNumber.properties
 .classpath
 /.DS_Store
 /.settings/
-#/bin/
-/bin/
+/.pydevproject
