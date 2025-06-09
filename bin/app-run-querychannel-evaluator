@@ -12,17 +12,17 @@ test -e "$DP_ENV" || { echo "fatal error: required file $DP_ENV not found"; exit
 echo "found environment config file: $DP_ENV"
 source $DP_ENV
 
-# check that DP_API_JAVA_HOME is defined
-test -z "$DP_API_JAVA_HOME" && { echo "fatal error: required DP_API_JAVA_HOME variable is not set in $DP_ENV"; exit 1; }
-echo "using DP_API_JAVA_HOME: $DP_API_JAVA_HOME"
+# check that DP_JAL_HOME is defined
+test -z "$DP_JAL_HOME" && { echo "fatal error: required DP_JAL_HOME variable is not set in $DP_ENV"; exit 1; }
+echo "using DP_JAL_HOME: $DP_JAL_HOME"
 
 # check that DP_HOME directory exists
-test -d "$DP_API_JAVA_HOME" || { echo "fatal error: configured DP_API_JAVA_HOME directory $DP_HOME does not exist"; exit 1; }
+test -d "$DP_JAL_HOME" || { echo "fatal error: configured DP_JAL_HOME directory $DP_HOME does not exist"; exit 1; }
 
 
 # --- Construct output location APP_OUT from argument $2 and environment ----
 
-TOOLS_DIR=$DP_API_JAVA_TOOLS_OUTPUT
+TOOLS_DIR=$DP_JAL_OUTPUT
 APP_EXT="/query/channel/"
 
 # Check if Java API Library tools output location variable is available
@@ -41,9 +41,9 @@ fi
 # --- Output location APP_OUT ----
 
 
-APP_NAME='QueryChannelEvaluator'
-APP_JAR='${DP_API_JAVA_HOME}/target/dp-api-java-shaded-1.7.0.jar'
-APP_MAIN='com.ospreydcs.dp.api.tools.query.channel.QueryChannelEvaluator'
+APP_NAME=QueryChannelEvaluator
+APP_JAR=${DP_JAL_HOME}/target/dp-api-java-shaded-1.7.0.jar
+APP_MAIN=com.ospreydcs.dp.api.tools.query.channel.QueryChannelEvaluator
 APP_IN=$1
 
 APP_CMD="java -cp $APP_JAR $APP_MAIN '$APP_IN' '$APP_OUT'"

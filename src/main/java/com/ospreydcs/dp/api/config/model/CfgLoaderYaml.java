@@ -15,8 +15,12 @@ package com.ospreydcs.dp.api.config.model;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 import org.apache.logging.log4j.LogManager;
@@ -51,6 +55,25 @@ public final class CfgLoaderYaml {
     /** Java API Library configuration file directory (relative to installation location) */
     public static final String      STR_LIB_DIR_CFG = "config";
     
+    /** The location of the enclosing JAR file */
+    public static final String      STR_JAR_LOCATION;
+    
+    static {
+        String      strJarLoc;
+        
+        try {
+            strJarLoc = CfgLoaderYaml.class
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .getPath();
+            
+        } catch (Exception e) {
+            strJarLoc = "";
+        }
+        
+        STR_JAR_LOCATION = strJarLoc;
+    }
     
     //
     // Class Resources
@@ -82,7 +105,7 @@ public final class CfgLoaderYaml {
      * @param   <Struct>    type of the structure class support the YAML document format
      * 
      * @param   strFileName file name of YAML document containing configuration parameters
-     * @param   clsStruct   class type of the structure class to be created
+     * @param   clsStruct   class type of the structure class to be created from file contents
      * 
      * @return  a new <code>Struct</code> instance containing the contents of the YAML file 
      * 
@@ -97,8 +120,8 @@ public final class CfgLoaderYaml {
 //        InputStream insProps = new FileInputStream(strFileName);
 //        T cfgProps = ymlClient.load(insProps);
         
-        File    fileCfg = locateConfigFile(strFileName);  
-        Struct  strcCfg = load(fileCfg, clsStruct);
+        InputStream isFileCfg = locateConfigFile(strFileName);  
+        Struct      strcCfg = load(isFileCfg, clsStruct);
         
         return strcCfg;
     }
@@ -111,13 +134,13 @@ public final class CfgLoaderYaml {
      * <p>
      * If an error occurs during YAML parsing either an error message is sent to a log file if
      * the properties file cannot be found, or <em>SnakeYaml</em> sends
-     * error messages to <code>sterr</code> then crashes.
+     * error messages to <code>sterr</code> then crashes (hard).
      * </p>
      * 
      * @param   <Struct>    type of the structure class support the YAML document format
      *
      * @param   fileYaml    file instance identifying the target YAML document
-     * @param   clsStruct   class type of the structure class to be created
+     * @param   clsStruct   class type of the structure class to be created from file contents
      * 
      * @return  a new <code>Struct</code> instance containing the contents of the YAML file
      *  
@@ -128,6 +151,29 @@ public final class CfgLoaderYaml {
 
         InputStream isFile = new FileInputStream(fileYaml);
         Struct      cfgParams = YML_INSTANCE.loadAs(isFile, clsStruct);
+        
+        return cfgParams;
+    }
+    
+    /**
+     * <p>
+     * Loads (configuration) parameters from the given input stream.
+     * </p>
+     * <p>
+     * The input stream is assumed to be connected to a YAML file supporting the given structure class type 
+     * <code>Struct</code>.  The input stream is parsed and values loaded into a new structure class supporting 
+     * the YAML file format.
+     * </p>
+     * 
+     * @param   <Struct>    type of the structure class support the YAML document format
+     *
+     * @param   isFileYaml  input stream connected to the file instance of the target YAML document
+     * @param   clsStruct   class type of the structure class to be created from input stream
+     * 
+     * @return  a new <code>Struct</code> instance containing the contents of the YAML file
+     */
+    public static <Struct extends Object> Struct load(InputStream isFileYaml, Class<Struct> clsStruct) {
+        Struct      cfgParams = YML_INSTANCE.loadAs(isFileYaml, clsStruct);
         
         return cfgParams;
     }
@@ -154,7 +200,7 @@ public final class CfgLoaderYaml {
      * 
      * @throws FileNotFoundException    the configuration file was not reachable
      */
-    private static File locateConfigFile(String strFileName) throws FileNotFoundException {
+    private static InputStream locateConfigFile(String strFileName) throws FileNotFoundException {
         
         // Look for file in the JAL Home directory 
         try {
@@ -162,14 +208,19 @@ public final class CfgLoaderYaml {
             if (fileCfg.exists()) {
                 LOGGER.info("Configuration taken from JAL Home file {}.", fileCfg);
 
-                return  fileCfg;
+                InputStream isFileCfg = Files.newInputStream(fileCfg.toPath());
+                
+                return  isFileCfg;
             }
             
-            LOGGER.warn("Configuration file {} not found.  Attempting internal (JAR) configuration.", fileCfg);
+            LOGGER.warn("Configuration file {} not found in JAL Home {}.  Attempting internal (JAR) configuration.", fileCfg, JalEnv.getJalHomeValue());
             
-        } catch (Exception e) {
+        } catch (FileSystemNotFoundException | InvalidPathException e) {
             LOGGER.warn("Java API Library environment exception {}: {}.  Attempting internal (JAR) configuration.", e.getClass(), e.getMessage());
             
+        } catch (IOException | IllegalArgumentException | UnsupportedOperationException e) {
+            LOGGER.warn("Configuration file {} not accessiable - exception {}: {}.  Attempting internal (JAR) configuration.", e.getClass(), e.getMessage());
+
         }
         
         // Look for file in JAL JAR - Try finding file with class loader
@@ -178,23 +229,38 @@ public final class CfgLoaderYaml {
                 + " was found in class loader proximity.";
         
         try {
-            URL     urlFile = CfgLoaderYaml.class.getClassLoader().getResource(strFileName);
-            Path    pathFile = Path.of(urlFile.toURI());
-            File    fileCfg = pathFile.toFile(); // throws UnsupportedOperationException
+            ClassLoader ldrClass = CfgLoaderYaml.class.getClassLoader();
+            URL         urlFile = ldrClass.getResource(strFileName);
+            InputStream isFile = ldrClass.getResourceAsStream(strFileName);
             
-            if (fileCfg.canRead()) {
-                LOGGER.info("Loading configuration {} from internal JAL JAR.", strFileName);
-                return fileCfg;
+//            // TODO - Remove
+//            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Searching for file " + strFileName);
+//            System.out.println("  ClassLoader " + ldrClass + " found path location = " + urlFile.getPath());
+//            System.out.println("  ClassLoader " + ldrClass + " found file = " + urlFile.getFile());
+//            
+//            File    fileTest = new File(urlFile.getPath());
+//            System.out.println("  File created from File(urlFile.getFile()) = " + fileTest);
+//            // TODO ----
+//            
+//            Path    pathFile = Path.of(urlFile.toURI());
+//            System.out.println("  After pathFile = " + pathFile); // TODO - Remove
+//            
+//            File    fileCfg = pathFile.toFile(); // throws UnsupportedOperationException
+//            System.out.println("  After fileCfg = " + fileCfg); // TODO - Remove
+            
+            if (isFile != null) {
+                LOGGER.info("Loading configuration {} from internal JAR {}.", strFileName, STR_JAR_LOCATION);
+                return isFile;
             }
             
             else {
-                strErrMsg = strErrMsg + " File " + fileCfg + " was unreadable.";
+                strErrMsg = strErrMsg + " File " + urlFile.getPath() + " was unreadable.";
                 
                 throw new FileNotFoundException(strErrMsg);
             }
 
         } catch (Exception e) {
-            strErrMsg = strErrMsg + " Exception " + e.getClass().getSimpleName() + ": " + e.getMessage();
+            strErrMsg = strErrMsg + " Exception while attempting to read " + strFileName + " - " + e.getClass().getSimpleName() + ": " + e.getMessage();
 
             LOGGER.error(strErrMsg);
 

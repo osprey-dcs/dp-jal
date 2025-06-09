@@ -185,6 +185,7 @@ public record CorrelatorTestResult(
         ps.println(strPad + "  Processing data rate (MBps)  : " + this.dblDataRate);
         ps.println(strPad + "  Incoming message count       : " + this.cntRspMsgs);
         ps.println(strPad + "  Incoming message total bytes : " + this.szRspMsgs);
+        ps.println(strPad + "  Correlated blocks processed  : " + this.cntCorrelSet);
         ps.println(strPad + "  Total bytes processed        : " + this.szProcessed);
         ps.println(strPad + "  Processing duration          : " + this.durProcessed);
         ps.println(strPad + "  Test Case Parameters:");

@@ -95,7 +95,7 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
     //
     
     /** Name of the Java API Library configuration properties file (relative path and name) */
-    public static final String      STR_CFG_FILE = "dp-api-config.yml";
+    public static final String      STR_CFG_FILE = "dp-jal-config.yml";
 //    public static final String      STR_CFG_FILE = "src/main/resources/dp-api-config.yml";
     
     

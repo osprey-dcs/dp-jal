@@ -34,21 +34,28 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
+
+import com.sun.jdi.request.InvalidRequestStateException;
 
 import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
+import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.tools.app.ExitCode;
+import com.ospreydcs.dp.api.tools.app.QueryToolsAppBase;
 import com.ospreydcs.dp.api.tools.app.ToolsAppBase;
 import com.ospreydcs.dp.api.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.api.tools.config.query.JalToolsQueryConfig;
-import com.ospreydcs.dp.api.tools.query.QueryToolsAppBase;
 import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
@@ -114,6 +121,10 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
      */
     public static void main(String[] args) {
 
+        //
+        // ------- Special Requests -------
+        //
+        
         // Check for client help request
         if (ToolsAppBase.parseAppArgsHelp(args)) {
             System.out.println(STR_APP_USAGE);
@@ -166,29 +177,85 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
         try {
             DataCorrelationEvaluator    evaluator = new DataCorrelationEvaluator(suite, strOutputLoc);
             
+            evaluator.run();
+            evaluator.writeReport();
+            evaluator.shutdown();
+            
+            System.out.println(STR_APP_NAME + " Execution completed in " + evaluator.getRunDuration());
+            System.out.println("  Results stored at " + evaluator.getOutputFilePath().toAbsolutePath());
+            System.exit(ExitCode.SUCCESS.getCode());
+            
         } catch (DpGrpcException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.err.println(STR_APP_NAME + " creation FAILURE - Unable to connect to Query Service.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            
         } catch (ConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.err.println(STR_APP_NAME + " creation FAILURE - No time-series data requests in command line.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.INTPUT_ARG_INVALID.getCode());
+            
         } catch (UnsupportedOperationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.err.println(STR_APP_NAME + " creation FAILURE - Output location invalid: " + strOutputLoc);
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.OUTPUT_ARG_INVALID.getCode());
+            
         } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.err.println(STR_APP_NAME + " creation FAILURE - Unable to create output file.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.OUTPUT_FAILURE.getCode());
+            
         } catch (SecurityException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.err.println(STR_APP_NAME + " creation FAILURE - Unable to write to output file.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.OUTPUT_FAILURE.getCode());
+            
+            
+        } catch (InvalidRequestStateException e) {
+            System.err.println(STR_APP_NAME + " execution FAILURE - Application already executed.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            
+        } catch (DpQueryException e) {
+            System.err.println(STR_APP_NAME + " data recovery ERROR - General gRPC error in data recovery.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            
+        } catch (IllegalStateException e) {
+            System.err.println(STR_APP_NAME + " data recovery ERROR - Message request attempt on empty buffer.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            
+        } catch (InterruptedException e) {
+            System.err.println(STR_APP_NAME + " data recovery ERROR - Process interrupted while waiting for buffer message.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            
+        } catch (BufferUnderflowException e) {
+            System.err.println(STR_APP_NAME + " data recovery ERROR - message buffer not fully drained.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            
+        } catch (IllegalArgumentException e) {
+            System.err.println(STR_APP_NAME + " evaluation ERROR - invalid timestamps encountered in recovered data.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            
+        } catch (CompletionException e) {
+            System.err.println(STR_APP_NAME + " evaluation ERROR - data bucket insertion task failed.");
+            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            
         }
-        
     }
     
     
     //
-    // Tools Resources
+    // Application Resources
     //
+    
+//    /** TEST */
+//    private static final DpQueryConfig          CFG_DEF = DpApiConfig.getInstance().query;
     
     /** Default configuration parameters for the Query Service tools */
     private static final JalToolsQueryConfig    CFG_QUERY = JalToolsConfig.getInstance().query;
@@ -245,7 +312,7 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
           + "    R1, ..., Rn = Test request(s) to perform (TestArchiveRequest enumeration name(s)). \n"
           + "    M1, ..., Mj = Maximum allowable number(s) of concurrent processing threads (Integer value). \n"
           + "    P1, ..., Pk = Pivot size(s) triggering concurrent processing [Integer value]. \n"
-          + "    " + STR_VAR_OUTPUT + "    = output file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
+          + "    " + STR_VAR_OUTPUT + "    = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
           + "\n"
           + "  NOTES: \n"
           + "  - All bracketed quantities [...] are optional. \n"
@@ -263,7 +330,8 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
     //
     
     /** Default output path location */
-    public static final String      STR_OUTPUT_DEF = CFG_QUERY.output.correl.path;
+//    public static final String      STR_OUTPUT_DEF = CFG_QUERY.output.correl.path;
+    public static final String      STR_OUTPUT_DEF = "test/output/query/correl";
     
 
     /** The target correlation data rate (MBps) */
@@ -282,6 +350,15 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
     /** Parallelism tuning parameter - default number of independent processing threads */
     public static final int         CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.maxThreads;
     
+//    /** Concurrency enabled flag */
+//    public static final boolean     BOL_CONCURRENCY = CFG_DEF.concurrency.enabled;
+//    
+//    /** Parallelism tuning parameter - pivot to parallel processing when target set size hits this limit */
+//    public static final int         SZ_CONCURRENCY_PIVOT = CFG_DEF.concurrency.pivotSize;
+//    
+//    /** Parallelism tuning parameter - default number of independent processing threads */
+//    public static final int         CNT_CONCURRENCY_THDS = CFG_DEF.concurrency.maxThreads;
+    
     
     //
     // Class Resources
@@ -290,17 +367,13 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
     /** Class event logger */
     private static final Logger     LOGGER = Log4j.getLogger(DataCorrelationEvaluator.class, QueryToolsAppBase.STR_LOGGING_LEVEL);
 
-
+    
     // 
     // Defining Attributes
     //
     
     /** The test suite used for <code>QueryChannel</code> evaluations */
     private final CorrelatorTestSuite       suiteEvals;
-    
-    /** Output report location */
-    private final String                    strOutputLoc;
-    
     
     
     //
@@ -331,7 +404,8 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
     
     /**
      * <p>
-     * Constructs a new <code>DataCorrelationEvaluator</code> instance.
+     * Constructs a new <code>DataCorrelationEvaluator</code> instance for the given test suite 
+     * configuration and output location.
      * </p>
      * 
      * @param   suiteEvals      the test suite configuration 
@@ -348,7 +422,6 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
         super(DataCorrelationEvaluator.class);
         
         this.suiteEvals = suiteEvals;
-        this.strOutputLoc = strOutputLoc;
         
         // Create the correlator
         this.toolCorrelator = RawDataCorrelator.create();
@@ -358,10 +431,13 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
         
         // Create the collection of test cases and container for results
         this.mapCases = this.suiteEvals.createTestSuite();  // throws ConfigurationException
-        this.setResults = new LinkedList<>();
+        this.setResults = new TreeSet<>(CorrelatorTestResult.descendingRateOrdering());
         
-        // Create the output stream
+        // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
+        
+        OutputStreamAppender    appAppErrs = Log4j.createOutputStreamAppender(STR_APP_NAME, super.psOutput);
+        Log4j.attachAppender(LOGGER, appAppErrs);
     }
 
     
@@ -377,6 +453,24 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
         return LOGGER;
     }
     
+    /**
+     * <p>
+     * Returns the duration of the evaluations.
+     * </p>
+     * 
+     * @return  the duration of the <code>{@link #run()}</code> operation
+     * 
+     * @throws IllegalStateException    the evaluations have not been executed.
+     */
+    public Duration getRunDuration() throws IllegalStateException {
+        
+        // Check state
+        if (!super.bolRun)
+            throw new IllegalStateException("Evaluations have not been executed.");
+        
+        return this.durEval;
+    }
+    
     
     //
     // Operations
@@ -388,57 +482,48 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
      * </p>
      * <p>
      * The evaluations proceed according to each <code>{@link TestArchiveRequest}</code> in the
-     * <code>{@link #mapCases}</code> key set.  The data for the test request is first recovered
-     * with the super-class <code>{@link QueryToolsAppBase#chanQuery}</code> and 
-     * <code>{@link QueryToolsAppBase#bufDataMsgs}</code> resources.
-     * Then all <code>{@link CorrelatorTestCase} records that use the recovered data from that
-     * <code>TestArchiveRequest</code> are performed.
+     * <code>{@link #mapCases}</code> key set.  
+     * <ol>
+     * <li>The data for the test request is first recovered using <code>{@link #recoverRequestData(DpDataRequest)}</code></li>
+     * <li>All test cases using that data are performed with <code>{@link CorrelatorTestCase#evaluate(RawDataCorrelator, List)}</code></li>
+     * <li>All test case results are stored in <code>{@link #setResults}</code> for later evaluation.</li>
+     * <li>The application state variables are updated.</li>
+     * </ol>
      * </p>
      * 
+     * @throws InvalidRequestStateException the application has already been run
      * @throws DpQueryException         general exception during test request data recovery (see message and cause)
+     * @throws IllegalStateException    message request attempt on empty message buffer
      * @throws InterruptedException     processing interruption recovering request data in message data buffer
-     * @throws IllegalStateException    data request attempt on empty message buffer
      * @throws BufferUnderflowException message buffer not fully drained
      * @throws IllegalArgumentException invalid timestamps were encountered in the recovered data set
      * @throws CompletionException      error in <code>DataBucket</code> insertion task (see cause)
      */
-    public void run() throws DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException, IllegalArgumentException, CompletionException {
+    public void run() throws InvalidRequestStateException, DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException, IllegalArgumentException, CompletionException {
 
-//        // The container of recovered data for each test request
-//        //  It is cleared an reused for each test request
-//        List<QueryData> lstDataMsgs = new LinkedList<>();
+        // Check state
+        if (super.bolRun) {
+            throw new InvalidRequestStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Application has already been run.");
+        }
+        super.bolRun = true;
         
+        // Start counter
+        System.out.print("Performing evaluations .");
+        super.startExecutionTimer(1L, TimeUnit.SECONDS);
+
+        // Iterate over each test request in the test case collection (within test suite configuration)
         Instant insStart = Instant.now();
         for (TestArchiveRequest enmRqst : this.mapCases.keySet()) {
-            
-//            // First perform the data request against the Query Service test archive
-//            DpDataRequest   rqst = enmRqst.create();
-//            
-//            super.bufDataMsgs.activate();           // ready buffer for incoming messages
-//            super.chanQuery.recoverRequest(rqst);   // blocking operation - throws DpQueryException
-//            Thread  thdShutdn = new Thread( () -> { // spawn the buffer shutdown so #isSupplying() returns false when empty
-//                    try {
-//                        super.bufDataMsgs.shutdown();
-//                    } catch (InterruptedException e) {} 
-//                }
-//            );
-//            thdShutdn.start();
-//            
-//            // Transfer recovered test data from message buffer to local list
-//            while (super.bufDataMsgs.isSupplying()) {
-//                QueryData   msgData = super.bufDataMsgs.take(); // throws IllegalStateException, InterruptedException
-//                
-//                lstDataMsgs.add(msgData);
-//            }
-//            thdShutdn.join();                                   // throws InterruptedException
-//            
-//            if (super.bufDataMsgs.isSupplying())
-//                throw new BufferUnderflowException();           // still have messages in buffer
-//            
-//            super.bufDataMsgs.shutdownNow();    // clears out the message buffer just in case
 
-            // Perform all the test case evaluations for that test request
-            List<QueryData>             lstDataMsgs = this.recoverTestData(enmRqst);
+            // Recover raw data for this request
+            DpDataRequest               rqst = enmRqst.create();
+            
+            // TODO - Remove
+//            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - About to start request...");
+            List<QueryData>             lstDataMsgs = super.recoverRequestData(rqst);
+//            System.out.println("  Got request data.");
+            
+            // Perform all the test case evaluations for the test request
             List<CorrelatorTestCase>    lstCases = this.mapCases.get(enmRqst);
             
             this.toolCorrelator.reset();
@@ -447,14 +532,16 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
                 
                 this.setResults.add(recResult);
             }
-            
-//            // Clear out the test message set for the next test request
-//            lstDataMsgs.clear();
         }
         Instant insFinish = Instant.now();
-        
+
         this.durEval = Duration.between(insStart, insFinish);
+        super.stopExecutionTimer();
+        System.out.println(" Evaluations completed in " + this.durEval.toSeconds() + " seconds.");
+        
+        // Set state variables
         super.bolCompleted = true;
+        super.bolRun = true;
     }
     
     /**
@@ -475,7 +562,6 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
      */
     public void writeReport() throws IllegalStateException {
         this.writeReport(this.psOutput);
-        LOGGER.info("Evaluation report stored at location {}.", super.pathOutFile);
     }
     
     /**
@@ -504,7 +590,7 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
         ps.println(strHdr);
         
         // Print out evaluation summary
-        ps.println("Test cases specified : " + this.mapCases.size());
+        ps.println("Test cases specified : " + this.mapCases.values().stream().mapToInt(lst -> lst.size()).sum() );
         ps.println("Test cases run       : " + this.setResults.size());
         ps.println("Evaluation duration  : " + this.durEval);
         ps.println("Evaluation completed : " + this.bolCompleted);
@@ -644,71 +730,5 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
         String strOutputLoc = lstStrOutput.get(0);
         
         return strOutputLoc;
-    }
-    
-    /**
-     * <p>
-     * Recovers all the raw time-series for the given test archive data request.
-     * </p>
-     * <p>
-     * Uses the <code>QueryChannel</code> and <code>QueryMessageBuffer</code> resources of the base class to perform
-     * the recovery operation for the given request.  This is somewhat involved since the message buffer has state
-     * dynamics that must be considered.  Specifically, we require the follow events in order:
-     * <ol>
-     * <li>The buffer must be activated in order to accept the incoming data messages.</li>
-     * <li>The recovery operation is then started and the buffer begins receiving response data - block until complete.</li>
-     * <li>The buffer shutdown operation is started on a separate thread - it is a blocking operation.</li>
-     * <li>A recovery loop is entered continuing until the buffer stops supplying. </li>
-     * <li>Wait until the shutdown thread completes - should be complete when buffer is empty.</li>
-     * </ol>
-     * Note that once the buffer is shutdown it will no longer accept new data messages, however, we do not start
-     * the shutdown thread until the recovery operation has complete and the buffer should be full.  It will continue
-     * to supply message in the buffer until exhausted, after which it will refuse any additional requests
-     * (by throwing an <code>IllegalStateException</code>.)
-     * </p>
-     *  
-     * @param enmRqst   the data request to perform
-     * 
-     * @return  all the recovered data for the given request
-     * 
-     * @throws DpQueryException         general exception during test request data recovery (see message and cause)
-     * @throws InterruptedException     processing interruption recovering request data in message data buffer
-     * @throws IllegalStateException    data request attempt on empty message buffer
-     * @throws BufferUnderflowException message buffer not fully drained
-     */
-    @SuppressWarnings("unused")
-    private List<QueryData> recoverTestData(TestArchiveRequest enmRqst) throws DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException {
-        
-        // The container of recovered data for test request
-        List<QueryData> lstDataMsgs = new LinkedList<>();
-        
-        // Buffer shutdown operation is blocking - must be performed on separate thread
-        Thread  thdShutdn = new Thread( () -> { 
-                try {
-                    super.bufDataMsgs.shutdown();
-                } catch (InterruptedException e) {} 
-            }
-        );
-        
-        // First perform the data request against the Query Service test archive
-        DpDataRequest   rqst = enmRqst.create();
-        
-        super.bufDataMsgs.activate();           // ready buffer for incoming messages
-        super.chanQuery.recoverRequest(rqst);   // blocking operation, supplies messages to buffer - throws DpQueryException
-        thdShutdn.start();                      // spawn the buffer shutdown thread so #isSupplying() returns false when empty                          
-        
-        // Transfer recovered test data from message buffer to local list
-        while (super.bufDataMsgs.isSupplying()) {
-            QueryData   msgData = super.bufDataMsgs.take(); // throws IllegalStateException, InterruptedException
-            
-            lstDataMsgs.add(msgData);
-        }
-        thdShutdn.join();                                   // throws InterruptedException
-        
-        // Check for bad recovery state
-        if (super.bufDataMsgs.isSupplying())
-            throw new BufferUnderflowException();           // still have messages in buffer
-        
-        return lstDataMsgs;
     }
 }

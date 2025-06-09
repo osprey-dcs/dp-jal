@@ -471,10 +471,10 @@ public record CorrelatorTestResultSummary(
         ps.println(strPad + "  Minimum processed MByte count   : " + (double)this.szPrcdMin/1.0e6);
         ps.println(strPad + "  Maximum processed MByte count   : " + (double)this.szPrcdMax/1.0e6);
         ps.println(strPad + "  Average processed MByte count   : " + (double)this.szPrcdAvg/1.0e6);
-        ps.println(strPad + "  Minimum request duration        : " + this.durPrcdMin);
-        ps.println(strPad + "  Maximum request duration        : " + this.durPrcdMax);
-        ps.println(strPad + "  Average request duration        : " + this.durPrcdAvg);
-        ps.println(strPad + "  Request duration stand. dev.    : " + this.durPrcdStd);
+        ps.println(strPad + "  Minimum processing duration     : " + this.durPrcdMin);
+        ps.println(strPad + "  Maximum processing duration     : " + this.durPrcdMax);
+        ps.println(strPad + "  Average processing duration     : " + this.durPrcdAvg);
+        ps.println(strPad + "  Request processing stand. dev.  : " + this.durPrcdStd);
         
         // Print out the request hit counts
         for (Map.Entry<TestArchiveRequest, Integer> entry : mapRqstHits.entrySet()) {

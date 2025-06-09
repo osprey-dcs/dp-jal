@@ -40,6 +40,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future.State;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.naming.ConfigurationException;
 
@@ -185,6 +190,13 @@ public abstract class ToolsAppBase<T extends ToolsAppBase<T>> {
     protected PrintStream           psOutput = null;
     
     
+    /** The timer task executor service */
+    protected ScheduledExecutorService  execTimer = null; 
+    
+    /** The future for the timer task - used for task shut down */
+    protected ScheduledFuture<?>        futTimer = null;
+
+    
     //
     // State Variables
     //
@@ -194,7 +206,7 @@ public abstract class ToolsAppBase<T extends ToolsAppBase<T>> {
     
     /** Evaluation completed flag */
     protected boolean     bolCompleted = false;
-    
+
     
     //
     // Constructors
@@ -314,6 +326,11 @@ public abstract class ToolsAppBase<T extends ToolsAppBase<T>> {
      */
     public void close() {
         
+        // Check if counter executor is running
+        if (this.execTimer!=null && !this.execTimer.isTerminated()) {
+            this.execTimer.shutdownNow();
+        }
+        
         // Check if output stream is open
         if (this.psOutput!=null && this.psOutput!=System.out) {
             this.psOutput.flush();
@@ -327,6 +344,67 @@ public abstract class ToolsAppBase<T extends ToolsAppBase<T>> {
     //
     // Subclass Support Methods
     //
+    
+    /**
+     * <p>
+     * Starts the application timer task.
+     * </p>
+     * <p>
+     * The "application timer" is a convenience for application clients; it simply prints out a "." to the
+     * standard output (i.e., <code>{@link System#out}</code>) at the period given by the arguments.  It is
+     * intended to indicate the the application is currently executing when long execution intervals are 
+     * expected.
+     * </p>
+     * <p>
+     * The timer task executes on a separate thread and must be explicitly shut down using method
+     * <code>{@link #stopExecutionTimer()}</code>.  Note that the timer should not be used if CPU resources
+     * are critical for application execution, as a <code> 
+     * 
+     * @param lngPeriod
+     * @param tuPeriod
+     * @throws IllegalStateException
+     */
+    protected void  startExecutionTimer(long lngPeriod, TimeUnit tuPeriod) throws IllegalStateException {
+        
+        // Check state
+        if (this.execTimer!=null && !this.execTimer.isShutdown())
+            throw new IllegalStateException("The execution timer is already running.");
+        
+        // Create counter task
+        Runnable taskCntr = () -> System.out.print(".");
+
+        // Create the timer executor and launch task
+        this.execTimer = Executors.newScheduledThreadPool(1);
+        this.futTimer = this.execTimer.scheduleAtFixedRate(taskCntr, lngPeriod, lngPeriod, tuPeriod);
+    }
+    
+    /**
+     * <p>
+     * Stops the application timer task if it is running.
+     * </p>
+     * <p>
+     * If the application timer has been started using the <code>{@link #startExecutionTimer(long, TimeUnit)}</code>
+     * method, it is shutdown here and a value <code>true</code> is returned.  If the application timer has not been
+     * started or it is already shut down then nothing happens and the method returns false.
+     * </p>
+     *   
+     * @return  <code>true</code> if the application timer is shut down, <code>false</code> otherwise
+     */
+    protected boolean stopExecutionTimer() {
+        
+        if (this.futTimer==null || this.execTimer==null)
+            return false;
+        
+        if (this.futTimer.state()==State.CANCELLED)
+            return false;
+        
+        if (this.execTimer.isShutdown())
+            return false;
+        
+        this.futTimer.cancel(true);
+        this.execTimer.shutdown();
+        return true;
+    }
 
     /**
      * <p>
@@ -376,9 +454,9 @@ public abstract class ToolsAppBase<T extends ToolsAppBase<T>> {
             return System.out;
         
         // Check if argument is directory - if so create unique file name
-        Path    pathOutput = Path.of(strPath);
+        this.pathOutFile = Path.of(strPath);
         
-        if (Files.isDirectory(pathOutput)) {
+        if (Files.isDirectory(this.pathOutFile)) {
             String  strFileName = this.createUniqueFileName();
             
             this.pathOutFile = Paths.get(strPath, strFileName);

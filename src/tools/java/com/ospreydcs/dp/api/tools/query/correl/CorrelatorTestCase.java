@@ -207,7 +207,7 @@ public record CorrelatorTestCase(
         ps.println(strPad + "  Data Request ID                   : " + this.enmRqst.name());
         ps.println(strPad + "  Concurrent processing enabled     : " + this.bolConcOpt);
         ps.println(strPad + "  Maximum concurrency thread count  : " + this.cntMaxThrds);
-        ps.print(  strPad + "  Pivot size triggering concurrency : " + this.szConcPivot);
+        ps.println(strPad + "  Pivot size triggering concurrency : " + this.szConcPivot);
     }
 
 }

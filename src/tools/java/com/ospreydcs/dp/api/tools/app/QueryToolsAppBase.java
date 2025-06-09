@@ -23,28 +23,31 @@
  * @since May 28, 2025
  *
  */
-package com.ospreydcs.dp.api.tools.query;
+package com.ospreydcs.dp.api.tools.app;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.lang.module.FindException;
+import java.nio.BufferUnderflowException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.Logger;
-
+import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
+import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryStatic;
+import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
-import com.ospreydcs.dp.api.tools.app.ToolsAppBase;
 import com.ospreydcs.dp.api.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.api.tools.config.query.JalToolsQueryConfig;
 import com.ospreydcs.dp.api.tools.config.request.JalRequestSuiteConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * <p>
@@ -76,8 +79,15 @@ public abstract class QueryToolsAppBase<T extends QueryToolsAppBase<T>> extends 
     // Class Constants
     //
     
-    /** The default output location (i.e., if none is provided) */
-    public static final String     STR_OUTPUT_PATH_DEF = CFG_DEF.output.channel.path;
+    /** Timeout limit for message queue buffer polling operation */
+    public static final long        LNG_TIMEOUT_POLL = 15;
+    
+    /** Timeout limit units for message queue buffer polling operation */
+    public static final TimeUnit    TU_TIMEOUT_POLL = TimeUnit.MILLISECONDS;
+    
+    
+//    /** The default output location (i.e., if none is provided) */
+//    public static final String     STR_OUTPUT_PATH_DEF = CFG_DEF.output.channel.path;
 
     
     //
@@ -101,7 +111,6 @@ public abstract class QueryToolsAppBase<T extends QueryToolsAppBase<T>> extends 
 
     /** Event logging level */
     public static final String      STR_LOGGING_LEVEL = CFG_DEF.logging.level;
-
 
     
     //
@@ -145,7 +154,7 @@ public abstract class QueryToolsAppBase<T extends QueryToolsAppBase<T>> extends 
         // Create the channel resources and channel
         this.bufDataMsgs = QueryMessageBuffer.create();
         this.connQuery = DpQueryConnectionFactoryStatic.connect();  // throws DpGrpcException
-        this.chanQuery = QueryChannel.from(connQuery, bufDataMsgs);
+        this.chanQuery = QueryChannel.from(this.connQuery, this.bufDataMsgs);
         
         // Set timeout for channel operation and for request operation
         this.connQuery.setTimeoutLimit(LNG_TIMEOUT, TU_TIMEOUT);
@@ -230,7 +239,76 @@ public abstract class QueryToolsAppBase<T extends QueryToolsAppBase<T>> extends 
     //
     // Subclass Support Methods
     //
-    
+
+    /**
+     * <p>
+     * Recovers all the raw time-series for the given time-series data request.
+     * </p>
+     * <p>
+     * Uses the <code>QueryChannel</code> and <code>QueryMessageBuffer</code> resources of the base class to perform
+     * the recovery operation for the given request.  This is somewhat involved since the message buffer has state
+     * dynamics that must be considered.  Specifically, we require the follow events in order:
+     * <ol>
+     * <li>The buffer must be activated in order to accept the incoming data messages.</li>
+     * <li>The recovery operation is then started and the buffer begins receiving response data - block until complete.</li>
+     * <li>The buffer shutdown operation is started on a separate thread - it is a blocking operation.</li>
+     * <li>A recovery loop is entered continuing until the buffer stops supplying. </li>
+     * <li>Wait until the shutdown thread completes - should be complete when buffer is empty.</li>
+     * </ol>
+     * Note that once the buffer is shutdown it will no longer accept new data messages, however, we do not start
+     * the shutdown thread until the recovery operation has complete and the buffer should be full.  It will continue
+     * to supply message in the buffer until exhausted, after which it will refuse any additional requests
+     * (by throwing an <code>IllegalStateException</code>.)
+     * </p>
+     *  
+     * @param rqst   the data request to perform
+     * 
+     * @return  all the recovered data for the given request
+     * 
+     * @throws DpQueryException         general exception during test request data recovery (see message and cause)
+     * @throws IllegalStateException    data request attempt on empty message buffer
+     * @throws InterruptedException     processing interruption recovering request data in message data buffer
+     * @throws BufferUnderflowException message buffer not fully drained
+     */
+    protected List<QueryData> recoverRequestData(DpDataRequest rqst)
+            throws DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException {
+
+        // The container of recovered data for test request
+        List<QueryData> lstDataMsgs = new LinkedList<>();
+
+        // Create the buffer shutdown thread
+        //  buffer shutdown operation is blocking - must be performed on separate thread
+        Thread  thdShutdn = new Thread( () ->    
+        { 
+            try {
+                this.bufDataMsgs.shutdown();
+            } catch (InterruptedException e) {} 
+        }
+                );
+
+        // Perform the data request to the Query Service 
+        this.bufDataMsgs.activate();           // ready buffer for incoming messages
+        this.chanQuery.recoverRequest(rqst);   // blocking operation, supplies messages to buffer - throws DpQueryException
+        thdShutdn.start();                     // spawn the buffer shutdown thread so #isSupplying() returns false when empty                          
+
+        // Transfer recovered data from message buffer to local list
+        while (this.bufDataMsgs.isSupplying()) {
+//            QueryData   msgData = this.bufDataMsgs.take(); // throws IllegalStateException, InterruptedException
+            QueryData   msgData = this.bufDataMsgs.poll(); // throws IllegalStateException
+            if (msgData == null)
+                continue;
+
+            lstDataMsgs.add(msgData);
+        }
+        thdShutdn.join();                                  // throws InterruptedException
+
+        // Check for bad recovery state
+        if (this.bufDataMsgs.isSupplying())
+            throw new BufferUnderflowException();          // still have messages in buffer
+
+        return lstDataMsgs;
+    }
+
     /**
      * <p>
      * Attempts to recover the test suite configuration from the given name.
@@ -321,5 +399,5 @@ public abstract class QueryToolsAppBase<T extends QueryToolsAppBase<T>> extends 
             throw new IllegalArgumentException(strErrMsg2, e);
         }
     }
-    
+
 }

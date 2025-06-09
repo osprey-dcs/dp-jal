@@ -35,6 +35,7 @@ import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 import com.ospreydcs.dp.api.tools.config.query.JalToolsQueryConfig;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
@@ -99,6 +100,17 @@ public class JalToolsConfig extends CfgStructure<JalToolsConfig> {
     public static JalToolsConfig getInstance() {
         if (JalToolsConfig.cfgInstance == null) {
             try {
+//                // TODO - Remove
+//                String strCfgPath = JalToolsConfig.class.getClassLoader().getResource(STR_CFG_FILE_NAME).getPath();
+//                System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " called from " + JavaRuntime.getQualifiedCallerName());
+//                System.out.println("  The location of file " + STR_CFG_FILE_NAME + " is " + strCfgPath);
+//                
+//                ClassLoader ldrClass = CfgLoaderYaml.class.getClassLoader();
+//                strCfgPath = ldrClass.getResource(STR_CFG_FILE_NAME).getPath();
+//                System.out.println("  The location as found from " + ldrClass.getName() + " is " + strCfgPath);
+//                // -------
+//                
+//                JalToolsConfig.cfgInstance = CfgLoaderYaml.load(strCfgPath, JalToolsConfig.class);
                 JalToolsConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE_NAME, JalToolsConfig.class);
                 
                 CfgOverrideUtility.overrideRoot(JalToolsConfig.cfgInstance, CfgOverrideUtility.SOURCE.ENVIRONMENT);
