@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	ExitCode.java
- * Package: com.ospreydcs.dp.api.tools.app
+ * Package: com.ospreydcs.dp.api.app
  * Type: 	ExitCode
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since May 28, 2025
  *
  */
-package com.ospreydcs.dp.api.tools.app;
+package com.ospreydcs.dp.api.app;
 
 /**
  * <p>

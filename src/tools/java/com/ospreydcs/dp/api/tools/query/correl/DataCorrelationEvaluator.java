@@ -31,35 +31,31 @@ import java.nio.BufferUnderflowException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
-import com.sun.jdi.request.InvalidRequestStateException;
-
 import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
+import com.ospreydcs.dp.api.app.ExitCode;
+import com.ospreydcs.dp.api.app.JalApplicationBase;
+import com.ospreydcs.dp.api.app.JalQueryAppBase;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
-import com.ospreydcs.dp.api.tools.app.ExitCode;
-import com.ospreydcs.dp.api.tools.app.QueryToolsAppBase;
-import com.ospreydcs.dp.api.tools.app.ToolsAppBase;
-import com.ospreydcs.dp.api.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.api.tools.config.query.JalToolsQueryConfig;
 import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
+import com.sun.jdi.request.InvalidRequestStateException;
 
 /**
  * <p>
@@ -74,19 +70,38 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * the report generated.
  * </p>
  * <p>
- * The application expects the given collection of arguments in order:
+ * <h2>Command Line Arguments</h2>
+ * <p>
+ * The application expects the given collection of arguments (ordering is irrelevant):
  * <ol>
  * <li>Test Requests - commands identified by <code>{@link TestArchiveRequest}</code> enumeration constants. </li>
- * <li>Maximum Thread Counts - values identified by the variable delimiter {@value #STR_VAR_THRDS}. </li> 
- * <li>Concurrency Pivot Sizes - value identified by the variable delimiter {@value #STR_VAR_PIVOT}. </li>
+ * <li>Maximum Thread Counts - values identified by the variable delimiter {@value #STR_VAR_RQST_DCMP}. </li> 
+ * <li>Concurrency Pivot Sizes - value identified by the variable delimiter {@value #STR_VAR_STRM_CNT}. </li>
  * <li>Output Location - an optional path or file identified by the variable delimiter {@value #STR_VAR_OUTPUT}. </li>
  * </ol> 
  * Additionally, the following "commands" may be provided:
  * <ul>
- * <li>{@value ToolsAppBase#STR_ARG_HELP} - responses with a the <code>{@link #STR_APP_USAGE}</code> message.</li>
- * <li>{@value ToolsAppBase#STR_ARG_VERSION} - response with the <code>{@link #STR_APP_VERSION}</code> message.</li>
+ * <li>{@value JalApplicationBase#STR_ARG_HELP} - responses with a the <code>{@link #STR_APP_USAGE}</code> message.</li>
+ * <li>{@value JalApplicationBase#STR_ARG_VERSION} - response with the <code>{@link #STR_APP_VERSION}</code> message.</li>
  * </ul>
  * The above arguments may appear anywhere on the command line but take precedence over all other arguments.
+ * </p>
+ * The full command line for the application appears as follows:
+ * <pre>
+ * <code>
+ * >DataCorrelationEvaluator R1 [... RN] [{@value #STR_VAR_THRDS} M1 ...Mi] [{@value #STR_VAR_PIVOT} P1 ...Pj] [{@value #STR_VAR_OUTPUT} output]
+ * </code>
+ * </pre>
+ * where 
+ * <ul>
+ * <li><code>R1...RN</code> = name(s) of a test request enumeration <code>{@link TestArchiveRequest}</code>.</li>
+ * <li><code>M1...Mi</code> = number of concurrent processing thread(s).</code>.</li>
+ * <li><code>P1...Pj</code> = target size(s) triggering concurrent processing. </li>
+ * <li><code>output</code> = location of output file, or string "console" - evaluation output is sent directly to console. 
+ * </ul>
+ * If the <code>output</code> argument is not provided, the output of the evaluation is created in
+ * the default path specified by class constant <code>{@link #STR_OUTPUT_DEF}</code>. 
+ * </p>
  * <p>
  * The application command line is first parsed for "commands", which are the <code>{@link TestArchiveRequest}</code>
  * enumeration constants describing the time-series data requests used in the return test suite.
@@ -96,7 +111,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * </p>
  * <p>
  * The remaining arguments are optional; a <code>CorrelatorTestSuite</code> instance has default values that
- * will be supplied if any are missing.  Note that all values for variables {@value #STR_VAR_THRDS} and 
+ * will be supplied if any are missing.  Note that all values for variables {@value #STR_VAR_THREADS} and 
  * {@value #STR_VAR_PIVOT} are <code>Integer</code> valued and must be parse as such.  If an error occurs
  * while parse the integer value an exception is thrown.
  * </p>
@@ -105,7 +120,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * @since May 27, 2025
  *
  */
-public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrelationEvaluator> {
+public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelationEvaluator> {
     
     
     //
@@ -126,14 +141,14 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
         //
         
         // Check for client help request
-        if (ToolsAppBase.parseAppArgsHelp(args)) {
+        if (JalApplicationBase.parseAppArgsHelp(args)) {
             System.out.println(STR_APP_USAGE);
             
             System.exit(ExitCode.SUCCESS.getCode());
         }
         
         // Check for client version request
-        if (ToolsAppBase.parseAppArgsVersion(args)) {
+        if (JalApplicationBase.parseAppArgsVersion(args)) {
             System.out.println(STR_APP_VERSION);
             
             System.exit(ExitCode.SUCCESS.getCode());
@@ -145,10 +160,10 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
         
         // Check for general command-line errors
         try {
-            ToolsAppBase.parseAppArgsErrors(args, CNT_APP_MIN_ARGS, LST_STR_DELIMS);
+            JalApplicationBase.parseAppArgsErrors(args, CNT_APP_MIN_ARGS, LST_STR_DELIMS);
 
         } catch (Exception e) {
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
 
             System.exit(ExitCode.INPUT_CFG_CORRUPT.getCode());
         }
@@ -163,7 +178,7 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
             
         } catch (Exception e) {
             
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.INTPUT_ARG_INVALID.getCode());
             return;
         }
@@ -187,63 +202,63 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
             
         } catch (DpGrpcException e) {
             System.err.println(STR_APP_NAME + " creation FAILURE - Unable to connect to Query Service.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
             
         } catch (ConfigurationException e) {
             System.err.println(STR_APP_NAME + " creation FAILURE - No time-series data requests in command line.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.INTPUT_ARG_INVALID.getCode());
             
         } catch (UnsupportedOperationException e) {
             System.err.println(STR_APP_NAME + " creation FAILURE - Output location invalid: " + strOutputLoc);
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.OUTPUT_ARG_INVALID.getCode());
             
         } catch (FileNotFoundException e) {
             System.err.println(STR_APP_NAME + " creation FAILURE - Unable to create output file.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.OUTPUT_FAILURE.getCode());
             
         } catch (SecurityException e) {
             System.err.println(STR_APP_NAME + " creation FAILURE - Unable to write to output file.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.OUTPUT_FAILURE.getCode());
             
             
         } catch (InvalidRequestStateException e) {
             System.err.println(STR_APP_NAME + " execution FAILURE - Application already executed.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
             
         } catch (DpQueryException e) {
             System.err.println(STR_APP_NAME + " data recovery ERROR - General gRPC error in data recovery.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
             
         } catch (IllegalStateException e) {
             System.err.println(STR_APP_NAME + " data recovery ERROR - Message request attempt on empty buffer.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
             
         } catch (InterruptedException e) {
             System.err.println(STR_APP_NAME + " data recovery ERROR - Process interrupted while waiting for buffer message.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
             
         } catch (BufferUnderflowException e) {
             System.err.println(STR_APP_NAME + " data recovery ERROR - message buffer not fully drained.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
             
         } catch (IllegalArgumentException e) {
             System.err.println(STR_APP_NAME + " evaluation ERROR - invalid timestamps encountered in recovered data.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
             
         } catch (CompletionException e) {
             System.err.println(STR_APP_NAME + " evaluation ERROR - data bucket insertion task failed.");
-            ToolsAppBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
             
         }
@@ -254,11 +269,9 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
     // Application Resources
     //
     
-//    /** TEST */
-//    private static final DpQueryConfig          CFG_DEF = DpApiConfig.getInstance().query;
-    
     /** Default configuration parameters for the Query Service tools */
-    private static final JalToolsQueryConfig    CFG_QUERY = JalToolsConfig.getInstance().query;
+//    private static final JalToolsQueryConfig    CFG_QUERY = JalToolsConfig.getInstance().query;
+    private static final DpQueryConfig    CFG_QUERY = DpApiConfig.getInstance().query;
     
     
     //
@@ -269,6 +282,11 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
     public static final int         CNT_APP_MIN_ARGS = 2;
     
     
+    /** Default output path location */
+//  public static final String      STR_OUTPUT_DEF = CFG_QUERY.output.correl.path;
+    public static final String      STR_OUTPUT_DEF = "test/output/query/correl";
+  
+
     /** Argument flag identifying a maximum thread count value */
     public static final String      STR_VAR_THRDS = "--threads";
     
@@ -309,19 +327,19 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
           + "  Where  \n"
           + "    " + STR_ARG_HELP + "      = print this message and return.\n"
           + "    " + STR_ARG_VERSION + "   = prints application version information and return.\n"
-          + "    R1, ..., Rn = Test request(s) to perform (TestArchiveRequest enumeration name(s)). \n"
-          + "    M1, ..., Mj = Maximum allowable number(s) of concurrent processing threads (Integer value). \n"
-          + "    P1, ..., Pk = Pivot size(s) triggering concurrent processing [Integer value]. \n"
+          + "    R1, ..., Rn = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
+          + "    M1, ..., Mj = Maximum allowable number(s) of concurrent processing threads - Integer value(s). \n"
+          + "    P1, ..., Pk = Pivot size(s) triggering concurrent processing - Integer value(s). \n"
           + "    " + STR_VAR_OUTPUT + "    = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
           + "\n"
           + "  NOTES: \n"
           + "  - All bracketed quantities [...] are optional. \n"
-          + "  - Default " + STR_VAR_OUTPUT + " value is in Java API Tools configuration file.\n";
+          + "  - Default " + STR_VAR_OUTPUT + " value is " + STR_OUTPUT_DEF + ".\n";
 
     
     /** The "version" message for client version requests */
     public static final String      STR_APP_VERSION = 
-            DataCorrelationEvaluator.class.getSimpleName()
+            STR_APP_NAME
           + " version 1.0: compatible with Java Application Library version 1.8.0 or greater.";
     
     
@@ -329,14 +347,10 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
     // Class Constants - Default Values
     //
     
-    /** Default output path location */
-//    public static final String      STR_OUTPUT_DEF = CFG_QUERY.output.correl.path;
-    public static final String      STR_OUTPUT_DEF = "test/output/query/correl";
-    
-
     /** The target correlation data rate (MBps) */
     public static final double      DBL_RATE_TARGET = 500.0;
 
+    
     //
     // Class Constants - Correlator Initial Configuration
     //
@@ -365,7 +379,7 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
     //
     
     /** Class event logger */
-    private static final Logger     LOGGER = Log4j.getLogger(DataCorrelationEvaluator.class, QueryToolsAppBase.STR_LOGGING_LEVEL);
+    private static final Logger     LOGGER = Log4j.getLogger(DataCorrelationEvaluator.class, JalQueryAppBase.STR_LOGGING_LEVEL);
 
     
     // 
@@ -442,33 +456,15 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
 
     
     //
-    // ToolsAppBase Abstract Methods
+    // JalApplicationBase Abstract Methods
     //
     
     /**
-     * @see com.ospreydcs.dp.api.tools.app.ToolsAppBase#getLogger()
+     * @see com.ospreydcs.dp.api.app.JalApplicationBase#getLogger()
      */
     @Override
     protected Logger getLogger() {
         return LOGGER;
-    }
-    
-    /**
-     * <p>
-     * Returns the duration of the evaluations.
-     * </p>
-     * 
-     * @return  the duration of the <code>{@link #run()}</code> operation
-     * 
-     * @throws IllegalStateException    the evaluations have not been executed.
-     */
-    public Duration getRunDuration() throws IllegalStateException {
-        
-        // Check state
-        if (!super.bolRun)
-            throw new IllegalStateException("Evaluations have not been executed.");
-        
-        return this.durEval;
     }
     
     
@@ -518,10 +514,7 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
             // Recover raw data for this request
             DpDataRequest               rqst = enmRqst.create();
             
-            // TODO - Remove
-//            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - About to start request...");
             List<QueryData>             lstDataMsgs = super.recoverRequestData(rqst);
-//            System.out.println("  Got request data.");
             
             // Perform all the test case evaluations for the test request
             List<CorrelatorTestCase>    lstCases = this.mapCases.get(enmRqst);
@@ -542,6 +535,24 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
         // Set state variables
         super.bolCompleted = true;
         super.bolRun = true;
+    }
+    
+    /**
+     * <p>
+     * Returns the duration of the evaluations.
+     * </p>
+     * 
+     * @return  the duration of the <code>{@link #run()}</code> operation
+     * 
+     * @throws IllegalStateException    the evaluations have not been executed.
+     */
+    public Duration getRunDuration() throws IllegalStateException {
+        
+        // Check state
+        if (!super.bolRun)
+            throw new IllegalStateException("Evaluations have not been executed.");
+        
+        return this.durEval;
     }
     
     /**
@@ -633,8 +644,8 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
      * The method parse the given collection of arguments for the following information in order:
      * <ol>
      * <li>Test Requests - commands identified by <code>{@link TestArchiveRequest}</code> enumeration constants. </li>
-     * <li>Maximum Thread Counts - values identified by the variable delimiter {@value #STR_VAR_THRDS}. </li> 
-     * <li>Concurrency Pivot Sizes - value identified by the variable delimiter {@value #STR_VAR_PIVOT}. </li>
+     * <li>Maximum Thread Counts - values identified by the variable delimiter {@value #STR_VAR_RQST_DCMP}. </li> 
+     * <li>Concurrency Pivot Sizes - value identified by the variable delimiter {@value #STR_VAR_STRM_CNT}. </li>
      * </ol> 
      * <p>
      * The application command line is first parsed for "commands", which are the <code>{@link TestArchiveRequest}</code>
@@ -645,8 +656,8 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
      * </p>
      * <p>
      * The remaining arguments are optional; a <code>CorrelatorTestSuite</code> instance has default values that
-     * will be supplied if any are missing.  Note that all values for variables {@value #STR_VAR_THRDS} and 
-     * {@value #STR_VAR_PIVOT} are <code>Integer</code> valued and must be parse as such.  If an error occurs
+     * will be supplied if any are missing.  Note that all values for variables {@value #STR_VAR_RQST_DCMP} and 
+     * {@value #STR_VAR_STRM_CNT} are <code>Integer</code> valued and must be parse as such.  If an error occurs
      * while parse the integer value an exception is thrown.
      * </p>
      *  
@@ -662,7 +673,7 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
             throws ConfigurationException, IllegalArgumentException, NumberFormatException {
      
         // Parse the data requests 
-        List<String>    lstRqstNms = ToolsAppBase.parseAppArgsCommands(args);
+        List<String>    lstRqstNms = JalApplicationBase.parseAppArgsCommands(args);
         if (lstRqstNms.isEmpty()) {
             String  strMsg = "The command-line arguments contained no time-series data requests. Use --help command.";
 
@@ -676,13 +687,13 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
                 .toList();
         
         // Parse the maximum thread counts and convert to integers
-        List<String>    lstStrThrdCnts = ToolsAppBase.parseAppArgsVariable(args, STR_VAR_THRDS);
+        List<String>    lstStrThrdCnts = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_THRDS);
         List<Integer>   lstThrdCnts = lstStrThrdCnts.stream()
                 .<Integer>map(strNum -> Integer.valueOf(strNum))                    // throws NumberFormatException
                 .toList();
         
         // Parse the pivot sizes and convert to integers
-        List<String>    lstStrSzPivots = ToolsAppBase.parseAppArgsVariable(args, STR_VAR_PIVOT);
+        List<String>    lstStrSzPivots = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_PIVOT);
         List<Integer>   lstSzPivots = lstStrSzPivots.stream()
                 .<Integer>map(strNum -> Integer.valueOf(strNum))
                 .toList();
@@ -720,7 +731,7 @@ public final class DataCorrelationEvaluator extends QueryToolsAppBase<DataCorrel
     private static String   parseOutputLocation(String[] args) {
         
         // Look for the output location on the command line
-        List<String>    lstStrOutput = ToolsAppBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
+        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
     
         // If there is no user-provided output location use the default value in the JAL configuration
         if (lstStrOutput.isEmpty()) 

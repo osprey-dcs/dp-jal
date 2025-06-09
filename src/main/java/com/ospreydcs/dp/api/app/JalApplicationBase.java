@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	ToolsAppBase.java
- * Package: com.ospreydcs.dp.api.tools.app
- * Type: 	ToolsAppBase
+ * File:	JalApplicationBase.java
+ * Package: com.ospreydcs.dp.api.app
+ * Type: 	JalApplicationBase
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -23,7 +23,7 @@
  * @since May 28, 2025
  *
  */
-package com.ospreydcs.dp.api.tools.app;
+package com.ospreydcs.dp.api.app;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -54,7 +54,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
- * Bases class for Java API applications.
+ * Bases class for applications based upon the Java API Library.
  * </p>
  * <p>
  * Provides general methods and resources common for JAL applications. This can be used as a base class for
@@ -121,6 +121,18 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <li><code>{@link #parseAppArgsTarget(String[])}</code></li>
  * </ul>
  * </p>
+ * <p>
+ * <h2>Logging</h2>
+ * The base class expects a Log4j <code>{@link Logger}</code> instance to be created in the application sub-class.
+ * The logger instance is used here to log warning and error events, specifically in the 
+ * <code>{@link #reportTerminalException(Throwable)}</code> instance method.  Thus, the abstract methods 
+ * <code>{@link #isLogging()}</code> and <code>{@link #getLogger()}</code> methods must be implemented to 
+ * support these actions.  
+ * </p>
+ * <p>
+ * To deactivate logging by this base class simply implement the <code>{@link #isLogging()}</code> method to
+ * return <code>false</code>, then the <code>{@link #getLogger()}</code> method can return <code>null</code>.
+ * </p>
  * 
  * @param   <T> the class type of the final child application 
  * 
@@ -128,7 +140,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @since May 28, 2025
  *
  */
-public abstract class ToolsAppBase<T extends ToolsAppBase<T>> {
+public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
 
     
     //
@@ -214,12 +226,12 @@ public abstract class ToolsAppBase<T extends ToolsAppBase<T>> {
     
     /**
      * <p>
-     * Constructs a new <code>ToolsAppBase</code> instance.
+     * Constructs a new <code>JalApplicationBase</code> instance.
      * </p>
      *
      * @param clsApp    the class instance of the final application
      */
-    protected ToolsAppBase(Class<T> clsApp) {
+    protected JalApplicationBase(Class<T> clsApp) {
         this.clsApp = clsApp;
     }
 
@@ -994,7 +1006,7 @@ public abstract class ToolsAppBase<T extends ToolsAppBase<T>> {
      * @param clsApp    the class type of the application
      * @param e         the exception to report
      */
-    public static <T extends ToolsAppBase<T>> void  reportTerminalException(Class<T> clsApp, Throwable e) {
+    public static <T extends JalApplicationBase<T>> void  reportTerminalException(Class<T> clsApp, Throwable e) {
         String  strApp = clsApp.getClass().getName() + " TERMINAL ERROR at ";
         String  strHdr = JavaRuntime.getQualifiedCallerNameSimple() + ".";
         String  strMsg = "Encountered exception " + e.getClass().getSimpleName() + ": " + e.getMessage() + ".";
@@ -1026,7 +1038,7 @@ public abstract class ToolsAppBase<T extends ToolsAppBase<T>> {
      * @param clsApp    the class type of the application
      * @param strMsg    the message to report
      */
-    public static <T extends ToolsAppBase<T>> void  reportTerminalErrorMessage(Class<T> clsApp, String strMsg) {
+    public static <T extends JalApplicationBase<T>> void  reportTerminalErrorMessage(Class<T> clsApp, String strMsg) {
         String  strApp = clsApp.getClass().getName() + " TERMINAL ERROR at ";
         String  strHdr = JavaRuntime.getQualifiedCallerNameSimple() + ".";
         String  strBye = "Unable to continue. Exiting...";

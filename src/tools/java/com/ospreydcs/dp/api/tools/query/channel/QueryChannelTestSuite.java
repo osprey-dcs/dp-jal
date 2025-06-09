@@ -63,6 +63,38 @@ public class QueryChannelTestSuite {
     
     /**
      * <p>
+     * Creates a new, empty <code>QueryChannelTestSuite</code> instance ready for configuration.
+     * </p>
+     * <p>
+     * The returned test suite generation must be configured using the following configuration methods
+     * <ul>
+     * <li><code>{@link #addTestRequest(TestArchiveRequest)}</code></li>
+     * <li><code>{@link #addRequestDecomposition(RequestDecompType)}</code></li>
+     * <li><code>{@link #addStreamType(DpGrpcStreamType)}</code></li>
+     * <li><code>{@link #addStreamCount(int)}</code></li>
+     * </ul>
+     * At least one test request must be added to the configuration.  If any other configuration
+     * parameter is not supplied a default value is used from the following list:
+     * <ul>
+     * <li><code>{@link #ENM_RQST_DCMP_DEF} = {@value #ENM_RQST_DCMP_DEF}</code></li>
+     * <li><code>{@link #ENM_STRM_TYPE_DEF} = {@value #ENM_STRM_TYPE_DEF}</code></li>
+     * <li><code>{@link #INT_STRM_CNT_DEF} = {@value #INT_STRM_CNT_DEF}</code></li>
+     * </ul>
+     * Once configured the <code>QueryChannelTestSuite</code> instance can create suites of 
+     * <code>{@link QueryChannelTestCase}</code> by enumerating all the configuration parameters.
+     * Use method <code>{@link #createTestSuite()}</code> for test suite creation.
+     * </p>
+     * 
+     * @param strName   the (optional) request suite name
+     * 
+     * @return  a new <code>QueryChannelTestSuite</code> instance ready for configuration
+     */
+    public static QueryChannelTestSuite create(String strName) {
+        return new QueryChannelTestSuite(strName);
+    }
+    
+    /**
+     * <p>
      * Creates a new <code>QueryChannelTestSuite</code> initialized from the given configuration object.
      * </p>
      * <p>
@@ -115,11 +147,11 @@ public class QueryChannelTestSuite {
     public static final String      STR_LOGGING_LEVEL = CFG_DEF.logging.level;
     
     
-    /** Default gRPC stream type */
-    public static final DpGrpcStreamType    ENM_STRM_TYPE_DEF = CFG_DEF.recovery.request.stream.preference;
-    
     /** Default request decomposition strategy */
     public static final RequestDecompType   ENM_RQST_DCMP_DEF = RequestDecompType.NONE;
+    
+    /** Default gRPC stream type */
+    public static final DpGrpcStreamType    ENM_STRM_TYPE_DEF = CFG_DEF.recovery.request.stream.preference;
     
     /** Default gRPC stream count */
     public static final Integer             INT_STRM_CNT_DEF = 1;
@@ -164,7 +196,7 @@ public class QueryChannelTestSuite {
     
     /**
      * <p>
-     * Constructs a new, emtpy <code>QueryChannelTestSuite</code> instance with the given name.
+     * Constructs a new, empty <code>QueryChannelTestSuite</code> instance with the given name.
      * </p>
      *
      * @param strName   name of the test suite
@@ -196,33 +228,57 @@ public class QueryChannelTestSuite {
     
     /**
      * <p>
-     * Adds a new gRPC stream count to be added to the test suite.
+     * Adds a collection of time-series data requests into the test suite.
      * </p>
      * <p>
-     * Note that stream counts only apply to test cases where the request decomposition strategy
-     * is not equal to <code>{@link RequestDecompType#NONE}</code>.
+     * Adds the given test archive requests into the set of test requests for test case generation.
+     * Test cases will be generated for the given request according to the other test suite configuration
+     * parameters.
      * </p>
      * 
-     * @param cntStrms  the gRPC stream count to be included in test case generations
+     * @param setTestRqsts   collection of new <code>TestArchiveRequest</code> targets for test suite generation 
      */
-    public void addStreamCount(int cntStrms) {
-        this.setStrmCnts.add(cntStrms);
+    public void addTestRequests(Collection<TestArchiveRequest> setTestRqsts) {
+        this.setTestRqsts.addAll(setTestRqsts);
     }
     
     /**
      * <p>
-     * Adds a new time-series data request decomposition strategy to the test suite.
+     * Adds a new time-series data request decomposition strategy to the test suite configuration.
+     * </p>
+     * <p>
+     * Adds the given request decomposition strategy into the test suite configuration (for test case generation).
+     * Test cases will be generated through enumeration of all test suite configuration parameters.
      * </p>
      * 
-     * @param enmRqstType   the request decomposition strategy to be added to generated test cases
+     * @param enmRqstDmpType   the request decomposition strategy to be added to current configuration
      */
-    public void addRequestDecomposition(RequestDecompType enmRqstType) {
-        this.setDcmpType.add(enmRqstType);
+    public void addRequestDecomposition(RequestDecompType enmRqstDmpType) {
+        this.setDcmpType.add(enmRqstDmpType);
     }
     
     /**
      * <p>
-     * Adds a new gRPC stream type to the test suite.
+     * Adds a new collection of time-series data request decomposition strategies to the test suite configuration.
+     * </p>
+     * <p>
+     * Adds the given request decomposition strategy into the test suite configuration (for test case generation).
+     * Test cases will be generated through enumeration of all test suite configuration parameters.
+     * </p>
+     * 
+     * @param setRqstDmpTypes   collection of request decomposition strategies to be added to current configuration
+     */
+    public void addRequestDecompositions(Collection<RequestDecompType> setRqstDmpTypes) {
+        this.setDcmpType.addAll(setRqstDmpTypes);
+    }
+    
+    /**
+     * <p>
+     * Adds a new gRPC stream type to the current test suite configuration.
+     * </p>
+     * <p>
+     * Adds the given gRPC stream type into the test suite configuration (for test case generation).
+     * Test cases will be generated through enumeration of all test suite configuration parameters.
      * </p>
      * 
      * @param enmStrmType   the gRPC stream type to be included in test case generation
@@ -245,10 +301,87 @@ public class QueryChannelTestSuite {
         this.setStrmType.add(enmStrmType);
     }
     
+    /**
+     * <p>
+     * Adds a new collection of gRPC stream types to the current test suite configuration.
+     * </p>
+     * <p>
+     * Adds the given gRPC stream types into the test suite configuration (for test case generation).
+     * Test cases will be generated through enumeration of all test suite configuration parameters.
+     * </p>
+     * 
+     * @param setStrmTypes   the gRPC stream type to be included in test case generation
+     * 
+     * @throws IllegalArgumentException Illegal gRPC stream type for query operations 
+     */
+    public void addStreamTypes(Collection<DpGrpcStreamType> setStrmTypes) throws IllegalArgumentException {
+        
+        // Check arguments
+        boolean bolBadType = setStrmTypes.stream().anyMatch(enm -> enm == DpGrpcStreamType.FORWARD);
+        if (bolBadType) {
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
+                    + " - gRPC stream type " + DpGrpcStreamType.FORWARD + " not allowed in query operations";
+            
+            if (BOL_LOGGING)
+                LOGGER.error(strMsg);
+            
+            throw new IllegalArgumentException(strMsg);
+        }
+        
+        this.setStrmType.addAll(setStrmTypes);
+    }
+    
+    /**
+     * <p>
+     * Adds a new gRPC stream count to be added to the test suite configuration.
+     * </p>
+     * <p>
+     * @apiNote
+     * Note that non-unity stream counts only apply to test cases where the request decomposition strategy
+     * is not equal to <code>{@link RequestDecompType#NONE}</code>.  Any configurations where the decomposition 
+     * strategy equals <code>{@link RequestDecompType#NONE}</code> and the gRPC stream count is &gt; 1 will
+     * not be generated with <code>{@link #createTestSuite()}</code>.
+     * </p>
+     * 
+     * @param cntStrms  the gRPC stream count to be included in test case generations
+     */
+    public void addStreamCount(int cntStrms) {
+        this.setStrmCnts.add(cntStrms);
+    }
+    
+    /**
+     * <p>
+     * Adds a new collection of gRPC stream counts to be added to the test suite configuration.
+     * </p>
+     * <p>
+     * @apiNote
+     * Note that non-unity stream counts only apply to test cases where the request decomposition strategy
+     * is not equal to <code>{@link RequestDecompType#NONE}</code>.  Any configurations where the decomposition 
+     * strategy equals <code>{@link RequestDecompType#NONE}</code> and the gRPC stream count is &gt; 1 will
+     * not be generated with <code>{@link #createTestSuite()}</code>.
+     * </p>
+     * 
+     * @param setStrmCnts  the gRPC stream count to be included in test case generations
+     */
+    public void addStreamCounts(Collection<Integer> setStrmCnts) {
+        this.setStrmCnts.addAll(setStrmCnts);
+    }
+    
     
     //
     // Operations
     //
+    
+    /**
+     * <p>
+     * Returns the (optional) name of the test suite.
+     * </p>
+     * 
+     * @return  name of the test suite configuration
+     */
+    public String   getName() {
+        return this.strName;
+    }
     
     /**
      * <p>
@@ -272,7 +405,7 @@ public class QueryChannelTestSuite {
     public Collection<QueryChannelTestCase> createTestSuite() throws ConfigurationException {
         
         // Check state
-        this.defaultConfiguration();
+        this.defaultConfiguration();    // throws ConfigurationException
         
         // Create returned container and populate it by enumerating through all test suite parameters 
         List<QueryChannelTestCase>  lstCases = new LinkedList<>();
@@ -324,16 +457,15 @@ public class QueryChannelTestSuite {
         for (RequestDecompType enmType : this.setDcmpType)
             ps.println(strPad + "- " + enmType.name());
         
-        ps.println(strPad + "gRPC Stream Counts:");
-        for (Integer intCnt : this.setStrmCnts)
-            ps.println(strPad + "- " + intCnt);
-        
         ps.println(strPad + "gRPC Stream Types:");
         for (DpGrpcStreamType enmType : this.setStrmType)
             ps.println(strPad + "- " + enmType.name());
+        
+        ps.println(strPad + "gRPC Stream Counts:");
+        for (Integer intCnt : this.setStrmCnts)
+            ps.println(strPad + "- " + intCnt);
     }
 
-    
     
     //
     // Support Methods

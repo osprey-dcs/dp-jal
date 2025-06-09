@@ -20,97 +20,116 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since May 11, 2025
+ * @since Jun 9, 2025
  *
  */
 package com.ospreydcs.dp.api.tools.query.channel;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.lang.module.FindException;
 import java.lang.module.ResolutionException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.DateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
 
 import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
-import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
+import com.ospreydcs.dp.api.app.ExitCode;
+import com.ospreydcs.dp.api.app.JalApplicationBase;
+import com.ospreydcs.dp.api.app.JalQueryAppBase;
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
+import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
-import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryStatic;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
-import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
-import com.ospreydcs.dp.api.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.api.tools.config.query.JalToolsQueryConfig;
+import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.tools.config.request.JalRequestSuiteConfig;
+import com.ospreydcs.dp.api.tools.query.correl.CorrelatorTestSuite;
+import com.ospreydcs.dp.api.tools.query.correl.DataCorrelationEvaluator;
+import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 
 /**
  * <p>
- * Application for evaluating the performance of the <code>QueryChannel</code> class under predefined test suites.
+ * Application for evaluating the performance of the <code>QueryChannel</code> class under test suites 
+ * described in the argument.
  * </p>
  * <p>
- * There must be at least 1 command-line argument and at most 2 arguments.  The 1st argument indicates the
- * test suite to be executed and the 2nd (optional) argument specifies the output location.  
+ * The application command-line argument collection describes the test suite to be run during execution.  The test
+ * suite itself is given by a <code>{@link QueryChannelTestSuite}</code> instance, which is created from the 
+ * command-line arguments via the <code>{@link #parseTestSuiteConfig(String[])}</code>.  Once the test suite
+ * configuration is recovered, an instance of <code>QueryChannelEvaluator</code> is create, executed, and
+ * the report generated.
+ * </p>
+ * <p>
+ * The application expects the given collection of arguments (ordering is irrelevant):
+ * <ol>
+ * <li>Test Request(s) - command(s) identified by <code>{@link TestArchiveRequest}</code> enumeration constants. </li>
+ * <li>Data Request Decomposition Strategy(ies)- values identified by the variable delimiter {@value #STR_VAR_RQST_DCMP}. </li>
+ * <li>gRPC Stream Type(s) - value(s) identified by the variable {@value #STR_VAR_STRM_TYPE}. </li>
+ * <li>gRPC Stream Count(s) - value(s) identified by the variable {@value #STR_VAR_STRM_CNT}. </li>
+ * <li>Output Location - an optional path or file identified by the variable {@value #STR_VAR_OUTPUT}. </li>
+ * </ol> 
+ * Additionally, the following "commands" may be provided:
+ * <ul>
+ * <li>{@value JalApplicationBase#STR_ARG_HELP} - responses with a the <code>{@link #STR_APP_USAGE}</code> message.</li>
+ * <li>{@value JalApplicationBase#STR_ARG_VERSION} - response with the <code>{@link #STR_APP_VERSION}</code> message.</li>
+ * </ul>
+ * The above arguments may appear anywhere on the command line but take precedence over all other arguments.
+ * </p>
+ * <p>
+ * There must be at least 1 command-line argument, a valid  <code>{@link TestArchiveRequest}</code> constant name.  
+ * There must be at least one test request for a valid test suite configuration, there are default values for all
+ * other parameters.
  * More specifically, the command line arguments for the application are as follows:
  * <pre>
- *   <code>>QueryChannelEvaluator name [output]</code>
+ * <code>>
+ * >QueryChannelEvaluator R1 [... RN] [{@value #STR_VAR_RQST_DCMP} D1 ...Di] [{@value #STR_VAR_STRM_TYPE} S1 ...Sj] [{@value #STR_VAR_STRM_CNT} N1 ...Nk] [{@value #STR_VAR_OUTPUT} output]
+ * </code>
  * </pre>
  * where 
  * <ul>
- * <li><code>name</code> = name of a pre-defined test suite configuration within the Java API Tools configuration.</li>
- * <li><code>name</code> = file path of a YAML file containing <code>JalRequestSuiteConfig</code> formatted test suite.</li>
- * <li><code>output</code> = path for evaluation output file (unique file is created). </li>
- * <li><code>output</code> = file path for evaluation output (any existing file is clobbered).</li> 
- * <li><code>output</code> = the string "console" - evaluation output is sent directly to console. 
+ * <li><code>R1...RN</code> = name(s) of a test request enumeration <code>{@link TestArchiveRequest}</code>.</li>
+ * <li><code>D1...Di</code> = name(s) of request decomposition enumeration <code>{@link RequestDecompType}</code></code>.</li>
+ * <li><code>S1...Sj</code> = names(s) of gRPC stream type enumerations <code>{@link DpGrpcStreamType}</code>. </li>
+ * <li><code>N1...Nk</code> = number(s) of gRPC streams for request data recovery.</li> 
+ * <li><code>output</code> = location of output file, or string "console" - evaluation output is sent directly to console. 
  * </ul>
  * If the <code>output</code> argument is not provided, the output of the evaluation is created in
- * the default path specified in the Java API Tools configuration with value given by class constant
- * <code>{@link #STR_OUTPUT_PATH_DEF}</code>. 
+ * the default path specified by class constant <code>{@link #STR_OUTPUT_DEF}</code>. 
  * </p>
  * <p>
  * <h2>Test Suites</h2>
- * The <code>QueryChannelEvaluator</code> runs "test suites" described by the <code>{@link JalRequestSuiteConfig}</code>
- * structure class.  The structure class is used to instantiate a <code>{@link QueryChannelTestSuite}</code>
- * object.  The <code>QueryChannelTestSuite</code> object generates collections of 
- * <code>{@link QueryChannelTestCase}</code> instances according to the configuration in the original structure class.
+ * The <code>QueryChannelEvaluator</code> runs "test suites" described by the command-line argument
+ * The command-line arguments are used to to instantiate a <code>{@link QueryChannelTestSuite}</code>
+ * object which configures the test suite.  The <code>QueryChannelTestSuite</code> object generates collections of 
+ * <code>{@link QueryChannelTestCase}</code> instances according to the configuration in application arguments.
  * Each <code>QueryChannelTestCase</code> object performs an evaluation of a test <code>QueryChannel</code> object
  * under the conditions of the test.
  * </p> 
  * <p>
  * <h2>Output</h2>
  * A new output file is created for each application invocation.  The file will be located in the path
- * given by the optional 2nd argument or the default location in the configuration file.  The name of
- * the file has the form
+ * given by the optional 2nd argument or the default location <code>{@link #STR_OUTPUT_DEF}</code> .  
+ * The name of the file has the form
  * <pre>
  *   <code>QueryChannelEvaluator-[creation instant].txt</code>
  * </pre>
  * </p>
- *
+*
  * @author Christopher K. Allen
- * @since May 11, 2025
+ * @since Jun 9, 2025
  *
  */
-public class QueryChannelEvaluator {
+public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator> {
 
-    
     //
     // Application Entry
     //
@@ -124,255 +143,186 @@ public class QueryChannelEvaluator {
      */
     public static void main(String[] args) {
 
-        // Create the evaluator from application arguments while catching and reporting any exceptions
-        QueryChannelEvaluator   evaluator;
 
-        try {
-            evaluator = QueryChannelEvaluator.createEvaluator(args);
-            
-        } catch (IllegalArgumentException e) {
-            System.out.println(e.getMessage());
-            System.out.println();
-            System.out.println(STR_USAGE);
-            System.out.println();
-            System.out.println("Exiting...");
-            
-            System.exit(ExitCode.BAD_ARG_COUNT.getCode());
-            return;
-            
-        } catch (IllegalCallerException e) {
-            System.out.println(STR_USAGE);
+        //
+        // ------- Special Requests -------
+        //
+        
+        // Check for client help request
+        if (JalApplicationBase.parseAppArgsHelp(args)) {
+            System.out.println(STR_APP_USAGE);
             
             System.exit(ExitCode.SUCCESS.getCode());
-            return;
-
-        } catch (FindException e) {
-            QueryChannelEvaluator.reportException(e);
+        }
+        
+        // Check for client version request
+        if (JalApplicationBase.parseAppArgsVersion(args)) {
+            System.out.println(STR_APP_VERSION);
             
+            System.exit(ExitCode.SUCCESS.getCode());
+        }
+
+        //
+        // ------- Application Initialization -------
+        //
+        
+        // Check for general command-line errors
+        try {
+            JalApplicationBase.parseAppArgsErrors(args, CNT_APP_MIN_ARGS, LST_STR_DELIMS);
+
+        } catch (Exception e) {
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+
+            System.exit(ExitCode.INPUT_CFG_CORRUPT.getCode());
+        }
+        
+        // Get the test suite configuration and output location from the application arguments
+        String                  strOutputLoc;
+        QueryChannelTestSuite   suiteEvals;
+        try {
+            
+            suiteEvals = QueryChannelEvaluator.parseTestSuiteConfig(args);
+            strOutputLoc = QueryChannelEvaluator.parseOutputLocation(args);
+            
+        } catch (Exception e) {
+            
+            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
             System.exit(ExitCode.INTPUT_ARG_INVALID.getCode());
             return;
+        }
 
-        } catch (UnsupportedOperationException e) {
-            QueryChannelEvaluator.reportException(e);
+        
+        //
+        // ------- Application Execution -------
+        //
+        
+        // Create the evaluator, run it while catching and reporting any exceptions
+        try {
+            QueryChannelEvaluator   evaluator = new QueryChannelEvaluator(suiteEvals, strOutputLoc);
             
-            System.exit(ExitCode.OUTPUT_FAILURE.getCode());
-            return;
-
-        } catch (FileNotFoundException e) {
-            QueryChannelEvaluator.reportException(e);
+            evaluator.run();
+            evaluator.writeReport();
+            evaluator.shutdown();
             
-            System.exit(ExitCode.OUTPUT_FAILURE.getCode());
-            return;
-
-        } catch (SecurityException e) {
-            QueryChannelEvaluator.reportException(e);
+            System.out.println(STR_APP_NAME + " Execution completed in " + evaluator.getRunDuration());
+            System.out.println("  Results stored at " + evaluator.getOutputFilePath().toAbsolutePath());
+            System.exit(ExitCode.SUCCESS.getCode());
             
-            System.exit(ExitCode.OUTPUT_FAILURE.getCode());
-            return;
-
-        } catch (ConfigurationException e) {
-            QueryChannelEvaluator.reportException(e);
+        } catch (ConfigurationException | UnsupportedOperationException | FileNotFoundException | SecurityException 
+                | DpGrpcException e) {
             
+            JalApplicationBase.reportTerminalException(QueryChannelEvaluator.class, e);
             System.exit(ExitCode.INPUT_CFG_CORRUPT.getCode());
             return;
             
-        } catch (DpGrpcException e) {
-            QueryChannelEvaluator.reportException(e);
-            
-            System.exit(ExitCode.GRPC_CONN_FAILURE.getCode());
+        } catch (IllegalStateException | CompletionException | ResolutionException | DpQueryException
+                | InterruptedException e) {
+            JalApplicationBase.reportTerminalException(QueryChannelEvaluator.class, e);
+            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
             return;
+            
         }
-        
-        // Run the evaluator test suite
-        String  strLogErr = "Exception while running evaluator: {}. Execution terminated.";
-        
-        try {
-            evaluator.run();
-            
-            evaluator.writeReport();
-            
-            evaluator.shutdown();
-
-        } catch (IllegalStateException e) {
-            if (BOL_LOGGING)
-                LOGGER.error(strLogErr, e.getClass(), e);
-            
-            QueryChannelEvaluator.reportException(e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
-            return;
-
-        } catch (DpQueryException e) {
-            if (BOL_LOGGING)
-                LOGGER.error(strLogErr, e.getClass(), e);
-
-            QueryChannelEvaluator.reportException(e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
-            return;
-
-        } catch (InterruptedException e) {
-            if (BOL_LOGGING)
-                LOGGER.error(strLogErr, e.getClass(), e);
-
-            QueryChannelEvaluator.reportException(e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
-            return;
-
-        } catch (CompletionException e) {
-            if (BOL_LOGGING)
-                LOGGER.error(strLogErr, e.getClass(), e);
-
-            QueryChannelEvaluator.reportException(e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
-            return;
-
-        } catch (ResolutionException e) {
-            if (BOL_LOGGING)
-                LOGGER.error(strLogErr, e.getClass(), e);
-
-            QueryChannelEvaluator.reportException(e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
-            return;
-        }
-
-        LOGGER.info("Execution succcessful. Exiting normally.");
-        System.exit(ExitCode.SUCCESS.getCode());
     }
-
+    
     //
     // Application Resources
     //
     
-    /** Query tools default configuration parameters */
-    private static final JalToolsQueryConfig     CFG_DEF = JalToolsConfig.getInstance().query;
+    /** Default configuration parameters for the Query Service tools */
+//    private static final JalToolsQueryConfig    CFG_QUERY = JalToolsConfig.getInstance().query;
+    private static final DpQueryConfig    CFG_QUERY = DpApiConfig.getInstance().query;
     
     
     //
-    // Class Types
+    // Application Constants - Command-Line Arguments and Messages
     //
     
-    /** Increment variable used for <code>ExitCode</code> enumeration values. */
-    private static int  intExitCode = 0;
-    
-    /**
-     * <p>
-     * Enumeration of all possible application termination codes.
-     * </p>
-     */
-    public static enum ExitCode {
-        
-        /** Successful execution */
-        SUCCESS(intExitCode++),
-        
-        /** Bad argument count */
-        BAD_ARG_COUNT(intExitCode++),
-        
-        /** The input argument was invalid */
-        INTPUT_ARG_INVALID(intExitCode++),
-        
-        /** The input data pointed to by the input argument was corrupt */
-        INPUT_CFG_CORRUPT(intExitCode++),
-        
-        /** A failure occurred in establishing the output stream */
-        OUTPUT_FAILURE(intExitCode++),
-        
-        /** Unable to establish a gRPC connection to service */
-        GRPC_CONN_FAILURE(intExitCode++),
-        
-        /** Exception during application execution */
-        EXECUTION_EXCEPTION(intExitCode++)
-        ;
-        
-        /** the integer value of the exit code */
-        private final int   intValue;
-        
-        /** private constructor for enumeration constant - sets code value */
-        private ExitCode(int intValue) { this.intValue = intValue; };
-        
-        /**
-         * @return  the integer value of this exit code
-         */
-        public int  getCode() { return this.intValue; };
-    }
-    
-    //
-    // Class Constants
-    //
-    
-    /** The "usage" error message for invalid application arguments */
-    public static final String      STR_USAGE = 
-                                                "Usage: \n"
-                                              + "\n"
-                                              + ">QueryChannelEvaluator name [output] \n" 
-                                              + "  Where  \n"
-                                              + "    name = 'help' returns this message, or \n"
-                                              + "    name = name of pre-defined test suite configuration, or \n"
-                                              + "    name = YAML file containing formatted test suite configuration. \n"
-                                              + "    output = (optional) 'consoled' sends output to this console, or \n"
-                                              + "    output = (optional) path location of output file (name created), or \n"
-                                              + "    output = (optional) file path of output file (name given).\n"
-                                              + "\n"
-                                              + "  NOTE: \n"
-                                              + "    Default [output] value is in Java API Tools configuration file.";
+    /** Minimum number of application arguments - argument name and at least one data request */
+    public static final int         CNT_APP_MIN_ARGS = 2;
 
     
-    //
-    // Special Arguments and Default Values
-    //
-
-    /** Application argument value for help */
-    public static final String      STR_INPUT_HELP = "help";
-
-    /** Application argument value for console output */
-    public static final String      STR_OUTPUT_CONSOLE = "console";
-
-    /** The default output location (i.e., if none is provided) */
-    public static final String     STR_OUTPUT_PATH_DEF = CFG_DEF.output.channel.path;
-
-    /** The default output file extension */
-    public static final String     STR_OUTPUT_FILE_EXT = ".txt";
-
-
-    //
-    // Class Constants
-    //
+    /** Default output path location */
+//  public static final String      STR_OUTPUT_DEF = CFG_QUERY.output.correl.path;
+    public static final String      STR_OUTPUT_DEF = "test/output/query/correl";
+  
     
-    /** The target data rate (MBps) */
-    public static final double      DBL_RATE_TARGET = 100.0;
+    /** Argument variable name identifying data request decomposition types */
+    public static final String      STR_VAR_RQST_DCMP = "--decomp";
     
+    /** Argument variable name identifying gRPC stream types */
+    public static final String      STR_VAR_STRM_TYPE = "--stypes";
+    
+    /** Argument variable name identifying gRPC stream sizes */
+    public static final String      STR_VAR_STRM_CNT = "--scnts";
+    
+    /** Argument variable name identifying output location */
+    public static final String      STR_VAR_OUTPUT = "--output";
 
-    //
-    // Timeout Limits for Request Data Recovery (may exceed default API Library settings)
-    //
-    
-    /** Timeout limit for requested data recovery */
-    public static final long        LNG_TIMEOUT = 75L;
-    
-    /** Timeout limit units for requested data recovery */
-    public static final TimeUnit    TU_TIMEOUT = TimeUnit.SECONDS;
+    /** List of all the valid argument delimiters */
+    public static final List<String>    LST_STR_DELIMS = List.of(
+            STR_VAR_RQST_DCMP,
+            STR_VAR_STRM_TYPE,
+            STR_VAR_STRM_CNT, 
+            STR_VAR_OUTPUT
+            );
     
     
     //
-    // Logging Parameters
+    // Application Constants - Client Messages
     //
     
-    /** Event logging enabled flag */
-    public static final boolean     BOL_LOGGING = CFG_DEF.logging.enabled;
+    /** Application name */
+    public static final String      STR_APP_NAME = QueryChannelEvaluator.class.getSimpleName();
+    
+    
+    /** The "usage" message for client help requests or invalid application arguments */
+    public static final String      STR_APP_USAGE = 
+            STR_APP_NAME  + " Usage: \n"
+          + "\n"
+          + "% " + STR_APP_NAME
+          + " [" + STR_ARG_HELP + "]"
+          + " [" + STR_ARG_VERSION + "]"
+          + " R1 [ ... RN]"
+          + " [" + STR_VAR_RQST_DCMP + " D1 ... Di]"
+          + " [" + STR_VAR_STRM_TYPE + " S1 ... Sj]"
+          + " [" + STR_VAR_STRM_CNT + " N1 ... Nk]"
+          + " [" + STR_VAR_OUTPUT +" Output]"
+          + "\n" 
+          + "  Where  \n"
+          + "    " + STR_ARG_HELP + "      = print this message and return.\n"
+          + "    " + STR_ARG_VERSION + "   = prints application version information and return.\n"
+          + "    R1, ..., Rn = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
+          + "    D1, ..., Di = Request decomposition type(s) - RequestDecompType enumeration name(s). \n"
+          + "    S1, ..., Sj = gRPC stream type(s) - DpGrpcStreamType enumeration name(s). \n"
+          + "    N1, ..., Nk = gRPC stream count(s) peforming request recovery - Integer value(s). \n"
+          + "    " + STR_VAR_OUTPUT + "    = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
+          + "\n"
+          + "  NOTES: \n"
+          + "  - All bracketed quantities [...] are optional. \n"
+          + "  - Default " + STR_VAR_OUTPUT + " value is " + STR_OUTPUT_DEF + ".\n";
 
-    /** Event logging level */
-    public static final String      STR_LOGGING_LEVEL = CFG_DEF.logging.level;
-
-
-    /** The name of the scenario logging appender - target of scenario log entries */
-    private static final String     STR_LOG_APPENDER_NAME = "QueryChannelEvaluatorAppender";
+    
+    /** The "version" message for client version requests */
+    public static final String      STR_APP_VERSION = 
+            STR_APP_NAME
+          + " version 1.0: compatible with Java Application Library version 1.8.0 or greater.";
+    
+    
+    //
+    // Class Constants - Default Values
+    //
+    
+    /** The target correlation data rate (MBps) */
+    public static final double      DBL_RATE_TARGET = 200.0;
 
 
     //
     // Class Resources
     //
-
-    /** Class event logger */
-    private static final Logger     LOGGER = Log4j.getLogger(QueryChannelEvaluator.class, STR_LOGGING_LEVEL);
     
+    /** Class event logger */
+    private static final Logger     LOGGER = Log4j.getLogger(DataCorrelationEvaluator.class, JalQueryAppBase.STR_LOGGING_LEVEL);
+
     
     //
     // Defining Attributes
@@ -381,15 +331,9 @@ public class QueryChannelEvaluator {
     /** Name of the input configuration for the test suite */
     private final String                    strInputName;
     
-    /** Output report location */
-    private final String                    strOutputLoc;
-    
     
     /** The test suite used for <code>QueryChannel</code> evaluations */
     private final QueryChannelTestSuite     suiteEvals;
-    
-    /** The output stream to receive evaluation report */
-    private final PrintStream               psOutput;
     
     
     //
@@ -403,28 +347,9 @@ public class QueryChannelEvaluator {
     private final Collection<QueryChannelTestResult>    setResults;
     
     
-    /** The gRPC connection to the Query Service (default connection) */
-    private final DpQueryConnection                     connQuery;
-    
-    /** The receiver of <code>QueryData</code> Protocol Buffers messages */
-    private final QueryMessageBuffer                    bufDataMsgs;
-    
-    /** The <code>QueryChannel</code> object under evaluation */
-    private final QueryChannel                          chanQuery;
-
-    
     //
     // State Variables
     //
-    
-    /** Evaluation run() attempted */
-    private boolean     bolRun = false;
-    
-    /** Evaluation completed flag */
-    private boolean     bolCompleted = false;
-    
-    /** Evaluator shut down flag */
-    private boolean     bolShutdown = false;
     
     /** Total duration of test suite evaluation */
     private Duration    durEval = Duration.ZERO;
@@ -438,122 +363,52 @@ public class QueryChannelEvaluator {
      * <p>
      * Constructs a new <code>QueryChannelEvaluator</code> instance.
      * </p>
+     * <p>
+     * Creates and initializes a new <code>QueryChannelEvaluator</code> instance.  
+     * All instance resources are created.  Query Service connections are established.
+     * Exceptions are thrown if any resource creation fails.
+     * </p>
      *
-     * @param strInputName  name of the input configuration
-     * @param strOutputLoc  location of the output report
-     * @param cfgSuite      the test suite configuration record 
-     * @param psOutput      output stream to receive evaluation report
+     * @param suiteEvals    the test suite configuration to be run
+     * @param strOutputLoc  the location of the evaluations report
      * 
-     * @throws ConfigurationException   there are no test requests in the given configuration
-     * @throws DpGrpcException          unable to establish connection to the Data Platform Query Service
+     * @throws DpGrpcException                  unable to establish connection to the Query Service (see message and cause)
+     * @throws ConfigurationException           no data requests contained in test suite configuration
+     * @throws UnsupportedOperationException    the output file path did not belong to the file system
+     * @throws FileNotFoundException            unable to create the output file
+     * @throws SecurityException                unable to write to the output file                 
      */
-    public QueryChannelEvaluator(String strInputName, String strOutputLoc, JalRequestSuiteConfig cfgSuite, PrintStream psOutput) throws ConfigurationException, DpGrpcException {
-        this.strInputName = strInputName;
-        this.strOutputLoc = strOutputLoc;
-        this.psOutput = psOutput;
+    public QueryChannelEvaluator(QueryChannelTestSuite suiteEvals, String strOutputLoc) throws DpGrpcException, ConfigurationException, UnsupportedOperationException, FileNotFoundException, SecurityException {
+        super(QueryChannelEvaluator.class);
         
-        // Create the test suite and results container from the configuration record
-        this.suiteEvals = QueryChannelTestSuite.from(cfgSuite);
-        this.setCases = this.suiteEvals.createTestSuite();          // throws ConfigurationException
+        // Get the defining attributes
+        this.suiteEvals = suiteEvals;
+        this.strInputName = suiteEvals.getName();
+        
+        // Create the collection of test cases and container for results
+        this.setCases = this.suiteEvals.createTestSuite();  // throws ConfigurationException
         this.setResults = new TreeSet<>(QueryChannelTestResult.descendingRateOrdering());
         
-        // Create the channel resources and channel
-        this.bufDataMsgs = QueryMessageBuffer.create();
-        this.connQuery = DpQueryConnectionFactoryStatic.connect();  // throws DpGrpcException
-        this.chanQuery = QueryChannel.from(connQuery, bufDataMsgs);
+        // Create the output stream and attach Logger to it - records fatal errors to output file
+        super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
         
-        // Set timeout for channel operation and for request operation
-        this.connQuery.setTimeoutLimit(LNG_TIMEOUT, TU_TIMEOUT);
-        this.chanQuery.setTimeoutLimit(LNG_TIMEOUT, TU_TIMEOUT);
+        OutputStreamAppender    appAppErrs = Log4j.createOutputStreamAppender(STR_APP_NAME, super.psOutput);
+        Log4j.attachAppender(LOGGER, appAppErrs);
     }
-    
+
     
     //
-    // State/Attribute Query
+    // JalApplicationBase Abstract Methods
     //
     
     /**
-     * <p>
-     * Determines whether or not the test suite has been run.
-     * </p>
-     * <p>
-     * A return value of <code>true</code> indicates that the <code>{@link #run()}</code> method has been invoked
-     * This method can be invoked only once so a <code>true</code> value indicates that the current evaluator is
-     * in its final state and any results obtained are available.
-     * </p>  
-     * <p>
-     * To determine if all test cases where evaluated successfully one must
-     * invoke <code>{@link #hasCompleted()}</code>.  In other words, a returned value of <code>true</code> is 
-     * necessary for evaluation success but not sufficient.
-     * </p>
-     * 
-     * @return  <code>true</code> the <code>{@link #run()}</code> method has been invoked
-     *          <code>false</code> the evaluator is still in its initial state
+     * @see com.ospreydcs.dp.api.app.JalApplicationBase#getLogger()
      */
-    public boolean  hasRun() {
-        return this.bolRun;
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
     }
-    
-    /**
-     * <p>
-     * Determines whether or not the test suite has been run and completed successfully.
-     * </p>
-     * <p>
-     * A returned value of <code>true</code> indicates that the <code>{@link #run()}</code> method has been
-     * invoked and that all test cases where successfully completed, specifically, there were no errors in
-     * the <code>QueryChannel</code> evaluations performed by <code>{@link #run()}</code>.  
-     * To determine if errors occurred and the <code>{@link #run()}</code>
-     * method exited prematurely see <code>{@link #hasRun()}</code> which returns <code>true</code> in that case.
-     * </p>
-     *  
-     * @return  <code>true</code> all test cases where successfully run,
-     *          <code>false</code> either the evaluator has not be run or an error occurred during evaluations
-     *          
-     * @see #hasRun()
-     */
-    public boolean  hasCompleted() {
-        return this.bolCompleted;
-    }
-    
-    /**
-     * <p>
-     * Determines whether or not the evaluator has been shut down.
-     * </p>
-     * <p>
-     * A returned value of <code>true</code> indicates that the <code>{@link #shutdown()}</code> method has been
-     * invoked and the evaluator is no longer active, regardless or whether or not it has been run.
-     * </p>
-     * 
-     * @return  <code>true</code> the evaluator has been shut down and is no longer active
-     *          <code>false</code> the evaluator is still alive
-     */
-    public boolean  hasShutdown() {
-        return this.bolShutdown;
-    }
-    
-    /**
-     * <p>
-     * Returns the collection of test case results for the test suite.
-     * </p>
-     * <p>
-     * This method is applicable after the invocation to method <code>{@link #run()}</code> otherwise an
-     * exception is thrown.  It returns the collection of test case results that were successful from
-     * the test suite evaluations.
-     * </p>
-     * 
-     * @return  the collection of successful test case results for the evaluation, best case first ordering
-     * 
-     * @throws IllegalStateException    no results are available (called before <code>{@link #run()}</code>) 
-     */
-    public Collection<QueryChannelTestResult>  getResults() throws IllegalStateException {
-        
-        // Check state
-        if (!this.bolRun)
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + "- Test suite has not been run.");
-        
-        return this.setResults;
-    }
-    
+
     
     //
     // Operations
@@ -561,7 +416,7 @@ public class QueryChannelEvaluator {
     
     /**
      * <p>
-     * Runs all test cases within the test suite on the <code>QueryChannel</code> object under investigation.
+     * Runs all test cases within the test suite configuration on the <code>QueryChannel</code> object under investigation.
      * </p>
      * <p>
      * Runs all test cases in resource <code>{@link #setCases}</code> (i.e., specified in the test suite configuration) 
@@ -583,7 +438,7 @@ public class QueryChannelEvaluator {
     public void run() throws IllegalStateException, DpQueryException, InterruptedException, CompletionException, ResolutionException {
         
         // Check state
-        if (this.bolRun) 
+        if (super.bolRun) 
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() 
                                             + " - QueryChannel evaluations have already been run.");
         
@@ -599,17 +454,36 @@ public class QueryChannelEvaluator {
         for (QueryChannelTestCase recCase : this.setCases) {
             LOGGER.info("Running test case #{} of {} (with index {}) ...", indCase, CNT_CASES, recCase.indCase());
             
-            QueryChannelTestResult recResult = recCase.evaluate(this.chanQuery, this.bufDataMsgs); // throws exceptions
+            QueryChannelTestResult recResult = recCase.evaluate(super.chanQuery, super.bufDataMsgs); // throws exceptions
             
             this.setResults.add(recResult);
             indCase++;
         }
         Instant insFinish = Instant.now();
 
+        // Update state variables
         this.durEval = Duration.between(insStart, insFinish);
         this.bolCompleted = true;
 
         LOGGER.info("Evaluations complete. Time to completion {}.", this.durEval);
+    }
+    
+    /**
+     * <p>
+     * Returns the duration of the evaluations.
+     * </p>
+     * 
+     * @return  the duration of the <code>{@link #run()}</code> operation
+     * 
+     * @throws IllegalStateException    the evaluations have not been executed.
+     */
+    public Duration getRunDuration() throws IllegalStateException {
+        
+        // Check state
+        if (!super.bolRun)
+            throw new IllegalStateException("Evaluations have not been executed.");
+        
+        return this.durEval;
     }
     
     /**
@@ -630,7 +504,7 @@ public class QueryChannelEvaluator {
      */
     public void writeReport() throws IllegalStateException {
         this.writeReport(this.psOutput);
-        LOGGER.info("Evaluation report stored at location {}.", this.strOutputLoc);
+        LOGGER.info("Evaluation report stored at location {}.", super.getOutputFilePath());
     }
     
     /**
@@ -650,7 +524,7 @@ public class QueryChannelEvaluator {
     public void writeReport(PrintStream ps) throws IllegalStateException {
         
         // Check state
-        if (!this.bolRun)
+        if (!super.bolRun)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + "- Test suite has not been run.");
         
         // Print out header
@@ -689,362 +563,134 @@ public class QueryChannelEvaluator {
         }
     }
     
-    /**
-     * <p>
-     * Shuts down the evaluator.
-     * </p>
-     * <p>
-     * This method should be called before the evaluator is discarded, specifically, at the end of its
-     * lifetime.  The Query Service connection is terminated and the output stream is flushed and closed.
-     * This is a blocking operation and does not return until all resources are released.
-     * </p>
-     * <p>
-     * If the evaluator has already been shut down (i.e., this method has already been called) nothing is done.
-     * That is, it is safe to call this method multiple times.
-     * </p>
-     *  
-     * @throws InterruptedException     interrupted while waiting for the Query Service connection to shut down
-     */
-    public void shutdown() throws InterruptedException {
-        
-        // Check state
-        if (this.bolShutdown)
-            return;
-        
-        try {
-            // Shut down the message buffer and Query Service connection
-            this.bufDataMsgs.shutdownNow();
-            this.connQuery.shutdownSoft();
-            this.connQuery.awaitTermination();
-
-        } catch (InterruptedException e) {
-            throw e;
-            
-        } finally {
-            
-            // Close the output stream
-            this.psOutput.flush();
-            this.psOutput.close();
-            
-            this.bolShutdown = true;
-        }
-    }
-    
-    
     //
-    //  QueryChannelEvaluator Support Methods
-    // 
-
-//    /**
-//     * <p>
-//     * Creates the collection of test cases from the given test suite configuration structure.
-//     * </p>
-//     * <p>
-//     * The collection of <code>{@link QueryChannelTestCase}</code> records (i.e., the test suite) is created
-//     * according to the given configuration structure and then returned. The collection is used for all
-//     * <code>QueryChannel</code> evaluation operations.
-//     * </p>
-//     * 
-//     * @param cfgSuite  the request suite configuration structure class
-//     * 
-//     * @return  collection of all test cases to be executed
-//     * 
-//     * @throws ConfigurationException    there are no test requests in the given configuration
-//     */
-//    private Collection<QueryChannelTestCase>    initTestCases(JalRequestSuiteConfig cfgSuite) throws ConfigurationException {
-//        QueryChannelTestSuite   suite = QueryChannelTestSuite.from(cfgSuite);
-//        
-//        Collection<QueryChannelTestCase>    setCases = suite.createTestSuite(); // throws exception
-//        
-//        return setCases;
-//    }
-//    
-//    /**
-//     * <p>
-//     * Sends a case evaluation update message to Standard Output and the output stream.
-//     * </p>
-//     * 
-//     * @param cntCases  total number of test cases
-//     * @param indCase   index of current test case
-//     */
-//    private void    updateTestCase(final int cntCases, int indCase) {
-//        String  strMsg = "Running test case #" + indCase + " of " + cntCases + "...";
-//        
-//        System.out.println(strMsg);
-//        this.psOutput.println(strMsg);
-//    }
-    
-    /**
-     * <p>
-     * Creates and returns a header line for evaluations report.
-     * </p>
-     * <p>
-     * A header is created which identifies the file contents and time of creation.
-     * </p>
-     * 
-     * @return  a header string for evaluations reports
-     */
-    private String   createReportHeader() {
-        
-        // Write header
-        DateFormat  date = DateFormat.getDateTimeInstance();
-        String      strDateTime = date.format(new Date());
-        String      strHdr = QueryChannelEvaluator.class.getSimpleName() + " Output Results: " + strDateTime + "\n";
-
-        return strHdr;
-    }
-    
-    
-    //
-    // Main Method Support
+    // Support Methods
     //
     
     /**
      * <p>
-     * Checks that the Application command-line arguments then creates a new <code>QueryChannelEvaluator</code> from them.
+     * Parse the application command-line argument for the test suite configuration and returns it.
      * </p>
      * <p>
-     * The 1st argument is first checked for existence.  If the 2nd argument is included the directory 
-     * location is checked for existence.  The internal path attributes are then set according to
-     * the command-line arguments.
-     * </p>
-     * 
-     * @param args   string array of application command-line arguments
-     * 
-     * @return  a new <code>QueryChannelEvaluator</code> instance initialized according to the argument resources
-     *  
-     * @throws IllegalArgumentException the argument was the wrong length (either 1 or 2)
-     * @throws IllegalCallerException   the client requested command-line help
-     * @throws FindException            the 1st argument was neither a pre-defined test suite or a valid configuration file
-     * @throws UnsupportedOperationException 2nd argument file path is not associated with default provider
-     * @throws FileNotFoundException    unable to create output file (see message and cause)
-     * @throws SecurityException        unable to write to output file
-     * @throws ConfigurationException   there are no test requests in the given configuration
-     * @throws DpGrpcException          unable to establish connection to the Data Platform Query Service
-     */
-    private static QueryChannelEvaluator createEvaluator(String[] args) 
-            throws IllegalArgumentException, IllegalCallerException, 
-                   FindException, 
-                   UnsupportedOperationException, FileNotFoundException, SecurityException, 
-                   ConfigurationException, DpGrpcException  {
-        
-        // Check argument count
-        if (args.length==0 || args.length > 2) 
-            throw new IllegalArgumentException("Invalid Arguments: Bad argument count " + args.length);
-        
-        
-        // Check for help request
-        String  strHelp = args[0].toLowerCase();
-        if (strHelp.equals(STR_INPUT_HELP))
-            throw new IllegalCallerException("Client requests command-line help.");
-        
-        // Recover argument values
-        String      strCfgName = args[0];
-        String      strOutputLoc;
-        
-        if (args.length == 2)
-            strOutputLoc = args[1];
-        else
-            strOutputLoc = STR_OUTPUT_PATH_DEF;
-        
-        // Recovery/create input and output resources for the QueryChannelEvaluator instance
-        JalRequestSuiteConfig    cfgRqst = recoverTestSuiteConfig(strCfgName);   // throws FindException
-        PrintStream             psOutput = createOutputStream(strOutputLoc);    // throws UnsupportedOperationException, FileNotFoundException, SecurityException
-
-        // Direct the logging output to the output stream
-        OutputStreamAppender    appdrOstr = Log4j.createOutputStreamAppender(STR_LOG_APPENDER_NAME, psOutput);
-        Log4j.attachAppender(LOGGER, appdrOstr);
-        
-        // Create and return new evaluator
-        QueryChannelEvaluator   evaluator = new QueryChannelEvaluator(strCfgName, strOutputLoc, cfgRqst, psOutput);   // throws ConfigurationException, DpGrpcException
-        
-        return evaluator;
-    }
-    
-    /**
-     * <p>
-     * Attempts to recover the test suite configuration from the given name.
-     * </p>
-     * <p>
-     * The argument is assumed to be either a named, pre-defined test suite configuration within the Java API Tools
-     * configuration file, or a separate file containing a test suite configuration.  In the case of the latter,
-     * the file must be a YAML file containing the test suite configuration in a valid format for the structure
-     * class <code>{@link JalRequestSuiteConfig}</code>.  In the former case, the structure class obtained from the
-     * tools library configuration file is returned.  In the latter case, the YAML file is loaded and the structure
-     * class is populated from the file parameters then returned.
-     * </p>
-     * <p>
-     * The following operations are performed in order:
+     * The method parse the given collection of arguments for the following information in order:
      * <ol>
-     * <li>
-     * The Java API Tools configuration file is searched for a test suite configuration with name given by 
-     * the argument.
-     * </li>
-     * <li>
-     * If the above fails the argument is checked that it is a valid file location.  If not an exception is
-     * thrown.
-     * </li>
-     * <li>
-     * An attempt is made to read the (valid) file into a new <code>JalRequestSuiteConfig</code> structure class.
-     * If that fails an exception is thrown.
-     * </li>
-     * <li>
-     * If operation arrives here then the new <code>JalRequestSuiteConfig</code> instance is valid and it
-     * is returned.
-     * </li>
-     * </ol>
-     * 
-     * @param strName   named, pre-defined test suite or path containing file with test suite configuration
-     *  
-     * @return  a new <code>JalRequestSuiteConfig</code> structure class with test suite configuration
-     * 
-     * @throws FindException the argument was neither a pre-defined test suite nor a valid configuration file
-     */
-    private static JalRequestSuiteConfig recoverTestSuiteConfig(String strName) throws FindException {
-        
-        // Check if name is a pre-defined test suite (in the API Tools configuration)
-        List<JalRequestSuiteConfig>  lstCfgsAll = CFG_DEF.testRequests.testSuites;
-        
-        List<JalRequestSuiteConfig>  lstCfgTarget = lstCfgsAll.stream().filter(cfg -> strName.equals( cfg.testSuite.name) ).toList();
-        if (!lstCfgTarget.isEmpty())
-            return lstCfgTarget.getFirst();
-        
-        // Check if name is a valid file location (name is not a pre-defined test suite)
-        String  strErrMsg1 = JavaRuntime.getQualifiedMethodNameSimple()
-                + " - Invalid test suite name '" + strName 
-                + "': neither a named pre-defined test suite nor a valid file location.";
-        try {
-            Paths.get(strName);     // throws exceptions
-            
-        } catch (InvalidPathException | NullPointerException e) {
-            
-            if (BOL_LOGGING)
-                LOGGER.error(strErrMsg1);
-            
-            throw new IllegalArgumentException(strErrMsg1, e);
-        }
-        
-        // Check if name is a valid file
-        File file = new File(strName);
-        
-        if (!file.exists() || !file.isFile()) {
-            if (BOL_LOGGING)
-                LOGGER.error(strErrMsg1);
-            
-            throw new IllegalArgumentException(strErrMsg1);
-        }
-       
-        // Attempt to load test suite configuration from file (name is a valid file)
-        try {
-            JalRequestSuiteConfig cfg = CfgLoaderYaml.load(file, JalRequestSuiteConfig.class);
-            
-            return cfg;
-            
-        } catch (FileNotFoundException | SecurityException e) {
-            String  strErrMsg2 = JavaRuntime.getQualifiedMethodNameSimple()
-                    + " - Input " + strName + " was not a valid test suite configuration file.";
-            
-            if (BOL_LOGGING)
-                LOGGER.error(strErrMsg2);
-            
-            throw new IllegalArgumentException(strErrMsg2, e);
-        }
-    }
-    
-    /**
+     * <li>Test Requests - commands identified by <code>{@link TestArchiveRequest}</code> enumeration constants. </li>
+     * <li>Request Decomposition Strategies - values identified by the variable delimiter {@value #STR_VAR_RQST_DCMP}. </li> 
+     * <li>gRPC Stream Type - value identified by the variable delimiter {@value #STR_VAR_STRM_TYPE}. </li>
+     * <li>gRPC Stream Counts - value identified by the variable delimiter {@value #STR_VAR_STRM_CNT}. </li>
+     * </ol> 
      * <p>
-     * Creates a new output stream connected to a new output file at the given path location.
+     * The application command line is first parsed for "commands", which are the <code>{@link TestArchiveRequest}</code>
+     * enumeration constants describing the time-series data requests used in the return test suite.
+     * These arguments must be the first to appear on the command line and do not have delimiters.  
+     * At least one request is required for valid test suite creation, otherwise <code>ConfigurationException</code> 
+     * is thrown. If a test request has an invalid <code>{@link TestArchiveRequest}</code> name an exception is thrown.    
      * </p>
      * <p>
-     * A new output file is created with name given as a concatenation of the simple class name and the 
-     * current time instant.  The time instant addition avoids collisions with any other output files at 
-     * that location.
-     * </p>
-     * <p>
-     * A new <code>PrintStream</code> object is created that is attached to the above file.  
-     * <s>A header is written identifying the file contents and time of creation.</s>
+     * The remaining arguments are optional; a <code>QueryChannelTestSuite</code> instance has default values that
+     * will be supplied if any are missing.  
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * The returned stream should be closed when no longer needed.
-     * </p> 
+     * <ul>
+     * <li>
+     * All values for variables {@value #STR_VAR_RQST_DCMP} and {@value #STR_VAR_STRM_TYPE} are the names of
+     * enumeration constants.  If an error occurs while parsing the enumeration constant names an 
+     * <code>IllegalArgumenttException</code> is thrown.
+     * </li>
+     * <li>
+     * All values for variable {@value #STR_VAR_STRM_CNT} are <code>Integer</code> valued and must be parse as such.  
+     * If an error occurs while parsing the integer value an exception is thrown.
+     * </li>
+     * </ul>  
+     * </p>
+     *  
+     * @param args  the application command-line argument collection
      * 
-     * @param strPath   path location for the new output file
+     * @return  the test suite configuration as described by the command-line arguments
      * 
-     * @return  a new output print stream connected to the new output file
-     * 
-     * @throws UnsupportedOperationException    file path is not associated with default provider
-     * @throws FileNotFoundException    unable to create output file (see message and cause)
-     * @throws SecurityException        unable to write to file
+     * @throws ConfigurationException   no time-series data request (<code>TestArchiveRequest</code> constants) were found
+     * @throws IllegalArgumentException invalid enumeration constant name (not in <code>TestArchiveRequest, RequestDecompType</code>, etc.)
+     * @throws NumberFormatException    an invalid numeric argument was encounter (could not be converted to a <code>Integer</code> type)
      */
-    private static PrintStream  createOutputStream(String strPath) 
-            throws UnsupportedOperationException, FileNotFoundException, SecurityException {
+    private static QueryChannelTestSuite    parseTestSuiteConfig(String[] args) 
+            throws ConfigurationException, IllegalArgumentException, NumberFormatException {
+     
+        // Parse the data requests 
+        List<String>    lstRqstNms = JalApplicationBase.parseAppArgsCommands(args);
+        if (lstRqstNms.isEmpty()) {
+            String  strMsg = "The command-line arguments contained no time-series data requests. Use --help command.";
 
-        // Check if argument is "console"
-        String  strConsole = strPath.toLowerCase();
-        if (strConsole.equals(STR_OUTPUT_CONSOLE))
-            return System.out;
+            throw new ConfigurationException(strMsg);
+        }
         
-        // Check if argument is directory - if so create unique file name
-        Path    pathOutput = Path.of(strPath);
+        // Convert to TestArchiveRequest enumeration constants
+        List<TestArchiveRequest>    lstRqsts = lstRqstNms.stream()
+                .<TestArchiveRequest>map(strNm -> 
+                    TestArchiveRequest.valueOf(TestArchiveRequest.class, strNm))    // throws IllegalArgumentException
+                .toList();
         
-        // TODO - Remove
-//        System.out.println("pathOutput = " + pathOutput);
-//        System.out.println("Files.isDiretory(pathOutput) = " + Files.isDirectory(pathOutput));
-        if (Files.isDirectory(pathOutput)) {
-            String  strFileName = createUniqueOutputFileName();
-            
-            pathOutput = Paths.get(strPath, strFileName);
-        } 
+        // Parse the request decomposition types and convert to enumeration constants
+        List<String>            lstStrRqstDcmps = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_RQST_DCMP);
+        List<RequestDecompType> lstEnmRqstDcmps = lstStrRqstDcmps.stream()
+                .<RequestDecompType>map(strNm -> RequestDecompType.valueOf(RequestDecompType.class, strNm)) // throws IllegalArgumentException
+                .toList();
         
-        // Open the common output file
-        File        fileOutput = pathOutput.toFile();       // throws UnsupportedOperationException
-        PrintStream psOutput = new PrintStream(fileOutput); // throws FileNotFoundException, SecurityException
+        // Parse the gRPC stream types and convert to enumeration constants
+        List<String>            lstStrStrmTypes = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_STRM_TYPE);
+        List<DpGrpcStreamType>  lstEnmStrmTypes = lstStrStrmTypes.stream()
+                .<DpGrpcStreamType>map(strNm -> DpGrpcStreamType.valueOf(DpGrpcStreamType.class, strNm)) // throws IllegalArgumentException
+                .toList();
         
-        // Return new stream connected to new output file
-        return psOutput;
+        // Parse the gRPC stream count and convert to integer values
+        List<String>    lstStrStrmCnts = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_STRM_CNT);
+        List<Integer>   lstStrmCnts = lstStrStrmCnts.stream()
+                .<Integer>map(strNum -> Integer.valueOf(strNum))    // throws NumberFormatException
+                .toList();
+        
+        // Build the test suite and return it
+        QueryChannelTestSuite suite = QueryChannelTestSuite.create(STR_APP_NAME + " Command Line");
+        
+        suite.addTestRequests(lstRqsts);
+        suite.addRequestDecompositions(lstEnmRqstDcmps);
+        suite.addStreamTypes(lstEnmStrmTypes);
+        suite.addStreamCounts(lstStrmCnts);
+        
+        return suite;
     }
-    
+
     /**
      * <p>
-     * Creates a unique output file name for the output report.
+     * Parses the application command-line argument collection for the output location and return it.
      * </p>
      * <p>
-     * The returned file name is constructed from the class simple name, the current time instant,
-     * and the output file extension <code>{@link #STR_FILE_EXT_DEF}</code>.
+     * The output location, as specified by the application client, is the value of variable
+     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
+     * are ignored.
      * </p>
-     * 
-     * @return  new, unique, file name for output file
-     */
-    private static String   createUniqueOutputFileName() {
-        String      strCls = QueryChannelEvaluator.class.getSimpleName();
-        Instant     insNow = Instant.now();
-        String      strNow = insNow.toString();
-        String      strExt = STR_OUTPUT_FILE_EXT;
-        
-        String  strFileNm  = strCls + "-" + strNow + strExt;
-        
-        return strFileNm;
-    }
-    
-    /**
      * <p>
-     * Reports the given exception to Standard Error and to the event logger if enabled.
+     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
+     * optional parameter, then the default value given by <code>{@link #STR_OUTPUT_DEF}</code> is returned.
+     * This value is taken from the JAL default configuration.
      * </p>
      * 
-     * @param e the exception to report
+     * @param args  the application command-line argument collection
+     * 
+     * @return  the output location as specified in the command line, 
+     *          or value of <code>{@link #STR_OUTPUT_DEF}</code> if not present
      */
-    private static void reportException(Throwable e) {
-        String  strHdr = QueryChannelEvaluator.class.getSimpleName() + " FAILURE.";
-        String  strMsg = "Encountered exception " + e.getClass().getSimpleName() + ": " + e.getMessage() + ".";
-        String  strBye = "Unable to continue. Exiting...";
+    private static String   parseOutputLocation(String[] args) {
         
-        System.err.println(strHdr);
-        System.err.println(strMsg);
-        System.err.println(strBye);
-        
-        if (BOL_LOGGING)
-            LOGGER.error(strMsg);
-    }
+        // Look for the output location on the command line
+        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
     
+        // If there is no user-provided output location use the default value in the JAL configuration
+        if (lstStrOutput.isEmpty()) 
+            return STR_OUTPUT_DEF;
+    
+        // Else return the first element in the list
+        String strOutputLoc = lstStrOutput.get(0);
+        
+        return strOutputLoc;
+    }
 }

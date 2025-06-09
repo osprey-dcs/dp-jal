@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.api.tools.app
+ * Package: com.ospreydcs.dp.api.app
  * Type: 	package-info
  *
  * Copyright 2010-2025 the original author or authors.
@@ -25,11 +25,11 @@
  */
 /**
  * <p>
- * Package containing classes and resources supporting the Java API Library tools applications.
+ * Package containing classes and resources supporting for building applications using the Java API Library.
  * </p> 
  *
  * @author Christopher K. Allen
  * @since May 28, 2025
  *
  */
-package com.ospreydcs.dp.api.tools.app;
+package com.ospreydcs.dp.api.app;
