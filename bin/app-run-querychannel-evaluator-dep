@@ -42,8 +42,8 @@ fi
 
 
 APP_NAME=QueryChannelEvaluator
-APP_JAR=${DP_JAL_HOME}/target/dp-api-java-shaded-1.7.0.jar
-APP_MAIN=com.ospreydcs.dp.api.tools.query.channel.QueryChannelEvaluator
+APP_JAR=${DP_JAL_HOME}/target/dp-jal-shaded-1.7.0.jar
+APP_MAIN=com.ospreydcs.dp.jal.tools.query.channel.QueryChannelEvaluatorDeprecated
 APP_IN=$1
 
 APP_CMD="java -cp $APP_JAR $APP_MAIN '$APP_IN' '$APP_OUT'"

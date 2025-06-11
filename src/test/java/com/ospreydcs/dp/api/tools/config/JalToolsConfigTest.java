@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	JalToolsConfigTest.java
- * Package: com.ospreydcs.dp.api.tools.config
+ * Package: com.ospreydcs.dp.jal.tools.config
  * Type: 	JalToolsConfigTest
  *
  * Copyright 2010-2025 the original author or authors.
@@ -26,9 +26,7 @@
 package com.ospreydcs.dp.api.tools.config;
 
 import java.io.PrintStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeSet;
+import java.time.Instant;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -36,14 +34,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.tools.config.query.JalToolsQueryConfig;
-import com.ospreydcs.dp.api.tools.config.request.JalRequestSuiteConfig;
-import com.ospreydcs.dp.api.tools.config.request.JalTestRequestConfig;
-import com.ospreydcs.dp.api.tools.query.request.TestArchiveRequest;
+import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchiveConfig;
+import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchivePvsConfig;
+import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
 
 /**
  * <p>
@@ -131,45 +127,41 @@ public class JalToolsConfigTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.tools.config.JalToolsConfig#getInstance()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.config.JalToolsConfig#getInstance()}.
      */
     @Test
     public final void testGetInstance() {
         JalToolsConfig    cfgTest = JalToolsConfig.getInstance();
         
-        boolean bolLogEnabled = cfgTest.query.logging.enabled;
-        String  strLogLevel = cfgTest.query.logging.level;
+        String  strOutputPath = cfgTest.output.path;
         
         // Announce test method
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
 
         System.out.println(JalToolsConfig.class.getSimpleName() + " Parameters:");
-        System.out.println("  query.logging.enabled = " + bolLogEnabled);
-        System.out.println("  query.logging.level = " + strLogLevel);
+        System.out.println("  output.path = " + strOutputPath);
         System.out.println();
     }
     
     /**
-     * Test method for inspection of <code>{@link JalTestRequestConfig}</code> class recovered by <code>JalToolsConfig</code>.
+     * Test method for inspection of <code>{@link JalTestArchiveConfig}</code> class recovered by <code>JalToolsConfig</code>.
      */
     @Test
-    public final void testGetQuery() {
-        final JalTestRequestConfig    cfgRequests = JalToolsConfig.getInstance().query.testRequests;
+    public final void testTestArchive() {
+        final JalTestArchiveConfig    cfgArch = JalToolsConfig.getInstance().testArchive;
         
         // Parameters
-        final List<JalRequestSuiteConfig>    lstRqstSuites = cfgRequests.testSuites;
+        final Instant   insStart = Instant.parse(cfgArch.range.start);
+        final Instant   insEnd = Instant.parse(cfgArch.range.end);
+        
         
         // Announce test method
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
 
-        System.out.println("Request Test Suites:");
-        int indSuite = 1;
-        for (JalRequestSuiteConfig cfg : lstRqstSuites) {
-            System.out.println("  Test Suite #" + indSuite);
-            
-            this.printOut(System.out, "    ", cfg);
-            indSuite++;
-        }
+        System.out.println("Archive inception : " + insStart);
+        System.out.println("Last timestamp    : " + insEnd);
+
+        this.printOut(System.out, "", cfgArch.pvs);
     }
     
     
@@ -190,27 +182,28 @@ public class JalToolsConfigTest {
      * @param strPad    optional left-hand side white space padding (or <code>null</code>)
      * @param cfg       the structure class containing configuration parameters
      */
-    private void printOut(PrintStream ps, String strPad, JalRequestSuiteConfig cfg) {
+    private void printOut(PrintStream ps, String strPad, JalTestArchivePvsConfig cfg) {
         if (strPad == null)
             strPad = "";
         
-        ps.println(strPad + "Name    :" + cfg.testSuite.name);
+        ps.println(strPad + "PV Prefix    :" + cfg.prefix);
         
-        ps.println(strPad + "Request IDs:");
-        for (TestArchiveRequest enmRqst : cfg.testSuite.requestIds)
-            ps.println(strPad + "- " + enmRqst.name());
+        ps.println(strPad + "PV Data Types:");
+        for (DpSupportedType enmType : cfg.types)
+            ps.println(strPad + "  - " + enmType.name());
         
-        ps.println(strPad + "Request Decomposition Strategies:");
-        for (RequestDecompType enmType : cfg.testSuite.requestComposites)
-            ps.println(strPad + "- " + enmType.name());
+        ps.println(strPad + "PV Sampling Clock:");
+        ps.println(strPad + "  period : " + cfg.clock.period);
+        ps.println(strPad + "  units  : " + cfg.clock.units);
         
-        ps.println(strPad + "gRPC Stream Counts:");
-        for (Integer intCnt : cfg.testSuite.streamCounts)
-            ps.println(strPad + "- " + intCnt);
+        ps.println(strPad + "PV Counts:");
+        ps.println(strPad + "  total          : " + cfg.count.total);
+        ps.println(strPad + "  clocked        : " + cfg.count.clocked);
+        ps.println(strPad + "  timestamp list : " + cfg.count.tmsList);
         
-        ps.println(strPad + "gRPC Stream Types:");
-        for (DpGrpcStreamType enmType : cfg.testSuite.streamTypes)
-            ps.println(strPad + "- " + enmType.name());
+        ps.println(strPad + "PV Indexes:");
+        ps.println(strPad + "  clocked        : " + cfg.indexes.clocked);
+        ps.println(strPad + "  timestamp list : " + cfg.indexes.tmsList);
     }
 
 }

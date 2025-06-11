@@ -496,9 +496,9 @@ public class UniformSamplingBlockTest {
 
             Assert.assertEquals("Sample clock sample count incorrect for index " + Integer.toString(indCurr), cntSamples, clkCurr.getSampleCount());
             Assert.assertEquals("Sample clock start time incorrect for index " + Integer.toString(indCurr), insStart, clkCurr.getStartInstant());
-            Assert.assertTrue("Sample clock period units NOT in nanoseconds for index " + Integer.toString(indCurr), clkCurr.getSamplePeriodUnits() == ChronoUnit.NANOS);
-            Assert.assertEquals("Sample clock period incorrect for index " + Integer.toString(indCurr), lngPeriodNs, clkCurr.getSamplePeriod());
-            
+//            Assert.assertTrue("Sample clock period units NOT in nanoseconds for index " + Integer.toString(indCurr), clkCurr.getSamplePeriodUnits() == ChronoUnit.NANOS);
+//            Assert.assertEquals("Sample clock period incorrect for index " + Integer.toString(indCurr), lngPeriodNs, clkCurr.getSamplePeriod());
+            Assert.assertEquals("Sample clock period incorrect for index " + Integer.toString(indCurr), lngPeriodNs, clkCurr.getSamplePeriodDuration().toNanos());
             indCurr++;
         }
     }

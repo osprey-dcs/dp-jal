@@ -69,41 +69,6 @@ import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
  */
 public class UniformSamplingClock implements Comparable<Instant>, Serializable { 
 
-    //
-    // Class Constants
-    //
-    
-    /** The class serialization UID */ 
-    private static final long serialVersionUID = -5072057926184917173L;
-
-    
-    //
-    // Defining Attributes
-    //
-    
-    /** The starting instant of the sampling process */
-    private final Instant       insStart;
-    
-    /** The number of samples */
-    private final int           intCount;
-    
-    /** The sampling period duration */
-    private final long          lngPeriod;
-    
-    /** The sampling period time units */
-    private final ChronoUnit    cuPeriod;
-    
-    
-    //
-    // Consistent Parameters
-    //
-    
-    /** The sampling period as a <code>Duration</code> instance */
-    private final Duration      durPeriod;
-    
-    /** The time domain of the sampling process */
-    private final TimeInterval  ivlDomain;
-    
     
     //
     // Creators
@@ -134,17 +99,34 @@ public class UniformSamplingClock implements Comparable<Instant>, Serializable {
     
     /**
      * <p>
-     * Creates a new <code>UniformSamplingClock</code> instance using the given defining parameters.
+     * Creates and returns a new <code>UniformSamplingClock</code> instance configured with the given arguments.
+     * </p>
+     *
+     * @param insStart      The starting instant of the sampling process 
+     * @param cntSamples    The number of samples
+     * @param durPeriod     The sampling period
+     * 
+     * @return  a new sampling clock instance with the given parameters
+     * 
+     * @throws IllegalArgumentException cntSamples < 0 or lngPeriod <= 0
+     */
+    public static UniformSamplingClock from(Instant insStart, int cntSamples, Duration durPeriod)  throws IllegalArgumentException {
+        return new UniformSamplingClock(insStart, cntSamples, durPeriod);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>UniformSamplingClock</code> instance using the given defining parameters.
      * </p>
      *  
      * @param insStart  The starting instant of the sampling process 
-     * @param intCount  The number of samples
+     * @param cntSamples  The number of samples
      * @param lngPeriod The sampling period  
      * @param cuPeriod  The sampling period time units
      * 
      * @return  a new sampling clock instance with the given parameters
      * 
-     * @throws IllegalArgumentException intCount < 0 or lngPeriod <= 0
+     * @throws IllegalArgumentException cntSamples < 0 or lngPeriod <= 0
      */
     public static UniformSamplingClock from(Instant insStart, int intCount, long lngPeriod, ChronoUnit cuPeriod) 
             throws IllegalArgumentException {
@@ -250,43 +232,112 @@ public class UniformSamplingClock implements Comparable<Instant>, Serializable {
     
     
     //
-    // Constructor
+    // Class Constants
+    //
+    
+    /** The class serialization UID */ 
+    private static final long serialVersionUID = -5072057926184917173L;
+
+    
+    //
+    // Defining Attributes
+    //
+    
+    /** The starting instant of the sampling process */
+    private final Instant       insStart;
+    
+    /** The number of samples */
+    private final int           cntSamples;
+    
+    /** The sampling period as a <code>Duration</code> instance */
+    private final Duration      durPeriod;
+    
+    
+    //
+    // Consistent Parameters
+    //
+    
+//    /** The sampling period duration */
+//    private final long          lngPeriod;
+//    
+//    /** The sampling period time units */
+//    private final ChronoUnit    cuPeriod;
+    
+    /** The time domain of the sampling process */
+    private final TimeInterval  ivlDomain;
+    
+    
+    //
+    // Constructors
     //
     
     /**
      * <p>
-     * Constructs a new, initialized instance of <code>UniformSamplingClock</code>.
+     * Constructs a new <code>UniformSamplingClock</code> instance configured with the given arguments.
      * </p>
      *
-     * @param insStart  The starting instant of the sampling process 
-     * @param intCount  The number of samples
-     * @param lngPeriod The sampling period  
-     * @param cuPeriod  The sampling period time units
+     * @param insStart      The starting instant of the sampling process 
+     * @param cntSamples    The number of samples
+     * @param durPeriod     The sampling period
      * 
-     * @throws IllegalArgumentException intCount < 0 or lngPeriod <= 0
+     * @throws IllegalArgumentException cntSamples < 0 or lngPeriod <= 0
      */
-    public UniformSamplingClock(Instant insStart, int intCount, long lngPeriod, ChronoUnit cuPeriod) {
+    public UniformSamplingClock(Instant insStart, int cntSamples, Duration durPeriod) throws IllegalArgumentException {
         
         // Check Argument
-        if (intCount < 0 || lngPeriod <= 0)
+        if (cntSamples < 0 || durPeriod.isNegative())
             throw new IllegalArgumentException("Sampling count < 0 and/or sample periods <= 0.");
         
         this.insStart = insStart;
-        this.intCount = intCount;
-        this.lngPeriod = lngPeriod;
-        this.cuPeriod = cuPeriod;
-        
-        // Compute consistent parameters
-        this.durPeriod = Duration.of(lngPeriod, cuPeriod);
-        
-        // Special case - intCount == 0
-        if (intCount == 0) {
+        this.cntSamples = cntSamples;
+        this.durPeriod = durPeriod;
+
+        // Special case - cntSamples == 0
+        if (cntSamples == 0) {
             this.ivlDomain = TimeInterval.from(insStart, insStart);
             
             return;
         }
         
-        Duration durIvl = this.durPeriod.multipliedBy(intCount - 1);
+        Duration durIvl = this.durPeriod.multipliedBy(cntSamples - 1);
+        Instant insStop = this.insStart.plus(durIvl);
+        this.ivlDomain = TimeInterval.from(insStart, insStop);
+    }
+    
+    /**
+     * <p>
+     * Constructs a new, initialized instance of <code>UniformSamplingClock</code> configured with the given arguments.
+     * </p>
+     *
+     * @param insStart      The starting instant of the sampling process 
+     * @param cntSamples    The number of samples
+     * @param lngPeriod     The sampling period  
+     * @param cuPeriod      The sampling period time units
+     * 
+     * @throws IllegalArgumentException cntSamples < 0 or lngPeriod <= 0
+     */
+    public UniformSamplingClock(Instant insStart, int cntSamples, long lngPeriod, ChronoUnit cuPeriod) throws IllegalArgumentException {
+        
+        // Check Argument
+        if (cntSamples < 0 || lngPeriod <= 0)
+            throw new IllegalArgumentException("Sampling count < 0 and/or sample periods <= 0.");
+        
+        this.insStart = insStart;
+        this.cntSamples = cntSamples;
+//        this.lngPeriod = lngPeriod;
+//        this.cuPeriod = cuPeriod;
+        
+        // Compute consistent parameters
+        this.durPeriod = Duration.of(lngPeriod, cuPeriod);
+        
+        // Special case - cntSamples == 0
+        if (cntSamples == 0) {
+            this.ivlDomain = TimeInterval.from(insStart, insStart);
+            
+            return;
+        }
+        
+        Duration durIvl = this.durPeriod.multipliedBy(cntSamples - 1);
         Instant insStop = this.insStart.plus(durIvl);
         this.ivlDomain = TimeInterval.from(insStart, insStop);
     }
@@ -311,36 +362,36 @@ public class UniformSamplingClock implements Comparable<Instant>, Serializable {
      * @return  the total sample count where clock is enabled
      */
     public int getSampleCount() {
-        return this.intCount;
+        return this.cntSamples;
     }
     
-    /**
-     * <p>
-     * Returns the sample period.
-     * </p>
-     * <p>
-     * Use the method <code>{@link #getSamplePeriodUnits()}</code> to recover the
-     * sample period time units.
-     * </p>
-     * 
-     * @return  the sample period for the clock
-     * 
-     * @see #getSamplePeriodUnits()
-     */
-    public long getSamplePeriod() {
-        return this.lngPeriod;
-    }
-    
-    /**
-     * Returns the time units of the sample period.
-     * 
-     * @return  unit of time for the sample period
-     * 
-     * @see #getSamplePeriod()
-     */
-    public ChronoUnit   getSamplePeriodUnits() {
-        return this.cuPeriod;
-    }
+//    /**
+//     * <p>
+//     * Returns the sample period.
+//     * </p>
+//     * <p>
+//     * Use the method <code>{@link #getSamplePeriodUnits()}</code> to recover the
+//     * sample period time units.
+//     * </p>
+//     * 
+//     * @return  the sample period for the clock
+//     * 
+//     * @see #getSamplePeriodUnits()
+//     */
+//    public long getSamplePeriod() {
+//        return this.lngPeriod;
+//    }
+//    
+//    /**
+//     * Returns the time units of the sample period.
+//     * 
+//     * @return  unit of time for the sample period
+//     * 
+//     * @see #getSamplePeriod()
+//     */
+//    public ChronoUnit   getSamplePeriodUnits() {
+//        return this.cuPeriod;
+//    }
     
     /**
      * <p>
@@ -420,10 +471,10 @@ public class UniformSamplingClock implements Comparable<Instant>, Serializable {
      * @return  a new vector of timestamp instants represented by this object
      */
     public ArrayList<Instant>  createTimestamps() {
-        ArrayList<Instant>     vecTms = new ArrayList<>(this.intCount);
+        ArrayList<Instant>     vecTms = new ArrayList<>(this.cntSamples);
         
         Instant insTms = this.insStart;
-        for (int n=0; n<this.intCount; n++) {
+        for (int n=0; n<this.cntSamples; n++) {
             vecTms.add(insTms);
             
             insTms = insTms.plus(this.durPeriod);
@@ -451,11 +502,9 @@ public class UniformSamplingClock implements Comparable<Instant>, Serializable {
         // Check defining parameters
         if (!this.insStart.equals(clk.insStart))
             return false;
-        if (this.intCount != clk.intCount)
+        if (this.cntSamples != clk.cntSamples)
             return false;
-        if (this.lngPeriod != clk.lngPeriod)
-            return false;
-        if (this.cuPeriod != clk.cuPeriod)
+        if (!this.durPeriod.equals(clk.durPeriod))
             return false;
      
         return true;
@@ -469,9 +518,8 @@ public class UniformSamplingClock implements Comparable<Instant>, Serializable {
         String  strText = this.getClass().getName() + ": (";
         
         strText += "Start time=" + this.insStart + ", ";
-        strText += "Sample count=" + this.intCount + ", ";
-        strText += "Period=" + this.lngPeriod + " " + this.cuPeriod + ", "; 
-        strText += "Duration=" + this.durPeriod + ")";
+        strText += "Sample count=" + this.cntSamples + ", ";
+        strText += "Period=" + this.durPeriod + ")";
         strText += "Domain=" + this.ivlDomain + ")"; 
         
         return strText;

@@ -41,6 +41,7 @@ import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.api.util.Log4j;
 
 /**
  * <p>
@@ -280,18 +281,18 @@ public class TimeDomainProcessor {
     public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
-    /** Use advanced error checking and verification flag */
-    public static final boolean     BOL_ERROR_CHK = CFG_QUERY.data.table.construction.errorChecking;
+//    /** Use advanced error checking and verification flag */
+//    public static final boolean     BOL_ERROR_CHK = CFG_QUERY.data.table.construction.errorChecking;
+//    
+//    /** Enable/disable allowing time domain collisions within correlated data */ 
+//    public static final boolean     BOL_DOM_COLLISION = CFG_QUERY.data.table.construction.domainCollision;
     
-    /** Enable/disable allowing time domain collisions within correlated data */ 
-    public static final boolean     BOL_DOM_COLLISION = CFG_QUERY.data.table.construction.domainCollision;
     
-    
-    /** Concurrency enabled flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
-    
-    /** Parallelism tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
-    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
+//    /** Concurrency enabled flag */
+//    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
+//    
+//    /** Parallelism tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
+//    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
     
 
     //
@@ -299,17 +300,7 @@ public class TimeDomainProcessor {
     //
     
     /** Event logger for class */
-    private static final Logger LOGGER = LogManager.getLogger();
-    
-
-    /**
-     * <p>
-     * Class Resource Initialization - Initializes the event logger, sets logging level.
-     * </p>
-     */
-    static {
-        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
-    }
+    private static final Logger LOGGER = Log4j.getLogger(TimeDomainProcessor.class, STR_LOGGING_LEVEL);
     
     
     //
