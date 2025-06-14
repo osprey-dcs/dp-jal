@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.jal.tools.ingest.frames
+ * Package: com.ospreydcs.dp.jal.tools.ingest.model.frames
  * Type: 	package-info
  *
  * Copyright 2010-2025 the original author or authors.
@@ -32,4 +32,4 @@
  * @since Jun 11, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.ingest.frames;
+package com.ospreydcs.dp.jal.tools.ingest.model.frames;

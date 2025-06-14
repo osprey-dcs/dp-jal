@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SampleBlockConfig.java
- * Package: com.ospreydcs.dp.jal.tools.ingest.frames
+ * Package: com.ospreydcs.dp.jal.tools.ingest.model.frames
  * Type: 	SampleBlockConfig
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since Jun 11, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.ingest.frames;
+package com.ospreydcs.dp.jal.tools.ingest.model.frames;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.common.DpTimestampCase;
 import com.ospreydcs.dp.api.common.TimeAbstraction;
-import com.ospreydcs.dp.jal.tools.ingest.values.JalScalarType;
+import com.ospreydcs.dp.jal.tools.ingest.model.values.JalScalarType;
 
 /**
  * <p>

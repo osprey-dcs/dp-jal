@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.jal.tools.ingest.values;
+package com.ospreydcs.dp.jal.tools.ingest.model.values;
 
 import com.ospreydcs.dp.api.common.DpSupportedType;
 

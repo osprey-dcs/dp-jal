@@ -23,7 +23,7 @@
  * @since Jun 10, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.ingest;
+package com.ospreydcs.dp.jal.tools.ingest.add;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -59,9 +59,9 @@ import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.ingest.frames.IngestionFrameGenerator;
-import com.ospreydcs.dp.jal.tools.ingest.frames.SampleBlockConfig;
-import com.ospreydcs.dp.jal.tools.ingest.values.JalScalarType;
+import com.ospreydcs.dp.jal.tools.ingest.model.frames.IngestionFrameGenerator;
+import com.ospreydcs.dp.jal.tools.ingest.model.frames.SampleBlockConfig;
+import com.ospreydcs.dp.jal.tools.ingest.model.values.JalScalarType;
 import com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator;
 import com.sun.jdi.request.InvalidRequestStateException;
 

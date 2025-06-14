@@ -60,7 +60,7 @@ public record IngestRequestUID(String requestId) implements Serializable {
     
     
     /** Prefix given to all randomly generated Java Client API request UIDs */
-    public static final String  STR_PREFIX = "dp-api-java-";
+    public static final String  STR_PREFIX = "jal-";
     
     
     //
