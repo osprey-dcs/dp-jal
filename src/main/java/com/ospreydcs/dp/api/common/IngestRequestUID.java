@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.common;
 
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -176,6 +177,31 @@ public record IngestRequestUID(String requestId) implements Serializable {
         
         return new IngestRequestUID(strRqstId);
     }
+    
+    
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Prints out a text description of the record fields to the given output stream.
+     * </p>
+     * <p>
+     * A line-by-line text description of each record field is written to the given output.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white-space padding for each line header (or <code>null</code>)
+     */
+    public void printOut(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        ps.println(strPad + "Ingestion request UID : " + this.requestId);
+    }
 
     
     //
@@ -199,6 +225,18 @@ public record IngestRequestUID(String requestId) implements Serializable {
             return this.requestId.equals(rec.requestId);
         
         return false;
+    }
+    
+    /**
+     * <p>
+     * Returns the request UID field as a string.
+     * </p>
+     * 
+     * @see java.lang.Record#toString()
+     */
+    @Override
+    public String   toString() {
+        return this.requestId;
     }
     
 }

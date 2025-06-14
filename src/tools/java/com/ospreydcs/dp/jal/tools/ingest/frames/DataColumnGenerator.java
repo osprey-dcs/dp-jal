@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.jal.tools.ingest.frame;
+package com.ospreydcs.dp.jal.tools.ingest.frames;
 
 import java.util.ArrayList;
 import java.util.Collection;

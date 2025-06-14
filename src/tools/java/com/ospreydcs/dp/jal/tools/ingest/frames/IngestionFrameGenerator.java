@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	IngestionFrameGenerator.java
- * Package: com.ospreydcs.dp.jal.tools.ingest.frame
+ * Package: com.ospreydcs.dp.jal.tools.ingest.frames
  * Type: 	IngestionFrameGenerator
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,15 +23,12 @@
  * @since Jun 11, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.ingest.frame;
+package com.ospreydcs.dp.jal.tools.ingest.frames;
 
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
@@ -47,6 +44,74 @@ import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 
 /**
+ * <p>
+ * Class for generating <code>IngestionFrame</code> instances containing simulated data.
+ * </p>
+ * <p>
+ * A single class instance of <code>IngestionFrameGenerator</code> can create multiple <code>IngestionFrame</code>
+ * objects, which will contain different data and sequential time stamps.  Use the <code>{@link #build()}</code>
+ * for <code>IngestionFrame</code> generation after class instantiation.
+ * </p>
+ * <p>
+ * <h2>Configuration</h2>
+ * Instances of <code>IngestionFrameGenerator</code> are configured upon creation/construction.  A record object of
+ * type <code>{@link SampleBlockConfig}</code> is required for instantiation.  The record contains all fields necessary
+ * for full configuration and all <code>IngestionFrameGenerator</code> objects are ready for ingestion frame creation
+ * (i.e., invoking the <code>{@link #build()}</code> method) after instantiation.
+ * <p> 
+ * </p>
+ * <p>
+ * <h2>Ingest Frames</h2>
+ * <ul>
+ * <li><b>Data Columns</b>
+ * <br/>
+ * The number columns within each in ingestion frame is given by the size of the 
+ * <code>{@link SampleBlockConfig#setPvNames()}</code> set.  Each column has a name taken from the given set.
+ * </li>
+ * <li><b>Data Types</b>
+ * <br/>
+ * This class currently supports only scalar data types of that described by the enumeration 
+ * <code>{@link JalScalarType}</code>, and given by the field <code>{@link SampleBlockConfig#enmDataType()}</code>
+ * within the creation configuration record. The data types of all data within each generated ingestion frame will 
+ * all be identical (although the data values will not).
+ * <li><b>Timestamps</b>
+ * <br/>
+ * The timestaps are generated internally according to the number of samples specified by 
+ * <code>{@link SampleBlockConfig#cntSamples()}</code>, the sampling period <code>{@link SampleBlockConfig#tmaPeriod()}</code>,
+ * and by the desired timestamp representation <code>{@link SampleBlockConfig#enmTmsCase()}</code>.  
+ * See more details below.
+ * </li>
+ * <li><b>Sample Count</b>
+ * <br/>
+ * The number of samples for each sample process within each ingestion frame created is given by the field
+ * <code>{@link SampleBlockConfig#cntSamples()}</code>.  That is, all data columns within the generated
+ * ingestion frames have size <code>{@link SampleBlockConfig#cntSamples()}</code>.  That is, the generated 
+ * ingestion frames have <code>{@link SampleBlockConfig#cntSamples()}</code> rows.
+ * </li>
+ * <li><b>Sample Period</b>
+ * <br/>
+ * All timestamps within produced ingestion frames are generated under the assumption of a uniform sampling clock
+ * with period given by <code>{@link SampleBlockConfig#tmaPeriod()}</code>.
+ * </li>
+ * </ul>
+ * <p>
+ * <h2>Timestamps</h2>
+ * The start time (first timestamp) of the first ingestion frame produced (i.e., via the <code>{@link #build()}</code> method) 
+ * will be the inception time of the Data Platform Test Archive contained in class constant <code>{@link #INS_START}</code>.  
+ * In all subsequent ingestion frames the initial timestamp is advanced such that it follows directly from the last timestamp 
+ * of the previous ingestion frame.  The interval between timestamps (i.e., the "period") is given by the field
+ * <code>{@link SampleBlockConfig#tmaPeriod()}</code> within the configuration record.
+ * </p>
+ * <p>
+ * The method used to express timestamps for all generated ingestion frames is given by the field 
+ * <code>{@link SampleBlockConfig#enmTmsCase()}</code>.
+ * Within <code>IngestionFrame</code> instances timestamps can be specified with either a <code>UniformSamplingClock</code>
+ * object (for sampling processes that have a constant period) or with an explicit list of timestamp <code>Instant</code>
+ * values (i.e., a <code>List&lt;Instant&gt;</code> object).  Clearly the former method is less expensive but not
+ * as general as the latter method.   (Note that this has direct correspondence to the Data Platform gRPC messages
+ * for timestamps given by <code>SamplingClock</code> and <code>TimestampList</code>, respectively, both attributes
+ * of a <code>DataTimestamps</code> message).  
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Jun 11, 2025
@@ -168,10 +233,10 @@ public class IngestionFrameGenerator {
     //
     
     /** Index counter for ingestion frames created - used for frame label creation */
-    private int         indFrame = 0;
+    private int         indFrame; // = 0;
     
     /** The start time for each ingestion frame - advanced after each frame created */
-    private Instant     insStart = INS_START;
+    private Instant     insStart; // = INS_START;
     
     
     //
@@ -195,10 +260,16 @@ public class IngestionFrameGenerator {
     public IngestionFrameGenerator(SampleBlockConfig recCfg) throws IllegalArgumentException {
 //        this.recCfg = recCfg;
         
+        // Record configuration parameters
         this.cntSamples = recCfg.cntSamples();
         this.durPeriod = recCfg.tmaPeriod().getDuration();
         this.enmTmsCase = recCfg.enmTmsCase();
         
+        // Initialize state variables
+        this.indFrame =0;
+        this.insStart = INS_START.plus(recCfg.tmaDelay().getDuration());
+        
+        // Create the data column generator
         this.genCols = DataColumnGenerator.from(recCfg);
     }
     

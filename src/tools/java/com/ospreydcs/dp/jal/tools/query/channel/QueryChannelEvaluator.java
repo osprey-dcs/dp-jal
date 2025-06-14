@@ -44,8 +44,6 @@ import com.ospreydcs.dp.api.app.ExitCode;
 import com.ospreydcs.dp.api.app.JalApplicationBase;
 import com.ospreydcs.dp.api.app.JalQueryAppBase;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
@@ -170,9 +168,8 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
             JalApplicationBase.parseAppArgsErrors(args, CNT_APP_MIN_ARGS, LST_STR_DELIMS);
 
         } catch (Exception e) {
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
 
-            System.exit(ExitCode.INPUT_CFG_CORRUPT.getCode());
         }
         
         // Get the test suite configuration and output location from the application arguments
@@ -185,8 +182,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
             
         } catch (Exception e) {
             
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.INTPUT_ARG_INVALID.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
             return;
         }
 
@@ -209,15 +205,15 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
             
         } catch (ConfigurationException | UnsupportedOperationException | FileNotFoundException | SecurityException 
                 | DpGrpcException e) {
-            
-            JalApplicationBase.reportTerminalException(QueryChannelEvaluator.class, e);
-            System.exit(ExitCode.INPUT_CFG_CORRUPT.getCode());
+
+            // Creation exception
+            JalApplicationBase.terminateWithException(QueryChannelEvaluator.class, e, ExitCode.INITIALIZATION_EXCEPTION);
             return;
             
         } catch (IllegalStateException | CompletionException | ResolutionException | DpQueryException
                 | InterruptedException e) {
-            JalApplicationBase.reportTerminalException(QueryChannelEvaluator.class, e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            // Run, write, shut down exception
+            JalApplicationBase.terminateWithException(QueryChannelEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
             return;
             
         }
@@ -229,7 +225,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
     
     /** Default configuration parameters for the Query Service tools */
 //    private static final JalToolsQueryConfig    CFG_QUERY = JalToolsConfig.getInstance().query;
-    private static final DpQueryConfig      CFG_QUERY = DpApiConfig.getInstance().query;
+//    private static final DpQueryConfig      CFG_QUERY = DpApiConfig.getInstance().query;
     
     /** Default JAL tools configuration parameters */
     private static final JalToolsConfig     CFG_TOOLS = JalToolsConfig.getInstance();

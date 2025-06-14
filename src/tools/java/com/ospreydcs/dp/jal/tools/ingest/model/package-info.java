@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.jal.tools.ingest.frame
+ * Package: com.ospreydcs.dp.jal.tools.ingest.model
  * Type: 	package-info
  *
  * Copyright 2010-2025 the original author or authors.
@@ -20,16 +20,16 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jun 11, 2025
+ * @since Jun 14, 2025
  *
  */
 /**
  * <p>
- * Package containing resources for creating ingestion frames of simulated data.
+ * Package containing resources for JAL tools supporting Ingestion Service operations.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Jun 11, 2025
+ * @since Jun 14, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.ingest.frame;
+package com.ospreydcs.dp.jal.tools.ingest.model;

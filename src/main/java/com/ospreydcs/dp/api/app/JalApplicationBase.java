@@ -68,7 +68,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <li>Unique file name creation (e.g., for output streams) <code>{@link #createUniqueFileName()}</code>. </li>
  * <li>Report header creation (provides time and class info) <code>{@link #createReportHeader()}</code>. </li>
  * <li>Exception report for sub-class <code>{@link #reportTerminalException(Throwable)}</code>. </li>
- * <li>Exception reporting for main class <code>{@link #reportTerminalException(Class, Throwable)}</code>. </li>
+ * <li>Exception reporting for main class <code>{@link #terminateWithException(Class, Throwable)}</code>. </li>
  * <li>Common state management (see <code>{@link #hasRun()}, {@link #hasCompleted()}</code>. </li>
  * <li>Command-line parsing methods (prefixed with <code>parseAppArgs...()</code> (see below).</li>
  * </ul> 
@@ -105,8 +105,8 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * The command line parsers look for command-line switches, "commands",
  * variables, and properties.  They also identify some standard special requests such as {@value #STR_ARG_HELP}
  * and {@value #STR_ARG_VERSION}.  They can be combined with main class exception report through
- * <code>{@link #reportTerminalException(Class, Throwable)}</code> and/or 
- * <code>{@link #reportTerminalErrorMessage(Class, String)}</code> to configure the application.
+ * <code>{@link #terminateWithException(Class, Throwable)}</code> and/or 
+ * <code>{@link #terminateWithErrorMessage(Class, String)}</code> to configure the application.
  * </p>
  * <p>
  * See the method documentation for further details on their function and operation.
@@ -536,7 +536,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
         String      strHdr1 = this.pathOutFile.toAbsolutePath().toString();
         DateFormat  date = DateFormat.getDateTimeInstance();
         String      strDateTime = date.format(new Date());
-        String      strHdr2 = this.clsApp.getSimpleName() + " Output Results: " + strDateTime + "\n";
+        String      strHdr2 = this.clsApp.getSimpleName() + " Output Report: " + strDateTime + "\n";
 
         return strHdr1 + "\n" + strHdr2;
     }
@@ -988,7 +988,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     
     /**
      * <p>
-     * Reports a terminating error to Standard Error.
+     * Reports a terminating error to Standard Error then exits.
      * </p>
      * <p>
      * Reports a terminating exception (from the caller location) to the Standard Error.
@@ -998,29 +998,31 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * <p>
      * This method is intended to be called from a <code>main</code> method application entry point
      * upon discovery of terminating error (e.g., bad command-line arguments). 
-     * A <code>{@link System#exit(int)}</code> is assumed to be called following this method invocation.
+     * A <code>{@link System#exit(int)}</code> is called following this method invocation.
      * </p>
      * 
      * @param <T>   the type of the application calling this method
      * 
      * @param clsApp    the class type of the application
      * @param e         the exception to report
+     * @param enmCode   the exit code sent to <code>{@link System#exit(int)}</code>
      */
-    public static <T extends JalApplicationBase<T>> void  reportTerminalException(Class<T> clsApp, Throwable e) {
-        String  strApp = clsApp.getClass().getName() + " TERMINAL ERROR at ";
-        String  strHdr = JavaRuntime.getQualifiedCallerNameSimple() + ".";
+    public static <T extends JalApplicationBase<T>> void  terminateWithException(Class<T> clsApp, Throwable e, ExitCode enmCode) {
+        String  strApp = clsApp.getCanonicalName();
+        String  strHdr = "TERMINAL ERROR: " + strApp + " at " + JavaRuntime.getQualifiedCallerNameSimple() + ".";
         String  strMsg = "Encountered exception " + e.getClass().getSimpleName() + ": " + e.getMessage() + ".";
         String  strBye = "Unable to continue. Exiting...";
         
-        System.err.println(strApp);
         System.err.println(strHdr);
         System.err.println(strMsg);
         System.err.println(strBye);
+        
+        System.exit(enmCode.getCode());
     }
     
     /**
      * <p>
-     * Reports a terminating error message to Standard Error.
+     * Reports a terminating error message to Standard Error then exits.
      * </p>
      * <p>
      * Reports a terminating message (from the caller location) to the Standard Error.
@@ -1037,16 +1039,19 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * 
      * @param clsApp    the class type of the application
      * @param strMsg    the message to report
+     * @param enmCode   the exit code sent to <code>{@link System#exit(int)}</code>
      */
-    public static <T extends JalApplicationBase<T>> void  reportTerminalErrorMessage(Class<T> clsApp, String strMsg) {
-        String  strApp = clsApp.getClass().getName() + " TERMINAL ERROR at ";
-        String  strHdr = JavaRuntime.getQualifiedCallerNameSimple() + ".";
+    public static <T extends JalApplicationBase<T>> void  terminateWithErrorMessage(Class<T> clsApp, String strMsg, ExitCode enmCode) {
+        String  strApp = clsApp.getCanonicalName();
+        
+        String  strHdr = "TERMINAL ERROR: " + strApp + " at " + JavaRuntime.getQualifiedCallerNameSimple() + ".";
         String  strBye = "Unable to continue. Exiting...";
         
-        System.err.println(strApp);
         System.err.println(strHdr);
         System.err.println(strMsg);
         System.err.println(strBye);
+        
+        System.exit(enmCode.getCode());
     }
     
 }

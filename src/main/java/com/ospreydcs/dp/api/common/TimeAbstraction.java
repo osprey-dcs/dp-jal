@@ -138,7 +138,10 @@ public class TimeAbstraction {
     //
     
     /** The default time units used for construction by <code>Duration</code> instance. */
-    public static final TimeUnit       UNIT_DEF = TimeUnit.NANOSECONDS;
+    public static final TimeUnit            UNIT_DEF = TimeUnit.NANOSECONDS;
+    
+    /** The zero valued time duration */
+    public static final TimeAbstraction     ZERO = TimeAbstraction.from(Duration.ZERO);
     
     
     //

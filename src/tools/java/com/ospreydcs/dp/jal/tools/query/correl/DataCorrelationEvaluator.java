@@ -51,6 +51,7 @@ import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
+import com.ospreydcs.dp.api.util.JalEnv;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
@@ -164,9 +165,8 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
             JalApplicationBase.parseAppArgsErrors(args, CNT_APP_MIN_ARGS, LST_STR_DELIMS);
 
         } catch (Exception e) {
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
 
-            System.exit(ExitCode.INPUT_CFG_CORRUPT.getCode());
         }
         
         // Get the test suite configuration and output location from the application arguments
@@ -179,8 +179,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
             
         } catch (Exception e) {
             
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.INTPUT_ARG_INVALID.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
             return;
         }
 
@@ -203,65 +202,51 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
             
         } catch (DpGrpcException e) {
             System.err.println(STR_APP_NAME + " creation FAILURE - Unable to connect to Query Service.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INITIALIZATION_EXCEPTION);
             
         } catch (ConfigurationException e) {
             System.err.println(STR_APP_NAME + " creation FAILURE - No time-series data requests in command line.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.INTPUT_ARG_INVALID.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
             
         } catch (UnsupportedOperationException e) {
             System.err.println(STR_APP_NAME + " creation FAILURE - Output location invalid: " + strOutputLoc);
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.OUTPUT_ARG_INVALID.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.OUTPUT_ARG_INVALID);
             
         } catch (FileNotFoundException e) {
             System.err.println(STR_APP_NAME + " creation FAILURE - Unable to create output file.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.OUTPUT_FAILURE.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.OUTPUT_FAILURE);
             
         } catch (SecurityException e) {
             System.err.println(STR_APP_NAME + " creation FAILURE - Unable to write to output file.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.OUTPUT_FAILURE.getCode());
-            
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.OUTPUT_FAILURE);
             
         } catch (InvalidRequestStateException e) {
             System.err.println(STR_APP_NAME + " execution FAILURE - Application already executed.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
             
         } catch (DpQueryException e) {
             System.err.println(STR_APP_NAME + " data recovery ERROR - General gRPC error in data recovery.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.GRPC_EXCEPTION);
             
         } catch (IllegalStateException e) {
             System.err.println(STR_APP_NAME + " data recovery ERROR - Message request attempt on empty buffer.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
             
         } catch (InterruptedException e) {
             System.err.println(STR_APP_NAME + " data recovery ERROR - Process interrupted while waiting for buffer message.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
             
         } catch (BufferUnderflowException e) {
             System.err.println(STR_APP_NAME + " data recovery ERROR - message buffer not fully drained.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
             
         } catch (IllegalArgumentException e) {
             System.err.println(STR_APP_NAME + " evaluation ERROR - invalid timestamps encountered in recovered data.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
             
         } catch (CompletionException e) {
             System.err.println(STR_APP_NAME + " evaluation ERROR - data bucket insertion task failed.");
-            JalApplicationBase.reportTerminalException(DataCorrelationEvaluator.class, e);
-            System.exit(ExitCode.EXECUTION_EXCEPTION.getCode());
-            
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
         }
     }
     
@@ -333,7 +318,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
           + "    R1, ..., Rn = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
           + "    M1, ..., Mj = Maximum allowable number(s) of concurrent processing threads - Integer value(s). \n"
           + "    P1, ..., Pk = Pivot size(s) triggering concurrent processing - Integer value(s). \n"
-          + "    " + STR_VAR_OUTPUT + "    = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
+          + "    Output      = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
           + "\n"
           + "  NOTES: \n"
           + "  - All bracketed quantities [...] are optional. \n"
@@ -575,7 +560,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * @throws IllegalStateException    no results are available (called before <code>{@link #run()}</code>) 
      */
     public void writeReport() throws IllegalStateException {
-        this.writeReport(this.psOutput);
+        this.writeReport(super.psOutput);
     }
     
     /**
@@ -737,8 +722,9 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
     
         // If there is no user-provided output location use the default value in the JAL configuration
-        if (lstStrOutput.isEmpty()) 
+        if (lstStrOutput.isEmpty()) {
             return STR_OUTPUT_DEF;
+        }
     
         // Else return the first element in the list
         String strOutputLoc = lstStrOutput.get(0);

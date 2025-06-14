@@ -44,26 +44,39 @@ public enum ExitCode {
     /** Successful execution */
     SUCCESS(0),
     
+    /** Non-specific error - general */
+    ERROR(1),
+    
     /** Bad argument count */
-    BAD_ARG_COUNT(1),
+    BAD_ARG_COUNT(2),
     
     /** The input argument was invalid */
-    INTPUT_ARG_INVALID(2),
+    INTPUT_ARG_INVALID(3),
     
     /** The input data pointed to by the input argument was corrupt */
-    INPUT_CFG_CORRUPT(3),
+    INPUT_CFG_CORRUPT(4),
     
     /** The input argument was invalid */
-    OUTPUT_ARG_INVALID(4),
+    OUTPUT_ARG_INVALID(5),
     
     /** A failure occurred in establishing an output sink */
-    OUTPUT_FAILURE(5),
+    OUTPUT_FAILURE(6),
     
     /** Unable to establish a gRPC connection to a service */
-    GRPC_CONN_FAILURE(6),
+    GRPC_CONN_FAILURE(7),
+    
+    /** General gRPC exception during operation */
+    GRPC_EXCEPTION(8),
+    
+    /** General exception during application initialization */
+    INITIALIZATION_EXCEPTION(9),
     
     /** General exception during application execution */
-    EXECUTION_EXCEPTION(7)
+    EXECUTION_EXCEPTION(10),
+    
+    /** General exception during application shut down */
+    SHUTDOWN_EXCEPTION(11)
+    
     ;
 
     /** the integer value of the exit code */

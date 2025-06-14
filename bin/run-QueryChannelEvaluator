@@ -2,7 +2,7 @@
 
 echo
 echo '================================================================'
-echo 'app-run-correlation-evaluator'
+echo 'run-QueryChannelEvaluator'
 echo '================================================================'
 echo
 
@@ -12,8 +12,8 @@ echo
 
 DP_ENV=( ~/.dp.env )
 
-APP_NAME=DataCorrelationEvaluator
-APP_MAIN=com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator
+APP_NAME=QueryChannelEvaluator
+APP_MAIN=com.ospreydcs.dp.jal.tools.query.channel.QueryChannelEvaluator
 
 JAR_NAME=dp-jal-shaded
 JAR_VER=1.7.0

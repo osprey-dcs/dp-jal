@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.common;
 
+import java.io.PrintStream;
 import java.io.Serializable;
 
 /**
@@ -74,5 +75,32 @@ public final record ProviderUID(String uid, String name, boolean isNew) implemen
     public static ProviderUID   from (String uid, String name, boolean isNew) {
         return new ProviderUID(uid, name, isNew);
     }
+    
 
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Prints out a text description of the record fields to the given output stream.
+     * </p>
+     * <p>
+     * A line-by-line text description of each record field is written to the given output.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white-space padding for each line header (or <code>null</code>)
+     */
+    public void printOut(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        ps.println(strPad + "Data Provider name : " + this.name);
+        ps.println(strPad + "Data Provider UID  : " + this.uid);
+        ps.println(strPad + "Is new provider    : " + this.isNew);
+    }
+        
 }
