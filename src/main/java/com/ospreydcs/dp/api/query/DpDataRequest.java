@@ -32,8 +32,11 @@ import java.io.PrintStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
@@ -1431,7 +1434,7 @@ public final class DpDataRequest {
      * 
      * @param lstNames list of data source names
      */
-    public void selectSources(List<String> lstNames) {
+    public void selectSources(Collection<String> lstNames) {
         
         this.lstSelCmps.addAll(lstNames);
     }

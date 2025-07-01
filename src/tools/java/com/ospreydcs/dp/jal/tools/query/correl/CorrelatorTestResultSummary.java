@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
 
 /**
@@ -167,8 +168,8 @@ public record CorrelatorTestResultSummary(
             int         cntMsgsMin,
             int         cntMsgsMax,
             int         cntMsgsAvg,
-            long        szAlloctMin,
-            long        szAlloctMax,
+            long        szAllocMin,
+            long        szAllocMax,
             long        szAllocAvg,
             int         cntBlksMin,
             int         cntBlksMax,
@@ -193,8 +194,8 @@ public record CorrelatorTestResultSummary(
                 cntMsgsMin,
                 cntMsgsMax,
                 cntMsgsAvg,
-                szAlloctMin,
-                szAlloctMax,
+                szAllocMin,
+                szAllocMax,
                 szAllocAvg,
                 cntBlksMin,
                 cntBlksMax,
@@ -256,8 +257,8 @@ public record CorrelatorTestResultSummary(
             int         cntMsgsMin,
             int         cntMsgsMax,
             int         cntMsgsAvg,
-            long        szAlloctMin,
-            long        szAlloctMax,
+            long        szAllocMin,
+            long        szAllocMax,
             long        szAllocAvg,
             int         cntBlksMin,
             int         cntBlksMax,
@@ -282,8 +283,8 @@ public record CorrelatorTestResultSummary(
                 cntMsgsMin,
                 cntMsgsMax,
                 cntMsgsAvg,
-                szAlloctMin,
-                szAlloctMax,
+                szAllocMin,
+                szAllocMax,
                 szAllocAvg,
                 cntBlksMin,
                 cntBlksMax,
@@ -303,7 +304,7 @@ public record CorrelatorTestResultSummary(
     // Record Resources
     //
 
-    /** The target data rate */
+    /** The target data rate (MBps) */
     public static double  DBL_RATE_TARGET = 500.0;
     
     
@@ -340,10 +341,16 @@ public record CorrelatorTestResultSummary(
      * @param setResults    collection of test results
      * 
      * @return  a new <code>CorrelatorTestResultSummary</code> record containing a summary of the argument results
+     * 
+     * @throws  IllegalArgumentException    argument collection was empty
      */
-    public static CorrelatorTestResultSummary summarize(Collection<CorrelatorTestResult> setResults) {
+    public static CorrelatorTestResultSummary summarize(Collection<CorrelatorTestResult> setResults) throws IllegalArgumentException {
         
-        // Compute general summary results 
+        // Check argument - avoid divide by zero
+        if (setResults.isEmpty())
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Argument collection was empty.");
+        
+        // Get the results size 
         int         cntResults = setResults.size();
         
         // Compute the rates statistics

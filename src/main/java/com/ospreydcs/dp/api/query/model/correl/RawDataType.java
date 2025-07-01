@@ -33,7 +33,9 @@ package com.ospreydcs.dp.api.query.model.correl;
  * @author Christopher K. Allen
  * @since Mar 12, 2025
  *
+ * @deprecated Redundant - use <code>DpTimestampCaes</code>
  */
+@Deprecated(since="June 17, 2025", forRemoval=true)
 public enum RawDataType {
     
     /**

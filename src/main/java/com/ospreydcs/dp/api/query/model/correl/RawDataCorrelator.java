@@ -335,7 +335,7 @@ public class RawDataCorrelator {
 
     /** Manages thread pools of many, short-lived execution tasks */
 //  private final ExecutorService   exeThreadPool = Executors.newCachedThreadPool();
-  private ExecutorService   exeInsertTasks = Executors.newFixedThreadPool(CNT_CONCURRENCY_THDS);
+    private ExecutorService   exeInsertTasks = Executors.newFixedThreadPool(CNT_CONCURRENCY_THDS);
   
     
     //

@@ -28,6 +28,7 @@ package com.ospreydcs.dp.api.query.model.correl;
 import java.time.Instant;
 import java.util.ArrayList;
 
+import com.ospreydcs.dp.api.common.DpTimestampCase;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -77,7 +78,7 @@ public class RawClockedData extends RawCorrelatedData {
      * @throws IllegalArgumentException argument does not contains a sampling clock
      */
     protected RawClockedData(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
-        super(RawDataType.CLOCKED, ProtoTime.range(msgBucket.getDataTimestamps().getSamplingClock()), msgBucket);
+        super(DpTimestampCase.SAMPLING_CLOCK, ProtoTime.range(msgBucket.getDataTimestamps().getSamplingClock()), msgBucket);
 
         // Check argument
         if (!msgBucket.getDataTimestamps().hasSamplingClock()) {

@@ -67,7 +67,32 @@ import com.sun.jdi.request.InvalidRequestStateException;
 
 /**
  * <p>
- * Application for adding simulated PV samples to the Data Platform Test Archive archive.
+ * Application for adding custom, simulated PV samples to the Data Platform Test Archive archive.
+ * </p>
+ * <p>
+ * The application creates <code>{@link IngestionFrame}</code> objects containing simulated data
+ * for Process Variables (PVs) provided on the command line.  The timestamps for the PVs are
+ * aligned to the inception time of the Data Platform Test Archive, with any desired delay provided
+ * by the client.  Thus, the Data Platform Test Archive can be supplemented with custom data from 
+ * clients for unique testing applications.
+ * </p>
+ * <p>
+ * The configuration of the <code>IngestionFrame</code> instances sent to the Ingestion Service is
+ * given by a record <code>{@link SampleBlockConfig}</code>, whose fields are parsed from the command line.
+ * Ingestion frames are sent to the Ingestion Service using an <code>{@link IIngestionService}</code>
+ * interface obtain from the connection factory using a default connection.  All data transmission
+ * with this interface is done using unary gRPC operations.  Thus, this application is not intended to
+ * support large data sets.
+ * </p>
+ * <p>
+ * The application usage is described in the class constant {@link #STR_APP_USAGE}, which contains detailed
+ * information on command line arguments.  This description can be displayed from the command line with
+ * the single argument {@value JalApplicationBase#STR_ARG_HELP}, or specifically
+ * <pre>
+ * <code>
+ *   % {@value AddTestArchiveData#STR_APP_NAME} {@value JalApplicationBase#STR_ARG_HELP}
+ * </code>
+ * </pre>
  * </p>
  *
  * @author Christopher K. Allen

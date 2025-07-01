@@ -28,6 +28,7 @@ package com.ospreydcs.dp.api.app;
 import java.nio.BufferUnderflowException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -37,6 +38,8 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryStatic;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
+import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
+import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
@@ -106,15 +109,20 @@ public abstract class JalQueryAppBase<T extends JalQueryAppBase<T>> extends JalA
     //
     
     /** The gRPC connection to the Query Service (default connection) */
-    protected final DpQueryConnection                     connQuery;
+    protected final DpQueryConnection       connQuery;
+    
     
     /** The receiver of <code>QueryData</code> Protocol Buffers messages */
-    protected final QueryMessageBuffer                    bufDataMsgs;
+    protected final QueryMessageBuffer      bufDataMsgs;
     
     /** The <code>QueryChannel</code> object available for data recover and/or evaluations */
-    protected final QueryChannel                          chanQuery;
+    protected final QueryChannel            chanQuery;
 
 
+    /** Raw request data correlator */
+    protected final RawDataCorrelator       prcrRawData;
+    
+    
     //
     // State Variables
     //
@@ -147,6 +155,9 @@ public abstract class JalQueryAppBase<T extends JalQueryAppBase<T>> extends JalA
         // Set timeout for channel operation and for request operation
         this.connQuery.setTimeoutLimit(LNG_TIMEOUT, TU_TIMEOUT);
         this.chanQuery.setTimeoutLimit(LNG_TIMEOUT, TU_TIMEOUT);
+        
+        // Create the raw request data correlator
+        this.prcrRawData = RawDataCorrelator.create();
     }
 
     
@@ -297,95 +308,7 @@ public abstract class JalQueryAppBase<T extends JalQueryAppBase<T>> extends JalA
         return lstDataMsgs;
     }
 
-//    /**
-//     * <p>
-//     * Attempts to recover the test suite configuration from the given name.
-//     * </p>
-//     * <p>
-//     * The argument is assumed to be either a named, pre-defined test suite configuration within the Java API Tools
-//     * configuration file, or a separate file containing a test suite configuration.  In the case of the latter,
-//     * the file must be a YAML file containing the test suite configuration in a valid format for the structure
-//     * class <code>{@link JalRequestSuiteConfig}</code>.  In the former case, the structure class obtained from the
-//     * tools library configuration file is returned.  In the latter case, the YAML file is loaded and the structure
-//     * class is populated from the file parameters then returned.
-//     * </p>
-//     * <p>
-//     * The following operations are performed in order:
-//     * <ol>
-//     * <li>
-//     * The Java API Tools configuration file is searched for a test suite configuration with name given by 
-//     * the argument.
-//     * </li>
-//     * <li>
-//     * If the above fails the argument is checked that it is a valid file location.  If not an exception is
-//     * thrown.
-//     * </li>
-//     * <li>
-//     * An attempt is made to read the (valid) file into a new <code>JalRequestSuiteConfig</code> structure class.
-//     * If that fails an exception is thrown.
-//     * </li>
-//     * <li>
-//     * If operation arrives here then the new <code>JalRequestSuiteConfig</code> instance is valid and it
-//     * is returned.
-//     * </li>
-//     * </ol>
-//     * 
-//     * @param strName   named, pre-defined test suite or path containing file with test suite configuration
-//     *  
-//     * @return  a new <code>JalRequestSuiteConfig</code> structure class with test suite configuration
-//     * 
-//     * @throws FindException the argument was neither a pre-defined test suite nor a valid configuration file
-//     */
-//    protected JalRequestSuiteConfig recoverTestSuiteConfig(String strName) throws FindException {
+//    protected SortedSet<RawCorrelatedData>  correlateRequestData(DpDataRequest rqst) {
 //        
-//        // Check if name is a pre-defined test suite (in the API Tools configuration)
-//        List<JalRequestSuiteConfig>  lstCfgsAll = CFG_DEF.testRequests.testSuites;
-//        
-//        List<JalRequestSuiteConfig>  lstCfgTarget = lstCfgsAll.stream().filter(cfg -> strName.equals( cfg.testSuite.name) ).toList();
-//        if (!lstCfgTarget.isEmpty())
-//            return lstCfgTarget.getFirst();
-//        
-//        // Check if name is a valid file location (name is not a pre-defined test suite)
-////        try {
-////            Paths.get(strName);     // throws InvalidPathException 
-////            
-////        } catch (InvalidPathException | NullPointerException e) {
-////            
-////            if (BOL_LOGGING)
-////                LOGGER.error(strErrMsg1);
-////            
-////            throw new FindException(strErrMsg1, e);
-////        }
-//        
-//        // Check if name is a valid file
-//        File file = new File(strName);
-//        
-//        if (!file.exists() || !file.isFile()) {
-//            String  strErrMsg1 = JavaRuntime.getQualifiedMethodNameSimple()
-//                    + " - Invalid test suite name '" + strName 
-//                    + "': neither a named pre-defined test suite nor a valid file location.";
-//
-//            if (BOL_LOGGING)
-//                this.getLogger().error(strErrMsg1);
-//            
-//            throw new FindException(strErrMsg1);
-//        }
-//       
-//        // Attempt to load test suite configuration from file (name is a valid file)
-//        try {
-//            JalRequestSuiteConfig cfg = CfgLoaderYaml.load(file, JalRequestSuiteConfig.class);
-//            
-//            return cfg;
-//            
-//        } catch (FileNotFoundException | SecurityException e) {
-//            String  strErrMsg2 = JavaRuntime.getQualifiedMethodNameSimple()
-//                    + " - Input " + strName + " was not a valid test suite configuration file.";
-//            
-//            if (BOL_LOGGING)
-//                this.getLogger().error(strErrMsg2);
-//            
-//            throw new IllegalArgumentException(strErrMsg2, e);
-//        }
 //    }
-//
 }

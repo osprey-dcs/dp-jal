@@ -31,10 +31,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.SortedSet;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -518,7 +515,7 @@ public class TimeDomainProcessor {
      *          <code>false</code> if no time-time collisions were found 
      * 
      * @throws IllegalStateException     internal processing error: attempt to process data when more super domains existed 
-     * @throws IndexOutOfBoundsException internal processing error: attempt to access index beyond current enabled data list
+     * @throws IndexOutOfBoundsException internal processing error: attempt to access index beyond end of processing list
      */
     public boolean process() throws IllegalStateException, IndexOutOfBoundsException {
         
@@ -641,9 +638,9 @@ public class TimeDomainProcessor {
      * @return  the next <code>RawSuperDomData</code> collection within the correlated raw data
      *          
      * @throws  IllegalStateException       there were no more super domains to process
-     * @throws  IndexOutOfBoundsException   internal processing error (severe, should not happen)
+     * @throws  IndexOutOfBoundsException   internal processing error - end of processing list (severe, should not happen)
      *          
-     * #see {@link #extractSuperDomain(RawCorrelatedData)}
+     * @see {@link #extractSuperDomain(RawCorrelatedData)}
      */
     private RawSuperDomData  extractNext() throws IllegalStateException, IndexOutOfBoundsException {
         

@@ -46,6 +46,11 @@ import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
  * Represents a collection of <code>RawCorrelatedData</code> instances that have intersecting time ranges.
  * </p>
  * <p>
+ * Class instances are containers for <code>{@link RawCorrelatedData}</code> objects with time-domain collisions.
+ * That is, the raw, correlated data blocks within a container have intersecting time-domains, they are <em>not</em>
+ * disjoint.
+ * </p>
+ * <p>
  * This class is intended as an intermediate object in the processing of <code>RawCorrelatedData</code> instances
  * with time domain collisions.  Once built class instances should contain a collection of all the 
  * <code>RawCorrelatedData</code> instances within a query response having a non-emtpy time range intersection.

@@ -39,11 +39,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
+import com.ospreydcs.dp.api.common.DpTimestampCase;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
@@ -314,14 +316,6 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
     
     
     //
-    // Class Resources
-    //
-    
-    /** Event logger */
-    protected static final Logger    LOGGER = LogManager.getLogger();
-    
-    
-    //
     // Class Constants
     //
     
@@ -339,14 +333,12 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
     protected static final TimeUnit     TU_TIMEOUT = CFG_QUERY.timeout.unit;
     
     
-    /**
-     * <p>
-     * Class Resource Initialization - Initializes the event logger, sets logging level.
-     * </p>
-     */
-    static {
-        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
-    }
+    //
+    // Class Resources
+    //
+    
+    /** Event logger */
+    protected static final Logger    LOGGER = Log4j.getLogger(RawCorrelatedData.class, STR_LOGGING_LEVEL);
     
     
     // 
@@ -354,7 +346,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
     //
     
     /** Time-series raw data type - either uniform sampling or timestamp list (spurious) */
-    protected final RawDataType         enmType;
+    protected final DpTimestampCase     enmTmsCase;
     
     /** The time range of contained raw time series data */
     protected final TimeInterval        tvlRange;
@@ -381,14 +373,14 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * (sans the timestamps).
      * </p>
      *
-     * @param enmType   the raw time-series data type
+     * @param enmTmsCase the raw time-series data timestamp type
      * @param tvlRange  the time range for the new correlated block 
      * @param msgBucket the raw data bucket containing process data (ignore timestamps)
      */
-    protected RawCorrelatedData(RawDataType enmType, TimeInterval tvlRange, QueryData.DataBucket msgBucket) {
+    protected RawCorrelatedData(DpTimestampCase enmTmsCase, TimeInterval tvlRange, QueryData.DataBucket msgBucket) {
         
         // Set the raw time-series data type
-        this.enmType = enmType;
+        this.enmTmsCase = enmTmsCase;
         
         // Set the time interval for the block (including start time)
         this.tvlRange = tvlRange;
@@ -567,7 +559,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
     
     /**
      * <p>
-     * Returns the data type of the raw, time-series data contained in this correlated block.
+     * Returns the timestamp type of the raw, time-series data contained in this correlated block.
      * </p>
      * <p>
      * The data correlation is performed against either a uniform sampling clock or an explicit timestamp
@@ -582,8 +574,8 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      *  
      * @return  enumeration indicating the correlation mechanism within this correlated block
      */
-    public final RawDataType    getRawDataType() {
-        return this.enmType;
+    public final DpTimestampCase getTimestampType() {
+        return this.enmTmsCase;
     }
     
     /**

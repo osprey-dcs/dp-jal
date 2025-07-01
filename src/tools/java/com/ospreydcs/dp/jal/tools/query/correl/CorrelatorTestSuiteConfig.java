@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	CorrelatorTestSuite.java
+ * File:	CorrelatorTestSuiteConfig.java
  * Package: com.ospreydcs.dp.jal.tools.query.correl
- * Type: 	CorrelatorTestSuite
+ * Type: 	CorrelatorTestSuiteConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -42,31 +42,46 @@ import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
-import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.query.JalToolsQueryConfig;
 import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
 
 /**
  * <p>
- * Configurable class for creating collections of <code>CorrelatorTestCase</code> instances.
+ * Configurable class that creates collections of <code>CorrelatorTestCase</code> instances.
  * </p>
  * <p>
  * Generates collections of <code>{@link CorrelatorTestCase}</code> instances, or "test suites",
- * according to dynamic configuration.  Specifically, a new <code>CorrelatorTestSuite</code> instance
+ * according to dynamic configuration.  Specifically, a new <code>CorrelatorTestSuiteConfig</code> instance
  * is first configured using methods
  * <ul>
  * <li><code>{@link #addTestRequest(TestArchiveRequest)}</code></li>
  * <li><code>{@link #addMaxThreadCount(int)}</code></li>
  * <li><code>{@link #addConcurrencyPivotSize(int)}</code></li>
  * </ul>
- * which can be called repeatedly to create a configuration.  
+ * which all can be called repeatedly to create a configuration.
+ * Once configured, method <code>{@link #createTestSuite()}</code> is used create collections of
+ * <code>{@link CorrelatorTestCase}</code> mapped to the <code>{@link TestArchiveRequest}</code>
+ * which they use.  Of course the <code>{@link #createTestSuite()}</code> method can be called
+ * at any point.   
+ * </p>
+ * <p>
+ * <h2>NOTES:</h2>
+ * <ul>
+ * <li>
+ * At least one <code>{@link TestArchiveRequest}</code> constant must be added to the configuration before
+ * test suite creation.  
+ * </li>
+ * <li>
+ * Default values will be supplied for the rest of the above parameters if they are not provided.
+ * </li>
+ * </ul>
+ * </p>
  * 
  *
  * @author Christopher K. Allen
  * @since May 31, 2025
  *
  */
-public class CorrelatorTestSuite {
+public class CorrelatorTestSuiteConfig {
     
     
     //
@@ -75,13 +90,13 @@ public class CorrelatorTestSuite {
     
     /**
      * <p>
-     * Creates and returns a new, empty <code>CorrelatorTestSuite</code> ready for configuration.
+     * Creates and returns a new, empty <code>CorrelatorTestSuiteConfig</code> ready for configuration.
      * </p>
      * 
-     * @return  a new unconfigured instance of <code>CorrelatorTestSuite</code>
+     * @return  a new unconfigured instance of <code>CorrelatorTestSuiteConfig</code>
      */
-    public static CorrelatorTestSuite   create() {
-        return new CorrelatorTestSuite();
+    public static CorrelatorTestSuiteConfig   create() {
+        return new CorrelatorTestSuiteConfig();
     }
     
 
@@ -151,11 +166,11 @@ public class CorrelatorTestSuite {
     
     /**
      * <p>
-     * Constructs a new, unconfigured <code>CorrelatorTestSuite</code> instance.
+     * Constructs a new, unconfigured <code>CorrelatorTestSuiteConfig</code> instance.
      * </p>
      *
      */
-    public CorrelatorTestSuite() {
+    public CorrelatorTestSuiteConfig() {
 //        this.pathOutput = pathOutput;
     }
 
@@ -270,7 +285,7 @@ public class CorrelatorTestSuite {
      * parameter was not assigned then a single default value is assigned for that parameter.  See the following 
      * class constants for test suite default configuration values.
      * <ul>
-     * <li><code>{@link #CNT_MAX_THRD_DEF}</code> - default maximum thread count.</li> 
+     * <li><code>{@link #DUR_RQST_TM_DEF}</code> - default maximum thread count.</li> 
      * <li><code>{@link #SZ_CONC_PIVOT_DEF}</code> - default concurrency pivot size.</li>
      * </ul>
      * </p>
@@ -354,7 +369,7 @@ public class CorrelatorTestSuite {
      * Performs the following checks and actions:
      * <ul>
      * <li>if <code>{@link #setTestRqsts}.isEmpty() &rArr; throw IllegalStateException</code></li>
-     * <li>if <code>{@link #setMaxThrdCnts}.isEmpty() &rArr; {@link #setDcmpType}.add({@link #CNT_MAX_THRD_DEF})</code></li>
+     * <li>if <code>{@link #setMaxThrdCnts}.isEmpty() &rArr; {@link #setDcmpType}.add({@link #DUR_RQST_TM_DEF})</code></li>
      * <li>if <code>{@link #setPvitSize}.isEmpty() &rArr; {@link #setPivotSize}.add({@link #SZ_CONC_PIVOT_DEF})</code></li>
      * </ul>
      * </p>

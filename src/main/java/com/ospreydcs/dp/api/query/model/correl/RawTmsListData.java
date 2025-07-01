@@ -28,6 +28,7 @@ package com.ospreydcs.dp.api.query.model.correl;
 import java.time.Instant;
 import java.util.ArrayList;
 
+import com.ospreydcs.dp.api.common.DpTimestampCase;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -78,7 +79,7 @@ public class RawTmsListData extends RawCorrelatedData {
      * @throws IllegalArgumentException argument does not contains a timestamp list
      */
     protected RawTmsListData(QueryDataResponse.QueryData.DataBucket msgBucket) {
-        super(RawDataType.TIMESTAMPLIST, ProtoTime.range( msgBucket.getDataTimestamps().getTimestampList() ), msgBucket);
+        super(DpTimestampCase.TIMESTAMP_LIST, ProtoTime.range( msgBucket.getDataTimestamps().getTimestampList() ), msgBucket);
         
         // Check argument
         if (!msgBucket.getDataTimestamps().hasTimestampList()) {

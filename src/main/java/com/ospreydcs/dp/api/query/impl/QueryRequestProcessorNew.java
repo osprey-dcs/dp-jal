@@ -25,6 +25,7 @@
  */
 package com.ospreydcs.dp.api.query.impl;
 
+import java.io.PrintStream;
 import java.time.Duration;
 import java.util.List;
 import java.util.SortedSet;
@@ -960,6 +961,37 @@ public class QueryRequestProcessorNew {
         return this.cntCorrelateMaxThrds;
     }
     
+    /**
+     * <p>
+     * Prints out a text description of the current processor configuration to the given output stream.
+     * </p>
+     * <p>
+     * A line-by-line text description is given of the current processor configuration, along with the sub
+     * processor configurations.  Each line contains a header identifying the configuration field and the
+     * field value.  Optional left-hand-side padding is available to indent all output if the configuration
+     * information is part of a larger set.
+     * </p>
+     *  
+     * @param ps        output stream to receive configuration text description
+     * @param strPad    optional left-hand-side padding for output lines, or <code>null</code> if none desired
+     */
+    public void printOutConfig(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        ps.println(strPad + "gRPC Multi-Streaming");
+        ps.println(strPad + "  multi-streaming enabled   : " + this.bolMultiStream);
+        ps.println(strPad + "  query domain size trigger : " + this.szDomainMultiStream);
+        ps.println(strPad + "  maximum stream count      : " + this.cntMaxStreams);
+        ps.println(strPad + "Correlation Concurrency");
+        ps.println(strPad + "  concurrency enabled       : " + this.bolCorrelateConcurrenly);
+        ps.println(strPad + "  concurrency pivot size    : " + this.prcrCorrelator.getConcurrencyPivotSize());
+        ps.println(strPad + "  maximum thread count      : " + this.cntCorrelateMaxThrds);
+        ps.println(strPad + "  correlate while streaming : " + this.bolCorrelateMidstream);
+        ps.println(strPad + "Data Request Decomposition");
+        ps.println(strPad + "  maximum PV count per composite   : " + this.prcrDecomposer.getMaxDataSources());
+        ps.println(strPad + "  maximum time range per composite : " + this.prcrDecomposer.getMaxDuration());
+    }
     
     //
     // Process State Inquiry
