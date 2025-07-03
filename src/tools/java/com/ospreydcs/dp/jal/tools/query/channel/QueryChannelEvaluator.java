@@ -76,8 +76,8 @@ import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
  * </ol> 
  * Additionally, the following "commands" may be provided:
  * <ul>
- * <li>{@value JalApplicationBase#STR_ARG_HELP} - responses with a the <code>{@link #STR_APP_USAGE}</code> message.</li>
- * <li>{@value JalApplicationBase#STR_ARG_VERSION} - response with the <code>{@link #STR_APP_VERSION}</code> message.</li>
+ * <li>{@value JalApplicationBase#STR_VAR_HELP} - responses with a the <code>{@link #STR_APP_USAGE}</code> message.</li>
+ * <li>{@value JalApplicationBase#STR_VAR_VERSION} - response with the <code>{@link #STR_APP_VERSION}</code> message.</li>
  * </ul>
  * The above arguments may appear anywhere on the command line but take precedence over all other arguments.
  * </p>
@@ -193,7 +193,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         
         // Create the evaluator, run it while catching and reporting any exceptions
         try {
-            QueryChannelEvaluator   evaluator = new QueryChannelEvaluator(suiteEvals, strOutputLoc);
+            QueryChannelEvaluator   evaluator = new QueryChannelEvaluator(suiteEvals, strOutputLoc, args);
             
             evaluator.run();
             evaluator.writeReport();
@@ -278,8 +278,8 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
             STR_APP_NAME  + " Usage: \n"
           + "\n"
           + "% " + STR_APP_NAME
-          + " [" + STR_ARG_HELP + "]"
-          + " [" + STR_ARG_VERSION + "]"
+          + " [" + STR_VAR_HELP + "]"
+          + " [" + STR_VAR_VERSION + "]"
           + " R1 [ ... RN]"
           + " [" + STR_VAR_RQST_DCMP + " D1 ... Di]"
           + " [" + STR_VAR_STRM_TYPE + " S1 ... Sj]"
@@ -287,8 +287,8 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
           + " [" + STR_VAR_OUTPUT +" Output]"
           + "\n" 
           + "  Where  \n"
-          + "    " + STR_ARG_HELP + "      = print this message and return.\n"
-          + "    " + STR_ARG_VERSION + "   = prints application version information and return.\n"
+          + "    " + STR_VAR_HELP + "      = print this message and return.\n"
+          + "    " + STR_VAR_VERSION + "   = prints application version information and return.\n"
           + "    R1, ..., Rn = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
           + "    D1, ..., Di = Request decomposition type(s) - RequestDecompType enumeration name(s). \n"
           + "    S1, ..., Sj = gRPC stream type(s) - DpGrpcStreamType enumeration name(s). \n"
@@ -369,6 +369,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
      *
      * @param suiteEvals    the test suite configuration to be run
      * @param strOutputLoc  the location of the evaluations report
+     * @param args          the command-line arguments
      * 
      * @throws DpGrpcException                  unable to establish connection to the Query Service (see message and cause)
      * @throws ConfigurationException           no data requests contained in test suite configuration
@@ -376,8 +377,8 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
      * @throws FileNotFoundException            unable to create the output file
      * @throws SecurityException                unable to write to the output file                 
      */
-    public QueryChannelEvaluator(QueryChannelTestSuite suiteEvals, String strOutputLoc) throws DpGrpcException, ConfigurationException, UnsupportedOperationException, FileNotFoundException, SecurityException {
-        super(QueryChannelEvaluator.class);
+    public QueryChannelEvaluator(QueryChannelTestSuite suiteEvals, String strOutputLoc, String...args) throws DpGrpcException, ConfigurationException, UnsupportedOperationException, FileNotFoundException, SecurityException {
+        super(QueryChannelEvaluator.class, args);
         
         // Get the defining attributes
         this.suiteEvals = suiteEvals;
@@ -526,9 +527,16 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + "- Test suite has not been run.");
         
         // Print out header
-        String  strHdr = this.createReportHeader();
+        String  strHdr = super.createReportHeader();
         ps.println();
         ps.println(strHdr);
+        ps.println();
+        
+        // Print out command line
+        String  strCmdLn = super.createCommandLine();
+        ps.println("Execution");
+        ps.println(strCmdLn);
+        ps.println();
         
         // Print out evaluation summary
         ps.println("Test cases specified : " + this.setCases.size());

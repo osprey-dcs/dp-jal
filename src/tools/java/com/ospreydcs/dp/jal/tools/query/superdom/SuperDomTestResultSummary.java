@@ -28,6 +28,7 @@ package com.ospreydcs.dp.jal.tools.query.superdom;
 import java.io.PrintStream;
 import java.time.Duration;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 
 import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -357,13 +358,13 @@ public record SuperDomTestResultSummary(
      * 
      * @return  a new <code>SuperDomTestResultSummary</code> record containing a summary of the argument results
      * 
-     * @throws  IllegalArgumentException    argument collection was empty
+     * @throws  NoSuchElementException    argument collection was empty
      */
-    public SuperDomTestResultSummary    summarize(Collection<SuperDomTestResult> setResults) throws IllegalArgumentException {
+    public static SuperDomTestResultSummary    summarize(Collection<SuperDomTestResult> setResults) throws NoSuchElementException {
         
         // Check argument - avoid divide by zero
         if (setResults.isEmpty())
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Argument collection was empty.");
+            throw new NoSuchElementException(JavaRuntime.getQualifiedMethodNameSimple() + " - Argument collection was empty.");
         
         // Get the results size 
         int         cntResults = setResults.size();
@@ -396,7 +397,7 @@ public record SuperDomTestResultSummary(
         // Compute the request recovery and correlation duration summary results
         Duration    durRawDataPrcdAvg = setResults.stream().<Duration>map(rec -> rec.durRawDataPrcd()).reduce(Duration.ZERO, (d1,d2) -> d1.plus(d2)).dividedBy(cntResults);
         Duration    durRawDataPrcdMin = setResults.stream().<Duration>map(rec -> rec.durRawDataPrcd()).reduce(durRawDataPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) < 0) return d1; else return d2; } );
-        Duration    durRawDataPrcdMax = setResults.stream().<Duration>map(rec -> rec.durRawDataPrcd()).reduce(durRawDataPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) > 1) return d1; else return d2; } );
+        Duration    durRawDataPrcdMax = setResults.stream().<Duration>map(rec -> rec.durRawDataPrcd()).reduce(durRawDataPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) > 0) return d1; else return d2; } );
         
         double      dblPrcdNsSqrd = setResults.stream().<Duration>map(rec -> rec.durRawDataPrcd()).mapToLong(dur -> dur.toNanos()).mapToDouble(l -> Long.valueOf(l).doubleValue()).map(ns -> ns*ns).sum()/cntResults;
         double      dblRawDataPrcdNsAvg = Long.valueOf(durRawDataPrcdAvg.toNanos() ).doubleValue();
@@ -431,7 +432,7 @@ public record SuperDomTestResultSummary(
         // Compute the super-domain processing duration summary results
         Duration    durSupDomPrcdAvg = setResults.stream().<Duration>map(rec -> rec.durSupDomPrcd()).reduce(Duration.ZERO, (d1,d2) -> d1.plus(d2)).dividedBy(cntResults);
         Duration    durSupDomPrcdMin = setResults.stream().<Duration>map(rec -> rec.durSupDomPrcd()).reduce(durSupDomPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) < 0) return d1; else return d2; } );
-        Duration    durSupDomPrcdMax = setResults.stream().<Duration>map(rec -> rec.durSupDomPrcd()).reduce(durSupDomPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) > 1) return d1; else return d2; } );
+        Duration    durSupDomPrcdMax = setResults.stream().<Duration>map(rec -> rec.durSupDomPrcd()).reduce(durSupDomPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) > 0) return d1; else return d2; } );
         
         double      dblSupDomPrcdNsSqrd = setResults.stream().<Duration>map(rec -> rec.durSupDomPrcd()).mapToLong(dur -> dur.toNanos()).mapToDouble(l -> Long.valueOf(l).doubleValue()).map(ns -> ns*ns).sum()/cntResults;
         double      dblSupDomPrcdNsAvg = Long.valueOf(durSupDomPrcdAvg.toNanos() ).doubleValue();
@@ -490,46 +491,45 @@ public record SuperDomTestResultSummary(
         // Print out results  
         ps.println(strPad + "Tests Result Summary ");
         ps.println(strPad + "  Total number of result cases    : " + this.cntResultsTot);
-        ps.println(strPad + "  Minimum number of messages recovered : " + this.cntRcvMsgsMin);
-        ps.println(strPad + "  Maximum number of messages recovered : " + this.cntRcvMsgsMax);
-        ps.println(strPad + "  Average number of messages recovered : " + this.cntRcvMsgsAvg);
-        ps.println(strPad + "  Minimum recovery allocation (bytes)  : " + this.szRcvAllocMin);
-        ps.println(strPad + "  Maximum recovery allocation (bytes)  : " + this.szRcvAllocMax);
-        ps.println(strPad + "  Average recovery allocation (bytes)  : " + this.szRcvAllocAvg);
-        ps.println(strPad + "  Minimum total raw data block count   : " + this.cntRawBlksTotMin);
-        ps.println(strPad + "  Maximum total raw data block count   : " + this.cntRawBlksTotMax);
-        ps.println(strPad + "  Average total raw data block count   : " + this.cntRawBlksTotAvg);
-        ps.println(strPad + "  Minimum clocked raw data block count  : " + this.cntRawBlksClkMin);
-        ps.println(strPad + "  Maximum clocked raw data block count  : " + this.cntRawBlksClkMax);
-        ps.println(strPad + "  Average clocked raw data block count  : " + this.cntRawBlksClkAvg);
-        ps.println(strPad + "  Minimum timestamp list raw block count :" + this.cntRawBlksTmsLstMin);
-        ps.println(strPad + "  Maximum timestamp list raw block count :" + this.cntRawBlksTmsLstMax);
-        ps.println(strPad + "  Average timestamp list raw block count :" + this.cntRawBlksTmsLstAvg);
+        ps.println(strPad + "  Minimum number of messages recovered   : " + this.cntRcvMsgsMin);
+        ps.println(strPad + "  Maximum number of messages recovered   : " + this.cntRcvMsgsMax);
+        ps.println(strPad + "  Average number of messages recovered   : " + this.cntRcvMsgsAvg);
+        ps.println(strPad + "  Minimum recovery allocation (bytes)    : " + this.szRcvAllocMin);
+        ps.println(strPad + "  Maximum recovery allocation (bytes)    : " + this.szRcvAllocMax);
+        ps.println(strPad + "  Average recovery allocation (bytes)    : " + this.szRcvAllocAvg);
+        ps.println(strPad + "  Minimum total raw data block count     : " + this.cntRawBlksTotMin);
+        ps.println(strPad + "  Maximum total raw data block count     : " + this.cntRawBlksTotMax);
+        ps.println(strPad + "  Average total raw data block count     : " + this.cntRawBlksTotAvg);
+        ps.println(strPad + "  Minimum clocked raw data block count   : " + this.cntRawBlksClkMin);
+        ps.println(strPad + "  Maximum clocked raw data block count   : " + this.cntRawBlksClkMax);
+        ps.println(strPad + "  Average clocked raw data block count   : " + this.cntRawBlksClkAvg);
+        ps.println(strPad + "  Minimum timestamp list raw block count : " + this.cntRawBlksTmsLstMin);
+        ps.println(strPad + "  Maximum timestamp list raw block count : " + this.cntRawBlksTmsLstMax);
+        ps.println(strPad + "  Average timestamp list raw block count : " + this.cntRawBlksTmsLstAvg);
         ps.println(strPad + "  Minimum raw data and correlation duration : " + this.durRawDataPrcdMin);
         ps.println(strPad + "  Maximum raw data and correlation duration : " + this.durRawDataPrcdMax);
         ps.println(strPad + "  Average raw data and correlation duration : " + this.durRawDataPrcdAvg);
-        ps.println(strPad + "  Minimum raw data and correlate data rate (MBps) : " + this.dblRateRawDataPrcdMin);
-        ps.println(strPad + "  Maximum raw data and correlate data rate (MBps) : " + this.dblRateRawDataPrcdMax);
-        ps.println(strPad + "  Average raw data and correlate data rate (MBps) : " + this.dblRateRawDataPrcdAvg);
-        ps.println(strPad + "  Raw data and correlate data rate std. dev. (MBps) : " + this.dblRateRawDataPrcdStd);
-        ps.println(strPad + "  Raw data and correlate data rates > average : " + this.cntRatesRawDataGtAvg);
-        ps.println(strPad + "  Raw data and correlate data rates > target  : " + this.cntRatesRawDataGtTgt);
-        ps.println(strPad + "  Minimum total disjoint data block count : " + this.cntDisBlksTotMin);
-        ps.println(strPad + "  Maximum total disjoint data block count : " + this.cntDisBlksTotMax);
-        ps.println(strPad + "  Average total disjoint data block count : " + this.cntDisBlksTotAvg);
+        ps.println(strPad + "  Minimum raw data and correlate data rate (MBps)   : " + this.dblRateRawDataPrcdMin);
+        ps.println(strPad + "  Maximum raw data and correlate data rate (MBps)   : " + this.dblRateRawDataPrcdMax);
+        ps.println(strPad + "  Average raw data and correlate data rate (MBps)   : " + this.dblRateRawDataPrcdAvg);
+        ps.println(strPad + "  Raw data and correlate data rate std. (MBps)      : " + this.dblRateRawDataPrcdStd);
+        ps.println(strPad + "  Raw data and correlate data rates > average       : " + this.cntRatesRawDataGtAvg);
+        ps.println(strPad + "  Raw data and correlate data rates > target        : " + this.cntRatesRawDataGtTgt);
+        ps.println(strPad + "  Minimum total disjoint data block count       : " + this.cntDisBlksTotMin);
+        ps.println(strPad + "  Maximum total disjoint data block count       : " + this.cntDisBlksTotMax);
+        ps.println(strPad + "  Average total disjoint data block count       : " + this.cntDisBlksTotAvg);
         ps.println(strPad + "  Minimum disjoint correl. raw data block count : " + this.cntDisBlksTotMin);
         ps.println(strPad + "  Maximum disjoint correl. raw data block count : " + this.cntDisBlksTotMax);
         ps.println(strPad + "  Average disjoint correl. raw data block count : " + this.cntDisBlksTotAvg);
-        ps.println(strPad + "  Minimum disjoint super-domain block count : " + this.cntSupDomBlksMin);
-        ps.println(strPad + "  Maximum disjoint super-domain block count : " + this.cntSupDomBlksMax);
-        ps.println(strPad + "  Average disjoint super-domain block count : " + this.cntSupDomBlksAvg);
-        ps.println(strPad + "  Minimum super-domain processing duration : " + this.durSupDomPrcdMin);
-        ps.println(strPad + "  Maximum super-domain processing duration : " + this.durSupDomPrcdMax);
-        ps.println(strPad + "  Average super-domain processing duration : " + this.durSupDomPrcdAvg);
+        ps.println(strPad + "  Minimum disjoint super-domain block count     : " + this.cntSupDomBlksMin);
+        ps.println(strPad + "  Maximum disjoint super-domain block count     : " + this.cntSupDomBlksMax);
+        ps.println(strPad + "  Average disjoint super-domain block count     : " + this.cntSupDomBlksAvg);
+        ps.println(strPad + "  Minimum super-domain processing duration      : " + this.durSupDomPrcdMin);
+        ps.println(strPad + "  Maximum super-domain processing duration      : " + this.durSupDomPrcdMax);
+        ps.println(strPad + "  Average super-domain processing duration      : " + this.durSupDomPrcdAvg);
         ps.println(strPad + "  Minimum super-domain processing rate (Blks/sec) : " + this.dblRateSupDomPrcdMin);
         ps.println(strPad + "  Maximum super-domain processing rate (Blks/sec) : " + this.dblRateSupDomPrcdMax);
         ps.println(strPad + "  Average super-domain processing rate (Blks/sec) : " + this.dblRateSupDomPrcdAvg);
         ps.println(strPad + "  Super-domain processing rates greater than avg. : " + this.cntRatesSupDomGtAvg);
-        
     }
 }

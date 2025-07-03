@@ -28,7 +28,6 @@ package com.ospreydcs.dp.api.app;
 import java.nio.BufferUnderflowException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
@@ -38,8 +37,6 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryStatic;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
-import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
@@ -119,8 +116,8 @@ public abstract class JalQueryAppBase<T extends JalQueryAppBase<T>> extends JalA
     protected final QueryChannel            chanQuery;
 
 
-    /** Raw request data correlator */
-    protected final RawDataCorrelator       prcrRawData;
+//    /** Raw request data correlator */
+//    protected final RawDataCorrelator       prcrRawData;
     
     
     //
@@ -141,11 +138,12 @@ public abstract class JalQueryAppBase<T extends JalQueryAppBase<T>> extends JalA
      * </p>
      *
      * @param clsApp    the class instance of the final application
+     * @param args      the array of command-line arguments for the application main()
      * 
      * @throws DpGrpcException unable to establish connection to the Query Service (see message and cause)
      */
-    protected JalQueryAppBase(Class<T> clsApp) throws DpGrpcException {
-        super(clsApp);
+    protected JalQueryAppBase(Class<T> clsApp, String...args) throws DpGrpcException {
+        super(clsApp, args);
         
         // Create the channel resources and channel
         this.bufDataMsgs = QueryMessageBuffer.create();
@@ -156,8 +154,8 @@ public abstract class JalQueryAppBase<T extends JalQueryAppBase<T>> extends JalA
         this.connQuery.setTimeoutLimit(LNG_TIMEOUT, TU_TIMEOUT);
         this.chanQuery.setTimeoutLimit(LNG_TIMEOUT, TU_TIMEOUT);
         
-        // Create the raw request data correlator
-        this.prcrRawData = RawDataCorrelator.create();
+//        // Create the raw request data correlator
+//        this.prcrRawData = RawDataCorrelator.create();
     }
 
     

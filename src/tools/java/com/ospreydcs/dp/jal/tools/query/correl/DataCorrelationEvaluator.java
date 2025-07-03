@@ -82,8 +82,8 @@ import com.sun.jdi.request.InvalidRequestStateException;
  * </ol> 
  * Additionally, the following "commands" may be provided:
  * <ul>
- * <li>{@value JalApplicationBase#STR_ARG_HELP} - responses with a the <code>{@link #STR_APP_USAGE}</code> message.</li>
- * <li>{@value JalApplicationBase#STR_ARG_VERSION} - response with the <code>{@link #STR_APP_VERSION}</code> message.</li>
+ * <li>{@value JalApplicationBase#STR_VAR_HELP} - responses with a the <code>{@link #STR_APP_USAGE}</code> message.</li>
+ * <li>{@value JalApplicationBase#STR_VAR_VERSION} - response with the <code>{@link #STR_APP_VERSION}</code> message.</li>
  * </ul>
  * The above arguments may appear anywhere on the command line but take precedence over all other arguments.
  * </p>
@@ -173,12 +173,12 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         }
         
         // Get the test suite configuration and output location from the application arguments
-        String                  strOutputLoc;
-        CorrelatorTestSuiteConfig     suite;
+        String                      strOutputLoc;
+        CorrelatorTestSuiteConfig   suite;
         try {
             
             suite = DataCorrelationEvaluator.parseTestSuiteConfig(args);
-            strOutputLoc = DataCorrelationEvaluator.parseOutputLocation(args);
+            strOutputLoc = JalApplicationBase.parseOutputLocation(args, STR_OUTPUT_DEF);
             
         } catch (Exception e) {
             
@@ -212,7 +212,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
             JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
             
         } catch (UnsupportedOperationException e) {
-            System.err.println(STR_APP_NAME + " creation FAILURE - Output location invalid: " + strOutputLoc);
+            System.err.println(STR_APP_NAME + " creation FAILURE - Output location not found in file system: " + strOutputLoc);
             JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.OUTPUT_ARG_INVALID);
             
         } catch (FileNotFoundException e) {
@@ -308,16 +308,16 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
             STR_APP_NAME  + " Usage: \n"
           + "\n"
           + "% " + STR_APP_NAME
-          + " [" + STR_ARG_HELP + "]"
-          + " [" + STR_ARG_VERSION + "]"
+          + " [" + STR_VAR_HELP + "]"
+          + " [" + STR_VAR_VERSION + "]"
           + " R1 [ ... Rn]"
           + " [" + STR_VAR_THRDS + " M1 ... Mj]"
           + " [" + STR_VAR_PIVOT + " P1 ... Pk]"
           + " [" + STR_VAR_OUTPUT +" Output]"
           + "\n" 
           + "  Where  \n"
-          + "    " + STR_ARG_HELP + "      = print this message and return.\n"
-          + "    " + STR_ARG_VERSION + "   = prints application version information and return.\n"
+          + "    " + STR_VAR_HELP + "      = print this message and return.\n"
+          + "    " + STR_VAR_VERSION + "   = prints application version information and return.\n"
           + "    R1, ..., Rn = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
           + "    M1, ..., Mj = Maximum allowable number(s) of concurrent processing threads - Integer value(s). \n"
           + "    P1, ..., Pk = Pivot size(s) triggering concurrent processing - Integer value(s). \n"
@@ -377,7 +377,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
     // Defining Attributes
     //
     
-    /** The test suite used for <code>QueryChannel</code> evaluations */
+    /** The test suite used for <code>CorrelatorTestCase</code> evaluations */
     private final CorrelatorTestSuiteConfig       suiteEvals;
     
     
@@ -552,7 +552,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * </p>
      * <p>
      * This method is available after invoking <code>{@link #run()}</code>.  It prints out a report
-     * of the <code>QueryChannel</code> evaluations including a summary, test suite configuration, and
+     * of the <code>CorrelatorTestCase</code> evaluations including a summary, test suite configuration, and
      * all test case results.
      * </p>
      * <p>
@@ -572,7 +572,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * </p>
      * <p>
      * This method is available after invoking <code>{@link #run()}</code>.  It prints out a report
-     * of the <code>QueryChannel</code> evaluations including a summary, test suite configuration, and
+     * of the raw data recovery and correlation evaluations including a summary, test suite configuration, and
      * all test case results.
      * </p>
      * 
@@ -596,6 +596,10 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         ps.println("Test cases run       : " + this.setResults.size());
         ps.println("Evaluation duration  : " + this.durEval);
         ps.println("Evaluation completed : " + this.bolCompleted);
+        ps.println();
+        
+        // Print out raw data correlator configuration
+        this.toolCorrelator.printOutConfig(ps, null);
         ps.println();
         
         // Print out the test suite configuration
@@ -699,39 +703,39 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         return suite;
     }
 
-    /**
-     * <p>
-     * Parses the application command-line argument collection for the output location and return it.
-     * </p>
-     * <p>
-     * The output location, as specified by the application client, is the value of variable
-     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
-     * are ignored.
-     * </p>
-     * <p>
-     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
-     * optional parameter, then the default value given by <code>{@link #STR_OUTPUT_DEF}</code> is returned.
-     * This value is taken from the JAL default configuration.
-     * </p>
-     * 
-     * @param args  the application command-line argument collection
-     * 
-     * @return  the output location as specified in the command line, 
-     *          or value of <code>{@link #STR_OUTPUT_DEF}</code> if not present
-     */
-    private static String   parseOutputLocation(String[] args) {
-        
-        // Look for the output location on the command line
-        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
-    
-        // If there is no user-provided output location use the default value in the JAL configuration
-        if (lstStrOutput.isEmpty()) {
-            return STR_OUTPUT_DEF;
-        }
-    
-        // Else return the first element in the list
-        String strOutputLoc = lstStrOutput.get(0);
-        
-        return strOutputLoc;
-    }
+//    /**
+//     * <p>
+//     * Parses the application command-line argument collection for the output location and return it.
+//     * </p>
+//     * <p>
+//     * The output location, as specified by the application client, is the value of variable
+//     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
+//     * are ignored.
+//     * </p>
+//     * <p>
+//     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
+//     * optional parameter, then the default value given by <code>{@link #STR_OUTPUT_DEF}</code> is returned.
+//     * This value is taken from the JAL default configuration.
+//     * </p>
+//     * 
+//     * @param args  the application command-line argument collection
+//     * 
+//     * @return  the output location as specified in the command line, 
+//     *          or value of <code>{@link #STR_OUTPUT_DEF}</code> if not present
+//     */
+//    private static String   parseOutputLocation(String[] args) {
+//        
+//        // Look for the output location on the command line
+//        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
+//    
+//        // If there is no user-provided output location use the default value in the JAL configuration
+//        if (lstStrOutput.isEmpty()) {
+//            return STR_OUTPUT_DEF;
+//        }
+//    
+//        // Else return the first element in the list
+//        String strOutputLoc = lstStrOutput.get(0);
+//        
+//        return strOutputLoc;
+//    }
 }

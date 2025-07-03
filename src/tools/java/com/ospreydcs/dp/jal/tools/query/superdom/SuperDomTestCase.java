@@ -304,7 +304,7 @@ public record SuperDomTestCase(
         if (strPad == null)
             strPad = "";
         
-        ps.println(strPad + this.getClass().getSimpleName() + " " + this.indCase + ":");
+        ps.println(strPad + this.getClass().getSimpleName() + " #" + this.indCase + ":");
         ps.println(strPad + "  Test Archive request ID   : " + this.enmRqstOrg.name());
         ps.println(strPad + "  Time-series request ID    : " + this.rqstFinal.getRequestId());
         ps.println(strPad + "  Supplemental PV names     : " + this.setPvNames);

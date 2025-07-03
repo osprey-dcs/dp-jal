@@ -320,7 +320,7 @@ public record TestResultSummary(
         // Compute the request duration summary results
         Duration    durRqstAvg = setResults.stream().<Duration>map(rec -> rec.durRecovery()).reduce(Duration.ZERO, (d1,d2) -> d1.plus(d2)).dividedBy(cntResults);
         Duration    durRqstMin = setResults.stream().<Duration>map(rec -> rec.durRecovery()).reduce(durRqstAvg, (d1, d2) -> { if (d1.compareTo(d2) < 0) return d1; else return d2; } );
-        Duration    durRqstMax = setResults.stream().<Duration>map(rec -> rec.durRecovery()).reduce(durRqstAvg, (d1, d2) -> { if (d1.compareTo(d2) > 1) return d1; else return d2; } );
+        Duration    durRqstMax = setResults.stream().<Duration>map(rec -> rec.durRecovery()).reduce(durRqstAvg, (d1, d2) -> { if (d1.compareTo(d2) > 0) return d1; else return d2; } );
         
         double      dblRqstNsSqrd = setResults.stream().<Duration>map(rec -> rec.durRecovery()).mapToLong(dur -> dur.toNanos()).mapToDouble(l -> Long.valueOf(l).doubleValue()).map(ns -> ns*ns).sum()/cntResults;
         double      dblRqstNsAvg = Long.valueOf(durRqstAvg.toNanos() ).doubleValue();

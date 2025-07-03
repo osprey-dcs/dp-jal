@@ -655,11 +655,11 @@ public class TimeDomainProcessor {
         }
         
         // Get the target correlated data block and create next super domain
-        RawCorrelatedData   datStart = this.lstDataActive.remove(this.indListCurr);
+        RawCorrelatedData   datStart = this.lstDataActive.remove(this.indListCurr);  // indListCurr should point to first super-dom after hasNext()
         RawSuperDomData     domNext = RawSuperDomData.from(datStart);
         
         // Adjust processing list indices
-        this.indListCurr++;
+//        this.indListCurr++;
         this.indListLast--;
         
         boolean bolError = true;    // At least one block must be added or error occurred (double check)
@@ -697,7 +697,8 @@ public class TimeDomainProcessor {
                 if (!domNext.isDisjoint(datCmp)) {
                     domNext.add(datCmp);
                     
-                    this.lstDataActive.remove(datCmp);
+//                    this.lstDataActive.remove(datCmp);
+                    iterData.remove();
                     this.indListLast--;
                     bolRepeat = true;   // must do this again since super domain has changed
                     bolError = false;

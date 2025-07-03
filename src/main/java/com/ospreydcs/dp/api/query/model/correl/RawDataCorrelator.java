@@ -25,6 +25,7 @@
  */
 package com.ospreydcs.dp.api.query.model.correl;
 
+import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -633,6 +634,29 @@ public class RawDataCorrelator {
         return this.szSetConcPivot;
     }
     
+    /**
+     * <p>
+     * Prints out a text description of the current configuration to the given output stream.
+     * </p>
+     * <p>
+     * A line-by-line text description of each configuration field is written to the given output.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of configuration
+     * @param strPad    white-space padding for each line header (or <code>null</code>)
+     */
+    public void printOutConfig(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        // Print out test result single parameters
+        ps.println(strPad + this.getClass().getSimpleName() + " Configuration");
+        ps.println(strPad + "  Concurrency enabled    : " + this.bolConcurrency);
+        ps.println(strPad + "  Maximum thread count   : " + this.cntMaxThreads);
+        ps.println(strPad + "  Concurrency pivot size : " + this.szSetConcPivot);
+    }
  
     //
     // Attribute Query

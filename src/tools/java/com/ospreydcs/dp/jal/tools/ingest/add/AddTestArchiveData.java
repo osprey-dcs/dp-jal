@@ -87,10 +87,10 @@ import com.sun.jdi.request.InvalidRequestStateException;
  * <p>
  * The application usage is described in the class constant {@link #STR_APP_USAGE}, which contains detailed
  * information on command line arguments.  This description can be displayed from the command line with
- * the single argument {@value JalApplicationBase#STR_ARG_HELP}, or specifically
+ * the single argument {@value JalApplicationBase#STR_VAR_HELP}, or specifically
  * <pre>
  * <code>
- *   % {@value AddTestArchiveData#STR_APP_NAME} {@value JalApplicationBase#STR_ARG_HELP}
+ *   % {@value AddTestArchiveData#STR_APP_NAME} {@value JalApplicationBase#STR_VAR_HELP}
  * </code>
  * </pre>
  * </p>
@@ -297,8 +297,8 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
             STR_APP_NAME  + " Usage: \n"
           + "\n"
           + "> " + STR_APP_NAME
-          + " [" + STR_ARG_HELP + "]"
-          + " [" + STR_ARG_VERSION + "]"
+          + " [" + STR_VAR_HELP + "]"
+          + " [" + STR_VAR_VERSION + "]"
           + " " + STR_VAR_PVS + " PV1 [... PVn]"
           + " " + STR_VAR_TYPE + " TYPE"
           + " " + STR_VAR_SMPLS + " N"
@@ -310,8 +310,8 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
           + " [" + STR_VAR_OUTPUT + " Output]"
           + "\n\n" 
           + "  Where  \n"
-          + "    " + STR_ARG_HELP + "          = print this message and return.\n"
-          + "    " + STR_ARG_VERSION + "       = prints application version information and return.\n"
+          + "    " + STR_VAR_HELP + "          = print this message and return.\n"
+          + "    " + STR_VAR_VERSION + "       = prints application version information and return.\n"
           + "    PV1, [..., PVn] = Name(s) of the process variables to add (e.g., 'jalTools_1', 'jatTools_2', etc.). \n"
           + "    TYPE            = Data type of all process variables - 'JalScalarType' enumeration (e.g. 'INTEGER', 'DOUBLE', etc.). \n"
           + "    N               = The number of samples for each process variable (note total duration is T*N).\n"

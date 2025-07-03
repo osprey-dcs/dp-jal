@@ -44,13 +44,35 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.query.correl.CorrelatorTestSuiteConfig;
 import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
 
 /**
  * <p>
- * Configurable class that creates collections of <code>CorrelatorTestCase</code> instances.
+ * Configurable class that creates collections of <code>SuperDomTestCase</code> instances.
  * </p>
+ * <p>
+ * A <code>SuperDomTestSuiteConfig</code> instance is created in an unconfigured state.  Clients
+ * must configure the instance using the available configuration methods before calling the
+ * <code>{@link #createTestSuite()}</code> method which returns a collection (i.e., "suite") of
+ * <code>{@link SuperDomTestCase}</code> instances according to the current configuration.
+ * </p>
+ * <p>
+ * <h2>Configuration</h2>
+ * The test suite configuration consists of the following properties:
+ * <ul>
+ * <li>A (optional) collection of <code>{@link TestArchiveRequest}</code> time-series data requests.</li>
+ * <li>A (optional) collection of supplemental PV names to be added to each <code>TestArchiveRequest</code>.</li>
+ * <li>An (optional) override of each time-series data request duration.</li>
+ * <li>An (optional) delay time for each time-series data request.</li>
+ * </ul>
+ * A valid test suite configuration has the following requirements:
+ * <ul>
+ * <li>The configuration must contain either at least one <code>TestArchiveRequest</code> with no supplemental PVs.</li>
+ * <li>If no <code>TestArchiveRequest</code> enumerations are specified then there must be at least one supplemental PV.</li>
+ * <li>If no <code>TestArchiveRequest</code> enumerations are specified then the data request duration must be specified.</li>
+ * <li>The last two properties are optional when <code>TestArchiveRequest</code> enumerations are specified;
+ *     the time-range of each <code>TestArchiveRequest</code> remains unchanged.</li>
+ * </ul> 
  * 
  *
  * @author Christopher K. Allen
@@ -71,8 +93,8 @@ public class SuperDomTestSuiteConfig {
      * 
      * @return  a new unconfigured instance of <code>SuperDomTestSuiteConfig</code>
      */
-    public static CorrelatorTestSuiteConfig   create() {
-        return new CorrelatorTestSuiteConfig();
+    public static SuperDomTestSuiteConfig   create() {
+        return new SuperDomTestSuiteConfig();
     }
     
 
@@ -319,7 +341,7 @@ public class SuperDomTestSuiteConfig {
      * 
      * @return  an enumerated collection of test cases for the test suite parameters
      * 
-     * @throws ConfigurationException    there are no test requests or supplemental PVs in the current test suite
+     * @throws ConfigurationException    either no test requests or supplemental PVs, or only supplemental PVs an no duration
      */
     public Collection<SuperDomTestCase> createTestSuite() throws ConfigurationException {
         
@@ -407,7 +429,7 @@ public class SuperDomTestSuiteConfig {
             throw new ConfigurationException(strMsg);
         }
 
-        if (this.setTestRqsts.isEmpty() && this.durDelay==null) {
+        if (this.setTestRqsts.isEmpty() && this.durRange==null) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - Invalid test suite configuration, Test Archive Rquest collection empty and no request duration specified.";
             

@@ -386,7 +386,7 @@ public record CorrelatorTestResultSummary(
         // Compute the request duration summary results
         Duration    durPrcdAvg = setResults.stream().<Duration>map(rec -> rec.durProcessed()).reduce(Duration.ZERO, (d1,d2) -> d1.plus(d2)).dividedBy(cntResults);
         Duration    durPrcdMin = setResults.stream().<Duration>map(rec -> rec.durProcessed()).reduce(durPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) < 0) return d1; else return d2; } );
-        Duration    durPrcdMax = setResults.stream().<Duration>map(rec -> rec.durProcessed()).reduce(durPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) > 1) return d1; else return d2; } );
+        Duration    durPrcdMax = setResults.stream().<Duration>map(rec -> rec.durProcessed()).reduce(durPrcdAvg, (d1, d2) -> { if (d1.compareTo(d2) > 0) return d1; else return d2; } );
         
         double      dblPrcdNsSqrd = setResults.stream().<Duration>map(rec -> rec.durProcessed()).mapToLong(dur -> dur.toNanos()).mapToDouble(l -> Long.valueOf(l).doubleValue()).map(ns -> ns*ns).sum()/cntResults;
         double      dblPrcdNsAvg = Long.valueOf(durPrcdAvg.toNanos() ).doubleValue();

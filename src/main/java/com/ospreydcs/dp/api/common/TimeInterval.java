@@ -164,7 +164,7 @@ public record TimeInterval(Instant begin, Instant end) implements Serializable {
     
     /**
      * <p>
-     * Determines whether or not the two arguments have a common intersetion as a set.
+     * Determines whether or not the two arguments have a common intersection as closed intervals.
      * </p>
      * 
      * @param tvl1  time interval under test
@@ -175,9 +175,9 @@ public record TimeInterval(Instant begin, Instant end) implements Serializable {
     public static boolean   isDisjoint(TimeInterval tvl1, TimeInterval tvl2) {
         
         if (tvl1.hasIntersectionClosed(tvl2))
-            return true;
-        else
             return false;
+        else
+            return true;
     }
     
     /**

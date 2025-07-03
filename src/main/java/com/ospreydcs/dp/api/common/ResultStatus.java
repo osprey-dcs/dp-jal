@@ -91,10 +91,14 @@ public record ResultStatus(boolean success, String message, Throwable cause) {
     //
     
     /** The empty message */
-    private static final String STR_EMPTY = "";
+    private static final String     STR_EMPTY = "";
     
     /** The empty cause */
     private static final Throwable THR_EMPTY = new Throwable();
+    
+    
+    /** The success string */
+    private static final String     STR_SUCCESS = "SUCCESS";
     
     
     //
@@ -102,7 +106,7 @@ public record ResultStatus(boolean success, String message, Throwable cause) {
     //
     
     /** The universal "Success" record - there need only be one. */
-    public static final ResultStatus SUCCESS = new ResultStatus(true);
+    public static final ResultStatus SUCCESS = new ResultStatus(true, STR_SUCCESS);
     
     
     //

@@ -27,6 +27,7 @@ package com.ospreydcs.dp.jal.tools.query.superdom;
 
 import java.io.PrintStream;
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
@@ -180,6 +181,137 @@ public record SuperDomTestResult(
 
     
     //
+    // Tools
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>Comparator</code> provide a descending (reverse) ordering according to 
+     * raw data recovery and correlation data rates.
+     * </p>
+     * <p>
+     * The returned comparator instance compares the <code>{@link #dblRateRawDataPrcd}</code> fields of two 
+     * <code>SuperDomTestResult</code> records.  It provides a reverse ordering of records according
+     * to the data rate fields.  Specifically, the highest data rate will appear first in any ordered
+     * Java collection.
+     * </p>
+     * 
+     * @return  a new <code>Comparator</code> instance providing a reverse ordering by raw data rates
+     */
+    public static Comparator<SuperDomTestResult>   descendingRawProcRateOrdering() {
+    
+        Comparator<SuperDomTestResult>   cmp = (r1, r2) -> {
+
+            if (r1.dblRateRawDataPrcd > r2.dblRateRawDataPrcd)
+                return -1;
+            else
+                return +1;
+        };
+        
+        return cmp;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>Comparator</code> provide an ascending (natural) ordering according to 
+     * raw data recovery and correlation data rates.
+     * </p>
+     * <p>
+     * The returned comparator instance compares the <code>{@link #dblRateSupDomPrcd}</code> fields of two 
+     * <code>SuperDomTestResult</code> records.  It provides a natural ordering of records according
+     * to the data rate fields.  Specifically, the lowest data rate will appear first in any ordered
+     * Java collection.
+     * </p>
+     * <p>
+     * <s>
+     * Note that the comparator provided here is the equivalent of the natural order of 
+     * <code>SuperDomTestResult</code> records provided by the exposed <code>Comparable</code> interface.
+     * </s>
+     * </p>  
+     * 
+     * @return  a new <code>Comparator</code> instance providing a natural ordering by raw data rates
+     */
+    public static Comparator<SuperDomTestResult>    ascendingRawProcRateOrdering() {
+
+        Comparator<SuperDomTestResult>  cmp = (r1, r2) -> {
+
+            if (r1.dblRateRawDataPrcd < r2.dblRateRawDataPrcd)
+                return -1;
+            else
+                return +1;
+        };
+        
+        return cmp;  
+    }
+
+    /**
+     * <p>
+     * Creates and returns a new <code>Comparator</code> provide a descending (reverse) ordering according to 
+     * Super-Domain processing rates.
+     * </p>
+     * <p>
+     * The returned comparator instance compares the <code>{@link #dblRateSupDomPrcd}</code> fields of two 
+     * <code>SuperDomTestResult</code> records.  It provides a reverse ordering of records according
+     * to the data rate fields.  Specifically, the highest data rate will appear first in any ordered
+     * Java collection.
+     * </p>
+     * <p>
+     * <s>
+     * Note that the comparator provided here is the complement of the natural order of 
+     * <code>SuperDomTestResult</code> records provided by the exposed <code>Comparable</code> interface.
+     * </s>
+     * </p>  
+     * 
+     * @return  a new <code>Comparator</code> instance providing a reverse ordering by super-domain rates
+     */
+    public static Comparator<SuperDomTestResult>   descendingSuperDomRateOrdering() {
+    
+        Comparator<SuperDomTestResult>   cmp = (r1, r2) -> {
+
+            if (r1.dblRateSupDomPrcd > r2.dblRateSupDomPrcd)
+                return -1;
+            else
+                return +1;
+        };
+        
+        return cmp;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>Comparator</code> provide an ascending (natural) ordering according to 
+     * Super-Domain processing rates.
+     * </p>
+     * <p>
+     * The returned comparator instance compares the <code>{@link #dblRateSupDomPrcd}</code> fields of two 
+     * <code>SuperDomTestResult</code> records.  It provides a natural ordering of records according
+     * to the data rate fields.  Specifically, the lowest data rate will appear first in any ordered
+     * Java collection.
+     * </p>
+     * <p>
+     * <s>
+     * Note that the comparator provided here is the equivalent of the natural order of 
+     * <code>SuperDomTestResult</code> records provided by the exposed <code>Comparable</code> interface.
+     * </s>
+     * </p>  
+     * 
+     * @return  a new <code>Comparator</code> instance providing a natural ordering by super domain rates
+     */
+    public static Comparator<SuperDomTestResult>    ascendingSuperDomRateOrdering() {
+
+        Comparator<SuperDomTestResult>  cmp = (r1, r2) -> {
+
+            if (r1.dblRateSupDomPrcd < r2.dblRateSupDomPrcd)
+                return -1;
+            else
+                return +1;
+        };
+        
+        return cmp;  
+    }
+
+    
+    //
     // Operations
     //
     
@@ -201,22 +333,25 @@ public record SuperDomTestResult(
             strPad = "";
         
         // Print out test result single parameters
-        ps.println(strPad + "Test Results for case #" + this.recCase.indCase());
-        ps.println(strPad + "  Time-series data request ID            : " + this.strRecoveryRqstId);
-        ps.println(strPad + "  Recovery message count                 : " + this.cntRecoveryMsgs);
-        ps.println(strPad + "  Recovery allocation (bytes)            : " + this.szRecoveryAlloc);
-        ps.println(strPad + "  Raw correlated blocks total            : " + this.cntRawBlksTotal);
-        ps.println(strPad + "  Raw correlated blocks clocked          : " + this.cntRawBlksClk);
-        ps.println(strPad + "  Raw correlated blocks timestamp list   : " + this.cntRawBlksTmsLst);
-        ps.println(strPad + "  Recovery and correlation duration      : " + this.durRawDataPrcd);
-        ps.println(strPad + "  Recovery and correlation rate (MBps)   : " + this.dblRateRawDataPrcd);
-        ps.println(strPad + "  Raw correlated data ordering status    : " + this.recOrdering);
-        ps.println(strPad + "  Raw correlated data time-doamin status : " + this.recDisTmDom);
-        ps.println(strPad + "  Disjoint data blocks total (raw & sd)  : " + this.cntDisBlksTotal);
-        ps.println(strPad + "  Disjoint raw correlated data blocks    : " + this.cntDisRawBlks);
-        ps.println(strPad + "  Disjoint super-domain raw data blocks  : " + this.cntSupDomBlks);
-        ps.println(strPad + "  Super-domain processing duration       : " + this.durSupDomPrcd);
-        ps.println(strPad + "  Super-domain processing rate (MBps)    : " + this.dblRateSupDomPrcd);
+        ps.println(strPad + "Test Results for Case #" + this.recCase.indCase());
+        ps.println(strPad + "Parameters:");
+        this.recCase.printOut(ps, strPad + "  ");
+        ps.println(strPad + "Results:");
+        ps.println(strPad + "  Time-series data request ID                 : " + this.strRecoveryRqstId);
+        ps.println(strPad + "  Recovered message count                     : " + this.cntRecoveryMsgs);
+        ps.println(strPad + "  Recovered allocation size (bytes)           : " + this.szRecoveryAlloc);
+        ps.println(strPad + "  Raw correlated blocks total                 : " + this.cntRawBlksTotal);
+        ps.println(strPad + "  Raw correlated clocked block count          : " + this.cntRawBlksClk);
+        ps.println(strPad + "  Raw correlated tms list block count         : " + this.cntRawBlksTmsLst);
+        ps.println(strPad + "  Recovery and correlation duration           : " + this.durRawDataPrcd);
+        ps.println(strPad + "  Recovery and correlation rate (MBps)        : " + this.dblRateRawDataPrcd);
+        ps.println(strPad + "  Raw correlated data domain ordering status  : " + this.recOrdering);
+        ps.println(strPad + "  Raw correlated data disjoint domain status  : " + this.recDisTmDom);
+        ps.println(strPad + "  Disjoint data blocks total count (raw & sd) : " + this.cntDisBlksTotal);
+        ps.println(strPad + "  Disjoint raw correlated data block count    : " + this.cntDisRawBlks);
+        ps.println(strPad + "  Disjoint super-domain block count           : " + this.cntSupDomBlks);
+        ps.println(strPad + "  Super-domain processing duration            : " + this.durSupDomPrcd);
+        ps.println(strPad + "  Super-domain processing rate (Blocks/sec)   : " + this.dblRateSupDomPrcd);
         
         // Print out disjoint raw correlated data time domains
         ps.println(strPad + "  Disjoint raw correlated data time domains:");
@@ -229,7 +364,7 @@ public record SuperDomTestResult(
         ps.println(strPad + "    " + tvlDomain);
         
         // Print out the test case record
-        ps.println(strPad + "  Test Case #" + this.recCase.indCase());
+        ps.println(strPad + "  Test Case #" + this.recCase.indCase() + " Parameters:");
         this.recCase.printOut(ps, strPad + "  ");
     }
 }

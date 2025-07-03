@@ -103,8 +103,8 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * </p>
  * <p> 
  * The command line parsers look for command-line switches, "commands",
- * variables, and properties.  They also identify some standard special requests such as {@value #STR_ARG_HELP}
- * and {@value #STR_ARG_VERSION}.  They can be combined with main class exception report through
+ * variables, and properties.  They also identify some standard special requests such as {@value #STR_VAR_HELP}
+ * and {@value #STR_VAR_VERSION}.  They can be combined with main class exception report through
  * <code>{@link #terminateWithException(Class, Throwable)}</code> and/or 
  * <code>{@link #terminateWithErrorMessage(Class, String)}</code> to configure the application.
  * </p>
@@ -147,11 +147,14 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     // Special Arguments and Values
     //
 
-    /** Special application argument switch for help  - see {@link #parseAppArgsHelp(String[])} */
-    public static final String      STR_ARG_HELP = "--help";
+    /** Special application argument variable for help  - see {@link #parseAppArgsHelp(String[])} */
+    public static final String      STR_VAR_HELP = "--help";
     
-    /** Special application argument switch for version - see {@link #parseAppArgsVersion(String[])} */
-    public static final String      STR_ARG_VERSION = "--version";
+    /** Special application argument variable for version - see {@link #parseAppArgsVersion(String[])} */
+    public static final String      STR_VAR_VERSION = "--version";
+
+    /** Argument variable identifying output location */
+    public static final String      STR_VAR_OUTPUT = "--output";
 
     /** Special application argument variable value for console output - see {@link #openOutputStream(String)} */
     public static final String      STR_ARG_VAL_STDOUT = "console";
@@ -189,6 +192,9 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     
     /** The class type of the final application */
     protected final Class<T>        clsApp;
+    
+    /** The command-line arguments provided to application main() */
+    protected final String[]        arrCmdLnArgs;
 
 
     //
@@ -230,9 +236,11 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * </p>
      *
      * @param clsApp    the class instance of the final application
+     * @param args      the array of command-line arguments for the application main
      */
-    protected JalApplicationBase(Class<T> clsApp) {
+    protected JalApplicationBase(Class<T> clsApp, String...args) {
         this.clsApp = clsApp;
+        this.arrCmdLnArgs = args;
     }
 
     
@@ -308,6 +316,17 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     
     /**
      * <p>
+     * Returns the command-line arguments as provided at construction.
+     * </p>
+     * 
+     * @return  application command-line arguments or <code>null</code> if none provided at construction
+     */
+    public String[] getCommandLine() {
+        return this.arrCmdLnArgs;
+    }
+    
+    /**
+     * <p>
      * Returns the output file path if one was created, or <code>null</code> if not.
      * </p>
      * 
@@ -356,6 +375,41 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     //
     // Subclass Support Methods
     //
+    
+    /**
+     * <p>
+     * Creates a text string representing the command-line invocation for the application.
+     * </p>
+     * <p>
+     * The format of the returned string is given by the following:
+     * <pre>
+     * <code>
+     *   ClassName args
+     * </code>
+     * </pre>
+     * where <code>ClassName</code> is the application class name given by <code>{@link Class#getSimpleName()}</code>
+     * as obtained from <code>{@link #clsApp}</code> and <code>args</code> is the string array of application
+     * arguments as obtained from the attribute <code>{@link #arrCmdLnArgs}</code> provided at construction.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The returned string will be inaccurate if the command-line arguments were not (optionally) supplied to the
+     * constructor <code>{@link JalApplicationBase#JalApplicationBase(Class, String...)</code>.
+     * </p>
+     *  
+     * @return  a string representation of the invoking command line for this application
+     */
+    protected String    createCommandLine() {
+        StringBuilder   bufCmdLn = new StringBuilder(this.clsApp.getSimpleName());
+        
+        for (String strArg : this.arrCmdLnArgs) {
+            bufCmdLn.append(" ");
+            bufCmdLn.append(strArg);
+        }
+        bufCmdLn.append("\n");
+        
+        return bufCmdLn.toString();
+    }
     
     /**
      * <p>
@@ -447,9 +501,9 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * 
      * @return  a new output print stream connected to the new output file
      * 
-     * @throws UnsupportedOperationException    file path is not associated with default provider
+     * @throws UnsupportedOperationException    file path is not associated with default file system
      * @throws FileNotFoundException    unable to create output file (see message and cause)
-     * @throws SecurityException        unable to write to file
+     * @throws SecurityException        unable to write to output file
      */
     protected PrintStream  openOutputStream(String strPath) 
             throws UnsupportedOperationException, FileNotFoundException, SecurityException {
@@ -537,7 +591,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
         DateFormat  date = DateFormat.getDateTimeInstance();
         String      strDateTime = date.format(new Date());
         String      strHdr2 = this.clsApp.getSimpleName() + " Output Report: " + strDateTime + "\n";
-
+        
         return strHdr1 + "\n" + strHdr2;
     }
     
@@ -577,16 +631,16 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * </p>
      * <p>
      * A value <code>true</code> is returned if any element in the argument collection is equal to the value
-     * {@value #STR_ARG_HELP}, where case is ignored.  Otherwise a value <code>false</code> is returned.
+     * {@value #STR_VAR_HELP}, where case is ignored.  Otherwise a value <code>false</code> is returned.
      * </p>
      * <p>
      * This method is equivalent to <code>{@link #parseAppArgsSwitch(String[], String)}</code> with the second
-     * argument value as {@value #STR_ARG_HELP}.
+     * argument value as {@value #STR_VAR_HELP}.
      * </p>
      * 
      * @param args  the application argument collection
      *  
-     * @return  <code>true</code> if the argument collection contained the element {@value #STR_ARG_HELP} (case ignored),
+     * @return  <code>true</code> if the argument collection contained the element {@value #STR_VAR_HELP} (case ignored),
      *          <code>false</code> otherwise
      */
     public static boolean parseAppArgsHelp(String[] args) {
@@ -596,7 +650,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
             return false;
         
         // Look for help request
-        boolean bolHelp = parseAppArgsSwitch(args, STR_ARG_HELP);
+        boolean bolHelp = parseAppArgsSwitch(args, STR_VAR_HELP);
         
         return bolHelp;
     }
@@ -607,16 +661,16 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * </p>
      * <p>
      * A value <code>true</code> is returned if any element in the argument collection is equal to the value
-     * {@value #STR_ARG_VERSION}, where case is ignored.  Otherwise a value <code>false</code> is returned.
+     * {@value #STR_VAR_VERSION}, where case is ignored.  Otherwise a value <code>false</code> is returned.
      * </p>
      * <p>
      * This method is equivalent to <code>{@link #parseAppArgsSwitch(String[], String)}</code> with the second
-     * argument value as {@value #STR_ARG_VERSION}.
+     * argument value as {@value #STR_VAR_VERSION}.
      * </p>
      * 
      * @param args  the application argument collection
      *  
-     * @return  <code>true</code> if the argument collection contained the element {@value #STR_ARG_VERSION} (case ignored),
+     * @return  <code>true</code> if the argument collection contained the element {@value #STR_VAR_VERSION} (case ignored),
      *          <code>false</code> otherwise
      */
     public static boolean    parseAppArgsVersion(String[] args) {
@@ -626,7 +680,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
             return false;
         
         // Look for version request
-        boolean bolHelp = parseAppArgsSwitch(args, STR_ARG_VERSION);
+        boolean bolHelp = parseAppArgsSwitch(args, STR_VAR_VERSION);
         
         return bolHelp;
     }
@@ -641,8 +695,8 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * The following conditions are checked in order:
      * <ol>
      * <li>Wrong number of arguments, must be >= the specified number <code>IllegalArgumentException</code>)</li>
-     * <li>A {@value #STR_ARG_HELP} appeared in the argument list (<code>IllegalCallerException</code>).</li>
-     * <li>A {@value #STR_ARG_VERSION} appeared in the argument list (<code>IllegalCallerException</code>).</li>
+     * <li>A {@value #STR_VAR_HELP} appeared in the argument list (<code>IllegalCallerException</code>).</li>
+     * <li>A {@value #STR_VAR_VERSION} appeared in the argument list (<code>IllegalCallerException</code>).</li>
      * <li>An argument did not start with a valid switch/variable identified in argument (<code>UnsupportedOperationException</code>).</li>
      * </ol>
      * </p>
@@ -663,12 +717,12 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
             throw new IllegalArgumentException("The argument list " + args + " has lenth less than minimum " + cntMinArgs);
         
         // Check for help request
-        boolean bolHelp = Arrays.asList(args).stream().anyMatch(arg -> arg.strip().equalsIgnoreCase(STR_ARG_HELP));
+        boolean bolHelp = Arrays.asList(args).stream().anyMatch(arg -> arg.strip().equalsIgnoreCase(STR_VAR_HELP));
         if (bolHelp)
             throw new IllegalCallerException("The client requested help message.");
         
         // Check for version request
-        boolean bolVersion = Arrays.asList(args).stream().anyMatch(arg -> arg.strip().equalsIgnoreCase(STR_ARG_VERSION));
+        boolean bolVersion = Arrays.asList(args).stream().anyMatch(arg -> arg.strip().equalsIgnoreCase(STR_VAR_VERSION));
         if (bolVersion)
             throw new IllegalCallerException("The client requested version information.");
         
@@ -934,6 +988,55 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
         }
 
         return mapProps;
+    }
+    
+    /**
+     * <p>
+     * Parses the application command-line argument collection for the output location and return it.
+     * </p>
+     * <p>
+     * The output location, as specified by the application client, is the value of variable
+     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
+     * are ignored.  Application arguments occurring after the {@value STR_VAR_OUTPUT} variable are
+     * typically application target value(s) obtained from <code>{@link #parseAppArgsTarget(String[])}</code>.
+     * </p>
+     * <p>
+     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
+     * optional parameter, then the default value given by the second argument <code>strOutputDef</code> is returned.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Application arguments occurring after the {@value STR_VAR_OUTPUT} variable are typically application target value(s),
+     * which can be obtained from <code>{@link #parseAppArgsTarget(String[])}</code>.
+     * Thus, they are ignored rather than throwing an exception.
+     * </p>
+     * 
+     * @param args          the application command-line argument collection
+     * @param strOutputDef  the default output location is none is given on the command line
+     * 
+     * @return  the output location as specified in the command line, 
+     *          or value of <code>strOutputDef</code> if not present
+     *          
+     * @throws ConfigurationException the output variable contained multiple entries
+     */
+    protected static String   parseOutputLocation(String[] args, String strOutputDef) /* throws ConfigurationException */ {
+        
+        // Look for the output location on the command line
+        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
+        
+//        // Check configuration
+//        if (lstStrOutput.size() > 1) 
+//            throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() + ": argument variable " + STR_VAR_OUTPUT + " contains multiple values.");
+    
+        // If there is no user-provided output location use the default value given by the second argument
+        if (lstStrOutput.isEmpty()) {
+            return strOutputDef;
+        }
+    
+        // Else return the first element in the list
+        String strOutputLoc = lstStrOutput.get(0);
+        
+        return strOutputLoc;
     }
     
     /**
