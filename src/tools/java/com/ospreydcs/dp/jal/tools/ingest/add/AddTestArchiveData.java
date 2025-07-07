@@ -171,7 +171,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         
         // Create the data simulator and run it
         try {
-            AddTestArchiveData    appSimulator = new AddTestArchiveData(recFrmCfg, strOutputLoc);
+            AddTestArchiveData    appSimulator = new AddTestArchiveData(recFrmCfg, strOutputLoc, args);
             
             appSimulator.run(cntFrms);
             appSimulator.writeReport();
@@ -416,6 +416,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      *
      * @param recFrmCfg     the configuration record for ingestion frames
      * @param strOutputLoc  the output file path for report generation, or <code>null</code> if no report is requested
+     * @param args          application command-line arguments from main()
      * 
      * @throws DpGrpcException 
      * @throws DpIngestionException the data provider registration failed
@@ -423,8 +424,8 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * @throws FileNotFoundException         unable to create the output file (see cause and message)
      * @throws SecurityException             unable to write to the output file
      */
-    public AddTestArchiveData(SampleBlockConfig recFrmCfg, String strOutputLoc) throws DpGrpcException, DpIngestionException, IllegalArgumentException, UnsupportedOperationException, FileNotFoundException, SecurityException {
-        super(AddTestArchiveData.class);
+    public AddTestArchiveData(SampleBlockConfig recFrmCfg, String strOutputLoc, String...args) throws DpGrpcException, DpIngestionException, IllegalArgumentException, UnsupportedOperationException, FileNotFoundException, SecurityException {
+        super(AddTestArchiveData.class, args);
         
         // Record defining attributes
         this.recFrmCfg = recFrmCfg;
@@ -670,12 +671,20 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         }
         
         // Print out header
-        String  strPad = "  ";
         String  strHdr = super.createReportHeader();
         ps.println();
         ps.println(strHdr);
         ps.println();
         
+        // Print out command line
+        String  strCmdLn = super.createCommandLine();
+        ps.println("Execution");
+        ps.println(strCmdLn);
+        ps.println();
+
+        // Common left-hand side padding
+        String  strPad = "  ";
+
         // Print out execution summary
         ps.println("Data Provider name    : " + this.recPrvdrId.name());
         ps.println("Ingestion frames sent : " + this.cntFrames);

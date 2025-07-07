@@ -193,7 +193,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         
         // Create the correlation evaluator and run it
         try {
-            DataCorrelationEvaluator    evaluator = new DataCorrelationEvaluator(suite, strOutputLoc);
+            DataCorrelationEvaluator    evaluator = new DataCorrelationEvaluator(suite, strOutputLoc, args);
             
             evaluator.run();
             evaluator.writeReport();
@@ -415,6 +415,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * 
      * @param   suiteEvals      the test suite configuration 
      * @param   strOutputLoc    output path for evaluation results
+     * @param   args            application command-line arguments from main()
      * 
      * @throws DpGrpcException                  unable to connect to the Query Service (see message and cause) 
      * @throws ConfigurationException           there are no time-series data request in the given test suite configuration
@@ -422,7 +423,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * @throws FileNotFoundException            unable to create the output file (see message and cause)
      * @throws SecurityException                unable to write to output file
      */
-    public DataCorrelationEvaluator(CorrelatorTestSuiteConfig suiteEvals, String strOutputLoc) 
+    public DataCorrelationEvaluator(CorrelatorTestSuiteConfig suiteEvals, String strOutputLoc, String...args) 
             throws DpGrpcException, ConfigurationException, UnsupportedOperationException, FileNotFoundException, SecurityException {
         super(DataCorrelationEvaluator.class);
         
@@ -590,6 +591,13 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         String  strHdr = super.createReportHeader();
         ps.println();
         ps.println(strHdr);
+        ps.println();
+        
+        // Print out command line
+        String  strCmdLn = super.createCommandLine();
+        ps.println("Execution");
+        ps.println(strCmdLn);
+        ps.println();
         
         // Print out evaluation summary
         ps.println("Test cases specified : " + this.mapCases.values().stream().mapToInt(lst -> lst.size()).sum() );

@@ -384,7 +384,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * The format of the returned string is given by the following:
      * <pre>
      * <code>
-     *   ClassName args
+     *   ClassName args[0] args[1] ... args[N]
      * </code>
      * </pre>
      * where <code>ClassName</code> is the application class name given by <code>{@link Class#getSimpleName()}</code>
@@ -406,7 +406,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
             bufCmdLn.append(" ");
             bufCmdLn.append(strArg);
         }
-        bufCmdLn.append("\n");
+//        bufCmdLn.append("\n");
         
         return bufCmdLn.toString();
     }
@@ -590,7 +590,8 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
         String      strHdr1 = this.pathOutFile.toAbsolutePath().toString();
         DateFormat  date = DateFormat.getDateTimeInstance();
         String      strDateTime = date.format(new Date());
-        String      strHdr2 = this.clsApp.getSimpleName() + " Output Report: " + strDateTime + "\n";
+//        String      strHdr2 = this.clsApp.getSimpleName() + " Output Report: " + strDateTime + "\n";
+        String      strHdr2 = this.clsApp.getSimpleName() + " Output Report: " + strDateTime;
         
         return strHdr1 + "\n" + strHdr2;
     }

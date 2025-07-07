@@ -218,15 +218,12 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     /** Argument variable identifying request delay from archive inception */
     public static final String      STR_VAR_DELAY = "--delay";
     
-//    /** Argument flag identifying output location */
-//    public static final String      STR_VAR_OUTPUT = "--output";
-
     /** List of all the valid argument delimiters */
     public static final List<String>    LST_STR_DELIMS = List.of(
             STR_VAR_PVS, 
             STR_VAR_DUR, 
             STR_VAR_DELAY,
-            STR_VAR_OUTPUT
+            STR_VAR_OUTPUT      // from base class
             );
     
     
@@ -297,15 +294,6 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     
     /** Parallelism tuning parameter - default number of independent processing threads */
     public static final int         CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.maxThreads;
-    
-//    /** Concurrency enabled flag */
-//    public static final boolean     BOL_CONCURRENCY = CFG_DEF.concurrency.enabled;
-//    
-//    /** Parallelism tuning parameter - pivot to parallel processing when target set size hits this limit */
-//    public static final int         SZ_CONCURRENCY_PIVOT = CFG_DEF.concurrency.pivotSize;
-//    
-//    /** Parallelism tuning parameter - default number of independent processing threads */
-//    public static final int         CNT_CONCURRENCY_THDS = CFG_DEF.concurrency.maxThreads;
     
     
     //
@@ -378,7 +366,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         
         // Create test case suite and test result container
         this.setTestCases = this.cfgTests.createTestSuite();    //throws configuration exception
-        this.setTestResults = new TreeSet<>(SuperDomTestResult.descendingSuperDomRateOrdering());
+        this.setTestResults = new TreeSet<>(SuperDomTestResult.ascendingCaseIndexOrdering());
         
         // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
@@ -521,12 +509,13 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         String  strHdr = super.createReportHeader();
         ps.println();
         ps.println(strHdr);
+        ps.println();
         
         // Print out command line
         String  strCmdLn = super.createCommandLine();
         ps.println("Execution");
         ps.println(strCmdLn);
-        
+        ps.println();
         
         // Print out evaluation summary
         ps.println("Test cases specified : " + this.setTestCases.size() );

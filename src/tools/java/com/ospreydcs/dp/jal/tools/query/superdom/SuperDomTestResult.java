@@ -187,6 +187,60 @@ public record SuperDomTestResult(
     /**
      * <p>
      * Creates and returns a new <code>Comparator</code> provide a descending (reverse) ordering according to 
+     * test case index.
+     * </p>
+     * <p>
+     * The returned comparator instance compares the <code>{@link #recCase}</code> fields of two 
+     * <code>SuperDomTestResult</code> records.  It provides a reverse ordering of records according
+     * to the test case index fields (i.e., the <code>{@link SuperDomTestCase#indCase()}</code> fields).  
+     * Specifically, the highest case index will appear first in any ordered Java collection.
+     * </p>
+     * 
+     * @return  a new <code>Comparator</code> instance providing a reverse ordering by raw data rates
+     */
+    public static Comparator<SuperDomTestResult>   descendingCaseIndexOrdering() {
+    
+        Comparator<SuperDomTestResult>   cmp = (r1, r2) -> {
+
+            if (r1.recCase.indCase() > r2.recCase.indCase())
+                return -1;
+            else
+                return +1;
+        };
+        
+        return cmp;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>Comparator</code> provide an ascending (natural) ordering according to 
+     * test case index.
+     * </p>
+     * <p>
+     * The returned comparator instance compares the <code>{@link #dblRateSupDomPrcd}</code> fields of two 
+     * <code>SuperDomTestResult</code> records.  It provides a natural ordering of records according
+     * to the test case index fields (i.e., the <code>{@link SuperDomTestCase#indCase()}</code> fields).  
+     * Specifically, the lowest case index will appear first in any ordered Java collection.
+     * </p>
+     * 
+     * @return  a new <code>Comparator</code> instance providing a natural ordering by raw data rates
+     */
+    public static Comparator<SuperDomTestResult>    ascendingCaseIndexOrdering() {
+
+        Comparator<SuperDomTestResult>  cmp = (r1, r2) -> {
+
+            if (r1.recCase.indCase() < r2.recCase.indCase())
+                return -1;
+            else
+                return +1;
+        };
+        
+        return cmp;  
+    }
+
+    /**
+     * <p>
+     * Creates and returns a new <code>Comparator</code> provide a descending (reverse) ordering according to 
      * raw data recovery and correlation data rates.
      * </p>
      * <p>

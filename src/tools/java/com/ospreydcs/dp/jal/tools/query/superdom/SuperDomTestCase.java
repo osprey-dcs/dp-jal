@@ -257,12 +257,13 @@ public record SuperDomTestCase(
         int         cntDisBlksTot = cntDisRawBlks + cntDisSupBlks;
         
         List<TimeInterval>  lstRawDoms = lstRawData.stream().<TimeInterval>map(RawCorrelatedData::getTimeRange).toList();
+        List<TimeInterval>  lstSupDoms = lstSupData.stream().<TimeInterval>map(RawSuperDomData::timeRange).toList();
         
-        List<TimeInterval> lstSupDoms;  
-        if (!lstSupData.isEmpty())
-            lstSupDoms = lstSupData.stream().<TimeInterval>map(RawSuperDomData::timeRange).toList();
-        else
-            lstSupDoms = List.of();
+//        List<TimeInterval> lstSupDoms;  
+//        if (!lstSupData.isEmpty())
+//            lstSupDoms = lstSupData.stream().<TimeInterval>map(RawSuperDomData::timeRange).toList();
+//        else
+//            lstSupDoms = List.of();
         
         // Create test case and return
         SuperDomTestResult  recResult = SuperDomTestResult.from(strRqstId, 
