@@ -34,10 +34,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.DpTimestampCase;
 import com.ospreydcs.dp.api.common.ResultStatus;
@@ -413,6 +410,27 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
     
     /**
      * <p>
+     * Compute and return the approximate allocation required for the raw timestamp data.
+     * </p>
+     * <p>
+     * The raw memory allocation is the memory allocation required to hold all the serialized
+     * data of the original time-series data request (i.e., that contained within this block).
+     * The memory allocation size returned by this method should be that for the raw timestamps
+     * for which this block is correlated.
+     * Specifically, the serialized size of the Protocol Buffers message(s)
+     * containing the timestamps for this data block is returned. 
+     * </p>
+     * <p>
+     * This method is used by <code>{@link #computeRawAllocation()}</code> to get the allocation for the
+     * timestamps.
+     * </p>
+     * 
+     * @return  the approximate allocation of the original timestamp message(s) to which this block is correlated 
+     */
+    public abstract long computeRawTmsAllocation();
+    
+    /**
+     * <p>
      * Returns the vector of timestamps for all raw correlated data, generating it if necessary.
      * </p>
      * <p>
@@ -532,6 +550,32 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
     //
     // Operations - State Inquiry
     //
+    
+    /**
+     * <p>
+     * Returns the approximate memory allocation of the raw data within the collection in its current state.
+     * </p>
+     * <p>
+     * The returned value is an approximation of the allocation for all the Protocol Buffers 
+     * data messages associated with this raw correlated data block.
+     * It contains both the time-series data and the allocation required for the timestamps.
+     * Not that the allocation required for timestamps described by a sampling clock is typically trivial
+     * as compared to the associated time-series data.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * This value is computed on demand and can be expensive if the data block contains large number
+     * of raw data columns. 
+     * </p>
+     * 
+     * @return  the serialized memory allocation for all <code>DataColumn</code> messages within the current collection
+     */
+    public long    computeRawAllocation() {
+        long    lngAlloc = this.lstMsgCols.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
+        lngAlloc += this.computeRawTmsAllocation();
+        
+        return lngAlloc;
+    }
     
     /**
      * <p>

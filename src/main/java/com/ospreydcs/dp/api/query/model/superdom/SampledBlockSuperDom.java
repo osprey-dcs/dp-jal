@@ -457,9 +457,19 @@ public class SampledBlockSuperDom extends SampledBlock {
     
 
     //
-    // Base Class Abstract Support Methods
+    // SampledBlock Abstract Methods
     //
     
+    /**
+     * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#computeRawAllocation()
+     */
+    @Override
+    protected long computeRawAllocation() {
+        long    lngAlloc = this.datRawSupDom.computeRawAllocation();
+
+        return lngAlloc;
+    }
+
     /**
      * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#createTimestampsVector()
      */
@@ -521,9 +531,9 @@ public class SampledBlockSuperDom extends SampledBlock {
     private void extractPvNames() {
         
         for (RawCorrelatedData blk : this.datRawSupDom) {
-            blk.getSourceNames();
+            Set<String>    setBlkPvNms = blk.getSourceNames();
             
-            this.setPvNames.addAll(setPvNames);
+            this.setPvNames.addAll(setBlkPvNms);
         }
     }
     
@@ -692,8 +702,8 @@ public class SampledBlockSuperDom extends SampledBlock {
      * Creates and returns a thread task that fills in "phantom data" for the given process variable name.
      * </p>
      * <p>
-     * The task checks all row entries for data from the given process variable.  If no data is found
-     * for the PV is found for a row entries then a phantom value <code>null</code> is assigned.
+     * The task checks all row entries for data from the given process variable.  If no data 
+     * for the PV is found for a row entries then a phantom value <code>{@link #OBJ_PHANTOM}</code> is assigned.
      * </p>
      * 
      * @param strPvNm       the process variable name
@@ -707,8 +717,8 @@ public class SampledBlockSuperDom extends SampledBlock {
         Callable<Boolean>   task = () -> {
             
             setEntries.stream()
-                    .filter(entry -> entry.hasPvName(strPvNm))
-                    .forEach(entry -> entry.addValue(strPvNm, null));
+                    .filter(entry -> !entry.hasPvName(strPvNm))
+                    .forEach(entry -> entry.addValue(strPvNm, OBJ_PHANTOM));
             
             return true;
         };
@@ -758,7 +768,7 @@ public class SampledBlockSuperDom extends SampledBlock {
                 Object  objVal = entry.retrieveValue(strPvNm);
                 
                 this.arrVals[indTms][indPv] = objVal;
-                indPv++;
+//                indPv++;
             }
         }
     }

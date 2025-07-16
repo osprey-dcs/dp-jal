@@ -80,6 +80,21 @@ public class SampledBlockClocked extends SampledBlock {
         super.initialize();
     }
 
+    
+    //
+    // SampledBlock Abstract Methods
+    //
+    
+    /**
+     * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#computeRawAllocation()
+     */
+    @Override
+    protected long computeRawAllocation() {
+        long    lngAlloc = this.datRawClk.computeRawAllocation();
+        
+        return lngAlloc;
+    }
+
     /**
      * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#createTimestampsVector()
      */

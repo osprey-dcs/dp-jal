@@ -25,6 +25,7 @@
  */
 package com.ospreydcs.dp.api.query.model.assem;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -36,10 +37,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.w3c.dom.ranges.RangeException;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
@@ -48,10 +46,11 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.coalesce.SampledBlock;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
-import com.ospreydcs.dp.api.query.model.superdom.TimeDomainProcessor;
 import com.ospreydcs.dp.api.query.model.superdom.RawSuperDomData;
 import com.ospreydcs.dp.api.query.model.superdom.SampledBlockSuperDom;
+import com.ospreydcs.dp.api.query.model.superdom.TimeDomainProcessor;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.api.util.Log4j;
 
 /**
  * <p>
@@ -172,17 +171,15 @@ public class QueryResponseAssembler {
     //
     
     /** Event logger for class */
-    protected static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = Log4j.getLogger(QueryResponseAssembler.class, STR_LOGGING_LEVEL);
     
 
-    /**
-     * <p>
-     * Class Initialization - Initializes the event logger, sets logging level.
-     * </p>
-     */
-    static {
-        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
-    }
+    //
+    // Instance Resources
+    //
+    
+    /** The time-domain collision processor */
+    private final TimeDomainProcessor       procTmDomain;
     
     
     //
@@ -217,6 +214,7 @@ public class QueryResponseAssembler {
      *
      */
     public QueryResponseAssembler() {
+        this.procTmDomain = TimeDomainProcessor.create();
     }
     
     
@@ -452,6 +450,34 @@ public class QueryResponseAssembler {
         return this.szConcPivot;
     }
     
+    /**
+     * <p>
+     * Prints out a text description of the current configuration to the given output stream.
+     * </p>
+     * <p>
+     * A line-by-line text description of each configuration field is written to the given output.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of configuration
+     * @param strPad    white-space padding for each line header (or <code>null</code>)
+     */
+    public void printOutConfig(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        // Print out test result single parameters
+//        ps.println(strPad + this.getClass().getSimpleName() + " Configuration");
+        ps.println(strPad + "Error checking enabled         : " + this.bolErrorChk);
+        ps.println(strPad + "Time-domain collisions enabled : " + this.bolTmDomColl);
+        ps.println(strPad + "Concurrency enabled            : " + this.bolConcurrency);
+        ps.println(strPad + "Maximum thread count           : " + this.cntMaxThreads);
+        ps.println(strPad + "Concurrency pivot size         : " + this.szConcPivot);
+    }
+ 
+    
+    
     
     //
     // Operations
@@ -580,7 +606,7 @@ public class QueryResponseAssembler {
      *
      * @return  ordered, aggregated of coalesced sampled blocks containing the time-series data within the argument
      *  
-     * @throws RangeException           the argument has bad ordering or contains time domain collisions (see message)
+     * @throws RangeException           the argument has bad ordering or contains time domain collisions when none are allowed (see message)
      * @throws UnsupportedOperationException    the raw data contained neither a sampling clock or a timestamp list
      * @throws MissingResourceException the argument is has empty data column(s)
      * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
@@ -592,7 +618,7 @@ public class QueryResponseAssembler {
      * @throws InterruptedException     timeout occurred while waiting for concurrent fill tasks to complete in time-domain collisions
      */
     public SampledAggregate processWithExceptions(SortedSet<RawCorrelatedData> setRawData) 
-            throws IllegalArgumentException, MissingResourceException, IllegalStateException, TypeNotPresentException, 
+            throws RangeException, IllegalArgumentException, MissingResourceException, IllegalStateException, TypeNotPresentException, 
                    RejectedExecutionException, ExecutionException, InterruptedException 
     {
 
@@ -615,25 +641,25 @@ public class QueryResponseAssembler {
         SampledAggregate    aggBlks = SampledAggregate.from();
         List<SampledBlock>  lstBlks = new LinkedList<>();
         
-        // Create time-domain collision processor for the target set and process
-        TimeDomainProcessor    prcrTmDom = TimeDomainProcessor.from(setRawData);
-        
-        boolean bolSuperDoms = prcrTmDom.process();
+        // Process any time-domain collisions
+        boolean bolSuperDoms = procTmDomain.process(setRawData);    // throws IllegalStateException, IndexOutOfBoundsException
         
         // If time-domain collisions were found process the raw super domains
         if (bolSuperDoms) {
             if (BOL_LOGGING)
                 LOGGER.info(JavaRuntime.getQualifiedMethodNameSimple() + " - Time domain collisions detected in response data, creating super domains.");
             
-            List<RawSuperDomData>   lstRawSuperDoms = prcrTmDom.getSuperDomains();
-            List<SampledBlock>      lstSupDomBlks = this.buildSampledBlocks(lstRawSuperDoms);
-            
+            List<RawSuperDomData>   lstRawSuperDoms = procTmDomain.getSuperDomainData();        // throws IllegalStateExceptoin
+            List<SampledBlock>      lstSupDomBlks = this.buildSampledBlocks(lstRawSuperDoms);   // throws IllegalArgumentException, MissingResourceException
+                                                                                                // IllegalStateException, TypeNotPresentException, RejectedExecutionException
+                                                                                                // ExecutionException, InterruptedException
             lstBlks.addAll(lstSupDomBlks);
         }
         
         // Get the disjoint raw data from the time-domain processor and convert them into sampled blocks
-        List<RawCorrelatedData> lstRawDisjData = prcrTmDom.getDisjointRawData(); 
-        List<SampledBlock>      lstSmplBlks = this.buildSampledBlocks(lstRawDisjData);
+        List<RawCorrelatedData> lstRawDisjData = procTmDomain.getDisjointRawData();         // throws IllegalStateException
+        List<SampledBlock>      lstSmplBlks = this.buildSampledBlocks(lstRawDisjData);      // throws UnsupportedOperationException, MissingResourceException, 
+                                                                                            // IllegalArgumentException, IllegalStateException, TypeNotPresentException
         
         lstBlks.addAll(lstSmplBlks);
 

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	SuperDomainEvaluator.java
- * Package: com.ospreydcs.dp.jal.tools.query.superdom
- * Type: 	SuperDomainEvaluator
+ * File:	QueryAssemblyEvaluator.java
+ * Package: com.ospreydcs.dp.jal.tools.query.assem
+ * Type: 	QueryAssemblyEvaluator
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,10 +20,10 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jun 14, 2025
+ * @since Jul 8, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query.superdom;
+package com.ospreydcs.dp.jal.tools.query.assem;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -45,11 +45,10 @@ import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 import com.ospreydcs.dp.api.app.ExitCode;
 import com.ospreydcs.dp.api.app.JalApplicationBase;
 import com.ospreydcs.dp.api.app.JalQueryAppBase;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew;
+import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -59,32 +58,27 @@ import com.sun.jdi.request.InvalidRequestStateException;
 
 /**
  * <p>
- * Application <code>SuperDomainEvaluator</code>.
+ * Application <code>QueryAssemblyEvaluator</code>.
  * </p>
  * <p>
- * JAL Tools Application for evaluating the operation and performance of class <code>{@link TimeDomainProcessor}</code>.
- * The class processes the time-domains of raw correlated data into super domains from
- * collections of raw, correlated data.
- * </p>
- * <p>
- * See class constant <code>{@link #STR_APP_USAGE}</code> for application description and command-line operation.
- * </p>  
+ * Application for evaluating the operation and performance of the <code>{@link QueryResponseAssembler}</code> class.
+ * See class constant
  *
  * @author Christopher K. Allen
- * @since Jun 14, 2025
+ * @since Jul 8, 2025
  *
  */
-public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> {
+public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluator> {
 
     /**
      * <p>
      * Application entry point.
      * </p>
      * 
-     * @param args  command-line arguments for <code>SuperDomainEvaluator</code> application
+     * @param args  application command-line arguments
      */
     public static void main(String[] args) {
-     
+
         //
         // ------- Special Requests -------
         //
@@ -119,13 +113,13 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         }
         
         // Get the test suite configuration and output location from the application arguments
-        String                      strOutputLoc;
-        SuperDomTestSuiteConfig     cfgSuite;
+        String                          strOutputLoc;
+        QueryAssemblyTestSuiteConfig    cfgTests;
         try {
             
             strOutputLoc = JalApplicationBase.parseOutputLocation(args, STR_OUTPUT_DEF);
 
-            cfgSuite = SuperDomainEvaluator.parseTestSuiteConfig(args);
+            cfgTests = QueryAssemblyEvaluator.parseTestSuiteConfig(args);
             
         } catch (Exception e) {
             
@@ -139,14 +133,14 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         
         // Create the super-domain evaluator and run it, catch any exceptions in context
         try {
-            SuperDomainEvaluator    evaluator = new SuperDomainEvaluator(cfgSuite, strOutputLoc, args);
+            QueryAssemblyEvaluator  appMain = new QueryAssemblyEvaluator(cfgTests, strOutputLoc, args);
             
-            evaluator.run();
-            evaluator.writeReport();
-            evaluator.shutdown();
+            appMain.run();
+            appMain.writeReport();
+            appMain.shutdown();
             
-            System.out.println(STR_APP_NAME + " Execution completed in " + evaluator.getRunDuration());
-            System.out.println("  Results stored at " + evaluator.getOutputFilePath().toAbsolutePath());
+            System.out.println(STR_APP_NAME + " Execution completed in " + appMain.getRunDuration());
+            System.out.println("  Results stored at " + appMain.getOutputFilePath().toAbsolutePath());
             System.exit(ExitCode.SUCCESS.getCode());
             
         } catch (DpGrpcException e) {
@@ -169,10 +163,6 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
             System.err.println(STR_APP_NAME + " creation FAILURE - Unable to write to output file.");
             JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.OUTPUT_FAILURE);
             
-        } catch (InterruptedException e) {
-            System.err.println(STR_APP_NAME + " data recovery ERROR - Process interrupted while waiting for buffer message.");
-            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
-            
         } catch (InvalidRequestStateException e) {
             System.err.println(STR_APP_NAME + " execution FAILURE - Application already executed.");
             JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
@@ -189,16 +179,16 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
             System.err.println(STR_APP_NAME + " data recovery ERROR - General gRPC error in data recovery.");
             JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.GRPC_EXCEPTION);
             
+        } catch (InterruptedException e) {
+            System.err.println(STR_APP_NAME + " application shut down ERROR - Process interrupted while waiting for termination.");
+            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.SHUTDOWN_EXCEPTION);
+            
         }
     }
 
-    
     //
     // Application Resources
     //
-    
-    /** Default configuration parameters for the Query Service tools */
-    private static final DpQueryConfig      CFG_QUERY = DpApiConfig.getInstance().query;
     
     /** Default configuration parameters for the JAL Tools */
     private static final JalToolsConfig     CFG_TOOLS = JalToolsConfig.getInstance();
@@ -213,7 +203,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     
     
     /** Default output path location */
-    public static final String      STR_OUTPUT_DEF = CFG_TOOLS.output + "/query/superdom";
+    public static final String      STR_OUTPUT_DEF = CFG_TOOLS.output + "/query/assem";
   
 
     /** Argument variable identifying the PV name value(s) */
@@ -239,7 +229,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     //
     
     /** Application name */
-    public static final String      STR_APP_NAME = SuperDomainEvaluator.class.getSimpleName();
+    public static final String      STR_APP_NAME = QueryAssemblyEvaluator.class.getSimpleName();
     
     
     /** The "usage" message for client help requests or invalid application arguments */
@@ -288,27 +278,13 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     /** The target correlation data rate (MBps) */
     public static final double      DBL_RATE_TARGET = 500.0;
 
-    
-    //
-    // Class Constants - Correlator Initial Configuration
-    //
-    
-    /** Concurrency enabled flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
-    
-    /** Parallelism tuning parameter - pivot to parallel processing when target set size hits this limit */
-    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
-    
-    /** Parallelism tuning parameter - default number of independent processing threads */
-    public static final int         CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.maxThreads;
-    
-    
+
     //
     // Class Resources
     //
     
     /** Class event logger */
-    private static final Logger     LOGGER = Log4j.getLogger(SuperDomainEvaluator.class, JalQueryAppBase.STR_LOGGING_LEVEL);
+    private static final Logger     LOGGER = Log4j.getLogger(QueryAssemblyEvaluator.class, JalQueryAppBase.STR_LOGGING_LEVEL);
 
     
     // 
@@ -316,22 +292,25 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     //
     
     /** The test suite generator used for <code>SuperDomTestCase</code> evaluations */
-    private final SuperDomTestSuiteConfig       cfgTests;
+    private final QueryAssemblyTestSuiteConfig       cfgTests;
     
     
     //
     // Instance Resources
     //
     
-    /** The time-series request processor used for all test case evaluations */
-    private final QueryRequestProcessorNew          procCorrelator;
+    /** The time-series request processor used to recover and correlate request data - used for all test case evaluations */
+    private final QueryRequestProcessorNew              procCorrelator;
+    
+    /** The raw correlated data processor used to build sampled aggregates - used for all test case evaluations */
+    private final QueryResponseAssembler                procAssembler;
     
     
     /** The suite of test cases generated by the test suite configuration */
-    private final Collection<SuperDomTestCase>      setTestCases;
+    private final Collection<QueryAssemblyTestCase>       setTestCases;
     
     /** The collection of test case evaluation results */
-    private final Collection<SuperDomTestResult>    setTestResults;
+    private final Collection<QueryAssemblyTestResult>     setTestResults;
     
     
     //
@@ -343,37 +322,37 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     
     
     //
-    //  Constructor
+    // Constructor
     //
     
     /**
      * <p>
-     * Constructs a new <code>SuperDomainEvaluator</code> instance.
+     * Constructs a new <code>QueryAssemblyEvaluator</code> instance.
      * </p>
-     * 
-     * @param   cfgTests        the super-domain test suite generator (pre-configured)
-     * @param   strOutputLoc    file location for the evaluation report
-     * @param   args            application command-line arguments
      *
+     * @param cfgTests      the test suite generator (pre-configured)
+     * @param strOutputLoc  directory path for the output file
+     * @param args          the application command-line arguments
+     * 
      * @throws DpGrpcException          unable to establish connection with the Query Service (see message and cause)
      * @throws ConfigurationException   either no test requests or supplemental PVs, or only supplemental PVs an no duration
      * @throws UnsupportedOperationException the output file is not associated with the default file system
      * @throws FileNotFoundException    unable to create output file (see message and cause)
      * @throws SecurityException        unable to write to output file
      */
-    public SuperDomainEvaluator(SuperDomTestSuiteConfig cfgTests, String strOutputLoc, String...args) 
+    public QueryAssemblyEvaluator(QueryAssemblyTestSuiteConfig cfgTests, String strOutputLoc, String... args) 
             throws DpGrpcException, ConfigurationException, UnsupportedOperationException, FileNotFoundException, SecurityException {
-
-        super(SuperDomainEvaluator.class, args);  // throws DpGrpcException
+        super(QueryAssemblyEvaluator.class, args);  // throws DpGrpcException
         
         this.cfgTests = cfgTests;
         
         // Create the query request processor used for request recovery and correlation
         this.procCorrelator = QueryRequestProcessorNew.from(super.connQuery);
+        this.procAssembler = QueryResponseAssembler.create();
         
         // Create test case suite and test result container
-        this.setTestCases = this.cfgTests.createTestSuite();    //throws configuration exception
-        this.setTestResults = new TreeSet<>(SuperDomTestResult.ascendingCaseIndexOrdering());
+        this.setTestCases = this.cfgTests.createTestSuite();    //throws ConfigurationException
+        this.setTestResults = new TreeSet<>(QueryAssemblyTestResult.ascendingCaseIndexOrdering());
         
         // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
@@ -383,7 +362,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     }
 
     
-    //
+   //
     // JalApplicationBase Abstract Methods
     //
     
@@ -392,8 +371,10 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
      */
     @Override
     protected Logger getLogger() {
-        return LOGGER;
+        // TODO Auto-generated method stub
+        return null;
     }
+
 
 
     //
@@ -405,14 +386,15 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
      * Runs the application evaluating all test cases within the test suite configuration.
      * </p>
      * <p>
-     * The test suite generated by the <code>{@link SuperDomTestSuiteConfig}</code>
+     * The test suite generated by the <code>{@link QueryAssemblyTestSuiteConfig}</code>
      * instance provided at construction are available at the time of invocation.  The
      * test suite is run and the results are stored for later reporting.
      * <ul> 
      * <li>All test cases are in container <code>{@link #setTestCases}</code>.</li>
-     * <li>Test cases are represented by <code>{@link SuperDomTestCase}</code> records.</li>
-     * <li>Test results are obtained from method <code>{@link SuperDomTestCase#evaluate(QueryRequestProcessorNew)}</code>.</li>
-     * <li>Test results are represented by <code>{@link SuperDomTestResult}</code> records.</li>
+     * <li>Test cases are represented by <code>{@link QueryAssemblyTestCase}</code> records.</li>
+     * <li>Test results are obtained from method 
+     * <code>{@link QueryAssemblyTestCase#evaluate(QueryRequestProcessorNew, QueryResponseAssembler)}</code>.</li>
+     * <li>Test results are represented by <code>{@link QryRspAssemResult}</code> records.</li>
      * <li>All test results are saved to container <code>{@link #setTestResults}</code>.</li>
      * </ul>
      *   
@@ -435,8 +417,8 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
 
         // Iterate over each test case in the test suite 
         Instant insStart = Instant.now();
-        for (SuperDomTestCase recCase : this.setTestCases) {
-            SuperDomTestResult  recResult = recCase.evaluate(this.procCorrelator);
+        for (QueryAssemblyTestCase recCase : this.setTestCases) {
+            QueryAssemblyTestResult  recResult = recCase.evaluate(this.procCorrelator, this.procAssembler);
             
             this.setTestResults.add(recResult);
         }
@@ -531,25 +513,32 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         ps.println("Evaluation completed : " + this.bolCompleted);
         ps.println();
         
+        // General padding string
+        String  strPad = "  ";
+        
         // Print out the correlator configuration
         ps.println("Raw Data Correlator Configuration");
-        this.procCorrelator.printOutConfig(ps, "  ");
+        this.procCorrelator.printOutConfig(ps, strPad);
+        ps.println();
+        
+        // Print out the response assembler configuration
+        ps.println("Query Response Assembler Configuration");
+        this.procAssembler.printOutConfig(ps, strPad);
         ps.println();
         
         // Print out the test suite configuration
         ps.println("Test Suite Configuration");
-        this.cfgTests.printOut(ps, "  ");
+        this.cfgTests.printOut(ps, strPad);
         ps.println();
         
         // Print out results summary
-        SuperDomTestResultSummary.assignTargetDataRate(DBL_RATE_TARGET);
-        SuperDomTestResultSummary   recSummary = SuperDomTestResultSummary.summarize(this.setTestResults); // throws NoSuchElementException
+        QueryAssemblyTestResultSummary   recSummary = QueryAssemblyTestResultSummary.summarize(this.setTestResults); // throws NoSuchElementException
         recSummary.printOut(ps, null);
         ps.println();
         
         // Print out individual test case results
         ps.println("Test Case Results");
-        for (SuperDomTestResult recResult : this.setTestResults) {
+        for (QueryAssemblyTestResult recResult : this.setTestResults) {
             recResult.printOut(ps, "  ");
             ps.println();
         }
@@ -596,7 +585,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
      * @throws IllegalArgumentException invalid test request enumeration constant name (not in <code>TestArchiveRequest</code>)
      * @throws DateTimeParseException   an invalid time duration format was encountered (could not be converted to a <code>Duration</code> type)
      */
-    private static SuperDomTestSuiteConfig    parseTestSuiteConfig(String[] args) 
+    private static QueryAssemblyTestSuiteConfig    parseTestSuiteConfig(String[] args) 
             throws NoSuchElementException, MissingResourceException, ConfigurationException, IllegalArgumentException, DateTimeParseException {
      
         // Parse the data requests enumerations and the supplemental PVs
@@ -628,7 +617,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         if (lstRqstNms.isEmpty() && lstStrRqstDur.isEmpty()) {
             String  strMsg = "A request duration " + STR_VAR_DUR + " must be specified for PV list " + lstPvNms + ".";
             
-            throw new MissingResourceException(strMsg, SuperDomTestSuiteConfig.class.getName(), STR_VAR_DUR);
+            throw new MissingResourceException(strMsg, QueryAssemblyTestSuiteConfig.class.getName(), STR_VAR_DUR);
         }
 
         // Convert to TestArchiveRequest enumeration constants
@@ -654,7 +643,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         }
         
         // Build the test suite and return it
-        SuperDomTestSuiteConfig cfgSuite = SuperDomTestSuiteConfig.create();
+        QueryAssemblyTestSuiteConfig cfgSuite = QueryAssemblyTestSuiteConfig.create();
         
         cfgSuite.addTestRequests(lstRqsts);
         cfgSuite.addPvNames(lstPvNms);
@@ -666,40 +655,4 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         return cfgSuite;
     }
 
-//    /**
-//     * <p>
-//     * Parses the application command-line argument collection for the output location and return it.
-//     * </p>
-//     * <p>
-//     * The output location, as specified by the application client, is the value of variable
-//     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
-//     * are ignored.
-//     * </p>
-//     * <p>
-//     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
-//     * optional parameter, then the default value given by <code>{@link #STR_OUTPUT_DEF}</code> is returned.
-//     * This value is taken from the JAL default configuration.
-//     * </p>
-//     * 
-//     * @param args  the application command-line argument collection
-//     * 
-//     * @return  the output location as specified in the command line, 
-//     *          or value of <code>{@link #STR_OUTPUT_DEF}</code> if not present
-//     */
-//    private static String   parseOutputLocation(String[] args) {
-//        
-//        // Look for the output location on the command line
-//        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
-//    
-//        // If there is no user-provided output location use the default value in the JAL configuration
-//        if (lstStrOutput.isEmpty()) {
-//            return STR_OUTPUT_DEF;
-//        }
-//    
-//        // Else return the first element in the list
-//        String strOutputLoc = lstStrOutput.get(0);
-//        
-//        return strOutputLoc;
-//    }
-    
 }

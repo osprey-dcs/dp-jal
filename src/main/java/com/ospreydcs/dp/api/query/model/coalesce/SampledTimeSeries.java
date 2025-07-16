@@ -333,9 +333,9 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
         this.vecValues = vecValues;
         
         // Check the type
-        T   val = this.vecValues.get(0);
-        if (!enmType.isAssignableFrom(val))
-            throw new IllegalArgumentException("Data value type unassignable to requested type " + enmType);
+//        T   val = this.vecValues.get(0);
+//        if (!enmType.isAssignableFrom(val))
+//            throw new IllegalArgumentException("Data value type unassignable to requested type " + enmType);
     }
 
 

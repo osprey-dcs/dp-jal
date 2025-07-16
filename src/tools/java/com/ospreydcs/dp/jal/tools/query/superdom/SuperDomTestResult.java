@@ -77,8 +77,9 @@ import com.ospreydcs.dp.api.common.TimeInterval;
  * @param cntDisBlksTotal   total number of disjoint data blocks (raw and super domain) after super domain processing
  * @param cntDisRawBlks     the number of disjoint raw data blocks after super domain processing
  * @param cntSupDomBlks     the number of super domain blocks after super domain processing
+ * @param recDisBlkDoms     disjointness status of all data block time domains (after time-domain processing)
  * @param durSupDomPrcd     the time taken to perform super domain processing
- * @param dblRateSupDomPrcd the rate of super domain processing (blocks/second)
+ * @param dblRateSupDomPrcd the rate of super domain processing (MBps)
  * @param lstRawDoms        list of raw data time domains after super domain processing
  * @param lstSupDoms        list of super domains after super domain processing
  * @param recCase           the test case performed
@@ -97,6 +98,7 @@ public record SuperDomTestResult(
         int             cntDisBlksTotal,
         int             cntDisRawBlks,
         int             cntSupDomBlks,
+        ResultStatus    recDisBlkDoms,
         Duration        durSupDomPrcd,
         double          dblRateSupDomPrcd,
         List<TimeInterval>  lstRawDoms,
@@ -128,8 +130,9 @@ public record SuperDomTestResult(
      * @param cntDisBlksTotal   total number of disjoint data blocks (raw and super domain) after super domain processing
      * @param cntDisRawBlks     the number of disjoint raw data blocks after super domain processing
      * @param cntSupDomBlks     the number of super domain blocks after super domain processing
+     * @param recDisBlkDoms     disjointness status of all data block time domains (after time-domain processing)
      * @param durSupDomPrcd     the time taken to perform super domain processing
-     * @param dblRateSupDomPrcd the rate of super domain processing (blocks/second)
+     * @param dblRateSupDomPrcd the rate of super domain processing (MBps)
      * @param lstRawDoms        list of raw data time domains after super domain processing
      * @param lstSupDoms        list of super domains after super domain processing
      * @param recCase           the test case performed
@@ -150,6 +153,7 @@ public record SuperDomTestResult(
             int             cntDisBlksTotal,
             int             cntDisRawBlks,
             int             cntSupDomBlks,
+            ResultStatus    recDisBlkDoms,
             Duration        durSupDomPrcd,
             double          dblRateSupDomPrcd,
             List<TimeInterval>  lstRawDoms,
@@ -171,6 +175,7 @@ public record SuperDomTestResult(
                 cntDisBlksTotal,
                 cntDisRawBlks,
                 cntSupDomBlks,
+                recDisBlkDoms,
                 durSupDomPrcd,
                 dblRateSupDomPrcd,
                 lstRawDoms,
@@ -217,7 +222,7 @@ public record SuperDomTestResult(
      * test case index.
      * </p>
      * <p>
-     * The returned comparator instance compares the <code>{@link #dblRateSupDomPrcd}</code> fields of two 
+     * The returned comparator instance compares the <code>{@link #recCase}</code> fields of two 
      * <code>SuperDomTestResult</code> records.  It provides a natural ordering of records according
      * to the test case index fields (i.e., the <code>{@link SuperDomTestCase#indCase()}</code> fields).  
      * Specifically, the lowest case index will appear first in any ordered Java collection.
@@ -404,8 +409,9 @@ public record SuperDomTestResult(
         ps.println(strPad + "  Disjoint data blocks total count (raw & sd) : " + this.cntDisBlksTotal);
         ps.println(strPad + "  Disjoint raw correlated data block count    : " + this.cntDisRawBlks);
         ps.println(strPad + "  Disjoint super-domain block count           : " + this.cntSupDomBlks);
+        ps.println(strPad + "  Disjointness of all block time domains      : " + this.recDisBlkDoms);
         ps.println(strPad + "  Super-domain processing duration            : " + this.durSupDomPrcd);
-        ps.println(strPad + "  Super-domain processing rate (Blocks/sec)   : " + this.dblRateSupDomPrcd);
+        ps.println(strPad + "  Super-domain processing rate (MBps)         : " + this.dblRateSupDomPrcd);
         
         // Print out disjoint raw correlated data time domains
         ps.println(strPad + "  Disjoint raw correlated data time domains:");

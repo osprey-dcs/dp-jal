@@ -37,10 +37,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
@@ -57,6 +54,7 @@ import com.ospreydcs.dp.api.query.model.correl.RawTmsListData;
 import com.ospreydcs.dp.api.query.model.superdom.RawSuperDomData;
 import com.ospreydcs.dp.api.query.model.superdom.SampledBlockSuperDom;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.api.util.Log4j;
 
 /**
  * <p>
@@ -388,17 +386,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     //
     
     /** Event logger for class */
-    protected static final Logger     LOGGER = LogManager.getLogger();
-    
-
-    /**
-     * <p>
-     * Class Initialization - Initializes the event logger, sets logging level.
-     * </p>
-     */
-    static {
-        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
-    }
+    protected static final Logger     LOGGER = Log4j.getLogger(SampledBlock.class, STR_LOGGING_LEVEL);
     
     
     //
@@ -407,6 +395,9 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     
     /** The (optional) original time-series data request identifier */
     protected String            strRqstId = null;
+    
+    /** The total memory allocation for the original raw data used to create this block */
+    protected long              lngAllocRaw;
     
     /** The time range of the sampled block */
     protected TimeInterval      tvlRange;
@@ -508,6 +499,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     protected void initialize() throws MissingResourceException, IllegalStateException, TypeNotPresentException {
         
         // Create the defining data for the sampled block
+        this.lngAllocRaw = this.computeRawAllocation();
         this.vecTimestamps = this.createTimestampsVector();
         this.vecTimeSeries = this.createTimeSeriesVector(); // throws exceptions
         
@@ -526,6 +518,21 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     //
     // Abstract Support Methods
     //
+    
+    /**
+     * <p>
+     * Compute and return the approximate raw memory allocation for the sampled block.
+     * </p>
+     * <p>
+     * The raw memory allocation is the memory allocation required to hold all the serialized
+     * data of the original time-series data request (i.e., that contained within this block).
+     * The memory allocation should contain that for both the original <code>DataColumn</code>
+     * messages and the timestamps (e.g., if a timestamp list was used).
+     * </p>
+     * 
+     * @return  the approximate allocation of the original data used to make this block 
+     */
+    protected abstract long computeRawAllocation();
     
     /**
      * <p>
@@ -729,6 +736,42 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
      */
     public final TimeInterval   getTimeRange() {
         return this.tvlRange;
+    }
+    
+    /**
+     * <p>
+     * Returns the approximate memory allocation of the raw data used to create this sampled block.
+     * </p>
+     * <p>
+     * The returned value is an approximation of the allocation for all the Protocol Buffers 
+     * data messages associated within the raw correlated data block used to create this sampled block.
+     * It is the value returned by <code>{@link RawCorrelatedData#computeRawAllocation()}</code>.
+     * However, this value is computed only once, upon creation.
+     * The returned value contains both the time-series data and the allocation required for the timestamps.
+     * Not that the allocation required for timestamps described by a sampling clock is typically trivial
+     * as compared to the associated time-series data.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned value is the allocation required for the original raw correlated data block used in
+     * creation.  The allocation required for this <code>SampledBlock</code> can be different after conversion
+     * to Java objects (typically larger).  However, it does provide a minimum estimate for the heap size
+     * required by this sampled block.
+     * </li>
+     * <li>
+     * Compare this method with operation <code>{@link IDataTable#allocationSize()}</code> also available.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @return  the serialized memory allocation for all <code>DataColumn</code> messages within the current collection
+     * 
+     * @see #allocationSize()
+     */
+    public final long   getRawAllocation() {
+        return this.lngAllocRaw;
     }
     
     /**

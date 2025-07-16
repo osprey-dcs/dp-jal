@@ -28,6 +28,7 @@ package com.ospreydcs.dp.api.query.model.assem;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -154,7 +155,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @since Apr 13, 2025
  *
  */
-public class SampledAggregate {
+public class SampledAggregate implements Iterable<SampledBlock> {
     
     //
     // Creators
@@ -296,7 +297,7 @@ public class SampledAggregate {
 //    /** Ordered vector of all timestamps for sampled process */
 //    private final ArrayList<Instant>            vecTms = new ArrayList<>();
     
-    /** Ordered sest of sampled blocks comprising the sampled process */
+    /** Ordered set of sampled blocks comprising the aggregated sampled process */
     private final SortedSet<SampledBlock>       setSmplBlocks = new TreeSet<>(SampledBlock.StartTimeComparator.newInstance());
     
     
@@ -324,6 +325,33 @@ public class SampledAggregate {
         this.strRqstId = strRqstId;
     }
     
+    
+    //
+    // Iterable<SampledBlock> Interface
+    //
+    
+    /**
+     * <p>
+     * Returns an iterator over all the <code>SampleBlock</code> instances comprising this aggregate.
+     * </p>
+     * <p>
+     * The returned iterator supplies all the <code>SampledBlock</code> instances currently in the aggregate.
+     * The order of the <code>SampledBlock</code> instances is that of starting timestamp.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The returned iterator is state dependent; specifically, the iterator supplies the 
+     * <code>SampledBlock</code> instances in the aggreate's current state.  Any blocks added later
+     * are not considered.
+     * </p>
+     * 
+     * @see java.lang.Iterable#iterator()
+     */
+    @Override
+    public Iterator<SampledBlock> iterator() {
+        return this.setSmplBlocks.iterator();
+    }
+
     
     //
     // Operations
@@ -634,6 +662,76 @@ public class SampledAggregate {
      */
     public String   getRequestId() {
         return this.strRqstId;
+    }
+    
+    /**
+     * <p>
+     * Returns the approximate memory allocation of the raw data used to create this sampled aggregate in its current state.
+     * </p>
+     * <p>
+     * The returned value is an approximation of the allocation for all the Protocol Buffers 
+     * data messages associated within all raw correlated data blocks used to create this sampled aggregate.
+     * It is the summation returned by all <code>{@link SampledBlock#getRawAllocation()}</code>.
+     * However, this value is computed upon demand, but all internal <code>SampledBlock</code> instances
+     * pre-compute the value upon creation.
+     * The returned value contains both the time-series data and the allocation required for the timestamps.
+     * Not that the allocation required for timestamps described by a sampling clock is typically trivial
+     * as compared to the associated time-series data.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned value is the allocation required for the original raw correlated data block used in
+     * <code>SampledBlock</code>creation.  The allocation required for a <code>SampledBlock</code> can be 
+     * different after conversion to Java objects (typically larger).  However, it does provide a minimum 
+     * estimate for the heap size required by this sampled aggregation.
+     * </li>
+     * <li>
+     * Compare this method with operation <code>{@link SampledAggregate#allocationSize()}</code> also available.
+     * </li>
+     * <li>
+     * The returned value should be accurate and can be used for critical operations.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @return  the serialized memory allocation for all <code>DataColumn</code> messages within the current collection
+     * 
+     * @see #allocationSize()
+     */
+    public long getRawAllocation() {
+        long    lngAlloc = this.setSmplBlocks.stream().mapToLong(blk -> blk.getRawAllocation()).sum();
+        
+        return lngAlloc;
+    }
+    
+    /**
+     * <p>
+     * Computes and returns an estimate for the total memory allocation used for this sampled aggregate in its current state.
+     * </p>
+     * <p>
+     * The method iterates through all composite sample blocks invoking <code>{@link IDataTable#allocationSize()}</code>
+     * then sums the result.  The result is an estimate of the Java heap space (in bytes) required to store this collection
+     * of <code>SampledBlock</code> components.  Note that some Java value are converted on demand (i.e., time-series data)
+     * and thus the returned value can change after data is accessed.
+     * Typically this is a conservative (over)estimate favoring 64-bit architecture.  
+     * </p>
+     * <p>
+     * <h2>WARNINGS:</h2>
+     * <ul>
+     * <li>This can be an expensive operation and is computed on demand.</li>
+     * <li>This method is available as a guidance and should not be used for critical operations.</li>
+     * </ul>
+     *   
+     * @return  an estimate of the Java heap space required by this sampled aggregate
+     * 
+     * @see #getRawAllocation()
+     */
+    public long computeAllocationSize() {
+        long    lngAlloc = this.setSmplBlocks.stream().mapToLong(blk -> blk.allocationSize()).sum();
+        
+        return lngAlloc;
     }
     
     /**

@@ -211,6 +211,31 @@ public class RawSuperDomData implements Iterable<RawCorrelatedData> {
     
     /**
      * <p>
+     * Returns the approximate memory allocation of all raw data within the super collection in its current state.
+     * </p>
+     * <p>
+     * The returned value should provide an approximation of the allocation for all the Protocol Buffers 
+     * data messages currently maintained in the <code>{@link #setRawData}</code> collection.
+     * </p>
+     * <p>
+     * The method iterates through all 
+     * <code>RawCorrelatedData</code> instances within the super domain calling the method
+     * <code>{@link RawCorrelatedData#computeRawAllocation()}</code> and summing the result.
+     * </p>
+     * <h2>WARNING:</h2>
+     * This value is computed on demand for each invocation and can be expensive.  
+     * </p>
+     * 
+     * @return  the serialized memory allocation for all Protocol Buffers messages within the current super domain
+     */
+    public long computeRawAllocation() {
+        long    lngAlloc = this.setRawData.stream().mapToLong(blk -> blk.computeRawAllocation()).sum();
+        
+        return lngAlloc;
+    }
+    
+    /**
+     * <p>
      * Determines whether or not this super domain is empty.
      * </p>
      * 

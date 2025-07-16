@@ -28,7 +28,11 @@ package com.ospreydcs.dp.jal.tools.query.superdom;
 import java.io.PrintStream;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 import java.util.SortedSet;
 
@@ -123,6 +127,10 @@ public record SuperDomTestCase(
     
     /** Internal test case index (counter) */
     private static          int IND_CASE = 1;
+    
+    
+    /** The time-domain collision processor */
+    private static final TimeDomainProcessor    PROC_TM_DOM = TimeDomainProcessor.create();
 
     
     //
@@ -193,15 +201,10 @@ public record SuperDomTestCase(
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * A separate <code>{@link TimeDomainProcessor}</code> object is created and used for each test evaluation.
-     * This object performs the super domain processing described above. 
-     * </li>
-     * <li>
-     * The <code>QueryMessageBuffer</code> instance will be shut down and empty when this method returns.
-     * </li>
-     * <li>
+     * <s>
      * The super-domain processing rate is computed in "blocks per second" and returned in the field
-     * <code>{@link SuperDomTestResult#dblRateSupDomPrcd()}</code>.   
+     * <code>{@link SuperDomTestResult#dblRateSupDomPrcd()}</code>.
+     * </s>   
      * </li>
      * </ul>
      * </p>
@@ -240,30 +243,25 @@ public record SuperDomTestCase(
         
         // Perform timed super domain processing
         insStart = Instant.now();
-        TimeDomainProcessor prcrSupDom  = TimeDomainProcessor.from(setRawData);
-        
-        prcrSupDom.process();   // throws IllegalStateException, IndexOutOfBoundsException
+        PROC_TM_DOM.process(setRawData);
         insFinish = Instant.now();
         
-        List<RawCorrelatedData> lstRawData = prcrSupDom.getDisjointRawData();
-        List<RawSuperDomData>   lstSupData = prcrSupDom.getSuperDomains();
+        List<RawCorrelatedData> lstRawData = PROC_TM_DOM.getDisjointRawData();
+        List<RawSuperDomData>   lstSupData = PROC_TM_DOM.getSuperDomainData();
 
         // Recover/compute performance parameters
         Duration    durProcd = Duration.between(insStart, insFinish);
-        double      dblRateProcd = ( ((double)cntBlksTot) * 1.0e9 )/durProcd.toNanos(); 
+        double      dblRateProcd = ( ((double)szRecovery) * 1.0e9 )/durProcd.toNanos(); 
         
+        // Inspect time domains
         int         cntDisRawBlks = lstRawData.size();
         int         cntDisSupBlks = lstSupData.size();
         int         cntDisBlksTot = cntDisRawBlks + cntDisSupBlks;
         
         List<TimeInterval>  lstRawDoms = lstRawData.stream().<TimeInterval>map(RawCorrelatedData::getTimeRange).toList();
         List<TimeInterval>  lstSupDoms = lstSupData.stream().<TimeInterval>map(RawSuperDomData::timeRange).toList();
-        
-//        List<TimeInterval> lstSupDoms;  
-//        if (!lstSupData.isEmpty())
-//            lstSupDoms = lstSupData.stream().<TimeInterval>map(RawSuperDomData::timeRange).toList();
-//        else
-//            lstSupDoms = List.of();
+
+        ResultStatus        recDisBlkDoms = SuperDomTestCase.checkTimeDomains(lstRawDoms, lstSupDoms);
         
         // Create test case and return
         SuperDomTestResult  recResult = SuperDomTestResult.from(strRqstId, 
@@ -279,6 +277,7 @@ public record SuperDomTestCase(
                 cntDisBlksTot,
                 cntDisRawBlks, 
                 cntDisSupBlks, 
+                recDisBlkDoms,
                 durProcd, 
                 dblRateProcd, 
                 lstRawDoms, 
@@ -318,4 +317,67 @@ public record SuperDomTestCase(
     // Support Methods
     //
     
+    /**
+     * <p>
+     * Checks for intersecting <code>TimeInterval</code> instances within all the given arguments.
+     * </p>
+     * 
+     * @param lstRawDoms   container of raw correlated data <code>TimeInterval</code> instances to be checked
+     * @param lstSupDoms   container of super domain raw data <code>TimeInterval</code> instances to be checked
+     * 
+     * @return  <code>{@link ResultStatus#SUCCESS}</code> if no intersections,
+     *          otherwise a failure status with message
+     */
+    private static ResultStatus checkTimeDomains(List<TimeInterval> lstRawDoms, List<TimeInterval> lstSupDoms) {
+        
+        // Internal type
+        record      Pair(TimeInterval t1, TimeInterval t2)  {
+            
+            @Override
+            public String  toString() {
+                return t1.toString() + "/\\" + t2.toString();
+            }
+        };
+        
+        // Container of intersecting time intervals
+        List<Pair>  lstPairs = new LinkedList<>();
+
+        // Create the container of all time domains
+        ArrayList<TimeInterval>     lstAllDoms = new ArrayList<>(lstRawDoms.size() + lstSupDoms.size());
+        lstAllDoms.addAll(lstRawDoms);
+        lstAllDoms.addAll(lstSupDoms);
+        
+        // Iterate through all time intervals looking for intersections
+        Iterator<TimeInterval>  itrTgt = lstAllDoms.iterator();
+        while (itrTgt.hasNext()) {
+            TimeInterval    tvlTgt = itrTgt.next();
+
+            // Check if there are no more comparisons
+            if (!itrTgt.hasNext())
+                break;
+            
+            // Compare the reset of the intervals in the list
+            int                         indTgt = lstAllDoms.indexOf(tvlTgt);
+            ListIterator<TimeInterval>  itrCmp = lstAllDoms.listIterator(indTgt + 1);
+            while (itrCmp.hasNext()) {
+                TimeInterval tvlCmp = itrCmp.next();
+                
+                if (tvlTgt.hasIntersectionClosed(tvlCmp)) {
+                    Pair    pair = new Pair(tvlTgt, tvlCmp);
+                    
+                    lstPairs.add(pair);
+                }
+            }
+        }
+        
+        // If no intersections occurred return SUCCESS
+        if (lstPairs.isEmpty())
+            return ResultStatus.SUCCESS;
+        
+        // Return a FAILURE status indicating intersecting time domains
+        String          strMsg = "Intersecting time-domain pairs: " + lstPairs;
+        ResultStatus    recFail = ResultStatus.newFailure(strMsg);
+        
+        return recFail;
+    }
 }

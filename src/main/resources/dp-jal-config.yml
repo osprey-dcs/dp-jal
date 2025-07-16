@@ -130,7 +130,7 @@ query:      # Data Platform Query Service client API default configuration param
       table:         # Default parameters used for time-series data table construction
          construction:      # General data table reconstruction parameters
             errorChecking: true      # use advanced error checking : DP_API_QUERY_DATA_TABLE_CONSTRUCTION_ERROR_CHECKING
-            domainCollision: false   # allow/disallow time domain collision : DP_API_QUERY_DATA_TABLE_CONSTRUCTION_DOMAIN_COLLISION 
+            domainCollision: true    # allow/disallow time domain collision : DP_API_QUERY_DATA_TABLE_CONSTRUCTION_DOMAIN_COLLISION 
          sstatic:           # static data table properties 
             isDefault: true          # use static table as default  : DP_API_QUERY_DATA_TABLE_STATIC_DEFAULT
             hasMaxSize: true         # enforce maximum table size   : DP_API_QUERY_DATA_TABLE_STATIC_HAS_MAX_SIZE

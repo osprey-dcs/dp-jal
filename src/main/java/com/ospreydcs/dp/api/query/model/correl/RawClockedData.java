@@ -97,7 +97,7 @@ public class RawClockedData extends RawCorrelatedData {
     
     
     //
-    // Base Class Abstract Methods
+    // RawCorrelatedData Abstract Methods
     //
 
     /**
@@ -106,6 +106,14 @@ public class RawClockedData extends RawCorrelatedData {
     @Override
     public int getSampleCount() {
         return this.msgClock.getCount();
+    }
+
+    /**
+     * @see com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData#computeRawTmsAllocation()
+     */
+    @Override
+    public long computeRawTmsAllocation() {
+        return this.msgClock.getSerializedSize();
     }
 
     /**

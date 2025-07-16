@@ -54,7 +54,7 @@ public class RawTmsListData extends RawCorrelatedData {
     //
     
     /** The sampling clock message to correlate against */
-    private final TimestampList     msgLstTms;
+    private final TimestampList     msgTmsLst;
     
     
     //
@@ -92,8 +92,8 @@ public class RawTmsListData extends RawCorrelatedData {
         }
         
         // Extract the timestamp message and create timestamp vector
-        this.msgLstTms = msgBucket.getDataTimestamps().getTimestampList();
-        this.vecTms = new ArrayList<>( ProtoMsg.toInstantList(this.msgLstTms) );
+        this.msgTmsLst = msgBucket.getDataTimestamps().getTimestampList();
+        this.vecTms = new ArrayList<>( ProtoMsg.toInstantList(this.msgTmsLst) );
     }
 
     
@@ -106,7 +106,15 @@ public class RawTmsListData extends RawCorrelatedData {
      */
     @Override
     public int getSampleCount() {
-        return this.msgLstTms.getTimestampsCount();
+        return this.msgTmsLst.getTimestampsCount();
+    }
+
+    /**
+     * @see com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData#computeRawTmsAllocation()
+     */
+    @Override
+    public long computeRawTmsAllocation() {
+        return this.msgTmsLst.getSerializedSize();
     }
 
     /**
@@ -137,7 +145,7 @@ public class RawTmsListData extends RawCorrelatedData {
             return false;
         
         // - must have same timestamp lists
-        if (!ProtoTime.equals(this.msgLstTms, msgBckTms)) 
+        if (!ProtoTime.equals(this.msgTmsLst, msgBckTms)) 
             return false;
 
         // Add the data column and record its data source 
@@ -167,7 +175,7 @@ public class RawTmsListData extends RawCorrelatedData {
      * @see #getRawDataMessages()
      */
     public final TimestampList getTimestampListMessage() {
-        return this.msgLstTms;
+        return this.msgTmsLst;
     }
 
 }

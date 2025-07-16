@@ -84,8 +84,18 @@ public class SampledBlockTmsList extends SampledBlock {
     
     
     //
-    // Base Class Abstract Methods
+    // SampledBlock Abstract Methods
     //
+    
+    /**
+     * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#computeRawAllocation()
+     */
+    @Override
+    protected long computeRawAllocation() {
+        long    lngAlloc = this.datRawTmsLst.computeRawAllocation();
+        
+        return lngAlloc;
+    }
 
     /**
      * @see com.ospreydcs.dp.api.query.model.coalesce.SampledBlock#createTimestampsVector()

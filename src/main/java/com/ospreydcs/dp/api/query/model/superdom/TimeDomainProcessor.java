@@ -64,7 +64,7 @@ import com.ospreydcs.dp.api.util.Log4j;
  * time-domain collisions are detected.  The original set of <code>RawCorrelatedData</code> instances is
  * inspected (i.e., that set given at creation time) for time-domain collisions.  Any that are found are
  * extracted and placed into "super domain" collections.  Both the super domains and the correlated raw data
- * without time-domain collisions is available after processing via methods <code>{@link #getSuperDomains()}</code>
+ * without time-domain collisions is available after processing via methods <code>{@link #getSuperDomainData()}</code>
  * and <code>{@link #getDisjointRawData()}</code>, respectively.
  * </p> 
  * <p>
@@ -100,17 +100,28 @@ public class TimeDomainProcessor {
     // Creator
     //
     
+//    /**
+//     * <p>
+//     * Creates a new <code>TimeDomainProcessor</code> instance initialized to the given correlated raw data set.
+//     * </p>
+//     * 
+//     * @param setDataOrg    the correlated raw data set under processing
+//     * 
+//     * @return  a new time domain collision processor for the given data set
+//     */
+//    public static TimeDomainProcessor  from(SortedSet<RawCorrelatedData> setRawData) {
+//        return new TimeDomainProcessor(setRawData);
+//    }
+//    
     /**
      * <p>
-     * Creates a new <code>TimeDomainProcessor</code> instance initialized to the given correlated raw data set.
+     * Creates a new <code>TimeDomainProcessor</code> instance ready for time-domain processing.
      * </p>
      * 
-     * @param setDataOrg    the correlated raw data set under processing
-     * 
-     * @return  a new time domain collision processor for the given data set
+     * @return  a new time-domain collision processor
      */
-    public static TimeDomainProcessor  from(SortedSet<RawCorrelatedData> setRawData) {
-        return new TimeDomainProcessor(setRawData);
+    public static TimeDomainProcessor  create() {
+        return new TimeDomainProcessor();
     }
     
     
@@ -304,9 +315,6 @@ public class TimeDomainProcessor {
     // Defining Attributes
     //
 
-    /** The original correlated set to under processing */
-    private final SortedSet<RawCorrelatedData>  setDataOrg;
-    
     
     //
     //  Instance Resources
@@ -322,6 +330,10 @@ public class TimeDomainProcessor {
     //
     // State Variables
     //
+    
+    /** The raw correlated set to undergo processing */
+    private SortedSet<RawCorrelatedData>  setDataOrg;
+
     
     /** Flag indicating whether or not data has been processed */
     private boolean bolProcessed;
@@ -347,14 +359,14 @@ public class TimeDomainProcessor {
      *
      * @param setDataOrg    the correlated raw data set under processing
      */
-    public TimeDomainProcessor(SortedSet<RawCorrelatedData> setRawData) {
-        this.setDataOrg = setRawData;
-        this.lstDataActive.addAll( setRawData );
-        
-        this.bolProcessed = false;
-        this.bolTmDomColl = false;
-        this.indListCurr = 0;
-        this.indListLast = this.lstDataActive.size();
+    public TimeDomainProcessor(/* SortedSet<RawCorrelatedData> setRawData */) {
+//        this.setDataOrg = setRawData;
+//        this.lstDataActive.addAll( setRawData );
+//        
+//        this.bolProcessed = false;
+//        this.bolTmDomColl = false;
+//        this.indListCurr = 0;
+//        this.indListLast = this.lstDataActive.size();
     }
     
     
@@ -385,7 +397,7 @@ public class TimeDomainProcessor {
      * This method should only be called after invoking <code>{@link #process()}</code> otherwise an exception is
      * thrown.  A returned value of <code>true</code> indicates that the target set contained raw data with
      * intersecting time domains and the coalesced data forming any super domains is available from method 
-     * <code>{@link #getSuperDomains()}</code>.  
+     * <code>{@link #getSuperDomainData()}</code>.  
      * </p>
      * <p>
      * The remaining raw, correlated data blocks that did not contain any time domain collisions and were naturally
@@ -467,7 +479,7 @@ public class TimeDomainProcessor {
      * 
      * @throws IllegalStateException    the original data set has not yet been processed
      */
-    public List<RawSuperDomData>    getSuperDomains() throws IllegalStateException {
+    public List<RawSuperDomData>    getSuperDomainData() throws IllegalStateException {
         
         // Check state
         if (!this.bolProcessed) {
@@ -492,24 +504,50 @@ public class TimeDomainProcessor {
      * Processes the target correlated raw data set to identify and extract the super domains within set.
      * </p>
      * <p>
-     * This method should be invoked once and only once, after which the processed data is available via the
-     * methods <code>{@link #getDisjointRawData()}</code> and <code>{@link #getSuperDomains()}</code>.  Invoking
-     * the method repeatedly has no effect.
+     * This method can now be invoked repeatedly, on different data sets.  Thus, only one instance of 
+     * <code>TimeDomainProcessor</code> is required (unless multi-threading is utilized).  
+     * Each time the method is called the processed data is available from methods 
+     * <code>{@link #getDisjointRawData()}</code> and <code>{@link #getSuperDomainData()}</code>.  Invoking the
+     * method then erases all processed data previously created.
      * </p>
      * <p>
+     * <s>
+     * This method should be invoked once and only once, after which the processed data is available via the
+     * methods <code>{@link #getDisjointRawData()}</code> and <code>{@link #getSuperDomainData()}</code>.  Invoking
+     * the method repeatedly has no effect.
+     * </s>
+     * </p>
+     * <p>
+     * <h2>Operation</h2>
+     * After creation, a <code>TimeDomainProcessor</code> object is ready for processing.  Use the following steps:
+     * <ol>
+     * <li>Invoke <code>{@link #process(SortedSet)}</code> to perform time-domain collision processing on the target data.</li>
+     * <li>Recover the disjoint raw correlated data with method <code>{@link #getDisjointRawData()}</code>.</li>
+     * <li>Recover the disjoint super-domain data with method <code>{@link #getSuperDomainData()}</code>.</li>
+     * </ol>
+     * The above process can be repeated indefinitely where each time the previous collections of disjoint raw correlated
+     * data and disjoint super domains are removed. 
+     * </p>
+     * <p>
+     * All recovered data will have disjoint time domains; they will be ordered by start time.  However, the super
+     * domain start times may or may not proceed the raw correlated data; this must be inspected.
+     * </p>
+     * <p>   
+     * The ordering of the returned list follows the ordering of the original target set of correlated raw data blocks.
+     * Specifically, the first super domain encountered in the target set is the first super domain in the returned list
+     * and the remaining follow in order.
+     * </p>
+     * <p>
+     * <h2>Implementation</h2>
      * The method iterates through the target set of <code>RawCorrelatedData</code> instance provided at creation, 
      * identifies the super domains within the collection, and extracts them.  Once complete the set of all disjoint 
-     * super domains within the original collection is available from the method <code>{@link #getSuperDomains()}</code>.
+     * super domains within the original collection is available from the method <code>{@link #getSuperDomainData()}</code>.
      * The collection of remaining correlated raw data block from the original target set is available from
      * the method <code>{@link #getDisjointRawData()}</code>.  Note that all super domains and all correlated raw data
      * blocks returned from the above methods then has disjoint time-range intervals.  The raw data collections are
      * then ready for further processing.
      * </p>
-     * <p>
-     * The ordering of the returned list follows the ordering of the original target set of correlated raw data blocks.
-     * Specifically, the first super domain encountered in the target set is the first super domain in the returned list
-     * and the remaining follow in order.
-     * </p>
+     * 
      * 
      * @return  <code>true</code> if time-domain collisions were found and processed, 
      *          <code>false</code> if no time-time collisions were found 
@@ -517,14 +555,26 @@ public class TimeDomainProcessor {
      * @throws IllegalStateException     internal processing error: attempt to process data when more super domains existed 
      * @throws IndexOutOfBoundsException internal processing error: attempt to access index beyond end of processing list
      */
-    public boolean process() throws IllegalStateException, IndexOutOfBoundsException {
+    public boolean process(SortedSet<RawCorrelatedData> setRawData) throws IllegalStateException, IndexOutOfBoundsException {
         
-        if (this.bolProcessed) {
-            if (BOL_LOGGING)
-                LOGGER.warn("{} - Repeated call, data has already been processed.", JavaRuntime.getQualifiedMethodNameSimple());
-            
-            return this.bolTmDomColl;
-        }
+//        if (this.bolProcessed) {
+//            if (BOL_LOGGING)
+//                LOGGER.warn("{} - Repeated call, data has already been processed.", JavaRuntime.getQualifiedMethodNameSimple());
+//            
+//            return this.bolTmDomColl;
+//        }
+        
+        // Initialize the processor state variables
+        this.setDataOrg = setRawData;
+
+        this.lstDataActive.clear();
+        this.lstDataActive.addAll( setRawData );
+        this.lstSuperDoms.clear();
+        
+        this.bolProcessed = false;
+        this.bolTmDomColl = false;
+        this.indListCurr = 0;
+        this.indListLast = this.lstDataActive.size();
         
         while (this.hasNext()) {
             RawSuperDomData domNext = this.extractNext();
