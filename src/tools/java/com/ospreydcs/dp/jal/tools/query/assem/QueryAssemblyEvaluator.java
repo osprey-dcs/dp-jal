@@ -47,7 +47,7 @@ import com.ospreydcs.dp.api.app.JalApplicationBase;
 import com.ospreydcs.dp.api.app.JalQueryAppBase;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew;
+import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
@@ -85,6 +85,8 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         
         // Check for client help request
         if (JalApplicationBase.parseAppArgsHelp(args)) {
+            System.out.println();
+            System.out.println(STR_APP_DESCR);
             System.out.println(STR_APP_USAGE);
             
             System.exit(ExitCode.SUCCESS.getCode());
@@ -232,6 +234,20 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
     public static final String      STR_APP_NAME = QueryAssemblyEvaluator.class.getSimpleName();
     
     
+    /** A laconic description of the application function */
+    public static final String      STR_APP_DESCR = 
+            STR_APP_NAME + " Description \n"
+          + "- Application evaluates the performance and operation of the QueryRequestRecoverer class \n"
+          + "    and QueryResponseAssembler class for recovering, correlating, and assembling time-series data. \n"
+          + "- Data Platform Test Archive requests are performed, the data is recovered \n"
+          + "    as gRPC messages and correlated into raw data blocks associated with a \n"
+          + "    common timestamp message.  \n"
+          + "- The raw data this then assembled into sampled data blocks where time-domain collisions are \n"
+          + "    identified and addressed. \n"
+          + "- The sampled blocks are aggregated into a collection of all time-series request data than can \n"
+          + "    be used to create both static and dynamic data tables.\n"
+          + "- The operation is monitored, results are computed and stored in the output file.\n";
+    
     /** The "usage" message for client help requests or invalid application arguments */
     public static final String      STR_APP_USAGE = 
             STR_APP_NAME  + " Usage: \n"
@@ -300,7 +316,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
     //
     
     /** The time-series request processor used to recover and correlate request data - used for all test case evaluations */
-    private final QueryRequestProcessorNew              procCorrelator;
+    private final QueryRequestRecoverer              procCorrelator;
     
     /** The raw correlated data processor used to build sampled aggregates - used for all test case evaluations */
     private final QueryResponseAssembler                procAssembler;
@@ -347,7 +363,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         this.cfgTests = cfgTests;
         
         // Create the query request processor used for request recovery and correlation
-        this.procCorrelator = QueryRequestProcessorNew.from(super.connQuery);
+        this.procCorrelator = QueryRequestRecoverer.from(super.connQuery);
         this.procAssembler = QueryResponseAssembler.create();
         
         // Create test case suite and test result container
@@ -393,7 +409,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
      * <li>All test cases are in container <code>{@link #setTestCases}</code>.</li>
      * <li>Test cases are represented by <code>{@link QueryAssemblyTestCase}</code> records.</li>
      * <li>Test results are obtained from method 
-     * <code>{@link QueryAssemblyTestCase#evaluate(QueryRequestProcessorNew, QueryResponseAssembler)}</code>.</li>
+     * <code>{@link QueryAssemblyTestCase#evaluate(QueryRequestRecoverer, QueryResponseAssembler)}</code>.</li>
      * <li>Test results are represented by <code>{@link QryRspAssemResult}</code> records.</li>
      * <li>All test results are saved to container <code>{@link #setTestResults}</code>.</li>
      * </ul>
@@ -517,7 +533,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         String  strPad = "  ";
         
         // Print out the correlator configuration
-        ps.println("Raw Data Correlator Configuration");
+        ps.println("Query Request Recoverer Configuration");
         this.procCorrelator.printOutConfig(ps, strPad);
         ps.println();
         

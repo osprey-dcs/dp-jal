@@ -42,8 +42,6 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
-import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.query.JalToolsQueryConfig;
 import com.ospreydcs.dp.jal.tools.config.request.JalRequestSuiteConfig;
 import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
 
@@ -71,6 +69,7 @@ public class QueryChannelTestSuite {
      * The returned test suite generation must be configured using the following configuration methods
      * <ul>
      * <li><code>{@link #addTestRequest(TestArchiveRequest)}</code></li>
+     * <li><code>{@link #addSupplementalPvs(Set)}</code></li>
      * <li><code>{@link #addRequestDecomposition(RequestDecompType)}</code></li>
      * <li><code>{@link #addStreamType(DpGrpcStreamType)}</code></li>
      * <li><code>{@link #addStreamCount(int)}</code></li>
@@ -82,6 +81,9 @@ public class QueryChannelTestSuite {
      * <li><code>{@link #ENM_STRM_TYPE_DEF} = {@value #ENM_STRM_TYPE_DEF}</code></li>
      * <li><code>{@link #INT_STRM_CNT_DEF} = {@value #INT_STRM_CNT_DEF}</code></li>
      * </ul>
+     * Supplemental PVs are strictly optional.
+     * </p>
+     * <p>
      * Once configured the <code>QueryChannelTestSuite</code> instance can create suites of 
      * <code>{@link QueryChannelTestCase}</code> by enumerating all the configuration parameters.
      * Use method <code>{@link #createTestSuite()}</code> for test suite creation.
@@ -153,7 +155,7 @@ public class QueryChannelTestSuite {
     public static final RequestDecompType   ENM_RQST_DCMP_DEF = RequestDecompType.NONE;
     
     /** Default gRPC stream type */
-    public static final DpGrpcStreamType    ENM_STRM_TYPE_DEF = CFG_DEF.data.request.stream.preference;
+    public static final DpGrpcStreamType    ENM_STRM_TYPE_DEF = CFG_DEF.data.recovery.stream.preferred;
     
     /** Default gRPC stream count */
     public static final Integer             INT_STRM_CNT_DEF = 1;
@@ -181,6 +183,9 @@ public class QueryChannelTestSuite {
     
     /** Collection of stream counts for test suite */
     private final Set<Integer>              setStrmCnts = new TreeSet<>();
+    
+    /** Collection of supplemental PV names for time-series data request */
+    private final Set<String>               setSupplPvs = new TreeSet<>();
     
     /** Collection of request decomposition strategies for test suite */
     private final Set<RequestDecompType>    setDcmpType = new TreeSet<>();
@@ -242,6 +247,44 @@ public class QueryChannelTestSuite {
      */
     public void addTestRequests(Collection<TestArchiveRequest> setTestRqsts) {
         this.setTestRqsts.addAll(setTestRqsts);
+    }
+    
+    /**
+     * <p>
+     * Adds a new PV name to the collection of supplemental PV names.
+     * </p>
+     * <p>
+     * Supplemental PVs are added to all Data Platform Test Archive Requests <code>TestArchiveRequest</code>
+     * defined in this configuration.  Thus, the actual time-series data request performed is the original
+     * request augment by the collection of supplemental PV names within the configuration.
+     * </p>
+     * <p>
+     * Any duplicate PV names will only appear once in the augmented time-series data request.
+     * </p>
+     * 
+     * @param strPvName     PV name to be supplemented to the final time-series data request
+     */
+    public void addSupplementalPv(String strPvName) {
+        this.setSupplPvs.add(strPvName);
+    }
+    
+    /**
+     * <p>
+     * Adds a collection of PV names to the collection of supplemental PV names.
+     * </p>
+     * <p>
+     * Supplemental PVs are added to all Data Platform Test Archive Requests <code>TestArchiveRequest</code>
+     * defined in this configuration.  Thus, the actual time-series data request performed is the original
+     * request augment by the collection of supplemental PV names within the configuration.
+     * </p>
+     * <p>
+     * Any duplicate PV names will only appear once in the augmented time-series data request.
+     * </p>
+     * 
+     * @param setPvNames    a collection of PV names to be supplemented to the final time-series data request
+     */
+    public void addSupplementalPvs(Collection<String> setPvNames) {
+        this.setSupplPvs.addAll(setPvNames);
     }
     
     /**
@@ -417,14 +460,14 @@ public class QueryChannelTestSuite {
                 for (RequestDecompType enmDcmpType : this.setDcmpType) {
                     
                     if (enmDcmpType == RequestDecompType.NONE) {
-                        QueryChannelTestCase    recCase = QueryChannelTestCase.from(enmRqst, enmDcmpType, enmStrmType, 1);
+                        QueryChannelTestCase    recCase = QueryChannelTestCase.from(enmRqst, this.setSupplPvs, enmDcmpType, enmStrmType, 1);
                         
                         lstCases.add(recCase);
                         
                     } else {
                         for (Integer cntStrms : this.setStrmCnts) {
 
-                            QueryChannelTestCase    recCase = QueryChannelTestCase.from(enmRqst, enmDcmpType, enmStrmType, cntStrms);
+                            QueryChannelTestCase    recCase = QueryChannelTestCase.from(enmRqst, this.setSupplPvs, enmDcmpType, enmStrmType, cntStrms);
                             lstCases.add(recCase);
                         }
                     }
@@ -451,9 +494,18 @@ public class QueryChannelTestSuite {
         
         ps.println(strPad + "Name    : " + this.strName);
         
+        // Supplemental PV name request ID augmentation
+        String  strIdAug = "";
+        if (!this.setSupplPvs.isEmpty())
+            strIdAug = "+" + this.setSupplPvs;
+        
         ps.println(strPad + "Request IDs:");
         for (TestArchiveRequest enmRqst : this.setTestRqsts)
-            ps.println(strPad + "- " + enmRqst.name());
+            ps.println(strPad + "- " + enmRqst.name() + strIdAug);
+        
+        ps.println(strPad + "Supplemental PV Names:");
+        for (String strPvNm : this.setSupplPvs)
+            ps.println(strPad + "- " + strPvNm);
         
         ps.println(strPad + "Request Decomposition Strategies:");
         for (RequestDecompType enmType : this.setDcmpType)

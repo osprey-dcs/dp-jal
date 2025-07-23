@@ -246,7 +246,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @see QueryStream
  * @see QueryChannel
  * 
- * @deprecated Replaced by QueryRequestProcessorNew
+ * @deprecated Replaced by QueryRequestRecoverer
  */
 public class QueryRequestProcessorOld {
 
@@ -304,21 +304,21 @@ public class QueryRequestProcessorOld {
     public static final TimeUnit    TU_TIMEOUT = CFG_QUERY.timeout.unit;
     
     
-    /** Use multi-threading for query data correlation */
-    public static final boolean     BOL_CORRELATE_CONCURRENCY = CFG_QUERY.data.response.correlate.useConcurrency;
-    
     /** Perform data correlation while gRPC streaming - otherwise do it post streaming */
-    public static final boolean     BOL_CORRELATE_MIDSTREAM = CFG_QUERY.data.response.correlate.whileStreaming;
+    public static final boolean     BOL_CORRELATE_MIDSTREAM = CFG_QUERY.data.recovery.correlate.whileStreaming;
+    
+    /** Use multi-threading for query data correlation */
+    public static final boolean     BOL_CORRELATE_CONCURRENCY = CFG_QUERY.data.recovery.correlate.concurrency.enabled;
     
     
     /** Is response multi-streaming enabled? */
-    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.response.multistream.enabled;
+    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.recovery.multistream.enabled;
     
     /** Maximum number of open data streams to Query Service */
-    public static final int         CNT_MULTISTREAM = CFG_QUERY.data.response.multistream.maxStreams;
+    public static final int         CNT_MULTISTREAM = CFG_QUERY.data.recovery.multistream.maxStreams;
     
     /** Query domain size triggering multiple streaming (if enabled) */
-    public static final long        SIZE_DOMAIN_MULTISTREAM = CFG_QUERY.data.response.multistream.sizeDomain;
+    public static final long        SIZE_DOMAIN_MULTISTREAM = CFG_QUERY.data.recovery.multistream.sizeDomain;
     
     
     //
@@ -502,7 +502,7 @@ public class QueryRequestProcessorOld {
      * </p>
      * <p>
      * The default value is taken from the Java API Library configuration parameters and is available at
-     * <code>{@link #SIZE_DOMAIN_MULTISTREAM}</code>.
+     * <code>{@link #SIZE_MULTISTREAM_DOMAIN}</code>.
      * </p> 
      * <p>
      * <h2>USER NOTE:</h2>
@@ -723,7 +723,7 @@ public class QueryRequestProcessorOld {
      * </p>
      * <p>
      * The default value is taken from the Java API Library configuration file
-     * (see {@link #SIZE_DOMAIN_MULTISTREAM}).
+     * (see {@link #SIZE_MULTISTREAM_DOMAIN}).
      * </p>
      * <p>
      * <h2>USER NOTE:</h2>

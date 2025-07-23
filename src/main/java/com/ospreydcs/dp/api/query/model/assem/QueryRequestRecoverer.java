@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryRequestProcessorNew.java
+ * File:	QueryRequestRecoverer.java
  * Package: com.ospreydcs.dp.api.query.impl
- * Type: 	QueryRequestProcessorNew
+ * Type: 	QueryRequestRecoverer
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -23,7 +23,7 @@
  * @since Apr 22, 2025
  *
  */
-package com.ospreydcs.dp.api.query.impl;
+package com.ospreydcs.dp.api.query.model.assem;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -42,7 +42,6 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.query.model.correl.MessageTransferTask;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
@@ -61,12 +60,12 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * Class for recovering Query Service time-series data requests and time correlating the result set.
  * </p>
  * <p>
- * The <code>QueryRequestProcessorNew</code> class performs 2 functions: 1) time-series data request recovery 
+ * The <code>QueryRequestRecoverer</code> class performs 2 functions: 1) time-series data request recovery 
  * and 2) time correlation of the requested result set.  Internally, 
  * a <code>QueryChannel</code> object performs Data Platform Query Service data requests embodied with
  * the offered <code>{@link DpDataRequest}</code> objects, recovering the request data.  
  * Then a <code>QueryDataCorrelatorOld</code> object correlates the query responses into sorted sets of 
- * <code>{@link RawCorrelatedData}</code> objects. That is, <code>QueryRequestProcessorNew</code> class 
+ * <code>{@link RawCorrelatedData}</code> objects. That is, <code>QueryRequestRecoverer</code> class 
  * objects take inputs of type <code>DpDataRequest</code> and then output 
  * <code>{@link SortedSet}</code> collections containing the correlated results sets.  
  * All gRPC data streaming and correlation processing are performed internally.
@@ -96,14 +95,14 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * interface.
  * </p>
  * <p>
- * All supported Query Service data requests within <code>QueryRequestProcessorNew</code> are implemented by 
+ * All supported Query Service data requests within <code>QueryRequestRecoverer</code> are implemented by 
  * methods prefixed with <code>processRequest</code>.  All data request methods return sorted sets of
  * <code>{@RawCorrelatedData}</code> objects containing the results set of the offered data query request.
  * The sorted set contains all requested time-series data, correlated by single sampling clock, and sorted by
  * sampling clock start timestamp.
  * <p>
  * The ability to support timestamp lists within <code>{@link QueryDataRequest}</code> message is implemented within
- * the <code>QueryRequestProcessorNew</code>.  Thus, all timestamp situations are now supported.
+ * the <code>QueryRequestRecoverer</code>.  Thus, all timestamp situations are now supported.
  * </p>
  * <p>
  * Once a <code>{@link SortedSet}</code> of <code>{@link RawCorrelatedData}</code> objects is obtained from
@@ -116,9 +115,9 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * </p>
  * <p>
  * <h2>Final Processing</h2>
- * It is important to note that clients of the <code>QueryRequestProcessorNew</code> data request methods must 
+ * It is important to note that clients of the <code>QueryRequestRecoverer</code> data request methods must 
  * perform all final processing of the correlated output BEFORE invoking another data request.  Correlated data
- * output sets are <em>owned</em> by the <code>QueryRequestProcessorNew</code> instance performing the request.
+ * output sets are <em>owned</em> by the <code>QueryRequestRecoverer</code> instance performing the request.
  * Existing correlated data output sets will be destroyed (i.e., cleared by the internal 
  * <code>{@link RawDataCorrelator}</code> instance) whenever a subsequent data request is performed.
  * Either copy the output data to a new container or fully process the output sets before invoking additional
@@ -127,7 +126,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * <p>
  * <h2>Streaming/Processing Configuration</h2>
  * For performance considerations, the streaming and processing operations within a 
- * <code>QueryRequestProcessorNew</code> object are configurable.  Optimal configurations are determined by
+ * <code>QueryRequestRecoverer</code> object are configurable.  Optimal configurations are determined by
  * the hosting platform and the types (e.g., sizes) of the typical data request.  
  * The default configuration is obtained from the Data Platform API Query Service configuration within 
  * <code>{@link DpApiConfig}</code>.
@@ -153,7 +152,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * concurrently data streaming; otherwise data is correlated separately, after gRPC data stream completion.
  * </li>
  * <li>
- * <code>{{@link #setMaxStreamCount(int)}</code>: Sets the maximum allowable number of gRPC data streams for data recovery
+ * <code>{{@link #setMultiStreamingMaxStreamCount(int)}</code>: Sets the maximum allowable number of gRPC data streams for data recovery
  * when multi-streaming is enabled.
  * </li>
  * </ul>
@@ -161,11 +160,11 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * </p>
  * <p>
  * <h2>Query Service Connection</h2>
- * A single <code>{@link DpQueryConnection}</code> object is required by a <code>QueryRequestProcessorNew</code>
+ * A single <code>{@link DpQueryConnection}</code> object is required by a <code>QueryRequestRecoverer</code>
  * object, which is provided at construction.  The <code>DpQueryConnection</code> object contains the gRPC 
  * channel connection to the Data Platform Query Service used for all gRPC data query and data streaming 
- * operations. <code>QueryRequestProcessorNew</code> objects DO NOT take ownership of the Query Service connection.
- * (Ownership is assumed to be that of the client using the <code>QueryRequestProcessorNew</code> object.)
+ * operations. <code>QueryRequestRecoverer</code> objects DO NOT take ownership of the Query Service connection.
+ * (Ownership is assumed to be that of the client using the <code>QueryRequestRecoverer</code> object.)
  * Thus, the <code>DpQueryConnection</code> service connection is NOT shutdown here.  
  * </p>
  * <p>
@@ -206,7 +205,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * </p>
  * <p>
  * When using method <code>{@link #processRequest(DpDataRequest)}</code> , the number of concurrent data streams will always
- * be limited by the value of constant <code>{@link #CNT_MULTISTREAM}</code>.  
+ * be limited by the value of constant <code>{@link #CNT_MULTISTREAM_MAX_STRMS}</code>.  
  * If a client explicitly requests a stream count larger than that value (i.e., with 
  * <code>{@link #processRequests(List)}</code>), the number of data stream is equal to the number of requests 
  * in the argument list.  Use this method at your
@@ -224,10 +223,10 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * <p>
  * <h2>Data Correlation</h2>
  * All data correlation of the incoming Query Service data is performed by a single 
- * <code>{@link RawDataCorrelator}</code> instance within each <code>QueryRequestProcessorNew</code> object.
+ * <code>{@link RawDataCorrelator}</code> instance within each <code>QueryRequestRecoverer</code> object.
  * The <code>RawDataCorrelator</code> attribute is used to correlate all data, regardless of recovery method
  * (e.g., unary request, streaming request, etc.).  The <code>RawDataCorrelator</code> attribute is reused,
- * that is, the same instance is used for all data requests performed while the <code>QueryRequestProcessorNew</code>
+ * that is, the same instance is used for all data requests performed while the <code>QueryRequestRecoverer</code>
  * is alive.
  * </p>
  * <p>
@@ -251,7 +250,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * @see QueryChannel
  *
  */
-public class QueryRequestProcessorNew {
+public class QueryRequestRecoverer {
 
     
     //
@@ -275,8 +274,8 @@ public class QueryRequestProcessorNew {
      *
      * @return  a new <code>QueryRequestProcessorNex</code> instance ready for recovery and correlation of data requests
      */
-    public static QueryRequestProcessorNew    from(DpQueryConnection connQuery) {
-        return new QueryRequestProcessorNew(connQuery);
+    public static QueryRequestRecoverer    from(DpQueryConnection connQuery) {
+        return new QueryRequestRecoverer(connQuery);
     }
     
     //
@@ -308,24 +307,27 @@ public class QueryRequestProcessorNew {
     public static final TimeUnit    TU_TIMEOUT = CFG_QUERY.timeout.unit;
     
     
-    /** Use multi-threading for query data correlation */
-    public static final boolean     BOL_CORRELATE_CONCURRENCY = CFG_QUERY.data.response.correlate.useConcurrency;
-    
-    /** Perform data correlation while gRPC streaming - otherwise do it post streaming */
-    public static final boolean     BOL_CORRELATE_MIDSTREAM = CFG_QUERY.data.response.correlate.whileStreaming;
-    
-    /** Maximum number of processing threads for concurrent query data correlation */
-    public static final int         CNT_CORRELATE_MAX_THRDS = CFG_QUERY.concurrency.maxThreads;
-    
-    
     /** Is response multi-streaming enabled? */
-    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.response.multistream.enabled;
+    public static final boolean     BOL_MULTISTREAM_ENABLE = CFG_QUERY.data.recovery.multistream.enabled;
     
     /** Maximum number of open data streams to Query Service */
-    public static final int         CNT_MULTISTREAM = CFG_QUERY.data.response.multistream.maxStreams;
+    public static final int         CNT_MULTISTREAM_MAX_STRMS = CFG_QUERY.data.recovery.multistream.maxStreams;
     
     /** Query domain size triggering multiple streaming (if enabled) */
-    public static final long        SIZE_DOMAIN_MULTISTREAM = CFG_QUERY.data.response.multistream.sizeDomain;
+    public static final long        SIZE_MULTISTREAM_DOMAIN = CFG_QUERY.data.recovery.multistream.sizeDomain;
+    
+    
+    /** Perform data correlation while gRPC streaming - otherwise do it post streaming */
+    public static final boolean     BOL_CORRELATE_MIDSTREAM = CFG_QUERY.data.recovery.correlate.whileStreaming;
+    
+    /** Use multi-threading for query data correlation */
+    public static final boolean     BOL_CORRELATE_CONCURRENCY = CFG_QUERY.data.recovery.correlate.concurrency.enabled;
+    
+    /** The correlator raw-data target set limit before multi-threading is invoked (if enabled) */
+    public static final int         BOL_CORRELATE_SZ_PIVOT = CFG_QUERY.data.recovery.correlate.concurrency.pivotSize;
+    
+    /** Maximum number of processing threads for concurrent query data correlation */
+    public static final int         CNT_CORRELATE_MAX_THRDS = CFG_QUERY.data.recovery.correlate.concurrency.maxThreads;
     
     
     //
@@ -355,23 +357,23 @@ public class QueryRequestProcessorNew {
     //
     
     /** Multi-streaming query response toggle */
-    private boolean bolMultiStream = BOL_MULTISTREAM;
+    private boolean bolMultiStream = BOL_MULTISTREAM_ENABLE;
     
     /** The request domain size (PV count - time) triggering multi-streaming */
-    private long    szDomainMultiStream = SIZE_DOMAIN_MULTISTREAM;
+    private long    szDomainMultiStream = SIZE_MULTISTREAM_DOMAIN;
     
     /** Number of data streams for multi-streaming response recovery */
-    private int     cntMaxStreams = CNT_MULTISTREAM;
+    private int     cntMaxStreams = CNT_MULTISTREAM_MAX_STRMS;
 
     
-    /** Use multi-threading for query data correlation */
-    private boolean bolCorrelateConcurrenly = BOL_CORRELATE_CONCURRENCY;
+//    /** Use multi-threading for query data correlation */
+//    private boolean bolCorrelateConcurrenly = BOL_CORRELATE_CONCURRENCY;
     
     /** Perform query data correlation concurrent while gRPC streaming */
     private boolean bolCorrelateMidstream = BOL_CORRELATE_MIDSTREAM;
     
-    /** Maximum number of execution threads for concurrent query data correlation */
-    private int     cntCorrelateMaxThrds = CNT_CORRELATE_MAX_THRDS;
+//    /** Maximum number of execution threads for concurrent query data correlation */
+//    private int     cntCorrelateMaxThrds = CNT_CORRELATE_MAX_THRDS;
     
     
     //
@@ -392,7 +394,7 @@ public class QueryRequestProcessorNew {
     
     
     /** The independent task transferring response messages to the recovery buffer */
-    private MessageTransferTask     thdMsgXferTask;
+    private MessageTransferTask             thdMsgXferTask;
     
 
     //
@@ -425,7 +427,7 @@ public class QueryRequestProcessorNew {
      *
      * @param connQuery enabled connection to the Query Service
      */
-    public QueryRequestProcessorNew(DpQueryConnection connQuery) {
+    public QueryRequestRecoverer(DpQueryConnection connQuery) {
         this.connQuery = connQuery;
         
         this.queMsgBuffer = QueryMessageBuffer.create();
@@ -451,34 +453,215 @@ public class QueryRequestProcessorNew {
      * <ul>
      * <li><code>{@link #isMultiStreaming()}</code></li>
      * <li><code>{@link #getMultiStreamingDomainSize()}</code></li>
-     * <li><code>{@link #getMaxStreamCount()}</code></li>
-     * <li><code>{@link #getMaxDataSourceCount()}</code></li>
-     * <li><code>{@link #getMaxTimeRange()}</code></li>
-     * <li><code>{@link #isCorrelatingConcurrently()}</code></li>
+     * <li><code>{@link #getMultiStreamingMaxStreamCount()}</code></li>
+     * <li><code>{@link #getRequestDecompMaxPvCount()}</code></li>
+     * <li><code>{@link #getRequestDecompMaxTimeRange()}</code></li>
+     * <li><code>{@link #isCorrelateConcurrencyEnabled()}</code></li>
      * <li><code>{@link #isCorrelatingWhileStreaming()}</code></li>
      * <li><code>{@link #getCorrelateMaxThreads()}</code></li>
      * </ul>
      * </p>
      * 
-     * @see #BOL_MULTISTREAM
-     * @see #SIZE_DOMAIN_MULTISTREAM
-     * @see #CNT_MULTISTREAM
+     * @see #BOL_MULTISTREAM_ENABLE
+     * @see #SIZE_MULTISTREAM_DOMAIN
+     * @see #CNT_MULTISTREAM_MAX_STRMS
      * @see #BOL_CORRELATE_CONCURRENCY
      * @see #BOL_CORRELATE_CONCURRENCY
      * @see #CNT_CORRELATE_MAX_THRDS
      */
     public void resetDefaultConfiguration() {
         
-        this.bolMultiStream = BOL_MULTISTREAM;
-        this.szDomainMultiStream = SIZE_DOMAIN_MULTISTREAM;
-        this.cntMaxStreams = CNT_MULTISTREAM;
+        this.bolMultiStream = BOL_MULTISTREAM_ENABLE;
+        this.szDomainMultiStream = SIZE_MULTISTREAM_DOMAIN;
+        this.cntMaxStreams = CNT_MULTISTREAM_MAX_STRMS;
         
-        this.bolCorrelateConcurrenly = BOL_CORRELATE_CONCURRENCY;
+//        this.bolCorrelateConcurrenly = BOL_CORRELATE_CONCURRENCY;
         this.bolCorrelateMidstream = BOL_CORRELATE_MIDSTREAM;
-        this.cntCorrelateMaxThrds = CNT_CORRELATE_MAX_THRDS;
+//        this.cntCorrelateMaxThrds = CNT_CORRELATE_MAX_THRDS;
         
         this.prcrCorrelator.resetDefaultConfiguration();
         this.prcrDecomposer.resetDefaultCofiguration();
+    }
+    
+    /**
+     * <p>
+     * Enables or disables data request decomposition.
+     * </p>
+     * <p>
+     * If data request decomposition is disabled the original request will always be returned from
+     * any decomposition operation.  Specifically, the decomposition method will return a list containing
+     * a single element, the original request object.
+     * </p>
+     * <p>
+     * This is a configuration state variable for the internal <code>DataRequestDecomposer</code> instance.
+     * </p>
+     * 
+     * @param bolEnable the toggling on/off of request decomposition 
+     */
+    public void enableRequestDecomposition(boolean bolEnable) {
+        this.prcrDecomposer.enable(bolEnable);;
+    }
+    
+    /**
+     * <p>
+     * Sets the maximum number of data sources allowed in a composite data request.
+     * </p>
+     * <p>
+     * Time-series data requests are decomposed horizontally (by data source) using this value when invoking
+     * the <code>{@link #processRequest(DpDataRequest)}</code> method and multi-streaming is enabled.  
+     * No composite request will have the number of data sources larger than this value if decomposition 
+     * was successful.
+     * </p>
+     * <p>
+     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
+     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
+     * available at <code>{@link DataRequestDecomposer#CNT_MAX_SOURCES}</code>.
+     * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
+     * </p>
+     * 
+     * @param cntMaxSources maximum number of data sources allowed in composite requests when multi-streaming
+     */
+    public void setRequestDecompMaxPvCount(int cntMaxSources) {
+        this.prcrDecomposer.setMaxDataSources(cntMaxSources);
+    }
+    
+    /**
+     * <p>
+     * Sets the maximum time range allowed in a composite data request.
+     * </p>
+     * <p>
+     * Time-series data requests are decomposed vertically (by time range) using this value when invoking
+     * the <code>{@link #processRequest(DpDataRequest)}</code> method and multi-streaming is enabled.
+     * No composite request will have the time range of the request larger than this value if decomposition
+     * was successful.
+     * </p>
+     * <p>
+     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
+     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
+     * available at <code>{@link DataRequestDecomposer#DUR_MAX}</code>.
+     * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
+     * </p>
+     * 
+     * @param durRange  the maximum time duration allowed in composite requests when multi-streaming
+     */
+    public void setRequestDecompMaxTimeRange(Duration durRange) {
+        this.prcrDecomposer.setMaxDuration(durRange);
+    }
+    
+    /**
+     * <p>
+     * Enables/disables the use of concurrency (i.e. multi-threading) for correlation of raw query data.
+     * </p>
+     * <p>
+     * This is a performance parameter where correlation of query data is performed using
+     * parallelism.  Due to the nature of data correlation, multiple data sets can be
+     * processed simultaneously.  Thus, speedup is directly proportional to the number of
+     * CPU cores available.
+     * </p> 
+     * <p>
+     * The internal <code>{@link RawDataCorrelator}</code> instance used to correlate the
+     * results set of a Query Service data request has parallel processing capability.  This
+     * function can be toggled on or off.  Parallel processing of request data can greatly
+     * enhance performance, especially for large results sets.  However, it can also allocates
+     * processor resources (i.e., cores) from other concurrent, possibly critical, processes (e.g., 
+     * streaming resources).  Thus, in some situations the overall effect could be performance
+     * degradation.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>The number of correlation processing threads is taken from the API default parameters.</li>
+     * <li>Concurrency is only invoked if data sizes are greater than the "pivot size" in the API default parameters.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param bolCorrelateConcurrently   enable/disable concurrency for data correlation
+     */
+    public void enableCorrelateConcurrency(boolean bolCorrelateConcurrently) {
+//        this.bolCorrelateConcurrenly = bolCorrelateConcurrently;
+        this.prcrCorrelator.enableConcurrency(bolCorrelateConcurrently);
+    }
+    
+    /**
+     * <p>
+     * Sets the maximum number of allowable processing threads for raw data correlation when correlation 
+     * concurrency is enabled.
+     * </p>
+     * <p>
+     * The argument specifies maximum number of execution threads used by the internal <code>RawDataCorrelator</code>
+     * instance when processing the recovered raw data.  The parameter only has context when concurrent query data
+     * correlation is enabled (see <code>{@link #enableCorrelateConcurrency(boolean)}</code>).
+     * </p>
+     * <p>  
+     * This is a tuning parameter that is likely dependent upon
+     * the host platform and other configuration parameters.  In particular, if concurrent correlation and data
+     * recovery is enabled (see <code>{@link #enableCorrelateWhileStreaming(boolean)}</code>) a large argument
+     * could create a competition between the <code>QueryChannel</code> instance and the <code>RawDataCorrelator</code>
+     * instance.
+     * </p>
+     * <p>
+     * The default value taken from the Java API Library configuration file
+     * (see <code>{@link #CNT_CORRELATE_MAX_THRDS}</code>).  This value can be recovered from 
+     * <code>{@link #getCorrelateMaxThreads()}</code>.  The default value for concurrent processing is available
+     * from <code>{@link #bolCorrelateConcurrenly}</code> while the current configuration value is given by
+     * <code>{@link #isCorrelateConcurrencyEnabled()}</code>.  
+     * The default value for the maximum number of gRPC data streams is found at <cod>{@link #CNT_MULTISTREAM_MAX_STRMS}</code>.
+     * </p>
+     * 
+     * @param cntMaxThreads the maximum number of allowable concurrent processing threads for data correlation when enabled  
+     */
+    public void setCorrelateConcurrencyMaxThreads(int cntMaxThreads) {
+//        this.cntCorrelateMaxThrds = cntMaxThreads;
+        this.prcrCorrelator.setMaxThreadCount(cntMaxThreads);
+    }
+    
+    /**
+     * <p>
+     * Sets the size of the correlated raw data set (i.e., number of blocks) triggering concurrent processing.
+     * </p>
+     * <p>
+     * Specifies the raw data set size limit triggering concurrency in the internal <code>RawDataCorrelator</code>
+     * processor.  This parameter is enabled only if concurrent processing is enabled 
+     * (see <code>{@link #enableCorrelateConcurrency(boolean)}</code>).
+     * This is a tuning parameter which prevent concurrent processing for correlated data set sizes below the
+     * given value.  The intent is to prevent the allocation of independent thread resources if none are required.
+     * A value of 1 will ensure concurrent processing for all situations.
+     * </p>
+     * <p>
+     * The internal <code>{@link RawDataCorrelator}</code> instance used to correlate the
+     * results set of a Query Service data request has parallel processing capability.  This
+     * function can be to set a size limit of the target set of raw correlated data blocks before 
+     * multi-threaded (parallel) processing is triggered.  Parallel processing of request data can greatly
+     * enhance performance, especially for large results sets.  However, it can also allocates
+     * processor resources (i.e., cores) from other concurrent, possibly critical, processes (e.g., 
+     * streaming resources).  Thus, in some situations the overall effect could be performance
+     * degradation.
+     * </p>
+     * <p>
+     * The default value for this parameter is given by the constant <code>{@link #BOL_CORRELATE_SZ_PIVOT}</code> which
+     * is taken from the Java API Library configuration parameters.
+     * </p>   
+     * 
+     * @param szPivot   set of the correlated data set triggering concurrent processing
+     */
+    public void setCorrelateConcurrencyPivotSize(int szPivot) {
+        this.prcrCorrelator.setConcurrencyPivotSize(szPivot);
     }
     
     /**
@@ -508,9 +691,9 @@ public class QueryRequestProcessorNew {
      * </p>
      * <p>
      * The default value taken from the Java API Library configuration file
-     * (see <code>{@link #BOL_MULTISTREAM}</code>).  This value can be recovered from 
+     * (see <code>{@link #BOL_MULTISTREAM_ENABLE}</code>).  This value can be recovered from 
      * <code>{@link #isMultiStreaming()}</code>.  The default value for the maximum number of 
-     * gRPC data streams is found at <cod>{@link #CNT_MULTISTREAM}</code>.
+     * gRPC data streams is found at <cod>{@link #CNT_MULTISTREAM_MAX_STRMS}</code>.
      * </p>
      * <p>
      * <h2>Performance</h2>
@@ -551,7 +734,7 @@ public class QueryRequestProcessorNew {
      * </p>
      * <p>
      * The default value is taken from the Java API Library configuration parameters and is available at
-     * <code>{@link #SIZE_DOMAIN_MULTISTREAM}</code>.
+     * <code>{@link #SIZE_MULTISTREAM_DOMAIN}</code>.
      * </p> 
      * <p>
      * <h2>USER NOTE:</h2>
@@ -597,7 +780,7 @@ public class QueryRequestProcessorNew {
      * @throws IllegalStateException    method called while actively processing
      */
     synchronized 
-    public void setMaxStreamCount(int cntStreams) throws IllegalStateException {
+    public void setMultiStreamingMaxStreamCount(int cntStreams) throws IllegalStateException {
 
         if (this.thdMsgXferTask!=null && this.thdMsgXferTask.isAlive()) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change stream count while processing.";
@@ -609,119 +792,21 @@ public class QueryRequestProcessorNew {
         }
         
         this.cntMaxStreams = cntStreams;
-        this.prcrCorrelator.setMaxThreadCount(cntStreams);
     }
     
     /**
      * <p>
-     * Sets the maximum number of data sources allowed in a composite data request.
-     * </p>
-     * <p>
-     * Time-series data requests are decomposed horizontally (by data source) using this value when invoking
-     * the <code>{@link #processRequest(DpDataRequest)}</code> method and multi-streaming is enabled.  
-     * No composite request will have the number of data sources larger than this value if decomposition 
-     * was successful.
-     * </p>
-     * <p>
-     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
-     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
-     * available at <code>{@link DataRequestDecomposer#CNT_MAX_SOURCES}</code>.
-     * </p>
-     * <p>
-     * <h2>USER NOTE:</h2>
-     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
-     * method only.  This method performs any request decomposition on the offered time-series data
-     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
-     * method.  
-     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
-     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
-     * </p>
-     * 
-     * @param cntMaxSources maximum number of data sources allowed in composite requests when multi-streaming
-     */
-    public void setMaxDataSourceCount(int cntMaxSources) {
-        this.prcrDecomposer.setMaxDataSources(cntMaxSources);
-    }
-    
-    /**
-     * <p>
-     * Sets the maximum time range allowed in a composite data request.
-     * </p>
-     * <p>
-     * Time-series data requests are decomposed vertically (by time range) using this value when invoking
-     * the <code>{@link #processRequest(DpDataRequest)}</code> method and multi-streaming is enabled.
-     * No composite request will have the time range of the request larger than this value if decomposition
-     * was successful.
-     * </p>
-     * <p>
-     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
-     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
-     * available at <code>{@link DataRequestDecomposer#DUR_MAX}</code>.
-     * </p>
-     * <p>
-     * <h2>USER NOTE:</h2>
-     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
-     * method only.  This method performs any request decomposition on the offered time-series data
-     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
-     * method.  
-     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
-     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
-     * </p>
-     * 
-     * @param durRange
-     */
-    public void setMaxTimeRange(Duration durRange) {
-        this.prcrDecomposer.setMaxDuration(durRange);
-    }
-    
-    /**
-     * <p>
-     * Enables/disables the use of concurrency (i.e. multi-threading) for correlation of query data.
-     * </p>
-     * <p>
-     * This is a performance parameter where correlation of query data is performed using
-     * parallelism.  Due to the nature of data correlation, multiple data sets can be
-     * processed simultaneously.  Thus, speedup is directly proportional to the number of
-     * CPU cores available.
-     * </p> 
-     * <p>
-     * The internal <code>{@link RawDataCorrelator}</code> instance used to correlate the
-     * results set of a Query Service data request has parallel processing capability.  This
-     * function can be toggled on or off.  Parallel processing of request data can greatly
-     * enhance performance, especially for large results sets.  However, it can also allocates
-     * processor resources (i.e., cores) from other concurrent, possibly critical, processes (e.g., 
-     * streaming resources).  Thus, in some situations the overall effect could be performance
-     * degradation.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>The number of correlation processing threads is taken from the API default parameters.</li>
-     * <li>Concurrency is only invoked if data sizes are greater than the "pivot size" in the API default parameters.</li>
-     * </ul>
-     * </p>
-     * 
-     * @param bolCorrelateConcurrently   enable/disable concurrency for data correlation
-     */
-    public void enableCorrelateConcurrently(boolean bolCorrelateConcurrently) {
-        this.bolCorrelateConcurrenly = bolCorrelateConcurrently;
-        this.prcrCorrelator.enableConcurrency(bolCorrelateConcurrently);
-//        this.prcrCorrelator.setMaxThreadCount(this.cntMaxStreams);
-    }
-    
-    /**
-     * <p>
-     * Toggles the application of query data correlation during gRPC streaming operations.
+     * Toggles the application of query data correlation during data recovery (i.e., gRPC streaming operations).
      * </p>
      * <p>
      * This is a performance parameter where the correlation of query data is performed 
-     * simultaneously while gRPC data streaming.  The data stream(s) for large results set
-     * can extend over significant real time.  Thus, performing correlation while receiving
+     * simultaneously with raw data recovery (i.e., while gRPC data streaming).  The data stream(s) for large 
+     * results set can extend over significant real time.  Thus, performing correlation while receiving
      * data can decrease overall processing/transmission time.
      * </p>
      * <p>
-     * If this feature is disabled then all query data correlation is done after gRPC data 
-     * streaming has completed and all query results have been recovered.
+     * If this feature is disabled then all query data correlation is done after gRPC streaming completed 
+     * and all raw query results have been recovered.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
@@ -738,50 +823,156 @@ public class QueryRequestProcessorNew {
         this.bolCorrelateMidstream = bolCorrelateMidstream;
     }
     
+    
+    //
+    // Configuration Inquiry
+    //
+    
     /**
      * <p>
-     * Sets the maximum number of allowable processing threads for query data correlation when concurrency is enabled.
+     * Determines whether or not data request decomposition is enabled.  
      * </p>
-     * <p>
-     * The argument specifies maximum number of execution threads used by the internal <code>RawDataCorrelator</code>
-     * instance when processing the recovered raw data.  The parameter only has context when concurrent query data
-     * correlation is enabled (see <code>{@link #enableCorrelateConcurrently(boolean)}</code>).
-     * </p>
-     * <p>  
-     * This is a tuning parameter that is likely dependent upon
-     * the host platform and other configuration parameters.  In particular, if concurrent correlation and data
-     * recovery is enabled (see <code>{@link #enableCorrelateWhileStreaming(boolean)}</code>) a large argument
-     * could create a competition between the <code>QueryChannel</code> instance and the <code>RawDataCorrelator</code>
-     * instance.
-     * </p>
-     * <p>
-     * The default value taken from the Java API Library configuration file
-     * (see <code>{@link #CNT_CORRELATE_MAX_THRDS}</code>).  This value can be recovered from 
-     * <code>{@link #getCorrelateMaxThreads()}</code>.  The default value for concurrent processing is available
-     * from <code>{@link #bolCorrelateConcurrenly}</code> while the current configuration value is given by
-     * <code>{@link #isCorrelatingConcurrently()}</code>.  
-     * The default value for the maximum number of gRPC data streams is found at <cod>{@link #CNT_MULTISTREAM}</code>.
+     * <p>If the returned value is <code>false</code> no decomposition is performed, the original request is used.
      * </p>
      * 
-     * @param cntMaxThreads the maximum number of allowable concurrent processing threads for data correlation when enabled  
+     * @return <code>true</code> if request decomposition is enabled, <code>false</code> if disabled
      */
-    public void setCorrelateMaxThreads(int cntMaxThreads) {
-        this.cntCorrelateMaxThrds = cntMaxThreads;
+    public boolean  isRequestDecompositionEnabled() {
+        return this.prcrDecomposer.isEnabled();
     }
     
+    /**
+     * <p>
+     * Returns the maximum allowable number of data sources in a composite request.
+     * </p>
+     * <p>
+     * The returned value is used in horizontal request decomposition (i.e., by data source) in the
+     * <code>{@link #processRequest(DpDataRequest)}</code> method.  No composite request will have 
+     * a data source count larger than this value if request decomposition was successful and multi-streaming
+     * is enabled.
+     * </p>
+     * <p>
+     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
+     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
+     * available at <code>{@link DataRequestDecomposer#CNT_MAX_SOURCES}</code>.
+     * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
+     * </p>
+     * 
+     * @return  the maximum allowable number of data sources in any composite request when multi-streaming
+     */
+    public final int getRequestDecompMaxPvCount() {
+        return this.prcrDecomposer.getMaxDataSources();
+    }
     
+    /**
+     * <p>
+     * Returns the maximum allowing time range duration in a composite request.
+     * </p>
+     * <p>
+     * The returned value is used in vertical request decomposition (i.e., by time range) in the 
+     * <code>{@link #processRequest(DpDataRequest)}</code> method.  No composite request will have time range
+     * greater than the given duration if request decomposition is succesful and multi-streaming is enabled.
+     * </p>
+     * <p>
+     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
+     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
+     * available at <code>{@link DataRequestDecomposer#DUR_MAX}</code>.
+     * </p>
+     * <p>
+     * <h2>USER NOTE:</h2>
+     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
+     * method only.  This method performs any request decomposition on the offered time-series data
+     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
+     * method.  
+     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
+     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
+     * </p>
+     * 
+     * @return  the maximum allowable time range in any composite request when multi-streaming
+     */
+    public final Duration getRequestDecompMaxTimeRange() {
+        return this.prcrDecomposer.getMaxDuration();
+    }
+    
+    /**
+     * <p>
+     * Returns whether or not parallelism (multi-threading) is enabled for request data correlation.
+     * </p>
+     * <p>
+     * If the returned value is <code>true</code> then the correlation processing of query response data
+     * is performed using multi-threading.  This is a performance feature which can be enabled/disabled.
+     * In general, allowing concurrent processing of response data will increase performance
+     * so long as processing threads do not interfere with other activities (such as gRPC streaming).
+     * </p>
+     * 
+     * @return <code>true</code> if multi-threading of response data correlation is enabled, <code>false</code> otherwise
+     */
+    public final boolean isCorrelateConcurrencyEnabled() {
+        return this.prcrCorrelator.isConcurrencyEnabled();
+    }
+    
+    /**
+     * <p>
+     * Returns the maximum number of allowable concurrent threads for correlation processing of raw time-series data.
+     * </p>
+     * <p>
+     * The returned value reflect the configuration state of the internal <code>RawDataCorrelator</code>
+     * processor instance.
+     * </p>
+     * <p>
+     * Note that this value only has context if concurrent processing is enabled.  
+     * See method <code>{@link #isCorrelateConcurrencyEnabled()}</code>.
+     * </p>
+     *   
+     * @return  the maximum number of concurrent processing threads used in correlation
+     * 
+     * @see #setCorrelateConcurrencyMaxThreads(int)
+     */
+    public final int    getCorrelateConcurrencyMaxThreads() {
+        return this.prcrCorrelator.getConcurrencytMaxThreads();
+    }
+    
+    /**
+     * <p>
+     * Returns the size of the correlated data set which triggers concurrent processing.
+     * </p>
+     * <p>
+     * The returned value reflect the configuration state of the internal <code>RawDataCorrelator</code>
+     * processor instance.
+     * </p>
+     * <p>
+     * Note that this value only has context if concurrent processing is enabled.  
+     * See method <code>{@link #isCorrelateConcurrencyEnabled()}</code>.
+     * </p>
+     * 
+     * @return  the size limit of the correlated raw data set required for concurrent processing 
+     * 
+     * @see #setCorrelateConcurrencyPivotSize(int)
+     */
+    public final int    getCorrelateConcurrencyPivotSize() {
+        return this.prcrCorrelator.getConcurrencyPivotSize();
+    }
+
     /**
      * <p>
      * Specifies whether or not multi-streaming of query responses is enabled.
      * </p>
      * <p>
      * The default value is taken from the Java API Library configuration file
-     * (see {@link #BOL_MULTISTREAM}).
+     * (see {@link #BOL_MULTISTREAM_ENABLE}).
      * </p>
      * 
      * @return <code>true</code> if multi-streaming is enabled, <code>false</code> if disabled
      * 
-     * @see #BOL_MULTISTREAM
+     * @see #BOL_MULTISTREAM_ENABLE
      */
     public final boolean isMultiStreaming() {
         return this.bolMultiStream;
@@ -805,7 +996,7 @@ public class QueryRequestProcessorNew {
      * </p>
      * <p>
      * The default value is taken from the Java API Library configuration file
-     * (see {@link #SIZE_DOMAIN_MULTISTREAM}).
+     * (see {@link #SIZE_MULTISTREAM_DOMAIN}).
      * </p>
      * <p>
      * <h2>USER NOTE:</h2>
@@ -844,88 +1035,10 @@ public class QueryRequestProcessorNew {
      * 
      * @return the maximum number of concurrent gRPC data streams used to recover query responses when enabled
      */
-    public final int getMaxStreamCount() {
+    public final int getMultiStreamingMaxStreamCount() {
         return this.cntMaxStreams;
     }
     
-    /**
-     * <p>
-     * Returns the maximum allowable number of data sources in a composite request.
-     * </p>
-     * <p>
-     * The returned value is used in horizontal request decomposition (i.e., by data source) in the
-     * <code>{@link #processRequest(DpDataRequest)}</code> method.  No composite request will have 
-     * a data source count larger than this value if request decomposition was successful and multi-streaming
-     * is enabled.
-     * </p>
-     * <p>
-     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
-     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
-     * available at <code>{@link DataRequestDecomposer#CNT_MAX_SOURCES}</code>.
-     * </p>
-     * <p>
-     * <h2>USER NOTE:</h2>
-     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
-     * method only.  This method performs any request decomposition on the offered time-series data
-     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
-     * method.  
-     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
-     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
-     * </p>
-     * 
-     * @return  the maximum allowable number of data sources in any composite request when multi-streaming
-     */
-    public final int getMaxDataSourceCount() {
-        return this.prcrDecomposer.getMaxDataSources();
-    }
-    
-    /**
-     * <p>
-     * Returns the maximum allowing time range duration in a composite request.
-     * </p>
-     * <p>
-     * The returned value is used in vertical request decomposition (i.e., by time range) in the 
-     * <code>{@link #processRequest(DpDataRequest)}</code> method.  No composite request will have time range
-     * greater than the given duration if request decomposition is succesful and multi-streaming is enabled.
-     * </p>
-     * <p>
-     * The default value for this parameter is assigned to the <code>{@link DataRequestDecomposer}</code> 
-     * instance used in decomposition.  Its value is taken from the Java API Library configuration file and
-     * available at <code>{@link DataRequestDecomposer#DUR_MAX}</code>.
-     * </p>
-     * <p>
-     * <h2>USER NOTE:</h2>
-     * This parameter affects the operation of the <code>{@link #processRequest(DpDataRequest)}</code>
-     * method only.  This method performs any request decomposition on the offered time-series data
-     * request then offers the resulting list of composite requests to the <code>{@link #processRequests(List)}</code>
-     * method.  
-     * The method <code>{@link #processRequests(List)}</code> always performs request recovery on all 
-     * offered <code>DpDataRequest</code> instances as they are (i.e., using multiple gRPC data streams).
-     * </p>
-     * 
-     * @return  the maximum allowable time range in any composite request when multi-streaming
-     */
-    public final Duration getMaxTimeRange() {
-        return this.prcrDecomposer.getMaxDuration();
-    }
-    
-    /**
-     * <p>
-     * Returns whether or not parallelism (multi-threading) is enabled for request data correlation.
-     * </p>
-     * <p>
-     * If the returned value is <code>true</code> then the correlation processing of query response data
-     * is performed using multi-threading.  This is a performance feature which can be enabled/disabled.
-     * In general, allowing concurrent processing of response data will increase performance
-     * so long as processing threads do not interfere with other activities (such as gRPC streaming).
-     * </p>
-     * 
-     * @return <code>true</code> if multi-threading of response data correlation is enabled, <code>false</code> otherwise
-     */
-    public final boolean isCorrelatingConcurrently() {
-        return this.bolCorrelateConcurrenly;
-    }
-
     /**
      * <p>
      * Returns whether or not correlation of response data is allowed while it is streamed back from the
@@ -946,20 +1059,20 @@ public class QueryRequestProcessorNew {
         return this.bolCorrelateMidstream;
     }
 
-    /**
-     * <p>
-     * Returns the maximum number of allowable execution threads for concurrent query data correlation when enabled.
-     * </p>
-     * <p>
-     * The returned value is maximum number of execution threads used by the internal <code>RawDataCorrelator</code>
-     * instance when processing the recovered raw data.
-     * </p>
-     * 
-     * @return  maximum number of concurrent processing threads used for raw query data correlation
-     */
-    public final int getCorrelateMaxThreads() {
-        return this.cntCorrelateMaxThrds;
-    }
+//    /**
+//     * <p>
+//     * Returns the maximum number of allowable execution threads for concurrent query data correlation when enabled.
+//     * </p>
+//     * <p>
+//     * The returned value is maximum number of execution threads used by the internal <code>RawDataCorrelator</code>
+//     * instance when processing the recovered raw data.
+//     * </p>
+//     * 
+//     * @return  maximum number of concurrent processing threads used for raw query data correlation
+//     */
+//    public final int getCorrelateMaxThreads() {
+//        return this.prcrCorrelator.getConcurrencytMaxThreads();
+//    }
     
     /**
      * <p>
@@ -979,18 +1092,19 @@ public class QueryRequestProcessorNew {
         if (strPad == null)
             strPad = "";
         
-        ps.println(strPad + "gRPC Multi-Streaming");
-        ps.println(strPad + "  multi-streaming enabled   : " + this.bolMultiStream);
-        ps.println(strPad + "  query domain size trigger : " + this.szDomainMultiStream);
-        ps.println(strPad + "  maximum stream count      : " + this.cntMaxStreams);
-        ps.println(strPad + "Correlation Concurrency");
-        ps.println(strPad + "  concurrency enabled       : " + this.bolCorrelateConcurrenly);
-        ps.println(strPad + "  concurrency pivot size    : " + this.prcrCorrelator.getConcurrencyPivotSize());
-        ps.println(strPad + "  maximum thread count      : " + this.cntCorrelateMaxThrds);
-        ps.println(strPad + "  correlate while streaming : " + this.bolCorrelateMidstream);
         ps.println(strPad + "Data Request Decomposition");
+        ps.println(strPad + "  request decomposition enabled    : " + this.prcrDecomposer.isEnabled());
         ps.println(strPad + "  maximum PV count per composite   : " + this.prcrDecomposer.getMaxDataSources());
         ps.println(strPad + "  maximum time range per composite : " + this.prcrDecomposer.getMaxDuration());
+        ps.println(strPad + "Request Recovery (gRPC Streaming)");
+        ps.println(strPad + "  gRPC multi-streaming enabled     : " + this.bolMultiStream);
+        ps.println(strPad + "  multi-stream domain size trigger : " + this.szDomainMultiStream);
+        ps.println(strPad + "  maximum gRPC stream count        : " + this.cntMaxStreams);
+        ps.println(strPad + "  correlate while streaming enable : " + this.bolCorrelateMidstream);
+        ps.println(strPad + "Raw Data Correlation");
+        ps.println(strPad + "  correlation concurrency enabled  : " + this.prcrCorrelator.isConcurrencyEnabled());
+        ps.println(strPad + "  concurrency trigger pivot size   : " + this.prcrCorrelator.getConcurrencyPivotSize());
+        ps.println(strPad + "  maximum correlator thread count  : " + this.prcrCorrelator.getConcurrencytMaxThreads());
     }
     
     //
@@ -1202,8 +1316,8 @@ public class QueryRequestProcessorNew {
      * <p>
      * A separate gRPC data stream is established for each data request within the argument list and concurrent
      * data streams are used to recover the request data.
-     * At most <code>{@link #CNT_MULTISTREAM}</code> concurrent data streams are enabled at any instant.
-     * If the number of data requests in the argument is larger than <code>{@link #CNT_MULTISTREAM}</code>
+     * At most <code>{@link #CNT_MULTISTREAM_MAX_STRMS}</code> concurrent data streams are enabled at any instant.
+     * If the number of data requests in the argument is larger than <code>{@link #CNT_MULTISTREAM_MAX_STRMS}</code>
      * then streaming threads are run in a fixed size thread pool until all requests are completed.
      * </p>
      * <p>
@@ -1518,7 +1632,7 @@ public class QueryRequestProcessorNew {
         // Wait for the message transfer task to finish
         //  - All response data should be processed at that instant
         try {
-            this.thdMsgXferTask.join( QueryRequestProcessorNew.timeoutLimitDefaultMillis() );
+            this.thdMsgXferTask.join( QueryRequestRecoverer.timeoutLimitDefaultMillis() );
             
         } catch (InterruptedException e) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()

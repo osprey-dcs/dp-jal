@@ -22,8 +22,8 @@ public class DpQueryRecoveryConfig extends CfgStructure<DpQueryRecoveryConfig> {
     public DpDataRequestConfig      request;
     
     /** Default parameters for Query Service time-series data request responses */
-    @ACfgOverride.Struct(pathelem="RESPONSE")
-    public DpDataResponseConfig     response;
+    @ACfgOverride.Struct(pathelem="RECOVERY")
+    public DpDataRecoveryConfig     recovery;
     
     /** Default parameters for Query Service time-series data table results */
     @ACfgOverride.Struct(pathelem="TABLE")

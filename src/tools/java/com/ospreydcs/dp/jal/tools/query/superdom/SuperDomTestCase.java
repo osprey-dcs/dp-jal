@@ -40,7 +40,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew;
+import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.correl.RawClockedData;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawTmsListData;
@@ -66,7 +66,7 @@ import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
  * </p>
  * <p>
  * <h2>Test Case Evaluation and Results</h2>
- * A test case is evaluated using the <code>{@link #evaluate(QueryRequestProcessorNew)}</code> method.  The
+ * A test case is evaluated using the <code>{@link #evaluate(QueryRequestRecoverer)}</code> method.  The
  * The results of a single test case are contained in a <code>{@link SuperDomTestResult}</code> record, which
  * is returned by the method.  Considering the above, the result record contain fields for both the 
  * recovery and correlation of the raw, time-series data, and for the super-domain processing that follows.
@@ -217,7 +217,7 @@ public record SuperDomTestCase(
      * @throws IllegalStateException    internal processing error: attempt to process super domain when none available
      * @throws IndexOutOfBoundsException internal processing error: attempt to access index beyond end of processing list
      */
-    public SuperDomTestResult   evaluate(QueryRequestProcessorNew prcrRqsts) 
+    public SuperDomTestResult   evaluate(QueryRequestRecoverer prcrRqsts) 
             throws DpQueryException, IllegalStateException, IndexOutOfBoundsException {
 
         // Perform timed data recovery

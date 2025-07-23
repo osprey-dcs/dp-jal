@@ -50,6 +50,7 @@ import com.ospreydcs.dp.api.query.DpMetadataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IQueryService;
+import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.query.model.assem.SampledAggregate;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
@@ -139,7 +140,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * <h2>Data Recovery and Correlation</h2>
  * A single data processor is used for all time-series data request recovery and correlation.  
  * For unary data requests this is a single <code>{@link RawDataCorrelator}</code> instance. 
- * For gRPC streaming request this is a single <code>{@link QueryRequestProcessorNew}</code> instance.  
+ * For gRPC streaming request this is a single <code>{@link QueryRequestRecoverer}</code> instance.  
  * For streaming operations the data processor performs both the gRPC data 
  * streaming from the Query Service AND the correlation of incoming data.  
  * The data processor offers various configuration options where data can be simultaneously streamed and 
@@ -336,7 +337,7 @@ public class DpQueryServiceImplNew extends
     private final MetadataRequestProcessor  prcrMeta;
     
     /** The single query request processor used for recovering and correlating streamed, time-series data requests */
-    private final QueryRequestProcessorNew  prcrRqsts;
+    private final QueryRequestRecoverer  prcrRqsts;
     
     /** The single query response assembler used for assembling the recovered raw, correlated data */
     private final QueryResponseAssembler    assmRspns;
@@ -393,7 +394,7 @@ public class DpQueryServiceImplNew extends
         
         this.prcrRspns = RawDataCorrelator.create();
         this.prcrMeta = MetadataRequestProcessor.from(connQuery);
-        this.prcrRqsts = QueryRequestProcessorNew.from(connQuery);
+        this.prcrRqsts = QueryRequestRecoverer.from(connQuery);
         this.assmRspns = QueryResponseAssembler.create(); 
     }
     

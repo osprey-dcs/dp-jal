@@ -7,7 +7,10 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * Enumeration of possible query domain decomposition strategies.
  * </p>
  * <p>
- * Query domain decompositions are used for <em>decompose query</em> construction.
+ * Query domain decompositions are used for <em>composite request</em> construction.  Specifically,
+ * a time-series data request is decomposed into multiple, smaller, composite requests where the
+ * sum of the composite requests is the original query.  Thus, the query domain of the the original
+ * request is decomposed according to some decomposition strategy.
  * </p>
  * 
  * @see RequestDecompParams

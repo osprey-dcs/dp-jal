@@ -35,8 +35,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
@@ -325,13 +323,13 @@ public final class DpDataRequest {
     // Class Constants
     //
     
-    /** The default page size to use when creating gRPC paginated queries */
-    @Deprecated
-    private static final Integer                SZ_PAGES = CFG_DEFAULT.query.pageSize;
+//    /** The default page size to use when creating gRPC paginated queries */
+//    @Deprecated
+//    private static final Integer                SZ_PAGES = CFG_DEFAULT.query.pageSize;
     
     
     /** gRPC stream type default preference */
-    private static final DpGrpcStreamType       ENM_STREAM_PREF = CFG_DEFAULT.query.data.request.stream.preference;
+    private static final DpGrpcStreamType       ENM_STREAM_PREF = CFG_DEFAULT.query.data.recovery.stream.preferred;
     
     
     /** The start of this time epoch (Jan 1, 1970) */
@@ -365,10 +363,10 @@ public final class DpDataRequest {
     //
     
     
-    /** The size of a data page, that is, the number of data rows per page */
-    @Deprecated
-    @SuppressWarnings("unused")
-    private int szPage = SZ_PAGES;
+//    /** The size of a data page, that is, the number of data rows per page */
+//    @Deprecated
+//    @SuppressWarnings("unused")
+//    private int szPage = SZ_PAGES;
     
     /** The initial index of first page to return, that is, the starting page number */
     @Deprecated
@@ -587,7 +585,7 @@ public final class DpDataRequest {
     public void reset() {
 //        this.bolCursor = false;
         this.indStartPage = 0;
-        this.szPage = SZ_PAGES;
+//        this.szPage = SZ_PAGES;
 
         this.strRqstId = null;
         this.enmStrmType = ENM_STREAM_PREF;
@@ -1195,34 +1193,34 @@ public final class DpDataRequest {
         this.enmStrmType = enmStreamType;
     }
     
-    /**
-     * <p>
-     * Sets the size of the data pages to return from the <em>Query Service</em>
-     * when using paginated requests.
-     * </p>
-     * <p>
-     * Paginated responses to snapshot data requests are used in asynchronous
-     * queries. The data is streamed back in gRPC message blocks constituting
-     * data pages.  The value given here is the number of rows in each page 
-     * (not the allocation size of the gRPC message).
-     * </p>
-     * <p>
-     * If not set, this value defaults to that specified in the 
-     * Application properties (in the <i>application.yml</i> file).
-     * </p>
-     * <p>
-     * This is primarily a performance parameter to tweak.
-     * Note that the maximum gRPC message size has a hard limit (currently
-     * at 4 Mbytes).  For requests with large numbers of data columns each
-     * row could, potentially, require significant resource allocation.
-     * </p>
-     * 
-     * @param szPage page size of a data block returned from the <em>Query Service</em> (in rows)
-     */
-    @AUnavailable(status=STATUS.UNDER_REVIEW)
-    public void setPageSize(Integer szPage) {
-        this.szPage = szPage;
-    }
+//    /**
+//     * <p>
+//     * Sets the size of the data pages to return from the <em>Query Service</em>
+//     * when using paginated requests.
+//     * </p>
+//     * <p>
+//     * Paginated responses to snapshot data requests are used in asynchronous
+//     * queries. The data is streamed back in gRPC message blocks constituting
+//     * data pages.  The value given here is the number of rows in each page 
+//     * (not the allocation size of the gRPC message).
+//     * </p>
+//     * <p>
+//     * If not set, this value defaults to that specified in the 
+//     * Application properties (in the <i>application.yml</i> file).
+//     * </p>
+//     * <p>
+//     * This is primarily a performance parameter to tweak.
+//     * Note that the maximum gRPC message size has a hard limit (currently
+//     * at 4 Mbytes).  For requests with large numbers of data columns each
+//     * row could, potentially, require significant resource allocation.
+//     * </p>
+//     * 
+//     * @param szPage page size of a data block returned from the <em>Query Service</em> (in rows)
+//     */
+//    @AUnavailable(status=STATUS.UNDER_REVIEW)
+//    public void setPageSize(Integer szPage) {
+//        this.szPage = szPage;
+//    }
     
     /**
      * <p>
@@ -1907,7 +1905,7 @@ public final class DpDataRequest {
             throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Illegal stream type: " + enmType);
         
         this.indStartPage = 0;
-        this.szPage = SZ_PAGES;
+//        this.szPage = SZ_PAGES;
 
         this.strRqstId = strId;
         this.enmStrmType = enmType;

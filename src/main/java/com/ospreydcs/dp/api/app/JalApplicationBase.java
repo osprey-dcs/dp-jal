@@ -327,13 +327,16 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     
     /**
      * <p>
-     * Returns the output file path if one was created, or <code>null</code> if not.
+     * Returns the output file path if one was created, or <code>{@link #STR_ARG_VAL_STDOUT}</code> if not.
      * </p>
      * 
      * @return  the output file path used by the application
      */
     public Path     getOutputFilePath() {
-        return this.pathOutFile;
+        if (this.pathOutFile == null)
+            return Paths.get(STR_ARG_VAL_STDOUT);
+        else
+            return this.pathOutFile;
     }
     
     //
@@ -516,8 +519,11 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
             
         // Check if argument is "console"
         String  strConsole = strPath.toLowerCase();
-        if (strConsole.equals(STR_ARG_VAL_STDOUT))
+        if (strConsole.equals(STR_ARG_VAL_STDOUT)) {
+            this.psOutput = System.out;
+            
             return System.out;
+        }
         
         // Check if argument is directory - if so create unique file name
         this.pathOutFile = Path.of(strPath);
@@ -586,11 +592,15 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      */
     protected String   createReportHeader() {
         
-        // Write header
-        String      strHdr1 = this.pathOutFile.toAbsolutePath().toString();
+        // Create output file header (if not console)
+        String      strHdr1;
+        if (this.pathOutFile != null) 
+            strHdr1 = this.pathOutFile.toAbsolutePath().toString();
+        else
+            strHdr1 = STR_ARG_VAL_STDOUT;
+
         DateFormat  date = DateFormat.getDateTimeInstance();
         String      strDateTime = date.format(new Date());
-//        String      strHdr2 = this.clsApp.getSimpleName() + " Output Report: " + strDateTime + "\n";
         String      strHdr2 = this.clsApp.getSimpleName() + " Output Report: " + strDateTime;
         
         return strHdr1 + "\n" + strHdr2;
@@ -857,11 +867,27 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * and {10, 20}, respectively.  Note that the variables here have numeric values but are returned in their original 
      * string format.
      * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * If the variable name identified by the second argument is not present in the command-line arguments an empty
+     * list is returned.
+     * </li>
+     * <li>
+     * If the argument name is present but no values are given an empty list is returned.
+     * </li>
+     * <li>
+     * The variable name (with delimiter) can occur multiple times on the command line.  If so, the variable values
+     * for all occurrences of the variable name will be included in the returned list.
+     * </li>
+     * </ul>
+     * </p>
      * 
-     * @param args      application argument collection
+     * @param args      application command-line argument collection
      * @param strDelVar the command-line variable with delimiter
      * 
-     * @return  ordered list of variable values taken from the command line arguments
+     * @return  ordered list of variable values taken from the command line arguments (empty if variable name not present)
      */
     public static List<String>   parseAppArgsVariable(String[] args, String strDelVar) {
         
@@ -897,7 +923,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
             // We have found variable delimiter - advance to variable values
             iArg++;
 
-            // Keep read variable values until next delimiter, or end of arguments
+            // Keep reading variable values until next delimiter, or end of arguments
             for (int i=iArg; i<args.length; i++) {
                 String  strToken = args[i].strip();
 
@@ -951,7 +977,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * found an exception is thrown.
      * </p>
      * 
-     * @param args          application argument collection
+     * @param args          application command-line argument collection
      * @param strDelProp    the command-line property delimiter
      * 
      * @return  map of (name, value) properties for the given property delimiter
@@ -1020,7 +1046,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      *          
      * @throws ConfigurationException the output variable contained multiple entries
      */
-    protected static String   parseOutputLocation(String[] args, String strOutputDef) /* throws ConfigurationException */ {
+    public static String   parseOutputLocation(String[] args, String strOutputDef) /* throws ConfigurationException */ {
         
         // Look for the output location on the command line
         List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryRequestProcessorNewTest.java
+ * File:	QueryRequestRecovererTest.java
  * Package: com.ospreydcs.dp.api.query.impl
- * Type: 	QueryRequestProcessorNewTest
+ * Type: 	QueryRequestRecovererTest
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -54,6 +54,7 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
+import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -90,7 +91,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @since Apr 24, 2025
  *
  */
-public class QueryRequestProcessorNewTest {
+public class QueryRequestRecovererTest {
 
 
     //
@@ -229,7 +230,7 @@ public class QueryRequestProcessorNewTest {
     private static DpQueryConnection            connQuery;
     
     /** The QueryRequestProcessorOld under test */
-    private static QueryRequestProcessorNew     prcrQuery;
+    private static QueryRequestRecoverer     prcrQuery;
     
     /** Print output stream for storing evaluation results to single file */
     private static PrintStream                  psOutput;
@@ -249,10 +250,10 @@ public class QueryRequestProcessorNewTest {
         connQuery = DpQueryConnectionFactory.FACTORY.connect();
         
         // Create the test query response processor
-        prcrQuery = QueryRequestProcessorNew.from(connQuery);
+        prcrQuery = QueryRequestRecoverer.from(connQuery);
         
         // Open the common output file
-        String  strFileName = QueryRequestProcessorNewTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
+        String  strFileName = QueryRequestRecovererTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
         Path    pathOutput = Paths.get(STR_PATH_OUTPUT, strFileName);
         File    fileOutput = pathOutput.toFile();
         
@@ -261,7 +262,7 @@ public class QueryRequestProcessorNewTest {
         // Write header
         DateFormat  date = DateFormat.getDateTimeInstance();
         String      strDateTime = date.format(new Date());
-        psOutput.println(QueryRequestProcessorNewTest.class.getSimpleName() + ": " + strDateTime);
+        psOutput.println(QueryRequestRecovererTest.class.getSimpleName() + ": " + strDateTime);
         psOutput.println("  Multi-streaming request recovery : " + BOL_UNIV_RCVR_MULT);
         psOutput.println("  Correlate using multiple threads : " + BOL_UNIVR_CORR_CONC);
         psOutput.println("  Correlate while streaming        : " + BOL_UNIVR_CORR_STRM);
@@ -347,33 +348,33 @@ public class QueryRequestProcessorNewTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#from(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#from(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
      */
     @Test
     public final void testFrom() {
-        QueryRequestProcessorNew    prcrTest = QueryRequestProcessorNew.from(connQuery);
+        QueryRequestRecoverer    prcrTest = QueryRequestRecoverer.from(connQuery);
         
         Assert.assertNotNull(prcrTest);
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#QueryRequestProcessorNew(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#QueryRequestProcessorNew(com.ospreydcs.dp.api.grpc.query.DpQueryConnection)}.
      */
     @Test
     public final void testQueryRequestProcessorNew() {
-        QueryRequestProcessorNew    prcrTest = new QueryRequestProcessorNew(connQuery);
+        QueryRequestRecoverer    prcrTest = new QueryRequestRecoverer(connQuery);
         
         Assert.assertNotNull(prcrTest);
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#resetDefaultConfiguration()}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#resetDefaultConfiguration()}.
      */
     @Test
     public final void testResetDefaultConfiguration() {
 
         // Independent processor instance
-        QueryRequestProcessorNew    prcrTest = QueryRequestProcessorNew.from(connQuery);
+        QueryRequestRecoverer    prcrTest = QueryRequestRecoverer.from(connQuery);
         
         Assert.assertNotNull(prcrTest);
         
@@ -381,51 +382,51 @@ public class QueryRequestProcessorNewTest {
         final boolean bolMultStr = prcrTest.isMultiStreaming();
         final long    lngDomSize = prcrTest.getMultiStreamingDomainSize();
         final long    lngNewSize = lngDomSize/2;
-        final int     cntMaxStrs = prcrTest.getMaxStreamCount();
+        final int     cntMaxStrs = prcrTest.getMultiStreamingMaxStreamCount();
         final int     cntNewStrs = cntMaxStrs * 2;
-        final int     cntMaxSrcs = prcrTest.getMaxDataSourceCount();
+        final int     cntMaxSrcs = prcrTest.getRequestDecompMaxPvCount();
         final int     cntNewSrcs = cntMaxSrcs * 2;
-        final boolean bolCorrCon = prcrTest.isCorrelatingConcurrently();
+        final boolean bolCorrCon = prcrTest.isCorrelateConcurrencyEnabled();
         final boolean bolCorrStr = prcrTest.isCorrelatingWhileStreaming();
-        final int     cntMaxThds = prcrTest.getCorrelateMaxThreads();
+        final int     cntMaxThds = prcrTest.getCorrelateConcurrencyMaxThreads();
         final int     cntNexThds = cntMaxThds/2;
-        final Duration    durMaxRng = prcrTest.getMaxTimeRange();
+        final Duration    durMaxRng = prcrTest.getRequestDecompMaxTimeRange();
         final Duration    durNewRng = durMaxRng.dividedBy(2L);
         
         // Change configuration from default and confirm
         prcrTest.enableMultiStreaming(!bolMultStr);
         prcrTest.setMultiStreamingDomainSize(lngNewSize);
-        prcrTest.setMaxStreamCount(cntNewStrs);
-        prcrTest.setMaxDataSourceCount(cntNewSrcs);
-        prcrTest.enableCorrelateConcurrently(!bolCorrCon);
+        prcrTest.setMultiStreamingMaxStreamCount(cntNewStrs);
+        prcrTest.setRequestDecompMaxPvCount(cntNewSrcs);
+        prcrTest.enableCorrelateConcurrency(!bolCorrCon);
         prcrTest.enableCorrelateWhileStreaming(!bolCorrStr);
-        prcrTest.setCorrelateMaxThreads(cntNexThds);
-        prcrTest.setMaxTimeRange(durNewRng);
+        prcrTest.setCorrelateConcurrencyMaxThreads(cntNexThds);
+        prcrTest.setRequestDecompMaxTimeRange(durNewRng);
         
         Assert.assertTrue(prcrTest.isMultiStreaming() != bolMultStr);
         Assert.assertEquals(lngNewSize, prcrTest.getMultiStreamingDomainSize());
-        Assert.assertEquals(cntNewStrs, prcrTest.getMaxStreamCount());
-        Assert.assertEquals(cntNewSrcs, prcrTest.getMaxDataSourceCount());
-        Assert.assertTrue(prcrTest.isCorrelatingConcurrently() != bolCorrCon);
+        Assert.assertEquals(cntNewStrs, prcrTest.getMultiStreamingMaxStreamCount());
+        Assert.assertEquals(cntNewSrcs, prcrTest.getRequestDecompMaxPvCount());
+        Assert.assertTrue(prcrTest.isCorrelateConcurrencyEnabled() != bolCorrCon);
         Assert.assertTrue(prcrTest.isCorrelatingWhileStreaming() != bolCorrStr);
-        Assert.assertEquals(cntNexThds, prcrTest.getCorrelateMaxThreads());
-        Assert.assertEquals(durNewRng, prcrTest.getMaxTimeRange());
+        Assert.assertEquals(cntNexThds, prcrTest.getCorrelateConcurrencyMaxThreads());
+        Assert.assertEquals(durNewRng, prcrTest.getRequestDecompMaxTimeRange());
         
         // Reset to default configuration and confirm
         prcrTest.resetDefaultConfiguration();
         
-        Assert.assertTrue(prcrTest.isMultiStreaming() == CFG_QUERY.data.response.multistream.enabled);
-        Assert.assertEquals(CFG_QUERY.data.response.multistream.sizeDomain.longValue(), prcrTest.getMultiStreamingDomainSize());
-        Assert.assertEquals(CFG_QUERY.data.response.multistream.maxStreams.intValue(), prcrTest.getMaxStreamCount());
-        Assert.assertEquals(CFG_QUERY.data.request.decompose.maxSources.intValue(), prcrTest.getMaxDataSourceCount());
-        Assert.assertTrue(CFG_QUERY.data.response.correlate.useConcurrency == prcrTest.isCorrelatingConcurrently());
-        Assert.assertTrue(CFG_QUERY.data.response.correlate.whileStreaming == prcrTest.isCorrelatingWhileStreaming());
-        Assert.assertEquals(CFG_QUERY.data.response.multistream.maxStreams.intValue(), prcrTest.getMaxStreamCount());
-        Assert.assertEquals(CFG_QUERY.data.request.decompose.maxDuration, prcrTest.getMaxTimeRange().getSeconds());
+        Assert.assertTrue(prcrTest.isMultiStreaming() == CFG_QUERY.data.recovery.multistream.enabled);
+        Assert.assertEquals(CFG_QUERY.data.recovery.multistream.sizeDomain.longValue(), prcrTest.getMultiStreamingDomainSize());
+        Assert.assertEquals(CFG_QUERY.data.recovery.multistream.maxStreams.intValue(), prcrTest.getMultiStreamingMaxStreamCount());
+        Assert.assertEquals(CFG_QUERY.data.request.decompose.maxSources.intValue(), prcrTest.getRequestDecompMaxPvCount());
+        Assert.assertTrue(CFG_QUERY.data.recovery.correlate.concurrency.enabled == prcrTest.isCorrelateConcurrencyEnabled());
+        Assert.assertTrue(CFG_QUERY.data.recovery.correlate.whileStreaming == prcrTest.isCorrelatingWhileStreaming());
+        Assert.assertEquals(CFG_QUERY.data.recovery.multistream.maxStreams.intValue(), prcrTest.getMultiStreamingMaxStreamCount());
+        Assert.assertEquals(CFG_QUERY.data.request.decompose.maxDuration, prcrTest.getRequestDecompMaxTimeRange().getSeconds());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#enableMultiStreaming(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#enableMultiStreaming(boolean)}.
      */
     @Test
     public final void testEnableMultiStreaming() {
@@ -443,7 +444,7 @@ public class QueryRequestProcessorNewTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#setMultiStreamingDomainSize(long)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#setMultiStreamingDomainSize(long)}.
      */
     @Test
     public final void testSetMultiStreamingDomainSize() {
@@ -462,83 +463,83 @@ public class QueryRequestProcessorNewTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#setMaxStreamCount(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#setMultiStreamingMaxStreamCount(int)}.
      */
     @Test
     public final void testSetMaxStreamCount() {
         
         // Parameters
-        final int     cntMaxStrs = prcrQuery.getMaxStreamCount();
+        final int     cntMaxStrs = prcrQuery.getMultiStreamingMaxStreamCount();
         final int     cntNewStrs = cntMaxStrs * 2;
         
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Default multi-streaming maximum stream count: " + cntMaxStrs);
         
-        prcrQuery.setMaxStreamCount(cntNewStrs);
+        prcrQuery.setMultiStreamingMaxStreamCount(cntNewStrs);
         
-        Assert.assertEquals(cntNewStrs, prcrQuery.getMaxStreamCount());
+        Assert.assertEquals(cntNewStrs, prcrQuery.getMultiStreamingMaxStreamCount());
         
-        prcrQuery.setMaxStreamCount(cntMaxStrs);
+        prcrQuery.setMultiStreamingMaxStreamCount(cntMaxStrs);
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#setMaxDataSourceCount(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#setRequestDecompMaxPvCount(int)}.
      */
     @Test
     public final void testSetMaxDataSourceCount() {
         
         // Parameters
-        final int     cntMaxSrcs = prcrQuery.getMaxDataSourceCount();
+        final int     cntMaxSrcs = prcrQuery.getRequestDecompMaxPvCount();
         final int     cntNewSrcs = cntMaxSrcs * 2;
         
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Default maximum data source count: " + cntMaxSrcs);
         
-        prcrQuery.setMaxDataSourceCount(cntNewSrcs);
+        prcrQuery.setRequestDecompMaxPvCount(cntNewSrcs);
         
-        Assert.assertEquals(cntNewSrcs, prcrQuery.getMaxDataSourceCount());
+        Assert.assertEquals(cntNewSrcs, prcrQuery.getRequestDecompMaxPvCount());
         
-        prcrQuery.setMaxDataSourceCount(cntMaxSrcs);
-        Assert.assertEquals(cntMaxSrcs, prcrQuery.getMaxDataSourceCount());
+        prcrQuery.setRequestDecompMaxPvCount(cntMaxSrcs);
+        Assert.assertEquals(cntMaxSrcs, prcrQuery.getRequestDecompMaxPvCount());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#setMaxTimeRange(java.time.Duration)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#setRequestDecompMaxTimeRange(java.time.Duration)}.
      */
     @Test
     public final void testSetMaxTimeRange() {
         
         // Parameters
-        final Duration    durMaxRng = prcrQuery.getMaxTimeRange();
+        final Duration    durMaxRng = prcrQuery.getRequestDecompMaxTimeRange();
         final Duration    durNewRng = durMaxRng.dividedBy(2L);
         
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Default maximum time range duration: " + durMaxRng);
         
-        prcrQuery.setMaxTimeRange(durNewRng);
+        prcrQuery.setRequestDecompMaxTimeRange(durNewRng);
         
-        Assert.assertEquals(durNewRng, prcrQuery.getMaxTimeRange());
+        Assert.assertEquals(durNewRng, prcrQuery.getRequestDecompMaxTimeRange());
         
-        prcrQuery.setMaxTimeRange(durMaxRng);
+        prcrQuery.setRequestDecompMaxTimeRange(durMaxRng);
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#enableCorrelateConcurrently(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#enableCorrelateConcurrency(boolean)}.
      */
     @Test
     public final void testEnableCorrelateConcurrently() {
         
         // Parameters
-        final boolean bolEnabled = prcrQuery.isCorrelatingConcurrently();
+        final boolean bolEnabled = prcrQuery.isCorrelateConcurrencyEnabled();
         
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Default correlate concurrently: " + bolEnabled);
         
-        prcrQuery.enableCorrelateConcurrently(!bolEnabled);
+        prcrQuery.enableCorrelateConcurrency(!bolEnabled);
         
-        Assert.assertTrue(prcrQuery.isCorrelatingConcurrently() != bolEnabled);
+        Assert.assertTrue(prcrQuery.isCorrelateConcurrencyEnabled() != bolEnabled);
         
-        prcrQuery.enableCorrelateConcurrently(bolEnabled);
+        prcrQuery.enableCorrelateConcurrency(bolEnabled);
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#enableCorrelateWhileStreaming(boolean)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#enableCorrelateWhileStreaming(boolean)}.
      */
     @Test
     public final void testEnableCorrelateWhileStreaming() {
@@ -556,27 +557,27 @@ public class QueryRequestProcessorNewTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#setCorrelateMaxThreads(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#setCorrelateConcurrencyMaxThreads(int)}.
      */
     @Test
     public final void testSetCorrelateMaxThreads() {
         
         // Parameters
-        final int   cntMaxThds = prcrQuery.getCorrelateMaxThreads();
+        final int   cntMaxThds = prcrQuery.getCorrelateConcurrencyMaxThreads();
         final int   cntNexThds = cntMaxThds/2;
         
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Default correlate max thread count: " + cntMaxThds);
         
-        prcrQuery.setCorrelateMaxThreads(cntNexThds);
+        prcrQuery.setCorrelateConcurrencyMaxThreads(cntNexThds);
         
-        Assert.assertEquals(cntNexThds, prcrQuery.getCorrelateMaxThreads());
+        Assert.assertEquals(cntNexThds, prcrQuery.getCorrelateConcurrencyMaxThreads());
         
-        prcrQuery.setCorrelateMaxThreads(cntMaxThds);
+        prcrQuery.setCorrelateConcurrencyMaxThreads(cntMaxThds);
     }
 
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#processRequest(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#processRequest(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testProcessRequest() {
@@ -587,7 +588,7 @@ public class QueryRequestProcessorNewTest {
         final int           cntCases = LST_RQSTS.size() * LST_CFG_TEST_CASES.size();  
         
         // Test resource - we are changing configuration so we use an independent processor
-        final QueryRequestProcessorNew  prcrTest = QueryRequestProcessorNew.from(connQuery);
+        final QueryRequestRecoverer  prcrTest = QueryRequestRecoverer.from(connQuery);
         final SortedSet<ConfigResult>   setResults = new TreeSet<>(ConfigResult.ResultOrder.create());
         
 //        prcrTest.enableMultiStreaming(bolMultStrm);
@@ -624,7 +625,7 @@ public class QueryRequestProcessorNewTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew#processRequests(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer#processRequests(java.util.List)}.
      */
     @Test
     public final void testProcessRequests() {
@@ -640,9 +641,9 @@ public class QueryRequestProcessorNewTest {
         ps.println();
         
         // Configure Correlator
-//        QueryRequestProcessorNewTest.prcrQuery.enableMultiStreaming(bolMultStrm);
-//        QueryRequestProcessorNewTest.prcrQuery.enableCorrelateConcurrently(bolCorrCon);
-//        QueryRequestProcessorNewTest.prcrQuery.enableCorrelateWhileStreaming(bolCorrStrm);
+//        QueryRequestRecovererTest.prcrQuery.enableMultiStreaming(bolMultStrm);
+//        QueryRequestRecovererTest.prcrQuery.enableCorrelateConcurrently(bolCorrCon);
+//        QueryRequestRecovererTest.prcrQuery.enableCorrelateWhileStreaming(bolCorrStrm);
         
         int     indCase = 1;
         for (TestCase recCase : LST_MSTRM_TST_CASES) {
@@ -653,14 +654,14 @@ public class QueryRequestProcessorNewTest {
 
                 ConfigResult    recResult = recCase.evaluate(prcrQuery, REC_UNIVR_MSTRM_CFG);
 //                Instant insStart = Instant.now();
-//                SortedSet<RawCorrelatedData>  setData = QueryRequestProcessorNewTest.prcrQuery.processRequests(recCase.lstCmpRqsts);
+//                SortedSet<RawCorrelatedData>  setData = QueryRequestRecovererTest.prcrQuery.processRequests(recCase.lstCmpRqsts);
 //                Instant insFinish = Instant.now();
 //                
 //                // Compute results
 //                Duration    durRqst = Duration.between(insStart, insFinish);
-//                int         cntMsgs = QueryRequestProcessorNewTest.prcrQuery.getProcessedMessageCount();
+//                int         cntMsgs = QueryRequestRecovererTest.prcrQuery.getProcessedMessageCount();
 //                int         cntBlks = setData.size();
-//                long        szAlloc = QueryRequestProcessorNewTest.prcrQuery.getProcessedByteCount();
+//                long        szAlloc = QueryRequestRecovererTest.prcrQuery.getProcessedByteCount();
 //                
 //                double      dblRateXmit  = ( ((double)szAlloc) * 1000 )/durRqst.toNanos();
 //                

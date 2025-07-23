@@ -1,4 +1,4 @@
-package com.ospreydcs.dp.api.query.impl;
+package com.ospreydcs.dp.jal.tools.query.recovery;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -286,107 +286,107 @@ public record    ConfigResult(
         return recResult;
     }
     
-    /**
-     * <p>
-     * Performs the given time-series data request on the given correlator for the given configuration and evaluates results.
-     * </p>
-     * <p>
-     * The gRPC stream type used for the request data recovery is explicitly given here, however, the actual evaluation
-     * is deferred to method <code>{@link #evaluate(QueryRequestProcessorOld, DpDataRequest, TestConfig)}</code>.
-     * <ol>
-     * <li>
-     * First, the <code>DpDataRequest</code> argument is modified to use the given <code>DpGrpcStreamType</code> 
-     * argument value. 
-     * </li>
-     * <li>
-     * Second, the method <code>{@link #evaluate(QueryRequestProcessorOld, DpDataRequest, TestConfig)}</code> is invoked
-     * to evaluate the processor with the modified request.
-     * </li>
-     * <li>
-     * Third, the <code>DpDataRequest</code> argument is restored to its original state.
-     * </li>
-     * <li>
-     * Last, the result from the <code>{@link #evaluate(QueryRequestProcessorOld, DpDataRequest, TestConfig)}</code> invocation
-     * is returned.
-     * </li>
-     * </ol>
-     * </p>
-     * 
-     * @param prcrRqsts     the request processor under evaluation
-     * @param rqst          time-series data request to be offered to the processor for evaluation
-     * @param enmStrmType   the gRPC stream type to use in the request data recovery
-     * @param recPrcrCfg    configuration record for the given request processor
-     * 
-     * @return  a new <code>ConfigResult</code> record containing the results of the processor request evaluation
-     * 
-     * @throws DpQueryException general Query Service exception during request processing (see message and cause)
-     * 
-     * @see <code>{@link DpDataRequest#getStreamType()}</code>
-     * @see #evaluate(QueryRequestProcessorOld, DpDataRequest, TestConfig)
-     */
-    @SuppressWarnings("deprecation")
-    public static ConfigResult  evaluate(QueryRequestProcessorOld prcrRqsts, DpDataRequest rqst, DpGrpcStreamType enmStrmType, TestConfig recPrcrCfg) throws DpQueryException {
-
-        // Configure the data request
-        DpGrpcStreamType    enmStrmTypeOrg = rqst.getStreamType();
-        rqst.setStreamType(enmStrmType);
-        
-        // Compute results
-        ConfigResult    recResult = ConfigResult.evaluate(prcrRqsts, rqst, recPrcrCfg);
-
-        // Restore data request to original state and return results
-        rqst.setStreamType(enmStrmTypeOrg);
-        
-        return recResult;
-    }
-    
-    /**
-     * <p>
-     * Performs the given time-series data request on the given correlator for the given configuration and evaluates results.
-     * </p>
-     * <p>
-     * First the given <code>TestConfig</code> record is used to configure the given <code>QueryRequestRecoverer</code> 
-     * instance. Then the given <code>DpDataRequest</code> is used for the 
-     * <code>{@link QueryRequestRecoverer#processRequest(DpDataRequest)}</code> operation. 
-     * The performance of the operation is measured and returned in the <code>ConfigResult</code> record.
-     * </p>
-     * <p>
-     * The gRPC stream type used for the request data recovery is that assigned in the request itself
-     * (i.e., see <code>{@link DpDataRequest#getStreamType()}</code>).
-     * </p>
-     * 
-     * @param prcrRqsts     the request processor under evaluation
-     * @param rqst          time-series data request to be offered to the processor for evaluation
-     * @param recPrcrCfg    configuration record for the given request processor
-     * 
-     * @return  a new <code>ConfigResult</code> record containing the results of the processor request evaluation
-     * 
-     * @throws DpQueryException general Query Service exception during request processing (see message and cause)
-     */
-    @SuppressWarnings("deprecation")
-    public static ConfigResult  evaluate(QueryRequestProcessorOld prcrRqsts, DpDataRequest rqst, TestConfig recPrcrCfg) throws DpQueryException {
-
-        // Configure the processor
-        recPrcrCfg.configure(prcrRqsts);
-
-        Instant insStart = Instant.now();
-        SortedSet<CorrelatedQueryDataOld>  setData = prcrRqsts.processRequest(rqst);
-        Instant insFinish = Instant.now();
-
-        // Compute results
-        Duration    durRqst = Duration.between(insStart, insFinish);
-        int         cntMsgs = prcrRqsts.getProcessedMessageCount();
-        int         cntBlks = setData.size();
-        long        szAlloc = prcrRqsts.getProcessedByteCount();
-        List<DpDataRequest> lstCmpRqsts = prcrRqsts.getProcessedCompositeRequest();
-
-        double      dblRateXmit  = ( ((double)szAlloc) * 1000 )/durRqst.toNanos();
-
-        // Create result record and save
-        ConfigResult    recResult = ConfigResult.from(dblRateXmit, cntMsgs, szAlloc, cntBlks, durRqst, recPrcrCfg, rqst, lstCmpRqsts);
-
-        return recResult;
-    }
+//    /**
+//     * <p>
+//     * Performs the given time-series data request on the given correlator for the given configuration and evaluates results.
+//     * </p>
+//     * <p>
+//     * The gRPC stream type used for the request data recovery is explicitly given here, however, the actual evaluation
+//     * is deferred to method <code>{@link #evaluate(QueryRequestProcessorOld, DpDataRequest, TestConfig)}</code>.
+//     * <ol>
+//     * <li>
+//     * First, the <code>DpDataRequest</code> argument is modified to use the given <code>DpGrpcStreamType</code> 
+//     * argument value. 
+//     * </li>
+//     * <li>
+//     * Second, the method <code>{@link #evaluate(QueryRequestProcessorOld, DpDataRequest, TestConfig)}</code> is invoked
+//     * to evaluate the processor with the modified request.
+//     * </li>
+//     * <li>
+//     * Third, the <code>DpDataRequest</code> argument is restored to its original state.
+//     * </li>
+//     * <li>
+//     * Last, the result from the <code>{@link #evaluate(QueryRequestProcessorOld, DpDataRequest, TestConfig)}</code> invocation
+//     * is returned.
+//     * </li>
+//     * </ol>
+//     * </p>
+//     * 
+//     * @param prcrRqsts     the request processor under evaluation
+//     * @param rqst          time-series data request to be offered to the processor for evaluation
+//     * @param enmStrmType   the gRPC stream type to use in the request data recovery
+//     * @param recPrcrCfg    configuration record for the given request processor
+//     * 
+//     * @return  a new <code>ConfigResult</code> record containing the results of the processor request evaluation
+//     * 
+//     * @throws DpQueryException general Query Service exception during request processing (see message and cause)
+//     * 
+//     * @see <code>{@link DpDataRequest#getStreamType()}</code>
+//     * @see #evaluate(QueryRequestProcessorOld, DpDataRequest, TestConfig)
+//     */
+//    @SuppressWarnings("deprecation")
+//    public static ConfigResult  evaluate(QueryRequestProcessorOld prcrRqsts, DpDataRequest rqst, DpGrpcStreamType enmStrmType, TestConfig recPrcrCfg) throws DpQueryException {
+//
+//        // Configure the data request
+//        DpGrpcStreamType    enmStrmTypeOrg = rqst.getStreamType();
+//        rqst.setStreamType(enmStrmType);
+//        
+//        // Compute results
+//        ConfigResult    recResult = ConfigResult.evaluate(prcrRqsts, rqst, recPrcrCfg);
+//
+//        // Restore data request to original state and return results
+//        rqst.setStreamType(enmStrmTypeOrg);
+//        
+//        return recResult;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Performs the given time-series data request on the given correlator for the given configuration and evaluates results.
+//     * </p>
+//     * <p>
+//     * First the given <code>TestConfig</code> record is used to configure the given <code>QueryRequestRecoverer</code> 
+//     * instance. Then the given <code>DpDataRequest</code> is used for the 
+//     * <code>{@link QueryRequestRecoverer#processRequest(DpDataRequest)}</code> operation. 
+//     * The performance of the operation is measured and returned in the <code>ConfigResult</code> record.
+//     * </p>
+//     * <p>
+//     * The gRPC stream type used for the request data recovery is that assigned in the request itself
+//     * (i.e., see <code>{@link DpDataRequest#getStreamType()}</code>).
+//     * </p>
+//     * 
+//     * @param prcrRqsts     the request processor under evaluation
+//     * @param rqst          time-series data request to be offered to the processor for evaluation
+//     * @param recPrcrCfg    configuration record for the given request processor
+//     * 
+//     * @return  a new <code>ConfigResult</code> record containing the results of the processor request evaluation
+//     * 
+//     * @throws DpQueryException general Query Service exception during request processing (see message and cause)
+//     */
+//    @SuppressWarnings("deprecation")
+//    public static ConfigResult  evaluate(QueryRequestProcessorOld prcrRqsts, DpDataRequest rqst, TestConfig recPrcrCfg) throws DpQueryException {
+//
+//        // Configure the processor
+//        recPrcrCfg.configure(prcrRqsts);
+//
+//        Instant insStart = Instant.now();
+//        SortedSet<CorrelatedQueryDataOld>  setData = prcrRqsts.processRequest(rqst);
+//        Instant insFinish = Instant.now();
+//
+//        // Compute results
+//        Duration    durRqst = Duration.between(insStart, insFinish);
+//        int         cntMsgs = prcrRqsts.getProcessedMessageCount();
+//        int         cntBlks = setData.size();
+//        long        szAlloc = prcrRqsts.getProcessedByteCount();
+//        List<DpDataRequest> lstCmpRqsts = prcrRqsts.getProcessedCompositeRequest();
+//
+//        double      dblRateXmit  = ( ((double)szAlloc) * 1000 )/durRqst.toNanos();
+//
+//        // Create result record and save
+//        ConfigResult    recResult = ConfigResult.from(dblRateXmit, cntMsgs, szAlloc, cntBlks, durRqst, recPrcrCfg, rqst, lstCmpRqsts);
+//
+//        return recResult;
+//    }
     
     /**
      * <p>

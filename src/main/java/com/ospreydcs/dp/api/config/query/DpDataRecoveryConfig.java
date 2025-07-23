@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpDataResponseConfig.java
+ * File:	DpDataRecoveryConfig.java
  * Package: com.ospreydcs.dp.api.config.query
- * Type: 	DpDataResponseConfig
+ * Type: 	DpDataRecoveryConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -27,58 +27,61 @@
  */
 package com.ospreydcs.dp.api.config.query;
 
+import com.ospreydcs.dp.api.common.DpGrpcStreamType;
+import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
 /**
  * <p>
- * Structure class containing default parameters for Data Platform Query Service time-series data responses.
+ * Structure class containing default parameters for Data Platform Query Service time-series data recovery.
  * </p>
  * 
  * @author Christopher K. Allen
  * @since Feb 7, 2024
  *
  */
-@ACfgOverride.Root(root="DP_API_QUERY_DATA_RESPONSE")
-public class DpDataResponseConfig extends CfgStructure<DpDataResponseConfig> {
+@ACfgOverride.Root(root="DP_API_QUERY_DATA_RECOVERY")
+public class DpDataRecoveryConfig extends CfgStructure<DpDataRecoveryConfig> {
 
     /** Default constructor required for base structure class */
-    public DpDataResponseConfig() { super(DpDataResponseConfig.class); };
+    public DpDataRecoveryConfig() { super(DpDataRecoveryConfig.class); };
     
     //
     // Configuration Fields
     //
     
-    /** Query response data correlation parameters */
-    @ACfgOverride.Struct(pathelem="CORRELATE")
-    public Correlate        correlate;
+    /** gRPC streaming parameters for query responses */
+    @ACfgOverride.Struct(pathelem="STREAM")
+    public Stream                   stream;
     
     /** Multi-streaming parameters for query responses */
     @ACfgOverride.Struct(pathelem="MULTISTREAM")
     public Multistream      multistream;
 
+    /** Query response data correlation parameters */
+    @ACfgOverride.Struct(pathelem="CORRELATE")
+    public Correlate        correlate;
+    
     
     /**
-     * Structure class defining default configuration parameters for query response data correlation
+     * Structure class defining default configuration parameters for streaming data responses. 
      */
-    @ACfgOverride.Root(root="DP_API_QUERY_DATA_RESPONSE_CORRELATE")
-    public static class Correlate extends CfgStructure<Correlate> {
+    @ACfgOverride.Root(root="DP_API_QUERY_DATA_REQUEST_STREAM")
+    public static class Stream extends CfgStructure<Stream> {
         
         /** Default constructor required for base structure class */
-        public Correlate() { super(Correlate.class); };
+        public Stream() { super(Stream.class); };
         
+//      /** Default bucket count per page when using cursor requests */
+//      @AUnavailable(status=STATUS.UNDER_REVIEW)
+//      @ACfgOverride.Field(name="PAGE_SIZE")
+//      public Integer              pageSize;
         
-        //
-        // Configuration Fields
-        //
+        /** Preference for gRPC data stream type */
+        @ACfgOverride.Field(name="PREFERRED")
+        public DpGrpcStreamType   preferred;
         
-        /** Use concurrency during query data correlation */
-        @ACfgOverride.Field(name="CONCURRENCY")
-        public Boolean  useConcurrency;
-        
-        /** Correlate query data while gRPC streaming (otherwise after stream completion) */
-        @ACfgOverride.Field(name="WHILE_STREAMING")
-        public Boolean  whileStreaming;
     }
     
     /**
@@ -110,6 +113,29 @@ public class DpDataResponseConfig extends CfgStructure<DpDataResponseConfig> {
 //        /** Time units used for pivotSize */
 //        @ACfgOverride.Field(name="PIVOT_PERIOD")
 //        public TimeUnit     pivotPeriod;
+    }
+    
+    /**
+     * Structure class defining default configuration parameters for query response data correlation
+     */
+    @ACfgOverride.Root(root="DP_API_QUERY_DATA_RECOVERY_CORRELATE")
+    public static class Correlate extends CfgStructure<Correlate> {
+        
+        /** Default constructor required for base structure class */
+        public Correlate() { super(Correlate.class); };
+        
+        
+        //
+        // Configuration Fields
+        //
+        
+        /** Correlate raw time-series data while gRPC streaming (otherwise after stream completion) */
+        @ACfgOverride.Field(name="WHILE_STREAMING")
+        public Boolean              whileStreaming;
+        
+        /** Raw time-series data correlation concurrency parameters (multi-threaded correlation) */
+        @ACfgOverride.Struct(pathelem="CONCURRENCY")
+        public DpConcurrencyConfig  concurrency;
     }
     
 }

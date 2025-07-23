@@ -44,7 +44,7 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpDataResponseConfig;
+import com.ospreydcs.dp.api.config.query.DpDataRecoveryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.query.DpDataRequest;
@@ -71,7 +71,7 @@ public class QueryResponseCorrelatorDeprecatedTest2 {
     //
     
     /** Default configuration for recovering time-series query data */
-    public static final DpDataResponseConfig    CFG_RSP = DpApiConfig.getInstance().query.data.response;
+    public static final DpDataRecoveryConfig    CFG_RSP = DpApiConfig.getInstance().query.data.recovery;
     
     
     //
@@ -229,7 +229,7 @@ public class QueryResponseCorrelatorDeprecatedTest2 {
     @Test
     public final void testSetCorrelationConcurrency() {
         Boolean     bolCorrelConc = this.tstRspCorrelator.isCorrelatingConcurrently();
-        Assert.assertEquals(CFG_RSP.correlate.useConcurrency, bolCorrelConc);
+        Assert.assertEquals(CFG_RSP.correlate.concurrency.enabled, bolCorrelConc);
         
         this.tstRspCorrelator.setCorrelationConcurrency(!bolCorrelConc);
         Assert.assertEquals(!bolCorrelConc, this.tstRspCorrelator.isCorrelatingConcurrently());

@@ -30,9 +30,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpDataRequestConfig;
+import com.ospreydcs.dp.api.config.query.DpQueryRecoveryConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 
 /**
  * <p>
@@ -290,7 +289,7 @@ public record TestRequestRecord(
     //
 
     /** Default time-series data request configuration parameters */
-    private static final DpDataRequestConfig    CFG_RQST_DEF = DpApiConfig.getInstance().query.data.request;
+    private static final DpQueryRecoveryConfig    CFG_QRY_DEF = DpApiConfig.getInstance().query.data;
     
     
     //
@@ -312,7 +311,7 @@ public record TestRequestRecord(
     public static final TestRequestType     ENM_RQST_DEF = TestRequestType.GENERAL;
     
     /** The default gRPC stream type */
-    public static final DpGrpcStreamType    ENM_STRM_DEF = CFG_RQST_DEF.stream.preference;
+    public static final DpGrpcStreamType    ENM_STRM_DEF = CFG_QRY_DEF.recovery.stream.preferred;
     
     
     //

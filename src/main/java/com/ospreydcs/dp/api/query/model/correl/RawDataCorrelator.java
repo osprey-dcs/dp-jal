@@ -604,14 +604,14 @@ public class RawDataCorrelator {
     
     /**
      * <p>
-     * Returns the maximum number of allowable concurrent threads for processing of raw time-series data.
+     * Returns the maximum number of allowable concurrent threads for correlation processing of raw time-series data.
      * </p>
      * <p>
      * Note that this value only has context if concurrent processing is enabled.  
      * See method <code>{@link #isConcurrencyEnabled()}</code>.
      * </p>
      *   
-     * @return  the maximum number of concurrent processing threads
+     * @return  the maximum number of concurrent processing threads used in correlation
      */
     public int  getConcurrencytMaxThreads() {
         return this.cntMaxThreads;

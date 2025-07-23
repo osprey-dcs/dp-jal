@@ -30,7 +30,7 @@ import java.time.Duration;
 import java.util.SortedSet;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew;
+import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.correl.RawClockedData;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawTmsListData;
@@ -41,7 +41,7 @@ import com.ospreydcs.dp.api.query.model.superdom.TimeDomainProcessor;
  * Record containing the general results of a time-series request recovery and correlation operation.
  * </p>
  * <p>
- * The results are generally obtained from a <code>{@link QueryRequestProcessorNew#process(DpDataRequest)}</code>
+ * The results are generally obtained from a <code>{@link QueryRequestRecoverer#process(DpDataRequest)}</code>
  * operation.
  * </p>
  *
@@ -132,7 +132,7 @@ public record QueryRecoveryResult(
      * 
      * @return  a new <code>QueryRecoveryResult</code> record with fields extracted from the given arguments
      */
-    public static QueryRecoveryResult from(QueryRequestProcessorNew prcrRqst, SortedSet<RawCorrelatedData> setRawData, Duration durRecovery) {
+    public static QueryRecoveryResult from(QueryRequestRecoverer prcrRqst, SortedSet<RawCorrelatedData> setRawData, Duration durRecovery) {
         
         // Extract the request processor parameters
         String  strRqstId = prcrRqst.getRequestId();

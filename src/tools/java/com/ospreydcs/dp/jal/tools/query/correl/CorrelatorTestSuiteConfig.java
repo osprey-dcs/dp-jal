@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
@@ -120,10 +121,10 @@ public class CorrelatorTestSuiteConfig {
     
     
     /** Default maximum thread count */
-    public static final int         CNT_MAX_THRD_DEF = 2;
+    public static final int         CNT_MAX_THRD_DEF = CFG_DEF.data.recovery.correlate.concurrency.maxThreads;
     
     /** Default concurrency pivot size */
-    public static final int         SZ_CONC_PIVOT_DEF = 5;
+    public static final int         SZ_CONC_PIVOT_DEF = CFG_DEF.data.recovery.correlate.concurrency.pivotSize;
     
     
     //
@@ -142,9 +143,6 @@ public class CorrelatorTestSuiteConfig {
     // Defining Attributes
     //
     
-//    /** The output location for the test results */
-//    private final Path          pathOutput;
-    
     
     //
     // Instance Configuration
@@ -152,6 +150,9 @@ public class CorrelatorTestSuiteConfig {
     
     /** Collection of all test request for test suite */
     private final Set<TestArchiveRequest>   setTestRqsts = new TreeSet<>();
+    
+    /** Collection of supplementary PV names to add to all test requests */
+    private final Set<String>               setSupplPvs = new TreeSet<>();
 
     /** Collection of maximum thread counts for test suite */
     private final Set<Integer>              setMaxThrdCnts = new TreeSet<>();
@@ -171,7 +172,6 @@ public class CorrelatorTestSuiteConfig {
      *
      */
     public CorrelatorTestSuiteConfig() {
-//        this.pathOutput = pathOutput;
     }
 
     
@@ -209,6 +209,44 @@ public class CorrelatorTestSuiteConfig {
      */
     public void addTestRequest(TestArchiveRequest enmTestRqst) {
         this.setTestRqsts.add(enmTestRqst);
+    }
+    
+    /**
+     * <p>
+     * Adds a new PV name to the collection of supplemental PV names.
+     * </p>
+     * <p>
+     * Supplemental PVs are added to all Data Platform Test Archive Requests <code>TestArchiveRequest</code>
+     * defined in this configuration.  Thus, the actual time-series data request performed is the original
+     * request augment by the collection of supplemental PV names within the configuration.
+     * </p>
+     * <p>
+     * Any duplicate PV names will only appear once in the augmented time-series data request.
+     * </p>
+     * 
+     * @param strPvName     PV name to be supplemented to the final time-series data request
+     */
+    public void addSupplementalPv(String strPvName) {
+        this.setSupplPvs.add(strPvName);
+    }
+    
+    /**
+     * <p>
+     * Adds a collection of PV names to the collection of supplemental PV names.
+     * </p>
+     * <p>
+     * Supplemental PVs are added to all Data Platform Test Archive Requests <code>TestArchiveRequest</code>
+     * defined in this configuration.  Thus, the actual time-series data request performed is the original
+     * request augment by the collection of supplemental PV names within the configuration.
+     * </p>
+     * <p>
+     * Any duplicate PV names will only appear once in the augmented time-series data request.
+     * </p>
+     * 
+     * @param setPvNames    a collection of PV names to be supplemented to the final time-series data request
+     */
+    public void addSupplementalPvs(Collection<String> setPvNames) {
+        this.setSupplPvs.addAll(setPvNames);
     }
     
     /**
@@ -275,11 +313,16 @@ public class CorrelatorTestSuiteConfig {
      * Creates a new test suite of <code>CorrelatorTestCase</code> instances according to the current configuration.
      * </p>
      * <p>
-     * Note that the return value is map keyed by <code>TestArchiveRequest</code> instances.  The value of the
+     * Note that the return value is map keyed by <code>DpDataRequest</code> instances.  The value of the
      * map is a container of all <code>CorrelatorTestCase</code> instances that use that time-series data request.
      * This format is provide so that the data request need only be performed once and the recovered data then
      * used for each test case evaluation within the list keyed by that request.
      * </p> 
+     * <p>
+     * The <code>DpDataRequest</code> instances forming the map keys will all be augmented by the collection
+     * of supplemental PV names assigned by <code>{@link #addSupplementalPv(String)}</code> or 
+     * <code>{@link #addSupplementalPvs(Collection)}</code> (if any).
+     * </p>
      * <p>
      * If no time-series test request was added to the test suite an exception is thrown.  If a test suite configuration
      * parameter was not assigned then a single default value is assigned for that parameter.  See the following 
@@ -294,34 +337,46 @@ public class CorrelatorTestSuiteConfig {
      * 
      * @throws ConfigurationException    there are no test requests in the current test suite
      */
-    public Map<TestArchiveRequest, List<CorrelatorTestCase>> createTestSuite() throws ConfigurationException {
+    public Map<DpDataRequest, List<CorrelatorTestCase>> createTestSuite() throws ConfigurationException {
         
         // Check state
         this.defaultConfiguration();
         
         // Create returned container and populate it by enumerating through all test suite parameters 
-        Map<TestArchiveRequest, List<CorrelatorTestCase>>  mapCases = new HashMap<>();
+        Map<DpDataRequest, List<CorrelatorTestCase>>  mapCases = new HashMap<>();
         
         for (TestArchiveRequest enmRqst : this.setTestRqsts) {
+            
+            // Create the data request name
+            String          strIdAug = "";
+            if (!this.setSupplPvs.isEmpty())
+                strIdAug = "+" + this.setSupplPvs;
+            
+            // Create the data request
+            DpDataRequest   rqst = enmRqst.create();
+            rqst.selectSources(this.setSupplPvs);
+            rqst.setRequestId(strIdAug);
+            
+            // Create the list of test cases and populate if for this request
             List<CorrelatorTestCase>    lstCases = new LinkedList<>();
             
             for (Boolean bolEnable : SET_ENABLE) {
                 if (!bolEnable) {
-                    CorrelatorTestCase  recCase = CorrelatorTestCase.from(enmRqst, false, 1, 1);
+                    CorrelatorTestCase  recCase = CorrelatorTestCase.from(enmRqst, this.setSupplPvs, false, 1, 1);
 
                     lstCases.add(recCase);
 
                 } else {
                     for (Integer cntMaxThrds : this.setMaxThrdCnts)
                         for (Integer szPivot : this.setPivotSize) { 
-                            CorrelatorTestCase  recCase = CorrelatorTestCase.from(enmRqst, true, cntMaxThrds, szPivot);
+                            CorrelatorTestCase  recCase = CorrelatorTestCase.from(enmRqst, this.setSupplPvs, true, cntMaxThrds, szPivot);
 
                             lstCases.add(recCase);
                         }
                 }
             }
             
-            mapCases.put(enmRqst, lstCases);
+            mapCases.put(rqst, lstCases);
         }
         
         return mapCases;
@@ -343,9 +398,18 @@ public class CorrelatorTestSuiteConfig {
         if (strPad == null)
             strPad = "";
         
+        // Supplemental PV name request ID augmentation
+        String  strIdAug = "";
+        if (!this.setSupplPvs.isEmpty())
+            strIdAug = "+" + this.setSupplPvs;
+        
         ps.println(strPad + "Request IDs:");
         for (TestArchiveRequest enmRqst : this.setTestRqsts)
-            ps.println(strPad + "- " + enmRqst.name());
+            ps.println(strPad + "- " + enmRqst.name() + strIdAug);
+        
+        ps.println(strPad + "Supplemental PV Names:");
+        for (String strPvNm : this.setSupplPvs)
+            ps.println(strPad + "- " + strPvNm);
         
         ps.println(strPad + "Maximum Thread Counts:");
         for (Integer cntMaxThrds : this.setMaxThrdCnts)

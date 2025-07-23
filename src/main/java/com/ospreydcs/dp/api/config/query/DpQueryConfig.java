@@ -32,8 +32,6 @@ import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
 import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.model.AUnavailable;
-import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 
 /**
  * <p>
@@ -54,11 +52,6 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
     //
     // Configuration Fields
     //
-    
-    /** Default bucket count per page when using cursor requests */
-    @AUnavailable(status=STATUS.UNDER_REVIEW)
-    @ACfgOverride.Field(name="PAGE_SIZE")
-    public Integer              pageSize;
     
     /** Default parameters for Query Service time-series data requests and responses */
     @ACfgOverride.Struct(pathelem="DATA")

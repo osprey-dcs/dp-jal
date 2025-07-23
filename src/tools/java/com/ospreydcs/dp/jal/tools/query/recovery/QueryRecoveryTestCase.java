@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	CorrelatorTestCase.java
+ * File:	QueryRecoveryTestCase.java
  * Package: com.ospreydcs.dp.jal.tools.query.correl
- * Type: 	CorrelatorTestCase
+ * Type: 	QueryRecoveryTestCase
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -23,7 +23,7 @@
  * @since May 30, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query.correl;
+package com.ospreydcs.dp.jal.tools.query.recovery;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
 
-import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
+import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
 
@@ -62,7 +62,7 @@ import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
  * @since May 30, 2025
  * 
  */
-public record CorrelatorTestCase(
+public record QueryRecoveryTestCase(
         int                 indCase,
         TestArchiveRequest  enmRqst,
         Set<String>         setSupplPvs,
@@ -78,7 +78,7 @@ public record CorrelatorTestCase(
     
     /**
      * <p>
-     * Creates a new <code>CorrelatorTestCase</code> instance populated from the argument values.
+     * Creates a new <code>QueryRecoveryTestCase</code> instance populated from the argument values.
      * </p>
      * <p>
      * This is a convenience creator where no supplementing PV names are added to the given time-series
@@ -90,21 +90,21 @@ public record CorrelatorTestCase(
      * @param cntMaxThrds   maximum number of execution threads when concurrency is enabled
      * @param szConcPivot   the target set size triggering multi-threading when enabled
      * 
-     * @return  a new <code>CorrelatorTestCase</code> record with fields given by the arguments
+     * @return  a new <code>QueryRecoveryTestCase</code> record with fields given by the arguments
      */
-    public static CorrelatorTestCase    from(
+    public static QueryRecoveryTestCase    from(
             TestArchiveRequest  enmRqst,
             boolean             bolConcOpt,
             int                 cntMaxThrds,
             int                 szConcPivot
             )
     {
-        return new CorrelatorTestCase(IND_CASE, enmRqst, Set.of(), bolConcOpt, cntMaxThrds, szConcPivot); 
+        return new QueryRecoveryTestCase(IND_CASE, enmRqst, Set.of(), bolConcOpt, cntMaxThrds, szConcPivot); 
     }
     
     /**
      * <p>
-     * Creates a new <code>CorrelatorTestCase</code> instance populated from the argument values.
+     * Creates a new <code>QueryRecoveryTestCase</code> instance populated from the argument values.
      * </p>
      * <p>
      * This is a convenience creator where no supplementing PV names are added to the given time-series
@@ -117,9 +117,9 @@ public record CorrelatorTestCase(
      * @param cntMaxThrds   maximum number of execution threads when concurrency is enabled
      * @param szConcPivot   the target set size triggering multi-threading when enabled
      * 
-     * @return  a new <code>CorrelatorTestCase</code> record with fields given by the arguments
+     * @return  a new <code>QueryRecoveryTestCase</code> record with fields given by the arguments
      */
-    public static CorrelatorTestCase    from(
+    public static QueryRecoveryTestCase    from(
             TestArchiveRequest  enmRqst,
             Set<String>         setSupplPvs,
             boolean             bolConcOpt,
@@ -127,7 +127,7 @@ public record CorrelatorTestCase(
             int                 szConcPivot
             )
     {
-        return new CorrelatorTestCase(IND_CASE, enmRqst, setSupplPvs, bolConcOpt, cntMaxThrds, szConcPivot); 
+        return new QueryRecoveryTestCase(IND_CASE, enmRqst, setSupplPvs, bolConcOpt, cntMaxThrds, szConcPivot); 
     }
     
     
@@ -156,7 +156,7 @@ public record CorrelatorTestCase(
      * @param cntMaxThrds   maximum number of execution threads when concurrency is enabled
      * @param szConcPivot   the target set size triggering multi-threading when enabled
      */
-    public CorrelatorTestCase {
+    public QueryRecoveryTestCase {
         IND_CASE++;
     }
     
@@ -178,47 +178,49 @@ public record CorrelatorTestCase(
      * @throws IllegalArgumentException the argument contained invalid timestamps
      * @throws CompletionException      error in <code>DataBucket</code> insertion task execution (see cause)
      */
-    public CorrelatorTestResult evaluate(RawDataCorrelator processor, List<QueryDataResponse.QueryData> lstRspMsgs) 
+    public QueryRecoveryTestResult evaluate(QueryRequestRecoverer processor, List<QueryDataResponse.QueryData> lstRspMsgs) 
             throws IllegalArgumentException, CompletionException {
         
-        // Save processor configuration
-        final boolean   bolMultThrd = processor.isConcurrencyEnabled();
-        final int       cntMaxThrds = processor.getConcurrencytMaxThreads();
-        final int       szConcPivot = processor.getConcurrencyPivotSize();
-        
-        // Configure the processor
-        processor.enableConcurrency(this.bolConcOpt);
-        processor.setMaxThreadCount(this.cntMaxThrds);
-        processor.setConcurrencyPivotSize(this.szConcPivot);
-        
-        // Perform the evaluation
-        processor.reset();
-        
-        Instant     insStart = Instant.now();
-        for (QueryDataResponse.QueryData msgData : lstRspMsgs) {
-            processor.processQueryData(msgData);
-        }
-        Instant     insFinish = Instant.now();
-        
-        // Collect the results
-        long        szRspMsgs = lstRspMsgs.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
-        
-        Duration    durProcessed = Duration.between(insStart, insFinish);
-        int         cntRspMsgs = lstRspMsgs.size();
-        int         cntCorrelSet = processor.sizeCorrelatedSet();
-        long        szProcessed = processor.getBytesProcessed();
-        double      dblDataRate = ( ((double)szProcessed) * 1000 )/durProcessed.toNanos();
-        
-        // Restore the processor to its original state and configuration
-        processor.reset();
-        processor.enableConcurrency(bolMultThrd);
-        processor.setMaxThreadCount(cntMaxThrds);
-        processor.setConcurrencyPivotSize(szConcPivot);
+//        // Save processor configuration
+//        final boolean   bolMultThrd = processor.isConcurrencyEnabled();
+//        final int       cntMaxThrds = processor.getConcurrencytMaxThreads();
+//        final int       szConcPivot = processor.getConcurrencyPivotSize();
+//        
+//        // Configure the processor
+//        processor.enableConcurrency(this.bolConcOpt);
+//        processor.setMaxThreadCount(this.cntMaxThrds);
+//        processor.setConcurrencyPivotSize(this.szConcPivot);
+//        
+//        // Perform the evaluation
+//        processor.reset();
+//        
+//        Instant     insStart = Instant.now();
+//        for (QueryDataResponse.QueryData msgData : lstRspMsgs) {
+//            processor.processQueryData(msgData);
+//        }
+//        Instant     insFinish = Instant.now();
+//        
+//        // Collect the results
+//        long        szRspMsgs = lstRspMsgs.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
+//        
+//        Duration    durProcessed = Duration.between(insStart, insFinish);
+//        int         cntRspMsgs = lstRspMsgs.size();
+//        int         cntCorrelSet = processor.sizeCorrelatedSet();
+//        long        szProcessed = processor.getBytesProcessed();
+//        double      dblDataRate = ( ((double)szProcessed) * 1000 )/durProcessed.toNanos();
+//        
+//        // Restore the processor to its original state and configuration
+//        processor.reset();
+//        processor.enableConcurrency(bolMultThrd);
+//        processor.setMaxThreadCount(cntMaxThrds);
+//        processor.setConcurrencyPivotSize(szConcPivot);
         
         // Return the test results
-        CorrelatorTestResult    recResult = CorrelatorTestResult.from(cntRspMsgs, szRspMsgs, cntCorrelSet, szProcessed, durProcessed, dblDataRate, this);
+//        QueryRecoveryTestResult    recResult = QueryRecoveryTestResult.from(cntRspMsgs, szRspMsgs, cntCorrelSet, szProcessed, durProcessed, dblDataRate, this);
+//        
+//        return recResult;
         
-        return recResult;
+        return null;    // TODO - Complete
     }
     
     /**

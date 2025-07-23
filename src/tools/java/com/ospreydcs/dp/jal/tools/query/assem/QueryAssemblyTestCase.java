@@ -33,7 +33,7 @@ import java.util.SortedSet;
 
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew;
+import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.query.model.assem.SampledAggregate;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
@@ -59,7 +59,7 @@ import com.ospreydcs.dp.jal.tools.query.superdom.SuperDomTestResult;
  * </p>
  * <p>
  * <h2>Operation</h2>
- * A time-series data request assembly requires the component <code>QueryRequestProcessorNew</code> to recover
+ * A time-series data request assembly requires the component <code>QueryRequestRecoverer</code> to recover
  * the raw request data recovery and correlation, and a <code>QueryResponseAssembler</code> component to assemble
  * the resulting raw correlated data into a sampled aggregate of disjoint sampled blocks.
  * </p>
@@ -71,7 +71,7 @@ import com.ospreydcs.dp.jal.tools.query.superdom.SuperDomTestResult;
  * </p>
  * <p>
  * <h2>Test Case Evaluation and Results</h2>
- * A test case is evaluated using the <code>{@link #evaluate(QueryRequestProcessorNew)}</code> method.  The
+ * A test case is evaluated using the <code>{@link #evaluate(QueryRequestRecoverer)}</code> method.  The
  * The results of a single test case are contained in a <code>{@link SuperDomTestResult}</code> record, which
  * is returned by the method.  Considering the above, the result record contain fields for both the 
  * recovery and correlation of the raw, time-series data, and for the super-domain processing that follows.
@@ -246,7 +246,7 @@ public record QueryAssemblyTestCase(
      * 
      * @throws DpQueryException general exception during recovery and/or processing (see message and cause)
      */
-    public QueryAssemblyTestResult   evaluate(QueryRequestProcessorNew prcrRqsts, QueryResponseAssembler prcrAssem) 
+    public QueryAssemblyTestResult   evaluate(QueryRequestRecoverer prcrRqsts, QueryResponseAssembler prcrAssem) 
             throws DpQueryException {
 
         // Perform and time the raw data data recovery and correlation

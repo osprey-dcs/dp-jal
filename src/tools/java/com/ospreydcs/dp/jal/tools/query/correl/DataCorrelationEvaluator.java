@@ -147,6 +147,8 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         
         // Check for client help request
         if (JalApplicationBase.parseAppArgsHelp(args)) {
+            System.out.println();
+            System.out.println(STR_APP_DESCR);
             System.out.println(STR_APP_USAGE);
             
             System.exit(ExitCode.SUCCESS.getCode());
@@ -274,10 +276,12 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
     
     
     /** Default output path location */
-//  public static final String      STR_OUTPUT_DEF = CFG_QUERY.output.correl.path;
     public static final String      STR_OUTPUT_DEF = CFG_TOOLS.output + "/query/correl";
   
 
+    /** Argument variable name identifying supplemental PV names for data request */
+    public static final String      STR_VAR_PVS = "--pvs";
+    
     /** Argument flag identifying a maximum thread count value */
     public static final String      STR_VAR_THRDS = "--threads";
     
@@ -289,6 +293,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
 
     /** List of all the valid argument delimiters */
     public static final List<String>    LST_STR_DELIMS = List.of(
+            STR_VAR_PVS,
             STR_VAR_THRDS, 
             STR_VAR_PIVOT, 
             STR_VAR_OUTPUT
@@ -302,6 +307,16 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
     /** Application name */
     public static final String      STR_APP_NAME = DataCorrelationEvaluator.class.getSimpleName();
     
+    /** A laconic description of the application function */
+    public static final String      STR_APP_DESCR = 
+            STR_APP_NAME + " Description \n"
+          + "- Application evaluates the performance and operation of the RawDataCorrelator class \n"
+          + "    for recovering and correlating raw time-series data. \n"
+          + "- Data Platform Test Archive requests are performed, the data messages are recovered \n"
+          + "    and correlated into raw data blocks containing all data messages corresponding a \n "
+          + "    common timestamp message.\n"
+          + "- No further processing is performed. \n";
+    
     
     /** The "usage" message for client help requests or invalid application arguments */
     public static final String      STR_APP_USAGE = 
@@ -311,20 +326,24 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
           + " [" + STR_VAR_HELP + "]"
           + " [" + STR_VAR_VERSION + "]"
           + " R1 [ ... Rn]"
+          + " [" + STR_VAR_PVS + " PV1 ... PVi]"
           + " [" + STR_VAR_THRDS + " M1 ... Mj]"
           + " [" + STR_VAR_PIVOT + " P1 ... Pk]"
           + " [" + STR_VAR_OUTPUT +" Output]"
           + "\n" 
           + "  Where  \n"
-          + "    " + STR_VAR_HELP + "      = print this message and return.\n"
-          + "    " + STR_VAR_VERSION + "   = prints application version information and return.\n"
-          + "    R1, ..., Rn = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
-          + "    M1, ..., Mj = Maximum allowable number(s) of concurrent processing threads - Integer value(s). \n"
-          + "    P1, ..., Pk = Pivot size(s) triggering concurrent processing - Integer value(s). \n"
-          + "    Output      = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
+          + "    " + STR_VAR_HELP + "        = print this message and return.\n"
+          + "    " + STR_VAR_VERSION + "     = prints application version information and return.\n"
+          + "    R1, ..., Rn   = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
+          + "    PV1, ..., PVi = Supplemental PV names to be added to requests R1 through Rn. \n"
+          + "    M1, ..., Mj   = Maximum allowable number(s) of concurrent processing threads - Integer value(s). \n"
+          + "    P1, ..., Pk   = Pivot size(s) triggering concurrent processing - Integer value(s). \n"
+          + "    Output        = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
           + "\n"
           + "  NOTES: \n"
           + "  - All bracketed quantities [...] are optional. \n"
+          + "  - PV1, ..., PVj values are strictly optional. \n"
+          + "  - If values are not provided for " + STR_VAR_THRDS + " and/or " + STR_VAR_PIVOT + ", default values are provided. \n "
           + "  - Default " + STR_VAR_OUTPUT + " value is " + STR_OUTPUT_DEF + ".\n";
 
     
@@ -389,10 +408,10 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
     private final RawDataCorrelator     toolCorrelator;
     
     /** The collection of test cases used in evaluations */
-    private final Map<TestArchiveRequest,List<CorrelatorTestCase>>  mapCases;
+    private final Map<DpDataRequest,List<CorrelatorTestCase>>   mapCases;
     
     /** The collection of test results recovered from evaluations */
-    private final Collection<CorrelatorTestResult>                  setResults;
+    private final Collection<CorrelatorTestResult>              setResults;
     
     
     //
@@ -501,15 +520,13 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
 
         // Iterate over each test request in the test case collection (within test suite configuration)
         Instant insStart = Instant.now();
-        for (TestArchiveRequest enmRqst : this.mapCases.keySet()) {
+        for (DpDataRequest rqst : this.mapCases.keySet()) {
 
             // Recover raw data for this request
-            DpDataRequest               rqst = enmRqst.create();
-            
             List<QueryData>             lstDataMsgs = super.recoverRequestData(rqst);
             
             // Perform all the test case evaluations for the test request
-            List<CorrelatorTestCase>    lstCases = this.mapCases.get(enmRqst);
+            List<CorrelatorTestCase>    lstCases = this.mapCases.get(rqst);
             
             this.toolCorrelator.reset();
             for (CorrelatorTestCase recCase : lstCases) {
@@ -689,6 +706,9 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
                     TestArchiveRequest.valueOf(TestArchiveRequest.class, strNm))    // throws IllegalArgumentException
                 .toList();
         
+        // Parse any supplemental PV names
+        List<String>    lstSupplPvs = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_PVS);
+        
         // Parse the maximum thread counts and convert to integers
         List<String>    lstStrThrdCnts = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_THRDS);
         List<Integer>   lstThrdCnts = lstStrThrdCnts.stream()
@@ -705,6 +725,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         CorrelatorTestSuiteConfig suite = CorrelatorTestSuiteConfig.create();
         
         suite.addTestRequests(lstRqsts);
+        suite.addSupplementalPvs(lstSupplPvs);
         suite.addMaxThreadCounts(lstThrdCnts);
         suite.addConcurrencyPivotSizes(lstSzPivots);
         

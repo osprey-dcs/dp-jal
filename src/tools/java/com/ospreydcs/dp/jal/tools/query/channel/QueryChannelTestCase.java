@@ -30,6 +30,7 @@ import java.lang.module.ResolutionException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletionException;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
@@ -63,6 +64,8 @@ import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
  *
  * @param   indCase     the test case index
  * @param   enmRqstOrg  the original time-series data request
+ * @param   setSupplPvs a (optional) set of PV names to be added to the original request
+ * @param   strRqstName the name given to the final time-series data request
  * @param   enmDcmpType the request domain decomposition type
  * @param   enmStrType  the gRPC data stream type used to recover the request data
  * @param   cntStrms    the number of gRPC streams used for request data recovery
@@ -75,6 +78,8 @@ import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
 public record QueryChannelTestCase(
         int                 indCase,
         TestArchiveRequest  enmRqstOrg, 
+        Set<String>         setSupplPvs,
+        String              strRqstName,
         RequestDecompType   enmDcmpType, 
         DpGrpcStreamType    enmStrmType, 
         int                 cntStrms, 
@@ -89,6 +94,12 @@ public record QueryChannelTestCase(
     /**
      * <p>
      * Creates a new instances of <code>TestCase</code> from the given parameters.
+     * </p>
+     * <p>
+     * This is a convenience creator when no supplemental PV names are added to the time-series request.
+     * The field <code>{@link #setSupplPvs}</code> will be empty for the returned record and the list of
+     * composite request <code>{@link #lstCmpRqsts}</code> will be decomposed directly from the original 
+     * request <code>{@link #enmRqstOrg}</code>.
      * </p>
      * 
      * @param   enmRqstOrg  the original time-series data request
@@ -112,7 +123,53 @@ public record QueryChannelTestCase(
         lstRqsts.forEach(r -> r.setRequestId(enmRqstOrg.name()));
         lstRqsts.forEach(r -> r.setStreamType(enmStrmType));
         
-        return new QueryChannelTestCase(IND_CASE, enmRqstOrg, enmRqstDcmp, enmStrmType, cntStrms, lstRqsts);
+        return new QueryChannelTestCase(IND_CASE, enmRqstOrg, Set.of(), enmRqstOrg.name(),enmRqstDcmp, enmStrmType, cntStrms, lstRqsts);
+    }
+    
+    /**
+     * <p>
+     * Creates a new instances of <code>TestCase</code> from the given parameters.
+     * </p>
+     * <p>
+     * All supplemental PV names are added to the time-series request.  All composite requests will be build
+     * from the original request <code>{@link #enmRqstOrg}</code> augmented by the set of supplemental PV
+     * names.
+     * </p>
+     * 
+     * @param   enmRqstOrg  the original time-series data request
+     * @param   setSupplPvs an (optional) set of PV names to be added to the original request
+     * @param   enmDcmpType the request domain decomposition type
+     * @param   enmStrType  the gRPC data stream type used to recover the request data
+     * @param   cntStrms    the number of gRPC streams used for request data recovery
+     *
+     * @return  a new, initialized instance of <code>TestCase</code>
+     * 
+     * @throws  UnsupportedOperationException   an unexpected <code>RequestDecompType</code> enumeration was encountered    
+     */
+    public static QueryChannelTestCase  from(
+                                            TestArchiveRequest  enmRqstOrg,
+                                            Set<String>         setSupplPvs,
+                                            RequestDecompType   enmRqstDcmp, 
+                                            DpGrpcStreamType    enmStrmType, 
+                                            int cntStrms) 
+            throws UnsupportedOperationException {
+    
+        // Create the time-series data request
+        DpDataRequest       rqst = enmRqstOrg.create();
+        String              strId = enmRqstOrg.name();
+
+        if (!setSupplPvs.isEmpty())
+            strId = strId + "+" + setSupplPvs;
+        
+        rqst.setRequestId(strId);
+        rqst.selectSources(setSupplPvs);
+        
+        List<DpDataRequest> lstRqsts = PRCR_DECOMP.buildCompositeRequest(rqst, enmRqstDcmp, cntStrms);   // throws exception
+        
+        lstRqsts.forEach(r -> r.setRequestId( rqst.getRequestId()) );
+        lstRqsts.forEach(r -> r.setStreamType(enmStrmType));
+        
+        return new QueryChannelTestCase(IND_CASE, enmRqstOrg, setSupplPvs, strId, enmRqstDcmp, enmStrmType, cntStrms, lstRqsts);
     }
     
     
@@ -255,6 +312,8 @@ public record QueryChannelTestCase(
         
         ps.println(strPad + this.getClass().getSimpleName() + " " + this.indCase + ":");
         ps.println(strPad + "  Original request ID : " + this.enmRqstOrg.name());
+        ps.println(strPad + "  Modified request ID : " + this.strRqstName);
+        ps.println(strPad + "  Supplemental PV names      : " + this.setSupplPvs);
         ps.println(strPad + "  Request decomposition type : " + this.enmDcmpType);
         ps.println(strPad + "  gRPC stream type           : " + this.enmStrmType);
         ps.print(  strPad + "  gRPC stream count          : " + this.cntStrms);

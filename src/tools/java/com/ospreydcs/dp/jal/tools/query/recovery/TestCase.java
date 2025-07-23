@@ -1,4 +1,4 @@
-package com.ospreydcs.dp.api.query.impl;
+package com.ospreydcs.dp.jal.tools.query.recovery;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -10,7 +10,6 @@ import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
@@ -37,10 +36,10 @@ import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
  *
  */
 public record    TestCase(
-        DpDataRequest rqstOrg, 
-        RequestDecompType enmDcmpType, 
-        DpGrpcStreamType enmStrmType, 
-        int cntStrms,
+        DpDataRequest       rqstOrg, 
+        RequestDecompType   enmDcmpType, 
+        DpGrpcStreamType    enmStrmType, 
+        int                 cntStrms,
         List<DpDataRequest> lstCmpRqsts
         ) 
 {
@@ -128,47 +127,47 @@ public record    TestCase(
         return recResult;
     }
 
-    /**
-     * <p>
-     * Performs the multi-streamed, time-series data request on the given processor for the given configuration and evaluates results.
-     * </p>
-     * <p>
-     * First the given <code>TestConfig</code> record is used to configure the given <code>QueryRequestProcessorOld</code> instance.
-     * Then the given <code>DpDataRequest</code> is used for the <code>{@link QueryRequestProcessorOld#processRequest(DpDataRequest)</code>
-     * operation. 
-     * The performance of the operation is measured and returned in the <code>ConfigResult</code> record.
-     * </p>
-     * 
-     * @param prcrRqsts     the request processor under evaluation
-     * @param recPrcrCfg    configuration record for the given request processor
-     * 
-     * @return  a new <code>ConfigResult</code> record containing the results of the processor request evaluation
-     * 
-     * @throws DpQueryException general Query Service exception during request processing (see message and cause)
-     */
-    @SuppressWarnings("deprecation")
-    public ConfigResult  evaluate(QueryRequestProcessorOld prcrRqsts, TestConfig recPrcrCfg) throws DpQueryException {
-
-        // Configure the processor
-        recPrcrCfg.configure(prcrRqsts);
-
-        Instant insStart = Instant.now();
-        SortedSet<CorrelatedQueryDataOld>  setData = prcrRqsts.processRequests(this.lstCmpRqsts);
-        Instant insFinish = Instant.now();
-
-        // Compute results
-        Duration    durRqst = Duration.between(insStart, insFinish);
-        int         cntMsgs = prcrRqsts.getProcessedMessageCount();
-        int         cntBlks = setData.size();
-        long        szAlloc = prcrRqsts.getProcessedByteCount();
-
-        double      dblRateXmit  = ( ((double)szAlloc) * 1000 )/durRqst.toNanos();
-
-        // Create result record and save
-        ConfigResult    recResult = ConfigResult.from(dblRateXmit, cntMsgs, szAlloc, cntBlks, durRqst, recPrcrCfg, this.rqstOrg, this.lstCmpRqsts);
-
-        return recResult;
-    }
+//    /**
+//     * <p>
+//     * Performs the multi-streamed, time-series data request on the given processor for the given configuration and evaluates results.
+//     * </p>
+//     * <p>
+//     * First the given <code>TestConfig</code> record is used to configure the given <code>QueryRequestProcessorOld</code> instance.
+//     * Then the given <code>DpDataRequest</code> is used for the <code>{@link QueryRequestProcessorOld#processRequest(DpDataRequest)</code>
+//     * operation. 
+//     * The performance of the operation is measured and returned in the <code>ConfigResult</code> record.
+//     * </p>
+//     * 
+//     * @param prcrRqsts     the request processor under evaluation
+//     * @param recPrcrCfg    configuration record for the given request processor
+//     * 
+//     * @return  a new <code>ConfigResult</code> record containing the results of the processor request evaluation
+//     * 
+//     * @throws DpQueryException general Query Service exception during request processing (see message and cause)
+//     */
+//    @SuppressWarnings("deprecation")
+//    public ConfigResult  evaluate(QueryRequestProcessorOld prcrRqsts, TestConfig recPrcrCfg) throws DpQueryException {
+//
+//        // Configure the processor
+//        recPrcrCfg.configure(prcrRqsts);
+//
+//        Instant insStart = Instant.now();
+//        SortedSet<CorrelatedQueryDataOld>  setData = prcrRqsts.processRequests(this.lstCmpRqsts);
+//        Instant insFinish = Instant.now();
+//
+//        // Compute results
+//        Duration    durRqst = Duration.between(insStart, insFinish);
+//        int         cntMsgs = prcrRqsts.getProcessedMessageCount();
+//        int         cntBlks = setData.size();
+//        long        szAlloc = prcrRqsts.getProcessedByteCount();
+//
+//        double      dblRateXmit  = ( ((double)szAlloc) * 1000 )/durRqst.toNanos();
+//
+//        // Create result record and save
+//        ConfigResult    recResult = ConfigResult.from(dblRateXmit, cntMsgs, szAlloc, cntBlks, durRqst, recPrcrCfg, this.rqstOrg, this.lstCmpRqsts);
+//
+//        return recResult;
+//    }
 
     /**
      * <p>

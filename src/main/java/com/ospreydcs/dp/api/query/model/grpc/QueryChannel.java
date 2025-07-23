@@ -360,7 +360,7 @@ public class QueryChannel {
      * Recovers the query data using a unary gRPC operation blocking until all data is
      * recovered and processed.  Note that all raw query data is processed post recovery.  
      * The only processing option affecting this operation is 
-     * <code>{@link #enableCorrelateConcurrently(boolean)}</code>. 
+     * <code>{@link #enableCorrelateConcurrency(boolean)}</code>. 
      * </p>
      * <p>
      * All data recovery is performed within this method.
@@ -445,7 +445,7 @@ public class QueryChannel {
      * following methods for more information:
      * <ul>
      * <li><code>{@link #enableCorrelateWhileStreaming(boolean)}</code></li>
-     * <li><code>{@link #enableCorrelateConcurrently(boolean)}</code></li>
+     * <li><code>{@link #enableCorrelateConcurrency(boolean)}</code></li>
      * <li><code>{@link #enableMultiStreaming(boolean)}</code></li>
      * </ul>
      * These are all performance options that should be tuned for specific platforms.
@@ -551,7 +551,7 @@ public class QueryChannel {
      * following methods for more information:
      * <ul>
      * <li><code>{@link #enableCorrelateWhileStreaming(boolean)}</code></li>
-     * <li><code>{@link #enableCorrelateConcurrently(boolean)}</code></li>
+     * <li><code>{@link #enableCorrelateConcurrency(boolean)}</code></li>
      * <li><code>{@link #enableMultiStreaming(boolean)}</code></li>
      * </ul>
      * Note that the <code>{@link #enableMultiStreaming(boolean)}</code> has no effect here.

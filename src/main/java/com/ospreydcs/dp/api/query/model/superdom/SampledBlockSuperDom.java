@@ -729,7 +729,7 @@ public class SampledBlockSuperDom extends SampledBlock {
     
     /**
      * <p>
-     * Builds and populates all the Java array from the auxiliary data structures.
+     * Builds and populates all the Java arrays from the auxiliary data structures.
      * </p>
      * <p>
      * Allocates memory and populates the arrays <code>{@link #arrTms}, {@link #arrPvNames}, {@link #arrVals}</code>

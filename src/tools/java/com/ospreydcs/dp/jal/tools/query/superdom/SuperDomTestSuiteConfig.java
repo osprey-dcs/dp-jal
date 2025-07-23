@@ -73,6 +73,7 @@ import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
  * <li>The last two properties are optional when <code>TestArchiveRequest</code> enumerations are specified;
  *     the time-range of each <code>TestArchiveRequest</code> remains unchanged.</li>
  * </ul> 
+ * </p>
  * 
  *
  * @author Christopher K. Allen

@@ -851,20 +851,20 @@ public class QueryResponseCorrelatorDeprecated {
     
     
     /** Use multi-threading for query data correlation */
-    public static final boolean     BOL_CORRELATE_CONCURRENCY = CFG_QUERY.data.response.correlate.useConcurrency;
+    public static final boolean     BOL_CORRELATE_CONCURRENCY = CFG_QUERY.data.recovery.correlate.concurrency.enabled;
     
     /** Perform data correlation while gRPC streaming - otherwise do it post streaming */
-    public static final boolean     BOL_CORRELATE_MIDSTREAM = CFG_QUERY.data.response.correlate.whileStreaming;
+    public static final boolean     BOL_CORRELATE_MIDSTREAM = CFG_QUERY.data.recovery.correlate.whileStreaming;
     
     
     /** Is response multi-streaming enabled? */
-    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.response.multistream.enabled;
+    public static final boolean     BOL_MULTISTREAM = CFG_QUERY.data.recovery.multistream.enabled;
     
     /** Maximum number of open data streams to Query Service */
-    public static final int         CNT_MULTISTREAM = CFG_QUERY.data.response.multistream.maxStreams;
+    public static final int         CNT_MULTISTREAM = CFG_QUERY.data.recovery.multistream.maxStreams;
     
     /** Query domain size triggering multiple streaming (if enabled) */
-    public static final long        SIZE_DOMAIN_MULTISTREAM = CFG_QUERY.data.response.multistream.sizeDomain;
+    public static final long        SIZE_DOMAIN_MULTISTREAM = CFG_QUERY.data.recovery.multistream.sizeDomain;
     
     
     //
@@ -1160,7 +1160,7 @@ public class QueryResponseCorrelatorDeprecated {
      * </p>
      * <p>
      * The default value is taken from the Java API Library configuration file
-     * (see {@link #SIZE_DOMAIN_MULTISTREAM}).
+     * (see {@link #SIZE_MULTISTREAM_DOMAIN}).
      * </p>
      * 
      * @return the minimum query domain size triggering multi-streaming of response data (in data source * seconds)

@@ -30,7 +30,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 
-import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorNew;
+import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
@@ -53,7 +53,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <ul>  
  * <li>The <code>{@link SuperdomTestSuiteConfig}</code> class generates a suite (battery) of test cases.</li> 
  * <li>The parameters for a super-domain test case are stored in a <code>{@link SuperDomTestCase}</code> record.</li>
- * <li>A super-domain test case evaluation is performed by method <code>{@link SuperDomTestCase#evaluate(QueryRequestProcessorNew)}}</code>.</li>
+ * <li>A super-domain test case evaluation is performed by method <code>{@link SuperDomTestCase#evaluate(QueryRequestRecoverer)}}</code>.</li>
  * <li>The results of a super-domain test case evaluation are stored in a <code>{@link SuperDomTestResult}</code> record.</li>
  * <li>A summary for a suite of super-domain test results is created by method <code>{@link SuperDomTestResultSummary#summarize(Collection)}</code>.</li>
  * <li>The summary for a suite of super-domain test results is stored in a <code>{@link SuperDomTestResultSummary}</code> record.</li>

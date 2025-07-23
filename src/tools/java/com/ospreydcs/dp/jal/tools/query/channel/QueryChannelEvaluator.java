@@ -147,6 +147,8 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         
         // Check for client help request
         if (JalApplicationBase.parseAppArgsHelp(args)) {
+            System.out.println();
+            System.out.println(STR_APP_DESCR);
             System.out.println(STR_APP_USAGE);
             
             System.exit(ExitCode.SUCCESS.getCode());
@@ -178,7 +180,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         try {
             
             suiteEvals = QueryChannelEvaluator.parseTestSuiteConfig(args);
-            strOutputLoc = QueryChannelEvaluator.parseOutputLocation(args);
+            strOutputLoc = JalApplicationBase.parseOutputLocation(args, STR_OUTPUT_DEF);
             
         } catch (Exception e) {
             
@@ -223,10 +225,6 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
     // Application Resources
     //
     
-    /** Default configuration parameters for the Query Service tools */
-//    private static final JalToolsQueryConfig    CFG_QUERY = JalToolsConfig.getInstance().query;
-//    private static final DpQueryConfig      CFG_QUERY = DpApiConfig.getInstance().query;
-    
     /** Default JAL tools configuration parameters */
     private static final JalToolsConfig     CFG_TOOLS = JalToolsConfig.getInstance();
     
@@ -240,9 +238,11 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
 
     
     /** Default output path location */
-//  public static final String      STR_OUTPUT_DEF = CFG_QUERY.output.correl.path;
-    public static final String      STR_OUTPUT_DEF = CFG_TOOLS.output.path + "/query/correl";
-  
+    public static final String      STR_OUTPUT_DEF = CFG_TOOLS.output.path + "/query/channel";
+
+    
+    /** Argument variable name identifying supplemental PV names for data request */
+    public static final String      STR_VAR_SUPPL_PVS = "--pvs";
     
     /** Argument variable name identifying data request decomposition types */
     public static final String      STR_VAR_RQST_DCMP = "--decomp";
@@ -258,6 +258,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
 
     /** List of all the valid argument delimiters */
     public static final List<String>    LST_STR_DELIMS = List.of(
+            STR_VAR_SUPPL_PVS,
             STR_VAR_RQST_DCMP,
             STR_VAR_STRM_TYPE,
             STR_VAR_STRM_CNT, 
@@ -272,6 +273,14 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
     /** Application name */
     public static final String      STR_APP_NAME = QueryChannelEvaluator.class.getSimpleName();
     
+    /** A laconic description of the application function */
+    public static final String      STR_APP_DESCR = 
+            STR_APP_NAME + " Description \n"
+          + "- Application evaluates the performance and operation of the QueryChannel class \n"
+          + "    for recovering raw time-series data. \n"
+          + "- Data Platform Test Archive requests are performed, the data is recovered \n"
+          + "    as gRPC message and operation is recorded. \n"
+          + "- No further processing is performed. \n";
     
     /** The "usage" message for client help requests or invalid application arguments */
     public static final String      STR_APP_USAGE = 
@@ -280,23 +289,27 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
           + "% " + STR_APP_NAME
           + " [" + STR_VAR_HELP + "]"
           + " [" + STR_VAR_VERSION + "]"
-          + " R1 [ ... RN]"
-          + " [" + STR_VAR_RQST_DCMP + " D1 ... Di]"
-          + " [" + STR_VAR_STRM_TYPE + " S1 ... Sj]"
-          + " [" + STR_VAR_STRM_CNT + " N1 ... Nk]"
+          + " R1 [ ... Rn]"
+          + " [" + STR_VAR_SUPPL_PVS + " PV1 ... PVi]"
+          + " [" + STR_VAR_RQST_DCMP + " D1 ... Dj]"
+          + " [" + STR_VAR_STRM_TYPE + " S1 ... Sk]"
+          + " [" + STR_VAR_STRM_CNT + " N1 ... Nm]"
           + " [" + STR_VAR_OUTPUT +" Output]"
           + "\n" 
           + "  Where  \n"
-          + "    " + STR_VAR_HELP + "      = print this message and return.\n"
-          + "    " + STR_VAR_VERSION + "   = prints application version information and return.\n"
-          + "    R1, ..., Rn = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
-          + "    D1, ..., Di = Request decomposition type(s) - RequestDecompType enumeration name(s). \n"
-          + "    S1, ..., Sj = gRPC stream type(s) - DpGrpcStreamType enumeration name(s). \n"
-          + "    N1, ..., Nk = gRPC stream count(s) peforming request recovery - Integer value(s). \n"
+          + "    " + STR_VAR_HELP + "        = print this message and return.\n"
+          + "    " + STR_VAR_VERSION + "     = prints application version information and return.\n"
+          + "    R1, ..., Rn   = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
+          + "    PV1, ..., PVi = Supplemental PV names to be added to requests R1 through Rn. \n"
+          + "    D1, ..., Dj   = Request decomposition type(s) - RequestDecompType enumeration name(s). \n"
+          + "    S1, ..., Sk   = gRPC stream type(s) - DpGrpcStreamType enumeration name(s). \n"
+          + "    N1, ..., Nm   = gRPC stream count(s) peforming request recovery - Integer value(s). \n"
           + "    " + STR_VAR_OUTPUT + "    = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
           + "\n"
           + "  NOTES: \n"
           + "  - All bracketed quantities [...] are optional. \n"
+          + "  - PV1, ..., PVj values are strictly optional. \n"
+          + "  - If values are not provided for " + STR_VAR_STRM_TYPE + " and/or " + STR_VAR_STRM_CNT + ", default values are provided. \n "
           + "  - Default " + STR_VAR_OUTPUT + " value is " + STR_OUTPUT_DEF + ".\n";
 
     
@@ -319,7 +332,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
     //
     
     /** Class event logger */
-    private static final Logger     LOGGER = Log4j.getLogger(DataCorrelationEvaluator.class, JalQueryAppBase.STR_LOGGING_LEVEL);
+    private static final Logger     LOGGER = Log4j.getLogger(QueryChannelEvaluator.class, JalQueryAppBase.STR_LOGGING_LEVEL);
 
     
     //
@@ -636,6 +649,9 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
                     TestArchiveRequest.valueOf(TestArchiveRequest.class, strNm))    // throws IllegalArgumentException
                 .toList();
         
+        // Parse the supplemental PV names
+        List<String>            lstSupplPvs = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_SUPPL_PVS);
+        
         // Parse the request decomposition types and convert to enumeration constants
         List<String>            lstStrRqstDcmps = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_RQST_DCMP);
         List<RequestDecompType> lstEnmRqstDcmps = lstStrRqstDcmps.stream()
@@ -658,6 +674,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         QueryChannelTestSuite suite = QueryChannelTestSuite.create(STR_APP_NAME + " Command Line");
         
         suite.addTestRequests(lstRqsts);
+        suite.addSupplementalPvs(lstSupplPvs);
         suite.addRequestDecompositions(lstEnmRqstDcmps);
         suite.addStreamTypes(lstEnmStrmTypes);
         suite.addStreamCounts(lstStrmCnts);
@@ -665,38 +682,38 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         return suite;
     }
 
-    /**
-     * <p>
-     * Parses the application command-line argument collection for the output location and return it.
-     * </p>
-     * <p>
-     * The output location, as specified by the application client, is the value of variable
-     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
-     * are ignored.
-     * </p>
-     * <p>
-     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
-     * optional parameter, then the default value given by <code>{@link #STR_OUTPUT_DEF}</code> is returned.
-     * This value is taken from the JAL default configuration.
-     * </p>
-     * 
-     * @param args  the application command-line argument collection
-     * 
-     * @return  the output location as specified in the command line, 
-     *          or value of <code>{@link #STR_OUTPUT_DEF}</code> if not present
-     */
-    private static String   parseOutputLocation(String[] args) {
-        
-        // Look for the output location on the command line
-        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
-    
-        // If there is no user-provided output location use the default value in the JAL configuration
-        if (lstStrOutput.isEmpty()) 
-            return STR_OUTPUT_DEF;
-    
-        // Else return the first element in the list
-        String strOutputLoc = lstStrOutput.get(0);
-        
-        return strOutputLoc;
-    }
+//    /**
+//     * <p>
+//     * Parses the application command-line argument collection for the output location and return it.
+//     * </p>
+//     * <p>
+//     * The output location, as specified by the application client, is the value of variable
+//     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
+//     * are ignored.
+//     * </p>
+//     * <p>
+//     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
+//     * optional parameter, then the default value given by <code>{@link #STR_OUTPUT_DEF}</code> is returned.
+//     * This value is taken from the JAL default configuration.
+//     * </p>
+//     * 
+//     * @param args  the application command-line argument collection
+//     * 
+//     * @return  the output location as specified in the command line, 
+//     *          or value of <code>{@link #STR_OUTPUT_DEF}</code> if not present
+//     */
+//    private static String   parseOutputLocation(String[] args) {
+//        
+//        // Look for the output location on the command line
+//        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
+//    
+//        // If there is no user-provided output location use the default value in the JAL configuration
+//        if (lstStrOutput.isEmpty()) 
+//            return STR_OUTPUT_DEF;
+//    
+//        // Else return the first element in the list
+//        String strOutputLoc = lstStrOutput.get(0);
+//        
+//        return strOutputLoc;
+//    }
 }

@@ -95,7 +95,7 @@ ingest: # Data Platform Ingestion Service client API default configuration param
          enabled: true               # use multiple streams when possible : DP_API_INGEST_STREAM_CONCURRENCY_ENABLED
          pivotSize: 10               # currency activation size (frames)  : DP_API_INGEST_STREAM_CONCURRENCY_PIVOT_SIZE
          maxStreams: 3               # maximum number of streams to use   : DP_API_INGEST_STREAM_CONCURRENT_MAX_STREAMS
-   concurrency:  # General concurrency (multi-threading) properties
+   concurrency:  # General concurrency (multi-threading) properties for ingestion operations
       enabled: true                  # use concurrency            : DP_API_INGEST_CONCURRENCY_ENABLED
       pivotSize: 10                  # size inducing concurrency  : DP_API_INGEST_CONCURRENCY_PIVOT_SIZE
       maxThreads: 3                  # max worker thread count    : DP_API_INGEST_CONCURRENCY_MAX_THREADS
@@ -108,25 +108,28 @@ ingest: # Data Platform Ingestion Service client API default configuration param
       level: DEBUG                   # logger output level if active  : DP_API_INGEST_LOGGING_LEVEL
 
 query:      # Data Platform Query Service client API default configuration parameters
-   pageSize: 100      # UNUSED       # default bucket count per page  : DP_API_QUERY_PAGE_SIZE
-   
    data:         # Configuration parameters for time-series data requests and recoveries
       request:        # Default parameters used in data requests
-         stream:           # gRPC streaming default parameters
-            preference: BACKWARD        # {BACKWARD, BIDRECTIONAL} : DP_API_QUERY_DATA_REQUEST_STREAM_PREFERENCE
-         decompose:        # data request query decomposition default parameters (for multi-streaming)
-            enabled: true           # use query decomposition  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_ENABLED
-            maxSources: 1000        # max data source count    : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_SOURCES
-            maxDuration: 1          # max time duration (unit)  : DP_API_QUERY_DATA_REQUEST_COMPOSITE_MAX_DURATION
-            durationUnit: SECONDS   # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_COMPOSITE_DURATION_UNIT
-      response:       # Default parameters used for data responses
-         correlate:        # Query data correlation parameters
-            useConcurrency: true    # use mult-thread correlation : DP_API_QUERY_DATA_RESPONSE_CORRELATE_USE_CONCURRENCY
-            whileStreaming: true    # correlate during gRPC stream: DP_API_QUERY_DATA_RESPONSE_CORRELATE_WHILE_STREAMING
-         multistream:      # Multiple gRPC data stream parameters
-            enabled: true            # use multistreamed responses : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_ENABLED
-            maxStreams: 3            # maximum stream count        : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_MAX_STREAMS
-            sizeDomain: 2000         # rqst domain size (samples-time) triggering ms : DP_API_QUERY_DATA_RESPONSE_MULTISTREAM_PIVOT_SIZE
+         decompose:        # data request decomposition default parameters (for multi-streaming)
+            enabled: true           # use query decomposition  : DP_API_QUERY_DATA_REQUEST_DECOMPOSE_ENABLED
+            preferred: HORIZONTAL   # preferred decomposition strategy {HORIZONTAL, VERTICAL, GRID, NONE} : DP_API_QUERY_DATA_REQUEST_DECOMPOSE_PREFERRED
+            maxSources: 1000        # max data source count    : DP_API_QUERY_DATA_REQUEST_DECOMPOSE_MAX_SOURCES
+            maxDuration: 1          # max time duration (unit)  : DP_API_QUERY_DATA_REQUEST_DECOMPOSE_MAX_DURATION
+            durationUnit: SECONDS   # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_DECOMPOSE_DURATION_UNIT
+      recovery:       # Default parameters used for raw data recovery
+         stream:           # General gRPC streaming default parameters for raw data recovery
+#           pageSize: 100      # UNUSED # default bucket count per page  : DP_API_QUERY_PAGE_SIZE
+            preferred: BACKWARD     # {BACKWARD, BIDRECTIONAL} : DP_API_QUERY_DATA_REQUEST_STREAM_PREFERENCE
+         multistream:      # Multiple gRPC data streaming parameters
+            enabled: true            # use multistreamed responses : DP_API_QUERY_DATA_RECOVERY_MULTISTREAM_ENABLED
+            maxStreams: 3            # maximum stream count        : DP_API_QUERY_DATA_RECOVERY_MULTISTREAM_MAX_STREAMS
+            sizeDomain: 2000         # rqst domain size (samples-time) triggering ms : DP_API_QUERY_DATA_RECOVERY_MULTISTREAM_SIZE_DOMAIN
+         correlate:        # Raw time-series data correlation parameters
+            whileStreaming: true   # correlate during gRPC stream: DP_API_QUERY_DATA_RECOVERY_CORRELATE_WHILE_STREAMING
+            concurrency:           # raw data correlation concurrency (multi-threading) parameters
+               enabled: true                  # use concurrency            : DP_API_QUERY_DATA_RECOVERY_CORRELATE_CONCURRENCY_ENABLED
+               pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_DATA_RECOVERY_CORRELATE_CONCURRENCY_PIVOT_SIZE
+               maxThreads: 20                 # max worker thread count    : DP_API_QUERY_DATA_RECOVERY_CORRELATE_CONCURRENCY_MAX_THREADS
       table:         # Default parameters used for time-series data table construction
          construction:      # General data table reconstruction parameters
             errorChecking: true      # use advanced error checking : DP_API_QUERY_DATA_TABLE_CONSTRUCTION_ERROR_CHECKING
@@ -137,7 +140,7 @@ query:      # Data Platform Query Service client API default configuration param
             maxSize: 4000000         # maximum size (bytes) allowed : DP_API_QUERY_DATA_TABLE_STATIC_MAX_SIZE
          dynamic:           # dynamic data table properties
             enable: true             # enable dynamic data tables   : DP_API_QUERY_DATA_TABLE_DYNAMIC_ENABLE
-   concurrency:  # General concurrency (multi-threading) properties
+   concurrency:  # General concurrency (multi-threading) properties for query operations
       enabled: true                  # use concurrency            : DP_API_QUERY_CONCURRENCY_ENABLED
       pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
       maxThreads: 20                 # max worker thread count    : DP_API_QUERY_CONCURRENCY_MAX_THREADS
