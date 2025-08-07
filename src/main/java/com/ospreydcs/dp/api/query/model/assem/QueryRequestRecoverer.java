@@ -287,7 +287,7 @@ public class QueryRequestRecoverer {
     
     
     //
-    // Class Constants - Initialized from API configuration
+    // Class Constants - Initialized from JAL configuration file
     //
     
     /** Event logging enabled flag */

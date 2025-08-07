@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryRecoveryTestSuiteConfig.java
+ * File:	QueryRecoveryTestSuiteCreator.java
  * Package: com.ospreydcs.dp.jal.tools.query.recovery
- * Type: 	QueryRecoveryTestSuiteConfig
+ * Type: 	QueryRecoveryTestSuiteCreator
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -28,13 +28,9 @@ package com.ospreydcs.dp.jal.tools.query.recovery;
 import java.io.PrintStream;
 import java.time.Duration;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
 
 import javax.naming.ConfigurationException;
 
@@ -45,6 +41,7 @@ import com.ospreydcs.dp.api.common.TimeAbstraction;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
@@ -56,7 +53,7 @@ import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
  * </p>
  * <p>
  * Generates collections of <code>{@link QueryRecoveryTestCase}</code> instances, or "test suites",
- * according to dynamic configuration.  Specifically, a new <code>QueryRecoveryTestSuiteConfig</code> instance
+ * according to dynamic configuration.  Specifically, a new <code>QueryRecoveryTestSuiteCreator</code> instance
  * is first configured using methods
  * <ul>
  * <li><code>{@link #addTestRequest(TestArchiveRequest)}</code></li>
@@ -87,7 +84,7 @@ import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
  * @since May 31, 2025
  *
  */
-public class QueryRecoveryTestSuiteConfig {
+public class QueryRecoveryTestSuiteCreator {
     
     
     //
@@ -96,13 +93,13 @@ public class QueryRecoveryTestSuiteConfig {
     
     /**
      * <p>
-     * Creates and returns a new, empty <code>QueryRecoveryTestSuiteConfig</code> ready for configuration.
+     * Creates and returns a new, empty <code>QueryRecoveryTestSuiteCreator</code> ready for configuration.
      * </p>
      * 
-     * @return  a new unconfigured instance of <code>QueryRecoveryTestSuiteConfig</code>
+     * @return  a new unconfigured instance of <code>QueryRecoveryTestSuiteCreator</code>
      */
-    public static QueryRecoveryTestSuiteConfig   create() {
-        return new QueryRecoveryTestSuiteConfig();
+    public static QueryRecoveryTestSuiteCreator   create() {
+        return new QueryRecoveryTestSuiteCreator();
     }
     
 
@@ -128,13 +125,16 @@ public class QueryRecoveryTestSuiteConfig {
     /** The default value for request decomposition enabled */
     public static final boolean             BOL_DCMP_ENABLED_DEF = CFG_DEF.data.request.decompose.enabled;
     
-    /** The default value for request decomposition strategy */
+    /** The default value for automatic request decomposition (using max PVs and max time range) */
+    public static final boolean             BOL_DCMP_AUTO_ENABLED_DEF = false;
+    
+    /** The default value for request decomposition strategy (if auto is disabled) */
     public static final RequestDecompType   ENM_DCMP_TYPE_DEF = CFG_DEF.data.request.decompose.preferred;
     
-    /** The default value for maximum PV count in composite requests */
+    /** The default value for maximum PV count in composite requests (for automatic decomposition) */
     public static final int                 INT_DCMP_MAX_PVS_DEF = CFG_DEF.data.request.decompose.maxSources;
 
-    /** The default value for maximum time range in a composite request */
+    /** The default value for maximum time range in a composite request (for automatic decomposition) */
     public static final TimeAbstraction     TA_DCMP_MAX_RNG_DEF = TimeAbstraction.from(
             CFG_DEF.data.request.decompose.maxDuration, 
             CFG_DEF.data.request.decompose.durationUnit);
@@ -178,9 +178,6 @@ public class QueryRecoveryTestSuiteConfig {
     private static final Logger     LOGGER = Log4j.getLoggerSetLevel(STR_LOGGING_LEVEL);
     
     
-    /** Standard "concurrency enabled" selections **/
-    private static final Set<Boolean>       SET_ENABLE = Set.of(false, true);
-    
     
     //
     // Defining Attributes
@@ -201,13 +198,16 @@ public class QueryRecoveryTestSuiteConfig {
     /** Collection of time-series data request decomposition enable/disable flags */
     private final Set<Boolean>              setBolDcmp = new TreeSet<>();
     
-    /** Collection of time-series data request decomposition types */
+    /** Collection of automatic request decomposition enable/disable flags */
+    private final Set<Boolean>              setBolDmpAuto = new TreeSet<>();
+    
+    /** Collection of time-series data request decomposition types (for explicit, non-auto decomposition) */
     private final Set<RequestDecompType>    setEnmDcmpTypes = new TreeSet<>();
     
-    /** Collection of request decomposition maximum PV count per composite request */
+    /** Collection of request decomposition maximum PV count per composite request for automatic request decomposition */
     private final Set<Integer>              setIntDcmpMaxPvs = new TreeSet<>();
     
-    /** Collection of request decomposition maximum time range duration per composite request */
+    /** Collection of request decomposition maximum time range duration per composite request for automatic request decomposition */
     private final Set<Duration>             setDurDcmpMaxRngs = new TreeSet<>();
     
     
@@ -244,11 +244,11 @@ public class QueryRecoveryTestSuiteConfig {
     
     /**
      * <p>
-     * Constructs a new, unconfigured <code>QueryRecoveryTestSuiteConfig</code> instance.
+     * Constructs a new, unconfigured <code>QueryRecoveryTestSuiteCreator</code> instance.
      * </p>
      *
      */
-    public QueryRecoveryTestSuiteConfig() {
+    public QueryRecoveryTestSuiteCreator() {
     }
 
     
@@ -356,15 +356,79 @@ public class QueryRecoveryTestSuiteConfig {
      * </ul>
      * </p>
      *  
-     * @param setEnable a collection of time-series request decomposition enable flags
+     * @param setEnables a collection of time-series request decomposition enable flags
      */
-    public void addRequestDecompEnables(Collection<Boolean> setEnable) {
-        this.setBolDcmp.addAll(setEnable);
+    public void addRequestDecompEnables(Collection<Boolean> setEnables) {
+        this.setBolDcmp.addAll(setEnables);
+    }
+    
+    /**
+     * <p>
+     * Add a new automatic request decomposition enable/disable flag to the test suite configuration.
+     * </p>
+     * <p>
+     * When automatic request decomposition is enabled, the parameters <code>{@link #addRequestDecompMaxPvCnt(int)}</code>
+     * and <code>{@link #addRequestDecompMaxTimeRange(Duration)}</code> are used to find the "preferred" decomposition
+     * conforming to these values.  Specifically, 
+     * the <code>{@link DataRequestDecomposer#buildCompositeRequestPreferred(DpDataRequest)}</code> method is used to 
+     * decompose the request after the decomposer has been configured with the above parameters.
+     * </p>
+     * <p>
+     * Automatic decomposition is in contrast to an explicit request decomposition where the decomposition 
+     * strategy is specified (i.e., <code>{@link #addRequestDecompStrategy(RequestDecompType)}</code> and the request
+     * is decomposed into <code>{@link #addMultiStreamMaxStreamCount(int)}</code> composite requests (at most). 
+     * </p>
+     * <p>
+     * <h2>NOTES</h2>
+     * <ul>
+     * <li>Repeated values in the argument collection are ignored.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param bolEnable automatic request decomposition enable/disable flag 
+     */
+    public void addRequestDecompAutoEnable(boolean bolEnable) {
+        this.setBolDmpAuto.add(bolEnable);
+    }
+    
+    /**
+     * <p>
+     * Add a collection of new automatic request decomposition enable/disable flags to the test suite configuration.
+     * </p>
+     * <p>
+     * When automatic request decomposition is enabled, the parameters <code>{@link #addRequestDecompMaxPvCnt(int)}</code>
+     * and <code>{@link #addRequestDecompMaxTimeRange(Duration)}</code> are used to find the "preferred" decomposition
+     * conforming to these values.  Specifically, 
+     * the <code>{@link DataRequestDecomposer#buildCompositeRequestPreferred(DpDataRequest)}</code> method is used to 
+     * decompose the request after the decomposer has been configured with the above parameters.
+     * </p>
+     * <p>
+     * Automatic decomposition is in contrast to an explicit request decomposition where the decomposition 
+     * strategy is specified (i.e., <code>{@link #addRequestDecompStrategy(RequestDecompType)}</code> and the request
+     * is decomposed into <code>{@link #addMultiStreamMaxStreamCount(int)}</code> composite requests (at most). 
+     * </p>
+     * <p>
+     * <h2>NOTES</h2>
+     * <ul>
+     * <li>Time-series data request decomposition must be enabled for multi-streaming.</li>
+     * <li>Repeated values in the argument collection are ignored.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param setEnsbles    collection of new automatic request decomposition enable/disable flag
+     */
+    public void addRequestDecompAutoEnables(Collection<Boolean> setEnsbles) {
+        this.setBolDmpAuto.addAll(setEnsbles);
     }
     
     /**
      * <p>
      * Adds a time-series data request decomposition strategy to the test suite configuration.
+     * </p>
+     * <p>
+     * Request decomposition strategies are used in explicit decomposition (i.e., non-automatic).
+     * The request is decomposed according to the given strategy so that the number of composite
+     * requests is not greater than parameter <code>{@link #addMultiStreamMaxStreamCount(int)}</code>.
      * </p>
      * 
      * @param enmDcmpType   a new request decomposition strategy
@@ -378,6 +442,11 @@ public class QueryRecoveryTestSuiteConfig {
     /**
      * <p>
      * Adds a collection of time-series data request decomposition strategies to the test suite configuration.
+     * </p>
+     * <p>
+     * Request decomposition strategies are used in explicit decomposition (i.e., non-automatic).
+     * The request is decomposed according to the given strategy so that the number of composite
+     * requests is not greater than parameter <code>{@link #addMultiStreamMaxStreamCount(int)}</code>.
      * </p>
      *  
      * @param setDcmpTypes  a collection of new request decomposition strategies
@@ -393,8 +462,11 @@ public class QueryRecoveryTestSuiteConfig {
      * Adds a new composite request maximum PV count value to the test suite configuration.
      * </p>
      * <p>
-     * In time-series data request decomposition the original request is decomposed into multiple composite request.
-     * The maximum PV count per composite request applies to the <code>{@link RequestDecompType#HORIZONTAL}</code>
+     * This parameter is used in <b>automatic</b> request decomposition.
+     * </p>
+     * <p>
+     * In automatic time-series data request decomposition the original request is decomposed into multiple composite 
+     * requests. The maximum PV count per composite request applies to the <code>{@link RequestDecompType#HORIZONTAL}</code>
      * and <code>{@link RequestDecompType#GRID}</code> decomposition strategies.
      * </p>
      *  
@@ -409,7 +481,10 @@ public class QueryRecoveryTestSuiteConfig {
      * Adds a collection of new composite request maximum PV counts to the test suite configuration.
      * </p>
      * <p>
-     * In time-series data request decomposition the original request is decomposed into multiple composite request.
+     * This parameter is used in <b>automatic</b> request decomposition.
+     * </p>
+     * <p>
+     * In time-series data request decomposition the original request is decomposed into multiple composite requests.
      * The maximum PV count per composite request applies to the <code>{@link RequestDecompType#HORIZONTAL}</code>
      * and <code>{@link RequestDecompType#GRID}</code> decomposition strategies.
      * </p>
@@ -425,7 +500,10 @@ public class QueryRecoveryTestSuiteConfig {
      * Adds a new composite request maximum time duration to the test suite configuration.
      * </p>
      * <p>
-     * In time-series data request decomposition the original request is decomposed into multiple composite request.
+     * This parameter is used in <b>automatic</b> request decomposition.
+     * </p>
+     * <p>
+     * In time-series data request decomposition the original request is decomposed into multiple composite requests.
      * The maximum time range duration per composite request applies to the 
      * <code>{@link RequestDecompType#VERTICAL}</code> and <code>{@link RequestDecompType#GRID}</code> decomposition 
      * strategies.
@@ -442,7 +520,10 @@ public class QueryRecoveryTestSuiteConfig {
      * Adds a collection of new composite request maximum time durations to the test suite configuration.
      * </p>
      * <p>
-     * In time-series data request decomposition the original request is decomposed into multiple composite request.
+     * This parameter is used in <b>automatic</b> request decomposition.
+     * </p>
+     * <p>
+     * In time-series data request decomposition the original request is decomposed into multiple composite requests.
      * The maximum time range duration per composite request applies to the 
      * <code>{@link RequestDecompType#VERTICAL}</code> and <code>{@link RequestDecompType#GRID}</code> decomposition 
      * strategies.
@@ -792,49 +873,40 @@ public class QueryRecoveryTestSuiteConfig {
      * 
      * @throws ConfigurationException    there are no test requests in the current test suite
      */
-    public Map<DpDataRequest, List<QueryRecoveryTestCase>> createTestSuite() throws ConfigurationException {
+    public Collection<QueryRecoveryTestCase> createTestSuite() throws ConfigurationException {
         
         // Check state
-        this.defaultConfiguration();
+        this.defaultConfiguration();    // throws configuration exception
         
         // Create returned container and populate it by enumerating through all test suite parameters 
-        Map<DpDataRequest, List<QueryRecoveryTestCase>>  mapCases = new HashMap<>();
+        Collection<QueryRecoveryTestCase>   setCases = new LinkedList<>();
         
-        for (TestArchiveRequest enmRqst : this.setTestRqsts) {
+        for (TestArchiveRequest enmRqst : this.setTestRqsts) 
+            for (boolean bolDcmpEnbl : this.setBolDcmp)
+                for (boolean bolDcmpAuto : this.setBolDmpAuto)
+                    for (RequestDecompType enmDcmpType : this.setEnmDcmpTypes)
+                        for (int cntDcmpMaxPvs : this.setIntDcmpMaxPvs)
+                            for (Duration durDcmpMaxRng : this.setDurDcmpMaxRngs)
+                                for (DpGrpcStreamType enmStrmType : this.setEnmStrmTypes)
+                                    for (long lngMStrmDomSz : this.setLngMStrmDomSzs)
+                                        for (int cntMStrmMaxCnt : this.setIntMStrmMaxCnts)
+                                            for (boolean bolCorrRcvry : this.setBolCorrRcvry)
+                                                for (boolean bolCorrConc : this.setBolCorrConc)
+                                                    for (int intCorrPivotSz : this.setIntCorrPivotSzs)
+                                                        for (int intCorrMaxThrds : this.setIntCorrMaxThrds) {
+                                                            QueryRecoveryTestCase   recCase = QueryRecoveryTestCase.from(
+                                                                    enmRqst, this.setSupplPvs, 
+                                                                    bolDcmpEnbl, bolDcmpAuto, enmDcmpType, cntDcmpMaxPvs, durDcmpMaxRng, 
+                                                                    enmStrmType, 
+                                                                    lngMStrmDomSz, cntMStrmMaxCnt, 
+                                                                    bolCorrRcvry, bolCorrConc, intCorrPivotSz, intCorrMaxThrds
+                                                                    );
+                                                            
+                                                            setCases.add(recCase);
+                                                        }
             
-            // Create the data request name
-            String          strIdAug = "";
-            if (!this.setSupplPvs.isEmpty())
-                strIdAug = "+" + this.setSupplPvs;
-            
-            // Create the data request
-            DpDataRequest   rqst = enmRqst.create();
-            rqst.selectSources(this.setSupplPvs);
-            rqst.setRequestId(strIdAug);
-            
-            // Create the list of test cases and populate if for this request
-            List<QueryRecoveryTestCase>    lstCases = new LinkedList<>();
-            
-            for (Boolean bolEnable : SET_ENABLE) {
-                if (!bolEnable) {
-                    QueryRecoveryTestCase  recCase = QueryRecoveryTestCase.from(enmRqst, this.setSupplPvs, false, 1, 1);
-
-                    lstCases.add(recCase);
-
-                } else {
-                    for (Integer cntMaxThrds : this.setIntCorrMaxThrds)
-                        for (Integer szPivot : this.setIntCorrPivotSzs) { 
-                            QueryRecoveryTestCase  recCase = QueryRecoveryTestCase.from(enmRqst, this.setSupplPvs, true, cntMaxThrds, szPivot);
-
-                            lstCases.add(recCase);
-                        }
-                }
-            }
-            
-            mapCases.put(rqst, lstCases);
-        }
         
-        return mapCases;
+        return setCases;
     }
     
     /**
@@ -878,6 +950,10 @@ public class QueryRecoveryTestSuiteConfig {
         ps.println(strPadd + "Decomposition Enabled:");
         for (Boolean bolEnbl : this.setBolDcmp)
             ps.println(strPaddBul + bolEnbl);
+        
+        ps.println(strPadd + "Decomposition Automatic:");
+        for (Boolean bolAuto : this.setBolDmpAuto)
+            ps.println(strPaddBul + bolAuto);
         
         ps.println(strPadd + "Decomposition Strategy(ies):");
         for (RequestDecompType enmType : this.setEnmDcmpTypes)
@@ -942,11 +1018,12 @@ public class QueryRecoveryTestSuiteConfig {
      * Checks the configuration collections and assigns a default configuration if not initialized.
      * </p>
      * <p>
-     * Performs the following checks and actions:
+     * Checks all the parameter collections for elements.  
      * <ul>
-     * <li>if <code>{@link #setTestRqsts}.isEmpty() &rArr; throw IllegalStateException</code></li>
-     * <li>if <code>{@link #setIntCorrMaxThrds}.isEmpty() &rArr; {@link #setDcmpType}.add({@link #DUR_RQST_TM_DEF})</code></li>
-     * <li>if <code>{@link #setPvitSize}.isEmpty() &rArr; {@link #setIntCorrPivotSzs}.add({@link #SZ_CORR_PIVOT_SZ_DEF})</code></li>
+     * <li>If <code>{@link #setTestRqsts}</code> is empty an exception is thrown.</li>
+     * <li>The container <code>{@link #setSupplPvs}</code> is ignored.</li>
+     * <li>If any other container is empty a single, default value is supplied.</li>
+     * <li>All default values are taken from the JAL configuration file as class constants.</li>
      * </ul>
      * </p>
      *  
@@ -967,42 +1044,46 @@ public class QueryRecoveryTestSuiteConfig {
         
         // Request decomposition parameters
         if (this.setBolDcmp.isEmpty())
-            this.setBolDcmp.add(QueryRecoveryTestSuiteConfig.BOL_DCMP_ENABLED_DEF);
+            this.setBolDcmp.add(QueryRecoveryTestSuiteCreator.BOL_DCMP_ENABLED_DEF);
+        
+        if (this.setBolDmpAuto.isEmpty())
+            this.setBolDmpAuto.add(QueryRecoveryTestSuiteCreator.BOL_DCMP_AUTO_ENABLED_DEF);
         
         if (this.setEnmDcmpTypes.isEmpty())
-            this.setEnmDcmpTypes.add(QueryRecoveryTestSuiteConfig.ENM_DCMP_TYPE_DEF);
+            this.setEnmDcmpTypes.add(QueryRecoveryTestSuiteCreator.ENM_DCMP_TYPE_DEF);
         
         if (this.setIntDcmpMaxPvs.isEmpty())
-            this.setIntDcmpMaxPvs.add(QueryRecoveryTestSuiteConfig.INT_DCMP_MAX_PVS_DEF);
+            this.setIntDcmpMaxPvs.add(QueryRecoveryTestSuiteCreator.INT_DCMP_MAX_PVS_DEF);
         
         if (this.setDurDcmpMaxRngs.isEmpty())
-            this.setDurDcmpMaxRngs.add(QueryRecoveryTestSuiteConfig.DUR_DCMP_MAX_RNG_DEF);
+            this.setDurDcmpMaxRngs.add(QueryRecoveryTestSuiteCreator.DUR_DCMP_MAX_RNG_DEF);
+
+        // Recovery parameters
+        if (this.setEnmStrmTypes.isEmpty())
+            this.setEnmStrmTypes.add(QueryRecoveryTestSuiteCreator.ENM_STRM_TYPE_DEF);
         
         // gRPC multi-streaming parameters
         if (this.setBolMStrm.isEmpty())
-            this.setBolMStrm.add(QueryRecoveryTestSuiteConfig.BOL_MSTRM_ENABLED_DEF);
-        
-        if (this.setEnmStrmTypes.isEmpty())
-            this.setEnmStrmTypes.add(QueryRecoveryTestSuiteConfig.ENM_STRM_TYPE_DEF);
+            this.setBolMStrm.add(QueryRecoveryTestSuiteCreator.BOL_MSTRM_ENABLED_DEF);
         
         if (this.setLngMStrmDomSzs.isEmpty())
-            this.setLngMStrmDomSzs.add(QueryRecoveryTestSuiteConfig.LNG_MSTRM_DOM_SZ_DEF);
+            this.setLngMStrmDomSzs.add(QueryRecoveryTestSuiteCreator.LNG_MSTRM_DOM_SZ_DEF);
         
         if (this.setIntMStrmMaxCnts.isEmpty())
-            this.setIntMStrmMaxCnts.add(QueryRecoveryTestSuiteConfig.INT_MSTRM_MAX_CNT_DEF);
+            this.setIntMStrmMaxCnts.add(QueryRecoveryTestSuiteCreator.INT_MSTRM_MAX_CNT_DEF);
         
         // Raw data correlation parameters
         if (this.setBolCorrRcvry.isEmpty())
-            this.setBolCorrRcvry.add(QueryRecoveryTestSuiteConfig.BOL_CORR_RCVRY_ENABLE_DEF);
+            this.setBolCorrRcvry.add(QueryRecoveryTestSuiteCreator.BOL_CORR_RCVRY_ENABLE_DEF);
         
         if (this.setBolCorrConc.isEmpty())
-            this.setBolCorrConc.add(QueryRecoveryTestSuiteConfig.BOL_CORR_CONC_ENABLE_DEF);
-        
-        if (this.setIntCorrMaxThrds.isEmpty())
-            this.setIntCorrMaxThrds.add(CNT_CORR_MAX_THRDS_DEF);
+            this.setBolCorrConc.add(QueryRecoveryTestSuiteCreator.BOL_CORR_CONC_ENABLE_DEF);
         
         if (this.setIntCorrPivotSzs.isEmpty())
             this.setIntCorrPivotSzs.add(SZ_CORR_PIVOT_SZ_DEF);
+        
+        if (this.setIntCorrMaxThrds.isEmpty())
+            this.setIntCorrMaxThrds.add(CNT_CORR_MAX_THRDS_DEF);
     }
 
 }

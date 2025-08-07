@@ -25,28 +25,36 @@
  */
 package com.ospreydcs.dp.jal.tools.query.recovery;
 
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.Collection;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
+import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
 import com.ospreydcs.dp.api.app.ExitCode;
 import com.ospreydcs.dp.api.app.JalApplicationBase;
 import com.ospreydcs.dp.api.app.JalQueryAppBase;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
+import com.sun.jdi.request.InvalidRequestStateException;
 
 /**
  * <p>
@@ -88,6 +96,99 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
             System.exit(ExitCode.SUCCESS.getCode());
         }
 
+        
+        //
+        // ------- Application Initialization -------
+        //
+        
+        // Check for general command-line errors
+        try {
+            JalApplicationBase.parseAppArgsErrors(args, CNT_APP_MIN_ARGS, LST_STR_DELIMS);
+
+        } catch (Exception e) {
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
+
+        }
+        
+        // Get the test suite configuration and output location from the application arguments
+        String                          strOutputLoc;
+        QueryRecoveryTestSuiteCreator    suite;
+        try {
+            
+            suite = QueryRecoveryEvaluator.parseTestSuiteConfig(args);
+            strOutputLoc = JalApplicationBase.parseOutputLocation(args, STR_OUTPUT_DEF);
+            
+        } catch (Exception e) {
+            
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
+            return;
+        }
+
+        
+        //
+        // ------- Application Execution -------
+        //
+        
+        // Create the correlation evaluator and run it
+        try {
+            QueryRecoveryEvaluator    evaluator = new QueryRecoveryEvaluator(suite, strOutputLoc, args);
+            
+            evaluator.run();
+            evaluator.writeReport();
+            evaluator.shutdown();
+            
+            System.out.println(STR_APP_NAME + " Execution completed in " + evaluator.getRunDuration());
+            System.out.println("  Results stored at " + evaluator.getOutputFilePath().toAbsolutePath());
+            System.exit(ExitCode.SUCCESS.getCode());
+            
+        } catch (DpGrpcException e) {
+            System.err.println(STR_APP_NAME + " creation FAILURE - Unable to connect to Query Service.");
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.INITIALIZATION_EXCEPTION);
+            
+        } catch (ConfigurationException e) {
+            System.err.println(STR_APP_NAME + " creation FAILURE - No time-series data requests in command line.");
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
+            
+        } catch (UnsupportedOperationException e) {
+            System.err.println(STR_APP_NAME + " creation FAILURE - Output location not found in file system: " + strOutputLoc);
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.OUTPUT_ARG_INVALID);
+            
+        } catch (FileNotFoundException e) {
+            System.err.println(STR_APP_NAME + " creation FAILURE - Unable to create output file.");
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.OUTPUT_FAILURE);
+            
+        } catch (SecurityException e) {
+            System.err.println(STR_APP_NAME + " creation FAILURE - Unable to write to output file.");
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.OUTPUT_FAILURE);
+            
+        } catch (InvalidRequestStateException e) {
+            System.err.println(STR_APP_NAME + " execution FAILURE - Application already executed.");
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+            
+        } catch (DpQueryException e) {
+            System.err.println(STR_APP_NAME + " data recovery ERROR - General gRPC error in data recovery.");
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.GRPC_EXCEPTION);
+            
+        } catch (IllegalStateException e) {
+            System.err.println(STR_APP_NAME + " data recovery ERROR - Message request attempt on empty buffer.");
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+            
+        } catch (InterruptedException e) {
+            System.err.println(STR_APP_NAME + " data recovery ERROR - Process interrupted while waiting for buffer message.");
+            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+            
+//        } catch (BufferUnderflowException e) {
+//            System.err.println(STR_APP_NAME + " data recovery ERROR - message buffer not fully drained.");
+//            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+//            
+//        } catch (IllegalArgumentException e) {
+//            System.err.println(STR_APP_NAME + " evaluation ERROR - invalid timestamps encountered in recovered data.");
+//            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+//            
+//        } catch (CompletionException e) {
+//            System.err.println(STR_APP_NAME + " evaluation ERROR - data bucket insertion task failed.");
+//            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+        }
     }
 
     
@@ -118,6 +219,9 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
     /** Argument variable name for enabling/disabling request decomposition for multi-streaming */
     public static final String      STR_VAR_DCMP_ENABLE = "--dcmp";
     
+    /** Argument variable name for enabling/disabling automatic request decomposition */
+    public static final String      STR_VAR_DCMP_AUTO = "--dcmp_auto";
+    
     /** Argument variable name identifying data request decomposition types */
     public static final String      STR_VAR_DCMP_TYPES = "--dcmp_types";
     
@@ -132,8 +236,8 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
     public static final String      STR_VAR_STRM_TYPES = "--strm_types";
 
     
-    /** Argument variable name for enabling/disabling gRPC multi-streaming for raw data recovery */
-    public static final String      STR_VAR_MSTRM_ENABLE = "--mstrm";
+//    /** Argument variable name for enabling/disabling gRPC multi-streaming for raw data recovery */
+//    public static final String      STR_VAR_MSTRM_ENABLE = "--mstrm";
     
     /** Argument variable name identifying request domain size triggering gRPC multi-streaming for raw data recovery */
     public static final String      STR_VAR_MSTRM_DOM_SZ = "--mstrm_domsz";
@@ -162,11 +266,12 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
     public static final List<String>    LST_STR_DELIMS = List.of(
             STR_VAR_SUPPL_PVS,
             STR_VAR_DCMP_ENABLE,
+            STR_VAR_DCMP_AUTO,
             STR_VAR_DCMP_TYPES,
             STR_VAR_DCMP_MAX_PVS,
             STR_VAR_DCMP_MAX_RNG,
             STR_VAR_STRM_TYPES,
-            STR_VAR_MSTRM_ENABLE,
+//            STR_VAR_MSTRM_ENABLE,
             STR_VAR_MSTRM_DOM_SZ,
             STR_VAR_MSTRM_MAX_CNTS, 
             STR_VAR_CORR_RCVRY,
@@ -206,13 +311,14 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
           + " [" + STR_VAR_SUPPL_PVS + " PV1 ... PVn]"
           + STR_LINE_BREAK
           + " [" + STR_VAR_DCMP_ENABLE + " FALSE ... TRUE]"
+          + " [" + STR_VAR_DCMP_AUTO + " FALSE ... TRUE]"
           + " [" + STR_VAR_DCMP_TYPES + " D1 ... Dn]"
           + " [" + STR_VAR_DCMP_MAX_PVS + " M1 ... Mn]"
           + " [" + STR_VAR_DCMP_MAX_RNG + " R1 ... Rn]"
           + STR_LINE_BREAK
           + " [" + STR_VAR_STRM_TYPES + " S1 ... Sn]"
           + STR_LINE_BREAK
-          + " [" + STR_VAR_MSTRM_ENABLE + " FALSE TRUE]"
+//          + " [" + STR_VAR_MSTRM_ENABLE + " FALSE TRUE]"
           + " [" + STR_VAR_MSTRM_DOM_SZ + " Q1 ... Qn]"
           + " [" + STR_VAR_MSTRM_MAX_CNTS + " N1 ... Nn]"
           + STR_LINE_BREAK
@@ -228,28 +334,32 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
           + "    " + STR_VAR_VERSION + "     = prints application version information and return.\n"
           + "    R1, ..., Rn   = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
           + "    PV1, ..., PVn = Supplemental PV names to be added to requests R1 through Rn. \n"
-          + "    " + STR_VAR_DCMP_ENABLE + "   = Enable/disable time-series data request decomposition. \n"
-          + "    D1, ..., Dn   = Request decomposition strategy(ies) - RequestDecompType enumeration name(s). \n"
-          + "    M1, ..., Mn   = Maximum number of PVs per composite request - Integer value(s). \n"
-          + "    R1, ..., Rn   = Maximum time range per composite request - 'PnDTnHnMd.dS' duration format(s). \n"
-          + "    S1, ..., Sn   = gRPC stream type(s) - DpGrpcStreamType enumeration name(s). \n"
-          + "   " + STR_VAR_DCMP_ENABLE + "   = Enable/disable multiple gRPC data streaming in raw data recovery. \n"
+          + "    " + STR_VAR_DCMP_ENABLE + "        = Enable/disable time-series data request decomposition {FALSE, TRUE}. \n"
+          + "    " + STR_VAR_DCMP_AUTO + "   = Enable/disable time-series data request automatic decomposition {FALSE, TRUE}. \n"
+          + "    D1, ..., Dn   = Request decomposition strategy(ies) - RequestDecompType enumeration name(s) for explicit deomposition {HORIZONTAL, VERTICAL, GRID}. \n"
+          + "    M1, ..., Mn   = Maximum number of PVs per composite request in automatic decomposition - Integer value(s). \n"
+          + "    R1, ..., Rn   = Maximum time range per composite request in automatic - 'PnDTnHnMd.dS' duration format(s). \n"
+          + "    S1, ..., Sn   = gRPC stream type(s) - DpGrpcStreamType enumeration name(s) {BACKWARD, BIDRECTIONAL}. \n"
+//          + "   " + STR_VAR_MSTRM_ENABLE + "         = Enable/disable multiple gRPC data streaming in raw data recovery {FALSE, TRUE}. \n"
           + "    Q1, ..., Qn   = Request domain size(s) (in PVs-Seconds) triggering gRPC multi-streaming. \n"
           + "    N1, ..., Nn   = gRPC stream count(s) peforming request recovery - Integer value(s). \n"
-          + "   " + STR_VAR_CORR_RCVRY + "   = Enable/disable raw data correlation during data recovery. \n"
-          + "   " + STR_VAR_CORR_CONC + "    = Enable/disable multi-threaded (concurrent) raw data correlation. \n"
-          + "   P1, ..., Pn    = Raw data target set size(s) (block count) triggering concurrency. \n"
-          + "   T1, ..., Tn    = Maximum thread count(s) for concurrent raw data correlation. \n"
+          + "   " + STR_VAR_CORR_RCVRY + "   = Enable/disable raw data correlation during data recovery {FALSE, TRUE}. \n"
+          + "   " + STR_VAR_CORR_CONC + "    = Enable/disable multi-threaded (concurrent) raw data correlation {FALSE, TRUE}. \n"
+          + "   P1, ..., Pn    = Raw data target set size(s) (block count) triggering concurrency - Long value(s). \n"
+          + "   T1, ..., Tn    = Maximum thread count(s) for concurrent raw data correlation - Integer value(s). \n"
           + "    " + STR_VAR_OUTPUT + "      = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
           + "\n"
           + "  NOTES: \n"
           + "  - At least one TestArchiveRequest enumeration is required (i.e., R1). \n"
           + "  - All bracketed quantities [...] are optional. \n"
           + "  - PV1, ..., PVn values are strictly optional - if not present R1 through Rn are unmodified. \n"
-          + "  - The default values for all other variables are taken from the JAL configuration file. \n"
+          + "  - The default values for all other variables except " + STR_VAR_DCMP_AUTO + " are taken from the JAL configuration file. \n"
+          + "  - Automatic request decomposition uses parameter M1, ..., Mn and R1, ..., Rn. \n"
+          + "  - Explicit request decomposition (i.e., non-auto) uses parameters D1, ..., Dn and N1, ..., Nn. \n"
+          + "  - The default value for " + STR_VAR_DCMP_AUTO + " is '" + QueryRecoveryTestSuiteCreator.BOL_DCMP_AUTO_ENABLED_DEF + "'. \n"
           + "  - The Boolean values FALSE and TRUE are not case sensitive. \n"
           + "  - Request decomposition enable " + STR_VAR_DCMP_ENABLE + " must be TRUE for gRPC multi-streaming. \n"
-          + "  - gRPC multi-streaming enable " + STR_VAR_MSTRM_ENABLE + " must be TRUE for gRPC multi-streaming. \n"
+//          + "  - gRPC multi-streaming enable " + STR_VAR_MSTRM_ENABLE + " must be TRUE for gRPC multi-streaming. \n"
           + "  - Default " + STR_VAR_OUTPUT + " value is " + STR_OUTPUT_DEF + ". \n"
           + "  - If a file name is not included in the output path, a unique file name is generated for the output. \n" ;
 
@@ -276,6 +386,28 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
     private static final Logger     LOGGER = Log4j.getLogger(QueryRecoveryEvaluator.class, JalQueryAppBase.STR_LOGGING_LEVEL);
 
     
+    // 
+    // Defining Attributes
+    //
+    
+    /** The test suite used for <code>CorrelatorTestCase</code> evaluations */
+    private final QueryRecoveryTestSuiteCreator       cfgTestSuite;
+    
+    
+    //
+    // Instance Resources
+    //
+    
+    /** The time-series data re(processor) under evaluation */
+    private final QueryRequestRecoverer                 prcrRqstRcvry;
+    
+    /** The collection of test cases used in evaluations */
+    private final Collection<QueryRecoveryTestCase>     setTestCases;
+    
+    /** The collection of test results recovered from evaluations */
+    private final Collection<QueryRecoveryTestResult>   setTestResults;
+    
+    
     //
     // State Variables
     //
@@ -293,12 +425,36 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
      * Constructs a new <code>QueryRecoveryEvaluator</code> instance.
      * </p>
      *
-     * @param clsApp
-     * @param args
-     * @throws DpGrpcException
+     * @param cfgSuite      the pre-configured test suite generator 
+     * @param strOutputLoc  path location for the output file, or "console"
+     * @param args          the application command-line arguments.
+     * 
+     * @throws DpGrpcException  unable to establish connection to the Query Service (see message and cause)
+     * @throws UnsupportedOperationException    the file path is not associated with the default file system
+     * @throws FileNotFoundException            unable to create output file
+     * @throws SecurityException                unable to write to output file
+     * @throws ConfigurationException 
      */
-    public QueryRecoveryEvaluator(String strOutputLoc, String... args) throws DpGrpcException {
+    public QueryRecoveryEvaluator(QueryRecoveryTestSuiteCreator cfgSuite, String strOutputLoc, String... args) 
+            throws DpGrpcException, ConfigurationException, UnsupportedOperationException, FileNotFoundException, SecurityException {
         super(QueryRecoveryEvaluator.class, args);
+        
+        this.cfgTestSuite = cfgSuite;
+        
+
+        // Create resources
+        this.prcrRqstRcvry = QueryRequestRecoverer.from(super.connQuery);
+        
+        this.setTestCases = this.cfgTestSuite.createTestSuite();    // throws ConfigurationException
+        this.setTestResults = new TreeSet<>(QueryRecoveryTestResult.descendingDataRateOrdering());
+        
+        
+        // Create the output stream and attach Logger to it - records fatal errors to output file
+        super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
+        
+        OutputStreamAppender    appAppErrs = Log4j.createOutputStreamAppender(STR_APP_NAME, super.psOutput);
+        Log4j.attachAppender(LOGGER, appAppErrs);
+        
     }
 
     
@@ -318,6 +474,44 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
     //
     // Operations
     //
+    
+    /**
+     * <p>
+     * Runs the application evaluating all test cases within the test suite configuration.
+     * </p>
+     * 
+     * @throws DpQueryException general error during data recovery/processing (see message and cause)
+     */
+    public void run() throws DpQueryException {
+
+        // Check state
+        if (super.bolRun) {
+            throw new InvalidRequestStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Application has already been run.");
+        }
+        super.bolRun = true;
+        
+        // Start counter
+        System.out.print("Performing evaluations (" + this.setTestCases.size() + " cases) .");
+        super.startExecutionTimer(1L, TimeUnit.SECONDS);
+
+        // Iterate over each test case in test suite
+        Instant insStart = Instant.now();
+        for (QueryRecoveryTestCase recTestCase : this.setTestCases) {
+            QueryRecoveryTestResult recTestResult = recTestCase.evaluate(this.prcrRqstRcvry); // throws DpQueryException
+            
+            this.setTestResults.add(recTestResult);
+        }
+        Instant insFinish = Instant.now();
+
+        this.durEval = Duration.between(insStart, insFinish);
+        super.stopExecutionTimer();
+        System.out.println(" Evaluations completed in " + this.durEval.toSeconds() + " seconds.");
+        
+        // Set state variables
+        super.bolCompleted = true;
+        super.bolRun = true;
+        
+    }
     
     /**
      * <p>
@@ -389,6 +583,35 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         ps.println(strCmdLn);
         ps.println();
         
+        // Print out evaluation summary
+        ps.println("Test cases specified : " + this.setTestCases.size());
+        ps.println("Test cases run       : " + this.setTestResults.size());
+        ps.println("Evaluation duration  : " + this.durEval);
+        ps.println("Evaluation completed : " + this.bolCompleted);
+        ps.println();
+        
+        // Print out raw data processor configuration
+        ps.println("Final QueryRequestRecoverer Configuration (last case)");
+        this.prcrRqstRcvry.printOutConfig(ps, "  ");
+        ps.println();
+        
+        // Print out the test suite configuration
+        ps.println("Test Suite Configuration");
+        this.cfgTestSuite.printOut(ps, "  ");
+        ps.println();
+        
+        // Print out results summary
+        QueryRecoveryTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
+        QueryRecoveryTestsSummary  recSummary = QueryRecoveryTestsSummary.summarize(this.setTestResults);
+        recSummary.printOut(ps, null);
+        ps.println();
+        
+        // Print out each test result
+        ps.println("Individual Case Results:");
+        for (QueryRecoveryTestResult recCase : this.setTestResults) {
+            recCase.printOut(ps, "  ");
+            ps.println();
+        }
     }    
 
     
@@ -415,7 +638,7 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
      * If a test request has an invalid <code>{@link TestArchiveRequest}</code> name an exception is thrown.    
      * </p>
      * <p>
-     * The remaining arguments are optional; a <code>QueryRecoveryTestSuiteConfig</code> instance has default values that
+     * The remaining arguments are optional; a <code>QueryRecoveryTestSuiteCreator</code> instance has default values that
      * will be supplied if any are missing.  Note that all values for variables {@value #STR_VAR_RQST_DCMP} and 
      * {@value #STR_VAR_MSTRM_MAX_CNTS} are <code>Integer</code> valued and must be parse as such.  If an error occurs
      * while parse the integer value an exception is thrown.
@@ -434,7 +657,7 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
      * @throws NumberFormatException    an invalid numeric argument was encounter (could not be converted to a <code>Integer</code> type)
      * @throws DateTimeParseException   an invalid time duration format was encountered ('PnDTnHnMd.dS')
      */
-    private static QueryRecoveryTestSuiteConfig    parseTestSuiteConfig(String[] args) 
+    private static QueryRecoveryTestSuiteCreator    parseTestSuiteConfig(String[] args) 
             throws MissingResourceException, ConfigurationException, IllegalArgumentException, NumberFormatException, DateTimeParseException {
      
         //
@@ -468,6 +691,12 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
                 .<Boolean>map(str -> Boolean.parseBoolean(str))
                 .toList();
         
+        // Parse the automatic request decomposition flags if present
+        List<String>    lstStrDcmpAutos = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_DCMP_AUTO);
+        List<Boolean>   lstBolDcmpAutos = lstStrDcmpAutos.stream()
+                .<Boolean>map(str -> Boolean.parseBoolean(str))
+                .toList();
+        
         // Parse the request decomposition types and convert to enumeration constants if present
         List<String>            lstStrDcmpTypes = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_DCMP_TYPES);
         List<RequestDecompType> lstEnmDcmpTypes = lstStrDcmpTypes.stream()
@@ -491,11 +720,11 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         // --- Request Recovery ---
         //
         
-        // Parse the gRPC multi-streaming enable/disable values and convert to Boolean if present
-        List<String>    lstStrStrm = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_MSTRM_ENABLE);
-        List<Boolean>   lstBolStrm = lstStrStrm.stream()
-                .<Boolean>map(str -> Boolean.parseBoolean(str))
-                .toList();
+//        // Parse the gRPC multi-streaming enable/disable values and convert to Boolean if present
+//        List<String>    lstStrStrm = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_MSTRM_ENABLE);
+//        List<Boolean>   lstBolStrm = lstStrStrm.stream()
+//                .<Boolean>map(str -> Boolean.parseBoolean(str))
+//                .toList();
         
         // Parse the gRPC stream types used for data recovery then convert to DpGrpcStreamType enumeration if present
         List<String>            lstStrStrmTypes = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_STRM_TYPES);
@@ -503,9 +732,16 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
                 .<DpGrpcStreamType>map(str -> DpGrpcStreamType.valueOf(DpGrpcStreamType.class, str))    // throws IllegalArgumentException
                 .toList();
         
+        
+        // Parse the request domain sizes triggering gRPC multi-streaming and convert to Long if present
+        List<String>    lstStrMStrmDomSzs = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_MSTRM_DOM_SZ);
+        List<Long>      lstLngMStrmDomSzs = lstStrMStrmDomSzs.stream()
+                .<Long>map(str -> Long.parseLong(str))                // throws NumberFormatException
+                .toList();
+        
         // Parse the maximum number of gRPC streams allowed in time-series request data recovery
-        List<String>    lstStrStrmCnts = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_MSTRM_MAX_CNTS);
-        List<Integer>   lstIntStrmCnts = lstStrStrmCnts.stream()
+        List<String>    lstStrMStrmMaxCnts = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_MSTRM_MAX_CNTS);
+        List<Integer>   lstIntMStrmMaxCnts = lstStrMStrmMaxCnts.stream()
                 .<Integer>map(str -> Integer.parseInt(str))         // throws NumberFormatException
                 .toList();
         
@@ -541,15 +777,28 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         
         
         // Build the test suite generator and return it
-//        QueryRecoveryTestSuiteConfig suite = CorrelatorTestSuiteConfig.create();
-//        
-//        suite.addTestRequests(lstRqsts);
-//        suite.addSupplementalPvs(lstSupplPvs);
-//        suite.addMaxThreadCounts(lstMaxThrds);
-//        suite.addConcurrencyPivotSizes(lstPivotSzs);
-//        
-//        return suite;
-        return null;        // TODO - Complete
+        QueryRecoveryTestSuiteCreator suite = QueryRecoveryTestSuiteCreator.create();
+        
+        suite.addTestRequests(lstRqsts);
+        suite.addSupplementalPvs(lstSupplPvs);
+        
+        suite.addRequestDecompEnables(lstBolDcmps);
+        suite.addRequestDecompAutoEnables(lstBolDcmpAutos);
+        suite.addRequestDecompStrategies(lstEnmDcmpTypes);
+        suite.addRequestDecompMaxPvCnts(lstIntDcmpMaxPvs);
+        suite.addRequestDecompMaxTimeRanges(lstDurDcmpMaxRng);
+        
+        suite.addGrpcStreamTypes(lstEnmStrmTypes);
+        
+        suite.addMultiStreamRequestDomainSizes(lstLngMStrmDomSzs);
+        suite.addMultiStreamMaxStreamCounts(lstIntMStrmMaxCnts);
+        
+        suite.addCorrelConcurrentEnables(lstBolCorrConc);
+        suite.addCorrelDuringRecoveryEnables(lstBolCorrRcvry);
+        suite.addCorrelConcurrencyPivotSizes(lstIntCorrPivotSzs);
+        suite.addCorrelMaxThreadCounts(lstIntCorrMaxThrds);
+        
+        return suite;
     }
 
 }
