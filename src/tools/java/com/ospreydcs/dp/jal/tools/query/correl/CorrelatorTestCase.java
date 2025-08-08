@@ -34,7 +34,7 @@ import java.util.concurrent.CompletionException;
 
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
-import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
+import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 
 /**
  * <p>

@@ -20,16 +20,16 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since May 4, 2025
+ * @since Jul 7, 2025
  *
  */
 /**
  * <p>
- * Package containing query data request resources for Java API Library tools.
- * </p> 
+ * Package containing resources and main for <code>TestArchiveRequestEvaluator</code> application.
+ * </p>
  *
  * @author Christopher K. Allen
- * @since May 4, 2025
+ * @since Jul 7, 2025
  *
  */
 package com.ospreydcs.dp.jal.tools.query.request;

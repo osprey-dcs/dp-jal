@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
+import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 
 /**
  * <p>

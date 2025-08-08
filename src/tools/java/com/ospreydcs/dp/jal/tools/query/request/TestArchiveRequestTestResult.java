@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryAssemblyTestResult.java
- * Package: com.ospreydcs.dp.jal.tools.query.assem
- * Type: 	QueryAssemblyTestResult
+ * File:	TestArchiveRequestTestResult.java
+ * Package: com.ospreydcs.dp.jal.tools.query.request
+ * Type: 	TestArchiveRequestTestResult
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -23,7 +23,7 @@
  * @since Jul 8, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query.assem;
+package com.ospreydcs.dp.jal.tools.query.request;
 
 import java.io.PrintStream;
 import java.util.Comparator;
@@ -41,11 +41,11 @@ import java.util.Comparator;
  * @param recSmpAggResult   the results of the sampled data block creation and aggregation
  * @param recTestCase       the test case for which these results apply
  */
-public record QueryAssemblyTestResult(
+public record TestArchiveRequestTestResult(
         String                  strRqstIdOrg,
         QueryRecoveryResult     recRecoveryResult,
         SampledAggregateResult  recSmpAggResult,
-        QueryAssemblyTestCase   recTestCase
+        TestArchiveRequestTestCase   recTestCase
         ) 
 {
     
@@ -55,7 +55,7 @@ public record QueryAssemblyTestResult(
 
     /**
      * <p>
-     * Creates and returns a new <code>QueryAssemblyTestResult</code> record with fields given by the argument values.
+     * Creates and returns a new <code>TestArchiveRequestTestResult</code> record with fields given by the argument values.
      * </p>
      * 
      * @param strRqstIdOrg      the (optional) string identifier of the original request
@@ -63,16 +63,16 @@ public record QueryAssemblyTestResult(
      * @param recSmpAggResult   the results of the sampled data block creation and aggregation
      * @param recTestCase       the test case for which these results apply
      * 
-     * @return  a new <code>QueryAssemblyTestResult</code> record populated with the given argument values
+     * @return  a new <code>TestArchiveRequestTestResult</code> record populated with the given argument values
      */
-    public static QueryAssemblyTestResult from(
+    public static TestArchiveRequestTestResult from(
             String                  strRqstIdOrg,
             QueryRecoveryResult     recRecoveryResult,
             SampledAggregateResult  recSmpAggResult,
-            QueryAssemblyTestCase   recTestCase
+            TestArchiveRequestTestCase   recTestCase
             ) 
     {
-        return new QueryAssemblyTestResult(strRqstIdOrg, recRecoveryResult, recSmpAggResult, recTestCase);
+        return new TestArchiveRequestTestResult(strRqstIdOrg, recRecoveryResult, recSmpAggResult, recTestCase);
     }
 
 
@@ -88,15 +88,15 @@ public record QueryAssemblyTestResult(
      * <p>
      * The returned comparator instance compares the <code>{@link #recTestCase}</code> fields of two 
      * <code>SuperDomTestResult</code> records.  It provides a reverse ordering of records according
-     * to the test case index fields (i.e., the <code>{@link QueryAssemblyTestCase#indCase()}</code> fields).  
+     * to the test case index fields (i.e., the <code>{@link TestArchiveRequestTestCase#indCase()}</code> fields).  
      * Specifically, the highest case index will appear first in any ordered Java collection.
      * </p>
      * 
      * @return  a new <code>Comparator</code> instance providing a reverse ordering by raw data rates
      */
-    public static Comparator<QueryAssemblyTestResult>   descendingCaseIndexOrdering() {
+    public static Comparator<TestArchiveRequestTestResult>   descendingCaseIndexOrdering() {
     
-        Comparator<QueryAssemblyTestResult>   cmp = (r1, r2) -> {
+        Comparator<TestArchiveRequestTestResult>   cmp = (r1, r2) -> {
 
             if (r1.recTestCase.indCase() > r2.recTestCase.indCase())
                 return -1;
@@ -115,15 +115,15 @@ public record QueryAssemblyTestResult(
      * <p>
      * The returned comparator instance compares the <code>{@link #recTestCase}</code> fields of two 
      * <code>SuperDomTestResult</code> records.  It provides a natural ordering of records according
-     * to the test case index fields (i.e., the <code>{@link QueryAssemblyTestCase#indCase()}</code> fields).  
+     * to the test case index fields (i.e., the <code>{@link TestArchiveRequestTestCase#indCase()}</code> fields).  
      * Specifically, the lowest case index will appear first in any ordered Java collection.
      * </p>
      * 
      * @return  a new <code>Comparator</code> instance providing a natural ordering by raw data rates
      */
-    public static Comparator<QueryAssemblyTestResult>    ascendingCaseIndexOrdering() {
+    public static Comparator<TestArchiveRequestTestResult>    ascendingCaseIndexOrdering() {
 
-        Comparator<QueryAssemblyTestResult>  cmp = (r1, r2) -> {
+        Comparator<TestArchiveRequestTestResult>  cmp = (r1, r2) -> {
 
             if (r1.recTestCase.indCase() < r2.recTestCase.indCase())
                 return -1;

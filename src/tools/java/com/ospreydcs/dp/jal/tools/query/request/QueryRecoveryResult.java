@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	QueryRecoveryResult.java
- * Package: com.ospreydcs.dp.jal.tools.query.assem
+ * Package: com.ospreydcs.dp.jal.tools.query.request
  * Type: 	QueryRecoveryResult
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since Jul 9, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query.assem;
+package com.ospreydcs.dp.jal.tools.query.request;
 
 import java.io.PrintStream;
 import java.time.Duration;

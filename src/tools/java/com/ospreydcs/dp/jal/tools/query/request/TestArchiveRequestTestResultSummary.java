@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryAssemblyTestResultSummary.java
- * Package: com.ospreydcs.dp.jal.tools.query.assem
- * Type: 	QueryAssemblyTestResultSummary
+ * File:	TestArchiveRequestTestResultSummary.java
+ * Package: com.ospreydcs.dp.jal.tools.query.request
+ * Type: 	TestArchiveRequestTestResultSummary
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -23,41 +23,41 @@
  * @since Jul 14, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query.assem;
+package com.ospreydcs.dp.jal.tools.query.request;
 
 import java.io.PrintStream;
 import java.util.Collection;
 
 /**
  * <p>
- * Record containing summary results for a collection of <code>QueryAssemblyTestResult</code> records.
+ * Record containing summary results for a collection of <code>TestArchiveRequestTestResult</code> records.
  * </p>
  * <p>
- * A <code>QueryAssemblyTestResult</code> record contains the results of a query assembly processors test
- * case encapsulated by a <code>QueryAssemblyTestCase</code> record.  There are 2 parts to a query assembly
+ * A <code>TestArchiveRequestTestResult</code> record contains the results of a query assembly processors test
+ * case encapsulated by a <code>TestArchiveRequestTestCase</code> record.  There are 2 parts to a query assembly
  * test case:
  * <ol>
  * <li>Raw time-series data recovery and correlation into raw data blocks</li>
  * <li>Assembly of raw correlated data into an ordered aggregate of sampled blocks, each representing a "page" of request data.</li>
  * </ol>
- * The <code>QueryAssemblyTestResult</code> record contains 2 sub-records, one for each result of the
- * above operations.  In turn, the <code>QueryAssemblyTestResultSummary</code> record also contains two sub-records.
+ * The <code>TestArchiveRequestTestResult</code> record contains 2 sub-records, one for each result of the
+ * above operations.  In turn, the <code>TestArchiveRequestTestResultSummary</code> record also contains two sub-records.
  * The summary records primarily contain statistical information about the result record fields.
  * </p>  
  * <p>
  * <h2>Summary Creation</h2>
  * Record instances are intended to be created from the <code>{@link #summarize(Collection)}</code> static method where
- * the argument is a collection of <code>QueryAssemblyTestResult</code> records.
+ * the argument is a collection of <code>TestArchiveRequestTestResult</code> records.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Jul 14, 2025
  *
- * @param cntResults            total number of <code>QueryAssemblyTestResult</code> records considered
+ * @param cntResults            total number of <code>TestArchiveRequestTestResult</code> records considered
  * @param recRecoverySummary    record containing a summary of the raw time-series data recovery and correlation 
  * @param recAssemblySummary    record containing a summary of the ordered sampled aggregate assembly
  */
-public record QueryAssemblyTestResultSummary(
+public record TestArchiveRequestTestResultSummary(
         int                             cntResults,
         QueryRecoveryResultSummary      recRecoverySummary,
         SampledAggregateResultSummary   recAssemblySummary
@@ -70,21 +70,21 @@ public record QueryAssemblyTestResultSummary(
     
     /**
      * <p>
-     * Creates and returns a new <code>QueryAssemblyTestResultSummary</code> record from the given argument values.
+     * Creates and returns a new <code>TestArchiveRequestTestResultSummary</code> record from the given argument values.
      * </p>
      * 
-     * @param cntResults            total number of <code>QueryAssemblyTestResult</code> records considered
+     * @param cntResults            total number of <code>TestArchiveRequestTestResult</code> records considered
      * @param recRecoverySummary    record containing a summary of the raw time-series data recovery and correlation 
      * @param recAssemblySummary    record containing a summary of the ordered sampled aggregate assembly
      * 
-     * @return  a new <code>QueryAssemblyTestResultSummary</code> record populated from the given arguments
+     * @return  a new <code>TestArchiveRequestTestResultSummary</code> record populated from the given arguments
      */
-    public static QueryAssemblyTestResultSummary    from(
+    public static TestArchiveRequestTestResultSummary    from(
             int                             cntResults,
             QueryRecoveryResultSummary      recRecoverySummary, 
             SampledAggregateResultSummary   recAssemblySummary) 
     {
-        return new QueryAssemblyTestResultSummary(cntResults, recRecoverySummary, recAssemblySummary);
+        return new TestArchiveRequestTestResultSummary(cntResults, recRecoverySummary, recAssemblySummary);
     }
     
     
@@ -106,7 +106,7 @@ public record QueryAssemblyTestResultSummary(
      * 
      * @return  a summary of the argument collection
      */
-    public static QueryAssemblyTestResultSummary    summarize(Collection<QueryAssemblyTestResult> setResults) {
+    public static TestArchiveRequestTestResultSummary    summarize(Collection<TestArchiveRequestTestResult> setResults) {
         
         int                                 cntResults = setResults.size();
         Collection<QueryRecoveryResult>     setRecResults = setResults.stream().<QueryRecoveryResult>map(rec -> rec.recRecoveryResult()).toList();
@@ -115,7 +115,7 @@ public record QueryAssemblyTestResultSummary(
         QueryRecoveryResultSummary      recRecSum = QueryRecoveryResultSummary.summarize(setRecResults);
         SampledAggregateResultSummary   recAssSum = SampledAggregateResultSummary.summarize(setAggResults);
         
-        return QueryAssemblyTestResultSummary.from(cntResults, recRecSum, recAssSum);
+        return TestArchiveRequestTestResultSummary.from(cntResults, recRecSum, recAssSum);
     }
     
     /**

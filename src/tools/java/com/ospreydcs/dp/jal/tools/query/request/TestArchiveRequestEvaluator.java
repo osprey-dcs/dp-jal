@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryAssemblyEvaluator.java
- * Package: com.ospreydcs.dp.jal.tools.query.assem
- * Type: 	QueryAssemblyEvaluator
+ * File:	TestArchiveRequestEvaluator.java
+ * Package: com.ospreydcs.dp.jal.tools.query.request
+ * Type: 	TestArchiveRequestEvaluator
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -23,7 +23,7 @@
  * @since Jul 8, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query.assem;
+package com.ospreydcs.dp.jal.tools.query.request;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -53,22 +53,24 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator;
-import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
+import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 import com.sun.jdi.request.InvalidRequestStateException;
 
 /**
  * <p>
- * Application <code>QueryAssemblyEvaluator</code>.
+ * Application <code>TestArchiveRequestEvaluator</code>.
  * </p>
  * <p>
  * Application for evaluating the operation and performance of the <code>{@link QueryResponseAssembler}</code> class.
- * See class constant
+ * See class constants <code>{@link #STR_APP_DESCR}</code> and <code>{@link #STR_APP_USAGE}</code> for information
+ * on application operation and usage.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Jul 8, 2025
  *
  */
-public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluator> {
+public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequestEvaluator> {
 
     /**
      * <p>
@@ -116,12 +118,12 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         
         // Get the test suite configuration and output location from the application arguments
         String                          strOutputLoc;
-        QueryAssemblyTestSuiteConfig    cfgTests;
+        TestArchiveRequestTestSuiteCreator    cfgTests;
         try {
             
             strOutputLoc = JalApplicationBase.parseOutputLocation(args, STR_OUTPUT_DEF);
 
-            cfgTests = QueryAssemblyEvaluator.parseTestSuiteConfig(args);
+            cfgTests = TestArchiveRequestEvaluator.parseTestSuiteConfig(args);
             
         } catch (Exception e) {
             
@@ -135,7 +137,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         
         // Create the super-domain evaluator and run it, catch any exceptions in context
         try {
-            QueryAssemblyEvaluator  appMain = new QueryAssemblyEvaluator(cfgTests, strOutputLoc, args);
+            TestArchiveRequestEvaluator  appMain = new TestArchiveRequestEvaluator(cfgTests, strOutputLoc, args);
             
             appMain.run();
             appMain.writeReport();
@@ -205,7 +207,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
     
     
     /** Default output path location */
-    public static final String      STR_OUTPUT_DEF = CFG_TOOLS.output + "/query/assem";
+    public static final String      STR_OUTPUT_DEF = CFG_TOOLS.output + "/query/request";
   
 
     /** Argument variable identifying the PV name value(s) */
@@ -231,14 +233,18 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
     //
     
     /** Application name */
-    public static final String      STR_APP_NAME = QueryAssemblyEvaluator.class.getSimpleName();
+    public static final String      STR_APP_NAME = TestArchiveRequestEvaluator.class.getSimpleName();
     
     
     /** A laconic description of the application function */
     public static final String      STR_APP_DESCR = 
             STR_APP_NAME + " Description \n"
+          + "- Application for performing and evaluating the pre-defined time-series data requests within the \n"
+          + "    TestArchiveRequest enumeration. (Additional PVs can be added to the test requests.) \n"
           + "- Application evaluates the performance and operation of the QueryRequestRecoverer class \n"
           + "    and QueryResponseAssembler class for recovering, correlating, and assembling time-series data. \n"
+          + "- The Data Platform must be populated with data from the Test Archive by running application \n"
+          + "    'app-run-test-data-generator'.\n"
           + "- Data Platform Test Archive requests are performed, the data is recovered \n"
           + "    as gRPC messages and correlated into raw data blocks associated with a \n"
           + "    common timestamp message.  \n"
@@ -300,7 +306,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
     //
     
     /** Class event logger */
-    private static final Logger     LOGGER = Log4j.getLogger(QueryAssemblyEvaluator.class, JalQueryAppBase.STR_LOGGING_LEVEL);
+    private static final Logger     LOGGER = Log4j.getLogger(TestArchiveRequestEvaluator.class, JalQueryAppBase.STR_LOGGING_LEVEL);
 
     
     // 
@@ -308,7 +314,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
     //
     
     /** The test suite generator used for <code>SuperDomTestCase</code> evaluations */
-    private final QueryAssemblyTestSuiteConfig       cfgTests;
+    private final TestArchiveRequestTestSuiteCreator       cfgTests;
     
     
     //
@@ -323,10 +329,10 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
     
     
     /** The suite of test cases generated by the test suite configuration */
-    private final Collection<QueryAssemblyTestCase>       setTestCases;
+    private final Collection<TestArchiveRequestTestCase>       setTestCases;
     
     /** The collection of test case evaluation results */
-    private final Collection<QueryAssemblyTestResult>     setTestResults;
+    private final Collection<TestArchiveRequestTestResult>     setTestResults;
     
     
     //
@@ -343,7 +349,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
     
     /**
      * <p>
-     * Constructs a new <code>QueryAssemblyEvaluator</code> instance.
+     * Constructs a new <code>TestArchiveRequestEvaluator</code> instance.
      * </p>
      *
      * @param cfgTests      the test suite generator (pre-configured)
@@ -356,9 +362,9 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
      * @throws FileNotFoundException    unable to create output file (see message and cause)
      * @throws SecurityException        unable to write to output file
      */
-    public QueryAssemblyEvaluator(QueryAssemblyTestSuiteConfig cfgTests, String strOutputLoc, String... args) 
+    public TestArchiveRequestEvaluator(TestArchiveRequestTestSuiteCreator cfgTests, String strOutputLoc, String... args) 
             throws DpGrpcException, ConfigurationException, UnsupportedOperationException, FileNotFoundException, SecurityException {
-        super(QueryAssemblyEvaluator.class, args);  // throws DpGrpcException
+        super(TestArchiveRequestEvaluator.class, args);  // throws DpGrpcException
         
         this.cfgTests = cfgTests;
         
@@ -368,7 +374,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         
         // Create test case suite and test result container
         this.setTestCases = this.cfgTests.createTestSuite();    //throws ConfigurationException
-        this.setTestResults = new TreeSet<>(QueryAssemblyTestResult.ascendingCaseIndexOrdering());
+        this.setTestResults = new TreeSet<>(TestArchiveRequestTestResult.ascendingCaseIndexOrdering());
         
         // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
@@ -402,14 +408,14 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
      * Runs the application evaluating all test cases within the test suite configuration.
      * </p>
      * <p>
-     * The test suite generated by the <code>{@link QueryAssemblyTestSuiteConfig}</code>
+     * The test suite generated by the <code>{@link TestArchiveRequestTestSuiteCreator}</code>
      * instance provided at construction are available at the time of invocation.  The
      * test suite is run and the results are stored for later reporting.
      * <ul> 
      * <li>All test cases are in container <code>{@link #setTestCases}</code>.</li>
-     * <li>Test cases are represented by <code>{@link QueryAssemblyTestCase}</code> records.</li>
+     * <li>Test cases are represented by <code>{@link TestArchiveRequestTestCase}</code> records.</li>
      * <li>Test results are obtained from method 
-     * <code>{@link QueryAssemblyTestCase#evaluate(QueryRequestRecoverer, QueryResponseAssembler)}</code>.</li>
+     * <code>{@link TestArchiveRequestTestCase#evaluate(QueryRequestRecoverer, QueryResponseAssembler)}</code>.</li>
      * <li>Test results are represented by <code>{@link QryRspAssemResult}</code> records.</li>
      * <li>All test results are saved to container <code>{@link #setTestResults}</code>.</li>
      * </ul>
@@ -433,8 +439,8 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
 
         // Iterate over each test case in the test suite 
         Instant insStart = Instant.now();
-        for (QueryAssemblyTestCase recCase : this.setTestCases) {
-            QueryAssemblyTestResult  recResult = recCase.evaluate(this.procCorrelator, this.procAssembler);
+        for (TestArchiveRequestTestCase recCase : this.setTestCases) {
+            TestArchiveRequestTestResult  recResult = recCase.evaluate(this.procCorrelator, this.procAssembler);
             
             this.setTestResults.add(recResult);
         }
@@ -548,13 +554,13 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         ps.println();
         
         // Print out results summary
-        QueryAssemblyTestResultSummary   recSummary = QueryAssemblyTestResultSummary.summarize(this.setTestResults); // throws NoSuchElementException
+        TestArchiveRequestTestResultSummary   recSummary = TestArchiveRequestTestResultSummary.summarize(this.setTestResults); // throws NoSuchElementException
         recSummary.printOut(ps, null);
         ps.println();
         
         // Print out individual test case results
         ps.println("Test Case Results");
-        for (QueryAssemblyTestResult recResult : this.setTestResults) {
+        for (TestArchiveRequestTestResult recResult : this.setTestResults) {
             recResult.printOut(ps, "  ");
             ps.println();
         }
@@ -601,7 +607,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
      * @throws IllegalArgumentException invalid test request enumeration constant name (not in <code>TestArchiveRequest</code>)
      * @throws DateTimeParseException   an invalid time duration format was encountered (could not be converted to a <code>Duration</code> type)
      */
-    private static QueryAssemblyTestSuiteConfig    parseTestSuiteConfig(String[] args) 
+    private static TestArchiveRequestTestSuiteCreator    parseTestSuiteConfig(String[] args) 
             throws NoSuchElementException, MissingResourceException, ConfigurationException, IllegalArgumentException, DateTimeParseException {
      
         // Parse the data requests enumerations and the supplemental PVs
@@ -633,7 +639,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         if (lstRqstNms.isEmpty() && lstStrRqstDur.isEmpty()) {
             String  strMsg = "A request duration " + STR_VAR_DUR + " must be specified for PV list " + lstPvNms + ".";
             
-            throw new MissingResourceException(strMsg, QueryAssemblyTestSuiteConfig.class.getName(), STR_VAR_DUR);
+            throw new MissingResourceException(strMsg, TestArchiveRequestTestSuiteCreator.class.getName(), STR_VAR_DUR);
         }
 
         // Convert to TestArchiveRequest enumeration constants
@@ -659,7 +665,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         }
         
         // Build the test suite and return it
-        QueryAssemblyTestSuiteConfig cfgSuite = QueryAssemblyTestSuiteConfig.create();
+        TestArchiveRequestTestSuiteCreator cfgSuite = TestArchiveRequestTestSuiteCreator.create();
         
         cfgSuite.addTestRequests(lstRqsts);
         cfgSuite.addPvNames(lstPvNms);

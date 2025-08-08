@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryAssemblyTestCase.java
- * Package: com.ospreydcs.dp.jal.tools.query.assem
- * Type: 	QueryAssemblyTestCase
+ * File:	TestArchiveRequestTestCase.java
+ * Package: com.ospreydcs.dp.jal.tools.query.request
+ * Type: 	TestArchiveRequestTestCase
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -23,7 +23,7 @@
  * @since Jul 8, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query.assem;
+package com.ospreydcs.dp.jal.tools.query.request;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -38,8 +38,8 @@ import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.query.model.assem.SampledAggregate;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.superdom.TimeDomainProcessor;
-import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.query.superdom.SuperDomTestResult;
+import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 
 /**
  * <p>
@@ -87,7 +87,7 @@ import com.ospreydcs.dp.jal.tools.query.superdom.SuperDomTestResult;
  * @param durDelay      request time range delay override
  * @param rqstFinal     the final time-series data request to perform
  */
-public record QueryAssemblyTestCase(
+public record TestArchiveRequestTestCase(
         int                 indCase,
         TestArchiveRequest  enmRqstOrg,
         Set<String>         setPvNames,
@@ -103,7 +103,7 @@ public record QueryAssemblyTestCase(
     
     /**
      * <p>
-     * Creates and returns a new <code>QueryAssemblyTestCase</code> record with fields given by the argument valuees.
+     * Creates and returns a new <code>TestArchiveRequestTestCase</code> record with fields given by the argument valuees.
      * </p>
      * 
      * @param enmRqstOrg    the originating Test Archive data request
@@ -112,9 +112,9 @@ public record QueryAssemblyTestCase(
      * @param durDelay      request time range delay override
      * @param rqstFinal     the final time-series data request to perform
      * 
-     * @return  a new <code>QueryAssemblyTestCase</code> record populated with the given values  
+     * @return  a new <code>TestArchiveRequestTestCase</code> record populated with the given values  
      */
-    public static final QueryAssemblyTestCase    from(
+    public static final TestArchiveRequestTestCase    from(
             TestArchiveRequest  enmRqstOrg,
             Set<String>         setPvNames,
             Duration            durRange,
@@ -122,7 +122,7 @@ public record QueryAssemblyTestCase(
             DpDataRequest       rqstFinal
             )
     {
-        return new QueryAssemblyTestCase(IND_CASE, enmRqstOrg, setPvNames, durRange, durDelay, rqstFinal);
+        return new TestArchiveRequestTestCase(IND_CASE, enmRqstOrg, setPvNames, durRange, durDelay, rqstFinal);
     }
 
     
@@ -157,7 +157,7 @@ public record QueryAssemblyTestCase(
      * @param durDelay      request time range delay override
      * @param rqstFinal     the final time-series data request to perform
      */
-    public QueryAssemblyTestCase {
+    public TestArchiveRequestTestCase {
         IND_CASE++;
     }
     
@@ -177,18 +177,18 @@ public record QueryAssemblyTestCase(
      * The time-series data request is performed, the raw data is recovered and correlated, then assembled into 
      * into a sample block aggregate and inspected.
      * The performance of the evaluation is measured along with the properties of the correlation and assembly
-     * products then returned as a <code>QueryAssemblyTestResult</code> record.
+     * products then returned as a <code>TestArchiveRequestTestResult</code> record.
      * </p>
      * <p>
      * <h2>Evaluation</h2>
-     * There are essentially two operation within a <code>QueryAssemblyTestCase</code>: 
+     * There are essentially two operation within a <code>TestArchiveRequestTestCase</code>: 
      * <ol>
      * <li>Recovery and correlation of the time-series data request.</li>
      * <li>Assembly of the raw correlated data into an aggregate of sampled blocks.</li>
      * </ol>
      * The results of the first operation are contained in the result field 
-     * <code>{@link QueryAssemblyTestResult#recRecoveryResult()}</code> while the results of the second operation are contained
-     * in the <code>{@link QueryAssemblyTestResult#recSmpAggResult()}</code> field.
+     * <code>{@link TestArchiveRequestTestResult#recRecoveryResult()}</code> while the results of the second operation are contained
+     * in the <code>{@link TestArchiveRequestTestResult#recSmpAggResult()}</code> field.
      * </p>
      * <p>
      * The recovery and correlation recovers all raw data from the Query Service as <code>QueryData</code>
@@ -242,11 +242,11 @@ public record QueryAssemblyTestCase(
      * @param prcrRqsts     the processor of time-series data requests into raw correlated data
      * @param prcrAssem     the processor of raw correlated data into sampled aggregate products
      * 
-     * @return  A <code>QueryAssemblyTestResult</code> record containing the results of the evaluation
+     * @return  A <code>TestArchiveRequestTestResult</code> record containing the results of the evaluation
      * 
      * @throws DpQueryException general exception during recovery and/or processing (see message and cause)
      */
-    public QueryAssemblyTestResult   evaluate(QueryRequestRecoverer prcrRqsts, QueryResponseAssembler prcrAssem) 
+    public TestArchiveRequestTestResult   evaluate(QueryRequestRecoverer prcrRqsts, QueryResponseAssembler prcrAssem) 
             throws DpQueryException {
 
         // Perform and time the raw data data recovery and correlation
@@ -269,7 +269,7 @@ public record QueryAssemblyTestCase(
         
         
         // Assemble the QryRspAssemResult record from raw correlated data result and assembly result
-        QueryAssemblyTestResult   recResult = QueryAssemblyTestResult.from(strRqstId, recRecoveryResult, recAssemResult, this);
+        TestArchiveRequestTestResult   recResult = TestArchiveRequestTestResult.from(strRqstId, recRecoveryResult, recAssemResult, this);
         
         return recResult;
     }

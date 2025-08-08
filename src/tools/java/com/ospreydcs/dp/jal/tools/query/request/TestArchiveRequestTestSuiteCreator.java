@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	QueryAssemblyTestSuiteConfig.java
- * Package: com.ospreydcs.dp.jal.tools.query.assem
- * Type: 	QueryAssemblyTestSuiteConfig
+ * File:	TestArchiveRequestTestSuiteCreator.java
+ * Package: com.ospreydcs.dp.jal.tools.query.request
+ * Type: 	TestArchiveRequestTestSuiteCreator
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -23,7 +23,7 @@
  * @since Jul 8, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query.assem;
+package com.ospreydcs.dp.jal.tools.query.request;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -44,21 +44,21 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
+import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 
 /**
  * <p>
- * Class for generating collections of test cases for the <code>QueryAssemblyEvaluator</code> application.
+ * Class for generating collections of test cases for the <code>TestArchiveRequestEvaluator</code> application.
  * </p>
  * <p>
- * Class instances are configurable to generate test cases of type <code>{@link QueryAssemblyTestCase}</code> with
+ * Class instances are configurable to generate test cases of type <code>{@link TestArchiveRequestTestCase}</code> with
  * varying parameters.
  * </p>
  * <p>
- * A <code>QueryAssemblyTestSuiteConfig</code> instance is created in an unconfigured state.  Clients
+ * A <code>TestArchiveRequestTestSuiteCreator</code> instance is created in an unconfigured state.  Clients
  * must configure the instance using the available configuration methods before calling the
  * <code>{@link #createTestSuite()}</code> method which returns a collection (i.e., "suite") of
- * <code>{@link QueryAssemblyTestCase}</code> instances according to the current configuration.
+ * <code>{@link TestArchiveRequestTestCase}</code> instances according to the current configuration.
  * </p>
  * <p>
  * <h2>Configuration</h2>
@@ -83,7 +83,7 @@ import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequest;
  * @since Jul 8, 2025
  *
  */
-public class QueryAssemblyTestSuiteConfig {
+public class TestArchiveRequestTestSuiteCreator {
 
     //
     // Creator
@@ -96,8 +96,8 @@ public class QueryAssemblyTestSuiteConfig {
      * 
      * @return  a new unconfigured instance of <code>SuperDomTestSuiteConfig</code>
      */
-    public static QueryAssemblyTestSuiteConfig   create() {
-        return new QueryAssemblyTestSuiteConfig();
+    public static TestArchiveRequestTestSuiteCreator   create() {
+        return new TestArchiveRequestTestSuiteCreator();
     }
     
 
@@ -117,7 +117,7 @@ public class QueryAssemblyTestSuiteConfig {
     //
     
     /** Class name - used for request ID when no TestArchiveRequest constants are specified */
-    public static final String      STR_CLS_NAME = QueryAssemblyTestSuiteConfig.class.getSimpleName();
+    public static final String      STR_CLS_NAME = TestArchiveRequestTestSuiteCreator.class.getSimpleName();
 
     
     /** Event logging enabled flag */
@@ -171,11 +171,11 @@ public class QueryAssemblyTestSuiteConfig {
     
     /**
      * <p>
-     * Constructs a new <code>QueryAssemblyTestSuiteConfig</code> instance ready for configuration.
+     * Constructs a new <code>TestArchiveRequestTestSuiteCreator</code> instance ready for configuration.
      * </p>
      *
      */
-    public QueryAssemblyTestSuiteConfig() {
+    public TestArchiveRequestTestSuiteCreator() {
     }
 
 
@@ -346,7 +346,7 @@ public class QueryAssemblyTestSuiteConfig {
      * 
      * @throws ConfigurationException    either no test requests or supplemental PVs, or only supplemental PVs an no duration
      */
-    public Collection<QueryAssemblyTestCase> createTestSuite() throws ConfigurationException {
+    public Collection<TestArchiveRequestTestCase> createTestSuite() throws ConfigurationException {
         
         // Check state
         this.checkConfiguration();  // throws ConfigurationException
@@ -355,18 +355,18 @@ public class QueryAssemblyTestSuiteConfig {
         if (this.setTestRqsts.isEmpty()) {
             DpDataRequest       rqst = this.createRequest(this.setPvNames);
             TestArchiveRequest  enmRqst = TestArchiveRequest.EMPTY_REQUEST;
-            QueryAssemblyTestCase    recCase = QueryAssemblyTestCase.from(enmRqst, this.setPvNames, this.durRange, this.durDelay, rqst);
+            TestArchiveRequestTestCase    recCase = TestArchiveRequestTestCase.from(enmRqst, this.setPvNames, this.durRange, this.durDelay, rqst);
             
             return List.of(recCase);
         }
         
         // General Case - Supplement TestArchiveRequest constant with additional PV names
         //  Create returned container and populate it by enumerating through all test suite parameters 
-        List<QueryAssemblyTestCase>  lstCases = new ArrayList<>(this.setTestRqsts.size());
+        List<TestArchiveRequestTestCase>  lstCases = new ArrayList<>(this.setTestRqsts.size());
         
         for (TestArchiveRequest enmRqst : this.setTestRqsts) {
             DpDataRequest       rqst = this.createRequest(enmRqst);
-            QueryAssemblyTestCase    recCase = QueryAssemblyTestCase.from(enmRqst, this.setPvNames, this.durRange, this.durDelay, rqst);
+            TestArchiveRequestTestCase    recCase = TestArchiveRequestTestCase.from(enmRqst, this.setPvNames, this.durRange, this.durDelay, rqst);
             
             lstCases.add(recCase);
         }
