@@ -49,7 +49,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * </p>
  * <p>
  * <h2>Creation</h2>
- * Instances of <code>QueryRecoveryResultSummary</code> are intended to be created by method 
+ * Instances of <code>QueryRecoveryTestsSummary</code> are intended to be created by method 
  * <code>{@link #summarize(Collection)}</code> where the argument is collection of <code>QueryRecoveryResult</code>
  * records under inspection.
  * </p>

@@ -35,11 +35,9 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
@@ -56,6 +54,7 @@ import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.query.model.table.SampledAggregateTable;
 import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.api.util.Log4j;
 
 /**
  * <p>
@@ -241,13 +240,13 @@ public class SampledAggregate implements Iterable<SampledBlock> {
     
     
     /** Concurrency enabled flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
-    
-    /** Concurrency maximum thread count */
-    public static final int         CNT_CONCURRENCY_MAX_THRDS = CFG_QUERY.concurrency.maxThreads;
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.data.table.construction.concurrency.enabled;
     
     /** Concurrency tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
-    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.data.table.construction.concurrency.pivotSize;
+    
+    /** Concurrency maximum thread count */
+    public static final int         CNT_CONCURRENCY_MAX_THRDS = CFG_QUERY.data.table.construction.concurrency.maxThreads;
     
 
     //
@@ -255,17 +254,17 @@ public class SampledAggregate implements Iterable<SampledBlock> {
     //
     
     /** Event logger for class */
-    protected static final Logger LOGGER = LogManager.getLogger();
+    protected static final Logger LOGGER = Log4j.getLoggerSetLevel(STR_LOGGING_LEVEL);
     
 
-    /**
-     * <p>
-     * Class Initialization - Initializes the event logger, sets logging level.
-     * </p>
-     */
-    static {
-        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
-    }
+//    /**
+//     * <p>
+//     * Class Initialization - Initializes the event logger, sets logging level.
+//     * </p>
+//     */
+//    static {
+//        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+//    }
     
     
     //
@@ -350,6 +349,33 @@ public class SampledAggregate implements Iterable<SampledBlock> {
     @Override
     public Iterator<SampledBlock> iterator() {
         return this.setSmplBlocks.iterator();
+    }
+    
+    /**
+     * <p>
+     * Creates an returns a new stream instance supplying the component <code>SampledBlocks</code> within this aggregate.
+     * </p>
+     * <p>
+     * The returned stream instance is created using the <code>{@link Stream}</code> interface builder class obtained 
+     * from the <code>{@link Stream#builder()}</code> method.  The builder is populated with the <code>SampledBlock</code>
+     * instances within this aggregate, in order, then invoking <code>{@link Stream.Builder#build()}</code>.
+     * </p>
+     *  
+     * @return  a new <code>Stream&lt;SampledBlock&gt;</code> instance that iterates over all component blocks within this aggregate
+     */
+    public Stream<SampledBlock> stream() {
+        
+        // Create stream builder and populate it with the component blocks
+        Stream.Builder<SampledBlock>    bldr = Stream.builder();
+        
+        for (SampledBlock blk : this) {
+            bldr.accept(blk);;
+        }
+        
+        // Create the new stream instance and return it
+        Stream<SampledBlock>    strm = bldr.build();
+        
+        return strm;
     }
 
     

@@ -43,6 +43,7 @@ import org.w3c.dom.ranges.RangeException;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.IDataTable;
+import com.ospreydcs.dp.api.common.JalDataTableType;
 import com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess;
 import com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock;
 import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
@@ -303,7 +304,15 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     public String   getRequestId() {
         return null;
     }
-    
+
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#getTableType()
+     */
+    @Override
+    public JalDataTableType getTableType() {
+        return JalDataTableType.DYNAMIC;
+    }
+
     /**
      * @return always returns <code>true</code>, table is complete at construction
      * 

@@ -42,10 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.w3c.dom.ranges.RangeException;
 
 import com.ospreydcs.dp.api.common.DpSupportedType;
@@ -56,6 +53,7 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.api.util.Log4j;
 
 /**
  * <p>
@@ -190,10 +188,10 @@ public class SampledProcess {
     
     
     /** Concurrency enabled flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.data.table.construction.concurrency.enabled;
     
     /** Parallelism tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
-    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.data.table.construction.concurrency.pivotSize;
     
 
     //
@@ -201,17 +199,17 @@ public class SampledProcess {
     //
     
     /** Event logger for class */
-    protected static final Logger LOGGER = LogManager.getLogger();
+    protected static final Logger LOGGER = Log4j.getLoggerSetLevel(STR_LOGGING_LEVEL);
     
 
-    /**
-     * <p>
-     * Class Initialization - Initializes the event logger, sets logging level.
-     * </p>
-     */
-    static {
-        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
-    }
+//    /**
+//     * <p>
+//     * Class Initialization - Initializes the event logger, sets logging level.
+//     * </p>
+//     */
+//    static {
+//        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+//    }
     
     
     //

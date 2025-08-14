@@ -134,16 +134,23 @@ query:      # Data Platform Query Service client API default configuration param
          construction:      # General data table reconstruction parameters
             errorChecking: true      # use advanced error checking : DP_API_QUERY_DATA_TABLE_CONSTRUCTION_ERROR_CHECKING
             domainCollision: true    # allow/disallow time domain collision : DP_API_QUERY_DATA_TABLE_CONSTRUCTION_DOMAIN_COLLISION 
-         sstatic:           # static data table properties 
-            isDefault: true          # use static table as default  : DP_API_QUERY_DATA_TABLE_STATIC_DEFAULT
-            hasMaxSize: true         # enforce maximum table size   : DP_API_QUERY_DATA_TABLE_STATIC_HAS_MAX_SIZE
-            maxSize: 4000000         # maximum size (bytes) allowed : DP_API_QUERY_DATA_TABLE_STATIC_MAX_SIZE
-         dynamic:           # dynamic data table properties
-            enable: true             # enable dynamic data tables   : DP_API_QUERY_DATA_TABLE_DYNAMIC_ENABLE
-   concurrency:  # General concurrency (multi-threading) properties for query operations
-      enabled: true                  # use concurrency            : DP_API_QUERY_CONCURRENCY_ENABLED
-      pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
-      maxThreads: 20                 # max worker thread count    : DP_API_QUERY_CONCURRENCY_MAX_THREADS
+            concurrency:             # data table construction concurrency (multi-threading) parameters
+               enabled: true                  # use concurrency            : DP_API_QUERY_DATA_TABLE_CONSTRUCTION_CONCURRENCY_ENABLED
+               pivotSize: 5                   # size inducing concurrency  : DP_API_QUERY_DATA_TABLE_CONSTRUCTION_CONCURRENCY_PIVOT_SIZE
+               maxThreads: 10                 # max worker thread count    : DP_API_QUERY_DATA_TABLE_CONSTRUCTION_CONCURRENCY_MAX_THREADS
+         result:            # Data table result (concrete instance) parameters
+            type: AUTO               # JalDataTableType {STATIC, DYNAMIC, AUTO} : DP_API_QUERY_DATA_TABLE_RESULT_TYPE
+            staticTbl:               # static data table properties 
+               isDefault: true          # use static table as default in AUTO  : DP_API_QUERY_DATA_TABLE_STATIC_DEFAULT
+               maxSizeEnable: true      # enforce maximum table size in AUTO  : DP_API_QUERY_DATA_TABLE_STATIC_HAS_MAX_SIZE
+               maxSize: 4000000         # maximum size (bytes) allowed in AUTO : DP_API_QUERY_DATA_TABLE_STATIC_MAX_SIZE
+#            dynamic:                 # dynamic data table properties
+#               enable: true             # enable dynamic data tables   : DP_API_QUERY_DATA_TABLE_DYNAMIC_ENABLE
+
+#   concurrency:  # General concurrency (multi-threading) properties for query operations
+#      enabled: true                  # use concurrency            : DP_API_QUERY_CONCURRENCY_ENABLED
+#      pivotSize: 10                  # size inducing concurrency  : DP_API_QUERY_CONCURRENCY_PIVOT_SIZE
+#      maxThreads: 20                 # max worker thread count    : DP_API_QUERY_CONCURRENCY_MAX_THREADS
    timeout:      # General query timeout properties (e.g., used for query response wait timeout)
       enabled: true                  # apply timeout condition    : DP_API_QUERY_TIMEOUT_ENABLED
       limit: 30                      # request timeout limit      : DP_API_QUERY_TIMEOUT_LIMIT

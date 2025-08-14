@@ -53,7 +53,7 @@ public class DpDataRecoveryConfig extends CfgStructure<DpDataRecoveryConfig> {
     
     /** gRPC streaming parameters for query responses */
     @ACfgOverride.Struct(pathelem="STREAM")
-    public Stream                   stream;
+    public Stream           stream;
     
     /** Multi-streaming parameters for query responses */
     @ACfgOverride.Struct(pathelem="MULTISTREAM")

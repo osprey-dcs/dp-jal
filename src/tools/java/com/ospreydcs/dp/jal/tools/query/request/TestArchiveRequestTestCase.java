@@ -43,16 +43,16 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 
 /**
  * <p>
- * Record containing the parameters for a single time-series data query response assembly test case.
+ * Record containing the parameters for a single (DP Test Archive) time-series data request test case.
  * </p>
  * <p>
- * <h2>Query Response Assembly Test</h2>
- * A time-series query response assembly test case involves the following:
+ * <h2>Test Archive Request Test</h2>
+ * A Data Platform Test Archive time-series data request and assembly assembly test case involves the following:
  * <ol>
  * <li>The recovery and correlation of time-series data requests, </li>
  * <li>The super-domain processing of the recovered data into disjoint raw data blocks, </li>
  * <li>The assembly of raw data blocks into disjoint "sampled data blocks" each exposing <code>IDataTable</code>, </li>
- * <li>The aggregation of sampled data blocks into a "sampled aggregate."
+ * <li>The aggregation of sampled data blocks into a "sampled aggregate." </li>
  * </ol>   
  * This record contains the parameters necessary to perform
  * a single time-series query response assembly test evaluation.
@@ -72,15 +72,15 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * <p>
  * <h2>Test Case Evaluation and Results</h2>
  * A test case is evaluated using the <code>{@link #evaluate(QueryRequestRecoverer)}</code> method.  The
- * The results of a single test case are contained in a <code>{@link SuperDomTestResult}</code> record, which
- * is returned by the method.  Considering the above, the result record contain fields for both the 
+ * The results of a single test case are contained in a <code>{@link TestArchiveRequestTestResult}</code> record, 
+ * which is returned by the method.  Considering the above, the result record contain fields for both the 
  * recovery and correlation of the raw, time-series data, and for the super-domain processing that follows.
  * </p> 
  *
  * @author Christopher K. Allen
  * @since Jul 8, 2025
  *
- *
+ * @param indCase       the (optional) test case index
  * @param enmRqstOrg    the originating Test Archive data request
  * @param setPvNames    set of PV names supplementing the request
  * @param durRange      request time range duration override
@@ -103,7 +103,11 @@ public record TestArchiveRequestTestCase(
     
     /**
      * <p>
-     * Creates and returns a new <code>TestArchiveRequestTestCase</code> record with fields given by the argument valuees.
+     * Creates and returns a new <code>TestArchiveRequestTestCase</code> record with fields given by the argument values.
+     * </p>
+     * <p>
+     * The test case index is taken from the record resource <code>{@link #IND_CASE}</code> which is incremented in the
+     * canonical constructor.
      * </p>
      * 
      * @param enmRqstOrg    the originating Test Archive data request
@@ -134,23 +138,19 @@ public record TestArchiveRequestTestCase(
     private static          int IND_CASE = 1;
     
     
-//    /** The time-domain collision processor */
-//    private static final QueryResponseAssembler    PROC_QRY_RSP = QueryResponseAssembler.create();
-//
-    
     //
     // Constructors
     //
     
     /**
      * <p>
-     * Constructs a new <code>QueryChannelTestCase</code> instance.
+     * Constructs a new <code>TestArchiveRequestTestCase</code> instance.
      * </p>
      * <p>
      * Canonical constructor.  Sets field values and increments record index counter <code>{@link #IND_CASE}</code>
      * </p>
      *
-     * @param indCase     the test case index
+     * @param indCase       the test case index
      * @param enmRqstOrg    the originating Test Archive data request
      * @param setPvNames    set of PV names supplementing the request
      * @param durRange      request time range duration override

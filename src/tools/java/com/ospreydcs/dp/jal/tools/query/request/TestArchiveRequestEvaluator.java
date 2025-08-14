@@ -248,7 +248,7 @@ public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequ
           + "- Data Platform Test Archive requests are performed, the data is recovered \n"
           + "    as gRPC messages and correlated into raw data blocks associated with a \n"
           + "    common timestamp message.  \n"
-          + "- The raw data this then assembled into sampled data blocks where time-domain collisions are \n"
+          + "- The raw data is then assembled into sampled data blocks where time-domain collisions are \n"
           + "    identified and addressed. \n"
           + "- The sampled blocks are aggregated into a collection of all time-series request data than can \n"
           + "    be used to create both static and dynamic data tables.\n"
@@ -322,7 +322,7 @@ public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequ
     //
     
     /** The time-series request processor used to recover and correlate request data - used for all test case evaluations */
-    private final QueryRequestRecoverer              procCorrelator;
+    private final QueryRequestRecoverer                 procCorrelator;
     
     /** The raw correlated data processor used to build sampled aggregates - used for all test case evaluations */
     private final QueryResponseAssembler                procAssembler;

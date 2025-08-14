@@ -849,15 +849,14 @@ public class QueryRecoveryTestSuiteCreator {
      * Creates a new test suite of <code>QueryRecoveryTestCase</code> instances according to the current configuration.
      * </p>
      * <p>
-     * Note that the return value is map keyed by <code>DpDataRequest</code> instances.  The value of the
-     * map is a container of all <code>QueryRecoveryTestCase</code> instances that use that time-series data request.
-     * This format is provide so that the data request need only be performed once and the recovered data then
-     * used for each test case evaluation within the list keyed by that request.
+     * The return value is a collection of <code>QueryRecoveryTestCase</code> records.  Each record in the 
+     * <code>QueryRecoveryTestCase</code> collection refers to a specific time-series data request.
      * </p> 
      * <p>
-     * The <code>DpDataRequest</code> instances forming the map keys will all be augmented by the collection
+     * The <code>TestArchiveRequest</code> instances within the records will all be augmented by the collection
      * of supplemental PV names assigned by <code>{@link #addSupplementalPv(String)}</code> or 
-     * <code>{@link #addSupplementalPvs(Collection)}</code> (if any).
+     * <code>{@link #addSupplementalPvs(Collection)}</code> (if any).  This is done in the method
+     * <code>{@link QueryRecoveryTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code>.
      * </p>
      * <p>
      * If no time-series test request was added to the test suite an exception is thrown.  If a test suite configuration
@@ -876,7 +875,7 @@ public class QueryRecoveryTestSuiteCreator {
     public Collection<QueryRecoveryTestCase> createTestSuite() throws ConfigurationException {
         
         // Check state
-        this.defaultConfiguration();    // throws configuration exception
+        this.defaultConfiguration();    // throws ConfigurationException
         
         // Create returned container and populate it by enumerating through all test suite parameters 
         Collection<QueryRecoveryTestCase>   setCases = new LinkedList<>();

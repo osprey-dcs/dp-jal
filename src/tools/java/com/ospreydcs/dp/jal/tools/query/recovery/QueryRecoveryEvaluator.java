@@ -33,7 +33,6 @@ import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.List;
 import java.util.MissingResourceException;
-import java.util.NoSuchElementException;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
@@ -106,7 +105,7 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
             JalApplicationBase.parseAppArgsErrors(args, CNT_APP_MIN_ARGS, LST_STR_DELIMS);
 
         } catch (Exception e) {
-            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
+            JalApplicationBase.terminateWithExceptionAndMessage(QueryRecoveryEvaluator.class, e, STR_APP_USAGE, ExitCode.INPUT_CFG_CORRUPT);
 
         }
         
@@ -129,7 +128,7 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         // ------- Application Execution -------
         //
         
-        // Create the correlation evaluator and run it
+        // Create the application and run it
         try {
             QueryRecoveryEvaluator    evaluator = new QueryRecoveryEvaluator(suite, strOutputLoc, args);
             
@@ -330,7 +329,7 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
           + " [" + STR_VAR_OUTPUT +" Output] \n"
           + "\n" 
           + "  Where  \n"
-          + "    " + STR_VAR_HELP + "        = print this message and return.\n"
+          + "    " + STR_VAR_HELP + "        = prints this message and application description.\n"
           + "    " + STR_VAR_VERSION + "     = prints application version information and return.\n"
           + "    R1, ..., Rn   = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
           + "    PV1, ..., PVn = Supplemental PV names to be added to requests R1 through Rn. \n"
@@ -390,7 +389,7 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
     // Defining Attributes
     //
     
-    /** The test suite used for <code>CorrelatorTestCase</code> evaluations */
+    /** The (pre-configured) test suite creator used for <code>QueryRecoveryTestCase</code> generation */
     private final QueryRecoveryTestSuiteCreator       cfgTestSuite;
     
     
@@ -648,17 +647,13 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
      * 
      * @return  the test suite configuration as described by the command-line arguments
      * 
-     * @throws NoSuchElementException   no <code>TestArchiveRequest</code> constants or supplemental PVs were found
-     * @throws ConfigurationException   request duration or request delay variable contained more than a single value
-     * 
      * @throws MissingResourceException no time-series data request (<code>TestArchiveRequest</code> constants) were found
-     * @throws ConfigurationException   
      * @throws IllegalArgumentException invalid test request enumeration constant name (not in <code>TestArchiveRequest</code>)
      * @throws NumberFormatException    an invalid numeric argument was encounter (could not be converted to a <code>Integer</code> type)
      * @throws DateTimeParseException   an invalid time duration format was encountered ('PnDTnHnMd.dS')
      */
     private static QueryRecoveryTestSuiteCreator    parseTestSuiteConfig(String[] args) 
-            throws MissingResourceException, ConfigurationException, IllegalArgumentException, NumberFormatException, DateTimeParseException {
+            throws MissingResourceException, IllegalArgumentException, NumberFormatException, DateTimeParseException {
      
         //
         // --- Test Requests ---
@@ -688,13 +683,13 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         // Parse the request decomposition enable/disable values and convert to Boolean if present
         List<String>    lstStrDcmps = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_DCMP_ENABLE);
         List<Boolean>   lstBolDcmps = lstStrDcmps.stream()
-                .<Boolean>map(str -> Boolean.parseBoolean(str))
+                .<Boolean>map(str -> Boolean.parseBoolean(str))     // no exception - defaults to 'false'
                 .toList();
         
         // Parse the automatic request decomposition flags if present
         List<String>    lstStrDcmpAutos = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_DCMP_AUTO);
         List<Boolean>   lstBolDcmpAutos = lstStrDcmpAutos.stream()
-                .<Boolean>map(str -> Boolean.parseBoolean(str))
+                .<Boolean>map(str -> Boolean.parseBoolean(str))     // no exception - defaults to 'false'
                 .toList();
         
         // Parse the request decomposition types and convert to enumeration constants if present
@@ -706,7 +701,7 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         // Parse the decomposition maximum composite request PV count and convert to Integer if present
         List<String>    lstStrDcmpMaxPvs = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_DCMP_MAX_PVS);
         List<Integer>   lstIntDcmpMaxPvs = lstStrDcmpMaxPvs.stream()
-                .<Integer>map(str -> Integer.parseInt(str))
+                .<Integer>map(str -> Integer.parseInt(str))     // throws NumberFormatException
                 .toList();
         
         // Parse the decomposition maximum composite request time range and convert to Duration if present
@@ -753,26 +748,26 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         // Check for raw data correlation during recovery and convert to Boolean if present
         List<String>    lstStrCorrRcvry = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_CORR_RCVRY);
         List<Boolean>   lstBolCorrRcvry = lstStrCorrRcvry.stream()
-                .<Boolean>map(str -> Boolean.parseBoolean(str))
+                .<Boolean>map(str -> Boolean.parseBoolean(str))     // no exception - defaults to 'false'
                 .toList();
         
         // Check for raw data correlation using and multi-threaded (concurrency) and convert to Boolean if present
         List<String>    lstStrCorrConc = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_CORR_CONC);
         List<Boolean>   lstBolCorrConc = lstStrCorrConc.stream()
-                .<Boolean>map(str -> Boolean.parseBoolean(str))
+                .<Boolean>map(str -> Boolean.parseBoolean(str))     // no exception - defaults to 'false'
                 .toList();
         
         
         // Parse the raw data correlation maximum concurrent thread counts and convert to integers
         List<String>    lstStrCorrMaxThrds = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_CORR_MAX_THRDS);
         List<Integer>   lstIntCorrMaxThrds = lstStrCorrMaxThrds.stream()
-                .<Integer>map(strNum -> Integer.valueOf(strNum))                    // throws NumberFormatException
+                .<Integer>map(strNum -> Integer.valueOf(strNum))    // throws NumberFormatException
                 .toList();
         
         // Parse the raw data correlation correlated set sizes triggering (pivoting to) concurrency and convert to integers
         List<String>    lstStrPivotSzs = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_CORR_PIVOT_SZ);
         List<Integer>   lstIntCorrPivotSzs = lstStrPivotSzs.stream()
-                .<Integer>map(strNum -> Integer.valueOf(strNum))                    // throws NumberFormatException
+                .<Integer>map(strNum -> Integer.valueOf(strNum))    // throws NumberFormatException
                 .toList();
         
         

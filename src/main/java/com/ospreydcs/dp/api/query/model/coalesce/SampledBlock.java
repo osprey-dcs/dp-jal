@@ -42,6 +42,7 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.IDataTable;
+import com.ospreydcs.dp.api.common.JalDataTableType;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
@@ -371,10 +372,10 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     
     
     /** Concurrency enabled flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.data.table.construction.concurrency.enabled;
     
     /** Concurrency tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
-    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.data.table.construction.concurrency.pivotSize;
     
     
     /** Use extended error checking during initialization */
@@ -1024,7 +1025,15 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     public String getRequestId() {
         return this.strRqstId;
     }
-
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#getTableType()
+     */
+    @Override
+    public JalDataTableType getTableType() {
+        return JalDataTableType.AUTO;
+    }
+    
     /**
      * @return always returns <code>true</code> since table is populated at construction
      *

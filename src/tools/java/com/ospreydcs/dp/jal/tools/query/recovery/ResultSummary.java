@@ -68,7 +68,9 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * @author Christopher K. Allen
  * @since Apr 30, 2025
  *
+ * @deprecated Replaced by <code>QueryRecoveryTestsSummary</code>
  */
+@Deprecated(since="Aug 14", forRemoval=true)
 public record ResultSummary(
         int         cntResultsTot,
         int         cntRatesGtAvg,

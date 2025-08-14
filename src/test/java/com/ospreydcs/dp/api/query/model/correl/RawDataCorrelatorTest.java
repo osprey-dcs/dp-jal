@@ -41,7 +41,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.DpQueryApiFactoryOld;
+import com.ospreydcs.dp.api.query.DpQueryApiFactoryNew;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IQueryService;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
@@ -138,7 +138,7 @@ public class RawDataCorrelatorTest {
     public static void setUpBeforeClass() throws Exception {
         
         // Create the Query Service connection
-        apiTest = DpQueryApiFactoryOld.connect();
+        apiTest = DpQueryApiFactoryNew.connect();
         
         // Recover the raw data from the test archive
         LST_DATA_SMALL = RawDataCorrelatorTest.recoverQueryData(RQST_SMALL);
@@ -208,8 +208,8 @@ public class RawDataCorrelatorTest {
     public final void testEnableConcurrency() {
         
         // Parameters
-        final Boolean   bolConcDef = CFG_QUERY.concurrency.enabled;
-        final int       cntThreadsDef = CFG_QUERY.concurrency.maxThreads;
+        final Boolean   bolConcDef = CFG_QUERY.data.recovery.correlate.concurrency.enabled;
+        final int       cntThreadsDef = CFG_QUERY.data.recovery.correlate.concurrency.maxThreads;
         final int       cntThreads = 11;
         final boolean   bolConcNot = !bolConcDef;
         
@@ -252,7 +252,7 @@ public class RawDataCorrelatorTest {
     public final void testSetConcurrencyPivotSize() {
         
         // Parameters
-        final int   szPivotDef = CFG_QUERY.concurrency.pivotSize;
+        final int   szPivotDef = CFG_QUERY.data.recovery.correlate.concurrency.pivotSize;
         final int   szPivotTest = 100;
 
         // Verify correlator default configuration

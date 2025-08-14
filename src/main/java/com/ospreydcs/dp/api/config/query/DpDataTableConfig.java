@@ -25,6 +25,8 @@
  */
 package com.ospreydcs.dp.api.config.query;
 
+import com.ospreydcs.dp.api.common.JalDataTableType;
+import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -51,15 +53,10 @@ public class DpDataTableConfig extends CfgStructure<DpDataTableConfig> {
     @ACfgOverride.Struct(pathelem="CONSTRUCTION")
     public Construction  construction;
     
-    /** Default configuration parameters for time-series query results static data tables */ 
-    @ACfgOverride.Struct(pathelem="STATIC")
-    public Static       sstatic;
+    @ACfgOverride.Struct(pathelem="RESULT")
+    public ResultTable  result;
     
-    /** Default configuration parameters for time-series query results dynamic data tables */ 
-    @ACfgOverride.Struct(pathelem="DYNAMIC")
-    public Dynamic      dynamic;
-    
-    @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE_RECONSTRUCT")
+    @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE_CONSTRUCTION")
     public static class Construction extends CfgStructure<Construction> {
         
         /** Default constructor required for base structure class */
@@ -67,40 +64,65 @@ public class DpDataTableConfig extends CfgStructure<DpDataTableConfig> {
         
         /** Use advanced error checking and verification */
         @ACfgOverride.Field(name="ERROR_CHECKING")
-        public Boolean      errorChecking;
+        public Boolean              errorChecking;
         
         /** Enable/disable time domain collision within correlated blocks */
         @ACfgOverride.Field(name="DOMAIN_COLLISION")
-        public Boolean      domainCollision;
+        public Boolean              domainCollision;
+        
+        /** Table construction concurrency parameters (multi-threaded sampled aggregate construction */
+        @ACfgOverride.Struct(pathelem="CONCURRENCY")
+        public DpConcurrencyConfig  concurrency;
     }
     
-    @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE_STATIC")
-    public static class Static extends CfgStructure<Static> {
-
+    @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE_RESULT")
+    public static class ResultTable extends CfgStructure<ResultTable> {
+        
         /** Default constructor required for base structure class */
-        public Static() { super(Static.class); }
+        public ResultTable() { super(ResultTable.class); };
+        
+        /** The preferred data table type to return */
+        @ACfgOverride.Field(name="TYPE")
+        public JalDataTableType     type;
 
-        /** Is static data table the default preference */
-        @ACfgOverride.Field(name="DEFAULT")
-        public Boolean      isDefault;
+        /** Default configuration parameters for time-series query results static data tables */ 
+        @ACfgOverride.Struct(pathelem="STATIC")
+        public StaticTable          staticTbl;
         
-        /** Do static data tables have a maximum size limit */
-        @ACfgOverride.Field(name="HAS_MAX_SIZE")
-        public Boolean      hasMaxSize;
+//        /** Default configuration parameters for time-series query results dynamic data tables */ 
+//        @ACfgOverride.Struct(pathelem="DYNAMIC")
+//        public Dynamic      dynamic;
         
-        /** Maximum allowable size (in bytes) of a static data table */
-        @ACfgOverride.Field(name="MAX_SIZE")
-        public Integer      maxSize;
+        
+        @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE_STATIC")
+        public static class StaticTable extends CfgStructure<StaticTable> {
+
+            /** Default constructor required for base structure class */
+            public StaticTable() { super(StaticTable.class); }
+
+            /** Is static data table the default preference */
+            @ACfgOverride.Field(name="DEFAULT")
+            public Boolean      isDefault;
+            
+            /** Do static data tables have a maximum size limit */
+            @ACfgOverride.Field(name="MAX_SIZE_ENABLE")
+            public Boolean      maxSizeEnable;
+            
+            /** Maximum allowable size (in bytes) of a static data table */
+            @ACfgOverride.Field(name="MAX_SIZE")
+            public Integer      maxSize;
+        }
+        
+//        @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE_DYNAMIC")
+//        public static class Dynamic extends CfgStructure<Dynamic> {
+//            
+//            /** Default constructor required for base class */
+//            public Dynamic() { super(Dynamic.class); };
+//            
+//            /** Enable dynamic data tables */
+//            @ACfgOverride.Field(name="ENABLE")
+//            public Boolean      enable;
+//        }
     }
     
-    @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE_DYNAMIC")
-    public static class Dynamic extends CfgStructure<Dynamic> {
-        
-        /** Default constructor required for base class */
-        public Dynamic() { super(Dynamic.class); };
-        
-        /** Enable dynamic data tables */
-        @ACfgOverride.Field(name="ENABLE")
-        public Boolean      enable;
-    }
 }

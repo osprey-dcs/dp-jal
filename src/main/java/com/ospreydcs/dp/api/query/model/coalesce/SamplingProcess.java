@@ -140,10 +140,10 @@ public class SamplingProcess {
     
     
     /** Concurrency enabled flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.data.table.construction.concurrency.enabled;
     
     /** Parallelism tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
-    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int        SZ_CONCURRENCY_PIVOT = CFG_QUERY.data.table.construction.concurrency.pivotSize;
     
 
     //

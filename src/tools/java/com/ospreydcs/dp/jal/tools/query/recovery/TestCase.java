@@ -33,8 +33,10 @@ import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
  *
  * @author Christopher K. Allen
  * @since Jan 18, 2025
- *
+ * 
+ * @deprecated  Replaced by <code>QueryRecoveryTestCase</code>
  */
+@Deprecated(since="Aug 14, 2025", forRemoval=true)
 public record    TestCase(
         DpDataRequest       rqstOrg, 
         RequestDecompType   enmDcmpType, 

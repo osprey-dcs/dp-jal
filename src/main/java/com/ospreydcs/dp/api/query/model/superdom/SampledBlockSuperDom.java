@@ -290,13 +290,13 @@ public class SampledBlockSuperDom extends SampledBlock {
     
     
     /** Concurrency enabled flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.data.table.construction.concurrency.enabled;
     
     /** Maximum number of concurrent processing threads */
-    public static final int         CNT_MAX_THREADS = CFG_QUERY.concurrency.maxThreads;
+    public static final int         CNT_MAX_THREADS = CFG_QUERY.data.table.construction.concurrency.maxThreads;
     
     /** Concurrency tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
-    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.data.table.construction.concurrency.pivotSize;
     
     
     //

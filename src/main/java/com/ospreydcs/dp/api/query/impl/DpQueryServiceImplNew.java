@@ -44,18 +44,17 @@ import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.model.table.StaticDataTable;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpMetadataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IQueryService;
+import com.ospreydcs.dp.api.query.model.assem.DataTableCreator;
 import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.query.model.assem.SampledAggregate;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
-import com.ospreydcs.dp.api.query.model.table.SampledAggregateTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
@@ -281,18 +280,21 @@ public class DpQueryServiceImplNew extends
     // Class Constants
     //
     
-    /** Is static data table default for time-series data results */
-    private static final boolean        BOL_TBL_STATIC_DEF = CFG_DEF.data.table.sstatic.isDefault;
+//    /** The preferred data table type */
+//    private static final JalDataTableType   ENM_TBL_TYPE_DEF = CFG_DEF.data.table.result.type;
+//    
+//    /** Is static data table default for time-series data results */
+//    private static final boolean            BOL_TBL_STATIC_DEF = CFG_DEF.data.table.result.staticTbl.isDefault;
+//    
+//    /** Do static data table have a maximum size */
+//    private static final boolean            BOL_TBL_STATIC_MAX_ENBL = CFG_DEF.data.table.result.staticTbl.maxSizeEnable;
+//    
+//    /** Static data table maximum size (if applicable) */
+//    private static final int                SZ_TBL_STATIC_MAX = CFG_DEF.data.table.result.staticTbl.maxSize;
     
-    /** Do static data table have a maximum size */
-    private static final boolean        BOL_TBL_STATIC_HAS_MAX = CFG_DEF.data.table.sstatic.hasMaxSize;
     
-    /** Static data table maximum size (if applicable) */
-    private static final int            SZ_TBL_STATIC_MAX = CFG_DEF.data.table.sstatic.maxSize;
-    
-    
-    /** Enable dynamic data tables for time-series data results */
-    private static final boolean        BOL_TBL_DYN_ENABLE = CFG_DEF.data.table.dynamic.enable;
+//    /** Enable dynamic data tables for time-series data results */
+//    private static final boolean            BOL_TBL_DYN_ENABLE = CFG_DEF.data.table.result.dynamic.enable;
     
 //    /** Is dynamic data table default for time-series data results */
 //    private static final boolean        BOL_TBL_DYN_DEF = CFG_DEF.data.table.dynamic.isDefault;
@@ -331,33 +333,39 @@ public class DpQueryServiceImplNew extends
     //
     
     /** The single raw data correlator used for correlating unary time-series data requests */
-    private final RawDataCorrelator         prcrRspns;
+    private final RawDataCorrelator         prcrUnaryRsp;
     
     /** The single metadata request processor used for recovering and assembling metadata */
     private final MetadataRequestProcessor  prcrMeta;
     
     /** The single query request processor used for recovering and correlating streamed, time-series data requests */
-    private final QueryRequestRecoverer  prcrRqsts;
+    private final QueryRequestRecoverer     prcrRqsts;
     
     /** The single query response assembler used for assembling the recovered raw, correlated data */
-    private final QueryResponseAssembler    assmRspns;
+    private final QueryResponseAssembler    prcrRspns;
+    
+    /** The single data table creator used for data table creation from assembled data */
+    private final DataTableCreator          prcrTblCtor;
     
     
     //
     // Instance Configuration
     //
     
-    /** Is static data table default for time-series data results */
-    private boolean     bolTblStatDef = BOL_TBL_STATIC_DEF;
-    
-    /** Do static data table have a maximum size */
-    private boolean     bolTblStatHasMax = BOL_TBL_STATIC_HAS_MAX;
-    
-    /** Static data table maximum size (if applicable) */
-    private int         szTblStatMax = SZ_TBL_STATIC_MAX;
-    
-    /** Enable dynamic data tables for time-series data results */
-    private boolean     bolTblDynEnable = BOL_TBL_DYN_ENABLE;
+//    /** The data table type to create (decides concrete implementation of <code>IDataTable</code>) */
+//    private JalDataTableType    enmTblType = ENM_TBL_TYPE_DEF;
+//    
+//    /** Is static data table default for time-series data results */
+//    private boolean     bolTblStatDef = BOL_TBL_STATIC_DEF;
+//    
+//    /** Do static data table have a maximum size */
+//    private boolean     bolTblStatHasMax = BOL_TBL_STATIC_MAX_ENBL;
+//    
+//    /** Static data table maximum size (if applicable) */
+//    private int         szTblStatMax = SZ_TBL_STATIC_MAX;
+//    
+//    /** Enable dynamic data tables for time-series data results */
+//    private boolean     bolTblDynEnable = BOL_TBL_DYN_ENABLE;
 
     
     //
@@ -392,10 +400,11 @@ public class DpQueryServiceImplNew extends
     public DpQueryServiceImplNew(DpQueryConnection connQuery) {
         super(connQuery);
         
-        this.prcrRspns = RawDataCorrelator.create();
+        this.prcrUnaryRsp = RawDataCorrelator.create();
         this.prcrMeta = MetadataRequestProcessor.from(connQuery);
         this.prcrRqsts = QueryRequestRecoverer.from(connQuery);
-        this.assmRspns = QueryResponseAssembler.create(); 
+        this.prcrRspns = QueryResponseAssembler.create(); 
+        this.prcrTblCtor = DataTableCreator.create();
     }
     
     
@@ -412,7 +421,7 @@ public class DpQueryServiceImplNew extends
      * configuration file.  These values are recorded in the following class constants:
      * <ul>
      * <li><code>{@link #BOL_TBL_STATIC_DEF}</code></li>
-     * <li><code>{@link #BOL_TBL_STATIC_HAS_MAX}</code></li>
+     * <li><code>{@link #BOL_TBL_STATIC_MAX_ENBL}</code></li>
      * <li><code>{@link #SZ_TBL_STATIC_MAX}</code></li>
      * <li><code>{@link #BOL_TBL_DYN_ENABLE}</code></li>
      * </ul>
@@ -429,143 +438,187 @@ public class DpQueryServiceImplNew extends
      */
     public void resetDefaultConfiguration() {
         
-        this.bolTblStatDef = BOL_TBL_STATIC_DEF;
-        this.bolTblStatHasMax = BOL_TBL_STATIC_HAS_MAX;
-        this.szTblStatMax = SZ_TBL_STATIC_MAX;
-        this.bolTblDynEnable = BOL_TBL_DYN_ENABLE;
+//        this.enmTblType = ENM_TBL_TYPE_DEF;
+//        this.bolTblStatDef = BOL_TBL_STATIC_DEF;
+//        this.bolTblStatHasMax = BOL_TBL_STATIC_MAX_ENBL;
+//        this.szTblStatMax = SZ_TBL_STATIC_MAX;
+//        this.bolTblDynEnable = BOL_TBL_DYN_ENABLE;
         
-        this.prcrRspns.resetDefaultConfiguration();
+        this.prcrUnaryRsp.resetDefaultConfiguration();
         this.prcrRqsts.resetDefaultConfiguration();
-        this.assmRspns.resetDefaultConfiguration();
+        this.prcrRspns.resetDefaultConfiguration();
+        this.prcrTblCtor.resetDefaultConfiguration();
     }
     
-    /**
-     * <p>
-     * Sets/clears the "use static data table as default" flag.
-     * </p>
-     * <p>
-     * Set this value <code>true</code> to first attempt using a static data table as the result of a 
-     * time-series data request.  Note that a dynamic table can be still be created if the result set is 
-     * too large and dynamic data tables are enabled. 
-     * </p>
-     * <p>
-     * Set this value <code>false</code> to use dynamic data tables as the result of a time-series data
-     * request.  Note that dynamic data tables must be enabled (see <code>{@link #enableDynamicTables(boolean)}</code>)
-     * in this case, otherwise a pathological configuration exists and all time-series data requests will
-     * throw exceptions.
-     * </p> 
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>
-     * This method is provided primarily for unit testing and is not available through the 
-     * <code>IQueryService</code> interface.
-     * </li>
-     * <li>
-     * The default value for this parameter is given by class constant <code>{@link #BOL_TBL_STATIC_DEF}</code>
-     * which is taken from the Java API Library configuration file.
-     * </li>
-     * </ul>
-     * </p>
-     *  
-     * @param bolDefault   set <code>true</code> to use static data tables as default, 
-     *                     set <code>false</code> to use dynamic data tables 
-     */
-    public void setStaticTableDefault(boolean bolDefault) {
-        this.bolTblStatDef = bolDefault;
-    }
-    
-    /**
-     * <p>
-     * Enables static data table maximum size and specifies the size limit.
-     * </p>
-     * <p>
-     * Calling this method enforces a maximum size limitation for all static data tables returning the
-     * results of time-series data requests.  The size limit (in bytes) is given by the argument value.
-     * If the result set size of a data request is larger than the argument value the implementation will
-     * revert to a dynamic data table (assuming dynamic data tables are enabled).
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>
-     * This method is provided primarily for unit testing and is not available through the 
-     * <code>IQueryService</code> interface.
-     * </li>
-     * <li>
-     * The default value for this parameter is given by class constant <code>{@link #szTblStatMax}</code>
-     * which is taken from the Java API Library configuration file.
-     * </li>
-     * </ul>
-     * </p>
-     * 
-     * @param szMax maximum allowable size (in bytes) of a static data table
-     */
-    public void enableStaticTableMaxSize(int szMax) {
-        this.bolTblStatHasMax = true;
-        this.szTblStatMax = szMax;
-    }
-    
-    /**
-     * <p>
-     * Disables the enforcement of a size limit for static data tables.
-     * </p>
-     * <p>
-     * Calling this method disables size limitations for static data tables used as the result of a time-series
-     * data request.  Result sets of any size will be returned as a static data table if static tables are the
-     * default (see <code>{@link #setStaticTableDefault(boolean)}</code>).
-     * </p> 
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>
-     * This method is provided primarily for unit testing and is not available through the 
-     * <code>IQueryService</code> interface.
-     * </li>
-     * <li>
-     * The default value for this condition is given by class constant <code>{@link #bolTblStatHasMax}</code>
-     * which is taken from the Java API Library configuration file.
-     * </li>
-     * </ul>
-     * </p>
-     * 
-     */
-    public void disableStaticTableMaxSize() {
-        this.bolTblStatHasMax = false;
-    }
-
-    /**
-     * <p>
-     * Enables/disables the use of dynamic data tables for time-series request results.
-     * </p>
-     * <p>
-     * Setting this value <code>true</code> ensures that dynamic data tables are available for providing the results
-     * of time-series data requests.  Note that static data tables may still be available depending upon the value
-     * of <code>{@link #bolTblStatDef}</code> (see <code>{@link #setStaticTableDefault(boolean)}</code>). 
-     * </p>
-     * <p>
-     * Setting this value <code>false</code> will prevent dynamic data table from being returned.  If there is a
-     * size limit on static data tables an exception will be thrown if that limit is violated.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>
-     * This method is provided primarily for unit testing and is not available through the 
-     * <code>IQueryService</code> interface.
-     * </li>
-     * <li>
-     * The default value for this parameter is given by class constant <code>{@link #bolTblDynEnable}</code>
-     * which is taken from the Java API Library configuration file.
-     * </li>
-     * </ul>
-     * </p>
-     * 
-     * @param bolEnable set or clear the use of dynamic data tables for time-series request results
-     */
-    public void enableDynamicTables(boolean bolEnable) {
-        this.bolTblDynEnable = bolEnable;
-    }
+//    /**
+//     * <p>
+//     * Sets the desired data table type to return from a time-series data request.
+//     * </p>
+//     * <p>
+//     * The given parameter decides the concrete implementation of <code>IDataTable</code> returned by a 
+//     * time-series data query operation.  The data table type has important repercussions on performance and
+//     * Java resource allocation (e.g., heap space).  See documentation on enumeration 
+//     * <code>{@link JalDataTableType}</code> for more information.
+//     * </p>
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * The data table type is a recent additional and overrides much of the parameters provided by the
+//     * following configuration methods:
+//     * <ul>
+//     * <li><code>{@link #setStaticTableDefault(boolean)}</code></li>
+//     * <li><code>{@link #enableDynamicTables(boolean)}</code></li>
+//     * </ul>
+//     * </p>
+//     * @implNote
+//     * The choice of data table implementation is performed in private method 
+//     * <code>{@link #selectTableImpl(SampledAggregate, long)}</code>.  
+//     *  
+//     * @param enmType   the data table type to be returned for time-series data query operations
+//     * 
+//     * @throws UnsupportedOperatonException illegal (i.e. <code>{@link JalDataTableType#UNSUPPORTED}</code>) or unsupported type 
+//     */
+//    public void setDataTableType(JalDataTableType enmType) throws UnsupportedOperationException {
+//
+//        // Check table type
+//        if (enmType == JalDataTableType.UNSUPPORTED) {
+//            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - Illegal data table type " + enmType + ".";
+//            
+//            if (BOL_LOGGING)
+//                LOGGER.warn(strMsg);
+//            
+//            throw new UnsupportedOperationException(strMsg);
+//        }
+//        
+//        this.enmTblType = enmType;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Sets/clears the "use static data table as default" flag.
+//     * </p>
+//     * <p>
+//     * Set this value <code>true</code> to first attempt using a static data table as the result of a 
+//     * time-series data request.  Note that a dynamic table can be still be created if the result set is 
+//     * too large and dynamic data tables are enabled. 
+//     * </p>
+//     * <p>
+//     * Set this value <code>false</code> to use dynamic data tables as the result of a time-series data
+//     * request.  Note that dynamic data tables must be enabled (see <code>{@link #enableDynamicTables(boolean)}</code>)
+//     * in this case, otherwise a pathological configuration exists and all time-series data requests will
+//     * throw exceptions.
+//     * </p> 
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li>
+//     * This method is provided primarily for unit testing and is not available through the 
+//     * <code>IQueryService</code> interface.
+//     * </li>
+//     * <li>
+//     * The default value for this parameter is given by class constant <code>{@link #BOL_TBL_STATIC_DEF}</code>
+//     * which is taken from the Java API Library configuration file.
+//     * </li>
+//     * </ul>
+//     * </p>
+//     *  
+//     * @param bolDefault   set <code>true</code> to use static data tables as default, 
+//     *                     set <code>false</code> to use dynamic data tables 
+//     */
+//    public void setStaticTableDefault(boolean bolDefault) {
+//        this.bolTblStatDef = bolDefault;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Enables static data table maximum size and specifies the size limit.
+//     * </p>
+//     * <p>
+//     * Calling this method enforces a maximum size limitation for all static data tables returning the
+//     * results of time-series data requests.  The size limit (in bytes) is given by the argument value.
+//     * If the result set size of a data request is larger than the argument value the implementation will
+//     * revert to a dynamic data table (assuming dynamic data tables are enabled).
+//     * </p>
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li>
+//     * This method is provided primarily for unit testing and is not available through the 
+//     * <code>IQueryService</code> interface.
+//     * </li>
+//     * <li>
+//     * The default value for this parameter is given by class constant <code>{@link #szTblStatMax}</code>
+//     * which is taken from the Java API Library configuration file.
+//     * </li>
+//     * </ul>
+//     * </p>
+//     * 
+//     * @param szMax maximum allowable size (in bytes) of a static data table
+//     */
+//    public void enableStaticTableMaxSize(int szMax) {
+//        this.bolTblStatHasMax = true;
+//        this.szTblStatMax = szMax;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Disables the enforcement of a size limit for static data tables.
+//     * </p>
+//     * <p>
+//     * Calling this method disables size limitations for static data tables used as the result of a time-series
+//     * data request.  Result sets of any size will be returned as a static data table if static tables are the
+//     * default (see <code>{@link #setStaticTableDefault(boolean)}</code>).
+//     * </p> 
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li>
+//     * This method is provided primarily for unit testing and is not available through the 
+//     * <code>IQueryService</code> interface.
+//     * </li>
+//     * <li>
+//     * The default value for this condition is given by class constant <code>{@link #bolTblStatHasMax}</code>
+//     * which is taken from the Java API Library configuration file.
+//     * </li>
+//     * </ul>
+//     * </p>
+//     * 
+//     */
+//    public void disableStaticTableMaxSize() {
+//        this.bolTblStatHasMax = false;
+//    }
+//
+//    /**
+//     * <p>
+//     * Enables/disables the use of dynamic data tables for time-series request results.
+//     * </p>
+//     * <p>
+//     * Setting this value <code>true</code> ensures that dynamic data tables are available for providing the results
+//     * of time-series data requests.  Note that static data tables may still be available depending upon the value
+//     * of <code>{@link #bolTblStatDef}</code> (see <code>{@link #setStaticTableDefault(boolean)}</code>). 
+//     * </p>
+//     * <p>
+//     * Setting this value <code>false</code> will prevent dynamic data table from being returned.  If there is a
+//     * size limit on static data tables an exception will be thrown if that limit is violated.
+//     * </p>
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * <ul>
+//     * <li>
+//     * This method is provided primarily for unit testing and is not available through the 
+//     * <code>IQueryService</code> interface.
+//     * </li>
+//     * <li>
+//     * The default value for this parameter is given by class constant <code>{@link #bolTblDynEnable}</code>
+//     * which is taken from the Java API Library configuration file.
+//     * </li>
+//     * </ul>
+//     * </p>
+//     * 
+//     * @param bolEnable set or clear the use of dynamic data tables for time-series request results
+//     */
+//    public void enableDynamicTables(boolean bolEnable) {
+//        this.bolTblDynEnable = bolEnable;
+//    }
     
     
     //
@@ -662,18 +715,18 @@ public class DpQueryServiceImplNew extends
             QueryDataResponse.QueryData     msgData = msgRsp.getQueryData();
 
             // Correlate recovered data
-            this.prcrRspns.processQueryData(msgData);   // throws IllegalArgumentException and CompletionException
+            this.prcrUnaryRsp.processQueryData(msgData);   // throws IllegalArgumentException and CompletionException
             
             // Extract the correlated, raw data from the processor
-            SortedSet<RawCorrelatedData>    setData = this.prcrRspns.getCorrelatedSet();
-            long                            szData = this.prcrRspns.getBytesProcessed();
+            SortedSet<RawCorrelatedData>    setData = this.prcrUnaryRsp.getCorrelatedSet();
+            long                            szData = this.prcrUnaryRsp.getBytesProcessed();
             
             // Assemble the raw, correlated data into data table and return
-            SampledAggregate    aggBlks = this.assmRspns.process(setData);  // throws DpQueryException
-            IDataTable          table = this.selectTableImpl(aggBlks, szData);
+            SampledAggregate    aggBlks = this.prcrRspns.process(setData);  // throws DpQueryException
+            IDataTable          table = this.prcrTblCtor.createTable(aggBlks, szData);
             
             // Reset correlator for next invocation 
-            this.prcrRspns.reset();
+            this.prcrUnaryRsp.reset();
             
             return table;
             
@@ -686,7 +739,7 @@ public class DpQueryServiceImplNew extends
             if (BOL_LOGGING) 
                 LOGGER.error(strMsg);
             
-            this.prcrRspns.reset();
+            this.prcrUnaryRsp.reset();
 
             throw new DpQueryException(strMsg, e);
         }
@@ -705,8 +758,8 @@ public class DpQueryServiceImplNew extends
         String                          strRqstId = this.prcrRqsts.getRequestId();
         
         // Time domain processing and data coalescing/aggregation
-        SampledAggregate    aggBlks = this.assmRspns.process(strRqstId, setData);
-        IDataTable          table = this.selectTableImpl(aggBlks, szData);
+        SampledAggregate    blksAggr = this.prcrRspns.process(strRqstId, setData);
+        IDataTable          table = this.prcrTblCtor.createTable(blksAggr, szData);
         
         return table;
     }
@@ -722,8 +775,8 @@ public class DpQueryServiceImplNew extends
         long                            szData = this.prcrRqsts.getProcessedByteCount();
         
         // Time domain processing and data coalescing/aggregation
-        SampledAggregate    aggBlks = this.assmRspns.process(setData);
-        IDataTable          table = this.selectTableImpl(aggBlks, szData);
+        SampledAggregate    blksAggr = this.prcrRspns.process(setData);
+        IDataTable          table = this.prcrTblCtor.createTable(blksAggr, szData);
         
         return table;
     }
@@ -752,69 +805,155 @@ public class DpQueryServiceImplNew extends
     // Support Methods
     //
     
-    /**
-     * <p>
-     * Selects an <code>IDataTable</code> implementation from the given <code>SampledAggregate</code> according to size.
-     * </p>
-     * <p>
-     * The resulting <code>IDataTable</code> implementation, either <code>StaticDataTable</code> or 
-     * <code>SampledAggregateTable</code> depends upon the size of the sampling process (as specified by the argument)
-     * and the configuration parameters of the Java API Library.  The different implementations are given as follows:
-     * <ul>
-     * <li><code>StaticDataTable</code> - data table is fully populated with timestamps and data values. </li>
-     * <li><code>SampledAggregateTable</code> - data table can be sparse, timestamps and data values and can be computed
-     *                                         on demanded (e.g., missing data values).</li> 
-     * </ul>
-     * See the class documentation for each data type for further details.
-     * </p>
-     * <p>
-     * The <code>StaticDataTable</code> implementation is returned if the following conditions hold:
-     * <ol>
-     * <li><code>{@link #bolTblStatDef}</code> is <code>true</code> (static tables are the default).</li>
-     * <li>Either of the two conditions hold: 
-     *   <ul>
-     *   <li><code>{@link #bolTblStatHasMax}</code> = <code>false</code> OR</li>
-     *   <li><code>{@link #bolTblStatHasMax}</code> = <code>true</code> AND <code>{@link #szTblStatMax}</code> &le; <code>szData</code></li>.
-     *   </ul>
-     * </li>
-     * </ol>
-     * Otherwise, a <code>SampledAggregateTable is returned IFF <code>{@link #bolTblDynEnable}</code> = <code>true</code>.
-     * An exception is thrown if the value is <code>false</code>.
-     * </p>
-     * 
-     * @param aggBlks   sampled aggregate created from a set of <code>RawCorrelatedData</code> objects
-     * @param szData    approximate size (in bytes) of sampled aggregate
-     * 
-     * @return  an appropriate <code>IDataTable</code> implementation
-     * 
-     * @throws UnsupportedOperationException    library configuration and size requirements are incompatible for table creation
-     * 
-     * @see StaticDataTable
-     * @see SampledAggregateTable
-     */
-    private IDataTable  selectTableImpl(SampledAggregate aggBlks, long szData) throws UnsupportedOperationException {
-
-        // Attempt static data table construction
-        if (this.bolTblStatDef) {
-            if (!this.bolTblStatHasMax)
-                return aggBlks.createStaticDataTable();
-            else
-                if (szData <= this.szTblStatMax)
-                    return aggBlks.createStaticDataTable();
-        }
-        
-        // Static data table creation failed, use dynamic table if enabled
-        if (this.bolTblDynEnable)
-            return aggBlks.createDynamicDataTable();
-        
-        // Could not create data table with the given configuration and table size
-        else {
-            String strMsg = " Result set size " + szData 
-                        + " greater than maximum static table size " + this.szTblStatMax
-                        + " and dynamic tables are DISABLED: Cannot create data table.";
-            
-            throw new UnsupportedOperationException(strMsg);
-        }
-    }
+//    /**
+//     * <p>
+//     * Selects an <code>IDataTable</code> implementation from the given <code>SampledAggregate</code> according to table type
+//     * preference parameter.
+//     * </p>
+//     * <p>
+//     * The returned <code>IDataTable</code> implementation is determined by the attribute <code>{@link #enmTblType}</code>.
+//     * A switch statement is used to selected the returned concrete instance according to the following:
+//     * <ul>
+//     * <li><code>{@link JalDataTableType#STATIC}</code> - returns <code>{@link SampledAggregate#createStaticDataTable()}</code>.</li>
+//     * <li><code>{@link JalDataTableType#DYNAMIC}</code> - returns <code>{@link #createTableImplStatic(SampledAggregate, long)}</code>.</li>
+//     * <li><code>{@link JalDataTableType#AUTO}</code> - returns <code>{@link #createTableImplAuto(SampledAggregate, long)}</code>.</li>
+//     * Any other enumeration value throws an exception.
+//     * </ul>
+//     * </p>
+//     * <p>
+//     * The resulting <code>IDataTable</code> implementation, either <code>StaticDataTable</code> or 
+//     * <code>SampledAggregateTable</code> depends upon the size of the sampling process (as specified by the argument)
+//     * and the configuration parameters of the Java API Library.  The different implementations are given as follows:
+//     * <ul>
+//     * <li><code>StaticDataTable</code> - data table is fully populated with timestamps and data values. </li>
+//     * <li><code>SampledAggregateTable</code> - data table can be sparse, timestamps and data values and can be computed
+//     *                                         on demanded (e.g., missing data values).</li> 
+//     * </ul>
+//     * See the class documentation for each data type for further details.
+//     * </p>
+//     * 
+//     * @param aggBlks   sampled aggregate created from a set of <code>RawCorrelatedData</code> objects
+//     * @param szData    approximate size (in bytes) of sampled aggregate
+//     * 
+//     * @return  an appropriate <code>IDataTable</code> implementation
+//     * 
+//     * @throws DpQueryException    library configuration and size requirements are incompatible for table creation
+//     * 
+//     * @see StaticDataTable
+//     * @see SampledAggregateTable
+//     */
+//    private IDataTable  selectTableImpl(SampledAggregate aggBlks, long szData) throws DpQueryException {
+//        
+//        return switch (this.enmTblType) {
+//        case DYNAMIC -> aggBlks.createDynamicDataTable();
+//        case STATIC -> this.createTableImplStatic(aggBlks, szData);
+//        case AUTO -> this.createTableImplAuto(aggBlks, szData);
+//        default -> throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - Illegal table type " + this.enmTblType);
+//        };
+//    }
+//    
+//    /**
+//     * <p>
+//     * Creates a static data table implementation from the given arguments.
+//     * </p>
+//     * <p>
+//     * The method creates a <code>{@link StaticDataTable}</code> instance from method 
+//     * <code>{@link SampledAggregate#createStaticDataTable()}</code> if the following conditions hold:
+//     * <ul>
+//     * <li><code>{@link #bolTblStatHasMax}</code> = <code>false</code>. </li>
+//     * <li><code>{@link #bolTblStatHasMax}</code> = <code>true</code> AND 
+//     *   <code>{@link #szTblStatMax}</code> < argument <code>saData</code>. 
+//     * </li>
+//     * </ul>
+//     * Otherwise an exception is thrown.
+//     * </p>
+//     * 
+//     * @param aggBlks   sampled aggregate created from a set of <code>RawCorrelatedData</code> objects
+//     * @param szData    approximate size (in bytes) of sampled aggregate
+//     * 
+//     * @return  an <code>IDataTable</code> implementation of type <code>StaticDataTable</code>
+//     * 
+//     * @throws DpQueryException    library configuration and size requirements are incompatible for table creation
+//     * 
+//     * @see StaticDataTable
+//     */
+//    private IDataTable  createTableImplStatic(SampledAggregate aggBlks, long szData) throws DpQueryException {
+//        
+//        if (this.bolTblStatHasMax && (szData > this.szTblStatMax)) {
+//            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() 
+//                    + " - Maximum static table size enabled with limit = " + this.szTblStatMax
+//                    + " and request size = " + szData + " is too large.";
+//            
+//            throw new DpQueryException(strMsg);
+//        }
+//        
+//        return aggBlks.createStaticDataTable();
+//    }
+//    
+//    /**
+//     * <p>
+//     * Creates a static or dynamic data table depending upon the configuration parameters and data size.
+//     * </p>
+//     * <p>
+//     * This method is to be called when <code>{@link #enmTblType}</code> is equal to 
+//     * <code>{@link JalDataTableType#AUTO}</code>.
+//     * </p>
+//     * <p>
+//     * The resulting <code>IDataTable</code> implementation, either <code>StaticDataTable</code> or 
+//     * <code>SampledAggregateTable</code> depends upon the size of the sampling process (as specified by the argument)
+//     * and the configuration parameters of the Java API Library.  The different implementations are given as follows:
+//     * <ul>
+//     * <li><code>StaticDataTable</code> - data table is fully populated with timestamps and data values. </li>
+//     * <li><code>SampledAggregateTable</code> - data table can be sparse, timestamps and data values and can be computed
+//     *                                         on demanded (e.g., missing data values).</li> 
+//     * </ul>
+//     * See the class documentation for each data type for further details.
+//     * </p>
+//     * <p>
+//     * The <code>StaticDataTable</code> implementation is returned if the following conditions hold:
+//     * <ol>
+//     * <li><code>{@link #bolTblStatDef}</code> is <code>true</code> (static tables are the default).</li>
+//     * <li><code>{@link #szTblStatMax}</code> &le; <code>szData</code></li>.
+//     * </ol>
+//     * Otherwise, a <code>SampledAggregateTable</code> is returned.
+//     * </p>
+//     * 
+//     * @param aggBlks   sampled aggregate created from a set of <code>RawCorrelatedData</code> objects
+//     * @param szData    approximate size (in bytes) of sampled aggregate
+//     * 
+//     * @return  an appropriate <code>IDataTable</code> implementation
+//     * 
+//     * @see StaticDataTable
+//     * @see SampledAggregateTable
+//     */
+//    private IDataTable  createTableImplAuto(SampledAggregate aggBlks, long szData) {
+//
+//        if (this.bolTblStatDef && (szData < this.szTblStatMax)) {
+//            return aggBlks.createStaticDataTable();
+//        } else {
+//            return aggBlks.createDynamicDataTable();
+//        }
+////        // Attempt static data table construction
+////        if (this.bolTblStatDef) {
+////            if (!this.bolTblStatHasMax)
+////                return aggBlks.createStaticDataTable();
+////            else
+////                if (szData <= this.szTblStatMax)
+////                    return aggBlks.createStaticDataTable();
+////        }
+////        
+////        // Static data table creation failed, use dynamic table if enabled
+////        if (this.bolTblDynEnable)
+////            return aggBlks.createDynamicDataTable();
+////        
+////        // Could not create data table with the given configuration and table size
+////        else {
+////            String strMsg = " Result set size " + szData 
+////                        + " greater than maximum static table size " + this.szTblStatMax
+////                        + " and dynamic tables are DISABLED: Cannot create data table.";
+////            
+////            throw new UnsupportedOperationException(strMsg);
+////        }
+//    }
 
 }

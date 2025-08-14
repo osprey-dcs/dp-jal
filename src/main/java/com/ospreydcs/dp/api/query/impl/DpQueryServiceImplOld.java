@@ -257,17 +257,19 @@ public class DpQueryServiceImplOld extends
     //
     
     /** Is static data table default for time-series data results */
-    private static final boolean        BOL_TBL_STATIC_DEF = CFG_DEF.data.table.sstatic.isDefault;
+//    private static final boolean        BOL_TBL_STATIC_DEF = CFG_DEF.data.table.result.sstatic.isDefault;
+    private static final boolean        BOL_TBL_STATIC_DEF = true;
     
     /** Do static data table have a maximum size */
-    private static final boolean        BOL_TBL_STATIC_HAS_MAX = CFG_DEF.data.table.sstatic.hasMaxSize;
+    private static final boolean        BOL_TBL_STATIC_HAS_MAX = CFG_DEF.data.table.result.staticTbl.maxSizeEnable;
     
     /** Static data table maximum size (if applicable) */
-    private static final int            SZ_TBL_STATIC_MAX = CFG_DEF.data.table.sstatic.maxSize;
+    private static final int            SZ_TBL_STATIC_MAX = CFG_DEF.data.table.result.staticTbl.maxSize;
     
     
     /** Enable dynamic data tables for time-series data results */
-    private static final boolean        BOL_TBL_DYN_ENABLE = CFG_DEF.data.table.dynamic.enable;
+//    private static final boolean        BOL_TBL_DYN_ENABLE = CFG_DEF.data.table.result.dynamic.enable;
+    private static final boolean        BOL_TBL_DYN_ENABLE = true;
     
 //    /** Is dynamic data table default for time-series data results */
 //    private static final boolean        BOL_TBL_DYN_DEF = CFG_DEF.data.table.dynamic.isDefault;

@@ -91,10 +91,10 @@ public class TestArchiveRequestTestSuiteCreator {
     
     /**
      * <p>
-     * Creates and returns a new, empty <code>SuperDomTestSuiteConfig</code> ready for configuration.
+     * Creates and returns a new, empty <code>TestArchiveRequestTestSuiteCreator</code> ready for configuration.
      * </p>
      * 
-     * @return  a new unconfigured instance of <code>SuperDomTestSuiteConfig</code>
+     * @return  a new unconfigured instance of <code>TestArchiveRequestTestSuiteCreator</code>
      */
     public static TestArchiveRequestTestSuiteCreator   create() {
         return new TestArchiveRequestTestSuiteCreator();
@@ -365,8 +365,8 @@ public class TestArchiveRequestTestSuiteCreator {
         List<TestArchiveRequestTestCase>  lstCases = new ArrayList<>(this.setTestRqsts.size());
         
         for (TestArchiveRequest enmRqst : this.setTestRqsts) {
-            DpDataRequest       rqst = this.createRequest(enmRqst);
-            TestArchiveRequestTestCase    recCase = TestArchiveRequestTestCase.from(enmRqst, this.setPvNames, this.durRange, this.durDelay, rqst);
+            DpDataRequest               rqst = this.createRequest(enmRqst);
+            TestArchiveRequestTestCase  recCase = TestArchiveRequestTestCase.from(enmRqst, this.setPvNames, this.durRange, this.durDelay, rqst);
             
             lstCases.add(recCase);
         }
@@ -402,6 +402,7 @@ public class TestArchiveRequestTestSuiteCreator {
         ps.println(strPad + "Request delay override    : " + this.durDelay);
     }
 
+    
     //
     // Support Methods
     //
@@ -413,8 +414,8 @@ public class TestArchiveRequestTestSuiteCreator {
      * <p>
      * Performs the following checks and actions:
      * <ul>
-     * <li>if <code>{@link #setTestRqsts}.isEmpty() && <code>{@link #setPvNames}.isEmpty()</code> </li>
-     * <li>if <code>{@link #setTestRqsts}.isEmpty() && {@link #durRange} == null)</code></li>
+     * <li>if <code>{@link #setTestRqsts}.isEmpty() && <code>{@link #setPvNames}.isEmpty()</code> throws exception. </li>
+     * <li>if <code>{@link #setTestRqsts}.isEmpty() && {@link #durRange} == null)</code> throws exception. </li>
      * </ul>
      * </p>
      *  
@@ -441,7 +442,6 @@ public class TestArchiveRequestTestSuiteCreator {
             
             throw new ConfigurationException(strMsg);
         }
-        
     }
     
     /**

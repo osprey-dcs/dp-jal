@@ -297,13 +297,13 @@ public class RawDataCorrelator {
     
     
     /** Concurrency enabled flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.data.recovery.correlate.concurrency.enabled;
     
     /** Parallelism tuning parameter - pivot to parallel processing when target set size hits this limit */
-    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.data.recovery.correlate.concurrency.pivotSize;
     
     /** Parallelism tuning parameter - default number of independent processing threads */
-    public static final int         CNT_CONCURRENCY_THDS = CFG_QUERY.concurrency.maxThreads;
+    public static final int         CNT_CONCURRENCY_THDS = CFG_QUERY.data.recovery.correlate.concurrency.maxThreads;
     
     
     //

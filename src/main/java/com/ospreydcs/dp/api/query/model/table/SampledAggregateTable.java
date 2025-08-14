@@ -37,6 +37,7 @@ import java.util.SortedSet;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.IDataTable;
+import com.ospreydcs.dp.api.common.JalDataTableType;
 import com.ospreydcs.dp.api.query.model.assem.SampledAggregate;
 import com.ospreydcs.dp.api.query.model.coalesce.SampledBlock;
 
@@ -208,6 +209,14 @@ public class SampledAggregateTable implements IDataTable {
     @Override
     public String   getRequestId() {
         return this.aggSrcData.getRequestId();
+    }
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#getTableType()
+     */
+    @Override
+    public JalDataTableType getTableType() {
+        return JalDataTableType.DYNAMIC;
     }
     
     /**

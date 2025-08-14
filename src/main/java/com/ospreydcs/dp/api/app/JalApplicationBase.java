@@ -1184,4 +1184,40 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
         System.exit(enmCode.getCode());
     }
     
+    /**
+     * <p>
+     * Reports a terminating error to Standard Error then exits.
+     * </p>
+     * <p>
+     * Reports a terminating exception (from the caller location) to the Standard Error.
+     * The Error message assumes a terminal condition and reports it as such, reporting that the 
+     * application is exiting.
+     * </p>
+     * <p>
+     * This method is intended to be called from a <code>main</code> method application entry point
+     * upon discovery of terminating error (e.g., bad command-line arguments). 
+     * A <code>{@link System#exit(int)}</code> is called following this method invocation.
+     * </p>
+     * 
+     * @param <T>   the type of the application calling this method
+     * 
+     * @param clsApp    the class type of the application
+     * @param e         the exception to report
+     * @param strMsg    the error message send to the console
+     * @param enmCode   the exit code sent to <code>{@link System#exit(int)}</code>
+     */
+    public static <T extends JalApplicationBase<T>> void  terminateWithExceptionAndMessage(Class<T> clsApp, Throwable e, String strMsg, ExitCode enmCode) {
+        String  strApp = clsApp.getCanonicalName();
+        String  strHdr = "TERMINAL ERROR: " + strApp + " at " + JavaRuntime.getQualifiedCallerNameSimple() + ".";
+        String  strErr = "Encountered exception " + e.getClass().getSimpleName() + ": " + e.getMessage() + ".";
+        String  strBye = "Unable to continue. Exiting...";
+        
+        System.err.println(strHdr);
+        System.err.println(strErr);
+        System.err.println(strMsg);
+        System.err.println(strBye);
+        
+        System.exit(enmCode.getCode());
+    }
+    
 }

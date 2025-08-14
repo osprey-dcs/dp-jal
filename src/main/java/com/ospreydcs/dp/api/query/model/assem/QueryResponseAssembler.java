@@ -150,13 +150,13 @@ public class QueryResponseAssembler {
     
     
     /** Concurrency enabled flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
-    
-    /** Concurrency maximum thread count */
-    public static final int         CNT_CONCURRENCY_MAX_THRDS = CFG_QUERY.concurrency.maxThreads;
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.data.table.construction.concurrency.enabled;
     
     /** Concurrency tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
-    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.data.table.construction.concurrency.pivotSize;
+    
+    /** Concurrency maximum thread count */
+    public static final int         CNT_CONCURRENCY_MAX_THRDS = CFG_QUERY.data.table.construction.concurrency.maxThreads;
     
     
     /** General timeout limit */
@@ -467,7 +467,7 @@ public class QueryResponseAssembler {
         if (strPad == null)
             strPad = "";
         
-        // Print out test result single parameters
+        // Print out configuration parameters
 //        ps.println(strPad + this.getClass().getSimpleName() + " Configuration");
         ps.println(strPad + "Error checking enabled         : " + this.bolErrorChk);
         ps.println(strPad + "Time-domain collisions enabled : " + this.bolTmDomColl);

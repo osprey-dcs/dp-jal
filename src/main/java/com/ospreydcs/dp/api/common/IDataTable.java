@@ -212,6 +212,20 @@ public interface IDataTable {
     
     /**
      * <p>
+     * Returns the underlying data table implementation type for this table.
+     * </p>
+     * <p>
+     * Generally, implementations for <code>IDataTable</code> are either static or dynamic.
+     * The exact implementation for static or dynamic table is intentionally hidden from clients
+     * but the returned value indicates the general nature.
+     * </p>
+     * 
+     * @return  the table type for this concrete implementation
+     */
+    public JalDataTableType getTableType();
+    
+    /**
+     * <p>
      * Returns the number of rows in the data table. 
      * </p>
      * <p>

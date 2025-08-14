@@ -41,6 +41,7 @@ import java.util.stream.IntStream;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.IDataTable;
+import com.ospreydcs.dp.api.common.JalDataTableType;
 
 /**
  * <p>
@@ -381,6 +382,14 @@ public class StaticDataTable implements IDataTable, Serializable {
     @Override
     public String getRequestId() {
         return this.strRqstId;
+    }
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#getTableType()
+     */
+    @Override
+    public JalDataTableType getTableType() {
+        return JalDataTableType.STATIC;
     }
 
     /**

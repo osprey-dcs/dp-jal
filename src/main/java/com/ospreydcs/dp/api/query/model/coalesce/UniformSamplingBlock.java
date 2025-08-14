@@ -45,6 +45,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.IDataTable;
+import com.ospreydcs.dp.api.common.JalDataTableType;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
@@ -164,11 +165,11 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     
     
     /** Concurrency enabled flag */
-    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.concurrency.enabled;
+    public static final boolean     BOL_CONCURRENCY = CFG_QUERY.data.table.construction.concurrency.enabled;
 //    public static final boolean     BOL_CONCURRENCY = false;  // TODO - fix
     
     /** Concurrency tuning parameter - pivot to parallel processing when lstMsgDataCols size hits this limit */
-    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.concurrency.pivotSize;
+    public static final int         SZ_CONCURRENCY_PIVOT = CFG_QUERY.data.table.construction.concurrency.pivotSize;
     
 
     //
@@ -686,6 +687,14 @@ public class UniformSamplingBlock implements Comparable<UniformSamplingBlock>, I
     @Override
     public String getRequestId() {
         return this.strRqstId;
+    }
+    
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#getTableType()
+     */
+    @Override
+    public JalDataTableType getTableType() {
+        return JalDataTableType.AUTO;
     }
     
     /**
