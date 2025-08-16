@@ -950,11 +950,11 @@ public class QueryAssemblyTestSuiteCreator {
         this.setBolAggrErrEnbls.forEach(bol -> ps.println(strPaddBul + bol));
         ps.println(strPadd + "Time-domain collision enable(s)");
         this.setBolAggrTmDmCollEnbls.forEach(bol -> ps.println(strPaddBul + bol));
-        ps.println(strPadd + "Concurent assembly enable(s)");
+        ps.println(strPadd + "Concurrent assembly enable(s)");
         this.setBolAggrConcEnbls.forEach(bol -> ps.println(strPaddBul + bol));
         ps.println(strPadd + "Concurrency pivot size(s) (Sampled Blocks)");
         this.setIntAggrConcPvtSzs.forEach(i -> ps.println(strPaddBul + i));
-        ps.println(strPad + "Concurrency maximum thread count(s)");
+        ps.println(strPadd + "Concurrency maximum thread count(s)");
         this.setIntAggrConcMaxThrds.forEach(i -> ps.println(strPaddBul + i));
         
         ps.println(strPad + "JAL Data Table Creation");

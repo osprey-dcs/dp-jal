@@ -47,7 +47,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @since Aug 10, 2025
  *
  * @param strRqstId         the ID of the original time-series data request
- * @param recResultStatus   indicates the test result status (i.e. failure/success) with message and cause
+ * @param recTestStatus     indicates the test result status (i.e. failure/success) with message and cause
  * 
  * @param cntRcvrdMsgs      the number of recovered data messages from the Query Service
  * @param szAllocRawPrcd    the allocated size of the recovered and correlated data (in bytes)
@@ -81,7 +81,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  */
 public record QueryAssemblyTestResult(
         String                  strRqstId,
-        ResultStatus            recResultStatus,
+        ResultStatus            recTestStatus,
 
         int                     cntRcvrdMsgs,
         long                    szAllocRawPrcd,
@@ -131,7 +131,7 @@ public record QueryAssemblyTestResult(
      * </p>
      * 
      * @param strRqstId         the ID of the original time-series data request
-     * @param recResultStatus   indicates the test status (i.e. failure/success) with message and cause
+     * @param recTestStatus     indicates the test status (i.e. failure/success) with message and cause
      * 
      * @param cntRcvrdMsgs      the number of recovered data messages from the Query Service
      * @param szAllocRawPrcd    the allocated size of the recovered and correlated data (in bytes)
@@ -169,7 +169,7 @@ public record QueryAssemblyTestResult(
      */
     public static QueryAssemblyTestResult   from(
             String                  strRqstId,
-            ResultStatus            recResultStatus,
+            ResultStatus            recTestStatus,
 
             int                     cntRcvrdMsgs,
             long                    szAllocRawPrcd,
@@ -205,7 +205,7 @@ public record QueryAssemblyTestResult(
             ) 
     {
         return new QueryAssemblyTestResult(
-                strRqstId, recResultStatus,
+                strRqstId, recTestStatus,
                 cntRcvrdMsgs, szAllocRawPrcd, durDataRawPrcd, dblRateRawPrcd, 
                     cntBlksRawTot, cntBlksRawClkd,cntBlksRawTmsLst, 
                     recBlksOrdered, recBlksDisTmDom,
@@ -227,11 +227,11 @@ public record QueryAssemblyTestResult(
      * This creator is intended for use whenever a 
      * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code> 
      * operation fails; that is, an exception is thrown internally.  The cause of the failure (and a message) should
-     * be included in the <code>recResultStatus</code> argument.
+     * be included in the <code>recTestStatus</code> argument.
      * </p>
      * 
      * @param strRqstId         identifier of the original time-series data request
-     * @param recResultStatus   the cause of the failure
+     * @param recTestStatus   the cause of the failure
      * @param recTestCase       the test case that failed
      * 
      * @return  a new <code>QueryAssemblyTestResult</code> instance containing test evaluation failure information
@@ -370,7 +370,6 @@ public record QueryAssemblyTestResult(
     }
 
     
-    
     //
     // Operations
     //
@@ -394,13 +393,13 @@ public record QueryAssemblyTestResult(
         String  strPadd = strPad + "  ";
 //        String  strPaddBul = strPadd + " - ";
         
-        if (this.recResultStatus.isFailure()) {
+        if (this.recTestStatus.isFailure()) {
             ps.println(strPad + this.getClass().getSimpleName() + " " + this.recTestCase.indCase() + ":");
             ps.println(strPadd + "Original Data Request ID : " + this.strRqstId);
             ps.println(strPadd + "Test Failure");
-            ps.println(strPadd + "  Failure message        : " + this.recResultStatus.message());
-            ps.println(strPadd + "  Cause type             : " + this.recResultStatus.cause().getClass().getSimpleName());
-            ps.println(strPadd + "  Cause message          : " + this.recResultStatus.cause().getMessage());
+            ps.println(strPadd + "  Failure message        : " + this.recTestStatus.message());
+            ps.println(strPadd + "  Cause type             : " + this.recTestStatus.cause().getClass().getSimpleName());
+            ps.println(strPadd + "  Cause message          : " + this.recTestStatus.cause().getMessage());
             ps.println(strPadd + "Test Case Causing Failure");
             this.recTestCase.printOut(ps, strPadd + "  ");
             
@@ -409,7 +408,7 @@ public record QueryAssemblyTestResult(
         
         ps.println(strPad + this.getClass().getSimpleName() + " " + this.recTestCase.indCase() + ":");
         ps.println(strPadd + "Original Data Request ID           : " + this.strRqstId);
-        ps.println(strPadd + "Test Result Status                 : " + this.recResultStatus);
+        ps.println(strPadd + "Test Result Status                 : " + this.recTestStatus);
 
         ps.println(strPadd + "Raw Data Recovery and Correlation");
         ps.println(strPadd + "  Recovered data message count     : " + this.cntRcvrdMsgs);
@@ -420,7 +419,7 @@ public record QueryAssemblyTestResult(
         ps.println(strPadd + "  Processed blocks ordering status : " + this.recBlksOrdered);
         ps.println(strPadd + "  Processed blocks disjoint status : " + this.recBlksDisTmDom);
         ps.println(strPadd + "  Processsing duration             : " + this.durDataRawPrcd);
-        ps.println(strPadd = "  Data processing rate (MBps)      : " + this.dblRateRawPrcd);
+        ps.println(strPadd + "  Data processing rate (MBps)      : " + this.dblRateRawPrcd);
         
         ps.println(strPadd + "Sampled Aggregate Assembly");
         ps.println(strPadd + "  Assembled data size (bytes)      : " + this.szAllocAggrAssm);

@@ -303,6 +303,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
           + "\n"
           + "- The Data Platform must be populated with data from the Test Archive by running application \n"
           + "    'app-run-test-data-generator'.\n"
+          + "    Additional time-series sample processes can be added using JAL application 'AddTestArchiveData'. \n"
           + "- Data Platform Test Archive requests are first performed where the data is recovered \n"
           + "    and correlated into raw data blocks associated with a common timestamp message. \n"
           + "- The recovery and correlation activity is not targeted, the data is simply collected for the table \n"
@@ -330,7 +331,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
           + " [" + STR_VAR_VERSION + "]"
           + STR_LINE_BREAK
           + " [R1 ... Rn]"
-          + " " + STR_VAR_RQST_PVS + " PV1 [... PVn]"
+          + " " + STR_VAR_RQST_PVS + " [PV1 ... PVn]"
           + " [" + STR_VAR_RQST_DUR + " R]"
           + " [" + STR_VAR_RQST_DELAY + " D]"
           + STR_LINE_BREAK
@@ -417,6 +418,9 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
     /** The collection of test results recovered from evaluations */
     private final Collection<QueryAssemblyTestResult>   setTestResults;
     
+    /** The collection of test failures seen in evaluations */
+    private final Collection<QueryAssemblyTestFailure>  setTestFails;
+    
     
     //
     // State Variables
@@ -480,6 +484,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         // Create test containers
         this.setTestCases = cfgTestSuite.createTestSuite();
         this.setTestResults = new TreeSet<>(QueryAssemblyTestResult.descendingAssmRateOrdering());
+        this.setTestFails = new TreeSet<>(QueryAssemblyTestFailure.ascendingIndexOrdering());
         
         // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
@@ -518,6 +523,10 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
             
             this.setTestResults.add(recTestResult);
         }
+        
+        // Collect any test failures
+        this.setTestFails.addAll( QueryAssemblyTestFailure.extractFailures(this.setTestResults) );
+        
         Instant insFinish = Instant.now();
 
         this.durEval = Duration.between(insStart, insFinish);
@@ -606,6 +615,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         // Print out evaluation summary
         ps.println("Test cases specified : " + this.setTestCases.size());
         ps.println("Test cases run       : " + this.setTestResults.size());
+        ps.println("Test case failures   : " +this.setTestFails.size());
         ps.println("Evaluation duration  : " + this.durEval);
         ps.println("Evaluation completed : " + this.bolCompleted);
         ps.println();
@@ -626,6 +636,13 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         QueryAssemblyTestsSummary  recSummary = QueryAssemblyTestsSummary.summarize(this.setTestResults);
         recSummary.printOut(ps, strPad);
         ps.println();
+        
+        // Print out any failed tests
+        if (!this.setTestFails.isEmpty()) {
+            ps.println("Test Failures");
+            this.setTestFails.forEach(rec -> rec.printOut(ps, strPad));
+            ps.println();
+        }
         
         // Score the test configurations and print out
         ps.println("QueryResponseAssembler Configuration Scoring");

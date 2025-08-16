@@ -442,10 +442,10 @@ public record QueryAssemblyTestsSummary(
         
         // Get the results size and failures
         int         cntResultsAll = setResultsAll.size();
-        int         cntFailures = setResultsAll.stream().filter(rec -> rec.recResultStatus().isFailure()).mapToInt(r -> 1).sum();
+        int         cntFailures = setResultsAll.stream().filter(rec -> rec.recTestStatus().isFailure()).mapToInt(r -> 1).sum();
         
         // Extract the successful results and result size
-        Collection<QueryAssemblyTestResult> setResults = setResultsAll.stream().filter(rec -> rec.recResultStatus().isSuccess()).toList();
+        Collection<QueryAssemblyTestResult> setResults = setResultsAll.stream().filter(rec -> rec.recTestStatus().isSuccess()).toList();
         int                                 cntResults = setResults.size();
         
         // Compute the sampled aggregate assembly statistics

@@ -323,7 +323,7 @@ public class AggrAssemblyConfigScore {
          * The value of the current data rate average value is returned as a convenience.
          * </p>
          * <p>
-         * If the <code>{@link QueryAssemblyTestResult#recResultStatus()}</code> field indicates
+         * If the <code>{@link QueryAssemblyTestResult#recTestStatus()}</code> field indicates
          * a test failure the attribute <code>{@link #cntTestFailures}</code> is incremented
          * and the test result record is ignored (i.e., the method returns immediately).
          * </p>
@@ -352,7 +352,7 @@ public class AggrAssemblyConfigScore {
             }
             
             // Check if this is a test failure
-            if (recResult.recResultStatus().isFailure()) {
+            if (recResult.recTestStatus().isFailure()) {
                 this.cntTestFailures++;
                 
                 return this.dblRateAvg;

@@ -256,7 +256,7 @@ public record QueryAssemblyTestCase(
      * <p>
      * <h2>NOTES:</h2>
      * If the test fails (i.e., an exception is thrown during the evaluation procedure) the
-     * field <code>{@link QueryAssemblyTestResult#recResultStatus()}</code> contains a 
+     * field <code>{@link QueryAssemblyTestResult#recTestStatus()}</code> contains a 
      * failure message and cause.  The remaining fields will be undefined.
      * </p>
      * 

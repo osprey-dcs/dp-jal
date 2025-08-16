@@ -569,8 +569,7 @@ public class QueryResponseAssembler {
             return aggBlks;
             
             // Catch any processing exception and package it within a DpQueryException 
-        } catch (IllegalArgumentException | MissingResourceException | IllegalStateException | TypeNotPresentException
-                | RejectedExecutionException | ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                             + " - Exception " + e.getClass() + " during correlated data coalescing and assembly: "
                             + e.getMessage();
