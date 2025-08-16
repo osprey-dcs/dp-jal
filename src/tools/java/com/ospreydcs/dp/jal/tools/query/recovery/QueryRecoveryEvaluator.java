@@ -59,6 +59,10 @@ import com.sun.jdi.request.InvalidRequestStateException;
  * <p>
  * Application for evaluating the operation and performance of the <code>{@link QueryRequestRecoverer}</code> class.
  * </p>
+ * <p>
+ * See class description and usage strings <code>{@link #STR_APP_DESCR}</code> and <code>{@link #STR_APP_USAGE}</code>
+ * for application details.
+ * <p>
  *
  * @author Christopher K. Allen
  * @since Jul 19, 2025
@@ -453,7 +457,6 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         
         OutputStreamAppender    appAppErrs = Log4j.createOutputStreamAppender(STR_APP_NAME, super.psOutput);
         Log4j.attachAppender(LOGGER, appAppErrs);
-        
     }
 
     

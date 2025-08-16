@@ -58,6 +58,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @since Aug 14, 2025
  *
  * @param cntResults            total <code>QueryAssemblyTestResult</code> records used for the summary
+ * @param cntFailures           total <code>QueryAssemblyTestResult</code> evaluation failures seen
  * 
  * @param szAllocAggrAssmMin    minimum allocation size (in bytes) seen for sampled aggregate assembly
  * @param szAllocAggrAssmMax    maximum allocation size (in bytes) seen for sampled aggregate assembly
@@ -128,6 +129,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  */
 public record QueryAssemblyTestsSummary(
         int         cntResults,
+        int         cntFailures,
         
         long        szAllocAggrAssmMin,
         long        szAllocAggrAssmMax,
@@ -211,6 +213,7 @@ public record QueryAssemblyTestsSummary(
      * </p>
      * 
      * @param cntResults            total <code>QueryAssemblyTestResult</code> records used for the summary
+     * @param cntFailures           total <code>QueryAssemblyTestResult</code> evaluation failures seen
      * 
      * @param szAllocAggrAssmMin    minimum allocation size (in bytes) seen for sampled aggregate assembly
      * @param szAllocAggrAssmMax    maximum allocation size (in bytes) seen for sampled aggregate assembly
@@ -283,6 +286,7 @@ public record QueryAssemblyTestsSummary(
      */
     public static QueryAssemblyTestsSummary from(
             int         cntResults,
+            int         cntFailures,
             
             long        szAllocAggrAssmMin,
             long        szAllocAggrAssmMax,
@@ -353,7 +357,7 @@ public record QueryAssemblyTestsSummary(
             )
     {
         return new QueryAssemblyTestsSummary(
-                cntResults,
+                cntResults, cntFailures,
                 
                 szAllocAggrAssmMin, szAllocAggrAssmMax, szAllocAggrAssmAvg, szAllocAggrAssmStd, 
                 durAggrAssmMin, durAggrAssmMax, durAggrAssmAvg, durAggrAssmStd,
@@ -424,20 +428,25 @@ public record QueryAssemblyTestsSummary(
      * new <code>QueryAssemblyTestsSummary</code> instance.
      * </p>
      *  
-     * @param setResults    collection of test results to summarize
+     * @param setResultsAll    collection of test results to summarize
      * 
      * @return  a new <code>QueryAssemblyTestsSummary</code> record containing a summary of the argument results
      * 
      * @throws  IllegalArgumentException    argument collection was empty
      */
-    public static QueryAssemblyTestsSummary summarize(Collection<QueryAssemblyTestResult> setResults) {
+    public static QueryAssemblyTestsSummary summarize(Collection<QueryAssemblyTestResult> setResultsAll) {
         
         // Check argument - avoid divide by zero
-        if (setResults.isEmpty())
+        if (setResultsAll.isEmpty())
             throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Argument collection was empty.");
         
-        // Get the results size 
-        int         cntResults = setResults.size();
+        // Get the results size and failures
+        int         cntResultsAll = setResultsAll.size();
+        int         cntFailures = setResultsAll.stream().filter(rec -> rec.recResultStatus().isFailure()).mapToInt(r -> 1).sum();
+        
+        // Extract the successful results and result size
+        Collection<QueryAssemblyTestResult> setResults = setResultsAll.stream().filter(rec -> rec.recResultStatus().isSuccess()).toList();
+        int                                 cntResults = setResults.size();
         
         // Compute the sampled aggregate assembly statistics
         long    szAllocAggrAssmMax = setResults.stream().mapToLong(rec -> rec.szAllocAggrAssm()).reduce(0,                  (s1, s2) -> { if (s1>s2) return s1; else return s2; } );
@@ -539,7 +548,7 @@ public record QueryAssemblyTestsSummary(
         
         // Create the result summary record and return it
         QueryAssemblyTestsSummary   recSummary = QueryAssemblyTestsSummary.from(
-                cntResults, 
+                cntResultsAll, cntFailures,
                 szAllocAggrAssmMin, szAllocAggrAssmMax, szAllocAggrAssmAvg, szAllocAggrAssmStd, 
                 durAggrAssmMin, durAggrAssmMax, durAggrAssmAvg, durAggrAssmStd, 
                 dblRateAggrAssmMin, dblRateTblBldSqrd, dblRateAggrAssmAvg, dblRateAggrAssmStd, 
@@ -584,7 +593,8 @@ public record QueryAssemblyTestsSummary(
         
         // Print out results  
         ps.println(strPad + "Query Assembly Test Results Summary ");
-        ps.println(strPadd + "Total number of result cases    : " + this.cntResults);
+        ps.println(strPadd + "Total number of result cases       : " + this.cntResults);
+        ps.println(strPadd + "Number of test evaluation failures : " + this.cntFailures);
         
         ps.println(strPadd + "Sampled Aggregate Assembly");
         ps.println(strPadd + "  Aggregate allocation size minimum (bytes)    : " + this.szAllocAggrAssmMin);

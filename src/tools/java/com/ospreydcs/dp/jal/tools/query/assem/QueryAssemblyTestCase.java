@@ -249,101 +249,128 @@ public record QueryAssemblyTestCase(
     // Operations
     //
     
-    public QueryAssemblyTestResult  evaluate(QueryRequestRecoverer prcrRcvr) throws DpQueryException {
-        
-        //
-        // --- Raw Data Recovery/Correlation ---
-        //
-        
-        // Recover and correlate the raw time-series, recording the performance parameters
-        Instant     insStart = Instant.now();
-        SortedSet<RawCorrelatedData>  setRawData = prcrRcvr.processRequest(rqstFinal); // throws DpQueryException
-        Instant     insFinish = Instant.now();
-
-        // Collect the results
-        Duration    durDataRawPrcd = Duration.between(insStart, insFinish);
-        long        szAllocRawPrcd = prcrRcvr.getProcessedByteCount();
-        double      dblRateRawPrcd = ( ((double)szAllocRawPrcd) * 1000.0 )/durDataRawPrcd.toNanos();
-        
-        int         cntRcvrdMsgs = prcrRcvr.getProcessedMessageCount();
-        int         cntBlksRawTot = setRawData.size();
-        int         cntBlksRawClkd = setRawData.stream().filter(blk -> blk instanceof RawClockedData).mapToInt(blk -> 1).sum();
-        int         cntBlksRawTmsLst = setRawData.stream().filter(blk -> blk instanceof RawTmsListData).mapToInt(blk -> 1).sum();
-
-        // Inspect raw data for ordering and collisions
-        ResultStatus    recBlksRawOrdered = TimeDomainProcessor.verifyStartTimeOrdering(setRawData);
-        ResultStatus    recBlksRawDisTmDom = TimeDomainProcessor.verfifyDisjointTimeDomains(setRawData);
-        
-
-        //
-        // --- Sampled Aggregate Assembly ---
-        //
-        
-        // Configure the sampled aggregate assembler
-        this.configureAssembler(PRCR_RSP_ASSMBLR);
+    /**
+     * <p>
+     * Performs the current test using the test conditions described in the record fields.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * If the test fails (i.e., an exception is thrown during the evaluation procedure) the
+     * field <code>{@link QueryAssemblyTestResult#recResultStatus()}</code> contains a 
+     * failure message and cause.  The remaining fields will be undefined.
+     * </p>
+     * 
+     * @param prcrRcvr  the request recoverer and correlator used to get the time-series data
+     * 
+     * @return  the results of the test evaluation as a <code>QueryAssemblyTestResult</code> record
+     */
+    public QueryAssemblyTestResult  evaluate(QueryRequestRecoverer prcrRcvr) {
         
         // Create the request ID string
         String      strRqstId = this.enmRqstOrg.name();
         if (!this.setSupplPvs.isEmpty())
             strRqstId += " + " + this.setSupplPvs;
         
-        // Assemble the sampled aggregate from the raw correlated data, recording performance parameters
-        insStart = Instant.now();
-        SampledAggregate blksAgg = PRCR_RSP_ASSMBLR.process(strRqstId, setRawData);
-        insFinish = Instant.now();
-        
-        // Collect the results
-        Duration    durAggrAssm = Duration.between(insStart, insFinish);
-        long        szAllocAggrAssm = blksAgg.getRawAllocation();
-        double      dblRateAggAssm = ( ((double)szAllocAggrAssm) * 1000.0 )/durAggrAssm.toNanos();
-        
-        int         cntBlksAggTot = blksAgg.getSampledBlockCount();
-        int         cntBlksAggClkd = blksAgg.stream().filter(blk -> blk instanceof SampledBlockClocked).mapToInt(blk -> 1).sum();
-        int         cntBlksAggTmsLst = blksAgg.stream().filter(blk -> blk instanceof SampledBlockTmsList).mapToInt(blk -> 1).sum();
-        int         cntBlksAggSupDom = blksAgg.stream().filter(blk -> blk instanceof SampledBlockSuperDom).mapToInt(blk -> 1).sum();
-        
-        
-        //
-        // --- Data Table Creation ---
-        //
-        
-        // Configure the table creator
-        this.configureTableCreator(PRCR_TBL_CTOR);
-        
-        // Create the data table
-        insStart = Instant.now();
-        IDataTable table = PRCR_TBL_CTOR.createTable(blksAgg, szAllocAggrAssm);
-        insFinish = Instant.now();
-        
-        // Collect the results
-        Duration            durTblBld = Duration.between(insStart, insFinish);
-        JalDataTableType    enmTblType = table.getTableType();
-        long                szTblCalc = table.allocationSize();
-        int                 cntTblRows = table.getRowCount();
-        int                 cntTblCols = table.getColumnCount();
-        String              strTblId = table.getRequestId();
-        double              dblRateTblBld = ( ((double)szTblCalc) * 1000.0 )/durTblBld.toNanos();
-                
-        
-        //
-        // --- Request Processing Totals ---
-        //
-        
-        long        szAllocTotal = szTblCalc;
-        Duration    durTotal = durDataRawPrcd.plus(durAggrAssm).plus(durTblBld);
-        double      dblRateTot = ( ((double)szAllocTotal) * 1000.0)/durTotal.toNanos();
-        
-        // Create the test result record and return it
-        QueryAssemblyTestResult recResult = QueryAssemblyTestResult.from(
-                strRqstId, 
-                cntRcvrdMsgs, szAllocRawPrcd, durDataRawPrcd, dblRateRawPrcd, 
+        try {
+
+            //
+            // --- Raw Data Recovery/Correlation ---
+            //
+
+            // Recover and correlate the raw time-series, recording the performance parameters
+            Instant     insStart = Instant.now();
+            SortedSet<RawCorrelatedData>  setRawData = prcrRcvr.processRequest(rqstFinal); // throws DpQueryException
+            Instant     insFinish = Instant.now();
+
+            // Collect the results
+            Duration    durDataRawPrcd = Duration.between(insStart, insFinish);
+            long        szAllocRawPrcd = prcrRcvr.getProcessedByteCount();
+            double      dblRateRawPrcd = ( ((double)szAllocRawPrcd) * 1000.0 )/durDataRawPrcd.toNanos();
+
+            int         cntRcvrdMsgs = prcrRcvr.getProcessedMessageCount();
+            int         cntBlksRawTot = setRawData.size();
+            int         cntBlksRawClkd = setRawData.stream().filter(blk -> blk instanceof RawClockedData).mapToInt(blk -> 1).sum();
+            int         cntBlksRawTmsLst = setRawData.stream().filter(blk -> blk instanceof RawTmsListData).mapToInt(blk -> 1).sum();
+
+            // Inspect raw data for ordering and collisions
+            ResultStatus    recBlksRawOrdered = TimeDomainProcessor.verifyStartTimeOrdering(setRawData);
+            ResultStatus    recBlksRawDisTmDom = TimeDomainProcessor.verfifyDisjointTimeDomains(setRawData);
+
+
+            //
+            // --- Sampled Aggregate Assembly ---
+            //
+
+            // Configure the sampled aggregate assembler
+            this.configureAssembler(PRCR_RSP_ASSMBLR);
+
+            // Assemble the sampled aggregate from the raw correlated data, recording performance parameters
+            insStart = Instant.now();
+            SampledAggregate blksAgg = PRCR_RSP_ASSMBLR.process(strRqstId, setRawData); // throws DpQueryException
+            insFinish = Instant.now();
+
+            // Collect the results
+            Duration    durAggrAssm = Duration.between(insStart, insFinish);
+            long        szAllocAggrAssm = blksAgg.getRawAllocation();
+            double      dblRateAggAssm = ( ((double)szAllocAggrAssm) * 1000.0 )/durAggrAssm.toNanos();
+
+            int         cntBlksAggTot = blksAgg.getSampledBlockCount();
+            int         cntBlksAggClkd = blksAgg.stream().filter(blk -> blk instanceof SampledBlockClocked).mapToInt(blk -> 1).sum();
+            int         cntBlksAggTmsLst = blksAgg.stream().filter(blk -> blk instanceof SampledBlockTmsList).mapToInt(blk -> 1).sum();
+            int         cntBlksAggSupDom = blksAgg.stream().filter(blk -> blk instanceof SampledBlockSuperDom).mapToInt(blk -> 1).sum();
+
+
+            //
+            // --- Data Table Creation ---
+            //
+
+            // Configure the table creator
+            this.configureTableCreator(PRCR_TBL_CTOR);
+
+            // Create the data table
+            insStart = Instant.now();
+            IDataTable table = PRCR_TBL_CTOR.createTable(blksAgg, szAllocAggrAssm); // throws DpQueryException
+            insFinish = Instant.now();
+
+            // Collect the results
+            Duration            durTblBld = Duration.between(insStart, insFinish);
+            JalDataTableType    enmTblType = table.getTableType();
+            long                szTblCalc = table.allocationSize();
+            int                 cntTblRows = table.getRowCount();
+            int                 cntTblCols = table.getColumnCount();
+            String              strTblId = table.getRequestId();
+            double              dblRateTblBld = ( ((double)szTblCalc) * 1000.0 )/durTblBld.toNanos();
+
+
+            //
+            // --- Request Processing Totals ---
+            //
+
+            long        szAllocTotal = szTblCalc;
+            Duration    durTotal = durDataRawPrcd.plus(durAggrAssm).plus(durTblBld);
+            double      dblRateTot = ( ((double)szAllocTotal) * 1000.0)/durTotal.toNanos();
+
+            // Create the test result record and return it
+            QueryAssemblyTestResult recResult = QueryAssemblyTestResult.from(
+                    strRqstId, ResultStatus.SUCCESS,
+                    cntRcvrdMsgs, szAllocRawPrcd, durDataRawPrcd, dblRateRawPrcd, 
                     cntBlksRawTot, cntBlksRawClkd, cntBlksRawTmsLst, recBlksRawOrdered, recBlksRawDisTmDom, 
-                durAggrAssm, dblRateAggAssm, szAllocAggrAssm, cntBlksAggTot, cntBlksAggClkd, cntBlksAggTmsLst, cntBlksAggSupDom, 
-                strTblId, durTblBld, dblRateTblBld, enmTblType, szTblCalc, cntTblRows, cntTblCols, 
-                szAllocTotal, durTotal, dblRateTot, 
-                this);
-        
-        return recResult;
+                    durAggrAssm, dblRateAggAssm, szAllocAggrAssm, cntBlksAggTot, cntBlksAggClkd, cntBlksAggTmsLst, cntBlksAggSupDom, 
+                    strTblId, durTblBld, dblRateTblBld, enmTblType, szTblCalc, cntTblRows, cntTblCols, 
+                    szAllocTotal, durTotal, dblRateTot, 
+                    this);
+
+            return recResult;
+
+            // Test Failure
+        } catch (DpQueryException e) {
+            String          strErrMsg = e.getCause().getMessage();
+            ResultStatus    recStatus = ResultStatus.newFailure(strErrMsg, e);
+
+            QueryAssemblyTestResult recResult = QueryAssemblyTestResult.from(strRqstId, recStatus, this);
+
+            return recResult;
+        }
     }
     
     /**

@@ -25,6 +25,7 @@
  */
 package com.ospreydcs.dp.jal.tools.query.assem;
 
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
 import com.ospreydcs.dp.api.app.ExitCode;
 import com.ospreydcs.dp.api.app.JalApplicationBase;
@@ -47,18 +49,22 @@ import com.ospreydcs.dp.api.common.JalDataTableType;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.query.recovery.QueryRecoveryEvaluator;
-import com.ospreydcs.dp.jal.tools.query.request.TestArchiveRequestTestSuiteCreator;
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 import com.sun.jdi.request.InvalidRequestStateException;
 
 /**
+ * <p>
+ * Application for evaluating the operation and performance of the <code>{@link QueryResponseAssembler}</code> class.
+ * </p>
+ * <p>
+ * See class description and usage strings <code>{@link #STR_APP_DESCR}</code> and <code>{@link #STR_APP_USAGE}</code>
+ * for application details.
+ * <p>
  *
  * @author Christopher K. Allen
  * @since Aug 8, 2025
@@ -124,7 +130,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
             
         } catch (Exception e) {
             
-            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
+            JalApplicationBase.terminateWithException(QueryAssemblyEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
             return;
         }
 
@@ -133,7 +139,51 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         // ------- Application Execution -------
         //
         
-        // Create the correlation evaluator and run it
+        // Create the query assembly evaluator and run it
+        try {
+            QueryAssemblyEvaluator    evaluator = new QueryAssemblyEvaluator(cfgTestSuite, strOutputLoc, args);
+            
+            evaluator.run();
+            evaluator.writeReport();
+            evaluator.shutdown();
+            
+            System.out.println(STR_APP_NAME + " Execution completed in " + evaluator.getRunDuration());
+            System.out.println("  Results stored at " + evaluator.getOutputFilePath().toAbsolutePath());
+            System.exit(ExitCode.SUCCESS.getCode());
+            
+        } catch (DpGrpcException e) {
+            System.err.println(STR_APP_NAME + " creation FAILURE - Unable to connect to Query Service.");
+            JalApplicationBase.terminateWithException(QueryAssemblyEvaluator.class, e, ExitCode.INITIALIZATION_EXCEPTION);
+            
+        } catch (ConfigurationException e) {
+            System.err.println(STR_APP_NAME + " creation FAILURE - No time-series data requests in command line.");
+            JalApplicationBase.terminateWithException(QueryAssemblyEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
+            
+        } catch (UnsupportedOperationException e) {
+            System.err.println(STR_APP_NAME + " creation FAILURE - Output location not found in file system: " + strOutputLoc);
+            JalApplicationBase.terminateWithException(QueryAssemblyEvaluator.class, e, ExitCode.OUTPUT_ARG_INVALID);
+            
+        } catch (FileNotFoundException e) {
+            System.err.println(STR_APP_NAME + " creation FAILURE - Unable to create output file.");
+            JalApplicationBase.terminateWithException(QueryAssemblyEvaluator.class, e, ExitCode.OUTPUT_FAILURE);
+            
+        } catch (SecurityException e) {
+            System.err.println(STR_APP_NAME + " creation FAILURE - Unable to write to output file.");
+            JalApplicationBase.terminateWithException(QueryAssemblyEvaluator.class, e, ExitCode.OUTPUT_FAILURE);
+            
+        } catch (InvalidRequestStateException e) {
+            System.err.println(STR_APP_NAME + " execution FAILURE - Application already executed.");
+            JalApplicationBase.terminateWithException(QueryAssemblyEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+            
+        } catch (IllegalStateException e) {
+            System.err.println(STR_APP_NAME + " data recovery ERROR - Message request attempt on empty buffer.");
+            JalApplicationBase.terminateWithException(QueryAssemblyEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+            
+        } catch (InterruptedException e) {
+            System.err.println(STR_APP_NAME + " data recovery ERROR - Process interrupted while waiting for buffer message.");
+            JalApplicationBase.terminateWithException(QueryAssemblyEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+            
+        }
         
     }
 
@@ -325,6 +375,8 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
           + "  NOTES: \n"
           + "  - All bracketed quantities [...] are optional. \n"
           + "  - If no R1,...,Rn are included, " + STR_VAR_RQST_PVS + " and " + STR_VAR_RQST_DUR + " must be present.\n"
+          + "  - The default " + STR_VAR_TBL_BLD_ENBL + " value is '" + BOL_TBL_BLD_ENBL_DEF + "'. \n"
+          + "  - Currently the option " + STR_VAR_TBL_BLD_ENBL + " is ignored, that is, data tables are always created. \n"
           + "  - The default " + STR_VAR_TBL_TYPE + " value is '" + ENM_TBL_TYPE_DEF + "'. \n"
           + "  - Default " + STR_VAR_OUTPUT + " value is " + STR_OUTPUT_DEF + ".\n";
 
@@ -357,9 +409,6 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
     
     /** The time-series data recoverer/processor used for raw data used for assembly test evaluations */
     private final QueryRequestRecoverer                 prcrRqstRcvry;
-    
-//    /** The time-series request data assembler under evaluation */
-//    private final QueryResponseAssembler                prcrRspAssmblr;
     
     
     /** The collection of test cases used in evaluations */
@@ -412,19 +461,31 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
      * 
      * @throws DpGrpcException          unable to establish connection to the Query Service (see message and cause)
      * @throws ConfigurationException   the test suite configuration was invalid
+     * @throws UnsupportedOperationException the output path is not associated with the default file system 
+     * @throws FileNotFoundException    unable to create output file (see message and cause)
+     * @throws SecurityException        unable to write to output file
      */
-    public QueryAssemblyEvaluator(QueryAssemblyTestSuiteCreator cfgTestSuite, String strOutputLoc, String... args) throws DpGrpcException, ConfigurationException {
+    public QueryAssemblyEvaluator(QueryAssemblyTestSuiteCreator cfgTestSuite, String strOutputLoc, String... args) 
+            throws DpGrpcException, 
+                   ConfigurationException, 
+                   UnsupportedOperationException, FileNotFoundException, SecurityException 
+    {
         super(QueryAssemblyEvaluator.class, args);
         
         this.cfgTestSuite = cfgTestSuite;
         
         // Create resources
         this.prcrRqstRcvry = QueryRequestRecoverer.from(super.connQuery);
-//        this.prcrRspAssmblr = QueryResponseAssembler.create();
         
         // Create test containers
         this.setTestCases = cfgTestSuite.createTestSuite();
         this.setTestResults = new TreeSet<>(QueryAssemblyTestResult.descendingAssmRateOrdering());
+        
+        // Create the output stream and attach Logger to it - records fatal errors to output file
+        super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
+        
+        OutputStreamAppender    appAppErrs = Log4j.createOutputStreamAppender(STR_APP_NAME, super.psOutput);
+        Log4j.attachAppender(LOGGER, appAppErrs);
     }
 
 
@@ -437,9 +498,8 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
      * Runs the application evaluating all test cases within the test suite configuration.
      * </p>
      * 
-     * @throws DpQueryException general error during data recovery/processing (see message and cause)
      */
-    public void run() throws DpQueryException {
+    public void run() {
 
         // Check state
         if (super.bolRun) {
@@ -528,6 +588,9 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         if (!this.bolRun)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + "- Test suite has not been run.");
         
+        // Create left-hand side padding
+        String  strPad = "  ";
+        
         // Print out header
         String  strHdr = super.createReportHeader();
         ps.println();
@@ -549,28 +612,31 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         
         // Print out raw data processor configuration
         ps.println("QueryRequestRecoverer Configuration");
-        this.prcrRqstRcvry.printOutConfig(ps, "  ");
+        this.prcrRqstRcvry.printOutConfig(ps, strPad);
         ps.println();
-        
-//        // Print out correlated data assembler configuration
-//        ps.println("Final QueryResponseAssembler Configuration (last case)");
-//        this.prcrRspAssmblr.printOutConfig(ps, " ");
         
         // Print out the test suite configuration
         ps.println("Test Suite Configuration");
         this.cfgTestSuite.printOut(ps, "  ");
         ps.println();
         
-        // Print out results summary
-//        QueryAssemblyTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
-//        QueryAssemblyTestsSummary  recSummary = QueryAssemblyTestsSummary.summarize(this.setTestResults);
-//        recSummary.printOut(ps, null);
-//        ps.println();
+        // Summarize the results and print out
+        ps.println("Test Results Summary");
+        QueryAssemblyTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
+        QueryAssemblyTestsSummary  recSummary = QueryAssemblyTestsSummary.summarize(this.setTestResults);
+        recSummary.printOut(ps, strPad);
+        ps.println();
+        
+        // Score the test configurations and print out
+        ps.println("QueryResponseAssembler Configuration Scoring");
+        AggrAssemblyConfigScore score = AggrAssemblyConfigScore.from(this.setTestResults);
+        score.printOutByRates(ps, strPad);
+        ps.println();
         
         // Print out each test result
         ps.println("Individual Case Results:");
         for (QueryAssemblyTestResult recCase : this.setTestResults) {
-//            recCase.printOut(ps, "  ");
+            recCase.printOut(ps, strPad);
             ps.println();
         }
     }    
@@ -662,7 +728,7 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         if (lstStrRqstNms.isEmpty() && lstStrRqstDur.isEmpty()) {
             String  strMsg = "A request duration " + STR_VAR_RQST_DUR + " must be specified for PV list " + lstStrSupplPvs + ".";
             
-            throw new MissingResourceException(strMsg, TestArchiveRequestTestSuiteCreator.class.getName(), STR_VAR_RQST_DUR);
+            throw new MissingResourceException(strMsg, TestArchiveRequest.class.getName(), STR_VAR_RQST_DUR);
         }
 
         // Convert to TestArchiveRequest enumeration constants
