@@ -631,10 +631,22 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         ps.println();
         
         // Summarize the results and print out
-        ps.println("Test Results Summary");
+//        ps.println("Test Results Summary");
         QueryAssemblyTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
         QueryAssemblyTestsSummary  recSummary = QueryAssemblyTestsSummary.summarize(this.setTestResults);
-        recSummary.printOut(ps, strPad);
+        recSummary.printOut(ps, null);
+        ps.println();
+        
+        // Print out test case data rates
+        ps.println("Test Case Data Rates");
+        QueryAssemblyTestsSummary.printOutDataRates(ps, strPad, this.setTestResults);
+//        this.setTestResults.forEach(rec -> ps.println(
+//                String.format(
+//                        "  %7.3f MBps for Case #%d with %7.3f MBytes allocation", 
+//                        rec.dblRateAggAssm(), rec.recTestCase().indCase(), ((double)rec.szAllocAggrAssm())/1_000_000 
+//                        )
+//                    )
+//                );
         ps.println();
         
         // Print out any failed tests

@@ -28,6 +28,7 @@ package com.ospreydcs.dp.jal.tools.query.assem;
 import java.io.PrintStream;
 import java.time.Duration;
 import java.util.Collection;
+import java.util.function.Function;
 
 import com.ospreydcs.dp.api.common.JalDataTableType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -386,6 +387,25 @@ public record QueryAssemblyTestsSummary(
     }
     
     
+    //
+    // Record Constants
+    //
+    
+    /** The format string used for printing out data rates from a test result collection */ 
+    private static final String      STR_DATA_RATE_FMTR = "  %7.3f MBps for Case #%d with %7.3f MBytes allocation";
+    
+    /** The function that converts <code>QueryAssemblyTestResult</code> records to strings with data rate */
+    private static final Function<QueryAssemblyTestResult, String>  FNC_DATA_RATE = rec -> {
+        int     intIndex = rec.recTestCase().indCase();
+        double  dblRate = rec.dblRateAggAssm();
+        double  dblAlloc = ((double)rec.szAllocAggrAssm())/1_000_000;
+        
+        String  strLine = String.format(STR_DATA_RATE_FMTR, dblRate, intIndex, dblAlloc);
+        
+        return strLine;
+    };
+        
+    
     //    
     // Record Resources
     //
@@ -417,7 +437,29 @@ public record QueryAssemblyTestsSummary(
 
     // Operations
     //
-    
+
+    /**
+     * <p>
+     * Prints out the line-by-line data rates for each test result in the argument collection.
+     * </p>
+     * <p>
+     * A line-by-line text description of each record field <code>{@link QueryAssemblyTestResult#dblRateAggAssm()}</code>
+     * is written to the given output.  The test case index and total allocation are also specified.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white space padding for left-hand side line headings (or <code>null</code>.
+     * @param setResults
+     */
+    synchronized
+    public static void printOutDataRates(PrintStream ps, String strPad, Collection<QueryAssemblyTestResult> setResults) {
+        final String    STR_PAD = (strPad == null) ? "" : "  ";
+
+        setResults.stream().<String>map(FNC_DATA_RATE).forEach(str -> ps.println(STR_PAD + str));
+    }
+
     /**
      * <p>
      * Computes a summary of the evaluation results for the given collection and returns them.
@@ -572,7 +614,7 @@ public record QueryAssemblyTestsSummary(
         
         return recSummary;
     }
-
+    
     /**
      * <p>
      * Prints out a text description of the record contents to the given output.

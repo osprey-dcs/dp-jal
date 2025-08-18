@@ -45,11 +45,19 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  *  </p>
  *  <p>
  *  </p>
- *  
  *
  * @author Christopher K. Allen
  * @since Aug 16, 2025
- *
+ * 
+ * @param   recTestCase         the test case that failed 
+ * @param   indTestCase         the failed test case index
+ * @param   recTestStatus       status record indicating test evaluation failure
+ * @param   strFailMsg          the failure message within the status
+ * @param   errFailCause        the failure cause within the status
+ * @param   strCauseMsg         the failure cause message 
+ * @param   errCauseCause       any embedded cause within the failure cause or <code>null</code> (i.e., the error cause error cause)
+ * @param   strCauseCauseMsg    the embedded cause message or <code>null</code> if nonexistent
+ * @param   bolTmDomCollEnbl    the time-domain collision enable/disable flag within the test case (typically the cause of failures)
  */
 public record QueryAssemblyTestFailure(
         QueryAssemblyTestCase   recTestCase,
@@ -59,7 +67,8 @@ public record QueryAssemblyTestFailure(
         Throwable               errFailCause,
         String                  strCauseMsg,
         Throwable               errCauseCause,
-        String                  strCauseCauseMsg
+        String                  strCauseCauseMsg,
+        boolean                 bolTmDomCollEnbl
         ) 
 {
     
@@ -129,6 +138,7 @@ public record QueryAssemblyTestFailure(
         Throwable   errFailCause = recTestStatus.cause();
         String      strCauseMsg = errFailCause.getMessage();
         Throwable   errCauseCause = errFailCause.getCause();
+        boolean     bolTmDomCollEnbl = recTestCase.bolAggrTmDomColl();
         
         String      strCauseCauseMsg; 
         if (errCauseCause != null)
@@ -141,7 +151,8 @@ public record QueryAssemblyTestFailure(
                 recTestCase, indCase, 
                 recTestStatus, 
                 strFailMsg, errFailCause, strCauseMsg, 
-                errCauseCause, strCauseCauseMsg
+                errCauseCause, strCauseCauseMsg,
+                bolTmDomCollEnbl
                 );
     }
     
@@ -230,11 +241,12 @@ public record QueryAssemblyTestFailure(
 //        String  strPaddBul = strPadd + " - ";
         
         ps.println(strPad + this.getClass().getSimpleName() + " Test Case #" + this.indTestCase());
-        ps.println(strPadd + "Failure message             : " + this.strFailMsg);
-        ps.println(strPadd + "Failure cause type          : " + this.errFailCause.getClass().getSimpleName());
-        ps.println(strPadd + "Failure cause message       : " + this.strCauseMsg);
-        ps.println(strPadd + "Failure cause cause type    : " + this.errCauseCause);
-        ps.println(strPadd + "Failure casue cause message : " + this.strCauseCauseMsg);
+        ps.println(strPadd + "Failure message              : " + this.strFailMsg);
+        ps.println(strPadd + "Failure cause type           : " + this.errFailCause.getClass().getSimpleName());
+        ps.println(strPadd + "Failure cause message        : " + this.strCauseMsg);
+        ps.println(strPadd + "Failure cause cause type     : " + this.errCauseCause);
+        ps.println(strPadd + "Failure cause cause message  : " + this.strCauseCauseMsg);
+        ps.println(strPadd + "Time-domain collision enable : " + this.bolTmDomCollEnbl);
         
         ps.println(strPadd + "Failed Test Case");
         this.recTestCase.printOut(ps, strPadd);
