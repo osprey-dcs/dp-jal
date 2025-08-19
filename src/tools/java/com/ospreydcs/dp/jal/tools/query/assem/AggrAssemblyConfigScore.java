@@ -789,7 +789,7 @@ public class AggrAssemblyConfigScore {
 
     /**
      * <p>
-     * Returns the internal index corresponding to the given <code>ConfigResult</code record.
+     * Returns the internal index corresponding to the given <code>ConfigResult</code> record.
      * </p>
      * <p>
      * The static list of index records, <code>{@link #LST_CONFIGS}</code> is searched for an

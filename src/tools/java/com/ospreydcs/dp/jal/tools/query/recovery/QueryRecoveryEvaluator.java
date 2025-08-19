@@ -46,7 +46,6 @@ import com.ospreydcs.dp.api.app.JalApplicationBase;
 import com.ospreydcs.dp.api.app.JalQueryAppBase;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -168,9 +167,9 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
             System.err.println(STR_APP_NAME + " execution FAILURE - Application already executed.");
             JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
             
-        } catch (DpQueryException e) {
-            System.err.println(STR_APP_NAME + " data recovery ERROR - General gRPC error in data recovery.");
-            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.GRPC_EXCEPTION);
+//        } catch (DpQueryException e) {
+//            System.err.println(STR_APP_NAME + " data recovery ERROR - General gRPC error in data recovery.");
+//            JalApplicationBase.terminateWithException(QueryRecoveryEvaluator.class, e, ExitCode.GRPC_EXCEPTION);
             
         } catch (IllegalStateException e) {
             System.err.println(STR_APP_NAME + " data recovery ERROR - Message request attempt on empty buffer.");
@@ -300,6 +299,14 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
           + "- Data Platform Test Archive requests are performed, the data is recovered \n"
           + "    as gRPC messages and correlated into raw data blocks associated with a \n"
           + "    common timestamp message.  \n"
+          + "    Thus, the Data Platform archive must be populated with the Test Archive data \n"
+          + "    supplied by application 'app-run-test-data-generator'. \n"
+          + "- Note the grouping of configuration parameters for the test conditions, specifically, \n"
+          + "    by request decomposition, by gRPC stream type and configuration, and by correlator \n"
+          + "    configuration. \n"
+          + "    Each configuration is scored by performance (data rate) in the application output. \n"
+          + "- Appropriate strategy is to hold one configuration parameter set constant then vary the \n"
+          + "    parameters of other configuration parameter sets. \n"
           + "- The operation is monitored, results are computed and stored in the output file.\n";
     
     /** The "usage" message for client help requests or invalid application arguments */
@@ -481,10 +488,8 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
      * <p>
      * Runs the application evaluating all test cases within the test suite configuration.
      * </p>
-     * 
-     * @throws DpQueryException general error during data recovery/processing (see message and cause)
      */
-    public void run() throws DpQueryException {
+    public void run() {
 
         // Check state
         if (super.bolRun) {
@@ -499,7 +504,7 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         // Iterate over each test case in test suite
         Instant insStart = Instant.now();
         for (QueryRecoveryTestCase recTestCase : this.setTestCases) {
-            QueryRecoveryTestResult recTestResult = recTestCase.evaluate(this.prcrRqstRcvry); // throws DpQueryException
+            QueryRecoveryTestResult recTestResult = recTestCase.evaluate(this.prcrRqstRcvry); 
             
             this.setTestResults.add(recTestResult);
         }
@@ -606,6 +611,18 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         QueryRecoveryTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
         QueryRecoveryTestsSummary  recSummary = QueryRecoveryTestsSummary.summarize(this.setTestResults);
         recSummary.printOut(ps, null);
+        ps.println();
+        
+        // Print out request decomposition configuration scoring
+        ps.println("Request Decomposition Configuration Scoring");
+        RequestDecompConfigScorer   dcmpScorer = RequestDecompConfigScorer.from(this.setTestResults);
+        dcmpScorer.printOutByRates(ps, "  ");
+        ps.println();
+        
+        // Print out gRPC stream configuration scoring
+        ps.println("gRPC Stream Configuration Scoring");
+        GrpcStreamConfigScorer  strmScorer = GrpcStreamConfigScorer.from(this.setTestResults);
+        strmScorer.printOutByRates(ps, "  ");
         ps.println();
         
         // Print out each test result

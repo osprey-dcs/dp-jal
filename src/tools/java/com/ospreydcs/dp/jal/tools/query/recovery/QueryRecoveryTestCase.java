@@ -35,7 +35,6 @@ import java.util.SortedSet;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.correl.RawClockedData;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
@@ -367,55 +366,69 @@ public record QueryRecoveryTestCase(
      * @param processor     query request processor under evaluation
      * 
      * @return  the results of the evaluation
-     * 
-     * @throws DpQueryException general error during data recovery/processor (see message and cause)
      */
-    public QueryRecoveryTestResult evaluate(QueryRequestRecoverer processor) throws DpQueryException {
-        
+    public QueryRecoveryTestResult evaluate(QueryRequestRecoverer processor) {
+
         // Configure the processor
         this.configureRecoverer(processor);
-        
-        // Create the list of composite requests 
-        //  - List contains only a single request if request decomposition is disabled
-        //  - Contains any supplemental PVs
-        //  - Specifies the gRPC stream type
-        List<DpDataRequest> lstRqsts = this.createRequests();
-        
-        // Perform the evaluation
-        Instant     insStart = Instant.now();
-        SortedSet<RawCorrelatedData>  setRawData = processor.processRequests(lstRqsts); // throws DpQueryException
-        Instant     insFinish = Instant.now();
 
         // Create the request ID
         String      strRqstId = this.enmRqst.name();
         if (!this.setSupplPvs.isEmpty())
             strRqstId += " + " + this.setSupplPvs;
-        
-        // Collect the results
-        Duration    durDataPrcd = Duration.between(insStart, insFinish);
-        long        szAllocPrcd = processor.getProcessedByteCount();
-        double      dblRatePrcd = ( ((double)szAllocPrcd) * 1000 )/durDataPrcd.toNanos();
-        
-        int         cntRcvrdMsgs = processor.getProcessedMessageCount();
-        int         cntBlksPrcdTot = setRawData.size();
-        int         cntBlksPrcdClkd = setRawData.stream().filter(blk -> blk instanceof RawClockedData).mapToInt(blk -> 1).sum();
-        int         cntBlksPrcdTmsLst = setRawData.stream().filter(blk -> blk instanceof RawTmsListData).mapToInt(blk -> 1).sum();
 
-        // Inspect raw data for ordering and collisions
-        ResultStatus    recBlksOrdered = TimeDomainProcessor.verifyStartTimeOrdering(setRawData);
-        ResultStatus    recBlksDisTmDom = TimeDomainProcessor.verfifyDisjointTimeDomains(setRawData);
-        
-        
-        // Return the test results
-        QueryRecoveryTestResult    recResult = QueryRecoveryTestResult.from(
-                strRqstId, lstRqsts, 
-                cntRcvrdMsgs, szAllocPrcd, 
-                durDataPrcd, dblRatePrcd, 
-                cntBlksPrcdTot, cntBlksPrcdClkd, cntBlksPrcdTmsLst, 
-                recBlksOrdered, recBlksDisTmDom, 
-                this);
-        
-        return recResult;
+        // Create the list of composite requests 
+        //  - List contains only a single request if request decomposition is disabled
+        //  - Contains any supplemental PVs
+        //  - Specifies the gRPC stream type
+        DpDataRequest       rqstOrg = this.createRequestOriginal();
+        List<DpDataRequest> lstRqsts = this.createRequests(rqstOrg);
+
+
+        // Attempt the evaluation
+        try {
+            Instant     insStart = Instant.now();
+            SortedSet<RawCorrelatedData>  setRawData = processor.processRequests(lstRqsts); // throws DpQueryException
+            Instant     insFinish = Instant.now();
+
+            // Collect the results
+            Duration    durDataPrcd = Duration.between(insStart, insFinish);
+            long        szAllocPrcd = processor.getProcessedByteCount();
+            double      dblRatePrcd = ( ((double)szAllocPrcd) * 1000 )/durDataPrcd.toNanos();
+
+            int         cntRcvrdMsgs = processor.getProcessedMessageCount();
+            int         cntBlksPrcdTot = setRawData.size();
+            int         cntBlksPrcdClkd = setRawData.stream().filter(blk -> blk instanceof RawClockedData).mapToInt(blk -> 1).sum();
+            int         cntBlksPrcdTmsLst = setRawData.stream().filter(blk -> blk instanceof RawTmsListData).mapToInt(blk -> 1).sum();
+
+            // Inspect raw data for ordering and collisions
+            ResultStatus    recBlksOrdered = TimeDomainProcessor.verifyStartTimeOrdering(setRawData);
+            ResultStatus    recBlksDisTmDom = TimeDomainProcessor.verfifyDisjointTimeDomains(setRawData);
+
+
+            // Return the test results
+            QueryRecoveryTestResult    recResult = QueryRecoveryTestResult.from(
+                    strRqstId, ResultStatus.SUCCESS, 
+                    rqstOrg, lstRqsts, 
+                    cntRcvrdMsgs, szAllocPrcd, 
+                    durDataPrcd, dblRatePrcd, 
+                    cntBlksPrcdTot, cntBlksPrcdClkd, cntBlksPrcdTmsLst, 
+                    recBlksOrdered, recBlksDisTmDom, 
+                    this);
+
+            return recResult;
+
+        } catch (Exception e) {
+
+            // Create test failure status
+            String          strErrMsg = e.getCause().getMessage();
+            ResultStatus    recFailStatus = ResultStatus.newFailure(strErrMsg, e);
+
+            // Return a failed test result
+            QueryRecoveryTestResult recResult = QueryRecoveryTestResult.from(strRqstId, recFailStatus, rqstOrg, lstRqsts, this);
+
+            return recResult;
+        }
     }
     
     /**
@@ -436,7 +449,7 @@ public record QueryRecoveryTestCase(
             strPad = "";
         String  strPadd = strPad + "  ";
         
-        ps.println(strPad + this.getClass().getSimpleName() + " " + this.indCase + ":");
+        ps.println(strPad + this.getClass().getSimpleName() + " " + this.indCase + " Conditions");
         ps.println(strPad + "  Original Data Request ID          : " + this.enmRqst.name());
         ps.println(strPad + "  Supplemental PV names             : " + this.setSupplPvs);
         ps.println(strPad + "  Request Decomposition");
@@ -520,17 +533,40 @@ public record QueryRecoveryTestCase(
     
     /**
      * <p>
-     * Creates the list of composite requests for the test case.
+     * Creates the originating time-series data request.
      * </p>
      * <p>
-     * Creates a list of composite time-series data requests according to the test case configuration.
-     * Performs the following steps to create the returned composite request list:
+     * Performs the following steps to create the originating data request:
      * <ol>
      * <li>Creates a <code>{@link DpDataRequest}</code> instance from <code>{@link TestArchiveRequest#create()}</code>.</li>
      *   <ul>
      *   <li>Adds all supplemental PVs to <code>DpDataRequest</code> from <code>{@link #setSupplPvs}</code>. </li>
      *   <li>Sets the gRPC stream type for the request from <code>{@link #enmStrmType}</code>. </li> 
      *   </ul>
+     * </ol>
+     * </p>
+     *  
+     * @return  the originating time-series data request for the test case
+     */
+    private DpDataRequest   createRequestOriginal() {
+        
+        // Create the original request and add any supplemental PVs
+        DpDataRequest   rqst = this.enmRqst.create();
+        rqst.setStreamType(this.enmStrmType);
+        rqst.selectSources(this.setSupplPvs);
+        
+        return rqst;
+    }
+    
+    /**
+     * <p>
+     * Creates the list of composite requests for the test case.
+     * </p>
+     * <p>
+     * Creates a list of composite time-series data requests according to the test case configuration.
+     * Performs the following steps to create the returned composite request list:
+     * <ol>
+     * <li>Creates a <code>{@link DpDataRequest}</code> instance from <code>{@link #createRequestOriginal()}</code> .</li>
      * <li>If the <code>{@link #bolDcmpEnbl()}</code> flag is <code>false</code> then the above <code>DpDataRequest</code> is returned 
      *     within a single-element <code>List</code>.
      * </li>
@@ -548,28 +584,27 @@ public record QueryRecoveryTestCase(
      * 
      * @return  a list of composite time-series data requests that create the original request defined by the test case 
      */
-    @SuppressWarnings("unused")
-    private List<DpDataRequest> createRequests() {
+    private List<DpDataRequest> createRequests(DpDataRequest rqstOrg) {
         
         // Create the original request and add any supplemental PVs
-        DpDataRequest   rqst = this.enmRqst.create();
-        rqst.setStreamType(this.enmStrmType);
-        rqst.selectSources(this.setSupplPvs);
+//        DpDataRequest   rqst = this.enmRqst.create();
+//        rqst.setStreamType(this.enmStrmType);
+//        rqst.selectSources(this.setSupplPvs);
         
         // If request decomposition is disabled return 
         if (!this.bolDcmpEnbl)
-            return List.of(rqst);
+            return List.of(rqstOrg);
         
         // Else decompose request automatically if enabled
         if (this.bolDcmpAuto()) {
             this.configureDecomposer(QueryRecoveryTestCase.PRCR_RQST_DCMP);
-            List<DpDataRequest> lstRqsts = QueryRecoveryTestCase.PRCR_RQST_DCMP.buildCompositeRequestPreferred(rqst);
+            List<DpDataRequest> lstRqsts = QueryRecoveryTestCase.PRCR_RQST_DCMP.buildCompositeRequestPreferred(rqstOrg);
             
             return lstRqsts;
         }
             
         // Else decompose request explicitly
-        List<DpDataRequest> lstRqsts = QueryRecoveryTestCase.PRCR_RQST_DCMP.buildCompositeRequest(rqst, this.enmDcmpType, this.cntMStrmMaxStrms);
+        List<DpDataRequest> lstRqsts = QueryRecoveryTestCase.PRCR_RQST_DCMP.buildCompositeRequest(rqstOrg, this.enmDcmpType, this.cntMStrmMaxStrms);
         
         return lstRqsts;
     }

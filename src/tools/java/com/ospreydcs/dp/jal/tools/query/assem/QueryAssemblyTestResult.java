@@ -230,9 +230,9 @@ public record QueryAssemblyTestResult(
      * be included in the <code>recTestStatus</code> argument.
      * </p>
      * 
-     * @param strRqstId         identifier of the original time-series data request
-     * @param recTestStatus   the cause of the failure
-     * @param recTestCase       the test case that failed
+     * @param strRqstId     identifier of the original time-series data request
+     * @param recTestStatus the cause of the failure
+     * @param recTestCase   the test case that failed
      * 
      * @return  a new <code>QueryAssemblyTestResult</code> instance containing test evaluation failure information
      * 
@@ -240,21 +240,21 @@ public record QueryAssemblyTestResult(
      */
     public static QueryAssemblyTestResult   from(
             String                  strRqstId,
-            ResultStatus            recResultStatus,
+            ResultStatus            recTestStatus,
 
             QueryAssemblyTestCase   recTestCase
             ) throws IllegalArgumentException
     {
         // Check status argument
-        if (recResultStatus.isSuccess()) 
+        if (recTestStatus.isSuccess()) 
             throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - The status argument indicates sucess.");
-        
        
+        // Create and return an empty record
         return new QueryAssemblyTestResult(
-                strRqstId, recResultStatus,
+                strRqstId, recTestStatus,
                 0, 0L, Duration.ZERO, 0.0,
                 0, 0, 0,
-                ResultStatus.newFailure(strRqstId, recResultStatus.cause()), ResultStatus.newFailure(strRqstId, recResultStatus.cause()),
+                ResultStatus.newFailure(strRqstId, recTestStatus.cause()), ResultStatus.newFailure(strRqstId, recTestStatus.cause()),
                 Duration.ZERO, 0.0, 0L, 
                 0, 0, 0, 0,
                 strRqstId, Duration.ZERO, 0.0,

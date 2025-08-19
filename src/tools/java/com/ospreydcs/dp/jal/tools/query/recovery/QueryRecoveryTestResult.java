@@ -32,6 +32,7 @@ import java.util.List;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
@@ -46,11 +47,15 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * @since Jul 23, 2025
  *
  * @param strRqstId         the (optional) request ID of the original time-series data request
+ * @param recTestStatus     the status of the test evaluation (i.e., success or failure)
+ * 
+ * @param rqstOrg           the originating time-series data request (i.e., before any potential decomposition)
  * @param lstCmpRqsts       the list of composite requests offered to the request processor
  * @param cntRcvrdMsgs      the number of <code>QueryData</code> message recovered from the request
  * @param szAllocPrcd       the total memory allocation (bytes) of the recovered/processed data
  * @param durDataPrcd       the total time duration to recover and correlate the requested data
  * @param dblRatePrcd       the data processing rate for data recovery and correlation
+ * 
  * @param cntBlksPrcdTot    the total number of raw correlated data blocks after correlation processing
  * @param cntBlksPrcdClkd   the number of clocked raw correlated data blocks after correlation processing
  * @param cntBlksPrcdTmsLst the number of timestamp list raw correlated data blocks after correlation processing
@@ -59,16 +64,21 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  */
 public record QueryRecoveryTestResult(
         String                  strRqstId,
+        ResultStatus            recTestStatus,
+        
+        DpDataRequest           rqstOrg,
         List<DpDataRequest>     lstCmpRqsts,
         int                     cntRcvrdMsgs,
         long                    szAllocPrcd,
         Duration                durDataPrcd,
         double                  dblRatePrcd,
+        
         int                     cntBlksPrcdTot,
         int                     cntBlksPrcdClkd,
         int                     cntBlksPrcdTmsLst,
         ResultStatus            recBlksOrdered,
         ResultStatus            recBlksDisTmDom,
+        
         QueryRecoveryTestCase   recTestCase
         ) 
 {
@@ -86,11 +96,15 @@ public record QueryRecoveryTestResult(
      * </p>
      * 
      * @param strRqstId         the (optional) request ID of the original time-series data request
+     * @param recTestStatus     the status of the test evaluation (i.e., success or failure)
+     * 
+     * @param rqstOrg           the originating time-series data request (i.e., before any potential decomposition)
      * @param lstCmpRqsts       the list of composite requests offered to the request processor
      * @param cntRcvrdMsgs      the number of <code>QueryData</code> message recovered from the request
      * @param szAllocPrcd       the total memory allocation (bytes) of the recovered/processed data
      * @param durDataPrcd       the total time duration to recover and correlate the requested data
      * @param dblRatePrcd       the data processing rate for data recovery and correlation
+     * 
      * @param cntBlksPrcdTot    the total number of raw correlated data blocks after correlation processing
      * @param cntBlksPrcdClkd   the number of clocked raw correlated data blocks after correlation processing
      * @param cntBlksPrcdTmsLst the number of timestamp list raw correlated data blocks after correlation processing
@@ -101,11 +115,15 @@ public record QueryRecoveryTestResult(
      */
     public static QueryRecoveryTestResult   from(
             String                  strRqstId,
+            ResultStatus            recTestStatus,
+            
+            DpDataRequest           rqstOrg,
             List<DpDataRequest>     lstCmpRqsts,
             int                     cntRcvrdMsgs,
             long                    szAllocPrcd,
             Duration                durDataPrcd,
             double                  dblRatePrcd,
+            
             int                     cntBlksPrcdTot,
             int                     cntBlksPrcdClkd,
             int                     cntBlksPrcdTmsLst,
@@ -116,16 +134,65 @@ public record QueryRecoveryTestResult(
     {
         return new QueryRecoveryTestResult(
                 strRqstId,
+                recTestStatus,
+                
+                rqstOrg,
                 lstCmpRqsts,
                 cntRcvrdMsgs,
                 szAllocPrcd,
                 durDataPrcd,
                 dblRatePrcd,
+                
                 cntBlksPrcdTot,
                 cntBlksPrcdClkd,
                 cntBlksPrcdTmsLst,
                 recBlksOrdered,
                 recBlksDisTmDom,
+                recTestCase
+                );
+    }
+    
+    /**
+     * <p>
+     * Creates a new instance of <code>QueryRecoveryTestResult</code> for the case of a test evaluation failure.
+     * </p>
+     * <p>
+     * This creator is intended for use whenever a 
+     * <code>{@link QueryRecoveryTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code> 
+     * operation fails; that is, an exception is thrown internally.  The cause of the failure (and a message) should
+     * be included in the <code>recTestStatus</code> argument.
+     * </p>
+     * 
+     * @param strRqstId     identifier of the original time-series data request
+     * @param recTestStatus the cause of the failure
+     * @param rqstOrg       the originating time-series data request (i.e., before any potential decomposition)
+     * @param lstCmpRqsts   the list of composite requests offered to the request processor
+     * @param recTestCase   the test case that failed
+     * 
+     * @return  a new <code>QueryAssemblyTestResult</code> instance containing test evaluation failure information
+     * 
+     * @throws IllegalArgumentException     the status argument indicates <code>{@link ResultStatus#SUCCESS}</code>
+     */
+    public static QueryRecoveryTestResult   from(
+                String                  strRqstId, 
+                ResultStatus            recTestStatus, 
+                DpDataRequest           rqstOrg,
+                List<DpDataRequest>     lstCmpRqsts, 
+                QueryRecoveryTestCase   recTestCase
+            ) throws IllegalArgumentException
+    {
+        // Check status argument
+        if (recTestStatus.isSuccess()) 
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - The status argument indicates sucess.");
+        
+        // Create and return an empty record
+        return new QueryRecoveryTestResult(
+                strRqstId, recTestStatus, 
+                rqstOrg, lstCmpRqsts, 
+                0, 0L, Duration.ZERO, 0.0,
+                0, 0, 0, 
+                ResultStatus.newFailure(strRqstId, recTestStatus.cause()), 
+                ResultStatus.newFailure(strRqstId, recTestStatus.cause()),
                 recTestCase
                 );
     }
@@ -212,6 +279,7 @@ public record QueryRecoveryTestResult(
         
         ps.println(strPad + this.getClass().getSimpleName() + " for test case # " + this.recTestCase.indCase() + ":");
         ps.println(strPad + "  Original Data Request ID            : " + this.strRqstId);
+        ps.println(strPad + "  Test result status                  : " + this.recTestStatus);
         ps.println(strPad + "  Request Supplemental PVs            : " + this.recTestCase.setSupplPvs());
         ps.println(strPad + "  Composite request count             : " + this.lstCmpRqsts.size());
         ps.println(strPad + "  Recovered data message count        : " + this.cntRcvrdMsgs);
