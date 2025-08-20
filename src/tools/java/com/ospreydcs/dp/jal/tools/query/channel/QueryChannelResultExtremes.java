@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	TestResultExtremes.java
+ * File:	QueryChannelResultExtremes.java
  * Package: com.ospreydcs.dp.jal.tools.query.channel
- * Type: 	TestResultExtremes
+ * Type: 	QueryChannelResultExtremes
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -49,7 +49,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * </p>
  * <p>
  * The method <code>{@link #computeExtremes(Collection)}</code> is the preferred means for creating 
- * <code>TestResultExtremes</code> records.  This is the primary operation.
+ * <code>QueryChannelResultExtremes</code> records.  This is the primary operation.
  * </p>
  * <p>
  * Note that <code>{@link #computeExtremes(Collection)}</code> relies on the internal methods
@@ -73,7 +73,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * @param pairStrmTypeBest  the best gRPC stream type encountered (with average data rate)
  * @param pairStrmTypeWorst the worst gRPC stream type encountered (with average data rate)
  */
-public record TestResultExtremes(
+public record QueryChannelResultExtremes(
         QueryChannelTestResult              recResultBest,
         QueryChannelTestResult              recResultWorst,
         Entry<Double, TestArchiveRequest>   pairRqstTypeBest,
@@ -93,7 +93,7 @@ public record TestResultExtremes(
     
     /**
      * <p>
-     * Creates a new <code>TestResultExtremes</code> record with fields given by the arguments.
+     * Creates a new <code>QueryChannelResultExtremes</code> record with fields given by the arguments.
      * </p>
      * 
      * @param recResultBest     the best test result encountered
@@ -107,9 +107,9 @@ public record TestResultExtremes(
      * @param pairStrmTypeBest  the best gRPC stream type encountered (with average data rate)
      * @param pairStrmTypeWorst the worst gRPC stream type encountered (with average data rate)
      * 
-     * @return  a new <code>TestResultExtremes</code> record populated by the given arguments
+     * @return  a new <code>QueryChannelResultExtremes</code> record populated by the given arguments
      */
-    public static TestResultExtremes    from(
+    public static QueryChannelResultExtremes    from(
             QueryChannelTestResult              recResultBest,
             QueryChannelTestResult              recResultWorst,
             Entry<Double, TestArchiveRequest>   pairRqstTypeBest,
@@ -122,7 +122,7 @@ public record TestResultExtremes(
             Entry<Double, DpGrpcStreamType>     pairStrmTypeWorst
             ) 
     {
-        return new TestResultExtremes(
+        return new QueryChannelResultExtremes(
                 recResultBest,
                 recResultWorst,
                 pairRqstTypeBest,
@@ -149,7 +149,7 @@ public record TestResultExtremes(
      * The "best" and "worst" performing fields are identified for the given collection of 
      * <code>{@link QueryChannelTestResult}</code> records.  The criterion for the best and worst qualifier
      * is the average data rate for all records with a targeted field value.    
-     * Once identified, these extreme field values are saved to a new <code>TestResultExtremes</code> record and returned.
+     * Once identified, these extreme field values are saved to a new <code>QueryChannelResultExtremes</code> record and returned.
      * </p>
      * <p>
      * <h2>Operation</h2>
@@ -165,7 +165,7 @@ public record TestResultExtremes(
      *  
      * @param setResults    collection of <code>QueryChannelTestResult</code> records under inspection
      * 
-     * @return  new <code>TestResultExtremes</code> record identifying the extreme field values within the argument collection
+     * @return  new <code>QueryChannelResultExtremes</code> record identifying the extreme field values within the argument collection
      * 
      * @throws NoSuchElementException   either the argument was empty or contained a record with invalid field value
      * 
@@ -175,7 +175,7 @@ public record TestResultExtremes(
      * @see #computeBestStreamCounts(Collection)
      * @see #computeBestStreamTypes(Collection)
      */
-    public static TestResultExtremes    computeExtremes(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
+    public static QueryChannelResultExtremes    computeExtremes(Collection<QueryChannelTestResult> setResults) throws NoSuchElementException {
         
         // Compute all the results
         TreeMap<Double, QueryChannelTestResult> mapRateToRslt = computeBestTestResults(setResults);
@@ -185,7 +185,7 @@ public record TestResultExtremes(
         TreeMap<Double, DpGrpcStreamType>       mapRateToStrmType = computeBestStreamTypes(setResults);
         
         // Pick off the best and worst values saving them to a new record
-        TestResultExtremes  recExtremes = TestResultExtremes.from(
+        QueryChannelResultExtremes  recExtremes = QueryChannelResultExtremes.from(
                 mapRateToRslt.lastEntry().getValue(),       mapRateToRslt.firstEntry().getValue(), 
                 mapRateToRqstType.lastEntry(),              mapRateToRqstType.firstEntry(), 
                 mapRateToDcmpType.lastEntry(),              mapRateToDcmpType.firstEntry(), 

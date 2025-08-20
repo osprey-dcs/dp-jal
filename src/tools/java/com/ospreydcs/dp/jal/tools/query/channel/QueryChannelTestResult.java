@@ -29,8 +29,10 @@ import java.io.PrintStream;
 import java.time.Duration;
 import java.util.Comparator;
 
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 
 
 /**
@@ -43,10 +45,14 @@ import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
  * <code>{@link QueryChannelTestCase#evaluate(QueryChannel, QueryMessageBuffer)}</code>. 
  * </p>
  * 
+ * @param strRqstId     the ID of the original data request
+ * @param recTestStatus the success/fail status of the test evaluation
+ * 
  * @param dblDataRate   the data rate seen during the request recovery (in MBps)
  * @param cntMessages   the number of <code>QueryData</code> messages recovered
  * @param szRecovery    the memory allocation size of the recovered data (in MBytes) 
  * @param durRecovery   the time duration required for the data recovery
+ * 
  * @param recTestCase   the test case creating the above results parameters
  *
  * @author Christopher K. Allen
@@ -55,10 +61,14 @@ import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
  * @see QueryChannelTestCase#evaluate(com.ospreydcs.dp.api.query.model.grpc.QueryChannel, com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer)
  */
 public record QueryChannelTestResult(
-        double      dblDataRate, 
-        int         cntMessages, 
-        long        szRecovery, 
-        Duration    durRecovery, 
+        String          strRqstId,
+        ResultStatus    recTestStatus,
+        
+        double          dblDataRate, 
+        int             cntMessages, 
+        long            szRecovery, 
+        Duration        durRecovery,
+        
         QueryChannelTestCase recTestCase 
         ) implements Comparable<QueryChannelTestResult>
 {
@@ -76,23 +86,63 @@ public record QueryChannelTestResult(
      * <code>{@link QueryChannelTestCase#evaluate(QueryChannel, QueryMessageBuffer)</code> method.
      * </p>
      * 
+     * @param strRqstId     the ID of the original data request
+     * @param recTestStatus the success/fail status of the test evaluation
+     * 
      * @param dblDataRate   the data rate seen during the request recovery (in MBps)
      * @param cntMessages   the number of <code>QueryData</code> messages recovered
      * @param szRecovery    the memory allocation size of the recovered data  
      * @param durRecovery   the time duration required for the data recovery
+     * 
      * @param recTestCase   the test case creating the above results parameters
      * 
      * @return  a new <code>QueryChannelTestResult</code> record with fields given by the above arguments
      */
     public static QueryChannelTestResult from(
+            String  strRqstId,
+            ResultStatus    recTestStatus,
+            
             double dblDataRate, 
             int cntMessages, 
             long szRecovery, 
-            Duration durRecovery, 
+            Duration durRecovery,
+            
             QueryChannelTestCase recTestCase
             ) 
     {
-        return new QueryChannelTestResult(dblDataRate, cntMessages, szRecovery, durRecovery, recTestCase);
+        return new QueryChannelTestResult(strRqstId, recTestStatus, dblDataRate, cntMessages, szRecovery, durRecovery, recTestCase);
+    }
+    
+    /**
+     * <p>
+     * Creates a new instance of <code>QueryChannelTestResult</code> for the case of a test evaluation failure.
+     * </p>
+     * <p>
+     * This creator is intended for use whenever a 
+     * <code>{@link QueryChannelTestCase#evaluate(QueryChannel, QueryMessageBuffer)}</code> 
+     * operation fails; that is, an exception is thrown internally.  The cause of the failure (and a message) should
+     * be included in the <code>recTestStatus</code> argument.
+     * </p>
+     * 
+     * @param strRqstId     identifier of the original time-series data request
+     * @param recTestStatus the cause of the failure
+     * @param recTestCase   the test case that failed
+     * 
+     * @return  a new <code>QueryAssemblyTestResult</code> instance containing test evaluation failure information
+     * 
+     * @throws IllegalArgumentException     the status argument indicates <code>{@link ResultStatus#SUCCESS}</code>
+     */
+    public static QueryChannelTestResult    from(String strRqstId, ResultStatus recTestStatus, QueryChannelTestCase recTestCase) throws IllegalArgumentException {
+        // Check status argument
+        if (recTestStatus.isSuccess()) 
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - The status argument indicates sucess.");
+        
+        // Create and return an empty record
+        return new QueryChannelTestResult(
+                strRqstId, recTestStatus,
+                0.0, 0, 0L, Duration.ZERO,
+                recTestCase
+                );
     }
     
     

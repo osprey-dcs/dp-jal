@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
 
+import com.ospreydcs.dp.api.common.ResultStatus;
+import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
@@ -52,8 +54,12 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * explicitly supplied.  That is, use of the canonical constructor should be avoided.
  * </p>  
  *
+ * @param indCase       (optional) index of test case
+ * 
  * @param enmRqst       the time-series data request supplying raw data
- * @param setSupplPvs   (optional) collection of PV names to be added to the given time-series data request 
+ * @param setSupplPvs   (optional) collection of PV names to be added to the given time-series data request
+ * @param rqstOrg       originating time-series data request
+ *  
  * @param bolConcOpt    enable/disable multi-threaded concurrency while correlation processing
  * @param cntMaxThrds   maximum number of execution threads when concurrency is enabled
  * @param szConcPivot   the target set size triggering multi-threading when enabled
@@ -64,8 +70,11 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  */
 public record CorrelatorTestCase(
         int                 indCase,
+        
         TestArchiveRequest  enmRqst,
         Set<String>         setSupplPvs,
+        DpDataRequest       rqstOrg,
+        
         boolean             bolConcOpt,
         int                 cntMaxThrds,
         int                 szConcPivot
@@ -99,7 +108,7 @@ public record CorrelatorTestCase(
             int                 szConcPivot
             )
     {
-        return new CorrelatorTestCase(IND_CASE, enmRqst, Set.of(), bolConcOpt, cntMaxThrds, szConcPivot); 
+        return new CorrelatorTestCase(IND_CASE, enmRqst, Set.of(), enmRqst.create(), bolConcOpt, cntMaxThrds, szConcPivot); 
     }
     
     /**
@@ -122,12 +131,14 @@ public record CorrelatorTestCase(
     public static CorrelatorTestCase    from(
             TestArchiveRequest  enmRqst,
             Set<String>         setSupplPvs,
+            DpDataRequest       rqstOrg,
+            
             boolean             bolConcOpt,
             int                 cntMaxThrds,
             int                 szConcPivot
             )
     {
-        return new CorrelatorTestCase(IND_CASE, enmRqst, setSupplPvs, bolConcOpt, cntMaxThrds, szConcPivot); 
+        return new CorrelatorTestCase(IND_CASE, enmRqst, setSupplPvs, rqstOrg, bolConcOpt, cntMaxThrds, szConcPivot); 
     }
     
     
@@ -151,7 +162,12 @@ public record CorrelatorTestCase(
      * Canonical constructor.  Sets field values and increments record index counter <code>{@link #IND_CASE}</code>
      * </p>
      *
-     * @param enmRqst       the time-series data request supplying raw data 
+     * @param indCase       (optional) index of test case
+     * 
+     * @param enmRqst       the time-series data request supplying raw data
+     * @param setSupplPvs   (optional) collection of PV names to be added to the given time-series data request
+     * @param rqstOrg       originating time-series data request
+     *  
      * @param bolConcOpt    enable/disable multi-threaded concurrency while correlation processing
      * @param cntMaxThrds   maximum number of execution threads when concurrency is enabled
      * @param szConcPivot   the target set size triggering multi-threading when enabled
@@ -179,7 +195,8 @@ public record CorrelatorTestCase(
      * @throws CompletionException      error in <code>DataBucket</code> insertion task execution (see cause)
      */
     public CorrelatorTestResult evaluate(RawDataCorrelator processor, List<QueryDataResponse.QueryData> lstRspMsgs) 
-            throws IllegalArgumentException, CompletionException {
+//            throws IllegalArgumentException, CompletionException 
+    {
         
         // Save processor configuration
         final boolean   bolMultThrd = processor.isConcurrencyEnabled();
@@ -187,38 +204,56 @@ public record CorrelatorTestCase(
         final int       szConcPivot = processor.getConcurrencyPivotSize();
         
         // Configure the processor
-        processor.enableConcurrency(this.bolConcOpt);
-        processor.setMaxThreadCount(this.cntMaxThrds);
-        processor.setConcurrencyPivotSize(this.szConcPivot);
+        this.configureCorrelator(processor);
         
         // Perform the evaluation
         processor.reset();
-        
-        Instant     insStart = Instant.now();
-        for (QueryDataResponse.QueryData msgData : lstRspMsgs) {
-            processor.processQueryData(msgData);
+
+        try {
+            
+            Instant     insStart = Instant.now();
+            for (QueryDataResponse.QueryData msgData : lstRspMsgs) {
+                processor.processQueryData(msgData);
+            }
+            Instant     insFinish = Instant.now();
+
+            // Collect the results
+            long        szRspMsgs = lstRspMsgs.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
+
+            Duration    durProcessed = Duration.between(insStart, insFinish);
+            int         cntRspMsgs = lstRspMsgs.size();
+            int         cntCorrelSet = processor.sizeCorrelatedSet();
+            long        szProcessed = processor.getBytesProcessed();
+            double      dblDataRate = ( ((double)szProcessed) * 1000 )/durProcessed.toNanos();
+
+            // Restore the processor to its original state and configuration
+            processor.reset();
+            processor.enableConcurrency(bolMultThrd);
+            processor.setMaxThreadCount(cntMaxThrds);
+            processor.setConcurrencyPivotSize(szConcPivot);
+
+            // Return the test results
+            CorrelatorTestResult    recResult = CorrelatorTestResult.from(this.rqstOrg.getRequestId(), ResultStatus.SUCCESS, cntRspMsgs, szRspMsgs, cntCorrelSet, szProcessed, durProcessed, dblDataRate, this);
+
+            return recResult;
+
+        } catch (Exception e) {
+
+            // Restore the processor to its original state and configuration
+            processor.reset();
+            processor.enableConcurrency(bolMultThrd);
+            processor.setMaxThreadCount(cntMaxThrds);
+            processor.setConcurrencyPivotSize(szConcPivot);
+
+            // Create the failure status
+            String          strErrMsg = e.getMessage();
+            ResultStatus    recStatus = ResultStatus.newFailure(strErrMsg, e);
+
+            // Return the failed test result
+            CorrelatorTestResult    recResult = CorrelatorTestResult.from(this.rqstOrg.getRequestId(), recStatus, this);
+
+            return recResult;
         }
-        Instant     insFinish = Instant.now();
-        
-        // Collect the results
-        long        szRspMsgs = lstRspMsgs.stream().mapToLong(msg -> msg.getSerializedSize()).sum();
-        
-        Duration    durProcessed = Duration.between(insStart, insFinish);
-        int         cntRspMsgs = lstRspMsgs.size();
-        int         cntCorrelSet = processor.sizeCorrelatedSet();
-        long        szProcessed = processor.getBytesProcessed();
-        double      dblDataRate = ( ((double)szProcessed) * 1000 )/durProcessed.toNanos();
-        
-        // Restore the processor to its original state and configuration
-        processor.reset();
-        processor.enableConcurrency(bolMultThrd);
-        processor.setMaxThreadCount(cntMaxThrds);
-        processor.setConcurrencyPivotSize(szConcPivot);
-        
-        // Return the test results
-        CorrelatorTestResult    recResult = CorrelatorTestResult.from(cntRspMsgs, szRspMsgs, cntCorrelSet, szProcessed, durProcessed, dblDataRate, this);
-        
-        return recResult;
     }
     
     /**
@@ -245,5 +280,26 @@ public record CorrelatorTestCase(
         ps.println(strPad + "  Maximum concurrency thread count  : " + this.cntMaxThrds);
         ps.println(strPad + "  Pivot size triggering concurrency : " + this.szConcPivot);
     }
+    
+    
+    //
+    // Support Methods
+    //
+    
+    /**
+     * <p>
+     * Configures the given processor to the conditions of the this test case.
+     * </p>
+     *  
+     * @param processor processor to be configured
+     */
+    private void    configureCorrelator(RawDataCorrelator processor) {
+        
+        // Configure the processor
+        processor.enableConcurrency(this.bolConcOpt);
+        processor.setMaxThreadCount(this.cntMaxThrds);
+        processor.setConcurrencyPivotSize(this.szConcPivot);
+    }
+    
 
 }

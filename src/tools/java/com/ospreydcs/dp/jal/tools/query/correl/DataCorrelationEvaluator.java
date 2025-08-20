@@ -506,7 +506,9 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * @throws IllegalArgumentException invalid timestamps were encountered in the recovered data set
      * @throws CompletionException      error in <code>DataBucket</code> insertion task (see cause)
      */
-    public void run() throws InvalidRequestStateException, DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException, IllegalArgumentException, CompletionException {
+    public void run() throws InvalidRequestStateException, DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException
+//    , IllegalArgumentException, CompletionException 
+    {
 
         // Check state
         if (super.bolRun) {
@@ -523,7 +525,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         for (DpDataRequest rqst : this.mapCases.keySet()) {
 
             // Recover raw data for this request
-            List<QueryData>             lstDataMsgs = super.recoverRequestData(rqst);
+            List<QueryData>             lstDataMsgs = super.recoverRequestData(rqst);   // throws DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException
             
             // Perform all the test case evaluations for the test request
             List<CorrelatorTestCase>    lstCases = this.mapCases.get(rqst);
@@ -619,6 +621,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         // Print out evaluation summary
         ps.println("Test cases specified : " + this.mapCases.values().stream().mapToInt(lst -> lst.size()).sum() );
         ps.println("Test cases run       : " + this.setResults.size());
+        ps.println("Test case failures   : " + this.setResults.stream().filter(rec -> rec.recTestStatus().isFailure()).count());
         ps.println("Evaluation duration  : " + this.durEval);
         ps.println("Evaluation completed : " + this.bolCompleted);
         ps.println();
@@ -633,9 +636,14 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         ps.println();
         
         // Print out results summary
-        CorrelatorTestResultSummary.assignTargetDataRate(DBL_RATE_TARGET);
-        CorrelatorTestResultSummary  recSummary = CorrelatorTestResultSummary.summarize(this.setResults);
+        CorrelatorTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
+        CorrelatorTestsSummary  recSummary = CorrelatorTestsSummary.summarize(this.setResults);
         recSummary.printOut(ps, null);
+        ps.println();
+        
+        // Print out the test case data rates
+        ps.println("Test Case Data Rates");
+        CorrelatorTestsSummary.printOutDataRates(ps, "  ", this.setResults);
         ps.println();
         
         // Print out results extremes

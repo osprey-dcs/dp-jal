@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * <p>
@@ -108,8 +107,15 @@ public class BufferConsumerTask implements Runnable {
     private long    szAlloc = 0;
     
     
-    /** The executed flag */
-    private boolean         bolRun = false;
+    /** The started flag */
+    private boolean         bolStarted = false;
+    
+    /** The finished execution flag */
+    private boolean         bolFinished = false;
+    
+    /** The terminate flag */
+    private boolean         bolTerminated = false;
+    
     
     /** The task success flag */
     private ResultStatus    recStatus;
@@ -131,10 +137,71 @@ public class BufferConsumerTask implements Runnable {
         this.fncSupplier = fncSupplier;
     }
     
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Terminates a currently executing task.
+     * </p>
+     * <p>
+     * If the task is currently executing, i.e., <code>{@link #run()}</code> has been invoked and has not completed,
+     * the <code>{@link #bolTerminated}</code> flag is set.  This causes the polling loop to exit and terminate
+     * the <code>{@link #run()}</code> method.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>If the task has not yet been started nothing is done and the method returns <code>false</code>.</li>
+     * <li>If the task has already completed nothing is done and the method returns <code>false</code>.</li>
+     * <li>If the task has already been terminated nothing is done and the method returns <code>false</code>.</li>
+     * </ul>
+     * 
+     * @return  <code>true</code> if the method has started and up for terminate, <code>false</code> otherwise
+     */
+    public boolean  terminate() {
+        
+        // If the task has already been run termination fails
+        if (this.bolFinished)
+            return false;
+        
+        // If termination has already been called termination fails
+        if (this.bolTerminated)
+            return false;
+        
+        // If the task has started terminate it
+        if (this.bolStarted)
+            this.bolTerminated = true;
+        
+        return this.bolTerminated;
+    }
+    
     
     //
     // State and Status Inquiry
     //
+    
+    /**
+     * @return  <code>true</code> if the task was initiated, i.e., <code>#run()</code> was invoked
+     */
+    public boolean  isStarted() {
+        return this.bolStarted;
+    }
+    
+    /**
+     * @return  <code>true</code> if the task has successfully completed execution (no errors)
+     */
+    public boolean  isFinished() {
+        return this.bolFinished;
+    }
+    
+    /**
+     * @return  <code>true</code> if the task was successfully terminate, <code>false</code> otherwise
+     */
+    public boolean  isTerminated() {
+        return this.bolTerminated;
+    }
     
     /**
      * <p>
@@ -148,7 +215,7 @@ public class BufferConsumerTask implements Runnable {
     public int   getMessageCount() throws IllegalStateException {
         
         // Check state
-        if (!this.bolRun)
+        if (!this.bolFinished)
             throw new IllegalStateException("Task has not been executed.");
         
         return this.cntMsgs;
@@ -166,7 +233,7 @@ public class BufferConsumerTask implements Runnable {
     public long getMemoryAllocation() throws IllegalStateException {
         
         // Check state
-        if (!this.bolRun)
+        if (!this.bolFinished)
             throw new IllegalStateException("Task has not been executed.");
         
         return this.szAlloc;
@@ -185,7 +252,7 @@ public class BufferConsumerTask implements Runnable {
     public ResultStatus getResult() throws IllegalStateException {
         
         // Check state
-        if (!this.bolRun)
+        if (!this.bolFinished)
             throw new IllegalStateException("Task has not been executed.");
 
         return this.recStatus;
@@ -202,7 +269,9 @@ public class BufferConsumerTask implements Runnable {
     @Override
     public void run() {
         
-        while (fncSupplier.isSupplying()) {
+        this.bolStarted = true;
+        
+        while (fncSupplier.isSupplying() && !this.bolTerminated) {
             try {
                 QueryDataResponse.QueryData msgData = fncSupplier.poll(LNG_TIMEOUT, TU_TIMEOUT);
                 
@@ -222,8 +291,15 @@ public class BufferConsumerTask implements Runnable {
             }
         }
         
-        this.bolRun = true;
-        this.recStatus = ResultStatus.SUCCESS;
+        this.bolFinished = true;
+        
+        if (this.bolTerminated) {
+            this.recStatus = ResultStatus.newFailure("Task was terminated by the client");
+
+        } else {
+            this.recStatus = ResultStatus.SUCCESS;
+            
+        }
     }
     
 }

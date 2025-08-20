@@ -451,7 +451,7 @@ public record QueryAssemblyTestsSummary(
      *   
      * @param ps        output stream to receive text description of record fields
      * @param strPad    white space padding for left-hand side line headings (or <code>null</code>.
-     * @param setResults
+     * @param setResults    collection of test results
      */
     synchronized
     public static void printOutDataRates(PrintStream ps, String strPad, Collection<QueryAssemblyTestResult> setResults) {

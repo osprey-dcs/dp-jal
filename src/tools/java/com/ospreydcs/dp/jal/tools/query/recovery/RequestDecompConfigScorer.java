@@ -192,21 +192,27 @@ public final class RequestDecompConfigScorer extends ConfigScorerBase<
         // State Variables
         //
         
-        /** The average number of total raw correlated blocks per recovery */
-        private int     cntBlksTotAvg = 0;
+        /** The composite request count average */
+        private double      cntCmpRqstAvg = 0.0;
         
-        /** The average number of clocked raw correlated blocks per recovery */
-        private int     cntBlksClkdAvg = 0;
+        /** The squard of the running composite request count (for composite request count standard deviation computation) */
+        private double      cntCmpRqstSqrd = 0.0;
         
-        /** The average number of timestamp list raw correlated blocks per recovery */
-        private int     cntBlksTmsLstAvg = 0;
-        
-        
-        /** Number of correctly ordered correlated result sets */
-        private int     cntOrdered = 0;
-        
-        /** Number of result sets with disjoint time domains */
-        private int     cntDisTmDoms = 0;
+//        /** The average number of total raw correlated blocks per recovery */
+//        private int     cntBlksTotAvg = 0;
+//        
+//        /** The average number of clocked raw correlated blocks per recovery */
+//        private int     cntBlksClkdAvg = 0;
+//        
+//        /** The average number of timestamp list raw correlated blocks per recovery */
+//        private int     cntBlksTmsLstAvg = 0;
+//        
+//        
+//        /** Number of correctly ordered correlated result sets */
+//        private int     cntOrdered = 0;
+//        
+//        /** Number of result sets with disjoint time domains */
+//        private int     cntDisTmDoms = 0;
         
         
         //
@@ -230,39 +236,59 @@ public final class RequestDecompConfigScorer extends ConfigScorerBase<
         //
 
         /**
-         * @return the average number of total raw correlated blocks per recovery 
+         * @return  the composite request count average 
          */
-        public final int getTotalRawBlockCountAvg() {
-            return cntBlksTotAvg;
+        public final double getCompositeRequestCountAvg() {
+            return this.cntCmpRqstAvg;
         }
-
+        
         /**
-         * @return the average number of clocked raw correlated blocks per recovery
+         * <p>
+         * Computes and returns the standard deviation of the composite request count.
+         * </p>
+         * 
+         * @return  The composite request count standard deviation  
          */
-        public final int getClockedRawBlockCountAvg() {
-            return cntBlksClkdAvg;
+        public final double compositeRequestCountStd() {
+            double  dblStd = Math.sqrt(this.cntCmpRqstSqrd - this.cntCmpRqstAvg*this.cntCmpRqstAvg);
+            
+            return dblStd;
         }
-
-        /**
-         * @return the average number of timestamp list raw correlated blocks per recovery
-         */
-        public final int getTmsListRawBlockCountAvg() {
-            return cntBlksTmsLstAvg;
-        }
-
-        /**
-         * @return the number of correctly ordered correlated result sets 
-         */
-        public final int getOrderedRawBlockResults() {
-            return cntOrdered;
-        }
-
-        /**
-         * @return the number of result sets with disjoint time domains 
-         */
-        public final int getDisjointTmDomainRawBlockResults() {
-            return cntDisTmDoms;
-        }
+        
+//        /**
+//         * @return the average number of total raw correlated blocks per recovery 
+//         */
+//        public final int getTotalRawBlockCountAvg() {
+//            return cntBlksTotAvg;
+//        }
+//
+//        /**
+//         * @return the average number of clocked raw correlated blocks per recovery
+//         */
+//        public final int getClockedRawBlockCountAvg() {
+//            return cntBlksClkdAvg;
+//        }
+//
+//        /**
+//         * @return the average number of timestamp list raw correlated blocks per recovery
+//         */
+//        public final int getTmsListRawBlockCountAvg() {
+//            return cntBlksTmsLstAvg;
+//        }
+//
+//        /**
+//         * @return the number of correctly ordered correlated result sets 
+//         */
+//        public final int getOrderedRawBlockResults() {
+//            return cntOrdered;
+//        }
+//
+//        /**
+//         * @return the number of result sets with disjoint time domains 
+//         */
+//        public final int getDisjointTmDomainRawBlockResults() {
+//            return cntDisTmDoms;
+//        }
 
         
         //
@@ -291,26 +317,19 @@ public final class RequestDecompConfigScorer extends ConfigScorerBase<
             int     N = super.getHitCount() - 1;
             
             if (N > 0) {
-                this.cntBlksTotAvg *= N;
-                this.cntBlksClkdAvg *= N;
-                this.cntBlksTmsLstAvg *= N;
+                this.cntCmpRqstAvg *= N;
+                this.cntCmpRqstSqrd *= N;
             }
             
             // Add in the appropriate test result values
-            this.cntBlksTotAvg += recResult.cntBlksPrcdTot();
-            this.cntBlksClkdAvg += recResult.cntBlksPrcdClkd();
-            this.cntBlksTmsLstAvg += recResult.cntBlksPrcdTmsLst();
+            this.cntCmpRqstAvg += recResult.lstCmpRqsts().size();
+            this.cntCmpRqstSqrd += recResult.lstCmpRqsts().size() * recResult.lstCmpRqsts().size();
             
             // Re-normalize the average values
             N = N + 1;
             
-            this.cntBlksTotAvg /= N;
-            this.cntBlksClkdAvg /= N;
-            this.cntBlksTmsLstAvg /= N;
-            
-            // Add in the test result properties
-            this.cntOrdered += recResult.recBlksOrdered().isSuccess() ? 1 : 0;
-            this.cntDisTmDoms += recResult.recBlksDisTmDom().isSuccess() ? 1 : 0;
+            this.cntCmpRqstAvg /= N;
+            this.cntCmpRqstSqrd /= N;
             
             return dblDataRate;
         }
@@ -326,11 +345,8 @@ public final class RequestDecompConfigScorer extends ConfigScorerBase<
             
             super.printOut(ps, strPad);
             ps.println(strPad + "Test Results Properties");
-            ps.println(strPadd + "Average raw correlated blocks total          : " + this.cntBlksTotAvg);
-            ps.println(strPadd + "Average raw correlated blocks clocked        : " + this.cntBlksClkdAvg);
-            ps.println(strPadd + "Average raw correlated blocks timestamp list : " + this.cntBlksTmsLstAvg);
-            ps.println(strPadd + "Results sets with ordered correlated blocks  : " + this.cntOrdered);
-            ps.println(strPadd + "Results sets w/ disjoint time-domain blocks  : " + this.cntDisTmDoms);
+            ps.println(strPadd + "Composite request count avg. : " + this.getCompositeRequestCountAvg());
+            ps.println(strPadd + "Composite request count std. : " + this.compositeRequestCountStd());
         }
         
     }

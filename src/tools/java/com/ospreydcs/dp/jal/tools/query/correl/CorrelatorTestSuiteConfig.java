@@ -362,14 +362,14 @@ public class CorrelatorTestSuiteConfig {
             
             for (Boolean bolEnable : SET_ENABLE) {
                 if (!bolEnable) {
-                    CorrelatorTestCase  recCase = CorrelatorTestCase.from(enmRqst, this.setSupplPvs, false, 1, 1);
+                    CorrelatorTestCase  recCase = CorrelatorTestCase.from(enmRqst, this.setSupplPvs, rqst, false, 1, 1);
 
                     lstCases.add(recCase);
 
                 } else {
                     for (Integer cntMaxThrds : this.setMaxThrdCnts)
                         for (Integer szPivot : this.setPivotSize) { 
-                            CorrelatorTestCase  recCase = CorrelatorTestCase.from(enmRqst, this.setSupplPvs, true, cntMaxThrds, szPivot);
+                            CorrelatorTestCase  recCase = CorrelatorTestCase.from(enmRqst, this.setSupplPvs, rqst, true, cntMaxThrds, szPivot);
 
                             lstCases.add(recCase);
                         }

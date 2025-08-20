@@ -683,13 +683,13 @@ public class QueryChannelEvaluatorDeprecated {
         ps.println();
         
         // Print out results summary
-        TestResultSummary.assignTargetDataRate(DBL_RATE_TARGET);
-        TestResultSummary  recSummary = TestResultSummary.summarize(this.setResults);
+        QueryChannelTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
+        QueryChannelTestsSummary  recSummary = QueryChannelTestsSummary.summarize(this.setResults);
         recSummary.printOutChannelSummary(ps, null);
         ps.println();
         
         // Print out results extremes
-        TestResultExtremes  recExtremes = TestResultExtremes.computeExtremes(setResults);
+        QueryChannelResultExtremes  recExtremes = QueryChannelResultExtremes.computeExtremes(setResults);
         recExtremes.printOut(ps, null);
         ps.println();
         

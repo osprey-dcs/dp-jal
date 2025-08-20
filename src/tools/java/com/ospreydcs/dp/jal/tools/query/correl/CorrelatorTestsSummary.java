@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	CorrelatorTestResultSummary.java
+ * File:	CorrelatorTestsSummary.java
  * Package: com.ospreydcs.dp.jal.tools.query.correl
- * Type: 	CorrelatorTestResultSummary
+ * Type: 	CorrelatorTestsSummary
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.tools.query.recovery.QueryRecoveryTestResult;
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 
 /**
@@ -89,7 +90,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * @since May 9, 2025
  *
  */
-public record CorrelatorTestResultSummary(
+public record CorrelatorTestsSummary(
         int         cntResultsTot,
         int         cntRatesGtAvg,
         int         cntRatesGtTgt,
@@ -124,7 +125,7 @@ public record CorrelatorTestResultSummary(
     
     /**
      * <p>
-     * Creates an returns a new <code>CorrelatorTestResultSummary</code> record populated from the given arguments.
+     * Creates an returns a new <code>CorrelatorTestsSummary</code> record populated from the given arguments.
      * </p>
      * <p>
      * Note that the <code>{@link #mapRqstHits}</code> field is created here and available to clients for
@@ -155,9 +156,9 @@ public record CorrelatorTestResultSummary(
      * @param durPrcdAvg    the average processing time duration within the result collection
      * @param durPrcdStd    the request processing time standard deviation of the result collection
      * 
-     * @return  a new <code>CorrelatorTestResultSummary</code> record populated with the given arguments
+     * @return  a new <code>CorrelatorTestsSummary</code> record populated with the given arguments
      */
-    public static CorrelatorTestResultSummary from(
+    public static CorrelatorTestsSummary from(
             int         cntResultsTot,
             int         cntRatesGtAvg,
             int         cntRatesGtTgt,
@@ -183,7 +184,7 @@ public record CorrelatorTestResultSummary(
             Duration    durPrcdStd
             ) 
     {
-        return new CorrelatorTestResultSummary(
+        return new CorrelatorTestsSummary(
                 cntResultsTot,
                 cntRatesGtAvg,
                 cntRatesGtTgt,
@@ -212,10 +213,10 @@ public record CorrelatorTestResultSummary(
     
     /**
      * <p>
-     * Creates an returns a new <code>CorrelatorTestResultSummary</code> record populated from the given arguments.
+     * Creates an returns a new <code>CorrelatorTestsSummary</code> record populated from the given arguments.
      * </p>
      * <p>
-     * Note that all fields of the <code>CorrelatorTestResultSummary</code> record appear as arguments.  Thus, this
+     * Note that all fields of the <code>CorrelatorTestsSummary</code> record appear as arguments.  Thus, this
      * creator is equivalent to the canonical constructor.
      * </p>
      * 
@@ -244,9 +245,9 @@ public record CorrelatorTestResultSummary(
      * @param durPrcdStd    the request processing time standard deviation of the result collection
      * @param mapRqstHits   map of (request, hit count) pairs specifying the number of times a request appears in the collection
      * 
-     * @return  a new <code>CorrelatorTestResultSummary</code> record populated with the given arguments
+     * @return  a new <code>CorrelatorTestsSummary</code> record populated with the given arguments
      */
-    public static CorrelatorTestResultSummary from(
+    public static CorrelatorTestsSummary from(
             int         cntResultsTot,
             int         cntRatesGtAvg,
             int         cntRatesGtTgt,
@@ -272,7 +273,7 @@ public record CorrelatorTestResultSummary(
             Duration    durPrcdStd,
             Map<TestArchiveRequest, Integer> mapRqstHits) 
     {
-        return new CorrelatorTestResultSummary(
+        return new CorrelatorTestsSummary(
                 cntResultsTot,
                 cntRatesGtAvg,
                 cntRatesGtTgt,
@@ -299,6 +300,15 @@ public record CorrelatorTestResultSummary(
                 mapRqstHits);
     }
     
+    
+    
+    //
+    // Record Constants
+    //
+    
+    /** The format string used for printing out data rates from a test result collection */ 
+    private static final String      STR_DATA_RATE_FMTR = "  %7.3f MBps for Case #%d with %7.3f MBytes allocation";
+
     
     //
     // Record Resources
@@ -330,21 +340,51 @@ public record CorrelatorTestResultSummary(
     
     /**
      * <p>
+     * Prints out the line-by-line data rates for each test result in the argument collection.
+     * </p>
+     * <p>
+     * A line-by-line text description of each record field <code>{@link QueryRecoveryTestResult#dblRateAggAssm()}</code>
+     * is written to the given output.  The test case index and total allocation are also specified.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white space padding for left-hand side line headings (or <code>null</code>.
+     * @param setResults    collection of test results
+     */
+    synchronized
+    public static void printOutDataRates(PrintStream ps, String strPad, Collection<CorrelatorTestResult> setResults) {
+        final String    STR_PAD = (strPad == null) ? "" : "  ";
+        
+        for (CorrelatorTestResult recResult : setResults) {
+            int     intIndex = recResult.recTestCase().indCase();
+            double  dblRate = recResult.dblDataRate();
+            double  dblAlloc = ((double)recResult.szProcessed())/1_000_000;
+
+            String  strLine = String.format(STR_DATA_RATE_FMTR, dblRate, intIndex, dblAlloc);
+            
+            ps.println(STR_PAD + strLine);
+        }
+    }
+
+    /**
+     * <p>
      * Computes a summary of the performance results for the given collection and returns them.
      * </p>
      * <p>
-     * All the fields of a <code>CorrelatorTestResultSummary</code> record are computed from the given 
+     * All the fields of a <code>CorrelatorTestsSummary</code> record are computed from the given 
      * collection of test result records.  The computed values are then returned in a 
-     * new <code>CorrelatorTestResultSummary</code> instance.
+     * new <code>CorrelatorTestsSummary</code> instance.
      * </p>
      *  
      * @param setResults    collection of test results
      * 
-     * @return  a new <code>CorrelatorTestResultSummary</code> record containing a summary of the argument results
+     * @return  a new <code>CorrelatorTestsSummary</code> record containing a summary of the argument results
      * 
      * @throws  IllegalArgumentException    argument collection was empty
      */
-    public static CorrelatorTestResultSummary summarize(Collection<CorrelatorTestResult> setResults) throws IllegalArgumentException {
+    public static CorrelatorTestsSummary summarize(Collection<CorrelatorTestResult> setResults) throws IllegalArgumentException {
         
         // Check argument - avoid divide by zero
         if (setResults.isEmpty())
@@ -410,7 +450,7 @@ public record CorrelatorTestResultSummary(
         }
         
         // Create summary record and return it
-        CorrelatorTestResultSummary   recSummary = CorrelatorTestResultSummary.from(
+        CorrelatorTestsSummary   recSummary = CorrelatorTestsSummary.from(
                 cntResults, 
                 cntRatesGtAvg, 
                 cntRatesGtTgt, 

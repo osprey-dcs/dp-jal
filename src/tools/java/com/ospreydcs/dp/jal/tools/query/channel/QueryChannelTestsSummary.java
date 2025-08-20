@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	TestResultSummary.java
+ * File:	QueryChannelTestsSummary.java
  * Package: com.ospreydcs.dp.jal.tools.query
- * Type: 	TestResultSummary
+ * Type: 	QueryChannelTestsSummary
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 
@@ -82,7 +83,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * @since May 9, 2025
  *
  */
-public record TestResultSummary(
+public record QueryChannelTestsSummary(
         int         cntResultsTot,
         int         cntRatesGtAvg,
         int         cntRatesGtTgt,
@@ -111,7 +112,7 @@ public record TestResultSummary(
     
     /**
      * <p>
-     * Creates an returns a new <code>TestResultSummary</code> record populated from the given arguments.
+     * Creates an returns a new <code>QueryChannelTestsSummary</code> record populated from the given arguments.
      * </p>
      * <p>
      * Note that the <code>{@link #mapRqstHits}</code> field is created here and available to clients for
@@ -136,9 +137,9 @@ public record TestResultSummary(
      * @param durRqstAvg    the average request time duration within the result collection
      * @param durRqstStd    the request duration standard deviation of the result collection
      * 
-     * @return  a new <code>TestResultSummary</code> record populated with the given arguments
+     * @return  a new <code>QueryChannelTestsSummary</code> record populated with the given arguments
      */
-    public static TestResultSummary from(
+    public static QueryChannelTestsSummary from(
             int         cntResultsTot,
             int         cntRatesGtAvg,
             int         cntRatesGtTgt,
@@ -158,7 +159,7 @@ public record TestResultSummary(
             Duration    durRqstStd
             ) 
     {
-        return new TestResultSummary(
+        return new QueryChannelTestsSummary(
                 cntResultsTot,
                 cntRatesGtAvg,
                 cntRatesGtTgt,
@@ -181,10 +182,10 @@ public record TestResultSummary(
     
     /**
      * <p>
-     * Creates an returns a new <code>TestResultSummary</code> record populated from the given arguments.
+     * Creates an returns a new <code>QueryChannelTestsSummary</code> record populated from the given arguments.
      * </p>
      * <p>
-     * Note that all fields of the <code>TestResultSummary</code> record appear as arguments.  Thus, this
+     * Note that all fields of the <code>QueryChannelTestsSummary</code> record appear as arguments.  Thus, this
      * creator is equivalent to the canonical constructor.
      * </p>
      * 
@@ -209,7 +210,7 @@ public record TestResultSummary(
      * 
      * @return  a new <code>ResultSummary</code> record populated with the given arguments
      */
-    public static TestResultSummary from(
+    public static QueryChannelTestsSummary from(
             int         cntResultsTot,
             int         cntRatesGtAvg,
             int         cntRatesGtTgt,
@@ -229,7 +230,7 @@ public record TestResultSummary(
             Duration    durRqstStd,
             Map<TestArchiveRequest, Integer> mapRqstHits) 
     {
-        return new TestResultSummary(
+        return new QueryChannelTestsSummary(
                 cntResultsTot,
                 cntRatesGtAvg,
                 cntRatesGtTgt,
@@ -251,6 +252,24 @@ public record TestResultSummary(
     }
     
     
+    //
+    // Record Constants
+    //
+    
+    /** The format string used for printing out data rates from a test result collection */ 
+    private static final String      STR_DATA_RATE_FMTR = "  %7.3f MBps for Case #%d with %7.3f MBytes allocation";
+    
+    /** The function that converts <code>QueryChannelTestResult</code> records to strings with data rate */
+    private static final Function<QueryChannelTestResult, String>  FNC_DATA_RATE = rec -> {
+        int     intIndex = rec.recTestCase().indCase();
+        double  dblRate = rec.dblDataRate();
+        double  dblAlloc = ((double)rec.szRecovery())/1_000_000;
+        
+        String  strLine = String.format(STR_DATA_RATE_FMTR, dblRate, intIndex, dblAlloc);
+        
+        return strLine;
+    };
+        
     //
     // Record Resources
     //
@@ -281,19 +300,41 @@ public record TestResultSummary(
     
     /**
      * <p>
+     * Prints out the line-by-line data rates for each test result in the argument collection.
+     * </p>
+     * <p>
+     * A line-by-line text description of each record field <code>{@link QueryChannelTestResult#dblDataRate()}</code>
+     * is written to the given output.  The test case index and total allocation are also specified.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white space padding for left-hand side line headings (or <code>null</code>.
+     * @param setResults    collection of test results
+     */
+    synchronized
+    public static void printOutDataRates(PrintStream ps, String strPad, Collection<QueryChannelTestResult> setResults) {
+        final String    STR_PAD = (strPad == null) ? "" : "  ";
+
+        setResults.stream().<String>map(FNC_DATA_RATE).forEach(str -> ps.println(STR_PAD + str));
+    }
+
+    /**
+     * <p>
      * Computes a summary of the performance results for the given collection and returns them.
      * </p>
      * <p>
-     * All the fields of a <code>TestResultSummary</code> record are computed from the given 
+     * All the fields of a <code>QueryChannelTestsSummary</code> record are computed from the given 
      * collection of test result records.  The computed values are then returned in a 
-     * new <code>TestResultSummary</code> instance.
+     * new <code>QueryChannelTestsSummary</code> instance.
      * </p>
      *  
      * @param setResults    collection of test results
      * 
-     * @return  a new <code>TestResultSummary</code> record containing a summary of the argument results
+     * @return  a new <code>QueryChannelTestsSummary</code> record containing a summary of the argument results
      */
-    public static TestResultSummary summarize(Collection<QueryChannelTestResult> setResults) {
+    public static QueryChannelTestsSummary summarize(Collection<QueryChannelTestResult> setResults) {
         
         // Compute general summary results 
         int         cntResults = setResults.size();
@@ -344,7 +385,7 @@ public record TestResultSummary(
         }
         
         // Create summary record and return it
-        TestResultSummary   recSummary = TestResultSummary.from(
+        QueryChannelTestsSummary   recSummary = QueryChannelTestsSummary.from(
                 cntResults, 
                 cntRatesGtAvg, 
                 cntRatesGtTgt, 
@@ -372,16 +413,16 @@ public record TestResultSummary(
 //     * Computes a summary of the performance results for the given collection and returns them.
 //     * </p>
 //     * <p>
-//     * All the fields of a <code>TestResultSummary</code> record are computed from the given 
+//     * All the fields of a <code>QueryChannelTestsSummary</code> record are computed from the given 
 //     * collection of test result records.  The computed values are then returned in a 
-//     * new <code>TestResultSummary</code> instance.
+//     * new <code>QueryChannelTestsSummary</code> instance.
 //     * </p>
 //     *  
 //     * @param setResults    collection of test results
 //     * 
-//     * @return  a new <code>TestResultSummary</code> record containing a summary of the argument results
+//     * @return  a new <code>QueryChannelTestsSummary</code> record containing a summary of the argument results
 //     */
-//    public static TestResultSummary summarizeCorrelatorResults(Collection<CorrelatorTestResult> setResults) {
+//    public static QueryChannelTestsSummary summarizeCorrelatorResults(Collection<CorrelatorTestResult> setResults) {
 //        
 //        // Compute general summary results 
 //        int         cntResults = setResults.size();
@@ -432,7 +473,7 @@ public record TestResultSummary(
 //        }
 //        
 //        // Create summary record and return it
-//        TestResultSummary   recSummary = TestResultSummary.from(
+//        QueryChannelTestsSummary   recSummary = QueryChannelTestsSummary.from(
 //                cntResults, 
 //                cntRatesGtAvg, 
 //                cntRatesGtTgt, 

@@ -613,16 +613,27 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         recSummary.printOut(ps, null);
         ps.println();
         
-        // Print out request decomposition configuration scoring
-        ps.println("Request Decomposition Configuration Scoring");
-        RequestDecompConfigScorer   dcmpScorer = RequestDecompConfigScorer.from(this.setTestResults);
-        dcmpScorer.printOutByRates(ps, "  ");
+        // Print out the test case data rates
+        ps.println("Test Case Data Rates");
+        QueryRecoveryTestsSummary.printOutDataRates(ps, "  ", this.setTestResults);
         ps.println();
         
-        // Print out gRPC stream configuration scoring
+        // Print out request decomposition configuration scoring
+        ps.println("Request Decomposition Configuration Scoring");
+        RequestDecompConfigScorer   scrrDcmp = RequestDecompConfigScorer.from(this.setTestResults);
+        scrrDcmp.printOutByRates(ps, "  ");
+        ps.println();
+        
+        // Print out the gRPC stream configuration scoring
         ps.println("gRPC Stream Configuration Scoring");
-        GrpcStreamConfigScorer  strmScorer = GrpcStreamConfigScorer.from(this.setTestResults);
-        strmScorer.printOutByRates(ps, "  ");
+        GrpcStreamConfigScorer  scrStrm = GrpcStreamConfigScorer.from(this.setTestResults);
+        scrStrm.printOutByRates(ps, "  ");
+        ps.println();
+        
+        // Print out the correlation configuration scoring
+        ps.println("Raw Data Correlation Configuration Scoring");
+        CorrelationConfigScorer scrCorr = CorrelationConfigScorer.from(this.setTestResults);
+        scrCorr.printOutByRates(ps, "  ");
         ps.println();
         
         // Print out each test result

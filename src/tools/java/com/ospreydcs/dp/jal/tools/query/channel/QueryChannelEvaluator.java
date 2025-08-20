@@ -212,13 +212,20 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
             JalApplicationBase.terminateWithException(QueryChannelEvaluator.class, e, ExitCode.INITIALIZATION_EXCEPTION);
             return;
             
-        } catch (IllegalStateException | CompletionException | ResolutionException | DpQueryException
-                | InterruptedException e) {
-            // Run, write, shut down exception
-            JalApplicationBase.terminateWithException(QueryChannelEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+        } catch (InterruptedException e) {
+
+            // Shutdown exception
+            JalApplicationBase.terminateWithException(QueryChannelEvaluator.class, e, ExitCode.SHUTDOWN_EXCEPTION);
             return;
-            
         }
+            
+//        } catch (IllegalStateException | CompletionException | ResolutionException | DpQueryException
+//                | InterruptedException e) {
+//            // Run, write, shut down exception
+//            JalApplicationBase.terminateWithException(QueryChannelEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
+//            return;
+//            
+//        }
     }
     
     //
@@ -357,6 +364,9 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
     /** The collection of test results recovered from evaluations */
     private final Collection<QueryChannelTestResult>    setResults;
     
+    /** The collection of test result failures */
+    private final Collection<QueryChannelTestResult>    setFailures;
+    
     
     //
     // State Variables
@@ -400,6 +410,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         // Create the collection of test cases and container for results
         this.setCases = this.suiteEvals.createTestSuite();  // throws ConfigurationException
         this.setResults = new TreeSet<>(QueryChannelTestResult.descendingRateOrdering());
+        this.setFailures = new TreeSet<>();
         
         // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
@@ -447,7 +458,9 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
      * @throws CompletionException      the message buffer consumer failed (see message and cause)
      * @throws ResolutionException      the message buffer failed to empty upon completion
      */
-    public void run() throws IllegalStateException, DpQueryException, InterruptedException, CompletionException, ResolutionException {
+    public void run() 
+//            throws IllegalStateException, DpQueryException, InterruptedException, CompletionException, ResolutionException 
+    {
         
         // Check state
         if (super.bolRun) 
@@ -472,6 +485,9 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
             indCase++;
         }
         Instant insFinish = Instant.now();
+        
+        // Collect any test failures
+        this.setFailures.addAll( this.setResults.stream().filter(rec -> rec.recTestStatus().isFailure()).toList() );
 
         // Update state variables
         this.durEval = Duration.between(insStart, insFinish);
@@ -554,6 +570,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         // Print out evaluation summary
         ps.println("Test cases specified : " + this.setCases.size());
         ps.println("Test cases run       : " + this.setResults.size());
+        ps.println("Test case failures   : " + this.setFailures.size());
         ps.println("Evaluation duration  : " + this.durEval);
         ps.println("Evaluation completed : " + this.bolCompleted);
         ps.println();
@@ -564,14 +581,25 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         ps.println();
         
         // Print out results summary
-        TestResultSummary.assignTargetDataRate(DBL_RATE_TARGET);
-        TestResultSummary  recSummary = TestResultSummary.summarize(this.setResults);
+        QueryChannelTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
+        QueryChannelTestsSummary  recSummary = QueryChannelTestsSummary.summarize(this.setResults);
         recSummary.printOutChannelSummary(ps, null);
         ps.println();
         
+        // Print out test case data rates
+        ps.println("Test Case Data Rates");
+        QueryChannelTestsSummary.printOutDataRates(ps, "  ", this.setResults);
+        ps.println();
+        
         // Print out results extremes
-        TestResultExtremes  recExtremes = TestResultExtremes.computeExtremes(setResults);
+        QueryChannelResultExtremes  recExtremes = QueryChannelResultExtremes.computeExtremes(setResults);
         recExtremes.printOut(ps, null);
+        ps.println();
+        
+        // Print out channel configuration scoring
+        ps.println("Channel Configuration Scoring");
+        ChannelConfigScorer scrChan = ChannelConfigScorer.from(this.setResults);
+        scrChan.printOutByRates(ps, "  ");
         ps.println();
         
         // Print out each test result

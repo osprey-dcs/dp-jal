@@ -63,9 +63,12 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * </p>
  *
  * @param   indCase     the test case index
+ * 
  * @param   enmRqstOrg  the original time-series data request
  * @param   setSupplPvs a (optional) set of PV names to be added to the original request
  * @param   strRqstName the name given to the final time-series data request
+ * @param   rqstOrg     the initial time-series data request
+ * 
  * @param   enmDcmpType the request domain decomposition type
  * @param   enmStrType  the gRPC data stream type used to recover the request data
  * @param   cntStrms    the number of gRPC streams used for request data recovery
@@ -77,9 +80,12 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  */
 public record QueryChannelTestCase(
         int                 indCase,
+        
         TestArchiveRequest  enmRqstOrg, 
         Set<String>         setSupplPvs,
         String              strRqstName,
+        DpDataRequest       rqstOrg,
+        
         RequestDecompType   enmDcmpType, 
         DpGrpcStreamType    enmStrmType, 
         int                 cntStrms, 
@@ -117,13 +123,15 @@ public record QueryChannelTestCase(
                                             DpGrpcStreamType enmStrmType, 
                                             int cntStrms) 
             throws UnsupportedOperationException {
+        
+        DpDataRequest   rqstOrg = enmRqstOrg.create();
     
-        List<DpDataRequest> lstRqsts = PRCR_DECOMP.buildCompositeRequest(enmRqstOrg.create(), enmRqstDcmp, cntStrms);   // throws exception
+        List<DpDataRequest> lstRqsts = PRCR_DECOMP.buildCompositeRequest(rqstOrg, enmRqstDcmp, cntStrms);   // throws exception
         
         lstRqsts.forEach(r -> r.setRequestId(enmRqstOrg.name()));
         lstRqsts.forEach(r -> r.setStreamType(enmStrmType));
         
-        return new QueryChannelTestCase(IND_CASE, enmRqstOrg, Set.of(), enmRqstOrg.name(),enmRqstDcmp, enmStrmType, cntStrms, lstRqsts);
+        return new QueryChannelTestCase(IND_CASE, enmRqstOrg, Set.of(), enmRqstOrg.name(),rqstOrg, enmRqstDcmp, enmStrmType, cntStrms, lstRqsts);
     }
     
     /**
@@ -169,7 +177,7 @@ public record QueryChannelTestCase(
         lstRqsts.forEach(r -> r.setRequestId( rqst.getRequestId()) );
         lstRqsts.forEach(r -> r.setStreamType(enmStrmType));
         
-        return new QueryChannelTestCase(IND_CASE, enmRqstOrg, setSupplPvs, strId, enmRqstDcmp, enmStrmType, cntStrms, lstRqsts);
+        return new QueryChannelTestCase(IND_CASE, enmRqstOrg, setSupplPvs, strId, rqst, enmRqstDcmp, enmStrmType, cntStrms, lstRqsts);
     }
     
     
@@ -245,52 +253,69 @@ public record QueryChannelTestCase(
      * @throws ResolutionException  the message buffer failed to empty upon completion
      */
     public QueryChannelTestResult   evaluate(QueryChannel chanQuery, QueryMessageBuffer bufMsgs) 
-            throws DpQueryException, InterruptedException, CompletionException, ResolutionException {
+    //        throws DpQueryException, InterruptedException, CompletionException, ResolutionException 
+    {
 
         // We need a consumer of QueryData messages from the buffer to avoid heap exhaustion for large requests
         BufferConsumerTask  tskCnsmr = BufferConsumerTask.from(bufMsgs);
         Thread              thdMsgCnsmr = new Thread(tskCnsmr);
-        
+
         // Activate the message buffer and consumer in order to recover data without blocking/heap exhaustion
         bufMsgs.activate();
         thdMsgCnsmr.start();
-        
-        // Perform timed data recovery
-        Instant insStart = Instant.now();
-        chanQuery.recoverRequests(this.lstCmpRqsts);  // throws DpQueryException
-        Instant insFinish = Instant.now();
-        
-        // Shutdown buffer - all messages have been recovered
-        bufMsgs.shutdown();
 
-        // Wait for message consumer to complete and check status
-        thdMsgCnsmr.join();                         // throws InterruptedException
-        if (tskCnsmr.getResult().isFailure()) {
-            ResultStatus    recStatus = tskCnsmr.getResult();
+        try {
+            // Perform timed data recovery
+            Instant insStart = Instant.now();
+            chanQuery.recoverRequests(this.lstCmpRqsts);  // throws DpQueryException
+            Instant insFinish = Instant.now();
+
+            // Shutdown buffer - all messages have been recovered
+            bufMsgs.shutdown();
+
+            // Wait for message consumer to complete and check status
+            thdMsgCnsmr.join();                         // throws InterruptedException
+            if (tskCnsmr.getResult().isFailure()) {
+                ResultStatus    recStatus = tskCnsmr.getResult();
+
+                throw new CompletionException(recStatus.message(), recStatus.cause());
+            }
+
+            // Recover/Compute performance parameters
+            Duration    durRecovery = Duration.between(insStart, insFinish);
+            int         cntMsgs = tskCnsmr.getMessageCount();
+            long        szRecovery = tskCnsmr.getMemoryAllocation();
+            double      dblRate = ( ((double)szRecovery) * 1000 )/durRecovery.toNanos();
+
+            // Shut down message consumer hard - this is redundant
+            if (bufMsgs.getQueueSize() > 0) {
+                String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
+                        + " - Test case #" + this.indCase + " had non-empty message buffer size "
+                        + bufMsgs.getQueueSize() + " after completion.";
+
+                bufMsgs.shutdownNow();
+                throw new ResolutionException(strMsg);
+            }
+
+            // Consolidate performance data to result record and return
+            QueryChannelTestResult  recResult = QueryChannelTestResult.from(this.strRqstName, ResultStatus.SUCCESS, dblRate, cntMsgs, szRecovery, durRecovery, this);
+
+            return recResult;
+
+        } catch (Exception e) {
             
-            throw new CompletionException(recStatus.message(), recStatus.cause());
-        }
-        
-        // Recover/Compute performance parameters
-        Duration    durRecovery = Duration.between(insStart, insFinish);
-        int         cntMsgs = tskCnsmr.getMessageCount();
-        long        szRecovery = tskCnsmr.getMemoryAllocation();
-        double      dblRate = ( ((double)szRecovery) * 1000 )/durRecovery.toNanos();
-        
-        // Shut down message consumer hard - this is redundant
-        if (bufMsgs.getQueueSize() > 0) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
-                           + " - Test case #" + this.indCase + " had non-empty message buffer size "
-                           + bufMsgs.getQueueSize() + " after completion.";
-            
+            // Shutdown buffer hard - just in case
             bufMsgs.shutdownNow();
-            throw new ResolutionException(strMsg);
+            tskCnsmr.terminate();
+            
+            // Create failure status
+            String          strErrMsg = e.getMessage();
+            ResultStatus    recFailure = ResultStatus.newFailure(strErrMsg, e);
+            
+            QueryChannelTestResult  recResult = QueryChannelTestResult.from(this.strRqstName, recFailure, this);
+            
+            return recResult;
         }
-        
-        // Consolidate performance data to result record and return
-        QueryChannelTestResult  recResult = QueryChannelTestResult.from(dblRate, cntMsgs, szRecovery, durRecovery, this);
-        
-        return recResult;
     }
     
     /**

@@ -344,7 +344,7 @@ public record SuperDomTestResultSummary(
      * <p>
      * All the fields of a <code>SuperDomTestResultSummary</code> record are computed from the given 
      * collection of test result records.  The computed values are then returned in a 
-     * new <code>CorrelatorTestResultSummary</code> instance.
+     * new <code>SuperDomTestResultSummary</code> instance.
      * </p>
      * <p>
      * Generally the statistics are computed for each record field within the argument collection.  The statistics

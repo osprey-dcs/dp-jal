@@ -29,17 +29,25 @@ import java.io.PrintStream;
 import java.time.Duration;
 import java.util.Comparator;
 
+import com.ospreydcs.dp.api.common.ResultStatus;
+import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.tools.query.recovery.QueryRecoveryTestCase;
+
 /**
  * <p>
  * Record contains the results of a <code>CorrelatorTestCase</code> evaluation.
  * </p>
  *
+ * @param strRqstId     the ID of the originating time-series data request
+ * @param recTestStatus the success/failure status of the test case
+ * 
  * @param cntRspMsgs    the number of <code>QueryData</code> response messages to process
  * @param szRspMsgs     the total memory allocation of the incoming response message set (in bytes)
  * @param cntCorrelSet  the final number raw correlated data blocks produced during processing
  * @param szProcessed   the total number of bytes processed 
  * @param durProcessed  the time taken to process the incoming <code>QueryData</code> message set 
  * @param dblDataRate   the data processing rate achieved in evaluation
+ * 
  * @param recTestCase   the test case record for the current result
  * 
  * @author Christopher K. Allen
@@ -47,12 +55,16 @@ import java.util.Comparator;
  *
  */
 public record CorrelatorTestResult(
+        String              strRqstId,
+        ResultStatus        recTestStatus,
+        
         int                 cntRspMsgs,
         long                szRspMsgs,
         int                 cntCorrelSet,
         long                szProcessed,
         Duration            durProcessed,
         double              dblDataRate,
+        
         CorrelatorTestCase  recTestCase
         ) 
 {
@@ -71,27 +83,76 @@ public record CorrelatorTestResult(
      * method.
      * </p>
      * 
+     * @param strRqstId     the ID of the originating time-series data request
+     * @param recTestStatus the success/failure status of the test case
+     * 
      * @param cntRspMsgs    the number of <code>QueryData</code> response messages to process
      * @param szRspMsgs     the total memory allocation of the incoming response message set (in bytes)
      * @param cntCorrelSet  the final number raw correlated data blocks produced during processing
      * @param szProcessed   the total number of bytes processed 
      * @param durProcessed  the time taken to process the incoming <code>QueryData</code> message set 
      * @param dblDataRate   the data processing rate achieved in evaluation
+     * 
      * @param recTestCase   the test case record for the current result
      * 
      * @return  a new <code>CorrelatorTestResult</code> record populated with the given argument values
      */
     public static CorrelatorTestResult  from(
+            String              strRqstId,
+            ResultStatus        recTestStatus,
+            
             int                 cntRspMsgs,
             long                szRspMsgs,
             int                 cntCorrelSet,
             long                szProcessed,
             Duration            durProcessed,
             double              dblDataRate,
+            
             CorrelatorTestCase  recTestCase
             )
     {
-        return new CorrelatorTestResult(cntRspMsgs, szRspMsgs, cntCorrelSet, szProcessed, durProcessed, dblDataRate, recTestCase);
+        return new CorrelatorTestResult(
+                strRqstId, recTestStatus,
+                cntRspMsgs, szRspMsgs, cntCorrelSet, szProcessed, durProcessed, dblDataRate, 
+                recTestCase
+                );
+    }
+    
+    /**
+     * <p>
+     * Creates a new instance of <code>CorrelatorTestResult</code> for the case of a test evaluation failure.
+     * </p>
+     * <p>
+     * This creator is intended for use whenever a 
+     * <code>{@link CorrelatorTestCase#evaluate(com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator, java.util.List)}</code>. 
+     * operation fails; that is, an exception is thrown internally.  The cause of the failure (and a message) should
+     * be included in the <code>recTestStatus</code> argument.
+     * </p>
+     * 
+     * @param strRqstId     identifier of the original time-series data request
+     * @param recTestStatus the cause of the failure
+     * @param recTestCase   the test case that failed
+     * 
+     * @return  a new <code>QueryAssemblyTestResult</code> instance containing test evaluation failure information
+     * 
+     * @throws IllegalArgumentException     the status argument indicates <code>{@link ResultStatus#SUCCESS}</code>
+     */
+    public static CorrelatorTestResult from(
+            String              strRqstId,
+            ResultStatus        recTestStatus,
+            CorrelatorTestCase  recTestCase
+            ) throws IllegalArgumentException
+    {
+        // Check status argument
+        if (recTestStatus.isSuccess()) 
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - The status argument indicates sucess.");
+        
+        // Create and return an empty record
+        return new CorrelatorTestResult(
+                strRqstId, recTestStatus,
+                0, 0L, 0, 0L, Duration.ZERO, 0.0,
+                recTestCase
+                );
     }
     
     

@@ -185,6 +185,13 @@ public class GrpcStreamConfigScorer extends
         // State Variables
         //
         
+        /** The average number of gRPC streams used */
+        private double  cntStrmsAvg = 0.0;
+        
+        /** The square of gRPC stream count (used for standard deviation calculation) */
+        private double  cntStrmsSqrd = 0.0;
+        
+        
         /** The average number of recovered messages per result */
         private int     cntRcvrdMsgsAvg = 0;
         
@@ -219,6 +226,26 @@ public class GrpcStreamConfigScorer extends
         //
         // State Inquiry
         //
+        
+        /**
+         * @return  the average number of gRPC streams used per result
+         */
+        public final double getGrpcStreamCountAvg() {
+            return this.cntStrmsAvg;
+        }
+        
+        /**
+         * <p>
+         * Computes and returns the standard deviation for the number of gRPC streams used.
+         * </p>
+         * 
+         * @return  gRPC stream count standard deviation
+         */
+        public final double grpcStreamCountStd() {
+            double  dblStd = Math.sqrt(this.cntStrmsSqrd - this.cntStrmsAvg*this.cntStrmsAvg);
+            
+            return dblStd;
+        }
         
         /**
          * @return the average number of recovered messages per result 
@@ -284,6 +311,8 @@ public class GrpcStreamConfigScorer extends
             int     N = super.getHitCount() - 1;    // N = 0 for the first time through
             
             if (N > 0) {    // This is not the first time through
+                this.cntStrmsAvg *= N;
+                this.cntStrmsSqrd *= N;
                 this.cntRcvrdMsgsAvg *= N;
                 this.cntRcvrdMsgsSqrd *= N;
                 this.szAllocPrcdAvg *= N;
@@ -291,6 +320,8 @@ public class GrpcStreamConfigScorer extends
             }
             
             // Add in the result values
+            this.cntStrmsAvg += recResult.lstCmpRqsts().size();
+            this.cntStrmsSqrd += recResult.lstCmpRqsts().size() * recResult.lstCmpRqsts().size();
             this.cntRcvrdMsgsAvg += recResult.cntRcvrdMsgs();
             this.cntRcvrdMsgsSqrd += recResult.cntRcvrdMsgs() * recResult.cntRcvrdMsgs();
             this.szAllocPrcdAvg += recResult.szAllocPrcd();
@@ -299,6 +330,8 @@ public class GrpcStreamConfigScorer extends
             // Re-normalize values
             N = N + 1;
             
+            this.cntStrmsAvg /= N;
+            this.cntStrmsSqrd /= N;
             this.cntRcvrdMsgsAvg /= N;
             this.cntRcvrdMsgsSqrd /= N;
             this.szAllocPrcdAvg /= N;
@@ -318,6 +351,8 @@ public class GrpcStreamConfigScorer extends
             
             super.printOut(ps, strPad);
             ps.println(strPad + "Test Results Properties");
+            ps.println(strPadd + "gRPC stream count avg.                  : " + this.getGrpcStreamCountAvg());
+            ps.println(strPadd + "gRPC stream count std.                  : " + this.grpcStreamCountStd());
             ps.println(strPadd + "Recovered message count avg.            : " + this.getRecoveredMessageCountAvg());
             ps.println(strPadd + "Recovered message count std.            : " + this.recoveredMessageCountStd());
             ps.println(strPadd + "Recovered allocation size avg. (MBytes) : " + this.getAllocationSizeAvg());

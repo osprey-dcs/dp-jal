@@ -171,7 +171,7 @@ public record QueryRecoveryTestCase(
         
         DpGrpcStreamType    enmStrmType,
         
-//        boolean             bolMStrmEnbl,
+//        boolean             bolMStrmEnbl,     // same as bolDcmpEnbl
         long                szMStrmQryDom,
         int                 cntMStrmMaxStrms,
         
@@ -453,9 +453,10 @@ public record QueryRecoveryTestCase(
         ps.println(strPad + "  Original Data Request ID          : " + this.enmRqst.name());
         ps.println(strPad + "  Supplemental PV names             : " + this.setSupplPvs);
         ps.println(strPad + "  Request Decomposition");
-        ps.println(strPadd + "  enabled                      : " + this.bolDcmpEnbl);
+        ps.println(strPadd + "  decomposition enabled        : " + this.bolDcmpEnbl);
         ps.println(strPadd + "  automatic decomposition      : " + this.bolDcmpAuto);
         ps.println(strPadd + "  non-auto decomp. strategy    : " + this.enmDcmpType);
+        ps.println(strPadd + "  non-auto max composite count : " + this.cntMStrmMaxStrms);
         ps.println(strPadd + "  auto max composite PV count  : " + this.cntDcmpMaxPvs);
         ps.println(strPadd + "  auto max composite time rng. : " + this.durDcmpMaxRng);
         ps.println(strPad + "  Raw Data Recovery");
