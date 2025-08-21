@@ -308,7 +308,7 @@ public class IngestionChannelTest {
             Assert.assertTrue(bolActive);
         
         } catch (Exception e) {
-            Assert.fail("active() exception: " + e.getMessage());
+            Assert.fail("enabled() exception: " + e.getMessage());
             return;
         }
         
@@ -616,7 +616,7 @@ public class IngestionChannelTest {
             Assert.assertTrue(bolActive);
         
         } catch (Exception e) {
-            Assert.fail("active() exception: " + e.getMessage());
+            Assert.fail("enabled() exception: " + e.getMessage());
             return null;
         }
         

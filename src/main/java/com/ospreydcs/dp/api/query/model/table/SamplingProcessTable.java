@@ -43,9 +43,10 @@ import org.w3c.dom.ranges.RangeException;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.IDataTable;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
-import com.ospreydcs.dp.api.query.model.series.UniformSamplingBlock;
+import com.ospreydcs.dp.api.common.JalDataTableType;
+import com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess;
+import com.ospreydcs.dp.api.query.model.coalesce.UniformSamplingBlock;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
 
 /**
  * <p>
@@ -161,7 +162,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * <li>Exception type determines the nature of any Data inconsistency. </li>
      * </ul>  
      *
-     * @param setTargetData sorted set of <code>CorrelatedQueryData</code> used to build this table
+     * @param setTargetData sorted set of <code>CorrelatedQueryDataOld</code> used to build this table
      * 
      * @return a new instance of <code>SamplingProcessTable</code> fully populated and ready for table operations
      *  
@@ -175,7 +176,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * @see SamplingProcess
      * @see #SamplingProcessTable(SortedSet)
      */
-    public static SamplingProcessTable from(SortedSet<CorrelatedQueryData> setTargetData) 
+    public static SamplingProcessTable from(SortedSet<CorrelatedQueryDataOld> setTargetData) 
             throws  MissingResourceException, 
                     IllegalArgumentException, 
                     IllegalStateException, 
@@ -229,7 +230,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * The internal sampling process is used for all table lookups. 
      * </p>
      *
-     * @param setTargetData sorted set of <code>CorrelatedQueryData</code> used to build internal sampling process
+     * @param setTargetData sorted set of <code>CorrelatedQueryDataOld</code> used to build internal sampling process
      * 
      * @throws MissingResourceException the argument is has empty data column(s)
      * @throws IllegalArgumentException the argument is has non-unique data sources, or unequal column sizes (see message)
@@ -238,7 +239,7 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
      * @throws TypeNotPresentException  an unsupported data type was detected within the argument
      * @throws CompletionException      the sampling process was corrupt after creation (see message)
      */
-    public SamplingProcessTable(SortedSet<CorrelatedQueryData> setTargetData)
+    public SamplingProcessTable(SortedSet<CorrelatedQueryDataOld> setTargetData)
             throws RangeException, MissingResourceException, IllegalArgumentException, IllegalStateException,
             TypeNotPresentException, CompletionException {
         
@@ -291,6 +292,26 @@ public class SamplingProcessTable /* extends SamplingProcess */ implements IData
     //
     // IDataTable Interface
     //
+
+    /**
+     * <p>
+     * Returns <code>null</code> as this feature is not implemented.
+     * </p>
+     * 
+     * @see com.ospreydcs.dp.api.common.IDataTable#getRequestId()
+     */
+    @Override
+    public String   getRequestId() {
+        return null;
+    }
+
+    /**
+     * @see com.ospreydcs.dp.api.common.IDataTable#getTableType()
+     */
+    @Override
+    public JalDataTableType getTableType() {
+        return JalDataTableType.DYNAMIC;
+    }
 
     /**
      * @return always returns <code>true</code>, table is complete at construction

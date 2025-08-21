@@ -42,7 +42,7 @@ import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.DpQueryApiFactory;
+import com.ospreydcs.dp.api.query.DpQueryApiFactoryOld;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.IQueryService;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
@@ -376,7 +376,7 @@ public class DpCreateDatasetRequestTest {
         // Open a Query Service API connection and perform data request
         IDataTable      tblTest = null;
         try {
-            IQueryService   apiQuery = DpQueryApiFactory.connect();
+            IQueryService   apiQuery = DpQueryApiFactoryOld.connect();
             
             tblTest = apiQuery.queryData(rqstData);
             

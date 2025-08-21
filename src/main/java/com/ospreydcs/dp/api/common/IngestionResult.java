@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.common;
 
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Instant;
@@ -408,26 +409,76 @@ public record IngestionResult(
         this.acknowledgments.add(new Acknowledge(requestId, colCount, rowCount));
     }
     
-    public String printOut() {
+    /**
+     * <p>
+     * Creates a string containing a text description of the record contents.
+     * </p>
+     * <p>
+     * A line-by-line text description of each record field is written to the given output.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white-space padding for each line header (or <code>null</code>)
+     * 
+     * @return  formatted string with text description of record
+     */
+    public String toString(String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
         StringWriter    wtrBuffer = new StringWriter();
         PrintWriter     os = new PrintWriter(wtrBuffer);
         
-        os.println("Data ingestion mode       : " + this.mode);
-        os.println("Transmitted request count : " + this.transmitRequestCount);
-        os.println("Accepted request count    : " + this.acceptedRequestCount);
-        os.println("Ingestion exception count : " + this.exceptions.size());
-        os.println("Acknowledgment count      : " + this.acknowledgments.size());
-        os.println("Start time instant        : " + this.startTime);
-        os.println("Final time instant        : " + this.finalTime);
-        os.println("Transmitted request UIDs  : " + this.transmitRequestIds);
-        os.println("Received request UIDS     : " + this.receivedRequestIds);
-        os.println("Rejected request UIDS     : " + this.rejectedRequestIds);
-        os.println("Ingestion exceptions      : " + this.exceptions);
-        os.println("Ingestion acknowledgments : " + this.acknowledgments);
+        os.println(strPad + "Data ingestion mode       : " + this.mode);
+        os.println(strPad + "Transmitted request count : " + this.transmitRequestCount);
+        os.println(strPad + "Accepted request count    : " + this.acceptedRequestCount);
+        os.println(strPad + "Ingestion exception count : " + this.exceptions.size());
+        os.println(strPad + "Acknowledgment count      : " + this.acknowledgments.size());
+        os.println(strPad + "Start time instant        : " + this.startTime);
+        os.println(strPad + "Final time instant        : " + this.finalTime);
+        os.println(strPad + "Transmitted request UIDs  : " + this.transmitRequestIds);
+        os.println(strPad + "Received request UIDS     : " + this.receivedRequestIds);
+        os.println(strPad + "Rejected request UIDS     : " + this.rejectedRequestIds);
+        os.println(strPad + "Ingestion exceptions      : " + this.exceptions);
+        os.println(strPad + "Ingestion acknowledgments : " + this.acknowledgments);
         os.flush();
         os.close();
         
         return wtrBuffer.toString();
+    }
+    
+    /**
+     * <p>
+     * Prints out a text description of the record fields to the given output stream.
+     * </p>
+     * <p>
+     * A line-by-line text description of each record field is written to the given output.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white-space padding for each line header (or <code>null</code>)
+     */
+    public void printOut(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        ps.println(strPad + "Data ingestion mode       : " + this.mode);
+        ps.println(strPad + "Transmitted request count : " + this.transmitRequestCount);
+        ps.println(strPad + "Accepted request count    : " + this.acceptedRequestCount);
+        ps.println(strPad + "Ingestion exception count : " + this.exceptions.size());
+        ps.println(strPad + "Acknowledgment count      : " + this.acknowledgments.size());
+        ps.println(strPad + "Start time instant        : " + this.startTime);
+        ps.println(strPad + "Final time instant        : " + this.finalTime);
+        ps.println(strPad + "Transmitted request UIDs  : " + this.transmitRequestIds);
+        ps.println(strPad + "Received request UIDS     : " + this.receivedRequestIds);
+        ps.println(strPad + "Rejected request UIDS     : " + this.rejectedRequestIds);
+        ps.println(strPad + "Ingestion exceptions      : " + this.exceptions);
+        ps.println(strPad + "Ingestion acknowledgments : " + this.acknowledgments);
+        ps.flush();
     }
     
     

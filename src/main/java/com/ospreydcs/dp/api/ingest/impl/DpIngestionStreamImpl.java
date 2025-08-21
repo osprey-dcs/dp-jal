@@ -33,8 +33,10 @@ import java.util.MissingResourceException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.IngestRequestUID;
@@ -312,12 +314,15 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     // Class Constants 
     //
 
-    /** Logging active flag */
-    private static final boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
+    /** Logging enabled flag */
+    private static final boolean    BOL_LOGGING = CFG_DEFAULT.logging.enabled;
+    
+    /** Logging event level */
+    private static final String     STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
     
     
     /** General timeout parameters (e.ge., used for awaitTermination(long, TimeUnit) */
-    private static final boolean    BOL_TIMEOUT_WAIT = CFG_DEFAULT.timeout.active;
+    private static final boolean    BOL_TIMEOUT_WAIT = CFG_DEFAULT.timeout.enabled;
 
     /** General timeout parameters (e.ge., used for awaitTermination(long, TimeUnit) */
     private static final long       LNG_TIMEOUT_WAIT = CFG_DEFAULT.timeout.limit;
@@ -337,7 +342,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 //    // Class Constants - Frame Decomposition Default Values
 //    //
 //
-//    /** Are general concurrency active - used for ingestion frame decomposition */
+//    /** Are general concurrency enabled - used for ingestion frame decomposition */
 //    private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.active;
 //    
 //    /** Maximum number of concurrent processing threads */
@@ -373,6 +378,16 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     private static final Logger LOGGER = LogManager.getLogger();
 
 
+    /**
+     * <p>
+     * Class Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
+    
+    
     //
     // Instance Resources
     //
@@ -516,7 +531,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * 
      * @param cntThreads    the number of independent processing threads each concurrent operation
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      */
     public void setFrameProcessingConcurrency(int cntThreads) throws IllegalStateException {
         
@@ -535,7 +550,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * </p>
      * <p>
      * Enables the automatic decomposition of ingestion frames (i.e., "frame binning").
-     * When frame decomposition is active any ingestion frame added to this supplier
+     * When frame decomposition is enabled any ingestion frame added to this supplier
      * is decomposed so that the total memory allocation is less than the given size.
      * </p>
      * <p> 
@@ -584,7 +599,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * </p>
      * <p>
      * Disables the automatic decomposition of ingestion frames (i.e., "frame binning").
-     * When frame decomposition is active any ingestion frame added to this processor
+     * When frame decomposition is enabled any ingestion frame added to this processor
      * is decomposed so that the total memory allocation is less than the given size.
      * </p>
      * <p> 
@@ -617,7 +632,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * <li>
      * <s>The maximum ingestion frame size can only be modified <em>before</em> the processor is 
      * activated with <code>{@link #activate()}</code>.  This method will disable frame
-     * decomposition if already active, but the maximum frame size cannot be changed post
+     * decomposition if already enabled, but the maximum frame size cannot be changed post
      * activation.</s>
      * </li>
      * </p>
@@ -653,7 +668,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * opened with <code>openStream()</code> , otherwise an exception is throw.
      * </p>
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      */
     public void disableFrameProcessingConcurrency() throws IllegalStateException {
 
@@ -776,7 +791,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * 
      * @param enmStreamType gRPC stream type for data transmission
      * 
-     * @throws IllegalStateException            method called while processor is active
+     * @throws IllegalStateException            method called while processor is enabled
      * @throws UnsupportedOperationException    an unsupported stream type was provided
      */
     public void setStreamType(DpGrpcStreamType enmStreamType) throws IllegalStateException, UnsupportedOperationException {
@@ -824,7 +839,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * 
      * @param cntStreamsMax maximum number of allowable gRPC data streams (>0)
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      * @throws IllegalArgumentException the argument was zero or negative
      * 
      * @see #CNT_MULTISTREAM_MAX
@@ -872,7 +887,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * activated with <code>{@link #activate()}</code> , otherwise an exception is throw.
      * </p>
      * 
-     * @throws IllegalStateException    method called while processor is active
+     * @throws IllegalStateException    method called while processor is enabled
      */
     public void disableMultipleStreams() throws IllegalStateException {
 
@@ -974,7 +989,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * The returned value is the number of Protocol Buffers messages carrying ingestion
      * data that have been transmitted to the Ingestion Service at the time of invocation.
      * If called after invoking <code>{@link #shutdown()}</code> then the returned value
-     * is the total number of messages transmitted while active.
+     * is the total number of messages transmitted while enabled.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
@@ -983,7 +998,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * The value returned by this method is not necessary equal to the number of 
      * <code>IngestionFrame</code> instances offered to upstream processing.  
      * If ingestion frame decomposition
-     * is active large ingestion frame exceeding the size limit which be decomposed into
+     * is enabled large ingestion frame exceeding the size limit which be decomposed into
      * smaller ingestion frames before being converted into <code>IngestDataRequest</code>
      * messages.
      * </li>
@@ -995,7 +1010,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * </li> 
      * <br/>
      * <li>
-     * If the <code>active()</code> method is called after a shutdown the returned value 
+     * If the <code>enabled()</code> method is called after a shutdown the returned value 
      * resets.
      * </li>
      * </ul>
@@ -1245,12 +1260,12 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
         
 //        boolean bolFirst = true;
         
-        // Continue to staging buffer wait so long as frame processor is active
+        // Continue to staging buffer wait so long as frame processor is enabled
         while (this.prcrFrames.hasNext()) {
             
 //            if (!bolFirst) {
 //                if (BOL_LOGGING)
-//                    LOGGER.info("Frame processor still active restarting awaitQueueEmpty() on staging buffer.");
+//                    LOGGER.info("Frame processor still enabled restarting awaitQueueEmpty() on staging buffer.");
 //            }
             
             this.buffStaging.awaitQueueEmpty();
@@ -1473,7 +1488,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * </p>
      * <p>
      * The returned task instance continuously transfers <code>IngestDataRequest</code> messages from the
-     * ingestion frame processor to the staging buffer while the frame processor is active.  Once
+     * ingestion frame processor to the staging buffer while the frame processor is enabled.  Once
      * <code>{@link #prcrFrames}</code> method <code>{@link IngestionFrameProcessor#isSupplying()}</code>
      * return <code>false</code> the task terminates normally and the attribute <code>{@link #recXferStatus}</code>
      * is set to <code>{@link ResultStatus#SUCCESS}</code>

@@ -29,10 +29,12 @@ package com.ospreydcs.dp.api.grpc.util;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
+import com.ospreydcs.dp.grpc.v1.common.TimestampList;
 
 /**
  * <p>
@@ -171,14 +173,14 @@ public final class ProtoTime {
     
     /**
      * <p>
-     * Compares two <code>{@link Timestamp}</code> Protobuf messages for strict equality.
+     * Compares two <code>{@link Timestamp}</code> Protocol Buffers messages for strict equality.
      * </p>
      * <p>
      * Two <code>Timestamp</code> messages are strictly equal if both field values are exactly equal.
      * Specifically, the following conditions are tested in order:
      * <ul>
-     * <li>The epoch seconds fields are compared for equality.</li>
-     * <li>The nanoseconds offset fields are compared for equality.</li>
+     * <li>The epoch seconds fields are compared for strict equality.</li>
+     * <li>The nanoseconds offset fields are compared for strict equality.</li>
      * </ul>
      * </p>
      * <p>
@@ -274,22 +276,22 @@ public final class ProtoTime {
     
     /**
      * <p>
-     * Compares the two Protobuf messages for strict equality.
+     * Compares the two Protocol Buffers messages for strict equality.
      * </p>
      * <p>
-     * The Protobuf message describe uniform sampling times.  They are "equal" if the following conditions hold
-     * (which are tested in order):
+     * The Protocol Buffers argument messages describe uniform sampling times.  They are "equal" if 
+     * the following conditions hold (which are tested in order):
      * <ol>
      * <li>They have equal sampling period.</li>
      * <li>They have equal sample count.</li>
      * <li>Their starting times are equal <code>{@link #equals(Timestamp, Timestamp)}</code> == <code>true</code>.</li>
      * </ol>
-     * <p>
+     * </p>
      * 
-     * @param msg1  first Protobuf message for comparison
-     * @param msg2  second Protobuf message for comparison
+     * @param msg1  first Protocol Buffers message for comparison
+     * @param msg2  second Protocol Buffers message for comparison
      * 
-     * @return  <code>true</code> if both messages describe the same sampling set,
+     * @return  <code>true</code> if both messages describe the same sampling clock,
      *          <code>false</code> otherwise 
      */
     public static boolean equals(SamplingClock msg1, SamplingClock msg2) {
@@ -315,10 +317,60 @@ public final class ProtoTime {
     
     /**
      * <p>
-     * Compares the two Protobuf messages for equivalence.
+     * Compares the two Protocol Buffers messages for strict equality.
      * </p>
      * <p>
-     * The Protobuf message describe uniform sampling times.  The equivalence qualifier applies to the
+     * The Protocol Buffers argument messages describe timestamp lists.  They are "equal" if 
+     * the following conditions hold (which are tested in order):
+     * <ol>
+     * <li>They have the same number of elements (timestamps).</li>
+     * <li>Each ordered timestamp within the lists are strictly equal according <code>{@link #equals(Timestamp, Timestamp)}</code>.</li>
+     * </ol>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method is more computationally efficient that checking for equivalence and should be used when
+     * performance is a strong consideration.  Note, however, that two timestamps can
+     * describe the same time instant (i.e., be equivalent), but not be strictly equal
+     * (i.e., have the same second field and nanosecond offset field).  Such situations will fail this
+     * test even though timestamps might be equivalent.  In that case use
+     * <code>{@link #equivalence(TimestampList, TimestampList)}</code>.
+     * </p>
+     * 
+     * @param msg1  first Protocol Buffers message for comparison
+     * @param msg2  second Protocol Buffers message for comparison
+     * 
+     * @return  <code>true</code> if both timestamp lists are strictly equal, <code>false</code> otherwise
+     * 
+     * @see ProtoTime#equals(Timestamp, Timestamp)
+     */
+    public static boolean equals(TimestampList msg1, TimestampList msg2) {
+        
+        // Do a quick check for length
+        if (msg1.getTimestampsCount() != msg2.getTimestampsCount())
+            return false;
+        
+        // Compare each timestamp within each list, in order
+        int     cntTms = msg1.getTimestampsCount();
+        for (int indTms=0; indTms<cntTms; indTms++) {
+            Timestamp   tms1 = msg1.getTimestamps(indTms);
+            Timestamp   tms2 = msg2.getTimestamps(indTms);
+            
+            boolean bolEquals = ProtoTime.equals(tms1, tms2);
+            if (!bolEquals)
+                return false;
+        }
+        
+        // If we are here than both timestamp lists are strictly equal
+        return true;
+    }
+    
+    /**
+     * <p>
+     * Compares the two Protocol Buffers messages for equivalence.
+     * </p>
+     * <p>
+     * The Protocol Buffers message describe uniform sampling clocks.  The equivalence qualifier applies to the
      * sampling start time field.
      * The two arguments are "equivalent" if the following hold (which are tested in order):
      * <ol>
@@ -326,10 +378,10 @@ public final class ProtoTime {
      * <li>They have equal sample count.</li>
      * <li>Their starting times are equivalent <code>{@link #equivalence(Timestamp, Timestamp)}</code> == <code>true</code>.</li>
      * </ol>
-     * <p>
+     * </p>
      * 
-     * @param msg1  first Protobuf message for comparison
-     * @param msg2  second Protobuf message for comparison
+     * @param msg1  first Protocol Buffers message for comparison
+     * @param msg2  second Protocol Buffers message for comparison
      * 
      * @return  <code>true</code> if both messages describe the equivalent sampling set,
      *          <code>false</code> otherwise
@@ -359,6 +411,55 @@ public final class ProtoTime {
     
     /**
      * <p>
+     * Compares the two Protocol Buffers messages for equivalence.
+     * </p>
+     * <p>
+     * The Protocol Buffers message describe timestamp lists.  The equivalence qualifier applies to the
+     * timestamps within both lists.
+     * The two arguments are "equivalent" if the following hold (which are tested in order):
+     * <ol>
+     * <li>They have equal sample count, i.e., the list sizes are equal.</li>
+     * <li>The ordered timstamps are equivalent <code>{@link #equivalence(Timestamp, Timestamp)}</code> == <code>true</code>.</li>
+     * </ol>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Equivalence testing is more computationally expensive than equality testing.  Two timestamps can have different
+     * second and nanosecond offset fields but describe the same time instant.  Use this method only if it is known
+     * that timestamps have this property, otherwise <code>{@link #equals(TimestampList, TimestampList)}</code> should
+     * be used.
+     * </p>  
+     * 
+     * @param msg1  first Protocol Buffers message for comparison
+     * @param msg2  second Protocol Buffers message for comparison
+     * 
+     * @return  <code>true</code> if both message describe equivalent timestamp lists, <code>false</code> otherwise
+     * 
+     * @see #equivalence(Timestamp, Timestamp)
+     */
+    public static boolean equivalence(TimestampList msg1, TimestampList msg2) {
+        
+        // Do a quick check for length
+        if (msg1.getTimestampsCount() != msg2.getTimestampsCount())
+            return false;
+        
+        // Compare each timestamp within each list, in order
+        int     cntTms = msg1.getTimestampsCount();
+        for (int indTms=0; indTms<cntTms; indTms++) {
+            Timestamp   tms1 = msg1.getTimestamps(indTms);
+            Timestamp   tms2 = msg2.getTimestamps(indTms);
+            
+            boolean bolEquiv = ProtoTime.equivalence(tms1, tms2);
+            if (!bolEquiv)
+                return false;
+        }
+        
+        // If we are here than both timestamp lists are strictly equal
+        return true;
+    }
+    
+    /**
+     * <p>
      * Determines whether or not the two Protobuf messages describe sampling intervals with intersecting time domains.
      * </p>
      * 
@@ -369,29 +470,100 @@ public final class ProtoTime {
      *          <code>false</code> if the sampling intervals are disjoint
      */
     public static boolean hasIntersection(SamplingClock msg1, SamplingClock msg2) {
-        TimeInterval    ivl1 = ProtoTime.domain(msg1);
-        TimeInterval    ivl2 = ProtoTime.domain(msg2);
+        TimeInterval    ivl1 = ProtoTime.range(msg1);
+        TimeInterval    ivl2 = ProtoTime.range(msg2);
         
         return ivl1.hasIntersectionClosed(ivl2);
     }
     
     /**
      * <p>
-     * Computes and returns the time domain of the sampling interval described by the argument.
+     * Computes and returns the time range of the sampling interval described by the argument.
      * </p>
+     * <p>
+     * The returned value is the following time interval <i>I</i> 
+     * <pre>
+     *   <i>I</i> &#8796; [<i>t</i><sub>1</sub>, <i>t</i><sub>2</sub>]
+     *   <i>t</i><sub>1</sub> = the start time instant of the sampling clock
+     *   <i>t</i><sub>2</sub> = <i>t</i><sub>1</sub> + (<i>N</i> - 1)&times;<i>T</i>
+     * </pre>
+     * where 
+     * <ul>
+     * <li><i>N</i> is the number of clock samples</li>
+     * <li><i>T</i> is the sample period of the clock (in nanoseconds)</li>
+     * </li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * The returned time interval only includes the range where samples are present.  Specifically,
+     * <i>t</i><sub>1</sub> is the time instant of the first sample and <i>t</i><sub>2</sub> is the
+     * time instant of the last sample.  That is, we do not include the last sample period <i>T</i>
+     * in the computation of the right end point.  
+     * </li>
+     * <li>
+     * The above convention is consistent with the time ranges specified by a timestamp list from
+     * method <code>{@link #range(TimestampList)}</code>.
+     * </li>
+     * </ul>
+     * </p>   
      * 
-     * @param msgTms    Protobuf message describing a uniform sampling interval
+     * @param msgClock    Protocol Buffers message describing a uniform sampling clock
      * 
-     * @return  the time domain of the given sampling interval
+     * @return  the time range of the given sampling clock
      */
-    public static TimeInterval domain(SamplingClock msgTms) {
-        Instant     insStart = ProtoMsg.toInstant(msgTms.getStartTime());
-        Duration    dur = Duration.ofNanos(msgTms.getCount() * msgTms.getPeriodNanos());
+    public static TimeInterval range(SamplingClock msgClock) {
+        Instant     insStart = ProtoMsg.toInstant(msgClock.getStartTime());
+        int         cntSmpls = msgClock.getCount();
+        long        lngPeriod = msgClock.getPeriodNanos();
+        long        lngDuration = lngPeriod * (cntSmpls - 1);
+        Duration    dur = Duration.ofNanos(lngDuration);
         Instant     insStop = insStart.plus(dur);
         
-        TimeInterval    ivl = TimeInterval.from(insStart, insStop);
+        TimeInterval    tvlRange = TimeInterval.from(insStart, insStop);
         
-        return ivl;
+        return tvlRange;
+    }
+    
+    /**
+     * <p>
+     * Extracts and returns the time range of the sampling interval described by the argument.
+     * </p>
+     * <p>
+     * The returned value is the following time interval <i>I</i> 
+     * <pre>
+     *   <i>I</i> &#8796; [<i>t</i><sub>1</sub>, <i>t</i><sub>2</sub>]
+     *   <i>t</i><sub>1</sub> = the first time instant within the timestamp list
+     *   <i>t</i><sub>2</sub> = the last time instant within the timestamp list
+     * </pre>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The returned time interval only includes the range where samples are present.  Specifically,
+     * <i>t</i><sub>1</sub> is the time instant of the first time instant and <i>t</i><sub>2</sub> is the
+     * time instant of the last time instant.  That is, we do not include the last sample period <i>T</i>
+     * in the computation of the right end point, as it is impossible to know.
+     * </p>   
+     * 
+     * @param msgTms    the Protocol Buffers message defining the timestamps
+     * 
+     * @return  the time range of the given timestamp list
+     */
+    public static TimeInterval range(TimestampList msgTms) {
+        List<Timestamp>     lstMsgTms = msgTms.getTimestampsList();
+        int                 cntTms = lstMsgTms.size();
+        
+        Timestamp msgTmsStart = lstMsgTms.get(0);
+        Timestamp msgTmsStop = lstMsgTms.get(cntTms - 1);
+        
+        Instant insStart = ProtoMsg.toInstant(msgTmsStart);
+        Instant insStop = ProtoMsg.toInstant(msgTmsStop);
+        
+        TimeInterval    tvlRange = TimeInterval.from(insStart, insStop);
+        
+        return tvlRange;
     }
     
     

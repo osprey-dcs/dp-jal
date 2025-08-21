@@ -28,8 +28,10 @@ package com.ospreydcs.dp.api.annotate.impl;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.annotate.DpAnnotationException;
 import com.ospreydcs.dp.api.annotate.DpCreateDatasetRequest;
@@ -39,16 +41,11 @@ import com.ospreydcs.dp.api.common.DatasetUID;
 import com.ospreydcs.dp.api.common.DpDataset;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.annotate.DpAnnotationConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.annotate.DpAnnotationConnection;
+import com.ospreydcs.dp.api.grpc.annotate.DpAnnotationConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
-import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceImpl;
-import com.ospreydcs.dp.api.query.impl.QueryRequestProcessor;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
 import com.ospreydcs.dp.grpc.v1.annotation.CreateDataSetRequest;
 import com.ospreydcs.dp.grpc.v1.annotation.CreateDataSetResponse;
 import com.ospreydcs.dp.grpc.v1.annotation.DpAnnotationServiceGrpc;
@@ -131,8 +128,11 @@ public class DpAnnotationServiceApiImpl extends
     // Class Constants
     //
     
-    /** Logging active flag */
-    private static final boolean        BOL_LOGGING = CFG_DEF.logging.active;
+    /** Logging enabled flag */
+    private static final boolean        BOL_LOGGING = CFG_DEF.logging.enabled;
+    
+    /** Event logging level */
+    private static final String         STR_LOGGING_LEVEL = CFG_DEF.logging.level;
     
     
     /** General query timeout limit */
@@ -148,6 +148,19 @@ public class DpAnnotationServiceApiImpl extends
     
     /** Class event logger */
     private static final Logger         LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Initialization
+     * </p>
+     * <p>
+     * Initializes the event logger - sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //

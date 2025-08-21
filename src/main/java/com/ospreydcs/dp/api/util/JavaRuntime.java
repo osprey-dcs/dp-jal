@@ -61,7 +61,7 @@ public class JavaRuntime {
      * 
      * @return the fully qualified class name in call stack at depth {@value #INT_STACK_DEPTH_CURR}
      */
-    public static String getMethodClass() {
+    public static String getMethodClassName() {
         StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
         String              strCallerClass = arrStackTrace[INT_STACK_DEPTH_CURR].getClassName();
         
@@ -73,11 +73,25 @@ public class JavaRuntime {
      * 
      * @return the fully qualified class name in call stack at depth {@value #INT_STACK_DEPTH_CALLER}
      */
-    public static String getCallerClass() {
+    public static String getCallerClassName() {
         StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
         String              strCallerClass = arrStackTrace[INT_STACK_DEPTH_CALLER].getClassName();
         
         return strCallerClass;
+    }
+    
+    /**
+     * Returns the class type instance of the method calling this method.
+     * 
+     * @return  the class type in the call stack at depth {@value #INT_STACK_DEPTH_CALLER}
+     */
+    public static Class<?>  getCallerClassType() {
+        StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
+        StackTraceElement   lvlStackTrace = arrStackTrace[INT_STACK_DEPTH_CALLER];
+        
+        Class<?> clsCaller = lvlStackTrace.getClass();
+        
+        return clsCaller;
     }
 
     /**
@@ -85,7 +99,7 @@ public class JavaRuntime {
      * 
      * @return the fully qualified class name in call stack at depth {@value #INT_STACK_DEPTH_CURR}
      */
-    public static String getMethodClassSimple() {
+    public static String getMethodClassNameSimple() {
         StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
         String              strCallerClass = arrStackTrace[INT_STACK_DEPTH_CURR].getClassName();
         
@@ -100,7 +114,7 @@ public class JavaRuntime {
      * 
      * @return the fully qualified class name in call stack at depth {@value #INT_STACK_DEPTH_CALLER}
      */
-    public static String getCallerClassSimple() {
+    public static String getCallerClassNameSimple() {
         StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
         String              strCallerClass = arrStackTrace[INT_STACK_DEPTH_CALLER].getClassName();
         
@@ -143,7 +157,7 @@ public class JavaRuntime {
      * <br/> <br/>
      * &nbsp; &nbsp; [ClassName]#[MethodName]
      * <br/> <br/>
-     * where [ClassName] is the result of <code>{@link #getMethodClass()}</code> and [MethodName]
+     * where [ClassName] is the result of <code>{@link #getMethodClassName()}</code> and [MethodName]
      * is the result of <code>{@link #getMethodName()}</code>.
      * </p>
      * 
@@ -168,7 +182,7 @@ public class JavaRuntime {
      * <br/> <br/>
      * &nbsp; &nbsp; [ClassName]#[MethodName]
      * <br/> <br/>
-     * where [ClassName] is the result of <code>{@link #getMethodClass()}</code> and [MethodName]
+     * where [ClassName] is the result of <code>{@link #getMethodClassName()}</code> and [MethodName]
      * is the result of <code>{@link #getMethodName()}</code>.
      * </p>
      * 
@@ -193,7 +207,7 @@ public class JavaRuntime {
      * <br/> <br/>
      * &nbsp; &nbsp; [ClassName]#[MethodName]
      * <br/> <br/>
-     * where [ClassName] is the result of <code>{@link #getMethodClassSimple()}</code> and 
+     * where [ClassName] is the result of <code>{@link #getMethodClassNameSimple()}</code> and 
      * [MethodName] is the result of <code>{@link #getMethodName()}</code>.
      * </p>
      * 
@@ -221,7 +235,7 @@ public class JavaRuntime {
      * <br/> <br/>
      * &nbsp; &nbsp; [ClassName]#[MethodName]
      * <br/> <br/>
-     * where [ClassName] is the result of <code>{@link #getMethodClassSimple()}</code> and 
+     * where [ClassName] is the result of <code>{@link #getMethodClassNameSimple()}</code> and 
      * [MethodName] is the result of <code>{@link #getMethodName()}</code>.
      * </p>
      * 

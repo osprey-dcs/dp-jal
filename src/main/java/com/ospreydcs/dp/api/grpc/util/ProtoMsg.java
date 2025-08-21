@@ -727,11 +727,11 @@ public final class ProtoMsg {
     }
     
     /**
-     * Converts the <code>TimestampList</code> message into a list of Java <code>Instant</code> objects.
+     * Converts the <code>TimestampList</code> message into an immutable list of Java <code>Instant</code> objects.
      * 
      * @param msgTmsLst Data Platform <code>TimestampList</code> message
      * 
-     * @return list of equivalent Java <code>Instant</code> objects
+     * @return immutable list of equivalent Java <code>Instant</code> objects
      * 
      * @throws DateTimeException an instant exceeds the maximum or minimum instant
      * @throws ArithmeticException arithmetic overflow occurred

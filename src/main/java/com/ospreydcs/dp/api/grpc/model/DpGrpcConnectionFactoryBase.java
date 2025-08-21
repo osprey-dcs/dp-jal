@@ -31,8 +31,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.grpc.DpConnectionsConfig;
@@ -50,7 +52,7 @@ import io.grpc.TlsChannelCredentials;
  * Abstract base class for factories creating <code>DsGrpcConnection</code> derived instances.
  * </p>
  * <p>
- * This base class is set up to create active gRPC connections represented by generic parameter 
+ * This base class is set up to create enabled gRPC connections represented by generic parameter 
  * type <code>Connection</code>.  The <code>Connection</code> type must be derived from 
  * <code>{@link DpGrpcConnection}</code>.  Thus, the requirement for all additional generic type
  * parameters. 
@@ -58,7 +60,7 @@ import io.grpc.TlsChannelCredentials;
  * <p>
  * Connection factories provide multiple <code>connect(...)</code> methods with various argument
  * signatures that determine combinations of specified connection parameters and default
- * connection parameters.  For example, the method {@link #connect()} returns an active 
+ * connection parameters.  For example, the method {@link #connect()} returns an enabled 
  * <code>Connection</code> instance with all default connection parameters.  The default
  * connection parameters are provided to the class constructor and are of type
  * <code>{@link DpGrpcConnectionConfig}</code>.
@@ -177,9 +179,13 @@ public abstract class DpGrpcConnectionFactoryBase<
     // Class Constants
     //
 
-    /** Is logging active */
-    public static final boolean BOL_LOGGING = CFG_DEFAULT.logging.active;
+    /** Is logging enabled */
+    public static final boolean BOL_LOGGING = CFG_DEFAULT.logging.enabled;
     
+    /** Event logger logging level */
+    public static final String  STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
+    
+
     /** Default maximum gRPC message size - this is a gRPC parameter */
     public static final int     INT_MSG_SIZE_MAX_DEFAULT = 4194304;
     
@@ -194,16 +200,21 @@ public abstract class DpGrpcConnectionFactoryBase<
     /** The static logging utility */
     private static final Logger LOGGER = LogManager.getLogger();
 
+    /** Class Resource Initialization - Initializes the event logger, sets logging level. */
+    static { 
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel())); 
+    }
+    
     
     //
     // Instance Attributes
     //
     
     /** The class type of the gRPC service */
-    private final Class<ServiceGrpc>    clsService;
+    private final Class<ServiceGrpc>        clsService;
     
     /** Record containing default connection parameters */
-    private final DpGrpcConnectionConfig  cfgConn;
+    private final DpGrpcConnectionConfig    cfgConn;
     
     
     
@@ -408,9 +419,9 @@ public abstract class DpGrpcConnectionFactoryBase<
 
         // If we are default configured for NO TLS security 
         //  Always call default TLS connect method - then specifies an insecure channel
-        if (!this.cfgConn.channel.tls.active)
+        if (!this.cfgConn.channel.tls.enabled)
             return this.connect(strHost, intPort, 
-                    this.cfgConn.channel.tls.active,    // Insecure channel
+                    this.cfgConn.channel.tls.enabled,    // Insecure channel
                     bolPlainText, 
                     this.cfgConn.channel.grpc.messageSizeMax, 
                     this.cfgConn.channel.grpc.keepAliveWithoutCalls, 
@@ -421,7 +432,7 @@ public abstract class DpGrpcConnectionFactoryBase<
         //  Call default TLS connect method - security ON/OFF is determined by configuration parameters
         if (this.cfgConn.channel.tls.defaultTls)
             return this.connect(strHost, intPort, 
-                    this.cfgConn.channel.tls.active,    // TLS security ON/OFF
+                    this.cfgConn.channel.tls.enabled,    // TLS security ON/OFF
                     bolPlainText, 
                     this.cfgConn.channel.grpc.messageSizeMax, 
                     this.cfgConn.channel.grpc.keepAliveWithoutCalls, 
@@ -701,7 +712,7 @@ public abstract class DpGrpcConnectionFactoryBase<
      * @param fileClientKey file containing client private key
      * @param bolPlainText  transmit data using plain ASCII (negates all TLS security)
      * @param intMsgSizeMax maximum message size for gRPC transmission (bytes)
-     * @param bolKeepAlive force connection to remain active (otherwise idle after timeout)
+     * @param bolKeepAlive force connection to remain enabled (otherwise idle after timeout)
      * @param bolGzipCompr enable GZIP compression for data transmission
      * @param lngTimeout   timeout limit used for channel operations (keepalive ping)
      * @param tuTimeout    timeout units used for channel operations (Keepalive ping)

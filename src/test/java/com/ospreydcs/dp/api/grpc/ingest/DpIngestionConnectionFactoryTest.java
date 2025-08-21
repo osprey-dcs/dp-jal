@@ -39,7 +39,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.DpApiTestingConfig;
+import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 
@@ -63,7 +63,7 @@ public class DpIngestionConnectionFactoryTest {
     private static final DpGrpcConnectionConfig.Channel   CFG_DEFAULT = DpApiConfig.getInstance().connections.ingestion.channel;
 
     /** The DP API Library Query Service testing configuration parameters - Ingestion not avaible yet */
-    private static final DpGrpcConnectionConfig           CFG_TESTING = DpApiTestingConfig.getInstance().testQuery.connection;
+    private static final DpGrpcConnectionConfig           CFG_TESTING = DpApiUnitTestConfig.getInstance().testQuery.connection;
 
     
     //

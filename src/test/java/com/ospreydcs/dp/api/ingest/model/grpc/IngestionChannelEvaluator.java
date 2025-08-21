@@ -342,7 +342,7 @@ public class IngestionChannelEvaluator {
      * </p>
      * <p>
      * The raw transmission rate is the payload memory allocation (in bytes) divided by the 
-     * time duration that the <code>IngestionChannel</code> is active (i.e., until shut down).
+     * time duration that the <code>IngestionChannel</code> is enabled (i.e., until shut down).
      * </p>
      *  
      * @return  the raw transmission rate in Mbps
@@ -367,7 +367,7 @@ public class IngestionChannelEvaluator {
      * </p>
      * <p>
      * The full transmission rate is the payload memory allocation (in bytes) divided by the 
-     * time duration that the <code>IngestionChannel</code> is active (i.e., until shut down)
+     * time duration that the <code>IngestionChannel</code> is enabled (i.e., until shut down)
      * plus the time duration for the payload supply buffer to shut down.
      * </p>
      *  

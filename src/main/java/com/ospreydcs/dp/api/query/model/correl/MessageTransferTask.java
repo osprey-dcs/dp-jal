@@ -31,14 +31,16 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
-import com.ospreydcs.dp.api.query.impl.QueryRequestProcessor;
+import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorOld;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
@@ -46,7 +48,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * <p>
- * Independent processing thread for the <code>QueryRequestProcessor</code> class.
+ * Independent processing thread for the <code>QueryRequestProcessorOld</code> class.
  * </p>
  * <p>
  * This task is performed on a separate thread to decouple the gRPC streaming of
@@ -55,10 +57,23 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * do want to began processing the data as soon as possible.
  * </p>
  * <p>
+ * <h2>Data Correlator</h2>
+ * In the current implementation either a <code>QueryDataCorrelator</code> or a 
+ * <code>RawDataCorrelator</code> can be used for the <code>QueryData</code> Protocol Buffers
+ * message sink.  Specifically, either class type is supported for raw data correlation.
+ * The specific type is determined at <code>MessageTransferTask</code> creation.  Note that
+ * <code>QueryDataCorrelator</code> is new deprecated and support there will likely be discontinued. 
+ * The difference between the two is the following:
+ * <ul>
+ * <li><code>QueryDataCorrelator</code> - supports only raw request data with <code>SampleClock</code> messages.</li>
+ * <li><code>RawDataCorrelator</code> - supports both <code>SampleClock</code> and <code>TimestampList</code> messages. </li>
+ * </ul>
+ * </p>
+ * <p>
  * <s>
  * The method <code>{@link setMaxMessages(int)}</code> must be invoked to set the total
  * number of data messages to be processed.  The method must called be either before
- * starting the thread or while the thread is active.  The internal processing loop exits 
+ * starting the thread or while the thread is enabled.  The internal processing loop exits 
  * properly whenever the internal message counter <code>{@link #cntMsgsXferred}</code>
  * is equal to the value supplied to this method.  Otherwise the processing loop
  * continues indefinitely, or until interrupted (e.g., with a call to 
@@ -66,13 +81,14 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * </s>
  * </p>
  * <p>
+ * <h2>Processing Loop</h2>
  * Message data processing is performed on a continuous loop within the thread's 
  * internal <code>{@link #run}</code> method (e.g., invoked by <code>{@link Thread#start()}</code>). 
  * There raw response data messages (type <code>QueryData</code>) are polled from the 
  * message supplier <code>{@link IMessageSupplier#poll(long, TimeUnit)}</code>, blocking until they 
  * become available or a timeout occurs (see <code>{@link #LNG_TIMEOUT}, {@link #TU_TIMEOUT}</code>).
- * Data messages are then passed to the data correlator <code>{@link #prcrCorrelator}</code>
- * for processing.  The loop exits whenever the supplier is no longer active, the task is
+ * Data messages are then passed to the data correlator <code>{@link #prcrCorrelatorOld}</code>
+ * for processing.  The loop exits whenever the supplier is no longer enabled, the task is
  * terminated (i.e., with the <code>{@link #terminate()}</code> method), or an exception occurs.
  * </p>
  * <p>
@@ -98,7 +114,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * task instances can only be used once.
  * </li>
  * <li>
- * The external <code>{@link QueryRequestProcessor}</code> object should block on the
+ * The external <code>{@link QueryRequestProcessorOld}</code> object should block on the
  * <code>{@link Thread#join()}</code> method to wait for this processing thread to 
  * complete.  <code>{@link Thread#join()}</code> will return once the processing loop
  * exits normally.
@@ -122,7 +138,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * <code>{@link #TU_TIMOUT}</code> can be used as tuning parameters for the processing
  * loop.
  * </li>
- * <ul>
+ * </ul>
  * </p>
  *
  * @author Christopher K. Allen
@@ -142,12 +158,12 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
      * and ready for task start.
      * </p>
      * 
-     * @param srcRspMsgs     source of request data messages for transfer to given correlator
-     * @param prcrCorrelator data correlator to receive data messages
+     * @param srcRspMsgs        source of request data messages for transfer to given correlator
+     * @param prcrCorrelator    data correlator to receive data messages
      * 
-     * @return  new <code>QueryDataProcessor</code> attached to the given arguments
+     * @return  new <code>MessageTransferTask</code> attached to the given arguments
      */
-    public static MessageTransferTask from(IMessageSupplier<QueryData> srcRspMsgs, QueryDataCorrelator prcrCorrelator) {
+    public static MessageTransferTask from(IMessageSupplier<QueryData> srcRspMsgs, RawDataCorrelator prcrCorrelator) {
         return new MessageTransferTask(srcRspMsgs, prcrCorrelator);
     }
     
@@ -167,7 +183,45 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
      * 
      * @return  a new thread task ready for execution.
      */
-    public static Thread    newThread(IMessageSupplier<QueryData> srcRspMsgs, QueryDataCorrelator prcrCorrelator) {
+    public static Thread    newThread(IMessageSupplier<QueryData> srcRspMsgs, RawDataCorrelator prcrCorrelator) {
+        MessageTransferTask task = MessageTransferTask.from(srcRspMsgs, prcrCorrelator);
+        Thread              thdTask = new Thread(task);
+        
+        return thdTask;
+    }
+    
+    /**
+     * <p>
+     * Creates a new instance of <code>MessageTransferTask</code> attached to the arguments 
+     * and ready for task start.
+     * </p>
+     * 
+     * @param srcRspMsgs        source of request data messages for transfer to given correlator
+     * @param prcrCorrelator    data correlator to receive data messages
+     * 
+     * @return  new <code>MessageTransferTask</code> attached to the given arguments
+     */
+    public static MessageTransferTask from(IMessageSupplier<QueryData> srcRspMsgs, QueryDataCorrelatorOld prcrCorrelator) {
+        return new MessageTransferTask(srcRspMsgs, prcrCorrelator);
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>Thread</code> instance which executes an instance of <code>MessageTransferTask</code>
+     * attached to the given arguments.
+     * </p>
+     * <p>
+     * This is a convenience method for explicitly creating thread tasks.  The returned instance is started
+     * with the <code>{@link Thread#start()}</code> method and terminates according to the conditions described
+     * in the <code>{@link #run()}</code> method documentation.
+     * </p>
+     *  
+     * @param srcRspMsgs     source of request data messages for transfer to given correlator
+     * @param prcrCorrelator data correlator to receive data messages
+     * 
+     * @return  a new thread task ready for execution.
+     */
+    public static Thread    newThread(IMessageSupplier<QueryData> srcRspMsgs, QueryDataCorrelatorOld prcrCorrelator) {
         MessageTransferTask task = MessageTransferTask.from(srcRspMsgs, prcrCorrelator);
         Thread              thdTask = new Thread(task);
         
@@ -187,8 +241,11 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
     // Class Constants - Initialized from API Library configuration
     //
     
-    /** Is logging active? */
-    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Is logging enabled? */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
     //
@@ -209,6 +266,19 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
     private static final Logger     LOGGER = LogManager.getLogger();
     
     
+    /**
+     * <p>
+     * Class Initialization
+     * </p>
+     * <p>
+     * Initializes the event logger - sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
+    
+    
     // 
     // Initializing Resources
     //
@@ -216,8 +286,11 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
     /** The external queued data buffer supplying data messages for correlation */
     private final IMessageSupplier<QueryData>   queDataBuffer;
     
-    /** The external data correlator doing the data message processing */
-    private final QueryDataCorrelator           prcrCorrelator;
+    /** The external data correlator doing toe data processing (message sink) */
+    private final QueryDataCorrelatorOld        prcrCorrelatorOld;
+    
+    /** The external data correlator doing toe data processing (message sink) */
+    private final RawDataCorrelator             prcrCorrelatorNew;
     
     
     //
@@ -239,16 +312,32 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
     
     /**
      * <p>
-     * Constructs a new instance of <code>QueryDataProcessor</code> attached to the 
+     * Constructs a new instance of <code>MessageTransferTask</code> attached to the 
      * raw data buffer and data correlator.
      * </p>
      *
      * @param queDataBuffer     source of raw data for correlation processing
-     * @param prcrCorrelator     data correlator to receive raw data
+     * @param prcrCorrelator    data correlator to receive raw data
      */
-    public MessageTransferTask(IMessageSupplier<QueryData> queDataBuffer, QueryDataCorrelator theCorrelator) {
+    public MessageTransferTask(IMessageSupplier<QueryData> queDataBuffer, RawDataCorrelator theCorrelator) {
         this.queDataBuffer = queDataBuffer;
-        this.prcrCorrelator = theCorrelator;
+        this.prcrCorrelatorOld = null;
+        this.prcrCorrelatorNew = theCorrelator;
+    }
+    
+    /**
+     * <p>
+     * Constructs a new instance of <code>MessageTransferTask</code> attached to the 
+     * raw data buffer and data correlator.
+     * </p>
+     *
+     * @param queDataBuffer     source of raw data for correlation processing
+     * @param prcrCorrelator    data correlator to receive raw data
+     */
+    public MessageTransferTask(IMessageSupplier<QueryData> queDataBuffer, QueryDataCorrelatorOld theCorrelator) {
+        this.queDataBuffer = queDataBuffer;
+        this.prcrCorrelatorOld = theCorrelator;
+        this.prcrCorrelatorNew = null;
     }
     
     
@@ -379,7 +468,7 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
      * <h2>NOTES:</h2>
      * <ul>
      * <li>
-     * This is the proper way to terminate an active processing thread.  DO NOT use
+     * This is the proper way to terminate an enabled processing thread.  DO NOT use
      * the method <code>{@link Thread#interrupt()}</code> as it will leave a 
      * <code>null</code> valued <code>{@link ResultStatus}</code> potentially corrupting
      * the normal (external) processing operations.
@@ -418,7 +507,7 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
      * Runs a continuous loop that polls the message supplier
      * (i.e., <code>{@link IMessageSupplier#poll(long, TimeUnit)}</code>) 
      * for <code>QueryData</code> request data messages.  When available, the data messages are
-     * passed to the associated correlator <code>{@link #prcrCorrelator}</code> for processing.
+     * passed to the associated correlator <code>{@link #prcrCorrelatorOld}</code> for processing.
      * </p>
      * <p>
      * The loop continues until the message supplier no longer has messages; specifically,
@@ -510,16 +599,17 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
                 return;
             }
 
-            // Add query data to the correlator
+            // Add query data to the correlator - supports either correlator type set at construction
             try {
                     
                 // Note that this operation will block until completed
-                this.prcrCorrelator.addQueryData(msgData);
-                this.cntMsgsXferred++;
-
-                // TODO - Remove
-//                if (BOL_LOGGING)
-//                    LOGGER.debug("{} - Processed message {}", JavaRuntime.getQualifiedMethodNameSimple(), this.cntMsgsProcessed);
+                if (this.prcrCorrelatorOld != null) {
+                    this.prcrCorrelatorOld.addQueryData(msgData);
+                    this.cntMsgsXferred++;
+                } else {
+                    this.prcrCorrelatorNew.processQueryData(msgData);
+                    this.cntMsgsXferred++;
+                }
 
             // Error - Data bucket did not contain timestamps 
             } catch (IllegalArgumentException e) {

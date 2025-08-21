@@ -69,7 +69,7 @@ public interface IMessageSupplier<T extends GeneratedMessage> {
      * Determines whether or not the message supplier actively supplying messages.
      * </p>
      * 
-     * @return  <code>true</code> if there are more messages to consume, <code>false, otherwise
+     * @return  <code>true</code> if there are more messages to consume, <code>false</code>, otherwise
      */
     public boolean  isSupplying();
     

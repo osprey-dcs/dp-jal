@@ -94,8 +94,8 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
     // Application Resources
     //
     
-    /** Location of the application properties file (relative path and name) */
-    public static final String      STR_CFG_FILE = "dp-api-config.yml";
+    /** Name of the Java API Library configuration properties file (relative path and name) */
+    public static final String      STR_CFG_FILE = "dp-jal-config.yml";
 //    public static final String      STR_CFG_FILE = "src/main/resources/dp-api-config.yml";
     
     
@@ -128,6 +128,7 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
      */
     public static DpApiConfig getInstance() {
         if (DpApiConfig.cfgInstance == null) {
+            
             try {
                 DpApiConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE, DpApiConfig.class);
                 
@@ -225,7 +226,7 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
      * Allow only internal construction of <code>DpApiConfig</code> instance.
      * </p>
      */
-    public DpApiConfig() {
+    private DpApiConfig() {
         super(DpApiConfig.class);
     }
 

@@ -35,8 +35,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
@@ -143,8 +145,11 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
     // Class Constants - Default Values
     //
     
-    /** Is logging active */
-    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
+    /** Is logging enabled */
+    private static final Boolean    BOL_LOGGING = CFG_DEFAULT.logging.enabled;
+    
+    /** Event logging level */
+    private static final String     STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
 
     
     /** Default maximum memory allocation */
@@ -165,6 +170,16 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
     
     
     
+    /**
+     * <p>
+     * Class Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
+    
+    
     //
     // Configuration Parameters
     //
@@ -172,7 +187,7 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
     /** Exert back pressure on clients (from frame buffer) enabled flag */
     private boolean bolBackPressure; // = BOL_BUFFER_BACKPRESSURE;
     
-    /** The maximum memory allocation of the outgoing message queue (i.e., when back pressure is active) */ 
+    /** The maximum memory allocation of the outgoing message queue (i.e., when back pressure is enabled) */ 
     private long    szMaxQueueAlloc; // = INT_MAX_ALLOC;
     
 
@@ -207,7 +222,7 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
     // State Variables
     //
     
-    /** Is supplier active (not been shutdown) */
+    /** Is supplier enabled (not been shutdown) */
     private boolean bolActive = false;
     
     /** Current queue memory allocation */
@@ -459,11 +474,11 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
      */
     public void awaitQueueReady() throws /* IllegalStateException,*/ InterruptedException {
         
-//        // Check if active - if deactivated will wait forever.
+//        // Check if enabled - if deactivated will wait forever.
 //        if (!this.bolActive)
-//            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer active.");
+//            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer enabled.");
 
-        // Do this regardless of whether back pressure is active or not
+        // Do this regardless of whether back pressure is enabled or not
         //  The client wants to wait, we wait
         this.lckMsgQueReady.lock();
         try {
@@ -522,9 +537,9 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
      */
     public void awaitQueueEmpty() throws /* IllegalStateException,*/ InterruptedException {
 
-        // Check if active - if deactivated will wait forever.
+        // Check if enabled - if deactivated will wait forever.
 //        if (!this.bolActive)
-//            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer active.");
+//            throw new IllegalStateException(JavaRuntime.getQualifiedCallerNameSimple() + " - supplier is no longer enabled.");
 
         // Get the request message queue empty lock 
         this.lckMsgQueEmpty.lock();
@@ -577,7 +592,7 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
      * Implicit or explicit throttling operations are available via the queue capacity parameter.
      * </p>
      * <h2>Operation</h2>
-     * This method enables all queue buffer tasks which are then continuously active
+     * This method enables all queue buffer tasks which are then continuously enabled
      * throughout the lifetime of this instance, or until explicitly shut down.  The method
      * <code>{@link #isSupplying()}</code> will return <code>true</code> after invocation, regardless
      * of whether or not messages are available.  This condition remains in effect until a shutdown operation
@@ -611,13 +626,13 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
      * </p>
      * 
      * @return  <code>true</code> if the ingestion message queue buffer was successfully activated,
-     *          <code>false</code> if the message supplier was already active
+     *          <code>false</code> if the message supplier was already enabled
      */
     @Override
     synchronized
     public boolean activate() {
         
-        // Check if already active
+        // Check if already enabled
         if (this.bolActive)
             return false;
 
@@ -642,7 +657,7 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
      * <p>
      * <h2>WARNING:</h2>
      * This method will block until all the message queue is completely exhausted.
-     * Thus, message consumers <em>must remain active after invoking this method</em> as any remaining messages
+     * Thus, message consumers <em>must remain enabled after invoking this method</em> as any remaining messages
      * left in the queue will cause this method to block indefinitely. 
      * </p>
      * <p>
@@ -652,7 +667,7 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
      * </p>
      * 
      * @return <code>true</code> if the message supplier was successfully shutdown,
-     *         <code>false</code> if the message supplier was not active or shutdown operation failed
+     *         <code>false</code> if the message supplier was not enabled or shutdown operation failed
      * 
      * @throws InterruptedException interrupted while waiting for processing threads to complete
      */
@@ -758,9 +773,9 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
     synchronized
     public void offer(List<IngestDataRequest> lstMsgRqsts) throws IllegalStateException, InterruptedException {
 
-        // Check if active
+        // Check if enabled
         if (!this.bolActive) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.";
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not enabled.";
             
             if (BOL_LOGGING)
                 LOGGER.warn(strMsg);
@@ -852,9 +867,9 @@ public class IngestionMemoryBuffer implements IMessageConsumer<IngestDataRequest
     public boolean offer(List<IngestDataRequest> lstMsgRqsts, long lngTimeout, TimeUnit tuTimeout)
             throws IllegalStateException, InterruptedException {
 
-        // Check if active
+        // Check if enabled
         if (!this.bolActive) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.";
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not enabled.";
             
             if (BOL_LOGGING)
                 LOGGER.warn(strMsg);

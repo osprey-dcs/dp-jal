@@ -282,7 +282,7 @@ public class IngestionStreamProcessorDeprecatedTest {
         // Activated processor - this should throw exception
         try {
             this.processor.enableMultipleStreams(3);
-            Assert.fail("Enabling multiple stream on active processor did not throw exception.");
+            Assert.fail("Enabling multiple stream on enabled processor did not throw exception.");
             
         } catch (IllegalStateException e) {
             
@@ -310,7 +310,7 @@ public class IngestionStreamProcessorDeprecatedTest {
         // Activated processor - this should throw exception
         try {
             this.processor.disableMultipleStreams();
-            Assert.fail("Disabling multiple stream on active processor did not throw exception.");
+            Assert.fail("Disabling multiple stream on enabled processor did not throw exception.");
             
         } catch (IllegalStateException e) {
             

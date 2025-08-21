@@ -168,8 +168,8 @@ public final class DpGrpcConnectionConfig extends CfgStructure<DpGrpcConnectionC
             //
             
             /** Is TLS security used */
-            @ACfgOverride.Field(name="ACTIVE")
-            public Boolean      active;
+            @ACfgOverride.Field(name="ENABLED")
+            public Boolean      enabled;
             
             /** Use default TLS security */
             @ACfgOverride.Field(name="DEFAULT")
@@ -243,7 +243,7 @@ public final class DpGrpcConnectionConfig extends CfgStructure<DpGrpcConnectionC
             @ACfgOverride.Field(name="XMIT_PLAIN_TEXT")
             public Boolean  usePlainText;
             
-            /** Keep channel active even when not in use - WARNING: This can sequester significant gRPC resources */
+            /** Keep channel enabled even when not in use - WARNING: This can sequester significant gRPC resources */
             @ACfgOverride.Field(name="KEEP_ALIVE")
             public Boolean  keepAliveWithoutCalls;
             

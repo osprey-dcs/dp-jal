@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.api.query.model.request;
 
+import java.io.PrintStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedList;
@@ -116,7 +117,7 @@ public class DataRequestDecomposer {
     //
     
     /** Use decompose queries feature */
-    public static final boolean                BOL_ACTIVE = CFG_RQST.decompose.active;
+    public static final boolean                BOL_ENABLED = CFG_RQST.decompose.enabled;
     
     /** Maximum number of data sources for a decompose query */
     public static final int                    CNT_MAX_SOURCES = CFG_RQST.decompose.maxSources;
@@ -124,7 +125,7 @@ public class DataRequestDecomposer {
     /** Maximum time range duration for a decompose query */
     public static final Duration               DUR_MAX = Duration.of(
                                                     CFG_RQST.decompose.maxDuration,
-                                                    CFG_RQST.decompose.unitDuration.toChronoUnit()
+                                                    CFG_RQST.decompose.durationUnit.toChronoUnit()
                                                     );
     
     //
@@ -132,7 +133,7 @@ public class DataRequestDecomposer {
     //
     
     /** Turn request decomposition on/off */
-    private boolean     bolActive = BOL_ACTIVE;
+    private boolean     bolEnabled = BOL_ENABLED;
     
     /** Maximum allowable number of data sources in a decompose request */
     private int         cntSrcsMax = CNT_MAX_SOURCES;
@@ -164,13 +165,53 @@ public class DataRequestDecomposer {
     //
     
     /**
+     * <p>
+     * Resets all configuration parameters to their default values.
+     * </p>
+     * <p>
+     * The default configuration at construction is reestablished after invoking this method.
+     * The default configuration parameters are taken from the Java API Library configuration
+     * file.  The following lists the getter method for retrieving the current configurations values
+     * and the default configuration available from class constants:
+     * <ul>
+     * <li><code>{@link #isEnabled()}</code> - <code>{@link #BOL_ENABLED}</code>.
+     * <li><code>{@link #getMaxDataSources()}</code> - <code>{@link #CNT_MAX_SOURCES}</code>.
+     * <li><code>{@link #getMaxDuration()}</code> - <code>{@link #DUR_MAX}</code>.
+     * </ul>
+     * <p>  
+     * 
+     */
+    public final void resetDefaultCofiguration() {
+        
+        this.bolEnabled = BOL_ENABLED;
+        this.cntSrcsMax = CNT_MAX_SOURCES;
+        this.durMax = DUR_MAX;
+    }
+    
+    /**
+     * <p>
+     * Determines whether or not data request decomposition is enabled.  
+     * </p>
+     * <p>
+     * If the returned value is <code>false</code> no decomposition is performed, the original request is used.
+     * </p>
+     * 
      * @return <code>true</code> if request decomposition is enabled, <code>false</code> if disabled
      */
-    public final boolean isActive() {
-        return bolActive;
+    public final boolean isEnabled() {
+        return bolEnabled;
     }
 
     /**
+     * <p>
+     * Returns the maximum number of PVs allowed in a composite request.
+     * </p>
+     * <p>
+     * The returned value is used in horizontal request decomposition (i.e., by data source).
+     * No composite request will have a data source count larger than this value if request 
+     * decomposition was successful and request decomposition is enabled and successful.
+     * </p>
+     *  
      * @return the maximum allowable number of data sources per decompose request
      */
     public final int getMaxDataSources() {
@@ -178,6 +219,15 @@ public class DataRequestDecomposer {
     }
 
     /**
+     * <p>
+     * Returns the maximum allowing time range duration in a composite request.
+     * </p>
+     * <p>
+     * The returned value is used in vertical request decomposition (i.e., by time range). 
+     * No composite request will have time range greater than the given duration if request decomposition 
+     * is enable and successful.
+     * </p>
+     * 
      * @return the maximum allowable time duration within a decompose request
      */
     public final Duration getMaxDuration() {
@@ -195,10 +245,10 @@ public class DataRequestDecomposer {
      * a single element, the original request object.
      * </p>
      * 
-     * @param bolActive the toggling on/off of request decomposition 
+     * @param bolEnabled the toggling on/off of request decomposition 
      */
-    public final void setActive(boolean bolActive) {
-        this.bolActive = bolActive;
+    public final void enable(boolean bolActive) {
+        this.bolEnabled = bolActive;
     }
 
     /**
@@ -234,6 +284,27 @@ public class DataRequestDecomposer {
      */
     public final void setMaxDuration(Duration durMax) {
         this.durMax = durMax;
+    }
+    
+    /**
+     * <p>
+     * Prints out a text description of the current processor configuration to the given output stream.
+     * </p>
+     * <p>
+     * A line-by-line text description is given of the current processor configuration, along with the sub
+     * processor configurations.  Each line contains a header identifying the configuration field and the
+     * field value.  Optional left-hand-side padding is available to indent all output if the configuration
+     * information is part of a larger set.
+     * </p>
+     *  
+     * @param ps        output stream to receive configuration text description
+     * @param strPad    optional left-hand-side padding for output lines, or <code>null</code> if none desired
+     */
+    public void printOutConfig(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        
     }
 
     
@@ -476,6 +547,10 @@ public class DataRequestDecomposer {
      */
     public List<DpDataRequest> buildCompositeRequestPreferred(DpDataRequest rqst) {
         
+        // Check if decomposition is enabled
+        if (!this.bolEnabled)
+            return List.of(rqst);
+        
         // Get the preferred domain decomposition 
         RequestDecompParams recDomains = this.decomposeDomainPreferred(rqst);
 
@@ -502,6 +577,10 @@ public class DataRequestDecomposer {
      * @see #buildCompositeRequestGrid(int, int)                      
      */
     public List<DpDataRequest> buildCompositeRequest(DpDataRequest rqst, RequestDecompParams recDomains) {
+        
+        // Check if decomposition is enabled
+        if (!this.bolEnabled)
+            return List.of(rqst);
         
         return switch (recDomains.type()) {
         case NONE -> List.of(rqst);
@@ -542,9 +621,15 @@ public class DataRequestDecomposer {
      * @param   cntQueries  the number of sub-queries in the returned decompose query
      * 
      * @return  a collection of decompose queries which, in total, are equivalent to the given data request
+     * 
+     * @throws  UnsupportedOperationException   an unexpected <code>RequestDecompType</code> enumeration was encountered    
      */
-    public List<DpDataRequest>  buildCompositeRequest(DpDataRequest rqst, RequestDecompType enmType, int cntQueries) {
+    public List<DpDataRequest>  buildCompositeRequest(DpDataRequest rqst, RequestDecompType enmType, int cntQueries) throws UnsupportedOperationException {
 
+        // Check if decomposition is enabled
+        if (!this.bolEnabled)
+            return List.of(rqst);
+        
         return switch (enmType) {
         
         case NONE -> List.of(rqst);
@@ -584,6 +669,12 @@ public class DataRequestDecomposer {
      * @return  a collection of decompose queries which, in total, are equivalent to the given data request
      */
     public List<DpDataRequest>  buildCompositeRequestGrid(DpDataRequest rqst, int cntQueriesHor, int cntQueriesVer) {
+        
+        // Check if decomposition is enabled
+        if (!this.bolEnabled)
+            return List.of(rqst);
+        
+        
         return this.decomposeDomainGridded(rqst, cntQueriesHor, cntQueriesVer);
     }
     
@@ -638,7 +729,7 @@ public class DataRequestDecomposer {
             
             List<String>    lstRqstSrcs = rqstOrg.getSourceNames().subList(indRqstStart, indRqstStop);
             
-            DpDataRequest rqstCmp = DpDataRequest.from(rqstOrg.getStreamType(), rqstOrg.getInitialTime(), rqstOrg.getFinalTime(), lstRqstSrcs);
+            DpDataRequest rqstCmp = DpDataRequest.from(rqstOrg.getRequestId(), rqstOrg.getStreamType(), rqstOrg.getInitialTime(), rqstOrg.getFinalTime(), lstRqstSrcs);
             
             lstRequests.add(rqstCmp);
             
@@ -690,7 +781,7 @@ public class DataRequestDecomposer {
             if (n == (cntQueries - 1))
                 insRqstTmStop = insRqstTmStop.plus(durRemain);
             
-            DpDataRequest   rqstCmp = DpDataRequest.from(rqstOrg.getStreamType(), insRqstTmStart, insRqstTmStop, rqstOrg.getSourceNames());
+            DpDataRequest   rqstCmp = DpDataRequest.from(rqstOrg.getRequestId(), rqstOrg.getStreamType(), insRqstTmStart, insRqstTmStop, rqstOrg.getSourceNames());
             
             lstRequests.add(rqstCmp);
             
@@ -765,7 +856,7 @@ public class DataRequestDecomposer {
                 if (n == (cntQueriesVer - 1))
                     insRqstTmStop = insRqstTmStop.plus(durRemain);
                 
-                DpDataRequest   rqstCmp = DpDataRequest.from(rqstOrg.getStreamType(), insRqstTmStart, insRqstTmStop, lstRqstSrcs);
+                DpDataRequest   rqstCmp = DpDataRequest.from(rqstOrg.getRequestId(), rqstOrg.getStreamType(), insRqstTmStart, insRqstTmStop, lstRqstSrcs);
                 
                 lstRequests.add(rqstCmp);
                 

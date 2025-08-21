@@ -644,7 +644,7 @@ public class IngestionMessageBufferTest {
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Message count    : " + cntMsgs);
         System.out.println("  Buffer capacity  : " + szCapacity);
-        System.out.println("  Duration active  : " + durActive);
+        System.out.println("  Duration enabled  : " + durActive);
         System.out.println("  Consumer ");
         System.out.println("    completed : " + tskCons.hasCompleted());
         System.out.println("    error     : " + tskCons.hasError());

@@ -445,7 +445,7 @@ public class IngestionFrameProcessorEvaluatorTest {
      * </p>
      * <p>
      * The test results are stored to a new file with the given name within the
-     * path location identified by class constant <code>{@link #STR_PATH_OUTPUT}</code>.
+     * path location identified by class constant <code>{@link #STR_OUTPUT_PATH_DEF}</code>.
      * A header is provided within the file using the given name of the testing method.
      * </p>
      * <p>

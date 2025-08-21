@@ -28,9 +28,11 @@
  */
 package com.ospreydcs.dp.api.query;
 
+import java.io.PrintStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -247,6 +249,47 @@ public final class DpDataRequest {
      * Thus, <b>use at your own risk</b>.
      * </p>
      *  
+     * @param strId         the request identifier used by Java API Library
+     * @param enmStreamType the preferred gRPC stream type for the  
+     * @param insStart      the start time of the data request
+     * @param insEnd        the final time of the data request
+     * @param lstPvNames    the data source names (i.e., process variable names) of the data request
+     * 
+     * @return  a new Query Service data request initialized with the given arguments
+     * 
+     * @throws  IllegalArgumentException    the given stream type is out of context
+     */
+    public static DpDataRequest from(String strId, DpGrpcStreamType enmStreamType, Instant insStart, Instant insEnd, List<String> lstPvNames) 
+            throws IllegalArgumentException {
+        
+        return new DpDataRequest(strId, enmStreamType, insStart, insEnd, lstPvNames);
+    }
+    
+    /**
+     * <p>
+     * Creates a new, initialized <code>DpDataRequest</code> instance defining a time-series data requests 
+     * from the <em>Query Service</em>.
+     * </p>
+     * <p>
+     * Note that the returned data request is defined by the given parameters. 
+     * The returned request can be further modified using the "selection" and "restrictor" methods to narrow 
+     * the returned data request based upon specific PV names, timestamps ranges, and other data filters.
+     * </p>
+     * <h2>NOTES:</h2>
+     * <p>
+     * <ul>
+     * <li>
+     * The request identifier parameter is set to <code>null</code>.  This parameter is used only by the 
+     * Java API Library and essentially means the request is unnamed.
+     * </li>
+     * <li>
+     * Invocation of this method for time-series data request creation assumes familiarity with the internal
+     * structure and operation of the <code>DpDataRequest</code> class.
+     * Thus, <b>use at your own risk</b>.
+     * </li>
+     * </ul>
+     * </p>
+     *  
      * @param enmStreamType the preferred gRPC stream type for the  
      * @param insStart      the start time of the data request
      * @param insEnd        the final time of the data request
@@ -259,7 +302,7 @@ public final class DpDataRequest {
     public static DpDataRequest from(DpGrpcStreamType enmStreamType, Instant insStart, Instant insEnd, List<String> lstPvNames) 
             throws IllegalArgumentException {
         
-        return new DpDataRequest(enmStreamType, insStart, insEnd, lstPvNames);
+        return new DpDataRequest(null, enmStreamType, insStart, insEnd, lstPvNames);
     }
     
 
@@ -280,13 +323,13 @@ public final class DpDataRequest {
     // Class Constants
     //
     
-    /** The default page size to use when creating gRPC paginated queries */
-    @Deprecated
-    private static final Integer                SZ_PAGES = CFG_DEFAULT.query.pageSize;
+//    /** The default page size to use when creating gRPC paginated queries */
+//    @Deprecated
+//    private static final Integer                SZ_PAGES = CFG_DEFAULT.query.pageSize;
     
     
     /** gRPC stream type default preference */
-    private static final DpGrpcStreamType       ENM_STREAM_PREF = CFG_DEFAULT.query.data.request.stream.preference;
+    private static final DpGrpcStreamType       ENM_STREAM_PREF = CFG_DEFAULT.query.data.recovery.stream.preferred;
     
     
     /** The start of this time epoch (Jan 1, 1970) */
@@ -320,24 +363,27 @@ public final class DpDataRequest {
     //
     
     
-    /** The size of a data page, that is, the number of data rows per page */
-    @Deprecated
-    @SuppressWarnings("unused")
-    private int szPage = SZ_PAGES;
+//    /** The size of a data page, that is, the number of data rows per page */
+//    @Deprecated
+//    @SuppressWarnings("unused")
+//    private int szPage = SZ_PAGES;
     
     /** The initial index of first page to return, that is, the starting page number */
     @Deprecated
     @SuppressWarnings("unused")
     private int indStartPage = 0;
+    
+    /** Optional request identifier or name */
+    private String              strRqstId = null;
 
-    /** optional gRPC stream type */
-    private DpGrpcStreamType  enmStrmType = ENM_STREAM_PREF;
+    /** Optional gRPC stream type */
+    private DpGrpcStreamType    enmStrmType = ENM_STREAM_PREF;
     
     /** The time range start instant */
-    private Instant insStart = INS_INCEPT;
+    private Instant             insStart = INS_INCEPT;
     
     /** The time range stop instant */
-    private Instant insStop = Instant.now();
+    private Instant             insStop = Instant.now();
     
 
     //
@@ -539,8 +585,9 @@ public final class DpDataRequest {
     public void reset() {
 //        this.bolCursor = false;
         this.indStartPage = 0;
-        this.szPage = SZ_PAGES;
+//        this.szPage = SZ_PAGES;
 
+        this.strRqstId = null;
         this.enmStrmType = ENM_STREAM_PREF;
         this.insStart = INS_INCEPT;
         this.insStop = INS_INCEPT;
@@ -560,7 +607,7 @@ public final class DpDataRequest {
      * @see java.lang.Object#clone()
      */
     public DpDataRequest    clone() {
-        return new DpDataRequest(this.enmStrmType, this.insStart, this.insStop, new LinkedList<String>(this.lstSelCmps));
+        return new DpDataRequest(this.strRqstId, this.enmStrmType, this.insStart, this.insStop, new LinkedList<String>(this.lstSelCmps));
     }
     
     /**
@@ -662,6 +709,27 @@ public final class DpDataRequest {
     //
     // Query Properties and Metadata
     //
+    
+    /**
+     * <p>
+     * Returns the (optional) request identifier.
+     * </p>
+     * <p>
+     * The time-series data request identifier is an additional property to identify request
+     * data.  It is used solely by the Java API Library; that is, it is not a property of the
+     * Data Platform Query Service.
+     * </p>
+     * <p>
+     * Typically, the request ID appears within the final tabular result set once the request is
+     * fully recovered and processed by the API library.  Thus, no special characteristics are 
+     * required of the ID and a string name is typically sufficient.
+     * </p>
+     *   
+     * @return  the (optional) request identifier
+     */
+    public String   getRequestId() {
+        return this.strRqstId;
+    }
     
     /**
      * <p>
@@ -1052,8 +1120,29 @@ public final class DpDataRequest {
     
     
     // 
-    // Query Metadata
+    // Request Metadata
     //
+    
+    /**
+     * <p>
+     * Sets the (optional) identifier for the time-series data request.
+     * </p>
+     * <p>
+     * The request identifier is an additional property to identify requested time-series
+     * data.  It is used solely by the Java API Library; that is, it is not a property of the
+     * Data Platform Query Service.
+     * </p>
+     * <p>
+     * Typically, the request ID is assigned by clients and then appears within the final (tabular) 
+     * result set once the request is fully recovered and processed by the API library.  Thus, no special 
+     * characteristics are required of the ID and a string name is typically sufficient.
+     * </p>
+     * 
+     * @param strRqstId the (optional) request identifier used by the Java API Library
+     */
+    public void setRequestId(String strRqstId) {
+        this.strRqstId = strRqstId;
+    }
     
     /**
      * <p>
@@ -1104,34 +1193,34 @@ public final class DpDataRequest {
         this.enmStrmType = enmStreamType;
     }
     
-    /**
-     * <p>
-     * Sets the size of the data pages to return from the <em>Query Service</em>
-     * when using paginated requests.
-     * </p>
-     * <p>
-     * Paginated responses to snapshot data requests are used in asynchronous
-     * queries. The data is streamed back in gRPC message blocks constituting
-     * data pages.  The value given here is the number of rows in each page 
-     * (not the allocation size of the gRPC message).
-     * </p>
-     * <p>
-     * If not set, this value defaults to that specified in the 
-     * Application properties (in the <i>application.yml</i> file).
-     * </p>
-     * <p>
-     * This is primarily a performance parameter to tweak.
-     * Note that the maximum gRPC message size has a hard limit (currently
-     * at 4 Mbytes).  For requests with large numbers of data columns each
-     * row could, potentially, require significant resource allocation.
-     * </p>
-     * 
-     * @param szPage page size of a data block returned from the <em>Query Service</em> (in rows)
-     */
-    @AUnavailable(status=STATUS.UNDER_REVIEW)
-    public void setPageSize(Integer szPage) {
-        this.szPage = szPage;
-    }
+//    /**
+//     * <p>
+//     * Sets the size of the data pages to return from the <em>Query Service</em>
+//     * when using paginated requests.
+//     * </p>
+//     * <p>
+//     * Paginated responses to snapshot data requests are used in asynchronous
+//     * queries. The data is streamed back in gRPC message blocks constituting
+//     * data pages.  The value given here is the number of rows in each page 
+//     * (not the allocation size of the gRPC message).
+//     * </p>
+//     * <p>
+//     * If not set, this value defaults to that specified in the 
+//     * Application properties (in the <i>application.yml</i> file).
+//     * </p>
+//     * <p>
+//     * This is primarily a performance parameter to tweak.
+//     * Note that the maximum gRPC message size has a hard limit (currently
+//     * at 4 Mbytes).  For requests with large numbers of data columns each
+//     * row could, potentially, require significant resource allocation.
+//     * </p>
+//     * 
+//     * @param szPage page size of a data block returned from the <em>Query Service</em> (in rows)
+//     */
+//    @AUnavailable(status=STATUS.UNDER_REVIEW)
+//    public void setPageSize(Integer szPage) {
+//        this.szPage = szPage;
+//    }
     
     /**
      * <p>
@@ -1343,7 +1432,7 @@ public final class DpDataRequest {
      * 
      * @param lstNames list of data source names
      */
-    public void selectSources(List<String> lstNames) {
+    public void selectSources(Collection<String> lstNames) {
         
         this.lstSelCmps.addAll(lstNames);
     }
@@ -1744,6 +1833,31 @@ public final class DpDataRequest {
         this.lstWhrCmps.add(strWhrCmp);
     }
     
+    /**
+     * <p>
+     * Prints out a text description of general properties of this time-series data request to the given output.
+     * </p>
+     * <p>
+     * The high-level properties of the current request are printed out in a line-by-line format with an
+     * optional padding at the left-hand side.  The <code>strPad</code> argument is assumed to be a sequence
+     * of white spaces (or <code>null</code>) that is used to pad the left-hand side before each line
+     * heading.  This format is useful when the description is used as part of a larger output series.
+     * </p>
+     * 
+     * @param ps        output stream to receive time-series data request properties description
+     * @param strPad    optional left-hand side whitespace padding for line headers
+     */
+    public void printOutProperties(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        ps.println(strPad + this.getClass().getSimpleName() + " " + this.getRequestId());
+        ps.println(strPad + "  Data source count : " + this.getSourceCount());
+        ps.println(strPad + "  Start time        : " + this.getInitialTime());
+        ps.println(strPad + "  Request duration  : " + this.rangeDuration());
+        ps.println(strPad + "  Domain size (byte-sec) : " + this.approxDomainSize());
+    }
+    
 
     //
     // Private Methods
@@ -1776,6 +1890,7 @@ public final class DpDataRequest {
      * identified in their declaration.
      * </p>
      *
+     * @param strId         the request identifier
      * @param enmType       the preferred gRPC data stream type
      * @param insStart      starting instant of time range
      * @param insStop       final instant of time range
@@ -1783,15 +1898,16 @@ public final class DpDataRequest {
      * 
      * @throws  IllegalArgumentException    the given stream type is out of context
      */
-    private DpDataRequest(DpGrpcStreamType enmType, Instant insStart, Instant insStop, List<String> lstSources) throws IllegalArgumentException {
+    private DpDataRequest(String strId, DpGrpcStreamType enmType, Instant insStart, Instant insStop, List<String> lstSources) throws IllegalArgumentException {
         
         // Check stream type
         if (enmType == DpGrpcStreamType.FORWARD)
             throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Illegal stream type: " + enmType);
         
         this.indStartPage = 0;
-        this.szPage = SZ_PAGES;
+//        this.szPage = SZ_PAGES;
 
+        this.strRqstId = strId;
         this.enmStrmType = enmType;
         this.insStart = insStart;
         this.insStop = insStop;
@@ -2305,9 +2421,10 @@ public final class DpDataRequest {
      */
     @Override
     public String toString() {
-        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClass());
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClassName());
         
         buf.append(" contents:\n");
+        buf.append("  request UD = " + this.strRqstId + "\n");
         buf.append("  source name(s) = " + this.lstSelCmps + "\n");
         buf.append("  start time = " + this.insStart + "\n");
         buf.append("  stop time = " + this.insStop + "\n");

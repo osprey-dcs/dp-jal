@@ -35,8 +35,10 @@ import java.util.concurrent.ExecutionException;
 
 import javax.naming.CannotProceedException;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.w3c.dom.ranges.RangeException;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
@@ -54,10 +56,10 @@ import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.api.query.IDpQueryStreamObserver;
 import com.ospreydcs.dp.api.query.IQueryService;
-import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryData;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
+import com.ospreydcs.dp.api.query.model.coalesce.SamplingProcess;
+import com.ospreydcs.dp.api.query.model.correl.CorrelatedQueryDataOld;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelatorOld;
 import com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated;
-import com.ospreydcs.dp.api.query.model.series.SamplingProcess;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus;
@@ -211,7 +213,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
  * @author Christopher K. Allen
  * @since Jan 5, 2024
  *
- * @deprecated  Replaced by DpQueryServiceImpl
+ * @deprecated  Replaced by DpQueryServiceImplOld
  */
 @Deprecated(since="Feb 16, 2025", forRemoval=true)
 public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQueryServiceImplDeprecated, DpQueryConnection, DpQueryServiceGrpc, DpQueryServiceBlockingStub, DpQueryServiceFutureStub, DpQueryServiceStub> implements IQueryService {
@@ -229,8 +231,11 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
     // Class Constants
     //
     
-    /** Logging active flag */
-    private static final boolean        BOL_LOGGING = CFG_DEFAULT.logging.active;
+    /** Event logging enabled flag */
+    private static final boolean        BOL_LOGGING = CFG_DEFAULT.logging.enabled;
+    
+    /** Event logging level */
+    private static final String         STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
     
     
     //
@@ -239,6 +244,16 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
     
     /** Class event logger */
     private static final Logger LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Resource Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //
@@ -390,12 +405,12 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
         
         QueryDataResponse msgRsp = super.grpcConn.getStubBlock().queryData(qry);
         
-        QueryDataCorrelator correlator = new QueryDataCorrelator();
+        QueryDataCorrelatorOld correlator = new QueryDataCorrelatorOld();
         
         try {
             correlator.addQueryResponse(msgRsp);
             
-            SortedSet<CorrelatedQueryData>  setPrcdData = correlator.getCorrelatedSet();
+            SortedSet<CorrelatedQueryDataOld>  setPrcdData = correlator.getCorrelatedSet();
             
             SamplingProcess process = SamplingProcess.from(setPrcdData);
             IDataTable      table = process.createStaticDataTable();
@@ -419,7 +434,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
     public IDataTable   queryData(DpDataRequest rqst) throws DpQueryException {
         
         // Perform request and response correlation
-        SortedSet<CorrelatedQueryData> setPrcdData = this.dataProcessor.processRequestStream(rqst);
+        SortedSet<CorrelatedQueryDataOld> setPrcdData = this.dataProcessor.processRequestStream(rqst);
         
         
         // Recover the sampling process 
@@ -452,7 +467,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
     public IDataTable   queryData(List<DpDataRequest> lstRqsts) throws DpQueryException {
         
         // Perform request and response correlation
-        SortedSet<CorrelatedQueryData>  setPrcdData = this.dataProcessor.processRequestMultiStream(lstRqsts);
+        SortedSet<CorrelatedQueryDataOld>  setPrcdData = this.dataProcessor.processRequestMultiStream(lstRqsts);
 
         // Recover the sampling process 
         // TODO - contains extensive error checking which may be removed when stable
@@ -491,7 +506,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
                 enmStreamType, 
                 this.getConnection().getStubAsync(),
                 msgRequest,
-                CFG_DEFAULT.logging.active);
+                BOL_LOGGING);
         
         return buf;
     }
@@ -515,7 +530,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
      * 
      * @param rqst  configured <code>{@link DpDataRequest]</code> request builder instance
      * 
-     * @return      an active query stream buffer ready to accumulate the results set
+     * @return      an enabled query stream buffer ready to accumulate the results set
      * 
      * @see DpQueryStreamBuffer
      * @see DpQueryStreamBuffer#start()
@@ -533,7 +548,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
                 DpGrpcStreamType.BACKWARD, 
                 this.getConnection().getStubAsync(),
                 msgRequest,
-                CFG_DEFAULT.logging.active);
+                BOL_LOGGING);
         
         return buf;
     }
@@ -557,7 +572,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
      * 
      * @param rqst          an initialized <code>{@link DpDataRequest]</code> request builder instance
      * 
-     * @return  an active query stream buffer ready to accumulate the result set
+     * @return  an enabled query stream buffer ready to accumulate the result set
      * 
      * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
      * 
@@ -577,7 +592,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
                 DpGrpcStreamType.BIDIRECTIONAL, 
                 this.getConnection().getStubAsync(),
                 msgRequest,
-                CFG_DEFAULT.logging.active);
+                BOL_LOGGING);
         
         return buf;
     }
@@ -599,7 +614,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
 //  * @param cntTimeout    time limit for Query Service timeout limit
 //  * @param tuTimeout     time units for Query Service timeout limit
 //  * 
-//  * @return  an active query stream buffer currently accumulating the result set
+//  * @return  an enabled query stream buffer currently accumulating the result set
 //  * 
 //  * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
 //  * 
@@ -652,7 +667,7 @@ public final class DpQueryServiceImplDeprecated extends DpServiceApiBase<DpQuery
 //     * @param cntTimeout    time limit for Query Service timeout limit
 //     * @param tuTimeout     time units for Query Service timeout limit
 //     * 
-//     * @return  an active query stream buffer currently accumulating the result set
+//     * @return  an enabled query stream buffer currently accumulating the result set
 //     * 
 //     * @throws DpQueryException Query Service exception - typically results from a malformed request (see message and cause)
 //     * 

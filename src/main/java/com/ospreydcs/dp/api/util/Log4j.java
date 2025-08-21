@@ -27,11 +27,16 @@
  */
 package com.ospreydcs.dp.api.util;
 
+import java.io.OutputStream;
+import java.io.Writer;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.appender.OutputStreamAppender;
+import org.apache.logging.log4j.core.appender.WriterAppender;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.spi.StandardLevel;
@@ -58,9 +63,60 @@ public class Log4j {
     // Class Constants
     //
     
+    /** Call stack depth to fetch caller details */
+    public static final int     INT_STACK_DEPTH_CALLER = 3;
+    
     /** The default logger pattern string (Log4j PatternLayout) used for appenders when none is given */ 
     private static final String STR_LOG_PATTERN_DEF = "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n";
 
+    
+    //
+    // Logger Creation
+    //
+    
+    /**
+     * <p>
+     * Gets the logger for the calling method class or creates a new logger for that class if none exists.
+     * </p>
+     * <p>
+     * The caller class type is obtained from the call stack on the current thread.  Once obtained the method
+     * defers to <code>{@link #getLogger(Class)}</code>.
+     * This method is essentially equivalent to <code>{@link LogManager#getLogger()}</code> when called from
+     * the same location.
+     * </p>
+     * <p>
+     * The caller class type is obtained from the current thread using methods 
+     * <code>{@link Thread#currentThread()}</code> and <code>{@link Thread#getStackTrace()}</code>.  
+     * The <code>{@link StackTraceElement}</code> for the caller depth <code>{@link #INT_STACK_DEPTH_CALLER}</code>
+     * is identified and the class type of the caller is obtained there (see {@link StackTraceElement#getClass()}</code>).
+     * </p>
+     *  
+     * @return  the <code>Logger</code> instances for the caller's class type
+     */
+    public static Logger    getLogger() {
+        StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
+        StackTraceElement   lvlStackTrace = arrStackTrace[INT_STACK_DEPTH_CALLER];
+        
+        Class<?> clsCaller = lvlStackTrace.getClass();
+
+        return Log4j.getLogger(clsCaller);
+    }
+    
+    /**
+     * <p>
+     * Get the logger for the given class or creates a new logger if logger does not exist.
+     * </p>
+     * This method defers to <code>{@link LogManager#getLogger(Class)}</code> and is essentially
+     * a direct invocation.
+     * </p>
+     * 
+     * @param clsLogger class type instance
+     * 
+     * @return  <code>Logger</code> instance for the given class
+     */
+    public static Logger    getLogger(Class<?> clsLogger) {
+        return LogManager.getLogger(clsLogger);
+    }
     
     /**
      * <h1>
@@ -84,6 +140,92 @@ public class Log4j {
         Logger  logger = LogManager.getLogger(strName);
         
         return logger;
+    }
+    
+    /**
+     * <p>
+     * Gets the logger for the given class or creates a new logger if nonexistent, then sets the given logging level.
+     * </p>
+     * <p>
+     * This is a convenience method for simultaneous logger retrieval and level setting.  It defers to method
+     * <code>{@link #getLogger(Class)}</code> to first retrieve the class logger then method 
+     * <code>{@link #setLevel(Logger, String)}</code> to set its logging level before returning it.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The string argument must specify exactly the name of a <code>{@link Level}</code> enclosed class sub-type.
+     * If the logging level is not properly specified then the logging level for the obtained logger remains at
+     * its default value.
+     * </p>
+     * 
+     * @param clsLogger     class type for the returned logger
+     * @param strLevel      string name of the <code>Level</code> class specifying logging event level 
+     * 
+     * @return  the logger for the given class set to the given logging level.
+     */
+    public static Logger    getLogger(Class<?> clsLogger, String strLevel) {
+        Logger  logger = Log4j.getLogger(clsLogger);
+        Log4j.setLevel(logger, strLevel);
+        
+        return logger;
+    }
+    
+    /**
+     * <p>
+     * Gets the logger for the calling method class or creates a new logger for that class if none exists, then
+     * set the logging level according to the argument.
+     * </p>
+     * <p>
+     * This is a convenience method which is essentially a combination of methods <code>{@link #getLogger()}</code> 
+     * and <code>{@link #setLevel(Logger, String)}</code>, although it is not implemented that way.  
+     * The <code>{@link Logger}</code> instance is first* created by determining the caller's class type then the 
+     * logging level is set before it is returned.
+     * </p>
+     * <p>
+     * The caller class type is obtained from the call stack on the current thread.  Once obtained the method
+     * defers to <code>{@link #getLogger(Class)}</code> to create the logger instance.
+     * The method <code>{@link #setLevel(Logger, String)}</code> is then called on the new <code>Logger</code>
+     * instance using the argument value.  
+     * </p>
+     * 
+     * @param strLevel  name of a <code{@link Level}</code> sub-class specifying level
+     * 
+     * @return  the <code>Logger</code> instances for the caller's class type and given logging level
+     */
+    public static Logger    getLoggerSetLevel(String strLevel) {
+        StackTraceElement[] arrStackTrace = Thread.currentThread().getStackTrace();
+        StackTraceElement   lvlStackTrace = arrStackTrace[INT_STACK_DEPTH_CALLER];
+        
+        Class<?> clsCaller = lvlStackTrace.getClass();
+
+        Logger  logger = Log4j.getLogger(clsCaller);
+        Log4j.setLevel(logger, strLevel);
+        
+        return logger;
+    }
+    
+    
+    //
+    // Logging Level Modification
+    //
+    
+    /**
+     * <p>
+     * Sets the event logging level of the given logger to the given level.
+     * </p>
+     * <p>
+     * The <code>strLevel</code> argument must be a valid name for one of the <code>{@link Level}</code>
+     * enclosed sub-classes.  If the argument does not name a <code>Level</code> sub-class (by name)
+     * then nothing is done, the given <code>Logger</code> instance remains unchanged.
+     * </p>
+     * 
+     * @param logger    logger whose event level is to be modified
+     * @param strLevel  name of a <code{@link Level}</code> sub-class specifying level
+     */
+    public static void  setLevel(Logger logger, String strLevel) {
+        Level level = Level.toLevel(strLevel, logger.getLevel());
+        
+        Configurator.setLevel(logger, level);
     }
     
     /**
@@ -178,6 +320,11 @@ public class Log4j {
         
         return level;
     }
+    
+    
+    //
+    // FileAppender Creation
+    //
 
     /**
      * <h1>
@@ -222,17 +369,18 @@ public class Log4j {
     }
     
     /**
-     * <h1>
-     * Creates and returns the target of the scenario event logging according to the scenario configuration
-     * </h1>
+     * <p>
+     * Creates and returns a new <code>FileAppender</code> instance configured by the given arguments.
+     * </p>
      * <p>
      * Creates and returns a Log4j <code>@link FileAppender</code> which saves log entries to the file location
-     * given in the argument.  The appender is configured according to the argument parameters. 
+     * given in the argument.  The appender is configured according to the argument parameters. The returned
+     * appender is ready for attachment to a Log4j <code>Logger</code> instance.
      * </p> 
      * <p>
      * <h2>Output File</h2>
-     * The output file path and name is given as a single string.  Either an absolute path or relative path may be 
-     * given.
+     * The output file path is given as a single string.  Either an absolute path or relative path may be 
+     * used.
      * </p>
      * <p>
      * <h2>Pattern Layouts</h2>
@@ -245,14 +393,18 @@ public class Log4j {
      * <h2>Appender Attachment</h2>
      * The returned appender instance must be attached to an logger instance for the appender to function.  The method
      * <code>{@link #attachAppender(Logger, AbstractAppender)}</code> is provided for this operation.  It is not
-     * possible to directly attach an appender to the standard <code>Logger</code> object available from the
+     * possible to directly attach an appender to the standard <code>Logger</code> interface available from the
      * Log4j <code>LogManager</code>.
      * </p>
+     * <p>
+     * <h2>Thread Safety</h2>
+     * The returned appender can be used by multiple <code>Logger</code> instances when the append argument
+     * flag is set.  All log entries will be sent to the same output file specified by the file name argument.
      * 
      * @param strName       the unique name of the file appender
      * @param strFile       the path and file name of the logging output file
      * @param strPattern    the pattern layout string specifying the format of each log entry
-     * @param bolAppend     append log entries to the end of the file (assures atomic writes for multiple applications) 
+     * @param bolAppend     append log entries to the end of the file (assures atomic writes for multiple Loggers) 
      * 
      * @return  Log4j file appender - persistent storage target for log entries
      */
@@ -277,6 +429,228 @@ public class Log4j {
         return appendFile;
     }
     
+    
+    //
+    // WriterAppender Creation
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new writer appender for attachment to a Log4j Logger object
+     * </p>
+     * <p>
+     * Defers to <code>{@link #createWriterAppender(String, Writer, String)}</code> using the 
+     * pattern layout argument as the default value <code>{@link #STR_LOG_PATTERN_DEF}</code>.
+     * <p>
+     * 
+     * @param strName       the unique name of the writer appender
+     * @param wtrTarget     the <code>Writer</code> instance to receive logging event entries
+     * 
+     * @return  Log4j output writer appender - writer stream target for log entries
+     * 
+     * @see #createWriterAppender(String, Writer, String)
+     */
+    public static WriterAppender    createWriterAppender(String strName, Writer wtrTarget) {
+        return Log4j.createWriterAppender(strName, wtrTarget, STR_LOG_PATTERN_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new writer appender for attachment to a Log4j Logger object
+     * </p>
+     * <p>
+     * Defers to <code>{@link #createWriterAppender(String, Writer, String, boolean)}</code> setting 
+     * argument <code>bolFollow</code> to <code>true</code>.  That is, the returned writer appender
+     * log entries follow the writer.
+     * </p>
+     * 
+     * @param strName       the unique name of the writer appender
+     * @param wtrTarget     the <code>Writer</code> instance to receive logging event entries
+     * @param strPattern    the pattern layout string specifying the format of each log entry
+     * 
+     * @return  Log4j output writer appender - writer stream target for log entries
+     * 
+     * @see #createWriterAppender(String, Writer, String, boolean)
+     */
+    public static WriterAppender  createWriterAppender(String strName, Writer wtrTarget, String strPattern) {
+        return Log4j.createWriterAppender(strName, wtrTarget, strPattern, true);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>WriterAppender</code> instance attached to the given output writer and
+     * configured by the given arguments.
+     * </p>
+     * <p>
+     * Creates and returns a Log4j <code>@link WriterAppender</code> instance which directs log entries to 
+     * writer instance given in the argument.  The appender is configured according to the argument parameters. 
+     * The returned appender is ready for attachment to a Log4j <code>Logger</code> instance.
+     * </p> 
+     * <p>
+     * <h2>Output Writer</h2>
+     * The output <code>{@link Writer}</code> argument must be initialize and ready for writing.  
+     * </p>
+     * <p>
+     * <h2>Pattern Layouts</h2>
+     * Log entries are formatted according to the <em>pattern layout</em> string.  These strings are closely related
+     * to the C <code>printf</code> function format string.  For more information on pattern layout strings see
+     * the documentation for class <code>{@link org.apache.logging.log4j.core.layout.PatternLayout}</code> and
+     * the online documentation <a href=https://logging.apache.org/log4j/2.x/manual/layouts.html>Log4j Layouts</a>.
+     * The class constant <code>{@link #STR_LOG_PATTERN_DEF}</code> is an example pattern used as a default value.
+     * </p>
+     * <p>
+     * <h2>Appender Attachment</h2>
+     * The returned appender instance must be attached to an logger instance for the appender to function.  The method
+     * <code>{@link #attachAppender(Logger, AbstractAppender)}</code> is provided for this operation.  It is not
+     * possible to directly attach an appender to the standard <code>Logger</code> interface available from the
+     * Log4j <code>LogManager</code>.
+     * </p>
+     * <p>
+     * <h2>Thread Safety</h2>
+     * The returned appender can be used by multiple <code>Logger</code> instances when the append argument
+     * flag is set.  All log entries will be sent to the same output file specified by the file name argument.
+     * 
+     * @param strName       the unique name of the writer appender
+     * @param wtrTarget     the <code>Writer</code> instance to receive logging event entries
+     * @param strPattern    the pattern layout string specifying the format of each log entry
+     * @param bolFollow     follows output writer events (assures atomic writes for multiple Loggers)
+     * 
+     * @return  Log4j output writer appender - writer stream target for log entries
+     */
+    public static WriterAppender createWriterAppender(String strName, Writer wtrTarget, String strPattern, boolean bolFollow) {
+        
+        // Create the pattern layout
+        PatternLayout.Builder   bldrLayout = PatternLayout.newBuilder();
+        bldrLayout.withPattern(strPattern);
+        PatternLayout layout = bldrLayout.build(); 
+
+        WriterAppender.Builder<?>   bldrWtr = WriterAppender.newBuilder();
+        bldrWtr.setName(strName);
+        bldrWtr.setLayout(layout);
+        bldrWtr.setTarget(wtrTarget);
+        bldrWtr.setFollow(bolFollow);
+        
+        // Create the writer appender and return it
+        WriterAppender  appdWtr = bldrWtr.build();
+        appdWtr.start();
+        
+        return appdWtr;
+    }
+    
+    
+    //
+    // OutputStreamAppender Creation
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new output stream appender for attachment to a Log4j Logger object
+     * </p>
+     * <p>
+     * Defers to <code>{@link #createOutputStreamAppender(String, OutputStream, String)}</code> using the 
+     * pattern layout argument as the default value <code>{@link #STR_LOG_PATTERN_DEF}</code>.
+     * <p>
+     * 
+     * @param strName       the unique name of the writer appender
+     * @param osTarget     the <code>OutputStream</code> instance to receive logging event entries
+     * 
+     * @return  Log4j output writer appender - writer stream target for log entries
+     * 
+     * @see #createWriterAppender(String, Writer, String)
+     */
+    public static OutputStreamAppender    createOutputStreamAppender(String strName, OutputStream osTarget) {
+        return Log4j.createOutputStreamAppender(strName, osTarget, STR_LOG_PATTERN_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new output stream appender for attachment to a Log4j Logger object
+     * </p>
+     * <p>
+     * Defers to <code>{@link #createOutputStreamAppender(String, OutputStream, String, boolean)}</code> setting 
+     * argument <code>bolFollow</code> to <code>true</code>.  That is, the returned output stream appender
+     * log entries follow the output stream events.
+     * </p>
+     * 
+     * @param strName       the unique name of the output stream appender
+     * @param osTarget      the <code>OutputStream</code> instance to receive logging event entries
+     * @param strPattern    the pattern layout string specifying the format of each log entry
+     * 
+     * @return  Log4j output stream appender - output stream target for log entries
+     * 
+     * @see #createOutputStreamAppender(String, OutputStream, String, boolean)
+     */
+    public static OutputStreamAppender  createOutputStreamAppender(String strName, OutputStream osTarget, String strPattern) {
+        return Log4j.createOutputStreamAppender(strName, osTarget, strPattern, true);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>OutputStreamAppender</code> instance attached to the given output stream and
+     * configured by the given arguments.
+     * </p>
+     * <p>
+     * Creates and returns a Log4j <code>@link OutputStreamAppender</code> instance which directs log entries to 
+     * output stream instance given in the argument.  The appender is configured according to the argument parameters. 
+     * The returned appender is ready for attachment to a Log4j <code>Logger</code> instance.
+     * </p> 
+     * <p>
+     * <h2>Output Stream</h2>
+     * The output stream <code>{@link OutputStream}</code> argument must be initialize and ready for writing.
+     * The appender is started and ready to direct logging events upon return.  
+     * </p>
+     * <p>
+     * <h2>Pattern Layouts</h2>
+     * Log entries are formatted according to the <em>pattern layout</em> string.  These strings are closely related
+     * to the C <code>printf</code> function format string.  For more information on pattern layout strings see
+     * the documentation for class <code>{@link org.apache.logging.log4j.core.layout.PatternLayout}</code> and
+     * the online documentation <a href=https://logging.apache.org/log4j/2.x/manual/layouts.html>Log4j Layouts</a>.
+     * The class constant <code>{@link #STR_LOG_PATTERN_DEF}</code> is an example pattern used as a default value.
+     * </p>
+     * <p>
+     * <h2>Appender Attachment</h2>
+     * The returned appender instance must be attached to an logger instance for the appender to function.  The method
+     * <code>{@link #attachAppender(Logger, AbstractAppender)}</code> is provided for this operation.  It is not
+     * possible to directly attach an appender to the standard <code>Logger</code> interface available from the
+     * Log4j <code>LogManager</code>.
+     * </p>
+     * <p>
+     * <h2>Thread Safety</h2>
+     * The returned appender can be used by multiple <code>Logger</code> instances when the append argument
+     * flag is set.  All log entries will be sent to the same output file specified by the file name argument.
+     * 
+     * @param strName       the unique name of the output stream appender
+     * @param wtrTarget     the <code>OutputStream</code> instance to receive logging event entries
+     * @param strPattern    the pattern layout string specifying the format of each log entry
+     * @param bolFollow     follows output stream events (assures atomic writes for multiple Loggers)
+     * 
+     * @return  Log4j output stream appender - directs log entries to given target stream
+     */
+    public static OutputStreamAppender    createOutputStreamAppender(String strName, OutputStream osTarget, String strPattern, boolean bolFollow) {
+        
+        // Create the pattern layout
+        PatternLayout.Builder   bldrLayout = PatternLayout.newBuilder();
+        bldrLayout.withPattern(strPattern);
+        PatternLayout layout = bldrLayout.build(); 
+
+        OutputStreamAppender.Builder<?>   bldrOstr = OutputStreamAppender.newBuilder();
+        bldrOstr.setName(strName);
+        bldrOstr.setLayout(layout);
+        bldrOstr.setTarget(osTarget);
+        bldrOstr.setFollow(bolFollow);
+        
+        // Create the writer appender and return it
+        OutputStreamAppender  appdOstr = bldrOstr.build();
+        appdOstr.start();
+        
+        return appdOstr;
+    }
+    
+    
+    //
+    // Appender/Logger Attachment
+    //
+    
     /**
      * <h1>
      * Attaches the given Log4j appender to the given Logger object
@@ -291,6 +665,8 @@ public class Log4j {
      * @param appender  appender to be added to target logger
      * 
      * @return  <code>true</code> if the appender was successfully attached, <code>false</code> otherwise
+     * 
+     * @see org.apache.logging.log4j.core.Logger
      */
     public static boolean    attachAppender(Logger logger, AbstractAppender appender) {
         

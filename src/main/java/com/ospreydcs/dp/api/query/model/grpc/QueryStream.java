@@ -673,7 +673,7 @@ public abstract class QueryStream implements Runnable, Callable<Boolean>, Stream
      * </p>
      * <p>
      * This operation is invoked by the Query Service to signal that all data has been
-     * transmitted and the stream is no longer active.  The method performs the following
+     * transmitted and the stream is no longer enabled.  The method performs the following
      * actions:
      * <ol>  
      * <li>The result record <code>{@link #recResult}</code> is set to SUCCESS.</li>

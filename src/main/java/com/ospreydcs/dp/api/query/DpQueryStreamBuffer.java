@@ -408,7 +408,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * </p>
      * <p>
      * Notifications about stream activities is sent to any registered query stream observers
-     * (see <code>{@link #addStreamObserver(IQueryStreamQueueBufferObserverDeprecated)}</code>).  Query stream observers 
+     * (see <code>{@link #addStreamObserver(IDpQueryStreamObserver)}</code>).  Query stream observers 
      * should spawn independent threads to process incoming data.
      * </p>
      * <p>
@@ -700,7 +700,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
 
     /**
      * <p>
-     * Perform a hard shutdown of an active data streaming process.  Any active processes
+     * Perform a hard shutdown of an enabled data streaming process.  Any enabled processes
      * are interrupted.
      * </p>
      * <p>
@@ -709,6 +709,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * <li>if the <code>{@link #start()}</code> has not been called.</li>
      * <li>if the data stream has already completed.</li>
      * In such cases the method returns <code>false</code>.
+     * </ul>
      * </p>
      * <p>
      * Use this method with caution as it sends an error message to the
@@ -721,7 +722,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * concurrent invocations occur.
      * </p>
      * 
-     * @return <code>true</code> if an active data streaming process was terminated, 
+     * @return <code>true</code> if an enabled data streaming process was terminated, 
      *         <code>false</code> if the data streaming was already inactive
      */
     public boolean shutdownNow() {
@@ -763,7 +764,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * called and the data stream is either
      * <ul>
      * <li>waiting for the <em>Query Service</em> to begin streaming</li>
-     * <li>in the active process of streaming</li>
+     * <li>in the enabled process of streaming</li>
      * <li>finished streaming and now dormant</li>
      * </ul>
      * </p>
@@ -777,7 +778,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
     
     /**
      * <p>
-     * Returns whether or not the associated data stream is currently active.
+     * Returns whether or not the associated data stream is currently enabled.
      * </p>
      * <p>
      * The returned value is the following combination of state queries:
@@ -785,7 +786,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * &nbsp; &nbsp; <code>{@link #isStreamRequested()} && ! {@link #isStreamCompleted()}</code>
      * </p>
      * 
-     * @return <code>true</code> if the Query Service data stream is active,
+     * @return <code>true</code> if the Query Service data stream is enabled,
      *         <code>false</code> otherwise
      *         
      * @see #isStreamRequested()
@@ -924,7 +925,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * <h2>NOTES:</h2>
      * This method returns the <em>current</em> size of the response buffer.
      * <ul>
-     * <li>If streaming is active the returned value is dynamics.</li>
+     * <li>If streaming is enabled the returned value is dynamics.</li>
      * <li>If the streaming has completed the returned value reflects the size of the results set 
      *     (number of data pages).</li>
      * </ul>
@@ -943,13 +944,13 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * <h2>NOTES:</h2>
      * This method returns response buffer, which is dynamic.
      * <ul>
-     * <li>If streaming is active the data buffer may continue to expand.</li>
+     * <li>If streaming is enabled the data buffer may continue to expand.</li>
      * <li>If the streaming has completed the returned value is the results set.</li> 
      * </ul>
      * </p>
      * <p>
      * <h2>WARNING:</h2>
-     * The returned object should not be modified if the current stream is still active.
+     * The returned object should not be modified if the current stream is still enabled.
      * Results are unpredictable.
      * </p>
      * 
@@ -1097,7 +1098,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      */
     @Override
     public String toString() {
-        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClass() + "\n");
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClassName() + "\n");
         
         // Write out contents
         buf.append("  List of page request indices: " + this.lstIndPageRequested + "\n");
@@ -1200,7 +1201,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
         this.addPage(msgRsp);
 
         // Request next page 
-        //  This is active only for bidirectional streams
+        //  This is enabled only for bidirectional streams
         this.requestNextPageBidi();
     }
 
@@ -1423,7 +1424,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
             throw new IllegalArgumentException(strErrMsg);
         }
         
-        // Set the active request flag and return
+        // Set the enabled request flag and return
         this.bolStreamRequested = true;
     }
 
@@ -1437,7 +1438,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * </p>
      * The following set of operations are performed:
      * <ul>
-     * <li>The rejection is logged (if logging is active).</li>
+     * <li>The rejection is logged (if logging is enabled).</li>
      * <li>Shuts down the forward stream if bidirectional (with <code>{@link #hndSvrStrm#onCompleted()})</code></li>.
      * <li>Sets the 'request rejected' flag (<code>{@link #bolRequestRejected}</code>.</li>
      * <li>Release the 'stream completed monitor'</li>
@@ -1476,7 +1477,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
      * when using a BIDI stream.
      * </p>
      * <p>
-     * This method is only active for bidirectional streams.  If a unidirectional stream was 
+     * This method is only enabled for bidirectional streams.  If a unidirectional stream was 
      * initiated the method simply returns.
      * </p>
      * <p>

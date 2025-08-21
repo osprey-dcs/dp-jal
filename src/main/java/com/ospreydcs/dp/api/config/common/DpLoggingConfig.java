@@ -53,9 +53,9 @@ public final class DpLoggingConfig extends CfgStructure<DpLoggingConfig>{
     // Configuration Fields
     //
     
-    /** Is logging active or not */
-    @ACfgOverride.Field(name="ACTIVE")
-    public Boolean  active;
+    /** Is logging enabled or not */
+    @ACfgOverride.Field(name="ENABLED")
+    public Boolean  enabled;
     
     /** Logging level */
     @AUnavailable(status=STATUS.UNDER_REVIEW)

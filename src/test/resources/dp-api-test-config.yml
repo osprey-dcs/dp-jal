@@ -1,5 +1,5 @@
 #
-# Project: dp-api-common
+# Project: dp-api-java
 # File:    dp-api-test-config.yml
 # Type:    YAML
 #
@@ -25,12 +25,12 @@ testQuery:
       persistence: src/test/data/persistence # persistent data location : DP_API_TEST_QUERY_DATA_PERSISTENCE
       
    timeoutShort:
-      active: true            # apply timeout condition   : DP_API_TEST_QUERY_TIMEOUT_ACTIVE
+      enabled: true           # apply timeout condition   : DP_API_TEST_QUERY_TIMEOUT_ENABLED
       limit: 5                # timeout limit             : DP_API_TEST_QUERY_TIMEOUT_LIMIT
       unit: SECONDS           # java.concurrent.TimeUnit  : DP_API_TEST_QUERY_TIMEOUT_UNIT
    
    timeoutLong:
-      active: true            # apply timeout condition   : DP_API_TEST_QUERY_TIMEOUT_ACTIVE
+      enabled: true           # apply timeout condition   : DP_API_TEST_QUERY_TIMEOUT_ENABLED
       limit: 60               # timeout limit             : DP_API_TEST_QUERY_TIMEOUT_LIMIT
       unit: SECONDS           # java.concurrent.TimeUnit  : DP_API_TEST_QUERY_TIMEOUT_UNIT
    
@@ -40,7 +40,7 @@ testQuery:
       description: Query Service test archive connection parameters # : DP_API_TEST_QUERY_CONNECTION_DESCRIPTION
       supplement: None               # (opt) anonymous parameter : DP_API_TEST_QUERY_CONNECTION_SUPPLEMENT
       timeout:      # General connection timeout properties (e.g., used in service shutdown)
-         active: true                # apply timeout condition   : DP_API_TEST_QUERY_CONNECTION_TIMEOUT_ACTIVE
+         enabled: true               # apply timeout condition   : DP_API_TEST_QUERY_CONNECTION_TIMEOUT_ENABLED
          limit: 30                   # timeout limit             : DP_API_TEST_QUERY_CONNECTION_TIMEOUT_LIMIT
          unit: SECONDS               # java.concurrent.TimeUnit  : DP_API_TEST_QUERY_CONNECTION_TIMEOUT_UNIT
       channel:      # gRPC Channel configuration         
@@ -48,7 +48,7 @@ testQuery:
             url: localhost              # host server URL           : DP_API_TEST_QUERY_CONNECTION_CHANNEL_HOST_URL
             port: 50052                 # server port address       : DP_API_TEST_QUERY_CONNECTION_CHANNEL_HOST_PORT
          tls:              # HTTP2 Transport Layer Security parameters
-            active: false               # use TLS security          : DP_API_TEST_QUERY_CONNECTION_CHANNEL_TLS_ACTIVE
+            enabled: false              # use TLS security          : DP_API_TEST_QUERY_CONNECTION_CHANNEL_TLS_ENABLED
             defaultTls: true            # use default TLS operation : DP_API_TEST_QUERY_CONNECTION_CHANNEL_TLS_DEFAULT
             filepaths:     # file path locations for TLS certificates and keys (only if defaultTls == false)
                trustedCerts:            # trusted certs collection  : DP_API_TEST_QUERY_CONNECTION_CHANNEL_TLS_FILE_TRUSTED_CERTS

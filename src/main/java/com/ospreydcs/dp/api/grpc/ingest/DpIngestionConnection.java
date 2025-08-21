@@ -60,11 +60,22 @@ public final class DpIngestionConnection extends DpGrpcConnection<DpIngestionSer
 
     
     //
-    // Class Resources
+    // Application Resources
     //
     
     /** Default connection parameters for Ingestion Service */
     public static final DpGrpcConnectionConfig CFG_DEFAULT = DpApiConfig.getInstance().connections.ingestion;
+    
+    
+    //
+    // Class Constants
+    //
+    
+    /** Default timeout limit */
+    public static final long        LNG_TIMEOUT = CFG_DEFAULT.timeout.limit;
+    
+    /** Default timeout limit units */
+    public static final TimeUnit    TU_TIMEOUT = CFG_DEFAULT.timeout.unit;
     
     
     //
@@ -154,7 +165,7 @@ public final class DpIngestionConnection extends DpGrpcConnection<DpIngestionSer
      * @see DpGrpcConnection#awaitTermination(long, TimeUnit)
      */
     public boolean awaitTermination() throws InterruptedException {
-        return super.awaitTermination(CFG_DEFAULT.timeout.limit, CFG_DEFAULT.timeout.unit);
+        return super.awaitTermination(LNG_TIMEOUT, TU_TIMEOUT);
     }
 
 }

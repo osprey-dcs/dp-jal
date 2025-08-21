@@ -500,7 +500,7 @@ public class IngestionFrameProcessorEvaluatorDep {
         os.println("  Total bytes produced  : " + results.szProducedTotalBytes);
         os.println("  Time processing       : " + results.getDurationProcessing());
         os.println("  Time for shutdown     : " + results.getDurationShutdown());
-        os.println("  Time processor active : " + results.getDurationActive());
+        os.println("  Time processor enabled : " + results.getDurationActive());
         os.println("  Tie for total test    : " + results.getDurationTotal());
     }
     

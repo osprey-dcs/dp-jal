@@ -29,12 +29,17 @@ package com.ospreydcs.dp.api.grpc.model;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
+import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 import io.grpc.ManagedChannel;
@@ -102,6 +107,16 @@ public class DpGrpcConnection<
     > 
 //    implements IConnection
 {
+    
+    //
+    // Application Resources
+    //
+    
+    /** The default logging configuration for all Data Platform connections */
+    private static final DpLoggingConfig            CFG_LOGGING = DpApiConfig.getInstance().connections.logging;
+    
+    /** The default connection parameters for the Data Platform Query Service */
+    private static final DpGrpcConnectionConfig     CFG_CONNECT = DpApiConfig.getInstance().connections.query;
 
     
     //
@@ -119,7 +134,17 @@ public class DpGrpcConnection<
     
 
     /** Event logging enabled flag */
-    private static final boolean    BOL_LOGGING = DpApiConfig.getInstance().connections.logging.active;
+    private static final boolean    BOL_LOGGING = CFG_LOGGING.enabled;
+    
+    /** Logging event level */
+    private static final String     STR_LOGGING_LEVEL = CFG_LOGGING.level;
+    
+    
+    /** The default timeout limit */
+    private static final long       LNG_TIMEOUT = CFG_CONNECT.timeout.limit;
+    
+    /** The default timeout limit units */
+    private static final TimeUnit   TU_TIMEOUT = CFG_CONNECT.timeout.unit;
     
     
     //
@@ -130,6 +155,20 @@ public class DpGrpcConnection<
     private static final Logger LOGGER = LogManager.getLogger();
 
     
+    /**
+     * <p>
+     * Class Initialization
+     * </p>
+     * <p>
+     * Initializes the event logger - sets logging level.
+     * </p>
+     */
+    static {
+        Level   lvlLogging = Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel());
+        Configurator.setLevel(LOGGER, lvlLogging);
+    }
+    
+    
     //
     // Connection Resources
     //
@@ -138,23 +177,23 @@ public class DpGrpcConnection<
     private final Class<ServiceGrpc> clsService;
     
     /** The single gRPC data channel supporting all communications stubs */
-    private final ManagedChannel    grpcChan;
+    private final ManagedChannel    chanGrpc;
     
     /** Blocking, synchronous communications stub (no streaming operations)*/
-    private final BlockStub         stubBlock;
+    private BlockStub         stubBlock;
     
     /** Non-blocking communications stub (no streaming operations) */
-    private final FutureStub        stubFuture;
+    private FutureStub        stubFuture;
 
     /** Full Stub - Nonblocking, asynchronous communications stub with all streaming operations */
-    private final AsyncStub         stubAsync;
+    private AsyncStub         stubAsync;
     
     
-//    /** The timeout limit for channel shutdown and termination operations */
-//    private final Integer           cntTimeout;
-//    
-//    /** The timeout units for channel shutdown and termination operations */
-//    private final TimeUnit          tuTimeout;
+    /** The timeout limit for channel shutdown and termination operations */
+    private long                lngTimeout = LNG_TIMEOUT;
+    
+    /** The timeout units for channel shutdown and termination operations */
+    private TimeUnit            tuTimeout = TU_TIMEOUT;
     
     
     //
@@ -173,17 +212,17 @@ public class DpGrpcConnection<
      *
      * @param <Service>     Protocol Buffers generated gRPC service class
      * 
-     * @param grpcChan       gRPC managed channel backing the synchronous blocking stub
+     * @param chanGrpc       gRPC managed channel backing the synchronous blocking stub
      * @param clsService    class object of the <code>Service</code> class
      * 
      * @throws DpGrpcException a Java reflection error occurred during communication stubs creation (see message and cause)
      */
-    public DpGrpcConnection(Class<ServiceGrpc> clsService, ManagedChannel grpcChan) throws DpGrpcException {
+    public DpGrpcConnection(Class<ServiceGrpc> clsService, ManagedChannel chanGrpc) throws DpGrpcException {
         this.clsService = clsService;
-        this.grpcChan = grpcChan;
-        this.stubBlock = this.newBlockStub(grpcChan);
-        this.stubFuture = this.newFutureStub(grpcChan);
-        this.stubAsync = this.newAsyncStub(grpcChan);
+        this.chanGrpc = chanGrpc;
+        this.stubBlock = this.newBlockStub(chanGrpc);
+        this.stubFuture = this.newFutureStub(chanGrpc);
+        this.stubAsync = this.newAsyncStub(chanGrpc);
         
         if (BOL_LOGGING)
             LOGGER.debug("Created new connection {} for gRPC service {}", this.getClass().getSimpleName(), clsService.getSimpleName());
@@ -205,7 +244,7 @@ public class DpGrpcConnection<
      */
     protected DpGrpcConnection(DpGrpcConnection<ServiceGrpc, BlockStub, FutureStub, AsyncStub>  conn) {
         this.clsService = conn.clsService;
-        this.grpcChan = conn.grpcChan;
+        this.chanGrpc = conn.chanGrpc;
         this.stubBlock = conn.stubBlock;
         this.stubFuture = conn.stubFuture;
         this.stubAsync = conn.stubAsync;
@@ -245,6 +284,67 @@ public class DpGrpcConnection<
 //        LOGGER.debug("Created new connection {} for gRPC unknown service", this.getClass().getName());
 //    }
 //    
+    
+    //
+    // Configuration
+    //
+    
+    /**
+     * <p>
+     * Sets the timeout limit for gRPC connection operations.
+     * </p>
+     * <p>
+     * The method new sets the timeout limits for all channel operations by creating new communication stubs
+     * with the given deadline.  The default shut down timeout limit for <code>{@link #awaitTermination()}</code>
+     * is also set here.  
+     * </p>
+     * <p>
+     * <s>
+     * Currently this timeout limit applies only to method <code>{@link #awaitTermination()}</code>,
+     * that is, the method will wait at most the given duration specified by the arguments.
+     * </s>
+     * </p>
+     * <p>
+     * The default value is taken from class constants <code>{@link #LNG_TIMEOUT}</code> and
+     * <code>{@link #TU_TIMEOUT}</code>, which are in turn taken from the Java API Library configuration
+     * file.
+     * </p>
+     * 
+     * @param lngTimeout    the timeout limit
+     * @param tuTimeout     the time units of the above limit
+     */
+    public void setTimeoutLimit(long lngTimeout, TimeUnit tuTimeout) {
+        this.lngTimeout = lngTimeout;
+        this.tuTimeout = tuTimeout;
+        
+        this.stubBlock = stubBlock.withDeadlineAfter(lngTimeout, tuTimeout);
+        this.stubFuture = stubFuture.withDeadlineAfter(lngTimeout, tuTimeout);
+        this.stubAsync = stubAsync.withDeadlineAfter(lngTimeout, tuTimeout);
+        
+        if (BOL_LOGGING) {
+            LOGGER.info("Operation timeout limit set to {} {} for gRPC connect {} communication stubs.", lngTimeout, tuTimeout, this.getClass());
+        }
+    }
+    
+    /**
+     * <p>
+     * Returns the timeout limit for gRPC connection operations
+     * </p>
+     * <p>
+     * Currently this timeout limit applies only to method <code>{@link #awaitTermination()}</code>,
+     * that is, the method will wait at most the given duration specified by the arguments.
+     * </p>
+     * <p>
+     * The default value is taken from class constants <code>{@link #LNG_TIMEOUT}</code> and
+     * <code>{@link #TU_TIMEOUT}</code>, which are in turn taken from the Java API Library configuration
+     * file.
+     * </p>
+     * 
+     * @return  the timeout limit as a Java <code>Duration</code> object 
+     */
+    public Duration getTimeoutLimit() {
+        return Duration.of(this.lngTimeout, this.tuTimeout.toChronoUnit());
+    }
     
     //
     // IConnection Interface
@@ -294,10 +394,10 @@ public class DpGrpcConnection<
 //    @Override
     public boolean shutdownSoft() throws InterruptedException {
 
-        if (this.grpcChan.isShutdown())
+        if (this.chanGrpc.isShutdown())
             return false;
         
-        this.grpcChan.shutdown();
+        this.chanGrpc.shutdown();
         
 //        boolean bolShutdown = this.chnGprc.awaitTermination(this.cntTimeout, this.tuTimeout);
 //        
@@ -334,15 +434,43 @@ public class DpGrpcConnection<
 //    @Override
     public boolean shutdownNow() {
         
-        if (this.grpcChan.isShutdown())
+        if (this.chanGrpc.isShutdown())
             return false;
         
-        this.grpcChan.shutdownNow();
+        this.chanGrpc.shutdownNow();
         
         if (BOL_LOGGING)
             LOGGER.info("Hard shutdown initiated for connection {}", this.getClass().getName());
         
         return true;
+    }
+    
+    /**
+     * <p>
+     * Blocks until the connection finishes a shutdown operation and the underlying gRPC
+     * channel fully terminates.
+     * </p>
+     * <p>
+     * This method defers to <code>{@link #awaitTermination(long, TimeUnit)}</code> supplying default 
+     * timeout arguments specified in the Java API Library configuration file
+     * (see <code>{@link #LNG_TIMEOUT}</code> and <code>{@link #TU_TIMEOUT}</code>), or a 
+     * client-specified timeout limit for the connection using method 
+     * <code>{@link #setTimeoutLimit(long, TimeUnit)}</code>. 
+     * </p>
+     * <p>
+     * It is assumed that either a {@link #shutdownSoft()} or {@link #shutdownNow()} operation
+     * was previously invoked, otherwise the method immediately returns a <code>false</code> value.
+     * After returning a <code>true</code> value all gRPC operations have completed, the underlying 
+     * gRPC channel has terminated, and all gRPC resource have been released.
+     * </p>
+     * 
+     * @return  <code>true</code> if connection shut down and terminated within the alloted limit,
+     *          <code>false</code> either the shutdown operation was never invoked, or the operation failed
+     *           
+     * @throws InterruptedException process was interrupted while waiting for channel to fully terminate
+     */
+    public boolean awaitTermination() throws InterruptedException {
+        return this.awaitTermination(this.lngTimeout, this.tuTimeout);
     }
     
     /**
@@ -369,7 +497,7 @@ public class DpGrpcConnection<
         if (!this.isShutdown())
             return false;
         
-        boolean bolResult = this.grpcChan.awaitTermination(cntTimeout, tuTimeout);
+        boolean bolResult = this.chanGrpc.awaitTermination(cntTimeout, tuTimeout);
         
         return bolResult;
     }
@@ -402,7 +530,7 @@ public class DpGrpcConnection<
      */
 //    @Override
     public boolean isShutdown() {
-        return this.grpcChan.isShutdown();
+        return this.chanGrpc.isShutdown();
     }
 
     /**
@@ -410,23 +538,23 @@ public class DpGrpcConnection<
      * Indicates whether or not the connection has been fully terminated.
      * </p>
      * <p>
-     * The "fully terminated" condition indicates that there are no active
+     * The "fully terminated" condition indicates that there are no enabled
      * processes and all channel resources have been released.  This condition
      * differs from that of <code>{@link #isShutdown()}</code> where a 
      * value <code>true</code> may be returned although the connection may still
-     * have active processes and allocated resources. 
+     * have enabled processes and allocated resources. 
      * </p>
      * <p>
      * This method defers to the <code>isTerminated()</code> method of the
      * <code>ManagedChannel</code> resource.
      * </p>
      * 
-     * @return <code>true</code> if there are not active processes and all resources have been releases,
+     * @return <code>true</code> if there are not enabled processes and all resources have been releases,
      *         <code>false</code> otherwise
      */
 //    @Override
     public boolean isTerminated() {
-        return this.grpcChan.isTerminated();
+        return this.chanGrpc.isTerminated();
     }
     
     
@@ -456,7 +584,7 @@ public class DpGrpcConnection<
      * @return the gRPC managed channel supporting this connection
      */
     public ManagedChannel getChannel() {
-        return this.grpcChan;
+        return this.chanGrpc;
     }
     
     /**

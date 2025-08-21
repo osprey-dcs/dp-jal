@@ -15,11 +15,20 @@ package com.ospreydcs.dp.api.config.model;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
+
+import com.ospreydcs.dp.api.util.JalEnv;
+import com.ospreydcs.dp.api.util.JavaRuntime;
 
 
 /**
@@ -38,7 +47,34 @@ import org.yaml.snakeyaml.Yaml;
  *
  */
 public final class CfgLoaderYaml {
-	
+
+    //
+    // Application Resources
+    //
+    
+    /** Java API Library configuration file directory (relative to installation location) */
+    public static final String      STR_LIB_DIR_CFG = "config";
+    
+    /** The location of the enclosing JAR file */
+    public static final String      STR_JAR_LOCATION;
+    
+    static {
+        String      strJarLoc;
+        
+        try {
+            strJarLoc = CfgLoaderYaml.class
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .getPath();
+            
+        } catch (Exception e) {
+            strJarLoc = "";
+        }
+        
+        STR_JAR_LOCATION = strJarLoc;
+    }
+    
     //
     // Class Resources
     //
@@ -69,7 +105,7 @@ public final class CfgLoaderYaml {
      * @param   <Struct>    type of the structure class support the YAML document format
      * 
      * @param   strFileName file name of YAML document containing configuration parameters
-     * @param   clsStruct   class type of the structure class to be created
+     * @param   clsStruct   class type of the structure class to be created from file contents
      * 
      * @return  a new <code>Struct</code> instance containing the contents of the YAML file 
      * 
@@ -78,16 +114,16 @@ public final class CfgLoaderYaml {
      */
     public static <Struct extends Object> Struct load(String strFileName, Class<Struct> clsStruct) throws FileNotFoundException, SecurityException {
         
+        
         // SnakeYaml version 1.x.x
-//        Yaml ymlClient = new Yaml(new Constructor(clsProps));
-//        InputStream insProps = new FileInputStream(strFileYml);
+//        Yaml ymlClient = new Yaml(new Constructor(clsStruct));
+//        InputStream insProps = new FileInputStream(strFileName);
 //        T cfgProps = ymlClient.load(insProps);
         
-        InputStream isCfg = CfgLoaderYaml.class.getClassLoader().getResourceAsStream(strFileName);
-//    	InputStream	isCfg = new FileInputStream(strFileYml);
-    	Struct objParams = YML_INSTANCE.loadAs(isCfg, clsStruct);
-
-        return objParams;
+        InputStream isFileCfg = locateConfigFile(strFileName);  
+        Struct      strcCfg = load(isFileCfg, clsStruct);
+        
+        return strcCfg;
     }
     
     /**
@@ -98,13 +134,13 @@ public final class CfgLoaderYaml {
      * <p>
      * If an error occurs during YAML parsing either an error message is sent to a log file if
      * the properties file cannot be found, or <em>SnakeYaml</em> sends
-     * error messages to <code>sterr</code> then crashes.
+     * error messages to <code>sterr</code> then crashes (hard).
      * </p>
      * 
      * @param   <Struct>    type of the structure class support the YAML document format
      *
      * @param   fileYaml    file instance identifying the target YAML document
-     * @param   clsStruct   class type of the structure class to be created
+     * @param   clsStruct   class type of the structure class to be created from file contents
      * 
      * @return  a new <code>Struct</code> instance containing the contents of the YAML file
      *  
@@ -114,178 +150,124 @@ public final class CfgLoaderYaml {
     public static <Struct extends Object> Struct load(File fileYaml, Class<Struct> clsStruct) throws FileNotFoundException, SecurityException {
 
         InputStream isFile = new FileInputStream(fileYaml);
-        Struct  objParams = YML_INSTANCE.loadAs(isFile, clsStruct);
+        Struct      cfgParams = YML_INSTANCE.loadAs(isFile, clsStruct);
         
-        return objParams;
+        return cfgParams;
     }
     
-//    /**
-//     * <p>
-//     * Overrides the default property values in the <em>application.yml</em> file
-//     * with any environment variables that are defined.  It is assumed the argument is
-//     * the <code>AppProperties</code> instance which has already been loaded from the
-//     * <em>application.yml</em> configuration file.
-//     * <h2>NOTE:</h2>
-//     * This is a recursive function so the method signature must be of type
-//     * <code>Object</code> to function correctly.  However, the argument of initial invocation
-//     * is expected to be of type <code>AppProperties</code>. 
-//     * </p>
-//     * 
-//     * @param   <Struct>    The structure type of the accepting the YAML document
-//     * 
-//     * @param objProps  the <code>AppProperties</code> instance to be overridden
-//     * 
-//     * @return <code>true</code> if at least one parameter was overridden, <code>false</code> otherwise
-//     * 
-//     * @throws IllegalArgumentException encountered a null argument during recursion
-//     * @throws IllegalAccessException unable to get a structure field object (java.lang.reflect.Field#get)
-//     */
-//    public static <Struct extends Object> boolean override(Struct objProps) throws IllegalArgumentException, IllegalAccessException {
-//        boolean bolResult = false;
-//        
-//        if ( Objects.isNull(objProps) )
-//            throw new IllegalArgumentException("Properties object is null");
-//        
-//        Class<?> clsProps = objProps.getClass();
-//        
-//        // Is the class marked for override (or recursive included class)?
-////        if (! (  clsProps.isAnnotationPresent(ACfgOverride.class) 
-////              || clsProps.isAnnotationPresent(ACfgOverride.Struct.class)
-////              || clsProps.isAnnotationPresent(ACfgOverride.Field.class) ) 
-////            ) 
-////            return false;
-//
-//        // For every field in the class
-//        for (Field fld : clsProps.getDeclaredFields()) {
-//            
-//            // Is field a structure containing a field to be overridden
-//            if (fld.isAnnotationPresent(ACfgOverride.Struct.class)) {
-//                fld.setAccessible(true);
-//                Object objFld = fld.get(objProps);
-//                
-//                // Recursively override the underlying field 
-//                if (CfgLoaderYaml.override(objFld))
-//                    bolResult = true;
-//                
-//            }
-//            
-//            // Can the field be overridden?
-//            if (fld.isAnnotationPresent(ACfgOverride.Field.class)) {
-//                ACfgOverride.Field annFld = fld.getAnnotation(ACfgOverride.Field.class);
-//                if ( !annFld.env().isBlank() ) {
-//                    String strNewVal = System.getenv(annFld.env());
-//                   
-//                    if (strNewVal == null || strNewVal.isBlank() || strNewVal.isEmpty())
-//                        continue;
-//
-//                    fld.setAccessible(true);
-//                    
-//                    // Parse by type
-//                    if (fld.getType().equals(java.lang.String.class)) {
-//                        fld.set(objProps, strNewVal);
-//                    
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Boolean.class)) {
-//                        Boolean bolNewVal = Boolean.parseBoolean(strNewVal);
-//                        fld.set(objProps, bolNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Integer.class)) {
-//                        Integer intNewVal = Integer.parseInt(strNewVal);
-//                        fld.set(objProps, intNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Long.class)) {
-//                        Long    lngNewVal = Long.parseLong(strNewVal);
-//                        fld.set(objProps, lngNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Float.class)) {
-//                        Float   fltNewVal = Float.parseFloat(strNewVal);
-//                        fld.set(objProps, fltNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                    if (fld.getType().equals(Double.class)) {
-//                        Double  dblNewVal = Double.parseDouble(strNewVal);
-//                        fld.set(objProps, dblNewVal);
-//                        
-//                        bolResult = true;
-//                    }
-//                }
-//            }
-//            
-//        }        
-//        
-//        return bolResult;
-//    }
-//    
-//    /**
-//     * <p>
-//     * Parses the properties in the <code>AppProperties</code> for the 
-//     * <code>AOverrideCapable</code> annotations to determine the supported environment
-//     * variables for the application.  The application then returns a list of these
-//     * variables which it found (along with the current values, the properties object,
-//     * etc. as an <code>CfgOverrideRec</code> records).
-//     * It is assumed the argument is
-//     * the <code>AppProperties</code> instance which has already been loaded from the
-//     * <em>application.yml</em> configuration file.  
-//     * <h2>NOTE:</h2>
-//     * This is a recursive function so the method signature must be of type
-//     * <code>Object</code> to function correctly.  However, the argument of initial invocation
-//     * is expected to be of type <code>AppProperties</code>. 
-//     * </p>
-//     * 
-//     * @param objProps  the <code>AppProperties</code> instance to be overridden
-//     * 
-//     * @return a list of environment variables (records) found when parsing the argument 
-//     * 
-//     * @throws IllegalArgumentException encountered a null argument during recursion
-//     * @throws IllegAccessException unable to get a structure field object (java.lang.reflect.Field#get)
-//     */
-//    public static List<CfgOverrideRec> parse(Object objProps) throws IllegalArgumentException, IllegalAccessException {
-//        
-//        if ( Objects.isNull(objProps) )
-//            throw new IllegalArgumentException("Properties object is null");
-//        
-//        List<CfgOverrideRec> lstVars = new LinkedList<CfgOverrideRec>();
-//
-//        Class<?> clsProps = objProps.getClass();
-//
-//        for (Field fld : clsProps.getDeclaredFields()) {
-//            if (fld.isAnnotationPresent(ACfgOverride.Struct.class)) {
-//                fld.setAccessible(true);
-//                Object objFld = fld.get(objProps);
-//                
-//                lstVars.addAll( CfgLoaderYaml.parse(objFld) );
-//            }
-//            
-//            if (fld.isAnnotationPresent(ACfgOverride.Field.class)) {
-//                ACfgOverride.Field annFld = fld.getAnnotation(ACfgOverride.Field.class);
-//                if ( !annFld.env().isBlank() ) {
-//                    String strVarNm  = annFld.env();
-//                    String strVarVal = System.getenv(annFld.env());
-//                    
-//                    CfgOverrideRec var = new CfgOverrideRec(strVarNm, strVarVal, fld, objProps);
-//                   
-//                    lstVars.add(var);
-//                }
-//            }
-//            
-//        }        
-//     
-//        return lstVars;
-//    }
-
+    /**
+     * <p>
+     * Loads (configuration) parameters from the given input stream.
+     * </p>
+     * <p>
+     * The input stream is assumed to be connected to a YAML file supporting the given structure class type 
+     * <code>Struct</code>.  The input stream is parsed and values loaded into a new structure class supporting 
+     * the YAML file format.
+     * </p>
+     * 
+     * @param   <Struct>    type of the structure class support the YAML document format
+     *
+     * @param   isFileYaml  input stream connected to the file instance of the target YAML document
+     * @param   clsStruct   class type of the structure class to be created from input stream
+     * 
+     * @return  a new <code>Struct</code> instance containing the contents of the YAML file
+     */
+    public static <Struct extends Object> Struct load(InputStream isFileYaml, Class<Struct> clsStruct) {
+        Struct      cfgParams = YML_INSTANCE.loadAs(isFileYaml, clsStruct);
+        
+        return cfgParams;
+    }
+    
     
     //
     // Support Methods
     //
     
+    /**
+     * <p>
+     * Locates the configuration file with the given name on the local platform.
+     * </p>
+     * <p>
+     * The method first attempts "dynamic configuration" by looking in the installation
+     * location for the Java API Library defined by the 'DP_API_JAVA_HOME' environment
+     * variable. This environment variable should be set to the installation directory of the
+     * Java API Library.    
+     * </p>
+     * 
+     * @param strFileName   the name of the configuration file
+     * 
+     * @return  a file object connected to the configuration file with the given name
+     * 
+     * @throws FileNotFoundException    the configuration file was not reachable
+     */
+    private static InputStream locateConfigFile(String strFileName) throws FileNotFoundException {
+        
+        // Look for file in the JAL Home directory 
+        try {
+            File    fileCfg = JalEnv.getJalHomeFile(STR_LIB_DIR_CFG, strFileName);
+            if (fileCfg.exists()) {
+                LOGGER.info("Configuration taken from JAL Home file {}.", fileCfg);
+
+                InputStream isFileCfg = Files.newInputStream(fileCfg.toPath());
+                
+                return  isFileCfg;
+            }
+            
+            LOGGER.warn("Configuration file {} not found in JAL Home {}.  Attempting internal (JAR) configuration.", fileCfg, JalEnv.getJalHomeValue());
+            
+        } catch (FileSystemNotFoundException | InvalidPathException e) {
+            LOGGER.warn("Java API Library environment exception {}: {}.  Attempting internal (JAR) configuration.", e.getClass(), e.getMessage());
+            
+        } catch (IOException | IllegalArgumentException | UnsupportedOperationException e) {
+            LOGGER.warn("Configuration file {} not accessiable - exception {}: {}.  Attempting internal (JAR) configuration.", e.getClass(), e.getMessage());
+
+        }
+        
+        // Look for file in JAL JAR - Try finding file with class loader
+        String  strErrMsg = JavaRuntime.getQualifiedMethodNameSimple()
+                + " - no resource with file name " + strFileName
+                + " was found in class loader proximity.";
+        
+        try {
+            ClassLoader ldrClass = CfgLoaderYaml.class.getClassLoader();
+            URL         urlFile = ldrClass.getResource(strFileName);
+            InputStream isFile = ldrClass.getResourceAsStream(strFileName);
+            
+//            // TODO - Remove
+//            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Searching for file " + strFileName);
+//            System.out.println("  ClassLoader " + ldrClass + " found path location = " + urlFile.getPath());
+//            System.out.println("  ClassLoader " + ldrClass + " found file = " + urlFile.getFile());
+//            
+//            File    fileTest = new File(urlFile.getPath());
+//            System.out.println("  File created from File(urlFile.getFile()) = " + fileTest);
+//            // TODO ----
+//            
+//            Path    pathFile = Path.of(urlFile.toURI());
+//            System.out.println("  After pathFile = " + pathFile); // TODO - Remove
+//            
+//            File    fileCfg = pathFile.toFile(); // throws UnsupportedOperationException
+//            System.out.println("  After fileCfg = " + fileCfg); // TODO - Remove
+            
+            if (isFile != null) {
+                LOGGER.info("Loading configuration {} from internal JAR {}.", strFileName, STR_JAR_LOCATION);
+                return isFile;
+            }
+            
+            else {
+                strErrMsg = strErrMsg + " File " + urlFile.getPath() + " was unreadable.";
+                
+                throw new FileNotFoundException(strErrMsg);
+            }
+
+        } catch (Exception e) {
+            strErrMsg = strErrMsg + " Exception while attempting to read " + strFileName + " - " + e.getClass().getSimpleName() + ": " + e.getMessage();
+
+            LOGGER.error(strErrMsg);
+
+            throw new FileNotFoundException(strErrMsg);
+        }
+    }
+        
     /**
      * <p>
      * Prevents construction of <code>CfgLoaderYaml</code> instances.

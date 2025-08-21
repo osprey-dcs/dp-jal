@@ -48,15 +48,15 @@ public class DpConcurrencyConfig extends CfgStructure<DpConcurrencyConfig> {
     // Configuration Parameters
     //
     
-    /** Is multi-threading active or not */
-    @ACfgOverride.Field(name="ACTIVE")
-    public Boolean  active;
+    /** Is multi-threading enabled or not */
+    @ACfgOverride.Field(name="ENABLED")
+    public Boolean  enabled;
     
     /** general size parameter to induce pivoting to concurrency (context dependent) */
     @ACfgOverride.Field(name="PIVOT_SIZE")
     public Integer  pivotSize;
     
     /** general thread count for concurrent operations */
-    @ACfgOverride.Field(name="THREAD_COUNT")
-    public Integer  threadCount;
+    @ACfgOverride.Field(name="MAX_THREADS")
+    public Integer  maxThreads;
 }

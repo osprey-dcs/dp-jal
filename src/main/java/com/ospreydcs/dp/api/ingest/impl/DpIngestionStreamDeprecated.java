@@ -29,8 +29,10 @@ package com.ospreydcs.dp.api.ingest.impl;
 
 import java.util.List;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.IngestRequestUID;
 import com.ospreydcs.dp.api.common.IngestionResponse;
@@ -42,7 +44,6 @@ import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
-import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.DpIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
@@ -169,8 +170,11 @@ public class DpIngestionStreamDeprecated extends
     // Class Constants
     //
     
-    /** Logging active flag */
-    private static final boolean            BOL_LOGGING = CFG_DEFAULT.logging.active;
+    /** Logging enabled flag */
+    private static final boolean            BOL_LOGGING = CFG_DEFAULT.logging.enabled;
+    
+    /** Logging event level */
+    private static final String             STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
     
     
     //
@@ -182,6 +186,16 @@ public class DpIngestionStreamDeprecated extends
     
 //    /** Provider UID counter - temporary.  Used to fake the provider registration process. */
 //    private static int  intProviderUidCounter = 1;
+    
+    
+    /**
+     * <p>
+     * Class Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     // 
@@ -460,7 +474,7 @@ public class DpIngestionStreamDeprecated extends
      * </ul>   
      * </p>
      * <p>
-     * The method returns immediately after canceling all active processes.  Upon return
+     * The method returns immediately after canceling all enabled processes.  Upon return
      * the data stream is inactive.
      * </p>
      * 
@@ -904,7 +918,7 @@ public class DpIngestionStreamDeprecated extends
      * <code>{@link #closeStreamNow()}</code>.  
      * If the data stream has not been closed this method will
      * perform a soft close <code>{@link #closeStreamNow()}</code> operation, immediately
-     * terminating all active processing and data transmission. 
+     * terminating all enabled processing and data transmission. 
      * </p>
      * <p>
      * Once the data stream is closed, either explicitly or implicitly as described above,

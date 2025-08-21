@@ -27,8 +27,6 @@
  */
 package com.ospreydcs.dp.api.query.model.grpc;
 
-import static org.junit.Assert.*;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Path;
@@ -50,14 +48,12 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
-import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.model.ProtoMessageBuffer;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelator;
-import com.ospreydcs.dp.api.query.model.correl.QueryResponseCorrelatorDeprecated;
+import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelatorOld;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
+import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
@@ -126,10 +122,12 @@ public class QueryChannelTest {
          * @param   lstCmpRqsts    the resulting composite time-series data request
          *
          * @return  a new, initialized instance of <code>TestCase</code>
+         * 
+         * @throws  UnsupportedOperationException   an unexpected <code>RequestDecompType</code> enumeration was encountered    
          */
         public static TestCase  from(DpDataRequest rqstOrg, RequestDecompType enmRqstDcmp, DpGrpcStreamType enmStrmType, int cntStrms) {
         
-            List<DpDataRequest> lstRqsts = PRCR_DECOMP.buildCompositeRequest(rqstOrg, enmRqstDcmp, cntStrms);
+            List<DpDataRequest> lstRqsts = PRCR_DECOMP.buildCompositeRequest(rqstOrg, enmRqstDcmp, cntStrms);   // throws exception
             
             lstRqsts.forEach(r -> r.setStreamType(enmStrmType));
             
@@ -214,7 +212,7 @@ public class QueryChannelTest {
     private static QueryChannel         chanQuery;
     
     /** The query data correlator */
-    private static QueryDataCorrelator  prcrCorrelator;
+    private static QueryDataCorrelatorOld  prcrCorrelator;
     
     /** Print output stream for storing evaluation results to single file */
     private static PrintStream          psOutput;
@@ -240,7 +238,7 @@ public class QueryChannelTest {
         chanQuery = QueryChannel.from(connQuery, queMsgBuffer);
         
         // Create the query request data correlator
-        prcrCorrelator = QueryDataCorrelator.create();
+        prcrCorrelator = QueryDataCorrelatorOld.create();
         
         // Open the common output file
         String  strFileName = QueryChannelTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
@@ -363,7 +361,7 @@ public class QueryChannelTest {
                 indCase++;
             }
 
-            os.println("  ProtoMessageBuffer<QueryData> Test");
+            os.println("  QueryMessageBuffer<QueryData> Test");
             indCase = 0;
             for (DpDataRequest rqst : lstRqsts) { 
 
@@ -399,7 +397,7 @@ public class QueryChannelTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryChannel#recoveryRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryChannel#recoverRequestUnary(com.ospreydcs.dp.api.query.DpDataRequest)}.
      */
     @Test
     public final void testRecoveryRequestUnary() {
@@ -421,7 +419,7 @@ public class QueryChannelTest {
         Instant     insStart = Instant.now();
         for (DpDataRequest rqst : lstRqsts) {
             try {
-                QueryChannelTest.chanQuery.recoveryRequestUnary(rqst);
+                QueryChannelTest.chanQuery.recoverRequestUnary(rqst);
 
             } catch (DpQueryException e) {
                 bufMsgs.shutdownNow();
@@ -508,7 +506,7 @@ public class QueryChannelTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryChannel#recoverRequest(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.query.model.grpc.QueryChannel#recoverRequests(java.util.List)}.
      */
     @Test
     public final void testRecoverRequestListOfDpDataRequest() {
@@ -619,7 +617,7 @@ public class QueryChannelTest {
         bufMsgs.activate();
         
         Instant     insStart = Instant.now();
-        int cntMsgs = chan.recoverRequest(recCase.lstCmpRqsts);   // blocks until all data is recovered
+        int cntMsgs = chan.recoverRequests(recCase.lstCmpRqsts);   // blocks until all data is recovered
         Instant     insFinish = Instant.now();
 
         // Compute results

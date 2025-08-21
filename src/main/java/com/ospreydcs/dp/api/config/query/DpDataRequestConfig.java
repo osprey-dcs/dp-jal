@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 
 /**
  * <p>
@@ -53,58 +54,43 @@ public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
     // Configuration Fields
     //
     
-    /** gRPC streaming parameters for query responses */
-    @ACfgOverride.Struct(pathelem="STREAM")
-    public Stream                   stream;
-    
     /** Composite data query parameters */
     @ACfgOverride.Struct(pathelem="DECOMPOSE")
-    public CompositeQueryConfig     decompose;
+    public CompositeConfig          decompose;
     
 
     /**
-     * Structure class defining default configuration parameters for streaming data responses. 
-     */
-    @ACfgOverride.Root(root="DP_API_QUERY_DATA_REQUEST_STREAM")
-    public static class Stream extends CfgStructure<Stream> {
-        
-        /** Default constructor required for base structure class */
-        public Stream() { super(Stream.class); };
-        
-        
-        /** Preference for gRPC data stream type */
-        @ACfgOverride.Field(name="PREFERENCE")
-        public DpGrpcStreamType   preference;
-    }
-    
-    /**
      *  Structure class defining default configuration parameters for decompose queries. 
      */
-    public static class CompositeQueryConfig extends CfgStructure<CompositeQueryConfig> {
+    public static class CompositeConfig extends CfgStructure<CompositeConfig> {
         
         /** Default constructor required for base structure class */
-        public CompositeQueryConfig() { super(CompositeQueryConfig.class);  }
+        public CompositeConfig() { super(CompositeConfig.class);  }
 
         
         //
         // Configuration Fields
         //
         
-        /** Is decompose query decomposition active */
-        @ACfgOverride.Field(name="ACTIVE")
-        public Boolean      active;
+        /** Is decompose query decomposition enabled */
+        @ACfgOverride.Field(name="ENABLED")
+        public Boolean              enabled;
+        
+        /** The preferred decomposition strategy */
+        @ACfgOverride.Field(name="PREFERRED")
+        public RequestDecompType    preferred;
         
         /** Maximum number of data sources per query - query domain horizontal "width" */
         @ACfgOverride.Field(name="MAX_SOURCES")
-        public Integer      maxSources;
+        public Integer              maxSources;
         
         /** Maximum duration of the time range - query domain vertical "length" */
         @ACfgOverride.Field(name="MAX_DURATION")
-        public long         maxDuration;
+        public long                 maxDuration;
         
         /** Maximum duration time units */
-        @ACfgOverride.Field(name="UNIT_DURATION")
-        public TimeUnit     unitDuration;
+        @ACfgOverride.Field(name="DURATION_UNIT")
+        public TimeUnit             durationUnit;
         
     }
     

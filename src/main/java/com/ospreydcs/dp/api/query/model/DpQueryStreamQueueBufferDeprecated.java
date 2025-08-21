@@ -590,7 +590,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
 
     /**
      * <p>
-     * Request a soft shutdown of an active data streaming process.  
+     * Request a soft shutdown of an enabled data streaming process.  
      * </p>
      * <p>
      * If the process is inactive nothing is done, specifically, if the 
@@ -609,7 +609,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
      * concurrent invocations occur.
      * </p>
      * 
-     * @return <code>true</code> if an active data streaming process was shutdown, 
+     * @return <code>true</code> if an enabled data streaming process was shutdown, 
      *         <code>false</code> if the data streaming was already inactive
      */
     public boolean shutdownSoft() throws InterruptedException, TimeoutException {
@@ -657,7 +657,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
     
     /**
      * <p>
-     * Perform a hard shutdown of an active data streaming process.  Any active processes
+     * Perform a hard shutdown of an enabled data streaming process.  Any enabled processes
      * are interrupted.
      * </p>
      * <p>
@@ -677,7 +677,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
      * concurrent invocations occur.
      * </p>
      * 
-     * @return <code>true</code> if an active data streaming process was terminated, 
+     * @return <code>true</code> if an enabled data streaming process was terminated, 
      *         <code>false</code> if the data streaming was already inactive
      */
     public boolean shutdownNow() {
@@ -737,7 +737,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
      * called and the data stream is either
      * <ul>
      * <li>waiting for the <em>Query Service</em> to begin streaming</li>
-     * <li>in the active process of streaming</li>
+     * <li>in the enabled process of streaming</li>
      * <li>finished streaming and now dormant</li>
      * </ul>
      * </p>
@@ -751,7 +751,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
     
     /**
      * <p>
-     * Returns whether or not the associated data stream is currently active.
+     * Returns whether or not the associated data stream is currently enabled.
      * </p>
      * <p>
      * The returned value is the following combination of state queries:
@@ -759,7 +759,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
      * &nbsp; &nbsp; <code>{@link #isStreamInitiated()} && <code>! {@link #isStreamComplete()}</code>
      * </p>
      * 
-     * @return <code>true</code> if the Query Service data stream is active,
+     * @return <code>true</code> if the Query Service data stream is enabled,
      *         <code>false</code> otherwise
      *         
      * @see #isStreamInitiated()
@@ -1039,7 +1039,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
      * </p>
      * <p>
      * This method returns the size of the buffer containing data pages returned from the Query Service so far. 
-     * Note that this value may change in the future if the data stream is still active.
+     * Note that this value may change in the future if the data stream is still enabled.
      * </p>
      *  
      * @return  current size of the stream buffer containing requested data 
@@ -1053,7 +1053,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
      * Returns the data page buffer in its current state.
      * </p>
      * <p>
-     * Note that the returned object should not be modified if the current stream is still active.
+     * Note that the returned object should not be modified if the current stream is still enabled.
      * Results are unpredictable.
      * </p>
      * 
@@ -1352,7 +1352,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
         this.storePage(msgRsp.getQueryData());
 
         // Request next page 
-        //  This is active only for bidirectional streams
+        //  This is enabled only for bidirectional streams
         this.requestNextPageBidi();
     }
 
@@ -1500,7 +1500,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
             this.stubAsync.queryDataStream(msgRqst, this);
         }
         
-        // Set the active request flag and return
+        // Set the enabled request flag and return
         this.bolStreamRequested = true;
     }
 
@@ -1536,7 +1536,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
      * after the stream has been started.
      * </p>
      * <p>
-     * This method is only active for bidirectional streams.  If a unidirectional stream was 
+     * This method is only enabled for bidirectional streams.  If a unidirectional stream was 
      * initiated the method simply returns.
      * </p>
      * <p>
@@ -1656,18 +1656,18 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
     
     /**
      * <p>
-     * Returns whether or not logging is active.
+     * Returns whether or not logging is enabled.
      * </p>
      * <p>
-     * Currently returns the logging active parameter in the application default parameters.
+     * Currently returns the logging enabled parameter in the application default parameters.
      * </p>
      * 
-     * @return <code>true</code> if logging is active, <code>false</code> otherwise
+     * @return <code>true</code> if logging is enabled, <code>false</code> otherwise
      * 
      * @see DpApiConfig.query.logging.active
      */
     private static boolean isLogging() {
-        return CFG_DEFAULT.logging.active;
+        return CFG_DEFAULT.logging.enabled;
     }
 
     
@@ -1681,7 +1681,7 @@ public class DpQueryStreamQueueBufferDeprecated implements StreamObserver<QueryD
      */
     @Override
     public String toString() {
-        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClass() + "\n");
+        StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClassName() + "\n");
         
         // Write out contents
         buf.append("  List of page requests: " + this.lstPgsRequested + "\n");

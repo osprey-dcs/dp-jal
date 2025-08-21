@@ -177,7 +177,7 @@ public class DpAnnotationConnectionFactoryStaticTest {
         // Test Parameters
         final String    strUrl = CFG_DEFAULT.channel.host.url;
         final int       intPort = CFG_DEFAULT.channel.host.port;
-        final boolean   bolTlsAct = CFG_DEFAULT.channel.tls.active;
+        final boolean   bolTlsAct = CFG_DEFAULT.channel.tls.enabled;
         final boolean   bolPlain = CFG_DEFAULT.channel.grpc.usePlainText;
         final int       intMaxMsg = CFG_DEFAULT.channel.grpc.messageSizeMax;
         final boolean   bolKeepAlive = CFG_DEFAULT.channel.grpc.keepAliveWithoutCalls;

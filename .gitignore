@@ -15,6 +15,6 @@ buildNumber.properties
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
-/bin/
 /.DS_Store
 /.settings/
+/bin/

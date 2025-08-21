@@ -35,8 +35,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.IngestRequestUID;
 import com.ospreydcs.dp.api.common.ResultStatus;
@@ -212,8 +214,11 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     private static final TimeUnit  TU_TIMEOUT = TimeUnit.MILLISECONDS;
     
     
-    /** Is logging active */
-    protected static final Boolean    BOL_LOGGING = CFG_INGEST.logging.active;
+    /** Is logging enabled */
+    protected static final Boolean  BOL_LOGGING = CFG_INGEST.logging.enabled;
+    
+    /** Event logging level */
+    protected static final String   STR_LOGGING_LEVEL = CFG_INGEST.logging.level;
     
     
     //
@@ -223,6 +228,15 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     /** Class logger */
     protected static final Logger     LOGGER = LogManager.getLogger();
     
+    
+    /**
+     * <p>
+     * Class Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //
@@ -625,10 +639,10 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     
     /**
      * <p>
-     * External termination of a data stream if currently active.
+     * External termination of a data stream if currently enabled.
      * </p>
      * <p>
-     * This method terminates an active data stream thread by setting the <code>{@link #bolStreamError}</code>
+     * This method terminates an enabled data stream thread by setting the <code>{@link #bolStreamError}</code>
      * to <code>true</code>.  This action causes the processing loop within <code>{@link #run()}</code> to exit.
      * The gRPC stream is then terminated with an <code>{@link StreamObserver#onError(Throwable)}</code> invocation.
      * </p>
@@ -974,7 +988,7 @@ final class IngestionUniStream extends IngestionStream implements StreamObserver
      * However, it can be called by the Query Service to signal an unanticipated exception.
      * In either event, the following actions ensue:
      * <ol>  
-     * <li>An error message is sent to the class logger (if active).</li>
+     * <li>An error message is sent to the class logger (if enabled).</li>
      * <li>The stream error flag <code>{@link IngestionStream#bolStreamError}</code> is set <code>true</code>.
      * <li>The result record <code>{@link #recStatus}</code> is set to a failure with message and exception.</li>
      * <li>The stream completed monitor <code>{@link #monStreamCompleted}</code> is released.</li>
@@ -1245,7 +1259,7 @@ final class IngestionBidiStream extends IngestionStream implements StreamObserve
      * However, it can be called by the Query Service to signal an unanticipated exception.
      * In either event, the following actions ensue:
      * <ol>  
-     * <li>An error message is sent to the class logger (if active).</li>
+     * <li>An error message is sent to the class logger (if enabled).</li>
      * <li>The stream error flag <code>{@link IngestionStream#bolStreamError}</code> is set <code>true</code>.
      * <li>The result record <code>{@link #recStatus}</code> is set to a failure with message and exception.</li>
      * <li>The stream completed monitor <code>{@link #monStreamCompleted}</code> is released.</li>

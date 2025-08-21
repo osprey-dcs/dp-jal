@@ -1,0 +1,51 @@
+#/bin/bash
+
+echo
+echo '================================================================'
+echo 'run-QueryChannelEvaluator'
+echo '================================================================'
+echo
+
+#
+# Application Constants
+#
+
+DP_ENV=( ~/.dp.env )
+
+APP_NAME=QueryChannelEvaluator
+APP_MAIN=com.ospreydcs.dp.jal.tools.query.channel.QueryChannelEvaluator
+
+JAR_NAME=dp-jal-shaded
+JAR_VER=1.7.0
+
+#
+# Recover Environment Variables
+#
+ 
+# look for environment config file and source it if it exists
+test -e "$DP_ENV" || { echo "fatal error: required file $DP_ENV not found"; exit 1; }
+echo "found environment config file: $DP_ENV"
+source $DP_ENV
+
+# check that DP_JAL_HOME is defined
+test -z "$DP_JAL_HOME" && { echo "fatal error: required DP_JAL_HOME variable is not set in $DP_ENV"; exit 1; }
+echo "using DP_JAL_HOME: $DP_JAL_HOME"
+
+# check that DP_HOME directory exists
+test -d "$DP_JAL_HOME" || { echo "fatal error: configured DP_JAL_HOME directory $DP_JAL_HOME does not exist"; exit 1; }
+
+#
+# Application Execution
+#
+
+APP_JAR=${DP_JAL_HOME}/target/${JAR_NAME}-${JAR_VER}.jar
+APP_CMD="java -cp $APP_JAR $APP_MAIN $@"
+
+echo "app name: $APP_NAME"
+echo "app args: $@"
+echo "app jar : $APP_JAR"
+echo "app main: $APP_MAIN"
+echo "java cmd: $APP_CMD"
+echo ""
+
+eval "$APP_CMD"

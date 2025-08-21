@@ -31,8 +31,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.MissingResourceException;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ProviderRegistrar;
 import com.ospreydcs.dp.api.common.ProviderUID;
@@ -122,8 +124,11 @@ public final class ProviderRegistrationService {
     // Class Constants
     //
     
-    /** Logging active flag */
-    private static final boolean    BOL_LOGGING = CFG_DEFAULT.logging.active;
+    /** Logging enabled flag */
+    private static final boolean    BOL_LOGGING = CFG_DEFAULT.logging.enabled;
+    
+    /** Event logging level */
+    private static final String     STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
     
     
     /** Data Provider unique name - registration implementation available test */
@@ -152,6 +157,16 @@ public final class ProviderRegistrationService {
     private static final Map<String, Integer>   MAP_PROVIDER_UID = new HashMap<>();
     
 
+    /**
+     * <p>
+     * Class Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
+    
+    
     //
     // Class State Variables
     //
@@ -319,7 +334,7 @@ public final class ProviderRegistrationService {
      * </ul>
      * </p>
      *  
-     * @param connIngest    active connection to the Ingestion Service
+     * @param connIngest    enabled connection to the Ingestion Service
      * 
      * @return  <code>true</code> if provider registration is available with the Ingestion Service,
      *          <code>false</code> otherwise

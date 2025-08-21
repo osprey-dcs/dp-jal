@@ -28,8 +28,8 @@
 package com.ospreydcs.dp.api.ingest;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -2307,10 +2307,11 @@ public class IngestionFrame implements Serializable {
      */
     private UniformSamplingClock    createReducedSampleClock(int cntSamples) {
         Instant     insStart = this.clkTms.getStartInstant();
-        long        lngPeriod = this.clkTms.getSamplePeriod();
-        ChronoUnit  cuPeriod = this.clkTms.getSamplePeriodUnits();
+//        long        lngPeriod = this.clkTms.getSamplePeriod();
+//        ChronoUnit  cuPeriod = this.clkTms.getSamplePeriodUnits();
+        Duration    durPeriod = this.clkTms.getSamplePeriodDuration();
         
-        UniformSamplingClock    clkReduced = UniformSamplingClock.from(insStart, cntSamples, lngPeriod, cuPeriod);
+        UniformSamplingClock    clkReduced = UniformSamplingClock.from(insStart, cntSamples, durPeriod);
         
         return clkReduced;
     }

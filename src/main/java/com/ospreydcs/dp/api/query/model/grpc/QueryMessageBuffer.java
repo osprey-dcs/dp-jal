@@ -35,8 +35,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
@@ -93,8 +95,11 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     // Class Constants - Initialized from API configuration
     //
     
-    /** Is logging active? */
-    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.active;
+    /** Is event logging enabled? */
+    public static final boolean     BOL_LOGGING = CFG_QUERY.logging.enabled;
+    
+    /** Event logging level */
+    public static final String      STR_LOGGING_LEVEL = CFG_QUERY.logging.level;
     
     
     //
@@ -103,6 +108,16 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     
     /** Class event logger */
     private static final Logger     LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Resource Initialization - Initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //
@@ -182,6 +197,29 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
         
         return lngAlloc;
     }
+    
+    /**
+     * <p>
+     * Returns all the data messages within the message queue buffer in its current state.
+     * </p>
+     * <p>
+     * This is a non-blocking but non-synchronized operation.  All the data message within the
+     * queue buffer at the time of this calling are returned, in order.  The queue buffer configuration
+     * or state is not changed (unlike a <code>{@link #offer(List)}, {@link #take()}, {@link #poll()}</code>).  
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method should not be used for transfer operations, as the buffer state is not managed here.
+     * It is provided as a convenience to observe buffer operations.
+     * </p>
+     * 
+     * @return  the message queue buffer data state at the time of the method invocation
+     */
+    public List<QueryData>    peakAtQueueData() {
+        List<QueryData> lstMsgsCurr = this.queMsgBuffer.stream().toList();
+        
+        return lstMsgsCurr;
+    }
 
     
     //
@@ -248,8 +286,7 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     //
     
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IMessageConsumer#isAccepting()
+     * @see com.ospreydcs.dp.api.model.IMessageConsumer#isAccepting()
      */
     @Override
     public boolean isAccepting() {
@@ -257,13 +294,12 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IMessageConsumer#activate()
+     * @see com.ospreydcs.dp.api.model.IMessageConsumer#activate()
      */
     @Override
     public boolean activate() {
         
-        // Check if already active
+        // Check if already enabled
         if (this.bolActive)
             return false;
 
@@ -274,8 +310,7 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IMessageConsumer#shutdown()
+     * @see com.ospreydcs.dp.api.model.IMessageConsumer#shutdown()
      */
     @Override
     public boolean shutdown() throws InterruptedException {
@@ -292,8 +327,7 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IMessageConsumer#shutdownNow()
+     * @see com.ospreydcs.dp.api.model.IMessageConsumer#shutdownNow()
      */
     @Override
     public void shutdownNow() {
@@ -303,15 +337,14 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     }
     
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IMessageConsumer#offer(java.util.List)
+     * @see com.ospreydcs.dp.api.model.IMessageConsumer#offer(java.util.List)
      */
     @Override
     public void offer(List<QueryData> lstMsgs) throws IllegalStateException, InterruptedException {
 
-        // Check if active
+        // Check if enabled
         if (!this.bolActive) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.";
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not enabled.";
             
             if (BOL_LOGGING)
                 LOGGER.warn(strMsg);
@@ -337,9 +370,9 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     public boolean offer(List<QueryData> lstMsgs, long lngTimeout, TimeUnit tuTimeout)
             throws IllegalStateException, InterruptedException {
 
-        // Check if active
+        // Check if enabled
         if (!this.bolActive) {
-            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not active.";
+            String  strMsg = JavaRuntime.getQualifiedMethodNameSimple() + " - queue buffer is not enabled.";
             
             if (BOL_LOGGING)
                 LOGGER.warn(strMsg);
@@ -358,8 +391,7 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     //
     
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IMessageSupplier#isSupplying()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#isSupplying()
      */
     @Override
     public boolean isSupplying() {
@@ -367,8 +399,7 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IMessageSupplier#take()
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#take()
      */
     @Override
     synchronized
@@ -394,8 +425,14 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IMessageSupplier#poll()
+     * @apiNote This operation has been modified so it returns <code>null</code> whenever the buffer is no longer
+     * supplying (i.e., <code>{@link #isSupplying()}</code> returns <code>false</code>) rather than throwing an 
+     * exception.  
+     * 
+     * @implNote The internal synchronization <code>{@link #signalRequestQueueConditions()}</code> can interfere
+     * with fast polling operations (e.g., to clear a buffer).  Thus the above modification is convenient. 
+     * 
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll()
      */
     @Override
     synchronized
@@ -408,7 +445,8 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
             if (BOL_LOGGING)
                 LOGGER.warn(strMsg);
             
-            throw new IllegalStateException(strMsg);
+//            throw new IllegalStateException(strMsg);
+            return null;
         }
         
         try {
@@ -427,8 +465,7 @@ public class QueryMessageBuffer implements IMessageConsumer<QueryData>, IMessage
     }
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.api.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
+     * @see com.ospreydcs.dp.api.model.IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)
      */
     @Override
     synchronized

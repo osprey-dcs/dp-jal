@@ -29,8 +29,10 @@ import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.annotate.model.DpDataBlock;
 import com.ospreydcs.dp.api.common.IDataTable;
@@ -146,8 +148,11 @@ public class DpCreateDatasetRequest {
     // Class Constants
     //
     
-    /** Is event logging active */
-    private static final boolean    BOL_LOGGING = CFG_DEF.logging.active;
+    /** Is event logging enabled */
+    private static final boolean    BOL_LOGGING = CFG_DEF.logging.enabled;
+    
+    /** Event logging level */
+    private static final String     STR_LOGGING_LEVEL = CFG_DEF.logging.level;
     
     
     //
@@ -156,6 +161,16 @@ public class DpCreateDatasetRequest {
     
     /** Class event logger */
     private static final Logger     LOGGER = LogManager.getLogger();
+    
+    
+    /**
+     * <p>
+     * Class Initialization - initializes the event logger, sets logging level.
+     * </p>
+     */
+    static {
+        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+    }
     
     
     //

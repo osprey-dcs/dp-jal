@@ -27,7 +27,6 @@
  */
 package com.ospreydcs.dp.api.config.model;
 
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,6 +35,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 
@@ -158,8 +158,8 @@ public final class CfgOverrideUtility {
      * It specifies which cache of system variable is used.
      * </li>
      * <li>
-     * This method calls the recursive function <code>{@link #overrideField(Field, Object, String, SOURCE)} to
-     * process each field of the given structure class.  The method calls itself whenever it encounters
+     * This method calls the recursive function <code>{@link #overrideField(Field, Object, String, SOURCE)}</code>
+     * to process each field of the given structure class.  The method calls itself whenever it encounters
      * a field that is a substructure.
      * </li>
      * </ul> 
@@ -280,8 +280,8 @@ public final class CfgOverrideUtility {
          * <h2>NOTES:</h2>
          * <ul>
          * <li>
-         * This method calls the recursive function <code>{@link #overrideField(Field, Object, String, SOURCE)} to
-         * process each field of the given structure class.  The method calls itself whenever it encounters
+         * This method calls the recursive function <code>{@link #overrideField(Field, Object, String, SOURCE)}</code> 
+         * to process each field of the given structure class.  The method calls itself whenever it encounters
          * a field that is a substructure.
          * </li>
          * </p> 

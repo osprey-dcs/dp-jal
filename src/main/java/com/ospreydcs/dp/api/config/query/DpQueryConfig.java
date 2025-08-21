@@ -27,13 +27,10 @@
  */
 package com.ospreydcs.dp.api.config.query;
 
-import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
 import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
 import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.model.AUnavailable;
-import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 
 /**
  * <p>
@@ -55,56 +52,19 @@ public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
     // Configuration Fields
     //
     
-    /** Default bucket count per page when using cursor requests */
-    @AUnavailable(status=STATUS.UNDER_REVIEW)
-    @ACfgOverride.Field(name="PAGE_SIZE")
-    public Integer              pageSize;
-    
     /** Default parameters for Query Service time-series data requests and responses */
     @ACfgOverride.Struct(pathelem="DATA")
-    public TimeSeriesDataConfig data;
+    public DpQueryRecoveryConfig    data;
     
-//    /** Default parameters for general Query Service gRPC streaming operations */
-//    @ACfgOverride.Struct(pathelem="STREAM")
-//    public DpGrpcStreamConfig   stream;
-    
-    /** Default concurrency parameters for Query Service operations */
-    @ACfgOverride.Struct(pathelem="CONCURRENCY")
-    public DpConcurrencyConfig  concurrency;
+//    /** Default concurrency parameters for Query Service operations */
+//    @ACfgOverride.Struct(pathelem="CONCURRENCY")
+//    public DpConcurrencyConfig      concurrency;
     
     /** Default timeout parameters for Query Service operations */
     @ACfgOverride.Struct(pathelem="TIMEOUT")
-    public DpTimeoutConfig      timeout;
+    public DpTimeoutConfig          timeout;
 
     /** Default logging configuration for Query Service operations */
     @ACfgOverride.Struct(pathelem="LOGGING")
-    public DpLoggingConfig      logging;
-    
-    
-    /**
-     * Structure class defining default configuration parameters for time-series data requests and responses
-     */
-    @ACfgOverride.Root(root="DP_API_QUERY_DATA")
-    public static class TimeSeriesDataConfig extends CfgStructure<TimeSeriesDataConfig> {
-        
-        /** Default constructor required for base structure class */
-        public TimeSeriesDataConfig() { super(TimeSeriesDataConfig.class); };
-        
-        
-        //
-        // Configuration Fields
-        //
-        
-        /** Default parameters for Query Service time-series data request queries */
-        @ACfgOverride.Struct(pathelem="REQUEST")
-        public DpDataRequestConfig      request;
-        
-        /** Default parameters for Query Service time-series data request responses */
-        @ACfgOverride.Struct(pathelem="RESPONSE")
-        public DpDataResponseConfig     response;
-        
-        /** Default parameters for Query Service time-series data table results */
-        @ACfgOverride.Struct(pathelem="TABLE")
-        public DpDataTableConfig        table;
-    }
+    public DpLoggingConfig          logging;
 }

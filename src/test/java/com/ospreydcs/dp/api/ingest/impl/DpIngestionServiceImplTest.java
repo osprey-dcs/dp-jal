@@ -491,7 +491,7 @@ public class DpIngestionServiceImplTest {
         System.out.println("  Time for transmission : " + Duration.between(insStart, insFinish));
         System.out.println("  Time for shutdown     : " + Duration.between(insFinish, insShutdown));
         System.out.println("  Time for termination  : " + Duration.between(insShutdown, insTerminate));
-        System.out.println("  Total time active     : " + Duration.between(insStart, insTerminate));
+        System.out.println("  Total time enabled     : " + Duration.between(insStart, insTerminate));
     }
     
     //

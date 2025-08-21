@@ -41,7 +41,7 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.ospreydcs.dp.api.config.DpApiTestingConfig;
+import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
@@ -68,7 +68,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * results set. Additionally, the <code>{@link #storeQueryResults()}</code> method
  * can store the recovered results set to a data file for persistence.
  * Saving the results sets to persistent file storage provides future testing availability 
- * without requiring an active Query Service.  
+ * without requiring an enabled Query Service.  
  * </p>
  * <p>
  * <h2>NOTES:</h2>
@@ -102,7 +102,7 @@ public final record TestQueryRecord (
     //
     
     /** Data Platform Testing configuration parameters */
-    private static final    DpApiTestingConfig CFG_TESTING = DpApiTestingConfig.getInstance();
+    private static final    DpApiUnitTestConfig CFG_TESTING = DpApiUnitTestConfig.getInstance();
     
     
     //
@@ -189,7 +189,7 @@ public final record TestQueryRecord (
      * requests to the test archive.
      * </p>
      * 
-     * @return  <code>true</code> if <code>{@link #qsTestArchive}</code> service was active and shut down,
+     * @return  <code>true</code> if <code>{@link #qsTestArchive}</code> service was enabled and shut down,
      *          <code>false</code> if the Query Service API was never created 
      * 
      */

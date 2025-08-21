@@ -64,7 +64,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * For test cases to pass the following conditions must be current:
  * <ul>
  * <li>
- * A Data Platform Query Service must be currently active and running at the default parameter set.
+ * A Data Platform Query Service must be currently enabled and running at the default parameter set.
  * </li>
  * <li>
  * The Data Platform data archive must be populated with test data from the Ingestion Service benchmark 
@@ -90,7 +90,7 @@ public class DpQueryServiceImplDeprecatedTest {
 //    private static final DpQueryConfig          CFG_QUERY = DpApiConfig.getInstance().query;
 //    
 //    /** The default API Test configuration */
-//    private static final DpApiTestingConfig     CFG_TEST = DpApiTestingConfig.getInstance();
+//    private static final DpApiUnitTestConfig     CFG_TEST = DpApiUnitTestConfig.getInstance();
     
     
     //
@@ -115,10 +115,10 @@ public class DpQueryServiceImplDeprecatedTest {
 //    public static final Instant INS_FINAL = INS_INCEPT.plusSeconds(60L);
 //    
 //    /** The total number of unique data source names within the Data Platform data archive test data set */
-//    public static final int     CNT_PV_NAMES = 4000;
+//    public static final int     CNT_PV_NAMES_TOTAL = 4000;
 //    
 //    /** List of all data source names within the Data Platform data archive test data set */
-//    public static final List<String> LST_PV_NAMES = IntStream.rangeClosed(1, CNT_PV_NAMES).mapToObj( i -> "pv_" + Integer.toString(i)).toList();   
+//    public static final List<String> LST_PV_NAMES_TOTAL = IntStream.rangeClosed(1, CNT_PV_NAMES_TOTAL).mapToObj( i -> "pv_" + Integer.toString(i)).toList();   
 //    
     
     /** Timeout limit */

@@ -93,7 +93,7 @@ public class GrpcConnectionConfigTest {
     public static DpGrpcConnectionConfig    createConfig1() {
         
         DpTimeoutConfig timeout = new DpTimeoutConfig();
-        timeout.active = true;
+        timeout.enabled = true;
         timeout.limit = 5L;
         timeout.unit = TimeUnit.SECONDS;
         
@@ -102,7 +102,7 @@ public class GrpcConnectionConfigTest {
         host.port = 50051;
         
         DpGrpcConnectionConfig.Channel.TLS tls = new DpGrpcConnectionConfig.Channel.TLS();
-        tls.active = true;
+        tls.enabled = true;
         tls.defaultTls = true;
         tls.filepaths = new DpGrpcConnectionConfig.Channel.TLS.FilePaths();
         tls.filepaths.trustedCerts = new String();

@@ -53,9 +53,9 @@ import java.time.Instant;
  * @param   name            data source name
  * @param   type            the type of data the data source last produced
  * @param   dpTypeName      the Data Platform type name for the last data produced 
- * @param   firstTimestamp  the timestamp where the data source was first active (i.e., earliest archive timestamp) 
- * @param   lastTimestamp   the timestamp where the data source was last active (i.e., latest archive timestamp)
- * @param   timestampCase   the timestamp case when last active 
+ * @param   firstTimestamp  the timestamp where the data source was first enabled (i.e., earliest archive timestamp) 
+ * @param   lastTimestamp   the timestamp where the data source was last enabled (i.e., latest archive timestamp)
+ * @param   timestampCase   the timestamp case when last enabled 
  * @param   timestampType   the timestamp case enumeration string ???
  * @param   sampleCount     the sample count for the last data bucket produced by the PV
  * @param   samplePeriod    the sampling period for the last data bucket produced by the PV (in nanoseconds)
@@ -87,9 +87,9 @@ public record MetadataRecord(
      * @param   name            data source name
      * @param   type            the type of data the data source last produced
      * @param   dpTypeName      the Data Platform type name for the last data produced 
-     * @param   firstTimestamp  the timestamp where the data source was first active (i.e., earliest archive timestamp) 
-     * @param   lastTimestamp   the timestamp where the data source was last active (i.e., latest archive timestamp)
-     * @param   timestampCase   the timestamp case when last active 
+     * @param   firstTimestamp  the timestamp where the data source was first enabled (i.e., earliest archive timestamp) 
+     * @param   lastTimestamp   the timestamp where the data source was last enabled (i.e., latest archive timestamp)
+     * @param   timestampCase   the timestamp case when last enabled 
      * @param   timestampType   the timestamp case enumeration string ???
      * @param   sampleCount     the sample count for the last data bucket produced by the PV
      * @param   samplePeriod    the sampling period for the last data bucket produced by the PV (in nanoseconds)
