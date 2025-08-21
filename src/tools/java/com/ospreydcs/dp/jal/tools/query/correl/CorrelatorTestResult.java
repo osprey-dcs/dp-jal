@@ -31,7 +31,6 @@ import java.util.Comparator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.jal.tools.query.recovery.QueryRecoveryTestCase;
 
 /**
  * <p>

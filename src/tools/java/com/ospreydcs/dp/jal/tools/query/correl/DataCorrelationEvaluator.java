@@ -54,6 +54,7 @@ import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
+import com.ospreydcs.dp.jal.tools.common.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 import com.sun.jdi.request.InvalidRequestStateException;
@@ -65,7 +66,7 @@ import com.sun.jdi.request.InvalidRequestStateException;
  * </p>
  * <p>
  * The application command-line argument collection describes the test suite to be run during execution.  The test
- * suite itself is given by a <code>{@link CorrelatorTestSuiteConfig}</code> instance, which is created from the 
+ * suite itself is given by a <code>{@link CorrelatorTestSuiteCreator}</code> instance, which is created from the 
  * command-line arguments via the <code>{@link #parseTestSuiteConfig(String[])}</code>.  Once the test suite
  * configuration is recovered, an instance of <code>DataCorrelationEvaluator</code> is create, executed, and
  * the report generated.
@@ -111,7 +112,7 @@ import com.sun.jdi.request.InvalidRequestStateException;
  * If a test request has an invalid <code>{@link TestArchiveRequest}</code> name an exception is thrown and execution fails.    
  * </p>
  * <p>
- * The remaining arguments are optional; a <code>CorrelatorTestSuiteConfig</code> instance has default values that
+ * The remaining arguments are optional; a <code>CorrelatorTestSuiteCreator</code> instance has default values that
  * will be supplied if any are missing.  Note that all values for variables {@value #STR_VAR_THREADS} and 
  * {@value #STR_VAR_TYPE} are <code>Integer</code> valued and must be parse as such.  If an error occurs
  * while parse the integer value an exception is thrown.
@@ -170,13 +171,14 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
             JalApplicationBase.parseAppArgsErrors(args, CNT_APP_MIN_ARGS, LST_STR_DELIMS);
 
         } catch (Exception e) {
+            System.out.println("Bad command line configuration. Use " + STR_VAR_HELP + " option.");
             JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
 
         }
         
         // Get the test suite configuration and output location from the application arguments
         String                      strOutputLoc;
-        CorrelatorTestSuiteConfig   suite;
+        CorrelatorTestSuiteCreator   suite;
         try {
             
             suite = DataCorrelationEvaluator.parseTestSuiteConfig(args);
@@ -397,7 +399,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
     //
     
     /** The test suite used for <code>CorrelatorTestCase</code> evaluations */
-    private final CorrelatorTestSuiteConfig       suiteEvals;
+    private final CorrelatorTestSuiteCreator       suiteEvals;
     
     
     //
@@ -442,9 +444,9 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * @throws FileNotFoundException            unable to create the output file (see message and cause)
      * @throws SecurityException                unable to write to output file
      */
-    public DataCorrelationEvaluator(CorrelatorTestSuiteConfig suiteEvals, String strOutputLoc, String...args) 
+    public DataCorrelationEvaluator(CorrelatorTestSuiteCreator suiteEvals, String strOutputLoc, String...args) 
             throws DpGrpcException, ConfigurationException, UnsupportedOperationException, FileNotFoundException, SecurityException {
-        super(DataCorrelationEvaluator.class);
+        super(DataCorrelationEvaluator.class, args);
         
         this.suiteEvals = suiteEvals;
         
@@ -643,12 +645,25 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         
         // Print out the test case data rates
         ps.println("Test Case Data Rates");
-        CorrelatorTestsSummary.printOutDataRates(ps, "  ", this.setResults);
+        DataRateLister<CorrelatorTestResult>    lstrDataRates = DataRateLister.from(
+                rec -> rec.recTestCase().indCase(),
+                rec -> rec.strRqstId(),
+                rec -> rec.szProcessed(), 
+                rec -> rec.dblDataRate()
+                );
+        lstrDataRates.printOut(ps, "  ", this.setResults);
+//        CorrelatorTestsSummary.printOutDataRates(ps, "  ", this.setResults);
         ps.println();
         
         // Print out results extremes
         CorrelatorTestResultExtremes  recExtremes = CorrelatorTestResultExtremes.computeExtremes(this.setResults);
         recExtremes.printOut(ps, null);
+        ps.println();
+        
+        // Print out configuration scoring
+        ps.println("Correlator Configuration Scoring");
+        CorrelatorConfigScorer  scrCorr = CorrelatorConfigScorer.from(setResults);
+        scrCorr.printOutByRates(ps, "  ");
         ps.println();
         
         // Print out each test result
@@ -683,7 +698,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * If a test request has an invalid <code>{@link TestArchiveRequest}</code> name an exception is thrown.    
      * </p>
      * <p>
-     * The remaining arguments are optional; a <code>CorrelatorTestSuiteConfig</code> instance has default values that
+     * The remaining arguments are optional; a <code>CorrelatorTestSuiteCreator</code> instance has default values that
      * will be supplied if any are missing.  Note that all values for variables {@value #STR_VAR_RQST_DCMP} and 
      * {@value #STR_VAR_STRM_CNT} are <code>Integer</code> valued and must be parse as such.  If an error occurs
      * while parse the integer value an exception is thrown.
@@ -697,7 +712,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * @throws IllegalArgumentException invalid test request enumeration constant name (not in <code>TestArchiveRequest</code>)
      * @throws NumberFormatException    an invalid numeric argument was encounter (could not be converted to a <code>Integer</code> type)
      */
-    private static CorrelatorTestSuiteConfig    parseTestSuiteConfig(String[] args) 
+    private static CorrelatorTestSuiteCreator    parseTestSuiteConfig(String[] args) 
             throws ConfigurationException, IllegalArgumentException, NumberFormatException {
      
         // Parse the data requests 
@@ -730,7 +745,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
                 .toList();
         
         // Build the test suite and return it
-        CorrelatorTestSuiteConfig suite = CorrelatorTestSuiteConfig.create();
+        CorrelatorTestSuiteCreator suite = CorrelatorTestSuiteCreator.create();
         
         suite.addTestRequests(lstRqsts);
         suite.addSupplementalPvs(lstSupplPvs);

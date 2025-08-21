@@ -51,6 +51,7 @@ import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.jal.tools.common.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator;
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
@@ -262,7 +263,7 @@ public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequ
           + " [" + STR_VAR_HELP + "]"
           + " [" + STR_VAR_VERSION + "]"
           + " [R1 ... Rn]"
-          + " " + STR_VAR_PVS + " PV1 [... PVm]"
+          + " " + STR_VAR_PVS + " [PV1 ... PVn]"
           + " [" + STR_VAR_DUR + " T]"
           + " [" + STR_VAR_DELAY + " D]"
           + " [" + STR_VAR_OUTPUT +" Output]"
@@ -271,7 +272,7 @@ public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequ
           + "    " + STR_VAR_HELP + "        = print this message and return.\n"
           + "    " + STR_VAR_VERSION + "     = prints application version information and return.\n"
           + "    R1, ..., Rn   = Test request(s) to perform - 'TestArchiveRequest' enumeration name(s).\n"
-          + "    PV1, ..., PVm = Additional PV name(s) to add to request(s).\n"
+          + "    PV1, ..., PVn = Supplemental PV name(s) to add to request(s).\n"
           + "    T             = Override of request duration - parseable duration of format 'P[nd]DT[nh]H[nm]M[ds]S',\n"
           + "                      where nd = integer number of days, \n "
           + "                           nh = integer number of hours, \n" 
@@ -556,6 +557,28 @@ public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequ
         // Print out results summary
         TestArchiveRequestTestResultSummary   recSummary = TestArchiveRequestTestResultSummary.summarize(this.setTestResults); // throws NoSuchElementException
         recSummary.printOut(ps, null);
+        ps.println();
+        
+        // Print out the test case query data recovery data rates
+        ps.println("Test Case Query Data Recovery Data Rates");
+        DataRateLister<TestArchiveRequestTestResult>  lstrRcvryRates = DataRateLister.from(
+                rec -> rec.recTestCase().indCase(), 
+                rec -> rec.recRecoveryResult().strRecoveryRqstId(),
+                rec -> rec.recRecoveryResult().szRecoveryAlloc(), 
+                rec -> rec.recRecoveryResult().dblRateRawDataPrcd()
+                ); 
+        lstrRcvryRates.printOut(ps, strPad, this.setTestResults);
+        ps.println();
+        
+        // Print out the test case data assembly rates
+        ps.println("Test Case Query Data Assembly Data Rates");
+        DataRateLister<TestArchiveRequestTestResult>    lstAssmRates = DataRateLister.from(
+                rec -> rec.recTestCase().indCase(), 
+                rec -> rec.recSmpAggResult().strRqstId(), 
+                rec -> rec.recSmpAggResult().szAllocJava(), 
+                rec -> rec.recSmpAggResult().dblRateSmpAggPrcd()
+                );
+        lstAssmRates.printOut(ps, strPad, this.setTestResults);
         ps.println();
         
         // Print out individual test case results

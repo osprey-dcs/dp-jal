@@ -76,7 +76,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * @since Jun 15, 2025
  *
  * @param enmRqstOrg    the originating Test Archive data request
- * @param setPvNames    set of PV names supplementing the request
+ * @param setSupplPvs   set of PV names supplementing the request
  * @param durRange      request time range duration override
  * @param durDelay      request time range delay override
  * @param rqstFinal     the final time-series data request to perform
@@ -84,7 +84,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 public record SuperDomTestCase(
         int                 indCase,
         TestArchiveRequest  enmRqstOrg,
-        Set<String>         setPvNames,
+        Set<String>         setSupplPvs,
         Duration            durRange,
         Duration            durDelay,
         DpDataRequest       rqstFinal
@@ -102,7 +102,7 @@ public record SuperDomTestCase(
      * </p>
      * 
      * @param enmRqstOrg    the originating Test Archive data request
-     * @param setPvNames    set of PV names supplementing the request
+     * @param setSupplPvs    set of PV names supplementing the request
      * @param durRange      request time range duration override
      * @param durDelay      request time range delay override
      * @param rqstFinal     the final time-series data request to perform
@@ -111,13 +111,13 @@ public record SuperDomTestCase(
      */
     public static final SuperDomTestCase    from(
             TestArchiveRequest  enmRqstOrg,
-            Set<String>         setPvNames,
+            Set<String>         setSupplPvs,
             Duration            durRange,
             Duration            durDelay,
             DpDataRequest       rqstFinal
             )
     {
-        return new SuperDomTestCase(IND_CASE, enmRqstOrg, setPvNames, durRange, durDelay, rqstFinal);
+        return new SuperDomTestCase(IND_CASE, enmRqstOrg, setSupplPvs, durRange, durDelay, rqstFinal);
     }
 
     
@@ -147,7 +147,7 @@ public record SuperDomTestCase(
      *
      * @param indCase     the test case index
      * @param enmRqstOrg    the originating Test Archive data request
-     * @param setPvNames    set of PV names supplementing the request
+     * @param setSupplPvs    set of PV names supplementing the request
      * @param durRange      request time range duration override
      * @param durDelay      request time range delay override
      * @param rqstFinal     the final time-series data request to perform
@@ -307,7 +307,7 @@ public record SuperDomTestCase(
         ps.println(strPad + this.getClass().getSimpleName() + " #" + this.indCase + ":");
         ps.println(strPad + "  Test Archive request ID   : " + this.enmRqstOrg.name());
         ps.println(strPad + "  Time-series request ID    : " + this.rqstFinal.getRequestId());
-        ps.println(strPad + "  Supplemental PV names     : " + this.setPvNames);
+        ps.println(strPad + "  Supplemental PV names     : " + this.setSupplPvs);
         ps.println(strPad + "  Request duration override : " + this.durRange);
         ps.println(strPad + "  Request delay override    : " + this.durDelay);
     }

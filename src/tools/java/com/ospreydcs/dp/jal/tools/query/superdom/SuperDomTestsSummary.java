@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	SuperDomTestResultSummary.java
+ * File:	SuperDomTestsSummary.java
  * Package: com.ospreydcs.dp.jal.tools.query.superdom
- * Type: 	SuperDomTestResultSummary
+ * Type: 	SuperDomTestsSummary
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -55,8 +55,8 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * <li>The parameters for a super-domain test case are stored in a <code>{@link SuperDomTestCase}</code> record.</li>
  * <li>A super-domain test case evaluation is performed by method <code>{@link SuperDomTestCase#evaluate(QueryRequestRecoverer)}}</code>.</li>
  * <li>The results of a super-domain test case evaluation are stored in a <code>{@link SuperDomTestResult}</code> record.</li>
- * <li>A summary for a suite of super-domain test results is created by method <code>{@link SuperDomTestResultSummary#summarize(Collection)}</code>.</li>
- * <li>The summary for a suite of super-domain test results is stored in a <code>{@link SuperDomTestResultSummary}</code> record.</li>
+ * <li>A summary for a suite of super-domain test results is created by method <code>{@link SuperDomTestsSummary#summarize(Collection)}</code>.</li>
+ * <li>The summary for a suite of super-domain test results is stored in a <code>{@link SuperDomTestsSummary}</code> record.</li>
  * </ul>
  * Use the <code>{@link #printOut(PrintStream, String)}</code> method to print out a text description of a record instance
  * once populated.
@@ -108,7 +108,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @since Jun 30, 2025
  *
  */
-public record SuperDomTestResultSummary(
+public record SuperDomTestsSummary(
         int         cntResultsTot,
         int         cntRcvMsgsMin,
         int         cntRcvMsgsMax,
@@ -162,7 +162,7 @@ public record SuperDomTestResultSummary(
     
     /**
      * <p>
-     * Creates and returns a new <code>SuperDomTestResultSummary</code> instance with field populated by the given arguments.
+     * Creates and returns a new <code>SuperDomTestsSummary</code> instance with field populated by the given arguments.
      * </p>
      * 
      * @param cntResultsTot         the total number of <code>SuperDomTestResult</code> instances used in the summary
@@ -210,9 +210,9 @@ public record SuperDomTestResultSummary(
      * @param dblRateSupDomPrcdAvg  the average super-domain processing data rate
      * @param dblRateSupDomPrcdStd  the standard deviation for super-domain processing data rates
      * 
-     * @return  new <code>SuperDomTestResultSummary</code> record with fields given by the above arguments
+     * @return  new <code>SuperDomTestsSummary</code> record with fields given by the above arguments
      */
-    public static SuperDomTestResultSummary from( 
+    public static SuperDomTestsSummary from( 
             int         cntResultsTot,
             int         cntRcvMsgsMin,
             int         cntRcvMsgsMax,
@@ -259,7 +259,7 @@ public record SuperDomTestResultSummary(
             double      dblRateSupDomPrcdStd
             )
     {
-        return new SuperDomTestResultSummary(
+        return new SuperDomTestsSummary(
                 cntResultsTot,
                 cntRcvMsgsMin,
                 cntRcvMsgsMax,
@@ -342,25 +342,25 @@ public record SuperDomTestResultSummary(
      * Computes a summary of the given collection of evaluation results and returns them as a record.
      * </p>
      * <p>
-     * All the fields of a <code>SuperDomTestResultSummary</code> record are computed from the given 
+     * All the fields of a <code>SuperDomTestsSummary</code> record are computed from the given 
      * collection of test result records.  The computed values are then returned in a 
-     * new <code>SuperDomTestResultSummary</code> instance.
+     * new <code>SuperDomTestsSummary</code> instance.
      * </p>
      * <p>
      * Generally the statistics are computed for each record field within the argument collection.  The statistics
      * are up to second order including minimum values, maximum values, average values, and standard deviations
      * (standard deviations are included for durations and rates).
-     * See the class documentation for <code>{@link SuperDomTestResultSummary}</code> for a description of each
+     * See the class documentation for <code>{@link SuperDomTestsSummary}</code> for a description of each
      * field within the returned results summary.
      * </p> 
      *  
      * @param setResults    collection of super-domain test results
      * 
-     * @return  a new <code>SuperDomTestResultSummary</code> record containing a summary of the argument results
+     * @return  a new <code>SuperDomTestsSummary</code> record containing a summary of the argument results
      * 
      * @throws  NoSuchElementException    argument collection was empty
      */
-    public static SuperDomTestResultSummary    summarize(Collection<SuperDomTestResult> setResults) throws NoSuchElementException {
+    public static SuperDomTestsSummary    summarize(Collection<SuperDomTestResult> setResults) throws NoSuchElementException {
         
         // Check argument - avoid divide by zero
         if (setResults.isEmpty())
@@ -450,7 +450,7 @@ public record SuperDomTestResultSummary(
      
 
         // Create the summary record and return it
-        SuperDomTestResultSummary   recSummary = SuperDomTestResultSummary.from(
+        SuperDomTestsSummary   recSummary = SuperDomTestsSummary.from(
                 cntResults, 
                 cntMsgsMin, cntMsgsMax, cntMsgsAvg, 
                 szAllocMin, szAllocMax, szAllocAvg, 

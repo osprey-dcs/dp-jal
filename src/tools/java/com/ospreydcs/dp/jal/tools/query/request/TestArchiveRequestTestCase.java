@@ -82,7 +82,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  *
  * @param indCase       the (optional) test case index
  * @param enmRqstOrg    the originating Test Archive data request
- * @param setPvNames    set of PV names supplementing the request
+ * @param setSupplPvs   set of PV names supplementing the request
  * @param durRange      request time range duration override
  * @param durDelay      request time range delay override
  * @param rqstFinal     the final time-series data request to perform
@@ -90,7 +90,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 public record TestArchiveRequestTestCase(
         int                 indCase,
         TestArchiveRequest  enmRqstOrg,
-        Set<String>         setPvNames,
+        Set<String>         setSupplPvs,
         Duration            durRange,
         Duration            durDelay,
         DpDataRequest       rqstFinal
@@ -111,7 +111,7 @@ public record TestArchiveRequestTestCase(
      * </p>
      * 
      * @param enmRqstOrg    the originating Test Archive data request
-     * @param setPvNames    set of PV names supplementing the request
+     * @param setSupplPvs   set of PV names supplementing the request
      * @param durRange      request time range duration override
      * @param durDelay      request time range delay override
      * @param rqstFinal     the final time-series data request to perform
@@ -120,13 +120,13 @@ public record TestArchiveRequestTestCase(
      */
     public static final TestArchiveRequestTestCase    from(
             TestArchiveRequest  enmRqstOrg,
-            Set<String>         setPvNames,
+            Set<String>         setSupplPvs,
             Duration            durRange,
             Duration            durDelay,
             DpDataRequest       rqstFinal
             )
     {
-        return new TestArchiveRequestTestCase(IND_CASE, enmRqstOrg, setPvNames, durRange, durDelay, rqstFinal);
+        return new TestArchiveRequestTestCase(IND_CASE, enmRqstOrg, setSupplPvs, durRange, durDelay, rqstFinal);
     }
 
     
@@ -152,7 +152,7 @@ public record TestArchiveRequestTestCase(
      *
      * @param indCase       the test case index
      * @param enmRqstOrg    the originating Test Archive data request
-     * @param setPvNames    set of PV names supplementing the request
+     * @param setSupplPvs   set of PV names supplementing the request
      * @param durRange      request time range duration override
      * @param durDelay      request time range delay override
      * @param rqstFinal     the final time-series data request to perform
@@ -294,7 +294,7 @@ public record TestArchiveRequestTestCase(
         ps.println(strPad + this.getClass().getSimpleName() + " #" + this.indCase + ":");
         ps.println(strPad + "  Test Archive request ID   : " + this.enmRqstOrg.name());
         ps.println(strPad + "  Time-series request ID    : " + this.rqstFinal.getRequestId());
-        ps.println(strPad + "  Supplemental PV names     : " + this.setPvNames);
+        ps.println(strPad + "  Supplemental PV names     : " + this.setSupplPvs);
         ps.println(strPad + "  Request duration override : " + this.durRange);
         ps.println(strPad + "  Request delay override    : " + this.durDelay);
     }

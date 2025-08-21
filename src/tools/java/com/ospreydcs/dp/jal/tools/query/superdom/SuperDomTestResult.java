@@ -86,6 +86,7 @@ import com.ospreydcs.dp.api.common.TimeInterval;
  */
 public record SuperDomTestResult(
         String          strRecoveryRqstId,
+        
         int             cntRecoveryMsgs,
         long            szRecoveryAlloc,
         int             cntRawBlksTotal,
@@ -93,6 +94,7 @@ public record SuperDomTestResult(
         int             cntRawBlksTmsLst,
         Duration        durRawDataPrcd,
         double          dblRateRawDataPrcd,
+        
         ResultStatus    recOrdering,
         ResultStatus    recDisTmDom,
         int             cntDisBlksTotal,
@@ -101,8 +103,10 @@ public record SuperDomTestResult(
         ResultStatus    recDisBlkDoms,
         Duration        durSupDomPrcd,
         double          dblRateSupDomPrcd,
+        
         List<TimeInterval>  lstRawDoms,
         List<TimeInterval>  lstSupDoms,
+        
         SuperDomTestCase    recCase
         ) 
 
@@ -137,7 +141,7 @@ public record SuperDomTestResult(
      * @param lstSupDoms        list of super domains after super domain processing
      * @param recCase           the test case performed
      * 
-     * @return
+     * @return  a new <code>SuperDomTestResult</code> record populated with the given values
      */
     public static SuperDomTestResult    from(
             String          strRecoveryRqstId,

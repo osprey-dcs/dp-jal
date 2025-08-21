@@ -42,10 +42,10 @@ import java.util.Comparator;
  * @param recTestCase       the test case for which these results apply
  */
 public record TestArchiveRequestTestResult(
-        String                  strRqstIdOrg,
-        QueryRecoveryResult     recRecoveryResult,
-        SampledAggregateResult  recSmpAggResult,
-        TestArchiveRequestTestCase   recTestCase
+        String                      strRqstIdOrg,
+        QueryRecoveryResult         recRecoveryResult,
+        SampledAggregateResult      recSmpAggResult,
+        TestArchiveRequestTestCase  recTestCase
         ) 
 {
     
@@ -66,10 +66,10 @@ public record TestArchiveRequestTestResult(
      * @return  a new <code>TestArchiveRequestTestResult</code> record populated with the given argument values
      */
     public static TestArchiveRequestTestResult from(
-            String                  strRqstIdOrg,
-            QueryRecoveryResult     recRecoveryResult,
-            SampledAggregateResult  recSmpAggResult,
-            TestArchiveRequestTestCase   recTestCase
+            String                      strRqstIdOrg,
+            QueryRecoveryResult         recRecoveryResult,
+            SampledAggregateResult      recSmpAggResult,
+            TestArchiveRequestTestCase  recTestCase
             ) 
     {
         return new TestArchiveRequestTestResult(strRqstIdOrg, recRecoveryResult, recSmpAggResult, recTestCase);

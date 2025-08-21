@@ -43,7 +43,7 @@ import java.util.TreeMap;
  * <p>
  * The record is intended to encapsulate the extreme values (i.e., the "best" and the "worst") from a collection
  * of <code>CorrelatorTestResult</code> records.  The collection is assumed to be the result of a 
- * <code>CorrelatorTestSuiteConfig</code> evaluation and this record provides additional means for summarizing 
+ * <code>CorrelatorTestSuiteCreator</code> evaluation and this record provides additional means for summarizing 
  * the results.  
  * </p>
  * <p>

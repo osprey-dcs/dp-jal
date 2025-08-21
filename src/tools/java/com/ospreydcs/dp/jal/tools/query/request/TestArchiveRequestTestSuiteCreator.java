@@ -151,7 +151,7 @@ public class TestArchiveRequestTestSuiteCreator {
     private final Set<TestArchiveRequest>   setTestRqsts = new TreeSet<>();
     
     /** Container for all supplemental PV names to add to requested data */
-    private final Set<String>               setPvNames = new TreeSet<>();
+    private final Set<String>               setSupplPvs = new TreeSet<>();
 
     
     //
@@ -226,10 +226,10 @@ public class TestArchiveRequestTestSuiteCreator {
      * more specifically, all PV names added to the current configuration.
      * </p>
      *  
-     * @param setPvNames  collection of PV names to add to each <code>TestArchiveRequest</code> within configuration
+     * @param setSupplPvs  collection of PV names to add to each <code>TestArchiveRequest</code> within configuration
      */
     public void addPvNames(Collection<String>   setPvNames) {
-        this.setPvNames.addAll(setPvNames);
+        this.setSupplPvs.addAll(setPvNames);
         
     }
     
@@ -247,7 +247,7 @@ public class TestArchiveRequestTestSuiteCreator {
      * @param strPvName PV name to add to each <code>TestArchiveRequest</code> within configuration
      */
     public void addPvName(String strPvName) {
-        this.setPvNames.add(strPvName);
+        this.setSupplPvs.add(strPvName);
     }
     
     /**
@@ -353,9 +353,9 @@ public class TestArchiveRequestTestSuiteCreator {
         
         // Special Case - no TestArchiveDataRequest constants w/in configuration, only PV names, only one case
         if (this.setTestRqsts.isEmpty()) {
-            DpDataRequest       rqst = this.createRequest(this.setPvNames);
+            DpDataRequest       rqst = this.createRequest(this.setSupplPvs);
             TestArchiveRequest  enmRqst = TestArchiveRequest.EMPTY_REQUEST;
-            TestArchiveRequestTestCase    recCase = TestArchiveRequestTestCase.from(enmRqst, this.setPvNames, this.durRange, this.durDelay, rqst);
+            TestArchiveRequestTestCase    recCase = TestArchiveRequestTestCase.from(enmRqst, this.setSupplPvs, this.durRange, this.durDelay, rqst);
             
             return List.of(recCase);
         }
@@ -366,7 +366,7 @@ public class TestArchiveRequestTestSuiteCreator {
         
         for (TestArchiveRequest enmRqst : this.setTestRqsts) {
             DpDataRequest               rqst = this.createRequest(enmRqst);
-            TestArchiveRequestTestCase  recCase = TestArchiveRequestTestCase.from(enmRqst, this.setPvNames, this.durRange, this.durDelay, rqst);
+            TestArchiveRequestTestCase  recCase = TestArchiveRequestTestCase.from(enmRqst, this.setSupplPvs, this.durRange, this.durDelay, rqst);
             
             lstCases.add(recCase);
         }
@@ -395,7 +395,7 @@ public class TestArchiveRequestTestSuiteCreator {
             ps.println(strPad + " - " + enmRqst.name());
         
         ps.println(strPad + "Supplementing PV names:");
-        for (String strPvNm : this.setPvNames)
+        for (String strPvNm : this.setSupplPvs)
             ps.println(strPad + " - " + strPvNm);
         
         ps.println(strPad + "Request duration override : " + this.durRange);
@@ -414,7 +414,7 @@ public class TestArchiveRequestTestSuiteCreator {
      * <p>
      * Performs the following checks and actions:
      * <ul>
-     * <li>if <code>{@link #setTestRqsts}.isEmpty() && <code>{@link #setPvNames}.isEmpty()</code> throws exception. </li>
+     * <li>if <code>{@link #setTestRqsts}.isEmpty() && <code>{@link #setSupplPvs}.isEmpty()</code> throws exception. </li>
      * <li>if <code>{@link #setTestRqsts}.isEmpty() && {@link #durRange} == null)</code> throws exception. </li>
      * </ul>
      * </p>
@@ -423,7 +423,7 @@ public class TestArchiveRequestTestSuiteCreator {
      */
     private void    checkConfiguration() throws ConfigurationException {
         
-        if (this.setTestRqsts.isEmpty() && this.setPvNames.isEmpty()) {
+        if (this.setTestRqsts.isEmpty() && this.setSupplPvs.isEmpty()) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - Invalid test suite configuration, both Test Archive Request and Supplemental PV names collections are empty.";
             
@@ -453,7 +453,7 @@ public class TestArchiveRequestTestSuiteCreator {
      * modifications are then performed to the base request:
      * <ul>
      * <li>
-     * If any supplemental PV names exist in the container <code>{@link #setPvNames}</code> they are added to the request.
+     * If any supplemental PV names exist in the container <code>{@link #setSupplPvs}</code> they are added to the request.
      * </li>
      * <li>
      * If the <code>#{@link #durRange}</code> attribute is non-null the range of the returned request is changed
@@ -476,7 +476,13 @@ public class TestArchiveRequestTestSuiteCreator {
         DpDataRequest   rqst = enmRqst.create();
         
         // Add supplemental PV names
-        rqst.selectSources(this.setPvNames);
+        if (!this.setSupplPvs.isEmpty()) {
+            String  strRqstId = rqst.getRequestId();
+            strRqstId += "+" + this.setSupplPvs;
+            
+            rqst.selectSources(this.setSupplPvs);
+            rqst.setRequestId(strRqstId);
+        }
 
         // If the request range or duration have no been modified there is nothing left to do
         if (this.durRange==null && this.durDelay==null)
@@ -509,7 +515,7 @@ public class TestArchiveRequestTestSuiteCreator {
      * the collection <code>{@link #setTestRqsts}</code> is empty.
      * </p>
      * <p>
-     * The returned request is built from the collection of PV names <code>{@link #setPvNames}</code> and the durations
+     * The returned request is built from the collection of PV names <code>{@link #setSupplPvs}</code> and the durations
      * <code>{@link #durRange}</code> and <code>{@link #durDelay}</code>.  If <code>{@link #durDelay}</code> is <code>null</code>
      * then the start time is the archive inception time <code>{@link #INS_ARCHIVE_INCEPT}</code>, otherwise it is
      * the inception time plus the delay.  

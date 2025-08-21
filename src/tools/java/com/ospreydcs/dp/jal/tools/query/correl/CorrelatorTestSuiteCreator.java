@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	CorrelatorTestSuiteConfig.java
+ * File:	CorrelatorTestSuiteCreator.java
  * Package: com.ospreydcs.dp.jal.tools.query.correl
- * Type: 	CorrelatorTestSuiteConfig
+ * Type: 	CorrelatorTestSuiteCreator
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -51,7 +51,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * </p>
  * <p>
  * Generates collections of <code>{@link CorrelatorTestCase}</code> instances, or "test suites",
- * according to dynamic configuration.  Specifically, a new <code>CorrelatorTestSuiteConfig</code> instance
+ * according to dynamic configuration.  Specifically, a new <code>CorrelatorTestSuiteCreator</code> instance
  * is first configured using methods
  * <ul>
  * <li><code>{@link #addTestRequest(TestArchiveRequest)}</code></li>
@@ -82,7 +82,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * @since May 31, 2025
  *
  */
-public class CorrelatorTestSuiteConfig {
+public class CorrelatorTestSuiteCreator {
     
     
     //
@@ -91,13 +91,13 @@ public class CorrelatorTestSuiteConfig {
     
     /**
      * <p>
-     * Creates and returns a new, empty <code>CorrelatorTestSuiteConfig</code> ready for configuration.
+     * Creates and returns a new, empty <code>CorrelatorTestSuiteCreator</code> ready for configuration.
      * </p>
      * 
-     * @return  a new unconfigured instance of <code>CorrelatorTestSuiteConfig</code>
+     * @return  a new unconfigured instance of <code>CorrelatorTestSuiteCreator</code>
      */
-    public static CorrelatorTestSuiteConfig   create() {
-        return new CorrelatorTestSuiteConfig();
+    public static CorrelatorTestSuiteCreator   create() {
+        return new CorrelatorTestSuiteCreator();
     }
     
 
@@ -167,11 +167,11 @@ public class CorrelatorTestSuiteConfig {
     
     /**
      * <p>
-     * Constructs a new, unconfigured <code>CorrelatorTestSuiteConfig</code> instance.
+     * Constructs a new, unconfigured <code>CorrelatorTestSuiteCreator</code> instance.
      * </p>
      *
      */
-    public CorrelatorTestSuiteConfig() {
+    public CorrelatorTestSuiteCreator() {
     }
 
     
@@ -347,15 +347,16 @@ public class CorrelatorTestSuiteConfig {
         
         for (TestArchiveRequest enmRqst : this.setTestRqsts) {
             
+            // Create the data request
+            DpDataRequest   rqst = enmRqst.create();
+            rqst.selectSources(this.setSupplPvs);
+            
             // Create the data request name
             String          strIdAug = "";
             if (!this.setSupplPvs.isEmpty())
                 strIdAug = "+" + this.setSupplPvs;
-            
-            // Create the data request
-            DpDataRequest   rqst = enmRqst.create();
-            rqst.selectSources(this.setSupplPvs);
-            rqst.setRequestId(strIdAug);
+            String          strRqstId = rqst.getRequestId() + strIdAug;
+            rqst.setRequestId(strRqstId);
             
             // Create the list of test cases and populate if for this request
             List<CorrelatorTestCase>    lstCases = new LinkedList<>();

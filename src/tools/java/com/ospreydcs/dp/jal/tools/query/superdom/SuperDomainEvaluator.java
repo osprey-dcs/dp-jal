@@ -52,6 +52,7 @@ import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.jal.tools.common.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator;
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
@@ -91,6 +92,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         
         // Check for client help request
         if (JalApplicationBase.parseAppArgsHelp(args)) {
+            System.out.println(STR_APP_DESCR);
             System.out.println(STR_APP_USAGE);
             
             System.exit(ExitCode.SUCCESS.getCode());
@@ -120,7 +122,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         
         // Get the test suite configuration and output location from the application arguments
         String                      strOutputLoc;
-        SuperDomTestSuiteConfig     cfgSuite;
+        SuperDomTestSuiteCreator     cfgSuite;
         try {
             
             strOutputLoc = JalApplicationBase.parseOutputLocation(args, STR_OUTPUT_DEF);
@@ -241,6 +243,33 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     /** Application name */
     public static final String      STR_APP_NAME = SuperDomainEvaluator.class.getSimpleName();
     
+    /** A laconic description of the application function */
+    public static final String      STR_APP_DESCR = 
+            STR_APP_NAME + " Description \n"
+          + "- Application evaluates the performance and operation of the TimeDomainProcessor class \n"
+          + "    for processing raw time-series data with time-domain collisions. \n"
+          + "\n"
+          + "- The Data Platform must be populated with data from the Test Archive by running application \n"
+          + "    'app-run-test-data-generator'.\n"
+          + "    Additional time-series sample processes can be added using JAL application 'AddTestArchiveData'. \n"
+          + "\n"
+          + "- Data Platform Test Archive requests are first performed, recovering and correlating all \n"
+          + "    time-series data into raw data blocks containing data messages corresponding a \n"
+          + "    common timestamp message.\n"
+          + "- The correlated data is then presented to a TimeDomainProcessor to resolve any time-domain \n"
+          + "    issues with the correlated data. \n"
+          + "    Specifically, the TimeDomainProcessor identifies and separates correlated blocks into \n"
+          + "    collections that share the same time interval. \n"
+          + "\n"
+          + "- The target of this application is the performance of time-domain collision identification for \n "
+          + "    various time-series requests. \n"
+          + "\n"
+          + "- Note that SampledAggregate instances are NOT created. \n"
+          + "    These aggregates require the creation of SampledBlock instance that resolve conflicting \n"
+          + "    time-domain collisions.  Typically, this process is much more CPU intensive."
+          + "- See application QueryAssemblyEvaluator for evaluation of SampledAggregate performance. \n"
+          + "    Note that SampledAggregate instances provide the mean by which data tables can be created. \n";
+    
     
     /** The "usage" message for client help requests or invalid application arguments */
     public static final String      STR_APP_USAGE = 
@@ -250,7 +279,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
           + " [" + STR_VAR_HELP + "]"
           + " [" + STR_VAR_VERSION + "]"
           + " [R1 ... Rn]"
-          + " " + STR_VAR_PVS + " PV1 [... PVm]"
+          + " " + STR_VAR_PVS + " [PV1 ... PVn]"
           + " [" + STR_VAR_DUR + " T]"
           + " [" + STR_VAR_DELAY + " D]"
           + " [" + STR_VAR_OUTPUT +" Output]"
@@ -259,7 +288,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
           + "    " + STR_VAR_HELP + "        = print this message and return.\n"
           + "    " + STR_VAR_VERSION + "     = prints application version information and return.\n"
           + "    R1, ..., Rn   = Test request(s) to perform - 'TestArchiveRequest' enumeration name(s).\n"
-          + "    PV1, ..., PVm = Additional PV name(s) to add to request(s).\n"
+          + "    PV1, ..., PVn = Supplemental PV name(s) to add to data request(s).\n"
           + "    T             = Override of request duration - parseable duration of format 'P[nd]DT[nh]H[nm]M[ds]S',\n"
           + "                      where nd = integer number of days, \n "
           + "                           nh = integer number of hours, \n" 
@@ -316,7 +345,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     //
     
     /** The test suite generator used for <code>SuperDomTestCase</code> evaluations */
-    private final SuperDomTestSuiteConfig       cfgTests;
+    private final SuperDomTestSuiteCreator       cfgTests;
     
     
     //
@@ -361,7 +390,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
      * @throws FileNotFoundException    unable to create output file (see message and cause)
      * @throws SecurityException        unable to write to output file
      */
-    public SuperDomainEvaluator(SuperDomTestSuiteConfig cfgTests, String strOutputLoc, String...args) 
+    public SuperDomainEvaluator(SuperDomTestSuiteCreator cfgTests, String strOutputLoc, String...args) 
             throws DpGrpcException, ConfigurationException, UnsupportedOperationException, FileNotFoundException, SecurityException {
 
         super(SuperDomainEvaluator.class, args);  // throws DpGrpcException
@@ -373,7 +402,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         
         // Create test case suite and test result container
         this.setTestCases = this.cfgTests.createTestSuite();    //throws configuration exception
-        this.setTestResults = new TreeSet<>(SuperDomTestResult.ascendingCaseIndexOrdering());
+        this.setTestResults = new TreeSet<>(SuperDomTestResult.descendingSuperDomRateOrdering());
         
         // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
@@ -405,7 +434,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
      * Runs the application evaluating all test cases within the test suite configuration.
      * </p>
      * <p>
-     * The test suite generated by the <code>{@link SuperDomTestSuiteConfig}</code>
+     * The test suite generated by the <code>{@link SuperDomTestSuiteCreator}</code>
      * instance provided at construction are available at the time of invocation.  The
      * test suite is run and the results are stored for later reporting.
      * <ul> 
@@ -542,9 +571,20 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         ps.println();
         
         // Print out results summary
-        SuperDomTestResultSummary.assignTargetDataRate(DBL_RATE_TARGET);
-        SuperDomTestResultSummary   recSummary = SuperDomTestResultSummary.summarize(this.setTestResults); // throws NoSuchElementException
+        SuperDomTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
+        SuperDomTestsSummary   recSummary = SuperDomTestsSummary.summarize(this.setTestResults); // throws NoSuchElementException
         recSummary.printOut(ps, null);
+        ps.println();
+        
+        // Print out the data rate listing
+        ps.println("Test Case Data Rates");
+        DataRateLister<SuperDomTestResult>  lstrRates = DataRateLister.from(
+                rec -> rec.recCase().indCase(), 
+                rec -> rec.strRecoveryRqstId(), 
+                rec -> rec.szRecoveryAlloc(), 
+                rec -> rec.dblRateSupDomPrcd()
+                );
+        lstrRates.printOut(ps, "  ", this.setTestResults);
         ps.println();
         
         // Print out individual test case results
@@ -580,7 +620,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
      * If a test request has an invalid <code>{@link TestArchiveRequest}</code> name an exception is thrown.    
      * </p>
      * <p>
-     * The remaining arguments are optional; a <code>SuperDomTestSuiteConfig</code> instance has default values that
+     * The remaining arguments are optional; a <code>SuperDomTestSuiteCreator</code> instance has default values that
      * will be supplied if any are missing.  Note that all values for variables {@value #STR_VAR_DUR} and 
      * {@value #STR_VAR_DELAY} are 'PnDTnHnMx.xS' formatted and parsed as such.  If an error occurs
      * while parsing the <code>{@link Duration}</code> value an exception is thrown.
@@ -596,7 +636,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
      * @throws IllegalArgumentException invalid test request enumeration constant name (not in <code>TestArchiveRequest</code>)
      * @throws DateTimeParseException   an invalid time duration format was encountered (could not be converted to a <code>Duration</code> type)
      */
-    private static SuperDomTestSuiteConfig    parseTestSuiteConfig(String[] args) 
+    private static SuperDomTestSuiteCreator    parseTestSuiteConfig(String[] args) 
             throws NoSuchElementException, MissingResourceException, ConfigurationException, IllegalArgumentException, DateTimeParseException {
      
         // Parse the data requests enumerations and the supplemental PVs
@@ -628,7 +668,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         if (lstRqstNms.isEmpty() && lstStrRqstDur.isEmpty()) {
             String  strMsg = "A request duration " + STR_VAR_DUR + " must be specified for PV list " + lstPvNms + ".";
             
-            throw new MissingResourceException(strMsg, SuperDomTestSuiteConfig.class.getName(), STR_VAR_DUR);
+            throw new MissingResourceException(strMsg, SuperDomTestSuiteCreator.class.getName(), STR_VAR_DUR);
         }
 
         // Convert to TestArchiveRequest enumeration constants
@@ -654,7 +694,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         }
         
         // Build the test suite and return it
-        SuperDomTestSuiteConfig cfgSuite = SuperDomTestSuiteConfig.create();
+        SuperDomTestSuiteCreator cfgSuite = SuperDomTestSuiteCreator.create();
         
         cfgSuite.addTestRequests(lstRqsts);
         cfgSuite.addPvNames(lstPvNms);

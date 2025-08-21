@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	SuperDomTestSuiteConfig.java
+ * File:	SuperDomTestSuiteCreator.java
  * Package: com.ospreydcs.dp.jal.tools.query.superdom
- * Type: 	SuperDomTestSuiteConfig
+ * Type: 	SuperDomTestSuiteCreator
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -51,7 +51,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * Configurable class that creates collections of <code>SuperDomTestCase</code> instances.
  * </p>
  * <p>
- * A <code>SuperDomTestSuiteConfig</code> instance is created in an unconfigured state.  Clients
+ * A <code>SuperDomTestSuiteCreator</code> instance is created in an unconfigured state.  Clients
  * must configure the instance using the available configuration methods before calling the
  * <code>{@link #createTestSuite()}</code> method which returns a collection (i.e., "suite") of
  * <code>{@link SuperDomTestCase}</code> instances according to the current configuration.
@@ -80,7 +80,7 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * @since Jun 15, 2025
  *
  */
-public class SuperDomTestSuiteConfig {
+public class SuperDomTestSuiteCreator {
 
 
     //
@@ -89,13 +89,13 @@ public class SuperDomTestSuiteConfig {
     
     /**
      * <p>
-     * Creates and returns a new, empty <code>SuperDomTestSuiteConfig</code> ready for configuration.
+     * Creates and returns a new, empty <code>SuperDomTestSuiteCreator</code> ready for configuration.
      * </p>
      * 
-     * @return  a new unconfigured instance of <code>SuperDomTestSuiteConfig</code>
+     * @return  a new unconfigured instance of <code>SuperDomTestSuiteCreator</code>
      */
-    public static SuperDomTestSuiteConfig   create() {
-        return new SuperDomTestSuiteConfig();
+    public static SuperDomTestSuiteCreator   create() {
+        return new SuperDomTestSuiteCreator();
     }
     
 
@@ -115,7 +115,7 @@ public class SuperDomTestSuiteConfig {
     //
     
     /** Class name - used for request ID when no TestArchiveRequest constants are specified */
-    public static final String      STR_CLS_NAME = SuperDomTestSuiteConfig.class.getSimpleName();
+    public static final String      STR_CLS_NAME = SuperDomTestSuiteCreator.class.getSimpleName();
 
     
     /** Event logging enabled flag */
@@ -149,7 +149,7 @@ public class SuperDomTestSuiteConfig {
     private final Set<TestArchiveRequest>   setTestRqsts = new TreeSet<>();
     
     /** Container for all supplemental PV names to add to requested data */
-    private final Set<String>               setPvNames = new TreeSet<>();
+    private final Set<String>               setSupplPvs = new TreeSet<>();
 
     
     //
@@ -169,11 +169,11 @@ public class SuperDomTestSuiteConfig {
     
     /**
      * <p>
-     * Constructs a new <code>SuperDomTestSuiteConfig</code> instance ready for configuration.
+     * Constructs a new <code>SuperDomTestSuiteCreator</code> instance ready for configuration.
      * </p>
      *
      */
-    public SuperDomTestSuiteConfig() {
+    public SuperDomTestSuiteCreator() {
     }
 
 
@@ -224,10 +224,10 @@ public class SuperDomTestSuiteConfig {
      * more specifically, all PV names added to the current configuration.
      * </p>
      *  
-     * @param setPvNames  collection of PV names to add to each <code>TestArchiveRequest</code> within configuration
+     * @param setSupplPvs  collection of PV names to add to each <code>TestArchiveRequest</code> within configuration
      */
     public void addPvNames(Collection<String>   setPvNames) {
-        this.setPvNames.addAll(setPvNames);
+        this.setSupplPvs.addAll(setPvNames);
         
     }
     
@@ -245,7 +245,7 @@ public class SuperDomTestSuiteConfig {
      * @param strPvName PV name to add to each <code>TestArchiveRequest</code> within configuration
      */
     public void addPvName(String strPvName) {
-        this.setPvNames.add(strPvName);
+        this.setSupplPvs.add(strPvName);
     }
     
     /**
@@ -351,9 +351,9 @@ public class SuperDomTestSuiteConfig {
         
         // Special Case - no TestArchiveDataRequest constants w/in configuration, only PV names, only one case
         if (this.setTestRqsts.isEmpty()) {
-            DpDataRequest       rqst = this.createRequest(this.setPvNames);
+            DpDataRequest       rqst = this.createRequest(this.setSupplPvs);
             TestArchiveRequest  enmRqst = TestArchiveRequest.EMPTY_REQUEST;
-            SuperDomTestCase    recCase = SuperDomTestCase.from(enmRqst, this.setPvNames, this.durRange, this.durDelay, rqst);
+            SuperDomTestCase    recCase = SuperDomTestCase.from(enmRqst, this.setSupplPvs, this.durRange, this.durDelay, rqst);
             
             return List.of(recCase);
         }
@@ -364,7 +364,7 @@ public class SuperDomTestSuiteConfig {
         
         for (TestArchiveRequest enmRqst : this.setTestRqsts) {
             DpDataRequest       rqst = this.createRequest(enmRqst);
-            SuperDomTestCase    recCase = SuperDomTestCase.from(enmRqst, this.setPvNames, this.durRange, this.durDelay, rqst);
+            SuperDomTestCase    recCase = SuperDomTestCase.from(enmRqst, this.setSupplPvs, this.durRange, this.durDelay, rqst);
             
             lstCases.add(recCase);
         }
@@ -393,7 +393,7 @@ public class SuperDomTestSuiteConfig {
             ps.println(strPad + " - " + enmRqst.name());
         
         ps.println(strPad + "Supplementing PV names:");
-        for (String strPvNm : this.setPvNames)
+        for (String strPvNm : this.setSupplPvs)
             ps.println(strPad + " - " + strPvNm);
         
         ps.println(strPad + "Request duration override : " + this.durRange);
@@ -411,7 +411,7 @@ public class SuperDomTestSuiteConfig {
      * <p>
      * Performs the following checks and actions:
      * <ul>
-     * <li>if <code>{@link #setTestRqsts}.isEmpty() && <code>{@link #setPvNames}.isEmpty()</code> </li>
+     * <li>if <code>{@link #setTestRqsts}.isEmpty() && <code>{@link #setSupplPvs}.isEmpty()</code> </li>
      * <li>if <code>{@link #setTestRqsts}.isEmpty() && {@link #durRange} == null)</code></li>
      * </ul>
      * </p>
@@ -420,7 +420,7 @@ public class SuperDomTestSuiteConfig {
      */
     private void    checkConfiguration() throws ConfigurationException {
         
-        if (this.setTestRqsts.isEmpty() && this.setPvNames.isEmpty()) {
+        if (this.setTestRqsts.isEmpty() && this.setSupplPvs.isEmpty()) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - Invalid test suite configuration, both Test Archive Request and Supplemental PV names collections are empty.";
             
@@ -451,7 +451,7 @@ public class SuperDomTestSuiteConfig {
      * modifications are then performed to the base request:
      * <ul>
      * <li>
-     * If any supplemental PV names exist in the container <code>{@link #setPvNames}</code> they are added to the request.
+     * If any supplemental PV names exist in the container <code>{@link #setSupplPvs}</code> they are added to the request.
      * </li>
      * <li>
      * If the <code>#{@link #durRange}</code> attribute is non-null the range of the returned request is changed
@@ -473,8 +473,17 @@ public class SuperDomTestSuiteConfig {
         // Create the base request
         DpDataRequest   rqst = enmRqst.create();
         
-        // Add supplemental PV names
-        rqst.selectSources(this.setPvNames);
+        // Augment request if supplemental PV exists
+        if (!this.setSupplPvs.isEmpty())  {
+            String      strRqstId = rqst.getRequestId();
+            
+            strRqstId += "+" + this.setSupplPvs;
+
+            // Add supplemental PV names and reset ID
+            rqst.selectSources(this.setSupplPvs);
+            rqst.setRequestId(strRqstId);;
+        }
+        
 
         // If the request range or duration have no been modified there is nothing left to do
         if (this.durRange==null && this.durDelay==null)
@@ -507,7 +516,7 @@ public class SuperDomTestSuiteConfig {
      * the collection <code>{@link #setTestRqsts}</code> is empty.
      * </p>
      * <p>
-     * The returned request is built from the collection of PV names <code>{@link #setPvNames}</code> and the durations
+     * The returned request is built from the collection of PV names <code>{@link #setSupplPvs}</code> and the durations
      * <code>{@link #durRange}</code> and <code>{@link #durDelay}</code>.  If <code>{@link #durDelay}</code> is <code>null</code>
      * then the start time is the archive inception time <code>{@link #INS_ARCHIVE_INCEPT}</code>, otherwise it is
      * the inception time plus the delay.  
