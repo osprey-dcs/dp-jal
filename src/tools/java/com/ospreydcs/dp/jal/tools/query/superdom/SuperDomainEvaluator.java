@@ -541,6 +541,9 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         if (!this.bolRun)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + "- Test suite has not been run.");
         
+        // General padding string
+        String  strPad = "  ";
+        
         // Print out header
         String  strHdr = super.createReportHeader();
         ps.println();
@@ -562,18 +565,12 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
         
         // Print out the correlator configuration
         ps.println("Raw Data Correlator Configuration");
-        this.procCorrelator.printOutConfig(ps, "  ");
+        this.procCorrelator.printOutConfig(ps, strPad);
         ps.println();
         
         // Print out the test suite configuration
         ps.println("Test Suite Configuration");
-        this.cfgTests.printOut(ps, "  ");
-        ps.println();
-        
-        // Print out results summary
-        SuperDomTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
-        SuperDomTestsSummary   recSummary = SuperDomTestsSummary.summarize(this.setTestResults); // throws NoSuchElementException
-        recSummary.printOut(ps, null);
+        this.cfgTests.printOut(ps, strPad);
         ps.println();
         
         // Print out the data rate listing
@@ -584,13 +581,19 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
                 rec -> rec.szRecoveryAlloc(), 
                 rec -> rec.dblRateSupDomPrcd()
                 );
-        lstrRates.printOut(ps, "  ", this.setTestResults);
+        lstrRates.printOut(ps, strPad, this.setTestResults);
+        ps.println();
+        
+        // Print out results summary
+        SuperDomTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
+        SuperDomTestsSummary   recSummary = SuperDomTestsSummary.summarize(this.setTestResults); // throws NoSuchElementException
+        recSummary.printOut(ps, null);
         ps.println();
         
         // Print out individual test case results
         ps.println("Test Case Results");
         for (SuperDomTestResult recResult : this.setTestResults) {
-            recResult.printOut(ps, "  ");
+            recResult.printOut(ps, strPad);
             ps.println();
         }
     }

@@ -49,6 +49,7 @@ import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.jal.tools.common.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator;
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
@@ -555,6 +556,8 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         if (!super.bolRun)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + "- Test suite has not been run.");
         
+        String  strPad = "  ";
+        
         // Print out header
         String  strHdr = super.createReportHeader();
         ps.println();
@@ -577,18 +580,25 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         
         // Print out the test suite configuration
         ps.println("Test Suite Configuration");
-        this.suiteEvals.printOut(ps, "  ");
+        this.suiteEvals.printOut(ps, strPad);
+        ps.println();
+        
+        // Print out test case data rates
+        ps.println("Test Case Data Rates");
+        DataRateLister<QueryChannelTestResult>  lstrRates = DataRateLister.from(
+                rec -> rec.recTestCase().indCase(), 
+                rec -> rec.strRqstId(), 
+                rec -> rec.szRecovery(), 
+                rec -> rec.dblDataRate()
+                );
+        lstrRates.printOut(ps, strPad, this.setResults);
+//        QueryChannelTestsSummary.printOutDataRates(ps, "  ", this.setResults);
         ps.println();
         
         // Print out results summary
         QueryChannelTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
         QueryChannelTestsSummary  recSummary = QueryChannelTestsSummary.summarize(this.setResults);
         recSummary.printOutChannelSummary(ps, null);
-        ps.println();
-        
-        // Print out test case data rates
-        ps.println("Test Case Data Rates");
-        QueryChannelTestsSummary.printOutDataRates(ps, "  ", this.setResults);
         ps.println();
         
         // Print out results extremes
@@ -599,13 +609,13 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
         // Print out channel configuration scoring
         ps.println("Channel Configuration Scoring");
         ChannelConfigScorer scrChan = ChannelConfigScorer.from(this.setResults);
-        scrChan.printOutByRates(ps, "  ");
+        scrChan.printOutByRates(ps, strPad);
         ps.println();
         
         // Print out each test result
         ps.println("Individual Case Results:");
         for (QueryChannelTestResult recCase : this.setResults) {
-            recCase.printOut(ps, "  ");
+            recCase.printOut(ps, strPad);
             ps.println();
         }
     }

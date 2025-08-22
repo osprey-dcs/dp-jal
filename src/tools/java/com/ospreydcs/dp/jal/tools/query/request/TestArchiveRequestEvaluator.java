@@ -517,6 +517,9 @@ public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequ
         if (!this.bolRun)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + "- Test suite has not been run.");
         
+        // General padding string
+        String  strPad = "  ";
+        
         // Print out header
         String  strHdr = super.createReportHeader();
         ps.println();
@@ -536,9 +539,6 @@ public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequ
         ps.println("Evaluation completed : " + this.bolCompleted);
         ps.println();
         
-        // General padding string
-        String  strPad = "  ";
-        
         // Print out the correlator configuration
         ps.println("Query Request Recoverer Configuration");
         this.procCorrelator.printOutConfig(ps, strPad);
@@ -554,13 +554,8 @@ public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequ
         this.cfgTests.printOut(ps, strPad);
         ps.println();
         
-        // Print out results summary
-        TestArchiveRequestTestResultSummary   recSummary = TestArchiveRequestTestResultSummary.summarize(this.setTestResults); // throws NoSuchElementException
-        recSummary.printOut(ps, null);
-        ps.println();
-        
         // Print out the test case query data recovery data rates
-        ps.println("Test Case Query Data Recovery Data Rates");
+        ps.println("Test Case Data Rates - Query Data Recovery/Correlation");
         DataRateLister<TestArchiveRequestTestResult>  lstrRcvryRates = DataRateLister.from(
                 rec -> rec.recTestCase().indCase(), 
                 rec -> rec.recRecoveryResult().strRecoveryRqstId(),
@@ -571,7 +566,7 @@ public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequ
         ps.println();
         
         // Print out the test case data assembly rates
-        ps.println("Test Case Query Data Assembly Data Rates");
+        ps.println("Test Case Data Rates - Sampled Aggregate Assembly");
         DataRateLister<TestArchiveRequestTestResult>    lstAssmRates = DataRateLister.from(
                 rec -> rec.recTestCase().indCase(), 
                 rec -> rec.recSmpAggResult().strRqstId(), 
@@ -581,10 +576,15 @@ public class TestArchiveRequestEvaluator extends JalQueryAppBase<TestArchiveRequ
         lstAssmRates.printOut(ps, strPad, this.setTestResults);
         ps.println();
         
+        // Print out results summary
+        TestArchiveRequestTestResultSummary   recSummary = TestArchiveRequestTestResultSummary.summarize(this.setTestResults); // throws NoSuchElementException
+        recSummary.printOut(ps, null);
+        ps.println();
+        
         // Print out individual test case results
         ps.println("Test Case Results");
         for (TestArchiveRequestTestResult recResult : this.setTestResults) {
-            recResult.printOut(ps, "  ");
+            recResult.printOut(ps, strPad);
             ps.println();
         }
     }
