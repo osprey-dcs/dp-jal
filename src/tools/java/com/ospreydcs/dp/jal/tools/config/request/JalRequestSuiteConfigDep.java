@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	JalRequestSuiteConfig.java
+ * File:	JalRequestSuiteConfigDep.java
  * Package: com.ospreydcs.dp.jal.tools.config.request
- * Type: 	JalRequestSuiteConfig
+ * Type: 	JalRequestSuiteConfigDep
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -40,11 +40,13 @@ import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
  * @author Christopher K. Allen
  * @since May 9, 2025
  *
+ * @deprecated No longer used
  */
-public class JalRequestSuiteConfig extends CfgStructure<JalRequestSuiteConfig> {
+@Deprecated(since="Aug 22, 2025")
+public class JalRequestSuiteConfigDep extends CfgStructure<JalRequestSuiteConfigDep> {
 
     /** Default constructor required for super class */
-    public JalRequestSuiteConfig() { super(JalRequestSuiteConfig.class); }
+    public JalRequestSuiteConfigDep() { super(JalRequestSuiteConfigDep.class); }
 
     
     //

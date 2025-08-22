@@ -16,7 +16,7 @@ APP_NAME=DataCorrelationEvaluator
 APP_MAIN=com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator
 
 JAR_NAME=dp-jal-shaded
-JAR_VER=1.7.0
+JAR_VER=1.7.1
 
 #
 # Recover Environment Variables

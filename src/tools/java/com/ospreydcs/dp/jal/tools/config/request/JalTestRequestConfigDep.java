@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	JalTestRequestConfig.java
+ * File:	JalTestRequestConfigDep.java
  * Package: com.ospreydcs.dp.jal.tools.config.request
- * Type: 	JalTestRequestConfig
+ * Type: 	JalTestRequestConfigDep
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -37,11 +37,13 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  * @author Christopher K. Allen
  * @since May 10, 2025
  *
+ * @deprecated  No longer used
  */
-public class JalTestRequestConfig extends CfgStructure<JalTestRequestConfig> {
+@Deprecated(since="Aug 22, 2025")
+public class JalTestRequestConfigDep extends CfgStructure<JalTestRequestConfigDep> {
 
     /** Default constructor required for super class */
-    public JalTestRequestConfig() { super(JalTestRequestConfig.class); }
+    public JalTestRequestConfigDep() { super(JalTestRequestConfigDep.class); }
 
     
     //
@@ -49,5 +51,5 @@ public class JalTestRequestConfig extends CfgStructure<JalTestRequestConfig> {
     //
     
     /** List of test request test suites */
-    public List<JalRequestSuiteConfig>       testSuites;
+    public List<JalRequestSuiteConfigDep>       testSuites;
 }

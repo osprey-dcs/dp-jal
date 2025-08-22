@@ -36,7 +36,6 @@ import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchiveConfig;
 import com.ospreydcs.dp.jal.tools.config.output.JalToolsOutputConfig;
-import com.ospreydcs.dp.jal.tools.config.query.JalToolsQueryConfig;
 
 /**
  * <p>
@@ -141,10 +140,6 @@ public class JalToolsConfig extends CfgStructure<JalToolsConfig> {
     /** Default output locations of Java API Library tools */
     @ACfgOverride.Struct(pathelem="OUTPUT")
     public JalToolsOutputConfig     output;
-    
-//    /** Default configuration parameters for Java API Library query service tools */
-//    @ACfgOverride.Struct(pathelem="QUERY")
-//    public JalToolsQueryConfig      query;
     
 
 }

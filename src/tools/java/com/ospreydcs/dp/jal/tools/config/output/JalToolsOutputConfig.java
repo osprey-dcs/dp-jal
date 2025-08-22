@@ -52,39 +52,4 @@ public class JalToolsOutputConfig extends CfgStructure<JalToolsOutputConfig> {
     @ACfgOverride.Field(name="PATH")
     public String   path;
 
-//    /** Output locations for the QueryChannel evaluations */
-//    @ACfgOverride.Struct(pathelem="CHANNEL")
-//    public Channel      channel;
-//
-//    /** Output locations for raw data correlation evaluations */
-//    @ACfgOverride.Struct(pathelem="CORREL")
-//    public Correlation  correl;
-//
-//
-//    /**
-//     * <p>
-//     * Structure class containing QueryChannel evaluation output locations.
-//     * </p>
-//     */
-//    @ACfgOverride.Root(root="JAL_TOOLS_QUERY_OUTPUT_CHANNEL")
-//    public static class Channel extends CfgStructure<Channel>{
-//
-//        /** Required constructor for base class */
-//        public Channel() { super(Channel.class); }
-//
-//        /** Location of QueryChannel evaluation outputs */
-//        @ACfgOverride.Field(name="PATH")
-//        public String   path;
-//    }
-//
-//    @ACfgOverride.Root(root="JAL_TOOLS_QUERY_OUTPUT_CORREL")
-//    public static class Correlation extends CfgStructure<Correlation> {
-//
-//        /** Required constructor for structure base class */
-//        public Correlation() { super(Correlation.class); };
-//
-//        /** Location of raw dat correlation evaluation outputs */
-//        @ACfgOverride.Field(name="CORREL")
-//        public String   path;
-//    }
 }
