@@ -37,7 +37,7 @@
  * <h2>Ingestion Service Interfaces</h2>   
  * There are currently 2 available interfaces with the Ingestion Service:
  * <ol>
- * <li><code>{@link DpIngestionServiceImpl}</code>: 
+ * <li><code>{@link IIngestionService}</code>: 
  *   Basic interaction with the Ingestion Service where the underlying 
  *   data transmission mechanism is unary RPC.  This interface is intended for clients with 
  *   minimal data ingestion requirements.
@@ -46,7 +46,7 @@
  *   <li>All data ingestion is performed synchronously using blocking operations.</li>
  *   </ul> 
  * </li>
- * <li><code>{@link DpIngestionStreamDeprecated}</code>: 
+ * <li><code>{@link IIngestionStream}</code>: 
  *   Advanced interaction with the Ingestion Service where the underlying
  *   data transmission mechanism is supported by gRPC data streams.  (In fact, multiple, concurrent
  *   data stream may be used depending upon the client API library configuration.)  This interface
@@ -78,5 +78,3 @@
  */
 package com.ospreydcs.dp.api.ingest;
 
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl;
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamDeprecated;
