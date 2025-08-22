@@ -51,7 +51,7 @@ import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.model.ProtoMessageBuffer;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.correl.QueryDataCorrelatorOld;
+import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
@@ -212,7 +212,7 @@ public class QueryChannelTest {
     private static QueryChannel         chanQuery;
     
     /** The query data correlator */
-    private static QueryDataCorrelatorOld  prcrCorrelator;
+    private static RawDataCorrelator    prcrCorrelator;
     
     /** Print output stream for storing evaluation results to single file */
     private static PrintStream          psOutput;
@@ -238,7 +238,7 @@ public class QueryChannelTest {
         chanQuery = QueryChannel.from(connQuery, queMsgBuffer);
         
         // Create the query request data correlator
-        prcrCorrelator = QueryDataCorrelatorOld.create();
+        prcrCorrelator = RawDataCorrelator.create();
         
         // Open the common output file
         String  strFileName = QueryChannelTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
@@ -672,7 +672,7 @@ public class QueryChannelTest {
     private Duration    correlate(boolean bolConcurrency, QueryMessageBuffer bufMsgs) {
         
         QueryChannelTest.prcrCorrelator.reset();
-        QueryChannelTest.prcrCorrelator.setConcurrency(bolConcurrency);
+        QueryChannelTest.prcrCorrelator.enableConcurrency(bolConcurrency);
         
         Instant insStart = Instant.now();
         try {
@@ -680,7 +680,7 @@ public class QueryChannelTest {
 
                 QueryDataResponse.QueryData msgData = bufMsgs.take();
                 
-                QueryChannelTest.prcrCorrelator.addQueryData(msgData);
+                QueryChannelTest.prcrCorrelator.processQueryData(msgData);
             }
 
         } catch (Exception e) {

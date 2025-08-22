@@ -7,7 +7,6 @@ import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.MetadataRecord;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
-import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorOld;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 
 /**
@@ -300,8 +299,10 @@ public interface IQueryService extends IConnection {
      * <ul>
      * <li>
      * The data streaming and reconstruction can be performed simultaneously, with various
-     * levels of concurrency.  Interface implementations typically employ an internal processor of 
-     * type <code>{@link QueryRequestProcessorOld}</code>.  See the class documentation for details
+     * levels of concurrency.  Interface implementations typically employ an internal processors of 
+     * type <code>{@link QueryRequestRecoverer}</code>, <code>{@link QueryResponseAssembler}</code>,
+     * and <code>{@link DataTableCreator}</code>.  
+     * See the class documentation for details
      * on tuning the instance with the various performance parameters.
      * </li>
      * <br/>
