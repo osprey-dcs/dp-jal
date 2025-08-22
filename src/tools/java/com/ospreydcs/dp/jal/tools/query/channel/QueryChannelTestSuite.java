@@ -42,7 +42,6 @@ import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
-import com.ospreydcs.dp.jal.tools.config.request.JalRequestSuiteConfig;
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 
 /**
@@ -97,39 +96,39 @@ public class QueryChannelTestSuite {
         return new QueryChannelTestSuite(strName);
     }
     
-    /**
-     * <p>
-     * Creates a new <code>QueryChannelTestSuite</code> initialized from the given configuration object.
-     * </p>
-     * <p>
-     * The <code>JalRequestSuiteConfig</code> structure class is parsed for configuration parameters which
-     * are used to populate the returned test suite.  Note that there must be at least one named
-     * <code>TestArchiveRequest</code> enumeration within the argument for valid <code>QueryChannelTestSuite</code>
-     * creation.
-     * </p>  
-     * 
-     * @param cfgSuite  request suite configuration structure class containing initialization parameters
-     * 
-     * @return  a new <code>QueryChannelTestSuite</code> instance configured according to the argument
-     */
-    public static QueryChannelTestSuite from(JalRequestSuiteConfig cfgSuite) {
-        
-        QueryChannelTestSuite   suite = new QueryChannelTestSuite(cfgSuite.testSuite.name);
-        
-        if (cfgSuite.testSuite.requestIds != null)
-            cfgSuite.testSuite.requestIds.forEach(enmRqst -> suite.addTestRequest(enmRqst));
-        
-        if (cfgSuite.testSuite.streamCounts != null)
-            cfgSuite.testSuite.streamCounts.forEach(cntStrms -> suite.addStreamCount(cntStrms));
-        
-        if (cfgSuite.testSuite.requestComposites != null)
-            cfgSuite.testSuite.requestComposites.forEach(enmCmp -> suite.addRequestDecomposition(enmCmp));
-        
-        if (cfgSuite.testSuite.streamTypes != null)
-            cfgSuite.testSuite.streamTypes.forEach(enmType -> suite.addStreamType(enmType));
-        
-        return suite;
-    }
+//    /**
+//     * <p>
+//     * Creates a new <code>QueryChannelTestSuite</code> initialized from the given configuration object.
+//     * </p>
+//     * <p>
+//     * The <code>JalRequestSuiteConfigDep</code> structure class is parsed for configuration parameters which
+//     * are used to populate the returned test suite.  Note that there must be at least one named
+//     * <code>TestArchiveRequest</code> enumeration within the argument for valid <code>QueryChannelTestSuite</code>
+//     * creation.
+//     * </p>  
+//     * 
+//     * @param cfgSuite  request suite configuration structure class containing initialization parameters
+//     * 
+//     * @return  a new <code>QueryChannelTestSuite</code> instance configured according to the argument
+//     */
+//    public static QueryChannelTestSuite from(JalRequestSuiteConfigDep cfgSuite) {
+//        
+//        QueryChannelTestSuite   suite = new QueryChannelTestSuite(cfgSuite.testSuite.name);
+//        
+//        if (cfgSuite.testSuite.requestIds != null)
+//            cfgSuite.testSuite.requestIds.forEach(enmRqst -> suite.addTestRequest(enmRqst));
+//        
+//        if (cfgSuite.testSuite.streamCounts != null)
+//            cfgSuite.testSuite.streamCounts.forEach(cntStrms -> suite.addStreamCount(cntStrms));
+//        
+//        if (cfgSuite.testSuite.requestComposites != null)
+//            cfgSuite.testSuite.requestComposites.forEach(enmCmp -> suite.addRequestDecomposition(enmCmp));
+//        
+//        if (cfgSuite.testSuite.streamTypes != null)
+//            cfgSuite.testSuite.streamTypes.forEach(enmType -> suite.addStreamType(enmType));
+//        
+//        return suite;
+//    }
 
     
     //

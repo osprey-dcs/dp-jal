@@ -40,7 +40,6 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
-import com.ospreydcs.dp.api.query.impl.QueryRequestProcessorOld;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
@@ -48,7 +47,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 
 /**
  * <p>
- * Independent processing thread for the <code>QueryRequestProcessorOld</code> class.
+ * Independent processing thread for the <code>RawDataCorrelator</code> class.
  * </p>
  * <p>
  * This task is performed on a separate thread to decouple the gRPC streaming of
@@ -114,7 +113,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
  * task instances can only be used once.
  * </li>
  * <li>
- * The external <code>{@link QueryRequestProcessorOld}</code> object should block on the
+ * The external <code>{@link RawDataCorrelator}</code> object should block on the
  * <code>{@link Thread#join()}</code> method to wait for this processing thread to 
  * complete.  <code>{@link Thread#join()}</code> will return once the processing loop
  * exits normally.
@@ -190,43 +189,43 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
         return thdTask;
     }
     
-    /**
-     * <p>
-     * Creates a new instance of <code>MessageTransferTask</code> attached to the arguments 
-     * and ready for task start.
-     * </p>
-     * 
-     * @param srcRspMsgs        source of request data messages for transfer to given correlator
-     * @param prcrCorrelator    data correlator to receive data messages
-     * 
-     * @return  new <code>MessageTransferTask</code> attached to the given arguments
-     */
-    public static MessageTransferTask from(IMessageSupplier<QueryData> srcRspMsgs, QueryDataCorrelatorOld prcrCorrelator) {
-        return new MessageTransferTask(srcRspMsgs, prcrCorrelator);
-    }
-    
-    /**
-     * <p>
-     * Creates a new <code>Thread</code> instance which executes an instance of <code>MessageTransferTask</code>
-     * attached to the given arguments.
-     * </p>
-     * <p>
-     * This is a convenience method for explicitly creating thread tasks.  The returned instance is started
-     * with the <code>{@link Thread#start()}</code> method and terminates according to the conditions described
-     * in the <code>{@link #run()}</code> method documentation.
-     * </p>
-     *  
-     * @param srcRspMsgs     source of request data messages for transfer to given correlator
-     * @param prcrCorrelator data correlator to receive data messages
-     * 
-     * @return  a new thread task ready for execution.
-     */
-    public static Thread    newThread(IMessageSupplier<QueryData> srcRspMsgs, QueryDataCorrelatorOld prcrCorrelator) {
-        MessageTransferTask task = MessageTransferTask.from(srcRspMsgs, prcrCorrelator);
-        Thread              thdTask = new Thread(task);
-        
-        return thdTask;
-    }
+//    /**
+//     * <p>
+//     * Creates a new instance of <code>MessageTransferTask</code> attached to the arguments 
+//     * and ready for task start.
+//     * </p>
+//     * 
+//     * @param srcRspMsgs        source of request data messages for transfer to given correlator
+//     * @param prcrCorrelator    data correlator to receive data messages
+//     * 
+//     * @return  new <code>MessageTransferTask</code> attached to the given arguments
+//     */
+//    public static MessageTransferTask from(IMessageSupplier<QueryData> srcRspMsgs, QueryDataCorrelatorOld prcrCorrelator) {
+//        return new MessageTransferTask(srcRspMsgs, prcrCorrelator);
+//    }
+//    
+//    /**
+//     * <p>
+//     * Creates a new <code>Thread</code> instance which executes an instance of <code>MessageTransferTask</code>
+//     * attached to the given arguments.
+//     * </p>
+//     * <p>
+//     * This is a convenience method for explicitly creating thread tasks.  The returned instance is started
+//     * with the <code>{@link Thread#start()}</code> method and terminates according to the conditions described
+//     * in the <code>{@link #run()}</code> method documentation.
+//     * </p>
+//     *  
+//     * @param srcRspMsgs     source of request data messages for transfer to given correlator
+//     * @param prcrCorrelator data correlator to receive data messages
+//     * 
+//     * @return  a new thread task ready for execution.
+//     */
+//    public static Thread    newThread(IMessageSupplier<QueryData> srcRspMsgs, QueryDataCorrelatorOld prcrCorrelator) {
+//        MessageTransferTask task = MessageTransferTask.from(srcRspMsgs, prcrCorrelator);
+//        Thread              thdTask = new Thread(task);
+//        
+//        return thdTask;
+//    }
     
 
     //
@@ -286,8 +285,8 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
     /** The external queued data buffer supplying data messages for correlation */
     private final IMessageSupplier<QueryData>   queDataBuffer;
     
-    /** The external data correlator doing toe data processing (message sink) */
-    private final QueryDataCorrelatorOld        prcrCorrelatorOld;
+//    /** The external data correlator doing toe data processing (message sink) */
+//    private final QueryDataCorrelatorOld        prcrCorrelatorOld;
     
     /** The external data correlator doing toe data processing (message sink) */
     private final RawDataCorrelator             prcrCorrelatorNew;
@@ -321,24 +320,24 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
      */
     public MessageTransferTask(IMessageSupplier<QueryData> queDataBuffer, RawDataCorrelator theCorrelator) {
         this.queDataBuffer = queDataBuffer;
-        this.prcrCorrelatorOld = null;
+//        this.prcrCorrelatorOld = null;
         this.prcrCorrelatorNew = theCorrelator;
     }
     
-    /**
-     * <p>
-     * Constructs a new instance of <code>MessageTransferTask</code> attached to the 
-     * raw data buffer and data correlator.
-     * </p>
-     *
-     * @param queDataBuffer     source of raw data for correlation processing
-     * @param prcrCorrelator    data correlator to receive raw data
-     */
-    public MessageTransferTask(IMessageSupplier<QueryData> queDataBuffer, QueryDataCorrelatorOld theCorrelator) {
-        this.queDataBuffer = queDataBuffer;
-        this.prcrCorrelatorOld = theCorrelator;
-        this.prcrCorrelatorNew = null;
-    }
+//    /**
+//     * <p>
+//     * Constructs a new instance of <code>MessageTransferTask</code> attached to the 
+//     * raw data buffer and data correlator.
+//     * </p>
+//     *
+//     * @param queDataBuffer     source of raw data for correlation processing
+//     * @param prcrCorrelator    data correlator to receive raw data
+//     */
+//    public MessageTransferTask(IMessageSupplier<QueryData> queDataBuffer, QueryDataCorrelatorOld theCorrelator) {
+//        this.queDataBuffer = queDataBuffer;
+////        this.prcrCorrelatorOld = theCorrelator;
+//        this.prcrCorrelatorNew = null;
+//    }
     
     
     //
@@ -375,7 +374,7 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
      * 
      * @return  <code>true</code> if the task was terminated externally, <code>false</code> otherwise
      */
-    public boolean isTerminated() {
+    public boolean hasTerminated() {
         return this.bolTerminated;
     }
     
@@ -603,13 +602,13 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
             try {
                     
                 // Note that this operation will block until completed
-                if (this.prcrCorrelatorOld != null) {
-                    this.prcrCorrelatorOld.addQueryData(msgData);
-                    this.cntMsgsXferred++;
-                } else {
+//                if (this.prcrCorrelatorOld != null) {
+//                    this.prcrCorrelatorOld.addQueryData(msgData);
+//                    this.cntMsgsXferred++;
+//                } else {
                     this.prcrCorrelatorNew.processQueryData(msgData);
                     this.cntMsgsXferred++;
-                }
+//                }
 
             // Error - Data bucket did not contain timestamps 
             } catch (IllegalArgumentException e) {

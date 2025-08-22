@@ -60,7 +60,6 @@ import com.ospreydcs.dp.api.grpc.annotate.DpAnnotationConnection;
 import com.ospreydcs.dp.api.grpc.annotate.DpAnnotationConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.impl.DpQueryServiceImplOldTest;
 import com.ospreydcs.dp.api.query.test.TestDpDataRequestGenerator;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -172,7 +171,7 @@ public class DpAnnotationServiceApiImplTest {
         apiTest = DpAnnotationApiFactory.connect();
         
         // Open the common output file
-        String  strFileName = DpQueryServiceImplOldTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
+        String  strFileName = DpAnnotationServiceApiImplTest.class.getSimpleName() + "-" + Instant.now().toString() + ".txt";
         Path    pathOutput = Paths.get(STR_PATH_OUTPUT, strFileName);
         File    fileOutput = pathOutput.toFile();
         
@@ -181,7 +180,7 @@ public class DpAnnotationServiceApiImplTest {
         // Write header
         DateFormat  date = DateFormat.getDateTimeInstance();
         String      strDateTime = date.format(new Date());
-        psOutput.println(DpQueryServiceImplOldTest.class.getSimpleName() + ": " + strDateTime);
+        psOutput.println(DpAnnotationServiceApiImplTest.class.getSimpleName() + ": " + strDateTime);
         psOutput.println();
     }
 

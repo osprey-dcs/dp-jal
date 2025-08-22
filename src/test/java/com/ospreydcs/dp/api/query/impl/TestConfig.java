@@ -84,25 +84,6 @@ public record    TestConfig(
     
     /**
      * <p>
-     * Configures the given processor with the current record configuration parameters.
-     * </p>
-     * 
-     * @param prcrQuery the <code>QueryRequestProcessorOld</code> to configure for data recovery
-     */
-    @SuppressWarnings("deprecation")
-    public void configure(QueryRequestProcessorOld prcrQuery) {
-        
-        // Configure the processor
-        prcrQuery.enableMultiStreaming(this.bolMultistream);
-        prcrQuery.enableCorrelateConcurrently(this.bolCorrConcurrent);
-        prcrQuery.enableCorrelateWhileStreaming(this.bolCorrStreaming);
-        prcrQuery.setMaxStreamCount(this.cntMaxStreams);
-        prcrQuery.setMaxDataSourceCount(this.cntMaxSources);
-        prcrQuery.setMaxTimeRange(this.durMaxRange);
-    }
-    
-    /**
-     * <p>
      * Extracts the configuration of the given request processor and returns it as a new <code>TestConfig</code> record.
      * </p
      * 
@@ -123,28 +104,6 @@ public record    TestConfig(
         return TestConfig.from(bolMultiStrm, bolCorrCon, bolCorrStrm, cntMaxStrms, cntMaxSrcs, durMaxRng);
     }
     
-    /**
-     * <p>
-     * Extracts the configuration of the given request processor and returns it as a new <code>TestConfig</code> record.
-     * </p
-     * 
-     * @param prcrRqst  request processor under scrutiny
-     * 
-     * @return  the configuration of the given processor
-     */
-    @SuppressWarnings("deprecation")
-    public TestConfig extractConfiguration(QueryRequestProcessorOld prcrRqst) {
-        
-        // Extract configuration parameters from query request processor
-        final boolean   bolMultiStrm = prcrRqst.isMultiStreaming(); 
-        final boolean   bolCorrCon = prcrRqst.isCorrelatingConcurrently();
-        final boolean   bolCorrStrm = prcrRqst.isCorrelatingWhileStreaming();
-        final int       cntMaxStrms = prcrRqst.getMaxStreamCount();
-        final int       cntMaxSrcs = prcrRqst.getMaxDataSourceCount();
-        final Duration  durMaxRng = prcrRqst.getMaxTimeRange();
-        
-        return TestConfig.from(bolMultiStrm, bolCorrCon, bolCorrStrm, cntMaxStrms, cntMaxSrcs, durMaxRng);
-    }
     
     /**
      * <p>

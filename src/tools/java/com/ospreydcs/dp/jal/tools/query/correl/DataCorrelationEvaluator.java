@@ -637,12 +637,6 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
         this.suiteEvals.printOut(ps, "  ");
         ps.println();
         
-        // Print out results summary
-        CorrelatorTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
-        CorrelatorTestsSummary  recSummary = CorrelatorTestsSummary.summarize(this.setResults);
-        recSummary.printOut(ps, null);
-        ps.println();
-        
         // Print out the test case data rates
         ps.println("Test Case Data Rates");
         DataRateLister<CorrelatorTestResult>    lstrDataRates = DataRateLister.from(
@@ -653,6 +647,12 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
                 );
         lstrDataRates.printOut(ps, "  ", this.setResults);
 //        CorrelatorTestsSummary.printOutDataRates(ps, "  ", this.setResults);
+        ps.println();
+        
+        // Print out results summary
+        CorrelatorTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
+        CorrelatorTestsSummary  recSummary = CorrelatorTestsSummary.summarize(this.setResults);
+        recSummary.printOut(ps, null);
         ps.println();
         
         // Print out results extremes

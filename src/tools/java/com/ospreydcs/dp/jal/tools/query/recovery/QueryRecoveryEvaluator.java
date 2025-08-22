@@ -50,6 +50,7 @@ import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.jal.tools.common.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 import com.sun.jdi.request.InvalidRequestStateException;
@@ -577,6 +578,7 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         // Check state
         if (!this.bolRun)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + "- Test suite has not been run.");
+        String  strPad = "  ";
         
         // Print out header
         String  strHdr = super.createReportHeader();
@@ -599,12 +601,24 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         
         // Print out raw data processor configuration
         ps.println("Final QueryRequestRecoverer Configuration (last case)");
-        this.prcrRqstRcvry.printOutConfig(ps, "  ");
+        this.prcrRqstRcvry.printOutConfig(ps, strPad);
         ps.println();
         
         // Print out the test suite configuration
         ps.println("Test Suite Configuration");
-        this.cfgTestSuite.printOut(ps, "  ");
+        this.cfgTestSuite.printOut(ps, strPad);
+        ps.println();
+        
+        // Print out the test case data rates
+        ps.println("Test Case Data Rates");
+        DataRateLister<QueryRecoveryTestResult> lstrRates = DataRateLister.from(
+                rec -> rec.recTestCase().indCase(), 
+                rec -> rec.strRqstId(), 
+                rec -> rec.szAllocPrcd(), 
+                rec -> rec.dblRatePrcd()
+                );
+        lstrRates.printOut(ps, strPad, this.setTestResults);
+//        QueryRecoveryTestsSummary.printOutDataRates(ps, "  ", this.setTestResults);
         ps.println();
         
         // Print out results summary
@@ -613,33 +627,28 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
         recSummary.printOut(ps, null);
         ps.println();
         
-        // Print out the test case data rates
-        ps.println("Test Case Data Rates");
-        QueryRecoveryTestsSummary.printOutDataRates(ps, "  ", this.setTestResults);
-        ps.println();
-        
         // Print out request decomposition configuration scoring
         ps.println("Request Decomposition Configuration Scoring");
         RequestDecompConfigScorer   scrrDcmp = RequestDecompConfigScorer.from(this.setTestResults);
-        scrrDcmp.printOutByRates(ps, "  ");
+        scrrDcmp.printOutByRates(ps, strPad);
         ps.println();
         
         // Print out the gRPC stream configuration scoring
         ps.println("gRPC Stream Configuration Scoring");
         GrpcStreamConfigScorer  scrStrm = GrpcStreamConfigScorer.from(this.setTestResults);
-        scrStrm.printOutByRates(ps, "  ");
+        scrStrm.printOutByRates(ps, strPad);
         ps.println();
         
         // Print out the correlation configuration scoring
         ps.println("Raw Data Correlation Configuration Scoring");
         CorrelationConfigScorer scrCorr = CorrelationConfigScorer.from(this.setTestResults);
-        scrCorr.printOutByRates(ps, "  ");
+        scrCorr.printOutByRates(ps, strPad);
         ps.println();
         
         // Print out each test result
         ps.println("Individual Case Results:");
         for (QueryRecoveryTestResult recCase : this.setTestResults) {
-            recCase.printOut(ps, "  ");
+            recCase.printOut(ps, strPad);
             ps.println();
         }
     }    

@@ -21,7 +21,6 @@ import java.net.URL;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -206,61 +205,46 @@ public final class CfgLoaderYaml {
         try {
             File    fileCfg = JalEnv.getJalHomeFile(STR_LIB_DIR_CFG, strFileName);
             if (fileCfg.exists()) {
-                LOGGER.info("Configuration taken from JAL Home file {}.", fileCfg);
+                LOGGER.info("Configuration '{}' taken from JAL Home location {}.", strFileName, fileCfg);
 
                 InputStream isFileCfg = Files.newInputStream(fileCfg.toPath());
                 
                 return  isFileCfg;
             }
             
-            LOGGER.warn("Configuration file {} not found in JAL Home {}.  Attempting internal (JAR) configuration.", fileCfg, JalEnv.getJalHomeValue());
+            LOGGER.warn("Configuration file '{}' not found in JAL Home '{}'.  Attempting internal (JAR) configuration.", fileCfg, JalEnv.getJalHomeValue());
             
         } catch (FileSystemNotFoundException | InvalidPathException e) {
             LOGGER.warn("Java API Library environment exception {}: {}.  Attempting internal (JAR) configuration.", e.getClass(), e.getMessage());
             
         } catch (IOException | IllegalArgumentException | UnsupportedOperationException e) {
-            LOGGER.warn("Configuration file {} not accessiable - exception {}: {}.  Attempting internal (JAR) configuration.", e.getClass(), e.getMessage());
+            LOGGER.warn("Configuration file '{}' not accessiable - exception {}: {}.  Attempting internal (JAR) configuration.", strFileName, e.getClass(), e.getMessage());
 
         }
         
         // Look for file in JAL JAR - Try finding file with class loader
         String  strErrMsg = JavaRuntime.getQualifiedMethodNameSimple()
-                + " - no resource with file name " + strFileName
-                + " was found in class loader proximity.";
+                + " - no resource with file name '" + strFileName
+                + "' was found in class loader proximity.";
         
         try {
             ClassLoader ldrClass = CfgLoaderYaml.class.getClassLoader();
             URL         urlFile = ldrClass.getResource(strFileName);
             InputStream isFile = ldrClass.getResourceAsStream(strFileName);
             
-//            // TODO - Remove
-//            System.out.println(JavaRuntime.getQualifiedMethodNameSimple() + " - Searching for file " + strFileName);
-//            System.out.println("  ClassLoader " + ldrClass + " found path location = " + urlFile.getPath());
-//            System.out.println("  ClassLoader " + ldrClass + " found file = " + urlFile.getFile());
-//            
-//            File    fileTest = new File(urlFile.getPath());
-//            System.out.println("  File created from File(urlFile.getFile()) = " + fileTest);
-//            // TODO ----
-//            
-//            Path    pathFile = Path.of(urlFile.toURI());
-//            System.out.println("  After pathFile = " + pathFile); // TODO - Remove
-//            
-//            File    fileCfg = pathFile.toFile(); // throws UnsupportedOperationException
-//            System.out.println("  After fileCfg = " + fileCfg); // TODO - Remove
-            
             if (isFile != null) {
-                LOGGER.info("Loading configuration {} from internal JAR {}.", strFileName, STR_JAR_LOCATION);
+                LOGGER.info("Loading configuration '{}' from internal JAR '{}'.", strFileName, STR_JAR_LOCATION);
                 return isFile;
             }
             
             else {
-                strErrMsg = strErrMsg + " File " + urlFile.getPath() + " was unreadable.";
+                strErrMsg = strErrMsg + " File '" + urlFile.getPath() + "' was unreadable.";
                 
                 throw new FileNotFoundException(strErrMsg);
             }
 
         } catch (Exception e) {
-            strErrMsg = strErrMsg + " Exception while attempting to read " + strFileName + " - " + e.getClass().getSimpleName() + ": " + e.getMessage();
+            strErrMsg = strErrMsg + " Exception while attempting to read configuration '" + strFileName + "' - " + e.getClass().getSimpleName() + ": " + e.getMessage();
 
             LOGGER.error(strErrMsg);
 

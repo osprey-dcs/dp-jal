@@ -52,7 +52,6 @@ import com.ospreydcs.dp.api.query.model.coalesce.SampledTimeSeries;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.query.model.table.SampledAggregateTable;
-import com.ospreydcs.dp.api.query.model.table.SamplingProcessTable;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 
@@ -1206,8 +1205,9 @@ public class SampledAggregate implements Iterable<SampledBlock> {
      * </p>
      * <p>
      * <h2>WARNING:</h2>
-     * This can be a resource intensive operation for large sampling processes.  Consider using a 
-     * <code>{@link SamplingProcessTable}</code> instance for large processes.
+     * This can be a resource intensive operation for large sampling processes.  Consider using  
+     * method <code>{@link #createDynamicDataTable()}</code> for large processes which currently supplies
+     * a <code>{@link SampledAggregateTable}</code> instance. 
      * </p>
      * <h2>NOTES:</h2>
      * <ul>

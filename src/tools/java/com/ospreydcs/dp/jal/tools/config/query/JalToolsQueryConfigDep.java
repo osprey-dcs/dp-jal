@@ -6,20 +6,21 @@ import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 import com.ospreydcs.dp.api.config.query.DpQueryRecoveryConfig;
-import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchiveConfig;
-import com.ospreydcs.dp.jal.tools.config.output.JalToolsOutputConfig;
-import com.ospreydcs.dp.jal.tools.config.request.JalTestRequestConfig;
+import com.ospreydcs.dp.jal.tools.config.request.JalTestRequestConfigDep;
 
 /**
  * <p>
  * Structure class containing configuration parameters for tools query operations.
  * </p>
+ * 
+ * @deprecated Not used
  */
+@Deprecated(since="Aug 22, 2025")
 @ACfgOverride.Root(root="JAL_TOOLS_QUERY") 
-public class JalToolsQueryConfig extends CfgStructure<JalToolsQueryConfig> {
+public class JalToolsQueryConfigDep extends CfgStructure<JalToolsQueryConfigDep> {
 
     /** Default constructor required for base class */
-    public JalToolsQueryConfig() { super(JalToolsQueryConfig.class); }
+    public JalToolsQueryConfigDep() { super(JalToolsQueryConfigDep.class); }
 
     
     //
@@ -48,7 +49,7 @@ public class JalToolsQueryConfig extends CfgStructure<JalToolsQueryConfig> {
 
     /** Collection of common test requests and and request suites for tool use */
     @ACfgOverride.Struct(pathelem="TEST_REQUESTS")
-    public JalTestRequestConfig      testRequests;
+    public JalTestRequestConfigDep      testRequests;
     
     /** The default configuration for data request recoveries */ 
     @ACfgOverride.Struct(pathelem="RECOVERY")

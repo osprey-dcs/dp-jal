@@ -53,6 +53,7 @@ import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.jal.tools.common.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 import com.sun.jdi.request.InvalidRequestStateException;
@@ -630,16 +631,53 @@ public class QueryAssemblyEvaluator extends JalQueryAppBase<QueryAssemblyEvaluat
         this.cfgTestSuite.printOut(ps, "  ");
         ps.println();
         
+        // Print out test case data rates
+        ps.println("Test Case Data Rates - Raw Data Recovery/Correlation");
+        DataRateLister<QueryAssemblyTestResult>  lstrRawRates = DataRateLister.from(
+                rec -> rec.recTestCase().indCase(), 
+                rec -> rec.strRqstId(), 
+                rec -> rec.szAllocRawPrcd(), 
+                rec -> rec.dblRateRawPrcd()
+                );
+        lstrRawRates.printOut(ps, strPad, this.setTestResults);
+        ps.println();
+        
+        ps.println("Test Case Data Rates - Sampled Aggregate Assembly");
+        DataRateLister<QueryAssemblyTestResult> lstrAssmRates = DataRateLister.from(
+                rec -> rec.recTestCase().indCase(), 
+                rec -> rec.strRqstId(), 
+                rec -> rec.szAllocAggrAssm(), 
+                rec -> rec.dblRateAggAssm()
+                );
+        lstrAssmRates.printOut(ps, strPad, this.setTestResults);
+        ps.println();
+        
+        ps.println("Test Case Data Rates - Table Creation");
+        DataRateLister<QueryAssemblyTestResult> lstrTblRates = DataRateLister.from(
+                rec -> rec.recTestCase().indCase(), 
+                rec -> rec.strRqstId(), 
+                rec -> rec.szTblCalc(), 
+                rec -> rec.dblRateTblBld()
+                );
+        lstrTblRates.printOut(ps, strPad, this.setTestResults);
+        ps.println();
+
+        ps.println("Test Case Data Rates - Total Requst");
+        DataRateLister<QueryAssemblyTestResult> lstrTotRates = DataRateLister.from(
+                rec -> rec.recTestCase().indCase(), 
+                rec -> rec.strRqstId(), 
+                rec -> rec.szAllocTotal(), 
+                rec -> rec.dblRateTotal()
+                );
+        lstrTotRates.printOut(ps, strPad, this.setTestResults);
+        ps.println();
+        
+        
         // Summarize the results and print out
 //        ps.println("Test Results Summary");
         QueryAssemblyTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
         QueryAssemblyTestsSummary  recSummary = QueryAssemblyTestsSummary.summarize(this.setTestResults);
         recSummary.printOut(ps, null);
-        ps.println();
-        
-        // Print out test case data rates
-        ps.println("Test Case Data Rates");
-        QueryAssemblyTestsSummary.printOutDataRates(ps, strPad, this.setTestResults);
         ps.println();
         
         // Print out any failed tests

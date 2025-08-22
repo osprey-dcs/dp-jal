@@ -53,46 +53,6 @@ public class JalTestArchiveConfig extends CfgStructure<JalTestArchiveConfig>{
     public JalTestArchivePvsConfig      pvs;
     
     
-//    /** The first timestamp of all data sources within the Data Platform test archive, i.e., the archive inception instant */
-//    @ACfgOverride.Field(name="FIRST_TIMESTAMP")
-//    public String       firstTimestamp;
-//    
-//    /** The last timestamp of all data sources within the Data Platform test archive */
-//    @ACfgOverride.Field(name="LAST_TIMESTAMP")
-//    public String       lastTimestamp; 
-//    
-//    /** The prefix given to all data sources within the Data Platform test archive; actual names are appended with their index */
-//    @ACfgOverride.Field(name="PV_PREFIX")
-//    public String       pvPrefix;
-//    
-//    /** The total number of all data sources within the Data Platform test archive */
-//    @ACfgOverride.Field(name="PV_COUNT_TOTAL")
-//    public Integer      pvCountTotal;
-//    
-//    /** The number of data sources within the Data Platform test archive that are sampled with a uniform sampling clock */
-//    @ACfgOverride.Field(name="PV_COUNT_CLOCK")
-//    public Integer      pvCountClock;
-//    
-//    /** The number of data sources within the Data Platform test archive that are sampled against an explicit timestamp list */
-//    @ACfgOverride.Field(name="PV_COUNT_TMS_LIST")
-//    public Integer      pvCountTmsList;
-//    
-//    /** 
-//     * The index of the first data source using a uniform sampling clock
-//     * <p>
-//     * Sampling clock PVs are named {pvPrefix+pvIndexStartClock, ..., pvPrefix+(pvIndexStartClock+pvCountClock)} 
-//     */
-//    @ACfgOverride.Field(name="PV_INDEX_START_CLOCK")
-//    public Integer      pvIndexStartClock;
-//    
-//    /** 
-//     * The index of the first data source using an explicit timestamp list
-//     * <p>
-//     * Timestamp list PVs are named {pvPrefix+pvIndexStartTmsList, ..., pvPrefix+(pvIndexStartTmsList+pvCountTmsList)} 
-//     */
-//    @ACfgOverride.Field(name="PV_INDEX_START_TMS_LIST")
-//    public Integer      pvIndexStartTmsList;
-    
     
     //
     // Internal Structure Classes
