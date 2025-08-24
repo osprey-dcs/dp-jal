@@ -1,4 +1,4 @@
-# dp-api-java
+# Java API Library (JAL) 
 Java API Library for the Data Platform Core Services
 
 ## Overview
@@ -11,6 +11,9 @@ Provides basic connection and communications services to the following Data Plat
 - Annotations Service (current development)
 
 Also contains utilities and resources for manipulating and processing data.
+
+#### NOTE: Naming Conventions
+The JAL library was initially in repository `dp-api-common` which was misleading.  The naming convention evolved from `dp-api-common` to `dp-api-java` to `dp-jal`.  The code base within the repository is also evolving for consistency.  Many classes are prefixed with `Dp` to indicate reliance on, or specifics to, the Data Platform.  Some classes are being renamed with prefix `Jal` to indicate that they are specific to the Java API Library for the Data Platform.
 
 ## API Library Build
 The Java API Library source and resources are available from the online repository [dp-api-java](https://github.com/osprey-dcs/dp-api-common).  The library should be downloaded into an appropriate location within the client host platform.  The Java API Library is then built as a ##Maven## project with all build parameters in the `pom.xml` file within the installation directory.
@@ -178,6 +181,10 @@ There are 3 supported annotation types:
 
 Annotations are attached to regions of the time-series data archive defined by 'data sets' (see above).  Data Platform clients create annotations within the data archive to provide a "value-added" data processing mechanism available to all other clients.  For example, a Data Platform client may identify a correlation between two data sets; the client can then create an association between the two data sets which is then retrievable by other clients for further processing (e.g., creating calculations based upon the correlation).
 
+## JAL Library Application Framework
+The JAL repository contains classes and resources for rapid development of applications based upon the JAL library.  These resources are located in the package `com.ospreydcs.dp.api.app`.  In particular, 2 bases class are provided: 1) `JalApplicationBase`, and `JalQueryAppBase`.  The first is a general base class for all applications.  It provides static methods for parsing command-line arguments and variables, as well methods for common operations such as opening/managing output files, managing Log4j logger utilities, and writing output reports.  The 2nd class, `JalQueryAppBase` is a child
+class of `JalApplicationBase` and provides additional operations specified to the Data Platform Query Service.
+
 ## Java API Library Tools
 The Java API Library ships with a set of tools and utilities.  These are executables used for performance and evaluations measurements, as well as testing the operation of individual API Library components.  The tools are implemented as "main classes" within the Java API Library and can be executed directly from the `dp-api-java-shaded-1.x.x.jar`.  However, the library ships with a collection of shell scripts to ease tool execution.  The shell scripts are located in directory
 
@@ -190,21 +197,44 @@ The environment variable `DP_JAL_HOME` must be set to the location of the local 
 
 Additionally, there are other environment variables that should be set for some tools to operate correctly.  Many Java API Library tools require an output location.  Specifically, they create reports summarizing their results and require an output file to deposit these reports.  The environment variable `DP_API_JAVA_TOOLS_OUTPUT` should be set to the output location on the local platform for all Java API Library tools.  
 
-### Tools Output Locations
+### Tools Output Location
+NOTE:  The information below is out dated.  The general output location for JAL tools and applications is set in the JAL configuration file `jal-tools-config.yml`.
+
 The directories for Java API Library tools output must be created in advance.  Thus, the following line should be included in the `~/.dp.env` file:
 
 `export DP_JAL_OUTPUT=my-local-output-directory`
 
 where `my-local-output-directory` is the location for tools outputs.  As with the `DP_JAL_HOME` variable, the `DP_JAL_OUTPUT` can be included in the Java command-line, where it also has the synonym `dp.jal.output`.
 
-Typically each tools has a separate sub-directory structure where it deposits its results.  For example, the `QueryChannelEvalutor` application, which can be started with script `app-run-querychannel-evaluator` has the sub-directory `query/channel` as its output location.  Thus, the directory
+Typically each tool has a separate sub-directory structure where it deposits its results.  For example, the `QueryChannelEvalutor` application, which can be started with script `run-QueryChannel-evaluator` has the sub-directory `query/channel` as its output location.  Thus, the directory
 
 `my-local-output-directory/query/channel`
 
 must exist on the location platform.
 
+## JAL Library Applications
+The JAL Library ships with a compliment of command-line applications that are intended for evaluation of various performance characteristics of the Data Platform.  These are essentially advanced testing applications that are to be used with the
+Data Platform Test Archive.  Applications can be launched from scripts within the `bin` directory.  That is, there is a script for each available application, typically with the name `run-JalApplicationName` where 'JalApplicationName' is the name of the JAL application.  
+
+The code base for the JAL Library applications lies within the JAL Tools packages.  They use the JAL Tools configuration.
+
 ### Execution
-Java API Library tools execution is performed using the usual (bash) shell script execution for the local platform.  For example, to execute the `QueryChannelEvaluator` tool execute the following from the `jal_install/bin` directory:
+Java API Library applications execution is performed using the usual (bash) shell script execution for the local platform.  For example, to execute the `QueryChannelEvaluator` tool execute the following from the `jal_install/bin` directory:
 
-`%./app-run-querychannel-evaluator`
+`%./run-QueryChannelEvaluator`
 
+To use the JAL application scripts requires the following conditions:
+- The JAL library must be build such that the shaded jar is available in the `target` directory.
+- The JAL_HOME environment variable must be set (i.e., either in the `.dp.env` file or within the system environment).
+- The Data Platform Test Archive must be populated.
+The last requirement is really a requirement on the applications themselves.  Most JAL applications expect the Data Platform Test Archive as the source for query operations.  See below for instructions on populated the Data Platform Test Archive.
+
+Help is available for each JAL application by using the help option `--help`.  For example, to obtain information on the operation and usage of application `run-QueryChannelEvaluator` use the following command line
+
+`%./run-QueryChannelEvaluator --help`
+
+### Data Platform Test Archive
+The Data Platform Test Archive is populated with the application `app-run-test-data-generator` available in the Data Platform installation.  The Test Archive is a set of consistent (simulated) sample data for use in Data Platform unit testing, service testing, service benchmarking, and evaluations with JAL applications.
+
+Note that there is a singular JAL application, `run-AddTestArchiveData`, which will add custom time-series data to the Data Platform archive.  In particular, to the Data Platform Test Archive.  These data are intended for use in evaluating Data
+Platform query operations with time-domain collisions where data with differing sampling clocks is sampled during the same time interval.

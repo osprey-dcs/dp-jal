@@ -45,6 +45,7 @@ import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 import com.ospreydcs.dp.api.app.ExitCode;
 import com.ospreydcs.dp.api.app.JalApplicationBase;
 import com.ospreydcs.dp.api.app.JalQueryAppBase;
+import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
@@ -231,9 +232,9 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
             System.err.println(STR_APP_NAME + " execution FAILURE - Application already executed.");
             JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.EXECUTION_EXCEPTION);
             
-        } catch (DpQueryException e) {
-            System.err.println(STR_APP_NAME + " data recovery ERROR - General gRPC error in data recovery.");
-            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.GRPC_EXCEPTION);
+//        } catch (DpQueryException e) {
+//            System.err.println(STR_APP_NAME + " data recovery ERROR - General gRPC error in data recovery.");
+//            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.GRPC_EXCEPTION);
             
         } catch (IllegalStateException e) {
             System.err.println(STR_APP_NAME + " data recovery ERROR - Message request attempt on empty buffer.");
@@ -508,7 +509,8 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * @throws IllegalArgumentException invalid timestamps were encountered in the recovered data set
      * @throws CompletionException      error in <code>DataBucket</code> insertion task (see cause)
      */
-    public void run() throws InvalidRequestStateException, DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException
+    public void run() throws InvalidRequestStateException
+//    , DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException
 //    , IllegalArgumentException, CompletionException 
     {
 
@@ -524,19 +526,55 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
 
         // Iterate over each test request in the test case collection (within test suite configuration)
         Instant insStart = Instant.now();
+        
         for (DpDataRequest rqst : this.mapCases.keySet()) {
 
             // Recover raw data for this request
-            List<QueryData>             lstDataMsgs = super.recoverRequestData(rqst);   // throws DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException
+            List<QueryData>     lstDataMsgs;
+            
+            try {
+
+                lstDataMsgs = super.recoverRequestData(rqst);   // throws DpQueryException, IllegalStateException, InterruptedException, BufferUnderflowException
+
+                // If the data request fails
+            } catch (Exception e) {
+                List<CorrelatorTestCase>    lstCases = this.mapCases.get(rqst);
+
+                String          strErrMsg = e.getMessage();
+                String          strRqstId = rqst.getRequestId();
+                ResultStatus    recStatus = ResultStatus.newFailure(strErrMsg, e);
+
+                // Record all cases for this request as failed
+                for (CorrelatorTestCase recCase : lstCases) {
+                    CorrelatorTestResult recResult = CorrelatorTestResult.from(strRqstId, recStatus, recCase);
+
+                    this.setResults.add(recResult);
+                }
+
+                continue;
+            }
             
             // Perform all the test case evaluations for the test request
             List<CorrelatorTestCase>    lstCases = this.mapCases.get(rqst);
-            
+
             this.toolCorrelator.reset();
             for (CorrelatorTestCase recCase : lstCases) {
-                CorrelatorTestResult recResult = recCase.evaluate(this.toolCorrelator, lstDataMsgs);    // throws IllegalArgumentException, CompletionException
-                
-                this.setResults.add(recResult);
+                try {
+                    CorrelatorTestResult recResult = recCase.evaluate(this.toolCorrelator, lstDataMsgs);    // throws IllegalArgumentException, CompletionException
+
+                    this.setResults.add(recResult);
+                    
+                    // If the test case evaluation fails
+                } catch (Exception e) {
+                    
+                    String          strErrMsg = e.getMessage();
+                    String          strRqstId = rqst.getRequestId();
+                    ResultStatus    recStatus = ResultStatus.newFailure(strErrMsg, e);
+
+                    CorrelatorTestResult    recResult = CorrelatorTestResult.from(strRqstId, recStatus, recCase);
+                    
+                    this.setResults.add(recResult);
+                }
             }
         }
         Instant insFinish = Instant.now();
@@ -646,7 +684,6 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
                 rec -> rec.dblDataRate()
                 );
         lstrDataRates.printOut(ps, "  ", this.setResults);
-//        CorrelatorTestsSummary.printOutDataRates(ps, "  ", this.setResults);
         ps.println();
         
         // Print out results summary

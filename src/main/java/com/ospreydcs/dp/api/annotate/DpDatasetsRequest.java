@@ -275,7 +275,7 @@ public class DpDatasetsRequest {
      * @param strDescrRegex the data set description pattern being requested
      */
     public void addCriterionDescription(String strDescrRegex) {
-        IDatasetCriterion  criterion = new IDatasetCriterion.DescrCriterion(strDescrRegex);
+        IDatasetCriterion  criterion = new IDatasetCriterion.TextCriterion(strDescrRegex);
         
         this.lstCriteria.add(criterion);
     }
