@@ -1,4 +1,4 @@
-# dp-api-java
+# Java API Library (JAL) 
 Java API Library for the Data Platform Core Services
 
 ## Overview
@@ -11,6 +11,9 @@ Provides basic connection and communications services to the following Data Plat
 - Annotations Service (current development)
 
 Also contains utilities and resources for manipulating and processing data.
+
+#### NOTE: Naming Conventions
+The JAL library was initially in repository `dp-api-common` which was misleading.  The naming convention evolved from `dp-api-common` to `dp-api-java` to `dp-jal`.  The code base within the repository is also evolving for consistency.  Many classes are prefixed with `Dp` to indicate reliance on, or specifics to, the Data Platform.  Some classes are being renamed with prefix `Jal` to indicate that they are specific to the Java API Library for the Data Platform.
 
 ## API Library Build
 The Java API Library source and resources are available from the online repository [dp-api-java](https://github.com/osprey-dcs/dp-api-common).  The library should be downloaded into an appropriate location within the client host platform.  The Java API Library is then built as a ##Maven## project with all build parameters in the `pom.xml` file within the installation directory.
