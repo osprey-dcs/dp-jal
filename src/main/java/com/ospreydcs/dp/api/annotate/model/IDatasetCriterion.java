@@ -89,31 +89,31 @@ public interface IDatasetCriterion {
          */
         @Override
         public QueryDataSetsCriterion build() {
-            QueryDataSetsCriterion.NameCriterion  msgName = QueryDataSetsCriterion.NameCriterion
+            QueryDataSetsCriterion.PvNameCriterion  msgName = QueryDataSetsCriterion.PvNameCriterion
                     .newBuilder()
-                    .setNamePattern(this.strNameRegex)
+                    .setName(this.strNameRegex)
                     .build();
             
-            return QueryDataSetsCriterion.newBuilder().setNameCriterion(msgName).build();
+            return QueryDataSetsCriterion.newBuilder().setPvNameCriterion(msgName).build();
         }
     }
     
     /** 
      * Record encapsulating data set description criterion parameters 
      */
-    public static record   DescrCriterion(String strDescr) implements IDatasetCriterion {
+    public static record   TextCriterion(String strDescr) implements IDatasetCriterion {
 
         /**
          * @see com.ospreydcs.dp.api.annotate.model.IDatasetCriterion#build()
          */
         @Override
         public QueryDataSetsCriterion build() {
-            QueryDataSetsCriterion.DescriptionCriterion msgDescr = QueryDataSetsCriterion.DescriptionCriterion
+            QueryDataSetsCriterion.TextCriterion msgDescr = QueryDataSetsCriterion.TextCriterion
                     .newBuilder()
-                    .setDescriptionText(this.strDescr)
+                    .setText(this.strDescr)
                     .build();
             
-            return QueryDataSetsCriterion.newBuilder().setDescriptionCriterion(msgDescr).build();
+            return QueryDataSetsCriterion.newBuilder().setTextCriterion(msgDescr).build();
         }
     }
     

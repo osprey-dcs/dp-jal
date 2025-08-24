@@ -26,7 +26,6 @@
 package com.ospreydcs.dp.api.query.impl;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -43,8 +42,8 @@ import com.ospreydcs.dp.api.query.DpMetadataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
-import com.ospreydcs.dp.grpc.v1.query.QueryMetadataRequest;
-import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryPvMetadataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryPvMetadataResponse;
 
 /**
  * <p>
@@ -125,11 +124,11 @@ public class MetadataRequestProcessor {
     private static final String         STR_LOGGING_LEVEL = CFG_DEF.logging.level;
     
     
-    /** General query timeout limit */
-    private static final long           LNG_TIMEOUT = CFG_DEF.timeout.limit;
-    
-    /** General query timeout units */
-    private static final TimeUnit       TU_TIMEOUT = CFG_DEF.timeout.unit;
+//    /** General query timeout limit */
+//    private static final long           LNG_TIMEOUT = CFG_DEF.timeout.limit;
+//    
+//    /** General query timeout units */
+//    private static final TimeUnit       TU_TIMEOUT = CFG_DEF.timeout.unit;
     
     
     //
@@ -236,10 +235,10 @@ public class MetadataRequestProcessor {
     public List<MetadataRecord>   processRequest(DpMetadataRequest rqst) throws DpQueryException {
         
         // Get the Protobuf request from the argument
-        QueryMetadataRequest    msgRqst = rqst.buildQueryRequest();
+        QueryPvMetadataRequest    msgRqst = rqst.buildQueryRequest();
         
         // Perform gRPC request
-        QueryMetadataResponse   msgRsp = this.connQuery.getStubBlock().queryMetadata(msgRqst);
+        QueryPvMetadataResponse   msgRsp = this.connQuery.getStubBlock().queryPvMetadata(msgRqst);
         
         // Check for Query Service exception
         if (msgRsp.hasExceptionalResult()) {

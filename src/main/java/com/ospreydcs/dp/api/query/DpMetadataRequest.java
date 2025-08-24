@@ -32,7 +32,7 @@ import java.util.List;
 
 import com.ospreydcs.dp.grpc.v1.query.PvNameList;
 import com.ospreydcs.dp.grpc.v1.query.PvNamePattern;
-import com.ospreydcs.dp.grpc.v1.query.QueryMetadataRequest;
+import com.ospreydcs.dp.grpc.v1.query.QueryPvMetadataRequest;
 
 /**
  * <p>
@@ -182,10 +182,10 @@ public class DpMetadataRequest {
      * 
      * @return metadata request Protobuf message used by Query Service
      */
-    public QueryMetadataRequest buildQueryRequest() {
+    public QueryPvMetadataRequest buildQueryRequest() {
 
         // Create request specification builder for either case
-        QueryMetadataRequest.Builder    bldrRqst = QueryMetadataRequest.newBuilder();
+        QueryPvMetadataRequest.Builder    bldrRqst = QueryPvMetadataRequest.newBuilder();
         
         // If this is a regular expression it takes precedence
         if (!this.strPvNameRegex.isEmpty()) {
@@ -207,7 +207,7 @@ public class DpMetadataRequest {
         }
         
         // Create the metadata request message containing above query specification and return it
-        QueryMetadataRequest    msgRqst = bldrRqst.build();
+        QueryPvMetadataRequest    msgRqst = bldrRqst.build();
         
         return msgRqst;
     }

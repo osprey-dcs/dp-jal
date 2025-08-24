@@ -113,7 +113,7 @@ public record DpDataset(DatasetUID datasetUid,
     public static DpDataset from(DataSet msgDataSet) {
         
         // Extract the message data
-        DatasetUID      recDatasetUid = DatasetUID.from(msgDataSet.getDataSetId());
+        DatasetUID      recDatasetUid = DatasetUID.from(msgDataSet.getId());
         OwnerUID        recOwnerUid = OwnerUID.from(msgDataSet.getOwnerId());
         String          strName = msgDataSet.getName();
         String          strDescr = msgDataSet.getDescription();

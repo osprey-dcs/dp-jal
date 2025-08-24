@@ -79,7 +79,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataStreamResponse;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse.RegistrationResult;
-import com.ospreydcs.dp.grpc.v1.query.QueryMetadataResponse;
+import com.ospreydcs.dp.grpc.v1.query.QueryPvMetadataResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse.ColumnTable;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse.RowMapTable;
@@ -906,7 +906,7 @@ public final class ProtoMsg {
      * @throws IllegalArgumentException data type name in the message was not a <code>DataValueType</code> enumeration
      * @throws TypeNotPresentException  data type in message does not map to <code>DpSupportedType</code> 
      */
-    public static MetadataRecord  toPvMetaRecord(QueryMetadataResponse.MetadataResult.PvInfo msgPvInfo) 
+    public static MetadataRecord  toPvMetaRecord(QueryPvMetadataResponse.MetadataResult.PvInfo msgPvInfo) 
             throws IllegalArgumentException, TypeNotPresentException {
         
         // Extract the PV name and type information
