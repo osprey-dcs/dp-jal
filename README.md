@@ -1,6 +1,8 @@
 # Java API Library (JAL) 
 Java API Library for the Data Platform Core Services
 
+Check new repository name dp-jal.
+
 ## Overview
 This library isolates clients from the Data Platform gRPC communications framework by providing Java language interfaces
 for the Core Services.  Interaction with the Core Services is simplified and clients require little or no knowledge of the gRPC library and the Protocol Buffers RPC interfaces.
