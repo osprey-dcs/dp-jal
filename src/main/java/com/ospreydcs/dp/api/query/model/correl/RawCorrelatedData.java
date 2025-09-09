@@ -43,6 +43,7 @@ import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.grpc.v1.common.DataBucket;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
@@ -203,7 +204,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * 
      * @throws IllegalArgumentException the argument does not contain valid timestamps
      */
-    public static RawCorrelatedData from(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
+    public static RawCorrelatedData from(DataBucket msgBucket) throws IllegalArgumentException {
         
         // Check argument for sampling clock
         if (msgBucket.getDataTimestamps().hasSamplingClock()) {
@@ -374,7 +375,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * @param tvlRange  the time range for the new correlated block 
      * @param msgBucket the raw data bucket containing process data (ignore timestamps)
      */
-    protected RawCorrelatedData(DpTimestampCase enmTmsCase, TimeInterval tvlRange, QueryData.DataBucket msgBucket) {
+    protected RawCorrelatedData(DpTimestampCase enmTmsCase, TimeInterval tvlRange, DataBucket msgBucket) {
         
         // Set the raw time-series data type
         this.enmTmsCase = enmTmsCase;
@@ -502,7 +503,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * @return      <code>true</code> only if argument data was successfully added to this reference,
      *              <code>false</code> otherwise (nothing done)
      */
-    public abstract boolean insertBucketData(QueryDataResponse.QueryData.DataBucket msgBucket);
+    public abstract boolean insertBucketData(DataBucket msgBucket);
     
 
     //

@@ -32,10 +32,9 @@ import com.ospreydcs.dp.api.common.DpTimestampCase;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.common.DataBucket;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.TimestampList;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
  * <p>
@@ -78,7 +77,7 @@ public class RawTmsListData extends RawCorrelatedData {
      * 
      * @throws IllegalArgumentException argument does not contains a timestamp list
      */
-    protected RawTmsListData(QueryDataResponse.QueryData.DataBucket msgBucket) {
+    protected RawTmsListData(DataBucket msgBucket) {
         super(DpTimestampCase.TIMESTAMP_LIST, ProtoTime.range( msgBucket.getDataTimestamps().getTimestampList() ), msgBucket);
         
         // Check argument

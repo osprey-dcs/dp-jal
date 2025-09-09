@@ -29,7 +29,7 @@ NOTES:
     <groupId>com.ospreydcs</groupId>
     <artifactId>dp-jal</artifactId>
     <packaging>jar</packaging>
-    <version>1.9.0</version>
+    <version>1.10.0</version>
 
     <properties>
 		
@@ -56,8 +56,8 @@ NOTES:
         <dp-jal.build-number>1</dp-jal.build-number>
         
 		<!-- Data Platform Properties-->        
-        <dp-grpc.version>1.9.0</dp-grpc.version>
-        <dp-service.version>1.9.0</dp-service.version> <!-- Remove - Unused -->
+        <dp-grpc.version>1.10.0</dp-grpc.version>
+        <dp-service.version>1.10.0</dp-service.version> <!-- Remove - Unused -->
 
         <!-- gRPC Properties -->
         <io.grpc.version>1.49.0</io.grpc.version>

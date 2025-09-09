@@ -45,10 +45,11 @@ import org.apache.logging.log4j.core.config.Configurator;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.common.DataBucket;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
+import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
+import com.ospreydcs.dp.grpc.v1.common.TimestampList;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData.DataBucket;
 
 /**
  * <p>
@@ -834,8 +835,8 @@ public class RawDataCorrelator {
             }
 
             // If the target set is large - pivot to concurrent processing of message data
-            Collection<QueryData.DataBucket>    setFreeBuckets = this.attemptDataInsertConcurrent(msgData); // throws CompletionException
-            SortedSet<RawCorrelatedData>        setDisjointData = this.processDisjointRawData(setFreeBuckets); // done serially
+            Collection<DataBucket>          setFreeBuckets = this.attemptDataInsertConcurrent(msgData); // throws CompletionException
+            SortedSet<RawCorrelatedData>    setDisjointData = this.processDisjointRawData(setFreeBuckets); // done serially
             this.setPrcdData.addAll(setDisjointData);
 
             // Increment byte counter
@@ -885,7 +886,7 @@ public class RawDataCorrelator {
      */
     private void processDataSerial(QueryDataResponse.QueryData msgData) throws IllegalArgumentException {
 
-        for (QueryDataResponse.QueryData.DataBucket msgBucket : msgData.getDataBucketsList()) {
+        for (DataBucket msgBucket : msgData.getDataBucketsList()) {
             
             // Attempt to add the message data into the current set of sampling interval references
             boolean bolSuccess = this.setPrcdData
@@ -940,7 +941,7 @@ public class RawDataCorrelator {
      * 
      * @throws CompletionException       error in <code>DataBucket</code> insertion task execution (see cause)
      */
-    private Collection<QueryDataResponse.QueryData.DataBucket>  attemptDataInsertConcurrent(QueryDataResponse.QueryData msgData) 
+    private Collection<DataBucket>  attemptDataInsertConcurrent(QueryDataResponse.QueryData msgData) 
             throws CompletionException
     {
         
@@ -970,10 +971,10 @@ public class RawDataCorrelator {
 
         // Collect all data buckets messages that were not processed and returned the data
 //        Collection<QueryDataResponse.QueryData.DataBucket>  lstBucsFree = this.extractFailedTaskBuckets(lstTasks);
-        List<QueryData.DataBucket> lstBucsFree = lstTasks
+        List<DataBucket> lstBucsFree = lstTasks
                 .stream()
                 .filter(task -> task.isSuccess()==false)
-                .<QueryData.DataBucket>map(task -> task.getSubject())
+                .<DataBucket>map(task -> task.getSubject())
                 .toList();
         
         return lstBucsFree;
@@ -1085,13 +1086,13 @@ public class RawDataCorrelator {
      * 
      * @return  set of new target references associated with the given argument data
      */
-    private SortedSet<RawCorrelatedData>  processDisjointRawData(Collection<QueryDataResponse.QueryData.DataBucket> setBuckets) {
+    private SortedSet<RawCorrelatedData>  processDisjointRawData(Collection<DataBucket> setBuckets) {
         
         // The returned sampling interval reference - that is, the targets
         SortedSet<RawCorrelatedData>  setRefs = new TreeSet<>(RawCorrelatedData.StartTimeComparator.create());
         
         // Treat each data bucket individually - high probability of modifying target set 
-        for (QueryDataResponse.QueryData.DataBucket msgBucket : setBuckets) {
+        for (DataBucket msgBucket : setBuckets) {
 
             // Attempt to insert bucket data into existing targets
             boolean bolSuccess = setRefs.stream().anyMatch(r -> r.insertBucketData(msgBucket));

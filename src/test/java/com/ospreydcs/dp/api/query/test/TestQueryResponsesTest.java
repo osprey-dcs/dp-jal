@@ -44,6 +44,7 @@ import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.CompositeQueryType;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
+import com.ospreydcs.dp.grpc.v1.common.DataBucket;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
@@ -121,7 +122,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Size of the ONE_SOURCE single query response list = " + lstRsps.size());
         
-        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the ONE_SOURCE query results set = " + lstBuckets.size());
     }
@@ -138,7 +139,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Size of the ONE_SOURCE single query response list = " + lstRsps.size());
         
-        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the ONE_SOURCE query results set = " + lstBuckets.size());
     }
@@ -155,7 +156,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Size of the WIDE single query response list = " + lstRsps.size());
         
-        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the WIDE query results set = " + lstBuckets.size());
     }
@@ -172,7 +173,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Size of the LONG single query response list = " + lstRsps.size());
         
-        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
+        List<DataBucket>    lstBuckets = this.extractBuckets(lstRsps);
         
         System.out.println("Number of data buckets in the LONG query results set = " + lstBuckets.size());
     }
@@ -197,7 +198,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the HORIZONTAL decompose query response list = " + lstRspsAll.size());
         
-        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the HORIZONTAL decompose query results set = " + lstBuckets.size());
     }
@@ -222,7 +223,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the VERTICAL decompose query response list = " + lstRspsAll.size());
         
-        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the VERTICAL decompose query results set = " + lstBuckets.size());
     }
@@ -247,7 +248,7 @@ public class TestQueryResponsesTest {
         
         System.out.println("Total size of the GRID decompose query response list = " + lstRspsAll.size());
         
-        List<QueryDataResponse.QueryData.DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
+        List<DataBucket>    lstBuckets = this.extractBuckets(lstRspsAll);
         
         System.out.println("Number of data buckets in the GRID decompose query results set = " + lstBuckets.size());
     }
@@ -370,10 +371,10 @@ public class TestQueryResponsesTest {
      * 
      * @see #extractData(List)
      */
-    private List<QueryDataResponse.QueryData.DataBucket> extractBuckets(List<QueryDataResponse> lstRsps) {
+    private List<DataBucket> extractBuckets(List<QueryDataResponse> lstRsps) {
         List<QueryDataResponse.QueryData>   lstData = this.extractData(lstRsps);
         
-        List<QueryDataResponse.QueryData.DataBucket> lstBuckets = lstData
+        List<DataBucket> lstBuckets = lstData
                 .stream()
                 .collect(LinkedList::new, 
                         (lst, data) -> lst.addAll(data.getDataBucketsList()), 

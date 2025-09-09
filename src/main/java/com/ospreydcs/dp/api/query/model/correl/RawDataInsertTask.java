@@ -36,7 +36,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 import com.ospreydcs.dp.api.config.DpApiConfig;
 import com.ospreydcs.dp.api.config.query.DpQueryConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.grpc.v1.common.DataBucket;
 
 /**
  * <p>
@@ -93,7 +93,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
      * 
      * @return  new, initialized thread task ready for execution
      */
-    public static RawDataInsertTask from(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<RawCorrelatedData> setTarget) {
+    public static RawDataInsertTask from(DataBucket msgSubject, SortedSet<RawCorrelatedData> setTarget) {
         return new RawDataInsertTask(msgSubject, setTarget);
     }
 
@@ -140,10 +140,10 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
     //
     
     /** The subject of this data insertion task */
-    private final QueryDataResponse.QueryData.DataBucket    msgSubject;
+    private final DataBucket                    msgSubject;
     
     /** The object of this task - target collection of correlated data */
-    private final SortedSet<RawCorrelatedData>              setTarget;
+    private final SortedSet<RawCorrelatedData>  setTarget;
     
     
     //
@@ -169,7 +169,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
      * @param msgSubject    the task subject - a Query Service data bucket message
      * @param setTarget     the task target - collection of <code>RawCorrelatedData</code> instances
      */
-    public RawDataInsertTask(QueryDataResponse.QueryData.DataBucket msgSubject, SortedSet<RawCorrelatedData> setTarget) {
+    public RawDataInsertTask(DataBucket msgSubject, SortedSet<RawCorrelatedData> setTarget) {
         this.msgSubject = msgSubject;
         this.setTarget = setTarget;
     }
@@ -211,7 +211,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
      * 
      * @return  the <code>DataBucket</code> Protobuf message subject of task
      */
-    public final QueryDataResponse.QueryData.DataBucket    getSubject() {
+    public final DataBucket    getSubject() {
         return this.msgSubject;
     }
     

@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.common.DataBucket;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
@@ -491,13 +492,13 @@ public class TestQueryResponses {
      * @see #queryData(SingleQueryType)
      * @see SingleQueryType
      */
-    public static List<QueryDataResponse.QueryData.DataBucket> queryBuckets(SingleQueryType enmType) {
+    public static List<DataBucket> queryBuckets(SingleQueryType enmType) {
         
         // Recover results set and extract data
         List<QueryDataResponse.QueryData>   lstData = TestQueryResponses.queryData(enmType);
         
         // Extract all data buckets
-        List<QueryDataResponse.QueryData.DataBucket> lstBuckets = lstData
+        List<DataBucket> lstBuckets = lstData
                 .stream()
                 .flatMap(
                         msgData -> msgData.getDataBucketsList().stream()

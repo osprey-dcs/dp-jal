@@ -32,9 +32,9 @@ import com.ospreydcs.dp.api.common.DpTimestampCase;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.grpc.v1.common.DataBucket;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
-import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
 
 /**
  * <p>
@@ -77,7 +77,7 @@ public class RawClockedData extends RawCorrelatedData {
      * 
      * @throws IllegalArgumentException argument does not contains a sampling clock
      */
-    protected RawClockedData(QueryDataResponse.QueryData.DataBucket msgBucket) throws IllegalArgumentException {
+    protected RawClockedData(DataBucket msgBucket) throws IllegalArgumentException {
         super(DpTimestampCase.SAMPLING_CLOCK, ProtoTime.range(msgBucket.getDataTimestamps().getSamplingClock()), msgBucket);
 
         // Check argument
@@ -129,7 +129,7 @@ public class RawClockedData extends RawCorrelatedData {
      */
     @Override
     synchronized
-    public boolean insertBucketData(QueryDataResponse.QueryData.DataBucket msgBucket) {
+    public boolean insertBucketData(DataBucket msgBucket) {
         
         // Check argument for sampling clock
         if (!msgBucket.getDataTimestamps().hasSamplingClock())
