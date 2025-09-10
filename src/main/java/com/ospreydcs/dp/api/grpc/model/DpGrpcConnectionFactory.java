@@ -81,7 +81,7 @@ import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
  *                       DpQueryServiceStub&gt; facQueryConnec = 
  *                           DpGrpcConnectionFactory.newFactory(
  *                                DpQueryServiceGrpc.class, 
- *                                DpApiConfig.getInstance()
+ *                                JalConfig.getInstance()
  *                                             .services
  *                                             .query
  *                                );

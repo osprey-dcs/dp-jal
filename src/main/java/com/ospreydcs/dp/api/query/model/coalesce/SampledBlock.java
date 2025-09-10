@@ -46,8 +46,8 @@ import com.ospreydcs.dp.api.common.JalDataTableType;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.query.model.correl.RawClockedData;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawTmsListData;
@@ -356,7 +356,7 @@ public abstract class SampledBlock implements IDataTable, Comparable<SampledBloc
     //
     
     /** The Data Platform API default configuration parameter set */
-    protected static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    protected static final JalQueryConfig  CFG_QUERY = JalConfig.getInstance().query;
     
     
     //

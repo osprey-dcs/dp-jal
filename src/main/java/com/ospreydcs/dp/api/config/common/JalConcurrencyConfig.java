@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpConcurrencyConfig.java
+ * File:	JalConcurrencyConfig.java
  * Package: com.ospreydcs.dp.api.config.common
- * Type: 	DpConcurrencyConfig
+ * Type: 	JalConcurrencyConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -31,19 +31,21 @@ import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
 /**
+ * <p>
+ * Structure class containing common configuration parameters for concurrency operations.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Jan 30, 2024
  *
  */
 @ACfgOverride.Root(root="DP_API_CONCURRENCY")
-public class DpConcurrencyConfig extends CfgStructure<DpConcurrencyConfig> {
+public class JalConcurrencyConfig extends CfgStructure<JalConcurrencyConfig> {
 
     /** Default constructor required for base structure class */
-    public DpConcurrencyConfig() {
-        super(DpConcurrencyConfig.class);
-    }
+    public JalConcurrencyConfig() { super(JalConcurrencyConfig.class); }
 
+    
     //
     // Configuration Parameters
     //

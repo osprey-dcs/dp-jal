@@ -37,8 +37,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -233,7 +233,7 @@ public class MessageTransferTask extends Thread implements Runnable, Callable<Bo
     //
     
     /** The Data Platform Query Service default parameters */
-    private static final DpQueryConfig CFG_QUERY = DpApiConfig.getInstance().query;
+    private static final JalQueryConfig CFG_QUERY = JalConfig.getInstance().query;
     
     
     //

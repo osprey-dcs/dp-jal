@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionServiceImpl.java
+ * File:	JalIngestionServiceImpl.java
  * Package: com.ospreydcs.dp.api.ingest
- * Type: 	DpIngestionServiceImpl
+ * Type: 	JalIngestionServiceImpl
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -40,13 +40,13 @@ import com.ospreydcs.dp.api.common.IngestRequestUID;
 import com.ospreydcs.dp.api.common.IngestionResult;
 import com.ospreydcs.dp.api.common.ProviderRegistrar;
 import com.ospreydcs.dp.api.common.ProviderUID;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.JalIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionService;
 import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
@@ -107,20 +107,20 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * </p>
  * <p>
  * <h2>Instance Creation</h2>
- * In generation objects of <code>DpIngestionServiceImpl</code> should be obtained from the connection
- * factory <code>{@link DpIngestionServiceFactory}</code>.  However, there are creator and 
+ * In generation objects of <code>JalIngestionServiceImpl</code> should be obtained from the connection
+ * factory <code>{@link JalIngestionServiceFactory}</code>.  However, there are creator and 
  * constructor method available which require a <code>{@link DpIngestionConnection}</code>
  * instance (which may be obtained from connection factory <code>DpIngestionConnectionFactory</code>.
  * </p>
  * <p>
  * <h2>Instance Shutdown</h2>
- * All instances of <code>DpIngestionServiceImpl</code> should be shutdown when no longer needed.
+ * All instances of <code>JalIngestionServiceImpl</code> should be shutdown when no longer needed.
  * This will release all resources and increase overall performance.  See methods
  * <code>{@link #shutdown()}</code> and <code>{@link #shutdownNow()}</code>.
  * </p>
  * <p>
  * <h2>Configuration</h2>
- * The <code>DpIngestionServiceImpl</code> class provides methods for interface configuration, which are
+ * The <code>JalIngestionServiceImpl</code> class provides methods for interface configuration, which are
  * not available through the <code>IIgestionService</code> interface.  (<code>IIngestionService</code>
  * interfaces are obtained from connection factories pre-configured.)  These methods are available
  * for unit testing and performance tuning.
@@ -130,8 +130,8 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
  * @since Mar 28, 2024
  *
  */
-public final class DpIngestionServiceImpl extends
-        DpServiceApiBase<DpIngestionServiceImpl, 
+public final class JalIngestionServiceImpl extends
+        DpServiceApiBase<JalIngestionServiceImpl, 
                          DpIngestionConnection, 
                          DpIngestionServiceGrpc, 
                          DpIngestionServiceBlockingStub, 
@@ -144,7 +144,7 @@ public final class DpIngestionServiceImpl extends
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>DpIngestionServiceImpl</code> attached to the 
+     * Creates and returns a new instance of <code>JalIngestionServiceImpl</code> attached to the 
      * given connection.
      * </p>
      * <p>
@@ -161,12 +161,12 @@ public final class DpIngestionServiceImpl extends
      * 
      * @param connIngest  the gRPC channel connection to the desired DP Ingestion Service
      *  
-     * @return new <code>DpIngestionServiceImpl</code> interfaces attached to the argument
+     * @return new <code>JalIngestionServiceImpl</code> interfaces attached to the argument
      * 
      * @see DpIngestionConnectionFactory
      */
-    public static DpIngestionServiceImpl from(DpIngestionConnection connIngest) {
-        return new DpIngestionServiceImpl(connIngest);
+    public static JalIngestionServiceImpl from(DpIngestionConnection connIngest) {
+        return new JalIngestionServiceImpl(connIngest);
     }
     
     
@@ -175,7 +175,7 @@ public final class DpIngestionServiceImpl extends
     //
     
     /** Default Ingestion Service configuration parameters */
-    private static final DpIngestionConfig  CFG_DEFAULT = DpApiConfig.getInstance().ingest;
+    private static final JalIngestionConfig  CFG_DEFAULT = JalConfig.getInstance().ingest;
     
     
     //
@@ -267,7 +267,7 @@ public final class DpIngestionServiceImpl extends
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionServiceImpl</code>.
+     * Constructs a new instance of <code>JalIngestionServiceImpl</code>.
      * </p>
      * <p>
      * The argument should be obtained from the appropriate connection factory,
@@ -285,7 +285,7 @@ public final class DpIngestionServiceImpl extends
      * 
      * @see DpIngestionConnectionFactory
      */
-    public DpIngestionServiceImpl(DpIngestionConnection connIngest) {
+    public JalIngestionServiceImpl(DpIngestionConnection connIngest) {
         super(connIngest);
         
         if (this.bolDecompAuto) 
@@ -496,11 +496,11 @@ public final class DpIngestionServiceImpl extends
      * 
      * @return                  record containing the data provider UID
      *         
-     * @throws DpIngestionException     registration failure or general communications exception (see details)
+     * @throws JalIngestionException     registration failure or general communications exception (see details)
      */
     @Override
     @AUnavailable(status=STATUS.ACCEPTED, note="Operation is mocked - Not implemented within the Ingestion Service until version 1.5.")
-    public ProviderUID  registerProvider(ProviderRegistrar recRegistration) throws DpIngestionException {
+    public ProviderUID  registerProvider(ProviderRegistrar recRegistration) throws JalIngestionException {
         
         this.recProviderUid = ProviderRegistrationService.registerProvider(super.grpcConn, recRegistration);
 
@@ -549,23 +549,23 @@ public final class DpIngestionServiceImpl extends
      * @return  collection of Ingestion Service responses to data within ingestion frame
      * 
      * @throws IllegalStateException    unregistered Data Provider
-     * @throws DpIngestionException     general ingestion exception (see detail and cause)
+     * @throws JalIngestionException     general ingestion exception (see detail and cause)
      */
     @Override
-    public IngestionResult ingest(IngestionFrame frame) throws IllegalStateException, DpIngestionException {
+    public IngestionResult ingest(IngestionFrame frame) throws IllegalStateException, JalIngestionException {
         
         // Check registration
         if (this.recProviderUid == null)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Data Provider was not registered.");
         
         // Create list of frames to be ingested - depends on auto-decomposition
-        List<IngestionFrame>    lstFrames = this.decomposeFrame(frame); // throws DpIngestionException
+        List<IngestionFrame>    lstFrames = this.decomposeFrame(frame); // throws JalIngestionException
         
         // Save the request UIDs
         this.lstRequestIds.addAll(lstFrames.stream().map(frm -> frm.getClientRequestUid()).toList());
         
         // Convert frames to messages and transmit, recovering responses
-        List<IngestDataResponse> lstRsps = this.transmitFrames(this.recProviderUid, lstFrames); // throws DpIngestionException
+        List<IngestDataResponse> lstRsps = this.transmitFrames(this.recProviderUid, lstFrames); // throws JalIngestionException
 
         // Convert responses to result and return
         IngestionResult     recResult;
@@ -639,9 +639,9 @@ public final class DpIngestionServiceImpl extends
      * @return          list of decompose ingestion frames if decomposed, 
      *                  otherwise original frame
      *                   
-     * @throws DpIngestionException both horizontal and vertical decomposition failed
+     * @throws JalIngestionException both horizontal and vertical decomposition failed
      */
-    private List<IngestionFrame>    decomposeFrame(IngestionFrame frame) throws DpIngestionException {
+    private List<IngestionFrame>    decomposeFrame(IngestionFrame frame) throws JalIngestionException {
 
         // Check if auto-decomposition is disabled
         if (!this.bolDecompAuto) {
@@ -680,7 +680,7 @@ public final class DpIngestionServiceImpl extends
                 if (BOL_LOGGING)
                     LOGGER.error(strMsg2);
 
-                throw new DpIngestionException(strMsg2, e2);
+                throw new JalIngestionException(strMsg2, e2);
             }
         }
     }
@@ -707,7 +707,7 @@ public final class DpIngestionServiceImpl extends
      *   request.
      *   </li>
      * </ol> 
-     * A <code>DpIngestionException</code> type exception is thrown in either case.  The original 
+     * A <code>JalIngestionException</code> type exception is thrown in either case.  The original 
      * exception is included as the cause parameter.
      * </p>
      * 
@@ -716,9 +716,9 @@ public final class DpIngestionServiceImpl extends
      * 
      * @return  ordered list of Ingestion Service ingest data responses
      * 
-     * @throws DpIngestionException unexpected gRPC runtime exception or request was rejected (see details)
+     * @throws JalIngestionException unexpected gRPC runtime exception or request was rejected (see details)
      */
-    private List<IngestDataResponse> transmitFrames(ProviderUID recUid, List<IngestionFrame> lstFrames) throws DpIngestionException {
+    private List<IngestDataResponse> transmitFrames(ProviderUID recUid, List<IngestionFrame> lstFrames) throws JalIngestionException {
         
         // Returned collection
         List<IngestDataResponse> lstRsps = new LinkedList<>();
@@ -749,7 +749,7 @@ public final class DpIngestionServiceImpl extends
                 if (BOL_LOGGING)
                     LOGGER.error(strMsg);
                 
-                throw new DpIngestionException(strMsg, e);
+                throw new JalIngestionException(strMsg, e);
                 
                 // The Ingestion Service rejected the ingestion request
             } catch (MissingResourceException e) {
@@ -760,7 +760,7 @@ public final class DpIngestionServiceImpl extends
                 if (BOL_LOGGING)
                     LOGGER.error(strMsg);
                 
-                throw new DpIngestionException(strMsg, e);
+                throw new JalIngestionException(strMsg, e);
             }
         }
         

@@ -37,8 +37,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.common.JalLoggingConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
@@ -113,10 +113,10 @@ public class DpGrpcConnection<
     //
     
     /** The default logging configuration for all Data Platform connections */
-    private static final DpLoggingConfig            CFG_LOGGING = DpApiConfig.getInstance().connections.logging;
+    private static final JalLoggingConfig            CFG_LOGGING = JalConfig.getInstance().connections.logging;
     
     /** The default connection parameters for the Data Platform Query Service */
-    private static final DpGrpcConnectionConfig     CFG_CONNECT = DpApiConfig.getInstance().connections.query;
+    private static final DpGrpcConnectionConfig     CFG_CONNECT = JalConfig.getInstance().connections.query;
 
     
     //

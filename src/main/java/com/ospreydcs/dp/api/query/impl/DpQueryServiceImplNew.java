@@ -38,8 +38,8 @@ import org.apache.logging.log4j.core.config.Configurator;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.MetadataRecord;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
@@ -273,7 +273,7 @@ public class DpQueryServiceImplNew extends
     //
     
     /** Default Query Service configuration parameters */
-    private static final DpQueryConfig  CFG_DEF = DpApiConfig.getInstance().query;
+    private static final JalQueryConfig  CFG_DEF = JalConfig.getInstance().query;
     
     
     //

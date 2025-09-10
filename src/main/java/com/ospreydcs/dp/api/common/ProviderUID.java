@@ -42,7 +42,7 @@ import java.io.Serializable;
  * original UID is returned.
  * </p>
  * <p>
- * Instances of <code>ProviderUID</code> are created by the <code>DpIngestionServiceImpl</code> client interface
+ * Instances of <code>ProviderUID</code> are created by the <code>JalIngestionServiceImpl</code> client interface
  * at passed to client data providers upon registration.
  * </p>
  * 

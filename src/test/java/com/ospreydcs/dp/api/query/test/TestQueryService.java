@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 
-import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
+import com.ospreydcs.dp.api.config.JalUnitTestConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
@@ -67,7 +67,7 @@ public class TestQueryService {
     //
     
     /** The query configuration for DP API testing */ 
-    public static final DpApiUnitTestConfig.TestQuery    CFG_QUERY = DpApiUnitTestConfig.getInstance().testQuery;
+    public static final JalUnitTestConfig.TestQuery    CFG_QUERY = JalUnitTestConfig.getInstance().testQuery;
     
 
     //
@@ -215,7 +215,7 @@ public class TestQueryService {
      * </p>
      * <p>
      * The returned instance is a Query Service API connected to the test archive
-     * as defined in <code>{@link DpApiUnitTestConfig.TestQuery}</code>.
+     * as defined in <code>{@link JalUnitTestConfig.TestQuery}</code>.
      * <p>
      * <p>
      * <h2>NOTES:</h2>

@@ -36,8 +36,8 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.api.common.DpTimestampCase;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.UniformSamplingClock;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
@@ -151,7 +151,7 @@ public class IngestionFrameGenerator {
     //
     
     /** Default configuration parameters for the Query Service tools */
-    private static final DpIngestionConfig  CFG_INGEST = DpApiConfig.getInstance().ingest;
+    private static final JalIngestionConfig  CFG_INGEST = JalConfig.getInstance().ingest;
     
     /** Default configuration parameters for the JAL Tools */
     private static final JalToolsConfig     CFG_TOOLS = JalToolsConfig.getInstance();

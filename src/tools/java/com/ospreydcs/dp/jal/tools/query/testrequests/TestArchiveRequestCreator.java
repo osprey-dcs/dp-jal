@@ -35,8 +35,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.common.JalLoggingConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -121,7 +121,7 @@ public class TestArchiveRequestCreator {
     public static final JalTestArchiveConfig     CFG_ARCHIVE = JalToolsConfig.getInstance().testArchive;
 
     /** General Query Service tools logging configuration */
-    public static final DpLoggingConfig         CFG_LOGGING = DpApiConfig.getInstance().query.logging;
+    public static final JalLoggingConfig         CFG_LOGGING = JalConfig.getInstance().query.logging;
     
     
     //

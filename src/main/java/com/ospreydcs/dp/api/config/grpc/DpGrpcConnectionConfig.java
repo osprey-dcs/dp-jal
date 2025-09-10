@@ -29,7 +29,7 @@ package com.ospreydcs.dp.api.config.grpc;
 
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
+import com.ospreydcs.dp.api.config.common.JalTimeoutConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -88,7 +88,7 @@ public final class DpGrpcConnectionConfig extends CfgStructure<DpGrpcConnectionC
     
     /** General timeout properties used external to channel connection (i.e., on channel objects) */
     @ACfgOverride.Struct(pathelem="TIMEOUT")
-    public DpTimeoutConfig  timeout;
+    public JalTimeoutConfig  timeout;
     
     /** Required Channel parameters */
     @ACfgOverride.Struct(pathelem="CHANNEL")

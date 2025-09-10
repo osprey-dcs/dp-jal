@@ -35,7 +35,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 
@@ -145,7 +145,7 @@ public final class CfgOverrideUtility {
      * </p>
      * <p>
      * The argument is is assumed to be a structure class containing configuration parameters, for example,
-     * the <code>{@link DpApiConfig}</code> instance. Although any appropriately annotated
+     * the <code>{@link JalConfig}</code> instance. Although any appropriately annotated
      * structure class is a viable argument.
      * </p>
      * <h2>NOTES:</h2>
@@ -916,7 +916,7 @@ public final class CfgOverrideUtility {
      * those specified as environment variables using the <code>ACfgOverride</code> annotations.
      * </p>
      * <p>
-     * It is assumed the argument is the <code>DpApiConfig</code> instance which has already been loaded 
+     * It is assumed the argument is the <code>JalConfig</code> instance which has already been loaded 
      * from the <em>dp-api-config.yml</em> configuration file.  Although any appropriately annotated
      * structure class is a viable argument.
      * </p>
@@ -998,7 +998,7 @@ public final class CfgOverrideUtility {
      * Java command-line arguments are specified using the "-D<name=value>" convention.
      * </p>
      * <p>
-     * It is assumed the argument is the <code>DpApiConfig</code> instance which has already been loaded 
+     * It is assumed the argument is the <code>JalConfig</code> instance which has already been loaded 
      * from the <em>dp-api-config.yml</em> configuration file.  Although any appropriately annotated
      * structure class is a viable argument.
      * </p>

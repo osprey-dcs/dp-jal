@@ -33,9 +33,9 @@ public interface IIngestionService extends IConnection {
      * 
      * @return                  record containing the data provider UID
      *         
-     * @throws DpIngestionException     registration failure or general communications exception (see details)
+     * @throws JalIngestionException     registration failure or general communications exception (see details)
      */
-    public ProviderUID registerProvider(ProviderRegistrar recRegistration) throws DpIngestionException;
+    public ProviderUID registerProvider(ProviderRegistrar recRegistration) throws JalIngestionException;
 
     /**
      * <p>
@@ -79,9 +79,9 @@ public interface IIngestionService extends IConnection {
      * @return  the result of the ingestion operation
      * 
      * @throws IllegalStateException    unregistered Data Provider
-     * @throws DpIngestionException     general ingestion exception (see detail and cause)
+     * @throws JalIngestionException     general ingestion exception (see detail and cause)
      */
-    public IngestionResult ingest(IngestionFrame frame) throws IllegalStateException, DpIngestionException;
+    public IngestionResult ingest(IngestionFrame frame) throws IllegalStateException, JalIngestionException;
     
     /**
      * <p>

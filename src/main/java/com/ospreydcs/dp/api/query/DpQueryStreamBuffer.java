@@ -39,8 +39,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc.DpQueryServiceStub;
@@ -190,7 +190,7 @@ public class DpQueryStreamBuffer implements StreamObserver<QueryDataResponse> {
     //
     
     /** Default Query Service API configuration parameters */
-    private static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    private static final JalQueryConfig  CFG_QUERY = JalConfig.getInstance().query;
     
     
     //

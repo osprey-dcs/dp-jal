@@ -47,8 +47,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ProviderUID;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -64,7 +64,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * This class performs several functions, including basic ingestion frame buffering, ingestion frame
  * decomposition, and conversion of ingestion frames to <code>IngestDataRequest</code> messages.
  * The ultimate use for class instances is as a supplier of <code>IngestDataRequest</code> messages.
- * Instance of this class are used by <code>DpIngestionStreamImpl</code>.
+ * Instance of this class are used by <code>JalIngestionStreamImpl</code>.
  * </p>
  * <p>
  * <h2>Activation</h2>
@@ -308,7 +308,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     //
     
     /** The Ingestion Service client API default configuration */
-    private static final DpIngestionConfig  CFG_DEFAULT = DpApiConfig.getInstance().ingest; 
+    private static final JalIngestionConfig  CFG_DEFAULT = JalConfig.getInstance().ingest; 
     
     
     //

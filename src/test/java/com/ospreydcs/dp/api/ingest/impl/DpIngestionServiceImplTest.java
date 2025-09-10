@@ -44,12 +44,12 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.common.IngestionResult;
 import com.ospreydcs.dp.api.common.ProviderRegistrar;
 import com.ospreydcs.dp.api.common.ProviderUID;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.JalIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionService;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
@@ -57,7 +57,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
- * JUnit test cases for class <code>DpIngestionServiceImpl</code>.
+ * JUnit test cases for class <code>JalIngestionServiceImpl</code>.
  * </p>
  *
  * @author Christopher K. Allen
@@ -72,7 +72,7 @@ public class DpIngestionServiceImplTest {
     //
     
     /** The default Ingestion Service configuration parameters */
-    private static final DpIngestionConfig          CFG_INGEST = DpApiConfig.getInstance().ingest;
+    private static final JalIngestionConfig          CFG_INGEST = JalConfig.getInstance().ingest;
     
     
     //
@@ -112,7 +112,7 @@ public class DpIngestionServiceImplTest {
     //
     
     /** The Ingestion Service API under test - only instantiate one */
-//    private static DpIngestionServiceImpl       apiIngest;
+//    private static JalIngestionServiceImpl       apiIngest;
     private static IIngestionService            apiIngest;
     
     
@@ -126,9 +126,9 @@ public class DpIngestionServiceImplTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
 //        DpIngestionConnection   connIngest = DpIngestionConnectionFactory.FACTORY.connect();
-//        apiIngest = new DpIngestionServiceImpl(connIngest);
+//        apiIngest = new JalIngestionServiceImpl(connIngest);
         
-        apiIngest = DpIngestionServiceFactory.FACTORY.connect();
+        apiIngest = JalIngestionServiceFactory.FACTORY.connect();
     }
 
     /**
@@ -160,7 +160,7 @@ public class DpIngestionServiceImplTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl#from(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionServiceImpl#from(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
      */
     @Test
     public final void testFrom() {
@@ -168,7 +168,7 @@ public class DpIngestionServiceImplTest {
         try {
             DpIngestionConnection   connIngest = DpIngestionConnectionFactory.FACTORY.connect();
 
-            DpIngestionServiceImpl      apiTest = DpIngestionServiceImpl.from(connIngest);
+            JalIngestionServiceImpl      apiTest = JalIngestionServiceImpl.from(connIngest);
             
             // Shutdown API connection and test
             apiTest.shutdown();
@@ -187,7 +187,7 @@ public class DpIngestionServiceImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl#awaitTermination()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionServiceImpl#awaitTermination()}.
      */
     @Test
     public final void testAwaitTermination() {
@@ -195,7 +195,7 @@ public class DpIngestionServiceImplTest {
         try {
 
             // Create new Ingestion Service API, then shut it down
-            IIngestionService      apiTest = DpIngestionServiceFactory.FACTORY.connect();
+            IIngestionService      apiTest = JalIngestionServiceFactory.FACTORY.connect();
             
             apiTest.shutdown();
             Assert.assertTrue("Test Ingestion Service API reported NOT shutdown after shutdownSoft() operation.", apiTest.isShutdown());
@@ -220,7 +220,7 @@ public class DpIngestionServiceImplTest {
 
         try {
             // Create new Ingestion Service API, then shut it down hard
-            IIngestionService      apiTest = DpIngestionServiceFactory.FACTORY.connect();
+            IIngestionService      apiTest = JalIngestionServiceFactory.FACTORY.connect();
             
             apiTest.shutdownNow();
             Assert.assertTrue("Test Ingestion Service API reported NOT shutdown after shutdownNow() operation.", apiTest.isShutdown());
@@ -269,7 +269,7 @@ public class DpIngestionServiceImplTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceImpl#registerProvider(com.ospreydcs.dp.api.common.ProviderRegistrar)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionServiceImpl#registerProvider(com.ospreydcs.dp.api.common.ProviderRegistrar)}.
      */
     @Test
     public final void testRegisterProvider() {
@@ -284,14 +284,14 @@ public class DpIngestionServiceImplTest {
             
             System.out.println("Test Data Provider UID = " + recUID.uid());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             Assert.fail("Data Provider registration failed with exception: " + e.getMessage());
             
         }
     }
     
     /**
-     * Test method for {@link DpIngestionServiceImpl#ingest(com.ospreydcs.dp.api.ingest.IngestionFrame)
+     * Test method for {@link JalIngestionServiceImpl#ingest(com.ospreydcs.dp.api.ingest.IngestionFrame)
      */
     @Test
     public final void testIngestIngestionFrameSmall() {
@@ -303,7 +303,7 @@ public class DpIngestionServiceImplTest {
             
             System.out.println("UID = " + recUID.uid() + " for provider registration " + REC_PROVIDER_REG_1);
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             Assert.fail("Data Provider registration failed with exception: " + e.getMessage());
             return;
         }
@@ -315,7 +315,7 @@ public class DpIngestionServiceImplTest {
             
             Assert.assertEquals(1, recResult.acceptedRequestCount());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             
             // Check if ingestData() is still unimplemented
             if (e.getCause() instanceof io.grpc.StatusRuntimeException gRpcExcp) {
@@ -333,7 +333,7 @@ public class DpIngestionServiceImplTest {
 
 
     /**
-     * Test method for {@link DpIngestionServiceImpl#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.IngestionFrame)
+     * Test method for {@link JalIngestionServiceImpl#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.IngestionFrame)
      */
     @Test
     public final void testIngestIngestionFrameLarge() {
@@ -348,7 +348,7 @@ public class DpIngestionServiceImplTest {
             
             System.out.println("UID = " + recUID.uid() + " for provider registration " + REC_PROVIDER_REG_1);
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             Assert.fail("Data Provider registration failed with exception: " + e.getMessage());
             return;
         }
@@ -361,7 +361,7 @@ public class DpIngestionServiceImplTest {
             // The frame decomposition will create 4 decompose-frames
             Assert.assertEquals(4, recResult.acceptedRequestCount());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             
             // Check if ingestData() is still unimplemented
             if (e.getCause() instanceof io.grpc.StatusRuntimeException gRpcExcp) {
@@ -383,7 +383,7 @@ public class DpIngestionServiceImplTest {
     }
     
     /**
-     * Test method for {@link DpIngestionServiceImpl#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.IngestionFrame)
+     * Test method for {@link JalIngestionServiceImpl#ingest(ProviderUID, com.ospreydcs.dp.api.ingest.IngestionFrame)
      */
     @Test
     public final void testIngestListOfIngestionFramesLarge() {
@@ -400,10 +400,10 @@ public class DpIngestionServiceImplTest {
         
         
         // Create API for this test
-        DpIngestionServiceImpl  apiIngest;
+        JalIngestionServiceImpl  apiIngest;
         try {
             DpIngestionConnection   connIngest = DpIngestionConnectionFactory.FACTORY.connect();
-            apiIngest = new DpIngestionServiceImpl(connIngest);
+            apiIngest = new JalIngestionServiceImpl(connIngest);
 
             // Enable frame decomposition
             apiIngest.enableFrameDecomposition(szFrmMax);
@@ -419,7 +419,7 @@ public class DpIngestionServiceImplTest {
         try {
             apiIngest.registerProvider(REC_PROVIDER_REG_1);
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             Assert.fail("Data Provider registration failed with exception: " + e.getMessage());
             return;
         }

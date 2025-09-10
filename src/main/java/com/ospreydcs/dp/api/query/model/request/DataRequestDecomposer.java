@@ -33,9 +33,9 @@ import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpDataRequestConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalDataRequestConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 
 /**
@@ -109,7 +109,7 @@ public class DataRequestDecomposer {
     //
     
     /** The default API library configuration for Query Service operations */
-    private static final DpDataRequestConfig CFG_RQST = DpApiConfig.getInstance().query.data.request;
+    private static final JalDataRequestConfig CFG_RQST = JalConfig.getInstance().query.data.request;
     
     
     //
@@ -395,8 +395,8 @@ public class DataRequestDecomposer {
      * 
      * @return  record containing sub-domain parameters when using preferred decomposition
      * 
-     * @see DpApiConfig
-     * @see DpQueryConfig
+     * @see JalConfig
+     * @see JalQueryConfig
      */
     public RequestDecompParams decomposeDomainPreferred(DpDataRequest rqst) {
 
@@ -481,8 +481,8 @@ public class DataRequestDecomposer {
      * 
      * @return  record containing sub-domain parameters when using default decomposition
      * 
-     * @see DpApiConfig
-     * @see DpQueryConfig
+     * @see JalConfig
+     * @see JalQueryConfig
      */
     public RequestDecompParams decomposeDomainDefault(DpDataRequest rqst) {
 
@@ -542,8 +542,8 @@ public class DataRequestDecomposer {
      * @return  an equivalent decompose query request where query domain is decomposed with preferred parameters 
      * 
      * @see #buildCompositeRequestPreferred(RequestDecompParams)
-     * @see DpQueryConfig
-     * @see DpApiConfig
+     * @see JalQueryConfig
+     * @see JalConfig
      */
     public List<DpDataRequest> buildCompositeRequestPreferred(DpDataRequest rqst) {
         

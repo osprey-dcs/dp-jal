@@ -38,7 +38,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 
@@ -59,7 +59,7 @@ public class DpAnnotationConnectionFactoryStaticTest {
     //
     
     /** Default connection parameters for the Annotation Service */
-    public static final DpGrpcConnectionConfig  CFG_DEFAULT = DpApiConfig.getInstance().connections.annotation;
+    public static final DpGrpcConnectionConfig  CFG_DEFAULT = JalConfig.getInstance().connections.annotation;
     
     
     //

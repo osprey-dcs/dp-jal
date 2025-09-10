@@ -9,7 +9,7 @@ import com.ospreydcs.dp.api.common.IngestRequestUID;
 import com.ospreydcs.dp.api.common.IngestionResult;
 import com.ospreydcs.dp.api.common.ProviderRegistrar;
 import com.ospreydcs.dp.api.common.ProviderUID;
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
 
@@ -21,7 +21,7 @@ import com.ospreydcs.dp.api.grpc.model.IConnection;
  * <h2>Connection Factory</h2>
  * Under normal circumstances implementations of <code>IIngestionStream</code> are obtained from a connection factory.
  * As such the internal configuration of the implementation is determined by the default configuration specified in
- * the API library configuration (i.e., <code>DpApiConfig</code>).
+ * the API library configuration (i.e., <code>JalConfig</code>).
  * </p>
  * <p>
  * <h2>Operation</h2>
@@ -42,7 +42,7 @@ import com.ospreydcs.dp.api.grpc.model.IConnection;
  *   <li>Clients can also use the <code>{@link #awaitQueueEmpty()}</code> method to block until the staging buffer is
  *       completely empty.</li>
  *   </ul>
- * The ingestion throttling feature is available in the <code>DpApiConfig</code> library 
+ * The ingestion throttling feature is available in the <code>JalConfig</code> library 
  * configuration and with the <code>{@link #enableBackPressure()}</code> and <code>{@link #disableBackPressure()}</code>
  * configuration methods specific to this class.
  * </li> 
@@ -116,14 +116,14 @@ public interface IIngestionStream extends IConnection {
      * 
      * @return  the unique identifier of the data provider with the Ingestion Service
      * 
-     * @throws DpIngestionException provider registration failed, or general gRPC runtime error
+     * @throws JalIngestionException provider registration failed, or general gRPC runtime error
      * 
      * @see #closeStream()
      * @see #closeStreamNow()
      * @see #shutdown()
      * @see #shutdownNow()
      */
-    public ProviderUID openStream(ProviderRegistrar recRegistration) throws DpIngestionException;
+    public ProviderUID openStream(ProviderRegistrar recRegistration) throws JalIngestionException;
 
     /**
      * <p>
@@ -149,9 +149,9 @@ public interface IIngestionStream extends IConnection {
      * 
      * @throws IllegalStateException    attempted to submit frame to unopened data stream
      * @throws InterruptedException     external process interruption while waiting on back pressure
-     * @throws DpIngestionException     general data ingestion failure (see detail)
+     * @throws JalIngestionException     general data ingestion failure (see detail)
      */
-    public void ingest(IngestionFrame frame) throws IllegalStateException, InterruptedException, DpIngestionException;
+    public void ingest(IngestionFrame frame) throws IllegalStateException, InterruptedException, JalIngestionException;
 
     /**
      * <p>
@@ -177,9 +177,9 @@ public interface IIngestionStream extends IConnection {
      * 
      * @throws IllegalStateException    attempted to submit frames to unopened data stream
      * @throws InterruptedException     external process interruption while waiting on back pressure
-     * @throws DpIngestionException     general data ingestion failure (see detail)
+     * @throws JalIngestionException     general data ingestion failure (see detail)
      */
-    public void ingest(List<IngestionFrame> lstFrames) throws IllegalStateException, InterruptedException, DpIngestionException;
+    public void ingest(List<IngestionFrame> lstFrames) throws IllegalStateException, InterruptedException, JalIngestionException;
 
     /**
      * <p>
@@ -284,7 +284,7 @@ public interface IIngestionStream extends IConnection {
      * </p>
      * The conditions described above are technical but all can be configured within the 
      * client API configuration parameter set in <em>dp-api-config.yml</em> and available
-     * in the <code>{@link DpApiConfig}</code> configuration class.
+     * in the <code>{@link JalConfig}</code> configuration class.
      * </p>
      * 
      * @return  the result of the ingestion operation 

@@ -44,8 +44,8 @@ import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.model.table.StaticDataTable;
 import com.ospreydcs.dp.api.query.model.coalesce.SampledBlock;
 import com.ospreydcs.dp.api.query.model.coalesce.SampledTimeSeries;
@@ -220,7 +220,7 @@ public class SampledAggregate implements Iterable<SampledBlock> {
     //
     
     /** The Data Platform API default configuration parameter set */
-    protected static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    protected static final JalQueryConfig  CFG_QUERY = JalConfig.getInstance().query;
     
     
     //

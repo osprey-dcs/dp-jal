@@ -48,8 +48,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactory;
 import com.ospreydcs.dp.api.query.DpDataRequest;
@@ -99,7 +99,7 @@ public class QueryRequestRecovererTest {
     //
     
     /** The Data Platform API default configuration parameter set */
-    public static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    public static final JalQueryConfig  CFG_QUERY = JalConfig.getInstance().query;
 
     
     //

@@ -11,7 +11,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;;
 
 /**
@@ -71,11 +71,11 @@ public class DpIngestionConnectionFactoryDeprecatedTest {
      */
     @Test
     public final void testConnectStringInt() {
-        String  strUrl = DpApiConfig.getInstance().connections.ingestion.channel.host.url;
-        int     intPort = DpApiConfig.getInstance().connections.ingestion.channel.host.port;
+        String  strUrl = JalConfig.getInstance().connections.ingestion.channel.host.url;
+        int     intPort = JalConfig.getInstance().connections.ingestion.channel.host.port;
         
-        long    lngConTmout = DpApiConfig.getInstance().connections.ingestion.timeout.limit;
-        TimeUnit tuConTmout = DpApiConfig.getInstance().connections.ingestion.timeout.unit;
+        long    lngConTmout = JalConfig.getInstance().connections.ingestion.timeout.limit;
+        TimeUnit tuConTmout = JalConfig.getInstance().connections.ingestion.timeout.unit;
         
         try {
             DpIngestionConnection   conn = DpIngestionConnectionFactoryStatic.connect(strUrl, intPort);
@@ -101,13 +101,13 @@ public class DpIngestionConnectionFactoryDeprecatedTest {
      */
     @Test
     public final void testConnectStringIntBooleanLongTimeUnit() {
-        String  strUrl = DpApiConfig.getInstance().connections.ingestion.channel.host.url;
-        int     intPort = DpApiConfig.getInstance().connections.ingestion.channel.host.port;
+        String  strUrl = JalConfig.getInstance().connections.ingestion.channel.host.url;
+        int     intPort = JalConfig.getInstance().connections.ingestion.channel.host.port;
         
-        boolean bolPlainText = DpApiConfig.getInstance().connections.ingestion.channel.grpc.usePlainText;
+        boolean bolPlainText = JalConfig.getInstance().connections.ingestion.channel.grpc.usePlainText;
         
-        long    lngTmout = DpApiConfig.getInstance().connections.ingestion.channel.grpc.timeoutLimit;
-        TimeUnit tuTmout = DpApiConfig.getInstance().connections.ingestion.channel.grpc.timeoutUnit;
+        long    lngTmout = JalConfig.getInstance().connections.ingestion.channel.grpc.timeoutLimit;
+        TimeUnit tuTmout = JalConfig.getInstance().connections.ingestion.channel.grpc.timeoutUnit;
         
         try {
             DpIngestionConnection   conn = DpIngestionConnectionFactoryStatic.connect(strUrl, intPort,

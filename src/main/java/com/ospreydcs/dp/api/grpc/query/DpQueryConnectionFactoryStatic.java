@@ -30,7 +30,7 @@ package com.ospreydcs.dp.api.grpc.query;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
@@ -65,7 +65,7 @@ public final class DpQueryConnectionFactoryStatic {
     //
     
     /** The API Library default Query Service configuration parameters */
-    private static final DpGrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.query;
+    private static final DpGrpcConnectionConfig   CFG_DEFAULT = JalConfig.getInstance().connections.query;
 
     
     //

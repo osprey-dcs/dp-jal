@@ -5,7 +5,7 @@ import java.util.List;
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.MetadataRecord;
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.grpc.model.IConnection;
 import com.ospreydcs.dp.grpc.v1.query.DpQueryServiceGrpc;
 
@@ -308,7 +308,7 @@ public interface IQueryService extends IConnection {
      * <br/>
      * <li>
      * The Query Service configuration section within the API configuration parameters 
-     * (i.e., those of <code>{@link DpApiConfig}</code> and associated resource file),
+     * (i.e., those of <code>{@link JalConfig}</code> and associated resource file),
      * provide access to the tuning parameters for internal processing and, thus, this method.
      * </li>
      * </ul>

@@ -54,8 +54,8 @@ import com.ospreydcs.dp.api.common.DatasetUID;
 import com.ospreydcs.dp.api.common.DpDataset;
 import com.ospreydcs.dp.api.common.OwnerUID;
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.annotate.DpAnnotationConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.annotate.JalAnnotationConfig;
 import com.ospreydcs.dp.api.grpc.annotate.DpAnnotationConnection;
 import com.ospreydcs.dp.api.grpc.annotate.DpAnnotationConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
@@ -81,7 +81,7 @@ public class DpAnnotationServiceApiImplTest {
     //
     
     /** The default Query Service configuration parameters */
-    public static final DpAnnotationConfig      CFG_DEF = DpApiConfig.getInstance().annotation;
+    public static final JalAnnotationConfig      CFG_DEF = JalConfig.getInstance().annotation;
     
     
     //

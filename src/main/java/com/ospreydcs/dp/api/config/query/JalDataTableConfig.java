@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpDataTableConfig.java
+ * File:	JalDataTableConfig.java
  * Package: com.ospreydcs.dp.api.config.query
- * Type: 	DpDataTableConfig
+ * Type: 	JalDataTableConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -26,7 +26,7 @@
 package com.ospreydcs.dp.api.config.query;
 
 import com.ospreydcs.dp.api.common.JalDataTableType;
-import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
+import com.ospreydcs.dp.api.config.common.JalConcurrencyConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -40,10 +40,10 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  *
  */
 @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE")
-public class DpDataTableConfig extends CfgStructure<DpDataTableConfig> {
+public class JalDataTableConfig extends CfgStructure<JalDataTableConfig> {
 
     /** Default constructor required for base structure class */
-    public DpDataTableConfig() { super(DpDataTableConfig.class); }
+    public JalDataTableConfig() { super(JalDataTableConfig.class); }
 
     
     // 
@@ -72,7 +72,7 @@ public class DpDataTableConfig extends CfgStructure<DpDataTableConfig> {
         
         /** Table construction concurrency parameters (multi-threaded sampled aggregate construction */
         @ACfgOverride.Struct(pathelem="CONCURRENCY")
-        public DpConcurrencyConfig  concurrency;
+        public JalConcurrencyConfig  concurrency;
     }
     
     @ACfgOverride.Root(root="DP_API_QUERY_DATA_TABLE_RESULT")

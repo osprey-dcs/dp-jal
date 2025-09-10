@@ -80,8 +80,10 @@ archive:    # Data Platform data archive properties
    inception: 2023-09-01T00:00:00.0Z # ealiest archive timestamp      : DP_API_ARCHIVE_INCEPTION
    
 ingest: # Data Platform Ingestion Service client API default configuration parameters
+   serialize:    # IngestionFrame serialization (before transmission) : JAL_INGEST_SERIALILZE
+      enabled: true               # use serialization           : JAL_INGEST_SERIALIZE_ENABLED
    decompose:    # IngestionFrame decomposition parameters
-      enabled: true               # use data binning            : DP_API_INGEST_DECOMPOSE_ACTIVE
+      enabled: true               # use data binning            : DP_API_INGEST_DECOMPOSE_ENABLED
       maxSize: 4000000            # max bin size (bytes)        : DP_API_INGEST_DECOMPOSE_MAX_SIZE
    stream:       # General gRPC streaming parameter for Ingestion Service operations
       enabled: true                 # use streaming parameters    : DP_API_INGEST_STREAM_ENABLED

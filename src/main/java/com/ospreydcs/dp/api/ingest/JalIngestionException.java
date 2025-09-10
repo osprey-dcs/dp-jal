@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionException.java
+ * File:	JalIngestionException.java
  * Package: com.ospreydcs.dp.api.ingest.model
- * Type: 	DpIngestionException
+ * Type: 	JalIngestionException
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -36,7 +36,7 @@ package com.ospreydcs.dp.api.ingest;
  * @since Mar 28, 2024
  *
  */
-public class DpIngestionException extends Exception {
+public class JalIngestionException extends Exception {
 
 
     /** Serialization identifier required by Serializable interface */
@@ -49,50 +49,50 @@ public class DpIngestionException extends Exception {
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionException</code>.
+     * Constructs a new instance of <code>JalIngestionException</code>.
      * </p>
      *
      */
-    public DpIngestionException() {
+    public JalIngestionException() {
     }
 
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionException</code> with detail message.
+     * Constructs a new instance of <code>JalIngestionException</code> with detail message.
      * </p>
      *
      * @param message   string detail message describing exception
      */
-    public DpIngestionException(String message) {
+    public JalIngestionException(String message) {
         super(message);
     }
 
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionException</code> caused by external exception.
+     * Constructs a new instance of <code>JalIngestionException</code> caused by external exception.
      * </p>
      *
      * @param cause     root-cause exception (i.e., origin of current exception)
      */
-    public DpIngestionException(Throwable cause) {
+    public JalIngestionException(Throwable cause) {
         super(cause);
     }
 
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionException</code> with detail message and root cause.
+     * Constructs a new instance of <code>JalIngestionException</code> with detail message and root cause.
      * </p>
      *
      * @param message   string detail message describing exception (in addition to cause)
      * @param cause     root-cause exception (i.e., origin of current exception)
      */
-    public DpIngestionException(String message, Throwable cause) {
+    public JalIngestionException(String message, Throwable cause) {
         super(message, cause);
     }
 
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionException</code>.
+     * Constructs a new instance of <code>JalIngestionException</code>.
      * </p>
      *
      * @param message               string detail message describing exception (in addition to cause)
@@ -100,7 +100,7 @@ public class DpIngestionException extends Exception {
      * @param enableSuppression     suppression enabled switch
      * @param writableStackTrace    writable stack trace enable switch
      */
-    public DpIngestionException(String message, 
+    public JalIngestionException(String message, 
             Throwable cause, 
             boolean enableSuppression,
             boolean writableStackTrace) 

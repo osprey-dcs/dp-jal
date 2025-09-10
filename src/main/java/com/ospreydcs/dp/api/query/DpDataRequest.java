@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IIngestionService;
 import com.ospreydcs.dp.api.ingest.IIngestionStream;
@@ -311,7 +311,7 @@ public final class DpDataRequest {
     //
     
     /** The default API library configuration */
-    private static final DpApiConfig CFG_DEFAULT = DpApiConfig.getInstance();
+    private static final JalConfig CFG_DEFAULT = JalConfig.getInstance();
     
     
     //
@@ -452,8 +452,8 @@ public final class DpDataRequest {
 //     * @return  an equivalent decompose query request where query domain is decomposed with default parameters 
 //     * 
 //     * @see #buildCompositeRequest(RequestDecompParams)
-//     * @see DpQueryConfig
-//     * @see DpApiConfig
+//     * @see JalQueryConfig
+//     * @see JalConfig
 //     */
 //    public List<DpDataRequest> buildCompositeRequest() {
 //        
@@ -665,7 +665,7 @@ public final class DpDataRequest {
 //     * If the <code>{@link #BOL_COMPOSITE}</code> decompose request flag is <code>true</code>,
 //     * the current <code>DpDataRequest</code> instance is decomposed into a decompose request.
 //     * The query domain is decomposed according to the decompose query parameters within
-//     * the default configuration (@see <code>{@link DpApiConfig}</code>). 
+//     * the default configuration (@see <code>{@link JalConfig}</code>). 
 //     * Otherwise the method returns a list of one <code>QueryRequest</code> object, that 
 //     * obtained from <code>{@link #buildQueryRequest()}</code>
 //     * </p>
@@ -686,8 +686,8 @@ public final class DpDataRequest {
 //     * 
 //     * @see #buildQueryRequest()
 //     * @see #buildCompositeRequest()
-//     * @see DpQueryConfig
-//     * @see DpApiConfig
+//     * @see JalQueryConfig
+//     * @see JalConfig
 //     */
 //    public List<QueryDataRequest> buildQueryRequests() {
 //        
@@ -1054,8 +1054,8 @@ public final class DpDataRequest {
 //     * 
 //     * @return  record containing sub-domain parameters when using default decomposition
 //     * 
-//     * @see DpApiConfig
-//     * @see DpQueryConfig
+//     * @see JalConfig
+//     * @see JalQueryConfig
 //     */
 //    public RequestDecompParams decomposeDomainDefault() {
 //
@@ -1111,8 +1111,8 @@ public final class DpDataRequest {
 //     *  
 //     * @return  record of default query domain decomposition parameters for a decompose query.
 //     * 
-//     * @see DpApiConfig
-//     * @see DpQueryConfig
+//     * @see JalConfig
+//     * @see JalQueryConfig
 //     */
 //    public RequestDecompParams  getDecompositionDefault() {
 //        return this.decomposeDomainDefault();
@@ -1175,7 +1175,7 @@ public final class DpDataRequest {
      * </pre>
      * </code> 
      * The value for class constant <code>{@link #ENM_STREAM_PREF}</code> is taken from the Query Service
-     * API configuration in <code>{@link DpApiConfig}</code>.
+     * API configuration in <code>{@link JalConfig}</code>.
      * </li>
      * </ul>
      * </p>

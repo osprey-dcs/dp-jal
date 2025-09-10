@@ -38,11 +38,11 @@ import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ProviderRegistrar;
 import com.ospreydcs.dp.api.common.ProviderUID;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.JalIngestionException;
 import com.ospreydcs.dp.api.model.AAdvancedApi;
 import com.ospreydcs.dp.api.model.AAdvancedApi.STATUS;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -117,7 +117,7 @@ public final class ProviderRegistrationService {
     //
     
     /** Default Query Service configuration parameters */
-    private static final DpIngestionConfig  CFG_DEFAULT = DpApiConfig.getInstance().ingest;
+    private static final JalIngestionConfig  CFG_DEFAULT = JalConfig.getInstance().ingest;
     
     
     //
@@ -255,10 +255,10 @@ public final class ProviderRegistrationService {
      * 
      * @return  record containing unique identifier of the data provider with the Ingestion Service
      * 
-     * @throws DpIngestionException either a gRPC runtime exception occurred or registration failed
+     * @throws JalIngestionException either a gRPC runtime exception occurred or registration failed
      */
     public static ProviderUID registerProvider(DpIngestionConnection connIngest, ProviderRegistrar recRegistration) 
-            throws DpIngestionException {
+            throws JalIngestionException {
 
         // If provider registration is not implemented then mock behavior
         if (!ProviderRegistrationService.isRegistrationImplemented(connIngest)) {
@@ -283,7 +283,7 @@ public final class ProviderRegistrationService {
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);
             
-            throw new DpIngestionException(strMsg, e);
+            throw new JalIngestionException(strMsg, e);
             
         } catch (MissingResourceException e) {
             String  strMsg = JavaRuntime.getQualifiedMethodNameSimple()
@@ -293,7 +293,7 @@ public final class ProviderRegistrationService {
             if (BOL_LOGGING)
                 LOGGER.error(strMsg);
 
-            throw new DpIngestionException(strMsg, e);
+            throw new JalIngestionException(strMsg, e);
         }
     }
     

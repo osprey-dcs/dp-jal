@@ -38,8 +38,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.JalUnitTestConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 
@@ -60,10 +60,10 @@ public class DpQueryConnectionFactoryTest {
     //
     
     /** The DP API Library Query Service default configuration parameters */
-    private static final DpGrpcConnectionConfig.Channel   CFG_DEFAULT = DpApiConfig.getInstance().connections.query.channel;
+    private static final DpGrpcConnectionConfig.Channel   CFG_DEFAULT = JalConfig.getInstance().connections.query.channel;
 
     /** The DP API Library Query Service testing configuration parameters */
-    private static final DpGrpcConnectionConfig           CFG_TESTING = DpApiUnitTestConfig.getInstance().testQuery.connection;
+    private static final DpGrpcConnectionConfig           CFG_TESTING = JalUnitTestConfig.getInstance().testQuery.connection;
 
     
     //

@@ -46,8 +46,8 @@ import com.ospreydcs.dp.api.app.ExitCode;
 import com.ospreydcs.dp.api.app.JalApplicationBase;
 import com.ospreydcs.dp.api.app.JalQueryAppBase;
 import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
@@ -264,7 +264,7 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
     //
     
     /** Default configuration parameters for the Query Service tools */
-    private static final DpQueryConfig      CFG_QUERY = DpApiConfig.getInstance().query;
+    private static final JalQueryConfig      CFG_QUERY = JalConfig.getInstance().query;
     
     /** Default configuration parameters for the JAL Tools */
     private static final JalToolsConfig     CFG_TOOLS = JalToolsConfig.getInstance();

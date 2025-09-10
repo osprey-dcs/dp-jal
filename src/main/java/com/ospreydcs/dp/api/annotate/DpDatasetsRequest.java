@@ -36,8 +36,8 @@ import org.apache.logging.log4j.core.config.Configurator;
 import com.ospreydcs.dp.api.annotate.model.IDatasetCriterion;
 import com.ospreydcs.dp.api.common.DatasetUID;
 import com.ospreydcs.dp.api.common.OwnerUID;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.annotate.DpAnnotationConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.annotate.JalAnnotationConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.annotation.QueryDataSetsRequest;
 import com.ospreydcs.dp.grpc.v1.annotation.QueryDataSetsRequest.QueryDataSetsCriterion;
@@ -109,7 +109,7 @@ public class DpDatasetsRequest {
     //
     
     /** The default Annotation Service API configuration parameters */
-    private static final DpAnnotationConfig     CFG_DEF = DpApiConfig.getInstance().annotation;
+    private static final JalAnnotationConfig     CFG_DEF = JalConfig.getInstance().annotation;
 
     
     //

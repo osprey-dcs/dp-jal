@@ -40,7 +40,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
+import com.ospreydcs.dp.api.config.JalUnitTestConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.CompositeQueryType;
 import com.ospreydcs.dp.api.query.test.TestQueryResponses.SingleQueryType;
@@ -57,7 +57,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
  * with the test case <code>{@link #testStorePersistentData()}</code>.  This method should be
  * run only once, after establishing a Query Service connected to the Data Platform test archive
  * and reachable through the <code>{@link TestQueryService}</code> test API using the test
- * configuration parameters of <code>{@link DpApiUnitTestConfig}</code>.
+ * configuration parameters of <code>{@link JalUnitTestConfig}</code>.
  * </p>
  *
  * @author Christopher K. Allen

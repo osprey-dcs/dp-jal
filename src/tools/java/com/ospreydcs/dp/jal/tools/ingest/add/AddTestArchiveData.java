@@ -49,11 +49,11 @@ import com.ospreydcs.dp.api.common.IngestRequestUID;
 import com.ospreydcs.dp.api.common.IngestionResult;
 import com.ospreydcs.dp.api.common.ProviderRegistrar;
 import com.ospreydcs.dp.api.common.ProviderUID;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.DpIngestionApiFactory;
-import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.JalIngestionApiFactory;
+import com.ospreydcs.dp.api.ingest.JalIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionService;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -186,7 +186,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
             System.err.println(STR_APP_NAME + " FAILURE - Unable to create application instance.");
             JalApplicationBase.terminateWithException(AddTestArchiveData.class, e, ExitCode.INITIALIZATION_EXCEPTION);
 
-        } catch (InvalidRequestStateException | IllegalStateException | DpIngestionException e)  {
+        } catch (InvalidRequestStateException | IllegalStateException | JalIngestionException e)  {
             System.err.println(STR_APP_NAME + " ERROR during application execution.");
             JalApplicationBase.terminateWithException(AddTestArchiveData.class, e, ExitCode.EXECUTION_EXCEPTION);
             
@@ -202,7 +202,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     //
     
     /** Default configuration parameters for the Query Service tools */
-    private static final DpIngestionConfig  CFG_INGEST = DpApiConfig.getInstance().ingest;
+    private static final JalIngestionConfig  CFG_INGEST = JalConfig.getInstance().ingest;
     
     /** Default configuration parameters for the JAL Tools */
     private static final JalToolsConfig     CFG_TOOLS = JalToolsConfig.getInstance();
@@ -419,12 +419,12 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * @param args          application command-line arguments from main()
      * 
      * @throws DpGrpcException 
-     * @throws DpIngestionException the data provider registration failed
+     * @throws JalIngestionException the data provider registration failed
      * @throws UnsupportedOperationException the given output file path did not exist on the file system
      * @throws FileNotFoundException         unable to create the output file (see cause and message)
      * @throws SecurityException             unable to write to the output file
      */
-    public AddTestArchiveData(SampleBlockConfig recFrmCfg, String strOutputLoc, String...args) throws DpGrpcException, DpIngestionException, IllegalArgumentException, UnsupportedOperationException, FileNotFoundException, SecurityException {
+    public AddTestArchiveData(SampleBlockConfig recFrmCfg, String strOutputLoc, String...args) throws DpGrpcException, JalIngestionException, IllegalArgumentException, UnsupportedOperationException, FileNotFoundException, SecurityException {
         super(AddTestArchiveData.class, args);
         
         // Record defining attributes
@@ -440,7 +440,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         }
         
         // Connect to the Ingestion Service API and register as provider 
-        this.apiIngest = DpIngestionApiFactory.connectService();
+        this.apiIngest = JalIngestionApiFactory.connectService();
         this.recPrvdrId = this.apiIngest.registerProvider(REC_PRVDR_REG);
         if (BOL_LOGGING) 
             LOGGER.info("Provider registration succeed with provider name={}, UID={}, and new={}", 
@@ -594,9 +594,9 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * @param cntFrames the number of ingestion frames to send to Ingestion Service
      * 
      * @throws IllegalStateException            unregistered data provider
-     * @throws DpIngestionException             general ingestion exception (see message and cause)
+     * @throws JalIngestionException             general ingestion exception (see message and cause)
      */
-    public void run(int cntFrames) throws InvalidRequestStateException, IllegalStateException, DpIngestionException {
+    public void run(int cntFrames) throws InvalidRequestStateException, IllegalStateException, JalIngestionException {
         
         // Generate ingestion frames and send them to the Ingestion Service
         Instant     insStart = Instant.now();

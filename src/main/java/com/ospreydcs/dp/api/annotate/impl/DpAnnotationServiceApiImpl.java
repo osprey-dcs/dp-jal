@@ -39,8 +39,8 @@ import com.ospreydcs.dp.api.annotate.DpDatasetsRequest;
 import com.ospreydcs.dp.api.annotate.IAnnotationService;
 import com.ospreydcs.dp.api.common.DatasetUID;
 import com.ospreydcs.dp.api.common.DpDataset;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.annotate.DpAnnotationConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.annotate.JalAnnotationConfig;
 import com.ospreydcs.dp.api.grpc.annotate.DpAnnotationConnection;
 import com.ospreydcs.dp.api.grpc.annotate.DpAnnotationConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
@@ -121,7 +121,7 @@ public class DpAnnotationServiceApiImpl extends
     //
     
     /** Default Annotation Service API configuration parameters */
-    private static final DpAnnotationConfig  CFG_DEF = DpApiConfig.getInstance().annotation;
+    private static final JalAnnotationConfig  CFG_DEF = JalConfig.getInstance().annotation;
     
     
     //

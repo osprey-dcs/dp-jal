@@ -42,8 +42,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.model.IMessageConsumer;
 import com.ospreydcs.dp.api.query.DpDataRequest;
@@ -169,7 +169,7 @@ public class QueryChannel {
     //
     
     /** The Data Platform Query Service default parameters */
-    private static final DpQueryConfig CFG_QUERY = DpApiConfig.getInstance().query;
+    private static final JalQueryConfig CFG_QUERY = JalConfig.getInstance().query;
     
     
     //
@@ -450,12 +450,12 @@ public class QueryChannel {
      * </ul>
      * These are all performance options that should be tuned for specific platforms.
      * The default values for these options are set in the Data Platform API configuration
-     * (see {@link DpApiConfig}</code>).  
+     * (see {@link JalConfig}</code>).  
      * </p>
      * <p>
      * <h2>Multi-Streaming</h2>
      * The method attempts to decompose large data requests into decompose request according to 
-     * settings in the default Data Platform API configuration (see <code>{@link DpApiConfig}</code>).  
+     * settings in the default Data Platform API configuration (see <code>{@link JalConfig}</code>).  
      * The <code>{@link #enableMultiStreaming(boolean)}</code> operation can be used to turn off 
      * the default behavior.
      * </p>
@@ -557,7 +557,7 @@ public class QueryChannel {
      * Note that the <code>{@link #enableMultiStreaming(boolean)}</code> has no effect here.
      * These performance options should be tuned for specific platforms.
      * The default values for these options are set in the Data Platform API configuration
-     * (see {@link DpApiConfig}</code>).
+     * (see {@link JalConfig}</code>).
      * </s>  
      * </p>
      * <p>

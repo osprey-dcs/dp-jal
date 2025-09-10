@@ -41,7 +41,7 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
+import com.ospreydcs.dp.api.config.JalUnitTestConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
@@ -102,7 +102,7 @@ public final record TestQueryRecord (
     //
     
     /** Data Platform Testing configuration parameters */
-    private static final    DpApiUnitTestConfig CFG_TESTING = DpApiUnitTestConfig.getInstance();
+    private static final    JalUnitTestConfig CFG_TESTING = JalUnitTestConfig.getInstance();
     
     
     //

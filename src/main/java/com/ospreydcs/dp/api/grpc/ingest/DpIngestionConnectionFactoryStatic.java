@@ -30,7 +30,7 @@ package com.ospreydcs.dp.api.grpc.ingest;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
@@ -64,7 +64,7 @@ public final class DpIngestionConnectionFactoryStatic{
     //
     
     /** The API Library default Ingestion Service configuration parameters */
-    private static final DpGrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.ingestion;
+    private static final DpGrpcConnectionConfig   CFG_DEFAULT = JalConfig.getInstance().connections.ingestion;
 
     
     //

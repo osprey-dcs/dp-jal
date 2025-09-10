@@ -42,8 +42,8 @@ import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.IngestRequestUID;
 import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServiceStub;
@@ -200,7 +200,7 @@ public abstract class IngestionStream implements Runnable, Callable<Boolean> {
     //
     
     /** The Ingestion Service client API default configuration */
-    private static final DpIngestionConfig  CFG_INGEST = DpApiConfig.getInstance().ingest; 
+    private static final JalIngestionConfig  CFG_INGEST = JalConfig.getInstance().ingest; 
     
     
     //

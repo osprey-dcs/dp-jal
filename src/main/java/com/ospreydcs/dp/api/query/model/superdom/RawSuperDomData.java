@@ -37,8 +37,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 
 /**
@@ -125,7 +125,7 @@ public class RawSuperDomData implements Iterable<RawCorrelatedData> {
     //
     
     /** The Data Platform API default configuration parameter set */
-    protected static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    protected static final JalQueryConfig  CFG_QUERY = JalConfig.getInstance().query;
     
     
     //

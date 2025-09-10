@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionConfig.java
+ * File:	JalIngestionConfig.java
  * Package: com.ospreydcs.dp.api.config.ingest
- * Type: 	DpIngestionConfig
+ * Type: 	JalIngestionConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -27,9 +27,9 @@
  */
 package com.ospreydcs.dp.api.config.ingest;
 
-import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
-import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
-import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
+import com.ospreydcs.dp.api.config.common.JalConcurrencyConfig;
+import com.ospreydcs.dp.api.config.common.JalLoggingConfig;
+import com.ospreydcs.dp.api.config.common.JalTimeoutConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcStreamConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
@@ -44,15 +44,19 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  *
  */
 @ACfgOverride.Root(root="DP_API_INGEST")
-public class DpIngestionConfig extends CfgStructure<DpIngestionConfig> {
+public class JalIngestionConfig extends CfgStructure<JalIngestionConfig> {
 
     /** Default constructor for super class structure */
-    public DpIngestionConfig() { super(DpIngestionConfig.class); }
+    public JalIngestionConfig() { super(JalIngestionConfig.class); }
     
     
     //
     // Configuration Fields
     //
+    
+    /** Default parameters for <code>IngestionFrame</code> serialization */
+    @ACfgOverride.Struct(pathelem="SERIALIZE")
+    public Serialize            serialize;
     
     /** Default parameters for <code>IngestionFrame</code> decomposition */
     @ACfgOverride.Struct(pathelem="DECOMPOSE")
@@ -64,16 +68,35 @@ public class DpIngestionConfig extends CfgStructure<DpIngestionConfig> {
     
     /** Default concurrency parameters for Query Service operations */
     @ACfgOverride.Struct(pathelem="CONCURRENCY")
-    public DpConcurrencyConfig  concurrency;
+    public JalConcurrencyConfig  concurrency;
     
     /** Default timeout parameters for Query Service operations */
     @ACfgOverride.Struct(pathelem="TIMEOUT")
-    public DpTimeoutConfig      timeout;
+    public JalTimeoutConfig      timeout;
 
     /** Default logging configuration for Query Service operations */
     @ACfgOverride.Struct(pathelem="LOGGING")
-    public DpLoggingConfig      logging;
+    public JalLoggingConfig      logging;
  
+    
+    /**
+     * <p>
+     * Structure class containing parameters for <code>ingestionFrame</code> serialization.
+     * </p>
+     */
+    public static final class Serialize extends CfgStructure<Serialize> {
+        
+        /** Default constructor required for base class */
+        public Serialize() { super(Serialize.class);  }
+        
+        // 
+        // Configuration Parameters
+        //
+        
+        /** Is serialization enabled */
+        @ACfgOverride.Field(name="ENABLED")
+        public Boolean      enabled;
+    }
     
     /**
      * Structure class containing parameters for <code>IngestionFrame</code> decomposition.
@@ -94,7 +117,6 @@ public class DpIngestionConfig extends CfgStructure<DpIngestionConfig> {
         /** Maximum size of (in bytes) of data bins */
         @ACfgOverride.Field(name="MAX_SIZE")
         public Integer      maxSize;
-
     }
     
 

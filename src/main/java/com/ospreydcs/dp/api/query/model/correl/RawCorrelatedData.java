@@ -39,8 +39,8 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.api.common.DpTimestampCase;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.grpc.v1.common.DataBucket;
@@ -310,7 +310,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
     //
     
     /** The Data Platform API default configuration parameter set */
-    protected static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    protected static final JalQueryConfig  CFG_QUERY = JalConfig.getInstance().query;
     
     
     //

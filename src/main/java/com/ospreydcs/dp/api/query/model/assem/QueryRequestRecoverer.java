@@ -37,8 +37,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryException;
@@ -129,7 +129,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * <code>QueryRequestRecoverer</code> object are configurable.  Optimal configurations are determined by
  * the hosting platform and the types (e.g., sizes) of the typical data request.  
  * The default configuration is obtained from the Data Platform API Query Service configuration within 
- * <code>{@link DpApiConfig}</code>.
+ * <code>{@link JalConfig}</code>.
  * </p>
  * <p>
  * There are several methods that can be used to modify the default streaming/processing configuration of a 
@@ -210,7 +210,7 @@ import com.ospreydcs.dp.grpc.v1.query.QueryDataRequest;
  * <code>{@link #processRequests(List)}</code>), the number of data stream is equal to the number of requests 
  * in the argument list.  Use this method at your
  * own risk.  Method <code>{@link #processRequest(DpDataRequest)}</code> is the preferred request method. 
- * The maximum number of data streams can be set using the <code>{@link DpApiConfig}</code> default API configuration.  
+ * The maximum number of data streams can be set using the <code>{@link JalConfig}</code> default API configuration.  
  * It is a tuning parameter dependent upon gRPC, the number of platform processor cores, and local network traffic.    
  * </p>
  * <p>
@@ -263,7 +263,7 @@ public class QueryRequestRecoverer {
      * </p>
      * <p>
      * The returned instance is configured according to the default configuration specified in the 
-     * Java API Library  (see <code>{@link DpApiConfig}</code>).  There are available setter and
+     * Java API Library  (see <code>{@link JalConfig}</code>).  There are available setter and
      * enable methods for re-configuration.
      * </p>
      * <p>
@@ -283,7 +283,7 @@ public class QueryRequestRecoverer {
     //
     
     /** The Data Platform Query Service default parameters */
-    private static final DpQueryConfig CFG_QUERY = DpApiConfig.getInstance().query;
+    private static final JalQueryConfig CFG_QUERY = JalConfig.getInstance().query;
     
     
     //
@@ -685,7 +685,7 @@ public class QueryRequestRecoverer {
      * <p>
      * <h2>Multi-stream Settings</h2>
      * The default multi-streaming settings are taken from the default Java API Library configuration 
-     * (see <code>{@link DpApiConfig}</code>).  The class offers multiple methods for changing
+     * (see <code>{@link JalConfig}</code>).  The class offers multiple methods for changing
      * the default parameters. The maximum number of gRPC data streams is also taken from the default 
      * Java API Library configuration.
      * </p>
@@ -1235,12 +1235,12 @@ public class QueryRequestRecoverer {
      * </ul>
      * These are all performance options that should be tuned for specific platforms.
      * The default values for these options are set in the Data Platform API configuration
-     * (see {@link DpApiConfig}</code>).  
+     * (see {@link JalConfig}</code>).  
      * </p>
      * <p>
      * <h2>Multi-Streaming</h2>
      * The method attempts to decompose large data requests into decompose request according to 
-     * settings in the default Data Platform API configuration (see <code>{@link DpApiConfig}</code>).  
+     * settings in the default Data Platform API configuration (see <code>{@link JalConfig}</code>).  
      * The <code>{@link #setMultiStreaming(boolean)}</code> operation can be used to turn off 
      * the default behavior.
      * </p>
@@ -1338,7 +1338,7 @@ public class QueryRequestRecoverer {
      * Note that the <code>{@link #setMultiStreamingResponse(boolean)}</code> has no effect here.
      * These performance options should be tuned for specific platforms.
      * The default values for these options are set in the Data Platform API configuration
-     * (see {@link DpApiConfig}</code>).  
+     * (see {@link JalConfig}</code>).  
      * </p>
      * <p>
      * <h2>NOTES:</h2>

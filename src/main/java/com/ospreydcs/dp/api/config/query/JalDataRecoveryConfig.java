@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpDataRecoveryConfig.java
+ * File:	JalDataRecoveryConfig.java
  * Package: com.ospreydcs.dp.api.config.query
- * Type: 	DpDataRecoveryConfig
+ * Type: 	JalDataRecoveryConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -28,7 +28,7 @@
 package com.ospreydcs.dp.api.config.query;
 
 import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
+import com.ospreydcs.dp.api.config.common.JalConcurrencyConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -42,10 +42,10 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  *
  */
 @ACfgOverride.Root(root="DP_API_QUERY_DATA_RECOVERY")
-public class DpDataRecoveryConfig extends CfgStructure<DpDataRecoveryConfig> {
+public class JalDataRecoveryConfig extends CfgStructure<JalDataRecoveryConfig> {
 
     /** Default constructor required for base structure class */
-    public DpDataRecoveryConfig() { super(DpDataRecoveryConfig.class); };
+    public JalDataRecoveryConfig() { super(JalDataRecoveryConfig.class); };
     
     //
     // Configuration Fields
@@ -135,7 +135,7 @@ public class DpDataRecoveryConfig extends CfgStructure<DpDataRecoveryConfig> {
         
         /** Raw time-series data correlation concurrency parameters (multi-threaded correlation) */
         @ACfgOverride.Struct(pathelem="CONCURRENCY")
-        public DpConcurrencyConfig  concurrency;
+        public JalConcurrencyConfig  concurrency;
     }
     
 }

@@ -48,8 +48,8 @@ import org.w3c.dom.ranges.RangeException;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -166,7 +166,7 @@ public class SampledProcess {
     //
     
     /** The Data Platform API default configuration parameter set */
-    protected static final DpQueryConfig  CFG_QUERY = DpApiConfig.getInstance().query;
+    protected static final JalQueryConfig  CFG_QUERY = JalConfig.getInstance().query;
     
     
     //

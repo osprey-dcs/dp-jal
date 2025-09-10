@@ -46,8 +46,8 @@ import org.junit.Test;
 import com.ospreydcs.dp.api.common.DpSupportedType;
 import com.ospreydcs.dp.api.common.IDataColumn;
 import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.DpQueryApiFactoryNew;
 import com.ospreydcs.dp.api.query.DpQueryStreamBuffer;
@@ -78,7 +78,7 @@ public class SampledBlockTest {
     //
     
     /** The default Query Service configuration parameters */
-    public static final DpQueryConfig          CFG_QUERY = DpApiConfig.getInstance().query;
+    public static final JalQueryConfig          CFG_QUERY = JalConfig.getInstance().query;
     
     
     //

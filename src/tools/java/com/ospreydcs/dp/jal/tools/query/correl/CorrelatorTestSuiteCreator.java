@@ -38,8 +38,8 @@ import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
@@ -106,7 +106,7 @@ public class CorrelatorTestSuiteCreator {
     //
     
     /** Query tools default configuration parameters */
-    private static final DpQueryConfig     CFG_DEF = DpApiConfig.getInstance().query;
+    private static final JalQueryConfig     CFG_DEF = JalConfig.getInstance().query;
     
     
     //

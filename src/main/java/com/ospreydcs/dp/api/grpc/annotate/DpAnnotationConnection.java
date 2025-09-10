@@ -29,7 +29,7 @@ package com.ospreydcs.dp.api.grpc.annotate;
 
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
@@ -64,7 +64,7 @@ public class DpAnnotationConnection extends DpGrpcConnection<DpAnnotationService
     //
     
     /** The Annotation Service default connection parameters */
-    private static final DpGrpcConnectionConfig     CFG_DEFAULT = DpApiConfig.getInstance().connections.annotation;
+    private static final DpGrpcConnectionConfig     CFG_DEFAULT = JalConfig.getInstance().connections.annotation;
     
     
     //

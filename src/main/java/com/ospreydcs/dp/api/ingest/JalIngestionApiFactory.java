@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionApiFactory.java
+ * File:	JalIngestionApiFactory.java
  * Package: com.ospreydcs.dp.api.ingest
- * Type: 	DpIngestionApiFactory
+ * Type: 	JalIngestionApiFactory
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -30,10 +30,10 @@ package com.ospreydcs.dp.api.ingest;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionServiceFactory;
-import com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamFactory;
+import com.ospreydcs.dp.api.ingest.impl.JalIngestionServiceFactory;
+import com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamFactory;
 
 /**
  * <h2>Connection factory for Data Platform Ingestion Service APIs</h2>
@@ -57,8 +57,8 @@ import com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamFactory;
  * </p>
  * <p>
  * All other configuration parameters for the created Ingestion Service API instances are taken from the default 
- * library configuration <code>{@link DpApiConfig}</code>.  Site installations can tune these parameters for
- * specific platforms within the configuration file <code>{@value DpApiConfig#STR_CFG_FILE}</code>.
+ * library configuration <code>{@link JalConfig}</code>.  Site installations can tune these parameters for
+ * specific platforms within the configuration file <code>{@value JalConfig#STR_CFG_FILE}</code>.
  * </p>
  * <p>
  * <h2>API Shut Downs</h2>
@@ -72,7 +72,7 @@ import com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamFactory;
  * @since Aug 22, 2024
  *
  */
-public class DpIngestionApiFactory {
+public class JalIngestionApiFactory {
     
     
     //
@@ -80,10 +80,10 @@ public class DpIngestionApiFactory {
     //
     
     /** The API connection factory for unary RPC connection to the Ingestion Service */
-    private static final DpIngestionServiceFactory      FAC_SERVICE = DpIngestionServiceFactory.FACTORY;
+    private static final JalIngestionServiceFactory      FAC_SERVICE = JalIngestionServiceFactory.FACTORY;
     
     /** The API connection factory for gRPC streams to the Ingestion Service */
-    private static final DpIngestionStreamFactory       FAC_STREAM = DpIngestionStreamFactory.FACTORY;
+    private static final JalIngestionStreamFactory       FAC_STREAM = JalIngestionStreamFactory.FACTORY;
     
     
     //
@@ -105,7 +105,7 @@ public class DpIngestionApiFactory {
      */
     public static IIngestionService    connectService() throws DpGrpcException {
 //        DpIngestionConnection   connIngest = FAC_CONNECT.connect();
-//        DpIngestionServiceImpl  apiService = DpIngestionServiceImpl.from(connIngest);
+//        JalIngestionServiceImpl  apiService = JalIngestionServiceImpl.from(connIngest);
 //        
 //        return apiService;
         return FAC_SERVICE.connect();
@@ -129,7 +129,7 @@ public class DpIngestionApiFactory {
      */
     public static IIngestionService    connectService(String strHostUrl, int intHostPort) throws DpGrpcException {
 //        DpIngestionConnection   connIngest = FAC_CONNECT.connect(strHostUrl, intHostPort);
-//        DpIngestionServiceImpl  apiService = DpIngestionServiceImpl.from(connIngest);
+//        JalIngestionServiceImpl  apiService = JalIngestionServiceImpl.from(connIngest);
 //        
 //        return apiService;
         return FAC_SERVICE.connect(strHostUrl, intHostPort);
@@ -155,7 +155,7 @@ public class DpIngestionApiFactory {
      */
     public static IIngestionService    connectService(String strHostUrl, int intHostPort, boolean bolPlainText) throws DpGrpcException {
 //        DpIngestionConnection   connIngest = FAC_CONNECT.connect(strHostUrl, intHostPort, bolPlainText);
-//        DpIngestionServiceImpl  apiService = DpIngestionServiceImpl.from(connIngest);
+//        JalIngestionServiceImpl  apiService = JalIngestionServiceImpl.from(connIngest);
 //        
 //        return apiService;
         return FAC_SERVICE.connect(strHostUrl, intHostPort, bolPlainText);
@@ -237,7 +237,7 @@ public class DpIngestionApiFactory {
      * may proceed.  
      * </li>
      * <li>
-     * All interface configuration parameters are default values taken from <code>{@link DpApiConfig}</code>.
+     * All interface configuration parameters are default values taken from <code>{@link JalConfig}</code>.
      * </li>
      * </ul>
      * </p>
@@ -376,7 +376,7 @@ public class DpIngestionApiFactory {
      * <code>{@link #connectService(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)}</code>.
      * </li> 
      * <li>
-     * All interface configuration parameters are default values taken from <code>{@link DpApiConfig}</code>.
+     * All interface configuration parameters are default values taken from <code>{@link JalConfig}</code>.
      * </li>
      * </ul>
      * </p>
@@ -554,7 +554,7 @@ public class DpIngestionApiFactory {
      * may proceed.  
      * </li>
      * <li>
-     * All interface configuration parameters are default values taken from <code>{@link DpApiConfig}</code>.
+     * All interface configuration parameters are default values taken from <code>{@link JalConfig}</code>.
      * </li>
      * </ul>
      * </p>
@@ -692,7 +692,7 @@ public class DpIngestionApiFactory {
      * <code>{@link #connectService(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)}</code>.
      * </li> 
      * <li>
-     * All interface configuration parameters are default values taken from <code>{@link DpApiConfig}</code>.
+     * All interface configuration parameters are default values taken from <code>{@link JalConfig}</code>.
      * </li>
      * </ul>
      * </p>
@@ -737,11 +737,11 @@ public class DpIngestionApiFactory {
     
     /**
      * <p>
-     * Prevent construction of <code>DpIngestionApiFactory</code> instance.
+     * Prevent construction of <code>JalIngestionApiFactory</code> instance.
      * </p>
      *
      */
-    private DpIngestionApiFactory() {
+    private JalIngestionApiFactory() {
     }
 
 }

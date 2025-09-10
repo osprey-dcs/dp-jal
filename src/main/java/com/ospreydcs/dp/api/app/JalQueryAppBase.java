@@ -30,8 +30,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnection;
 import com.ospreydcs.dp.api.grpc.query.DpQueryConnectionFactoryStatic;
@@ -64,7 +64,7 @@ public abstract class JalQueryAppBase<T extends JalQueryAppBase<T>> extends JalA
     //
     
     /** Query tools default configuration parameters */
-    private static final DpQueryConfig     CFG_DEF = DpApiConfig.getInstance().query;
+    private static final JalQueryConfig     CFG_DEF = JalConfig.getInstance().query;
     
 
     //

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionStreamFactory.java
+ * File:	JalIngestionStreamFactory.java
  * Package: com.ospreydcs.dp.api.ingest
- * Type: 	DpIngestionStreamFactory
+ * Type: 	JalIngestionStreamFactory
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -27,7 +27,7 @@
  */
 package com.ospreydcs.dp.api.ingest.impl;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
@@ -52,7 +52,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.DpIngestionServiceGrpc.DpIngestionServ
  * @since Apr 27, 2024
  */
 //@Deprecated(since="Aug 22, 2024", forRemoval=true)
-public class DpIngestionStreamFactory extends
+public class JalIngestionStreamFactory extends
         DpServiceApiFactoryBase<IIngestionStream, 
                                 DpIngestionConnection, 
                                 DpIngestionServiceGrpc, 
@@ -65,7 +65,7 @@ public class DpIngestionStreamFactory extends
     //
     
     /** Default configuration parameters for all DP Ingestion Service connections as taken from the application configuration */
-    private static final DpGrpcConnectionConfig   CFG_CONN_DEFAULT = DpApiConfig.getInstance().connections.ingestion;
+    private static final DpGrpcConnectionConfig   CFG_CONN_DEFAULT = JalConfig.getInstance().connections.ingestion;
 
     
     //
@@ -73,7 +73,7 @@ public class DpIngestionStreamFactory extends
     //
     
     /** The singleton instance of the connection factory */
-    public static final DpIngestionStreamFactory   FACTORY = newFactory(CFG_CONN_DEFAULT);
+    public static final JalIngestionStreamFactory   FACTORY = newFactory(CFG_CONN_DEFAULT);
     
     
     //
@@ -82,7 +82,7 @@ public class DpIngestionStreamFactory extends
     
     /**
      * <p>
-     * Creates a new, initialized instance of the <code>DpIngestionServiceFactory</code> 
+     * Creates a new, initialized instance of the <code>JalIngestionServiceFactory</code> 
      * Ingestion Service API connection factory.
      * </p>
      * <p>
@@ -92,10 +92,10 @@ public class DpIngestionStreamFactory extends
      * 
      * @param   cfgDefault  the default connection parameters for the Ingestion Service used by new factory
      * 
-     * @return  a new Ingestion Service API factory ready for <code>DpIngestionServiceImpl</code> creation and connection
+     * @return  a new Ingestion Service API factory ready for <code>JalIngestionServiceImpl</code> creation and connection
      */
-    public static final DpIngestionStreamFactory   newFactory(DpGrpcConnectionConfig cfgDefault) {
-        return new DpIngestionStreamFactory(cfgDefault);
+    public static final JalIngestionStreamFactory   newFactory(DpGrpcConnectionConfig cfgDefault) {
+        return new JalIngestionStreamFactory(cfgDefault);
     }
     
     
@@ -108,7 +108,7 @@ public class DpIngestionStreamFactory extends
      * 
      * @return  the static instance <code>{@link #FACTORY}</code>
      */
-    public static DpIngestionStreamFactory getInstance() {
+    public static JalIngestionStreamFactory getInstance() {
         return FACTORY;
     }
     
@@ -119,7 +119,7 @@ public class DpIngestionStreamFactory extends
     
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionStreamFactory</code>.
+     * Constructs a new instance of <code>JalIngestionStreamFactory</code>.
      * </p>
      * <p>
      * Super class requirement for instance construction.   Supplies the Protobuf-generated service interface
@@ -128,7 +128,7 @@ public class DpIngestionStreamFactory extends
      * 
      * @param   cfgDefault  the default connection parameters for the Ingestion Service used by new factory
      */
-    private DpIngestionStreamFactory(DpGrpcConnectionConfig cfgDefault) {
+    private JalIngestionStreamFactory(DpGrpcConnectionConfig cfgDefault) {
         super(DpIngestionServiceGrpc.class, cfgDefault);
     }
 
@@ -155,7 +155,7 @@ public class DpIngestionStreamFactory extends
      */
     @Override
     protected IIngestionStream apiFrom(DpIngestionConnection conn) throws DpGrpcException {
-        IIngestionStream    apiIngest = DpIngestionStreamImpl.from(conn);
+        IIngestionStream    apiIngest = JalIngestionStreamImpl.from(conn);
         
         return apiIngest;
     }

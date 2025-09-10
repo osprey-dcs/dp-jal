@@ -32,7 +32,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import com.ospreydcs.dp.api.config.DpApiUnitTestConfig;
+import com.ospreydcs.dp.api.config.JalUnitTestConfig;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 
 /**
@@ -65,7 +65,7 @@ import com.ospreydcs.dp.api.query.DpDataRequest;
  * </li>
  * </ul>
  * All <code>createRequest(...)</code> methods with fewer parameters use default values taken
- * from the <code>{@link DpApiUnitTestConfig#testArchive}</code> parameter set, 
+ * from the <code>{@link JalUnitTestConfig#testArchive}</code> parameter set, 
  * or zero - whichever is appropriate.
  * </p> 
  * <p>
@@ -124,7 +124,7 @@ public class TestDpDataRequestGenerator {
     //
     
     /** Default DP API library testing parameters */
-    public static final DpApiUnitTestConfig.TestArchive      CFG_ARCHIVE = DpApiUnitTestConfig.getInstance().testArchive;
+    public static final JalUnitTestConfig.TestArchive      CFG_ARCHIVE = JalUnitTestConfig.getInstance().testArchive;
 
     
     //

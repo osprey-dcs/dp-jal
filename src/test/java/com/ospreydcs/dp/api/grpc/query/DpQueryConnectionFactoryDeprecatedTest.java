@@ -38,7 +38,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 
@@ -59,7 +59,7 @@ public class DpQueryConnectionFactoryDeprecatedTest {
     //
     
     /** The API Library default Query Service configuration parameters */
-    private static final DpGrpcConnectionConfig.Channel   CFG_DEFAULT = DpApiConfig.getInstance().connections.query.channel;
+    private static final DpGrpcConnectionConfig.Channel   CFG_DEFAULT = JalConfig.getInstance().connections.query.channel;
 
 
     //

@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpApiUnitTestConfig.java
+ * File:	JalUnitTestConfig.java
  * Package: com.ospreydcs.dp.api.config.test
- * Type: 	DpApiUnitTestConfig
+ * Type: 	JalUnitTestConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -32,7 +32,7 @@ import java.io.FileNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
+import com.ospreydcs.dp.api.config.common.JalTimeoutConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
@@ -55,7 +55,7 @@ import com.ospreydcs.dp.api.config.test.TestQueryDataConfig;
  *
  */
 @ACfgOverride.Root(root="DP_API_TEST")
-public class DpApiUnitTestConfig extends CfgStructure<DpApiUnitTestConfig> {
+public class JalUnitTestConfig extends CfgStructure<JalUnitTestConfig> {
     
     
     //
@@ -79,7 +79,7 @@ public class DpApiUnitTestConfig extends CfgStructure<DpApiUnitTestConfig> {
     //
     
     /** Singleton instance of this class */
-    private static DpApiUnitTestConfig   cfgInstance = null;
+    private static JalUnitTestConfig   cfgInstance = null;
     
     
     //
@@ -88,7 +88,7 @@ public class DpApiUnitTestConfig extends CfgStructure<DpApiUnitTestConfig> {
     
     /**
      * <p>
-     * Returns the singleton instance of the <code>DpApiUnitTestConfig</code> class.  
+     * Returns the singleton instance of the <code>JalUnitTestConfig</code> class.  
      * </p>
      * <p>
      * If this is the first call to this method, the instance <code>{@link #cfgInstance}</code> is created using the
@@ -100,13 +100,13 @@ public class DpApiUnitTestConfig extends CfgStructure<DpApiUnitTestConfig> {
      * @return singleton instance of <code>DpApiUnitTestingConfig</code> containing initialization parameters
      *          for application
      */
-    public static DpApiUnitTestConfig getInstance() {
-        if (DpApiUnitTestConfig.cfgInstance == null) {
+    public static JalUnitTestConfig getInstance() {
+        if (JalUnitTestConfig.cfgInstance == null) {
             try {
-                DpApiUnitTestConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE_NAME, DpApiUnitTestConfig.class);
+                JalUnitTestConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE_NAME, JalUnitTestConfig.class);
                 
-                CfgOverrideUtility.overrideRoot(DpApiUnitTestConfig.cfgInstance, CfgOverrideUtility.SOURCE.ENVIRONMENT);
-                CfgOverrideUtility.overrideRoot(DpApiUnitTestConfig.cfgInstance, CfgOverrideUtility.SOURCE.PROPERTIES);
+                CfgOverrideUtility.overrideRoot(JalUnitTestConfig.cfgInstance, CfgOverrideUtility.SOURCE.ENVIRONMENT);
+                CfgOverrideUtility.overrideRoot(JalUnitTestConfig.cfgInstance, CfgOverrideUtility.SOURCE.PROPERTIES);
                 
             } catch (FileNotFoundException e) {
                 LOGGER.error("Unable to load properties from file: {}", STR_CFG_FILE_NAME);
@@ -115,7 +115,7 @@ public class DpApiUnitTestConfig extends CfgStructure<DpApiUnitTestConfig> {
                 System.exit(1);
                 
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                LOGGER.error("The {} class was not properly annotated for property overrides", DpApiUnitTestConfig.class.getName());
+                LOGGER.error("The {} class was not properly annotated for property overrides", JalUnitTestConfig.class.getName());
                 LOGGER.error("  Cause: ", e.getClass().getName());
                 LOGGER.error("  Message: {}", e.getMessage());
                 LOGGER.error("  Irrecoverable error. Exiting...");
@@ -125,7 +125,7 @@ public class DpApiUnitTestConfig extends CfgStructure<DpApiUnitTestConfig> {
                 
         }
         
-        return DpApiUnitTestConfig.cfgInstance;
+        return JalUnitTestConfig.cfgInstance;
     }
     
 
@@ -184,10 +184,10 @@ public class DpApiUnitTestConfig extends CfgStructure<DpApiUnitTestConfig> {
         public TestQueryDataConfig  data;
      
         @ACfgOverride.Struct(pathelem="TIMEOUT_SHORT")
-        public DpTimeoutConfig      timeoutShort;
+        public JalTimeoutConfig      timeoutShort;
         
         @ACfgOverride.Struct(pathelem="TIMEOUT_LONG")
-        public DpTimeoutConfig      timeoutLong;
+        public JalTimeoutConfig      timeoutLong;
         
         @ACfgOverride.Struct(pathelem="CONNECTION")
         public DpGrpcConnectionConfig connection;
@@ -195,7 +195,7 @@ public class DpApiUnitTestConfig extends CfgStructure<DpApiUnitTestConfig> {
     
     
     /** Default constructor required for base class */
-    public DpApiUnitTestConfig() {
-        super(DpApiUnitTestConfig.class);
+    public JalUnitTestConfig() {
+        super(JalUnitTestConfig.class);
     }
 }

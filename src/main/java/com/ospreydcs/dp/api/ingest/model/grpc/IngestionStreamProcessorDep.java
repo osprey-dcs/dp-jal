@@ -49,8 +49,8 @@ import com.ospreydcs.dp.api.common.IngestionResponse;
 import com.ospreydcs.dp.api.common.IngestionResult;
 import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
@@ -239,7 +239,7 @@ public final class IngestionStreamProcessorDep {
     //
     
     /** The Ingestion Service client API default configuration */
-    private static final DpIngestionConfig  CFG_DEFAULT = DpApiConfig.getInstance().ingest; 
+    private static final JalIngestionConfig  CFG_DEFAULT = JalConfig.getInstance().ingest; 
     
     
     //

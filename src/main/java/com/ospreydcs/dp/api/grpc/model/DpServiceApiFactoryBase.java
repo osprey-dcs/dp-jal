@@ -30,7 +30,7 @@ package com.ospreydcs.dp.api.grpc.model;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 
 /**
@@ -381,7 +381,7 @@ public abstract class DpServiceApiFactoryBase<
      * </li>
      * <li>
      * All interface configuration parameters are assumed to be default values taken from 
-     * <code>{@link DpApiConfig}</code>.
+     * <code>{@link JalConfig}</code>.
      * </li>
      * </ul>
      * </p>

@@ -44,7 +44,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
+import com.ospreydcs.dp.api.config.common.JalTimeoutConfig;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 import com.ospreydcs.dp.api.config.model.CfgOverrideRec;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
@@ -92,7 +92,7 @@ public class GrpcConnectionConfigTest {
      */
     public static DpGrpcConnectionConfig    createConfig1() {
         
-        DpTimeoutConfig timeout = new DpTimeoutConfig();
+        JalTimeoutConfig timeout = new JalTimeoutConfig();
         timeout.enabled = true;
         timeout.limit = 5L;
         timeout.unit = TimeUnit.SECONDS;

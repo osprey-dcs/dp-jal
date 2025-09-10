@@ -28,7 +28,7 @@ package com.ospreydcs.dp.api.query;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.api.query.impl.DpQueryServiceApiFactoryNew;
 
@@ -65,8 +65,8 @@ import com.ospreydcs.dp.api.query.impl.DpQueryServiceApiFactoryNew;
  * </p>
  * <p>
  * All other configuration parameters for the created Query Service API instances are taken from the default 
- * library configuration <code>{@link DpApiConfig}</code>.  Site installations can tune these parameters for
- * specific platforms within the configuration file <code>{@value DpApiConfig#STR_CFG_FILE}</code>.
+ * library configuration <code>{@link JalConfig}</code>.  Site installations can tune these parameters for
+ * specific platforms within the configuration file <code>{@value JalConfig#STR_CFG_FILE}</code>.
  * </p>
  * <p>
  * <h2>API Shut Downs</h2>
@@ -235,7 +235,7 @@ public class DpQueryApiFactoryNew {
      * may proceed.  
      * </li>
      * <li>
-     * All interface configuration parameters are default values taken from <code>{@link DpApiConfig}</code>.
+     * All interface configuration parameters are default values taken from <code>{@link JalConfig}</code>.
      * </li>
      * </ul>
      * </p>
@@ -374,7 +374,7 @@ public class DpQueryApiFactoryNew {
      * <code>{@link #connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)}</code>.
      * </li> 
      * <li>
-     * All interface configuration parameters are default values taken from <code>{@link DpApiConfig}</code>.
+     * All interface configuration parameters are default values taken from <code>{@link JalConfig}</code>.
      * </li>
      * </ul>
      * </p>

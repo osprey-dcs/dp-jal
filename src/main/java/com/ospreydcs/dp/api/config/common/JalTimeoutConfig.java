@@ -13,11 +13,11 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  * <p>
  */
 @ACfgOverride.Root(root="DP_API_TIMEOUT")
-public final class DpTimeoutConfig extends CfgStructure<DpTimeoutConfig> {
+public final class JalTimeoutConfig extends CfgStructure<JalTimeoutConfig> {
     
     /** Default constructor required for structure base class */
-    public DpTimeoutConfig() {
-        super(DpTimeoutConfig.class);
+    public JalTimeoutConfig() {
+        super(JalTimeoutConfig.class);
     }
 
     /** Is timeout enabled */

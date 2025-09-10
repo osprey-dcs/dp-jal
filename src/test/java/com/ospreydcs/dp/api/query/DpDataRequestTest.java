@@ -41,7 +41,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
@@ -67,7 +67,7 @@ public class DpDataRequestTest {
     // 
     
     /** The Data Platform API configuration parameters */
-    private static final DpApiConfig    CFG_DEFAULT = DpApiConfig.getInstance();
+    private static final JalConfig    CFG_DEFAULT = JalConfig.getInstance();
     
     
     //

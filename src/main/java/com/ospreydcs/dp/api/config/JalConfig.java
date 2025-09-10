@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpApiConfig.java
+ * File:	JalConfig.java
  * Package: com.ospreydcs.dp.api.config
- * Type: 	DpApiConfig
+ * Type: 	JalConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -33,13 +33,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
-import com.ospreydcs.dp.api.config.annotate.DpAnnotationConfig;
+import com.ospreydcs.dp.api.config.annotate.JalAnnotationConfig;
 import com.ospreydcs.dp.api.config.grpc.DpConnectionsConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
 
 /**
@@ -87,7 +87,7 @@ import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
  * @see DpConnectionsConfig
  */
 @ACfgOverride.Root(root="DP_API")
-public final class DpApiConfig extends CfgStructure<DpApiConfig> {
+public final class JalConfig extends CfgStructure<JalConfig> {
     
     
     //
@@ -95,7 +95,7 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
     //
     
     /** Name of the Java API Library configuration properties file (relative path and name) */
-    public static final String      STR_CFG_FILE = "dp-jal-config.yml";
+    public static final String      STR_CFG_FILE = "jal-config.yml";
 //    public static final String      STR_CFG_FILE = "src/main/resources/dp-api-config.yml";
     
     
@@ -104,7 +104,7 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
     //
     
     /** Singular instance of this class */
-    private static DpApiConfig      cfgInstance = null;
+    private static JalConfig      cfgInstance = null;
     
     /** The class logger */
     private static final Logger     LOGGER = LogManager.getLogger();
@@ -112,7 +112,7 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
     
     /**
      * <p>
-     * Returns the singleton instance of the <code>DpApiConfig</code> class.  
+     * Returns the singleton instance of the <code>JalConfig</code> class.  
      * </p>
      * <p>
      * If this is the first call to this method the instance is created using the
@@ -126,14 +126,14 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
      * @return singleton instance of DpApiCnofig containing initialization parameters
      *          for application
      */
-    public static DpApiConfig getInstance() {
-        if (DpApiConfig.cfgInstance == null) {
+    public static JalConfig getInstance() {
+        if (JalConfig.cfgInstance == null) {
             
             try {
-                DpApiConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE, DpApiConfig.class);
+                JalConfig.cfgInstance = CfgLoaderYaml.load(STR_CFG_FILE, JalConfig.class);
                 
-                CfgOverrideUtility.overrideRoot(DpApiConfig.cfgInstance, CfgOverrideUtility.SOURCE.ENVIRONMENT);
-                CfgOverrideUtility.overrideRoot(DpApiConfig.cfgInstance, CfgOverrideUtility.SOURCE.PROPERTIES);
+                CfgOverrideUtility.overrideRoot(JalConfig.cfgInstance, CfgOverrideUtility.SOURCE.ENVIRONMENT);
+                CfgOverrideUtility.overrideRoot(JalConfig.cfgInstance, CfgOverrideUtility.SOURCE.PROPERTIES);
                 
             } catch (FileNotFoundException e) {
                 LOGGER.error("Unable to load properties from file: {}", STR_CFG_FILE);
@@ -142,7 +142,7 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
                 System.exit(1);
                 
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                LOGGER.error("The {} class was not properly annotated for property overrides", DpApiConfig.class.getName());
+                LOGGER.error("The {} class was not properly annotated for property overrides", JalConfig.class.getName());
                 LOGGER.error("  Cause: ", e.getClass().getName());
                 LOGGER.error("  Message: {}", e.getMessage());
                 LOGGER.error("  Irrecoverable error. Exiting...");
@@ -152,7 +152,7 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
                 
         }
         
-        return DpApiConfig.cfgInstance;
+        return JalConfig.cfgInstance;
     }
     
 
@@ -166,15 +166,15 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
     
     /** Data Platform Ingestion Service API default parameters */
     @ACfgOverride.Struct(pathelem="INGEST")
-    public DpIngestionConfig    ingest;
+    public JalIngestionConfig    ingest;
     
     /** Data Platform Query Service API default parameters */
     @ACfgOverride.Struct(pathelem="QUERY")
-    public DpQueryConfig        query;
+    public JalQueryConfig        query;
     
     /** Data Platform Annotation Service API default parameters */
     @ACfgOverride.Struct(pathelem="ANNOTATION")
-    public DpAnnotationConfig   annotation;
+    public JalAnnotationConfig   annotation;
     
     /** Data Platform core services connection parameters */
     @ACfgOverride.Struct(pathelem="CONNECTION")
@@ -223,11 +223,11 @@ public final class DpApiConfig extends CfgStructure<DpApiConfig> {
 
     /**
      * <p>
-     * Allow only internal construction of <code>DpApiConfig</code> instance.
+     * Allow only internal construction of <code>JalConfig</code> instance.
      * </p>
      */
-    private DpApiConfig() {
-        super(DpApiConfig.class);
+    private JalConfig() {
+        super(JalConfig.class);
     }
 
 }

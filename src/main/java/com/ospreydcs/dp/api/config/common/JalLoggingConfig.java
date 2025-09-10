@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpLoggingConfig.java
+ * File:	JalLoggingConfig.java
  * Package: com.ospreydcs.dp.api.config.common
- * Type: 	DpLoggingConfig
+ * Type: 	JalLoggingConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -34,7 +34,7 @@ import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
 
 /**
  * <p>
- * Structure class containing default configuration parameters for Data Platform logging operations.
+ * Structure class containing default configuration parameters for common JAL logging operations.
  * </p>
  *
  * @author Christopher K. Allen
@@ -42,11 +42,11 @@ import com.ospreydcs.dp.api.model.AUnavailable.STATUS;
  *
  */
 @ACfgOverride.Root(root="DP_API_LOGGING")
-public final class DpLoggingConfig extends CfgStructure<DpLoggingConfig>{
+public final class JalLoggingConfig extends CfgStructure<JalLoggingConfig>{
 
     /** Default constructor required for base structure class */
-    public DpLoggingConfig() {
-        super(DpLoggingConfig.class);
+    public JalLoggingConfig() {
+        super(JalLoggingConfig.class);
     }
 
     //

@@ -7,10 +7,10 @@ import com.ospreydcs.dp.api.config.model.CfgStructure;
  * Structure class defining default configuration parameters for time-series data requests and responses
  */
 @ACfgOverride.Root(root="DP_API_QUERY_DATA")
-public class DpQueryRecoveryConfig extends CfgStructure<DpQueryRecoveryConfig> {
+public class JalQueryRecoveryConfig extends CfgStructure<JalQueryRecoveryConfig> {
     
     /** Default constructor required for base structure class */
-    public DpQueryRecoveryConfig() { super(DpQueryRecoveryConfig.class); };
+    public JalQueryRecoveryConfig() { super(JalQueryRecoveryConfig.class); };
     
     
     //
@@ -19,13 +19,13 @@ public class DpQueryRecoveryConfig extends CfgStructure<DpQueryRecoveryConfig> {
     
     /** Default parameters for Query Service time-series data request queries */
     @ACfgOverride.Struct(pathelem="REQUEST")
-    public DpDataRequestConfig      request;
+    public JalDataRequestConfig      request;
     
     /** Default parameters for Query Service time-series data request responses */
     @ACfgOverride.Struct(pathelem="RECOVERY")
-    public DpDataRecoveryConfig     recovery;
+    public JalDataRecoveryConfig     recovery;
     
     /** Default parameters for Query Service time-series data table results */
     @ACfgOverride.Struct(pathelem="TABLE")
-    public DpDataTableConfig        table;
+    public JalDataTableConfig        table;
 }

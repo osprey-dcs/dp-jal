@@ -52,14 +52,14 @@ import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.JalIngestionException;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.test.TestIngestionFrameGenerator;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 
 /**
  * <p>
- * JUnit test cases for class <code>DpIngestionStreamImpl</code>.
+ * JUnit test cases for class <code>JalIngestionStreamImpl</code>.
  * </p>
  *
  * @author Christopher K. Allen
@@ -102,8 +102,8 @@ public class DpIngestionStreamImplTest {
     /** The common connection used when possible */
     private static DpIngestionConnection        CONN_INGEST;
     
-    /** The common DpIngestionStreamImpl under test (used when possible) */
-    private static DpIngestionStreamImpl        INGEST_TEST;
+    /** The common JalIngestionStreamImpl under test (used when possible) */
+    private static JalIngestionStreamImpl        INGEST_TEST;
     
     //
     // Test Fixture
@@ -115,7 +115,7 @@ public class DpIngestionStreamImplTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         CONN_INGEST = DpIngestionConnectionFactory.FACTORY.connect();
-        INGEST_TEST = new DpIngestionStreamImpl(CONN_INGEST);
+        INGEST_TEST = new JalIngestionStreamImpl(CONN_INGEST);
     }
 
     /**
@@ -149,17 +149,17 @@ public class DpIngestionStreamImplTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#DpIngestionStreamImpl(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#DpIngestionStreamImpl(com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection)}.
      * <p>
      * Includes
      * <br/>
-     * {@link DpIngestionStreamImpl#openStream(ProviderRegistrar)}
+     * {@link JalIngestionStreamImpl#openStream(ProviderRegistrar)}
      * <br/>
-     * {@link DpIngestionStreamImpl#closeStream()}
+     * {@link JalIngestionStreamImpl#closeStream()}
      * <br/>
-     * {@link DpIngestionStreamImpl#shutdown()}
+     * {@link JalIngestionStreamImpl#shutdown()}
      * <br/>
-     * {@link DpIngestionStreamImpl#awaitTermination()}
+     * {@link JalIngestionStreamImpl#awaitTermination()}
      */
     @Test
     public final void testDpIngestionStreamImpl() {
@@ -175,7 +175,7 @@ public class DpIngestionStreamImplTest {
         }
         
         // Create the interface implementation from the connection
-        DpIngestionStreamImpl   istream = new DpIngestionStreamImpl(connIngest);
+        JalIngestionStreamImpl   istream = new JalIngestionStreamImpl(connIngest);
         Assert.assertFalse(istream.isStreamOpen());
         Assert.assertFalse(istream.isShutdown());
         Assert.assertFalse(istream.isTerminated());
@@ -187,7 +187,7 @@ public class DpIngestionStreamImplTest {
             REC_PRVR_UID = istream.openStream(REC_PRVR_REG);
             Assert.assertTrue(istream.isStreamOpen());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             istream.shutdownNow();
             
             Assert.fail("The interface failed openStream(): " + e.getMessage());
@@ -231,7 +231,7 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#shutdownNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#shutdownNow()}.
      */
     @Test
     public final void testShutdownNow() {
@@ -247,7 +247,7 @@ public class DpIngestionStreamImplTest {
         }
         
         // Create the interface implementation from the connection
-        DpIngestionStreamImpl   istream = new DpIngestionStreamImpl(connIngest);
+        JalIngestionStreamImpl   istream = new JalIngestionStreamImpl(connIngest);
         Assert.assertFalse(istream.isStreamOpen());
         Assert.assertFalse(istream.isShutdown());
         Assert.assertFalse(istream.isTerminated());
@@ -262,13 +262,13 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#awaitTermination(long, java.util.concurrent.TimeUnit)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#awaitTermination(long, java.util.concurrent.TimeUnit)}.
      * <p>
      * Includes
      * <br/>
-     * {@link DpIngestionStreamImpl#isShutdown()}
+     * {@link JalIngestionStreamImpl#isShutdown()}
      * <br/>
-     * {@link DpIngestionStreamImpl#isTerminated()}
+     * {@link JalIngestionStreamImpl#isTerminated()}
      */
     @Test
     public final void testAwaitTerminationLongTimeUnit() {
@@ -285,7 +285,7 @@ public class DpIngestionStreamImplTest {
         }
         
         // Create the interface implementation from the connection
-        DpIngestionStreamImpl   istream = new DpIngestionStreamImpl(connIngest);
+        JalIngestionStreamImpl   istream = new JalIngestionStreamImpl(connIngest);
         Assert.assertFalse(istream.isStreamOpen());
         Assert.assertFalse(istream.isShutdown());
         Assert.assertFalse(istream.isTerminated());
@@ -303,7 +303,7 @@ public class DpIngestionStreamImplTest {
             insOpened = Instant.now();
             Assert.assertTrue(istream.isStreamOpen());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             istream.shutdownNow();
             
             Assert.fail("The interface failed openStream(): " + e.getMessage());
@@ -358,11 +358,11 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#setFrameProcessingConcurrency(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#setFrameProcessingConcurrency(int)}.
      * <p>
      * Includes
      * <br/>
-     * {@link DpIngestionStreamImpl#disableFrameProcessingConcurrency()}
+     * {@link JalIngestionStreamImpl#disableFrameProcessingConcurrency()}
      */
     @Test
     public final void testSetFrameProcessingConcurrency() {
@@ -380,11 +380,11 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#setFrameDecomposition(long)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#setFrameDecomposition(long)}.
      * <p>
      * Includes
      * <br/>
-     * {@link DpIngestionStreamImpl#disableFrameDecomposition()}
+     * {@link JalIngestionStreamImpl#disableFrameDecomposition()}
      */
     @Test
     public final void testSetFrameDecomposition() {
@@ -397,7 +397,7 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#setStagingCapcity(long)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#setStagingCapcity(long)}.
      */
     @Test
     public final void testSetStagingCapcity() {
@@ -409,10 +409,10 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#enableBackPressure()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#enableBackPressure()}.
      * <p>
      * Includes
-     * {@link DpIngestionStreamImpl#disableBackPressure()}
+     * {@link JalIngestionStreamImpl#disableBackPressure()}
      */
     @Test
     public final void testEnableBackPressure() {
@@ -421,7 +421,7 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#setStreamType(com.ospreydcs.dp.api.common.DpGrpcStreamType)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#setStreamType(com.ospreydcs.dp.api.common.DpGrpcStreamType)}.
      */
     @Test
     public final void testSetStreamType() {
@@ -453,10 +453,10 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#setMultipleStreams(int)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#setMultipleStreams(int)}.
      * <p>
      * Includes
-     * {@link DpIngestionStreamImpl#disableMultipleStreams()}
+     * {@link JalIngestionStreamImpl#disableMultipleStreams()}
      */
     @Test
     public final void testSetMultipleStreams() {
@@ -483,7 +483,7 @@ public class DpIngestionStreamImplTest {
 
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#getProviderUid()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#getProviderUid()}.
 //     */
 ////    @Test
 //    public final void testGetProviderUid() {
@@ -491,7 +491,7 @@ public class DpIngestionStreamImplTest {
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#getQueueSize()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#getQueueSize()}.
 //     */
 ////    @Test
 //    public final void testGetQueueSize() {
@@ -499,7 +499,7 @@ public class DpIngestionStreamImplTest {
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#getClientRequestIds()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#getClientRequestIds()}.
 //     */
 //    @Test
 //    public final void testGetClientRequestIds() {
@@ -507,7 +507,7 @@ public class DpIngestionStreamImplTest {
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#getIngestionExceptions()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#getIngestionExceptions()}.
 //     */
 //    @Test
 //    public final void testGetIngestionExceptions() {
@@ -515,7 +515,7 @@ public class DpIngestionStreamImplTest {
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#openStream(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#openStream(com.ospreydcs.dp.api.model.ProviderRegistrar)}.
 //     */
 //    @Test
 //    public final void testOpenStream() {
@@ -523,7 +523,7 @@ public class DpIngestionStreamImplTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#ingest(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#ingest(com.ospreydcs.dp.api.ingest.IngestionFrame)}.
      */
     @Test
     public final void testIngestIngestionFrame() {
@@ -545,14 +545,14 @@ public class DpIngestionStreamImplTest {
         }
         
         // Create the interface implementation from the connection
-        DpIngestionStreamImpl   istream = new DpIngestionStreamImpl(connIngest);
+        JalIngestionStreamImpl   istream = new JalIngestionStreamImpl(connIngest);
         
         // Open the interface stream
         try {
             REC_PRVR_UID = istream.openStream(REC_PRVR_REG);
             Assert.assertTrue(istream.isStreamOpen());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             istream.shutdownNow();
             
             Assert.fail("The interface failed openStream(): " + e.getMessage());
@@ -567,7 +567,7 @@ public class DpIngestionStreamImplTest {
             insStart = Instant.now();
             istream.ingest(frame);
             
-        } catch (IllegalStateException | InterruptedException | DpIngestionException e) {
+        } catch (IllegalStateException | InterruptedException | JalIngestionException e) {
             istream.shutdownNow();
             Assert.fail("Data ingest() exception: type=" + e.getClass().getSimpleName() + ", detail=" + e.getMessage());
             return;
@@ -617,7 +617,7 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#ingest(java.util.List)}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#ingest(java.util.List)}.
      */
     @Test
     public final void testIngestListOfIngestionFrame() {
@@ -649,7 +649,7 @@ public class DpIngestionStreamImplTest {
         }
         
         // Create the interface implementation from the connection and configure it
-        DpIngestionStreamImpl   istream = new DpIngestionStreamImpl(connIngest);
+        JalIngestionStreamImpl   istream = new JalIngestionStreamImpl(connIngest);
         istream.setFrameProcessingConcurrency(cntThreads);
         istream.setStagingCapcity(szCapacity);
         istream.disableBackPressure();
@@ -660,7 +660,7 @@ public class DpIngestionStreamImplTest {
             REC_PRVR_UID = istream.openStream(REC_PRVR_REG);
             Assert.assertTrue(istream.isStreamOpen());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             istream.shutdownNow();
             
             Assert.fail("The interface failed openStream(): " + e.getMessage());
@@ -678,7 +678,7 @@ public class DpIngestionStreamImplTest {
             istream.ingest(lstFrms1);
 //            istream.ingest(lstFrms2);
             
-        } catch (IllegalStateException | InterruptedException | DpIngestionException e) {
+        } catch (IllegalStateException | InterruptedException | JalIngestionException e) {
             istream.shutdownNow();
             Assert.fail("Data ingest() exception: type=" + e.getClass().getSimpleName() + ", detail=" + e.getMessage());
             return;
@@ -752,7 +752,7 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#awaitQueueReady()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#awaitQueueReady()}.
      */
     @Test
     public final void testAwaitQueueReady() {
@@ -785,7 +785,7 @@ public class DpIngestionStreamImplTest {
         }
         
         // Create the interface implementation from the connection and configure it
-        DpIngestionStreamImpl   istream = new DpIngestionStreamImpl(connIngest);
+        JalIngestionStreamImpl   istream = new JalIngestionStreamImpl(connIngest);
         istream.setFrameProcessingConcurrency(cntThreads);
         istream.disableFrameDecomposition();
         istream.setStagingCapcity(szCapacity);
@@ -797,7 +797,7 @@ public class DpIngestionStreamImplTest {
             REC_PRVR_UID = istream.openStream(REC_PRVR_REG);
             Assert.assertTrue(istream.isStreamOpen());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             istream.shutdownNow();
             
             Assert.fail("The interface failed openStream(): " + e.getMessage());
@@ -837,7 +837,7 @@ public class DpIngestionStreamImplTest {
             System.out.println("  Queue ready wait time      : " + durReady);
             System.out.println("  Queue empty wait time      : " + durEmpty);
             
-        } catch (IllegalStateException | InterruptedException | DpIngestionException e) {
+        } catch (IllegalStateException | InterruptedException | JalIngestionException e) {
             Assert.fail("Data ingest() exception: type=" + e.getClass().getSimpleName() + ", detail=" + e.getMessage());
             
         }
@@ -885,7 +885,7 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#awaitQueueEmpty()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#awaitQueueEmpty()}.
      */
     @Test
     public final void testAwaitQueueEmpty() {
@@ -918,7 +918,7 @@ public class DpIngestionStreamImplTest {
         }
         
         // Create the interface implementation from the connection and configure it
-        DpIngestionStreamImpl   istream = new DpIngestionStreamImpl(connIngest);
+        JalIngestionStreamImpl   istream = new JalIngestionStreamImpl(connIngest);
         istream.setFrameProcessingConcurrency(cntThreads);
         istream.setStagingCapcity(szCapacity);
         istream.disableBackPressure();
@@ -929,7 +929,7 @@ public class DpIngestionStreamImplTest {
             REC_PRVR_UID = istream.openStream(REC_PRVR_REG);
             Assert.assertTrue(istream.isStreamOpen());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             istream.shutdownNow();
             
             Assert.fail("The interface failed openStream(): " + e.getMessage());
@@ -969,7 +969,7 @@ public class DpIngestionStreamImplTest {
             System.out.println("  Queue ready wait time      : " + durReady);
             System.out.println("  Queue empty wait time      : " + durEmpty);
             
-        } catch (IllegalStateException | InterruptedException | DpIngestionException e) {
+        } catch (IllegalStateException | InterruptedException | JalIngestionException e) {
             Assert.fail("Data ingest() exception: type=" + e.getClass().getSimpleName() + ", detail=" + e.getMessage());
             
         }
@@ -1016,7 +1016,7 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#closeStream()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#closeStream()}.
      */
     @Test
     public final void testCloseStream() {
@@ -1044,7 +1044,7 @@ public class DpIngestionStreamImplTest {
         }
         
         // Create the interface implementation from the connection and configure it
-        DpIngestionStreamImpl   istream = new DpIngestionStreamImpl(connIngest);
+        JalIngestionStreamImpl   istream = new JalIngestionStreamImpl(connIngest);
         istream.setFrameProcessingConcurrency(cntThreads);
         istream.setStagingCapcity(szCapacity);
         istream.disableBackPressure();
@@ -1054,7 +1054,7 @@ public class DpIngestionStreamImplTest {
             REC_PRVR_UID = istream.openStream(REC_PRVR_REG);
             Assert.assertTrue(istream.isStreamOpen());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             istream.shutdownNow();
             
             Assert.fail("The interface failed openStream(): " + e.getMessage());
@@ -1067,7 +1067,7 @@ public class DpIngestionStreamImplTest {
             // Transmit first payload then wait for queue ready 
             istream.ingest(lstFrms1);
             
-        } catch (IllegalStateException | InterruptedException | DpIngestionException e) {
+        } catch (IllegalStateException | InterruptedException | JalIngestionException e) {
             Assert.fail("Data ingest() exception: type=" + e.getClass().getSimpleName() + ", detail=" + e.getMessage());
             
         }
@@ -1126,7 +1126,7 @@ public class DpIngestionStreamImplTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#closeStreamNow()}.
+     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#closeStreamNow()}.
      */
     @Test
     public final void testCloseStreamNow() {
@@ -1154,7 +1154,7 @@ public class DpIngestionStreamImplTest {
         }
         
         // Create the interface implementation from the connection and configure it
-        DpIngestionStreamImpl   istream = new DpIngestionStreamImpl(connIngest);
+        JalIngestionStreamImpl   istream = new JalIngestionStreamImpl(connIngest);
         istream.setFrameProcessingConcurrency(cntThreads);
         istream.setStagingCapcity(szCapacity);
         istream.disableBackPressure();
@@ -1164,7 +1164,7 @@ public class DpIngestionStreamImplTest {
             istream.openStream(REC_PRVR_REG);
             Assert.assertTrue(istream.isStreamOpen());
             
-        } catch (DpIngestionException e) {
+        } catch (JalIngestionException e) {
             istream.shutdownNow();
             
             Assert.fail("The interface failed openStream(): " + e.getMessage());
@@ -1177,7 +1177,7 @@ public class DpIngestionStreamImplTest {
             // Transmit first payload then wait for queue ready 
             istream.ingest(lstFrms1);
             
-        } catch (IllegalStateException | InterruptedException | DpIngestionException e) {
+        } catch (IllegalStateException | InterruptedException | JalIngestionException e) {
             Assert.fail("Data ingest() exception: type=" + e.getClass().getSimpleName() + ", detail=" + e.getMessage());
             
         }
@@ -1251,7 +1251,7 @@ public class DpIngestionStreamImplTest {
     }
 
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#isStreamOpen()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#isStreamOpen()}.
 //     */
 //    @Test
 //    public final void testIsStreamOpen() {
@@ -1259,7 +1259,7 @@ public class DpIngestionStreamImplTest {
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.DpIngestionStreamImpl#awaitTermination()}.
+//     * Test method for {@link com.ospreydcs.dp.api.ingest.impl.JalIngestionStreamImpl#awaitTermination()}.
 //     */
 //    @Test
 //    public final void testAwaitTermination() {

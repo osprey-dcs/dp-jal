@@ -1,11 +1,11 @@
 package com.ospreydcs.dp.jal.tools.config.query;
 
-import com.ospreydcs.dp.api.config.common.DpConcurrencyConfig;
-import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
-import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
+import com.ospreydcs.dp.api.config.common.JalConcurrencyConfig;
+import com.ospreydcs.dp.api.config.common.JalLoggingConfig;
+import com.ospreydcs.dp.api.config.common.JalTimeoutConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.config.query.DpQueryRecoveryConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryRecoveryConfig;
 import com.ospreydcs.dp.jal.tools.config.request.JalTestRequestConfigDep;
 
 /**
@@ -33,15 +33,15 @@ public class JalToolsQueryConfigDep extends CfgStructure<JalToolsQueryConfigDep>
     
     /** General Query Service tools logging configuration */
     @ACfgOverride.Struct(pathelem="LOGGING")
-    public DpLoggingConfig          logging;
+    public JalLoggingConfig          logging;
     
     /** General tools testing timeout limits */
     @ACfgOverride.Struct(pathelem="TIMEOUT")
-    public DpTimeoutConfig          timeout;
+    public JalTimeoutConfig          timeout;
     
     /** General concurrency parameters */
     @ACfgOverride.Struct(pathelem="CONCURRENCY")
-    public DpConcurrencyConfig      concurrency;
+    public JalConcurrencyConfig      concurrency;
     
 //    /** The Data Platform test archive configuration parameter set */
 //    @ACfgOverride.Struct(pathelem="TEST_ARCHIVE")
@@ -53,7 +53,7 @@ public class JalToolsQueryConfigDep extends CfgStructure<JalToolsQueryConfigDep>
     
     /** The default configuration for data request recoveries */ 
     @ACfgOverride.Struct(pathelem="RECOVERY")
-    public DpQueryRecoveryConfig    recovery;
+    public JalQueryRecoveryConfig    recovery;
     
 }
 

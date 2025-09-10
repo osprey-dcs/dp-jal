@@ -27,7 +27,7 @@
  */
 package com.ospreydcs.dp.api.config.grpc;
 
-import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
+import com.ospreydcs.dp.api.config.common.JalLoggingConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -48,7 +48,7 @@ public final class DpConnectionsConfig extends CfgStructure<DpConnectionsConfig>
 
     /** General event logging for connection services */
     @ACfgOverride.Struct(pathelem="LOGGING")
-    public DpLoggingConfig          logging;
+    public JalLoggingConfig          logging;
 
     /** Data Platform Ingestion Service connection parameters */
     @ACfgOverride.Struct(pathelem="INGESTION")

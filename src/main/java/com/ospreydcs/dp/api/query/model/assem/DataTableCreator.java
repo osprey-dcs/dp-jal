@@ -33,8 +33,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.api.common.IDataTable;
 import com.ospreydcs.dp.api.common.JalDataTableType;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.query.DpQueryConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.query.JalQueryConfig;
 import com.ospreydcs.dp.api.model.table.StaticDataTable;
 import com.ospreydcs.dp.api.query.DpQueryException;
 import com.ospreydcs.dp.api.query.model.table.SampledAggregateTable;
@@ -144,7 +144,7 @@ public class DataTableCreator {
     //
     
     /** Query tools default configuration parameters */
-    private static final DpQueryConfig      CFG_QUERY = DpApiConfig.getInstance().query;
+    private static final JalQueryConfig      CFG_QUERY = JalConfig.getInstance().query;
 
     
     //

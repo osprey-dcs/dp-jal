@@ -1,10 +1,10 @@
 /*
  * Project: dp-api-common
- * File:	DpQueryConfig.java
- * Package: com.ospreydcs.dp.api.config.query
- * Type: 	DpQueryConfig
+ * File:	JalAnnotationConfig.java
+ * Package: com.ospreydcs.dp.api.config.annotate
+ * Type: 	JalAnnotationConfig
  *
- * Copyright 2010-2023 the original author or authors.
+ * Copyright 2010-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,51 +20,43 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Dec 31, 2023
+ * @since Feb 26, 2025
  *
- * TODO:
- * - None
  */
-package com.ospreydcs.dp.api.config.query;
+package com.ospreydcs.dp.api.config.annotate;
 
-import com.ospreydcs.dp.api.config.common.DpLoggingConfig;
-import com.ospreydcs.dp.api.config.common.DpTimeoutConfig;
+import com.ospreydcs.dp.api.config.common.JalLoggingConfig;
+import com.ospreydcs.dp.api.config.common.JalTimeoutConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
 /**
  * <p>
- * Structure class containing configuration parameters for Data Platform Query Service API operations.
+ * Structure class containing default configuration parameters for the JAL Annotation API operations.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Dec 31, 2023
+ * @since Feb 26, 2025
  *
  */
-@ACfgOverride.Root(root="DP_API_QUERY")
-public final class DpQueryConfig extends CfgStructure<DpQueryConfig> {
+@ACfgOverride.Root(root="DP_API_ANNOTATION")
+public class JalAnnotationConfig extends CfgStructure<JalAnnotationConfig> {
 
     /** Default constructor required for base structure class */
-    public DpQueryConfig() { super(DpQueryConfig.class); }
+    public JalAnnotationConfig() { super(JalAnnotationConfig.class); }
 
-
+    
     //
     // Configuration Fields
     //
     
-    /** Default parameters for Query Service time-series data requests and responses */
-    @ACfgOverride.Struct(pathelem="DATA")
-    public DpQueryRecoveryConfig    data;
-    
-//    /** Default concurrency parameters for Query Service operations */
-//    @ACfgOverride.Struct(pathelem="CONCURRENCY")
-//    public DpConcurrencyConfig      concurrency;
-    
     /** Default timeout parameters for Query Service operations */
     @ACfgOverride.Struct(pathelem="TIMEOUT")
-    public DpTimeoutConfig          timeout;
+    public JalTimeoutConfig      timeout;
 
     /** Default logging configuration for Query Service operations */
     @ACfgOverride.Struct(pathelem="LOGGING")
-    public DpLoggingConfig          logging;
+    public JalLoggingConfig      logging;
+    
+    
 }

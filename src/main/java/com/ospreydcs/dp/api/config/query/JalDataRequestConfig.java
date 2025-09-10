@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpDataRequestConfig.java
+ * File:	JalDataRequestConfig.java
  * Package: com.ospreydcs.dp.api.config.query
- * Type: 	DpDataRequestConfig
+ * Type: 	JalDataRequestConfig
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -29,7 +29,6 @@ package com.ospreydcs.dp.api.config.query;
 
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
@@ -44,10 +43,10 @@ import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
  *
  */
 @ACfgOverride.Root(root="DP_API_QUERY_DATA_REQUEST")
-public class DpDataRequestConfig extends CfgStructure<DpDataRequestConfig> {
+public class JalDataRequestConfig extends CfgStructure<JalDataRequestConfig> {
 
     /** Default constructor required for base structure class */
-    public DpDataRequestConfig() { super(DpDataRequestConfig.class); }
+    public JalDataRequestConfig() { super(JalDataRequestConfig.class); }
 
     
     //

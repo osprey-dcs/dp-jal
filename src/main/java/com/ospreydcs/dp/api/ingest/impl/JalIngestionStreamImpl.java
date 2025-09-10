@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpIngestionStreamImpl.java
+ * File:	JalIngestionStreamImpl.java
  * Package: com.ospreydcs.dp.api.ingest.impl
- * Type: 	DpIngestionStreamImpl
+ * Type: 	JalIngestionStreamImpl
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -44,12 +44,12 @@ import com.ospreydcs.dp.api.common.IngestionResult;
 import com.ospreydcs.dp.api.common.ProviderRegistrar;
 import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.api.grpc.ingest.DpIngestionConnectionFactory;
 import com.ospreydcs.dp.api.grpc.model.DpServiceApiBase;
-import com.ospreydcs.dp.api.ingest.DpIngestionException;
+import com.ospreydcs.dp.api.ingest.JalIngestionException;
 import com.ospreydcs.dp.api.ingest.IIngestionStream;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
@@ -89,7 +89,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  *   <li>Clients can also use the <code>{@link #awaitQueueEmpty()}</code> method to block until the staging buffer is
  *       completely empty.</li>
  *   </ul>
- * The ingestion throttling feature is available in the <code>DpApiConfig</code> library 
+ * The ingestion throttling feature is available in the <code>JalConfig</code> library 
  * configuration and with the <code>{@link #enableBackPressure()}</code> and <code>{@link #disableBackPressure()}</code>
  * configuration methods specific to this class.
  * </li> 
@@ -186,15 +186,15 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * <p>
  * <h2>Configuration</h2>
  * The class provides multiple methods for client-configuration of the <code>{@link IIngestionStream}</code> interface.
- * The class <code>DpIngestionStreamImpl</code> is constructed with default configuration taken from the client library 
- * configuration (i.e., <code>{@link DpApiConfig}</code>).  These methods are available to change the default 
+ * The class <code>JalIngestionStreamImpl</code> is constructed with default configuration taken from the client library 
+ * configuration (i.e., <code>{@link JalConfig}</code>).  These methods are available to change the default 
  * configuration, primarily for unit testing.
  * </p>
  * <p>
- * Under normal operation instances of <code>DpIngestionStreamImpl</code> are obtained from a connection factory which
+ * Under normal operation instances of <code>JalIngestionStreamImpl</code> are obtained from a connection factory which
  * only exposes the <code>IIngestionStream</code> interface.  Thus, the instances obtained are in the default configuration.
  * For access to the configuration methods when instances are obtained from the connection factory clients must cast the 
- * obtained interface to the <code>DpIngestionStreamImpl</code> type.  Typically this practice is discouraged and
+ * obtained interface to the <code>JalIngestionStreamImpl</code> type.  Typically this practice is discouraged and
  * should be performed primarily for testing.
  * </p>
  *  
@@ -203,7 +203,7 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * @since Aug 14, 2024
  *
  */
-public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImpl, 
+public class JalIngestionStreamImpl extends DpServiceApiBase<JalIngestionStreamImpl, 
                                                             DpIngestionConnection, 
                                                             DpIngestionServiceGrpc, 
                                                             DpIngestionServiceBlockingStub, 
@@ -216,7 +216,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     
     /**
      * <p>
-     * Creates a new instance of <code>DpIngestionStreamImpl</code> attached to the given Ingestion Service connection.
+     * Creates a new instance of <code>JalIngestionStreamImpl</code> attached to the given Ingestion Service connection.
      * </p>
      * <p>
      * This method is intended for use by <code>IIngestionStream</code> connection factories but
@@ -235,13 +235,13 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * 
      * @param connIngest  the gRPC channel connection to the desired DP Ingestion Service
      * 
-     * @return  a new <code>DpIngestionStreamImpl</code> instance connected and ready for data ingestion
+     * @return  a new <code>JalIngestionStreamImpl</code> instance connected and ready for data ingestion
      * 
      * @see DpIngestionConnectionFactory
-     * @see DpIngestionStreamFactory 
+     * @see JalIngestionStreamFactory 
      */
-    public static DpIngestionStreamImpl from(DpIngestionConnection connIngest) {
-        return new DpIngestionStreamImpl(connIngest);
+    public static JalIngestionStreamImpl from(DpIngestionConnection connIngest) {
+        return new JalIngestionStreamImpl(connIngest);
     }
 
     //
@@ -249,7 +249,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
     //
 
     /** Default Query Service configuration parameters */
-    private static final DpIngestionConfig  CFG_DEFAULT = DpApiConfig.getInstance().ingest;
+    private static final JalIngestionConfig  CFG_DEFAULT = JalConfig.getInstance().ingest;
 
 
 //    //
@@ -462,7 +462,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
 
     /**
      * <p>
-     * Constructs a new instance of <code>DpIngestionStreamImpl</code> attached to the given
+     * Constructs a new instance of <code>JalIngestionStreamImpl</code> attached to the given
      * Ingestion Service connection.
      * </p>
      * <p>
@@ -481,7 +481,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * 
      * @see DpIngestionConnectionFactory
      */
-    DpIngestionStreamImpl(DpIngestionConnection connIngest) {
+    JalIngestionStreamImpl(DpIngestionConnection connIngest) {
         super(connIngest);
         
         this.prcrFrames = IngestionFrameProcessor.create();
@@ -1165,7 +1165,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      */
     @Override
     synchronized
-    public ProviderUID openStream(ProviderRegistrar recRegistration) throws DpIngestionException {
+    public ProviderUID openStream(ProviderRegistrar recRegistration) throws JalIngestionException {
 
         // Check if stream is already open
         if (this.bolStreamOpen)
@@ -1200,7 +1200,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#ingest(com.ospreydcs.dp.api.ingest.IngestionFrame)
      */
     @Override
-    public void ingest(IngestionFrame frame) throws IllegalStateException, InterruptedException, DpIngestionException {
+    public void ingest(IngestionFrame frame) throws IllegalStateException, InterruptedException, JalIngestionException {
 
         // Check state
         if (!this.bolStreamOpen)
@@ -1224,7 +1224,7 @@ public class DpIngestionStreamImpl extends DpServiceApiBase<DpIngestionStreamImp
      * @see @see com.ospreydcs.dp.api.ingest.IIngestionStream#ingest(java.util.List)
      */
     @Override
-    public void ingest(List<IngestionFrame> lstFrames) throws IllegalStateException, InterruptedException, DpIngestionException {
+    public void ingest(List<IngestionFrame> lstFrames) throws IllegalStateException, InterruptedException, JalIngestionException {
 
         // Check state
         if (!this.bolStreamOpen)

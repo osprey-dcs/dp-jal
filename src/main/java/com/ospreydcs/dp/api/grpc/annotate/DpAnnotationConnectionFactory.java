@@ -27,7 +27,7 @@
  */
 package com.ospreydcs.dp.api.grpc.annotate;
 
-import com.ospreydcs.dp.api.config.DpApiConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnection;
 import com.ospreydcs.dp.api.grpc.model.DpGrpcConnectionFactoryBase;
@@ -80,7 +80,7 @@ public class DpAnnotationConnectionFactory extends
     //
     
     /** The API Library default Annotation Service configuration parameters */
-    private static final DpGrpcConnectionConfig   CFG_DEFAULT = DpApiConfig.getInstance().connections.annotation;
+    private static final DpGrpcConnectionConfig   CFG_DEFAULT = JalConfig.getInstance().connections.annotation;
 
     
     //

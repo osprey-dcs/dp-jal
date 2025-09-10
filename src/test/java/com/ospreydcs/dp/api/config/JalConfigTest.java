@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	DpApiConfigTest.java
+ * File:	JalConfigTest.java
  * Package: com.ospreydcs.dp.api.config
- * Type: 	DpApiConfigTest
+ * Type: 	JalConfigTest
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -44,14 +44,14 @@ import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
 
 /**
  * <p>
- * JUnit test cases for class <code>DpApiConfig</code>.
+ * JUnit test cases for class <code>JalConfig</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Dec 21, 2023
  *
  */
-public class DpApiConfigTest {
+public class JalConfigTest {
     
     
     //
@@ -114,22 +114,22 @@ public class DpApiConfigTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.DpApiConfig#getInstance()}.
+     * Test method for {@link com.ospreydcs.dp.api.config.JalConfig#getInstance()}.
      */
     @Test
     public final void testGetInstance() {
         
-        String  strIncpt = DpApiConfig.getInstance().archive.inception;
+        String  strIncpt = JalConfig.getInstance().archive.inception;
         System.out.println("Data Platform TestArchive Inception: " + strIncpt);
         Instant insIncpt = Instant.parse(strIncpt);
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.api.config.DpApiConfig#toString()}.
+     * Test method for {@link com.ospreydcs.dp.api.config.JalConfig#toString()}.
      */
     @Test
     public final void testToString() {
-        DpApiConfig cfg = DpApiConfig.getInstance();
+        JalConfig cfg = JalConfig.getInstance();
         
         System.out.println("DP API Default Configuration:");
         System.out.println(cfg);
@@ -137,14 +137,14 @@ public class DpApiConfigTest {
     
     @Test
     public final void testOverrides() {
-        DpApiConfig cfg = DpApiConfig.getInstance();
+        JalConfig cfg = JalConfig.getInstance();
         
         // Need to force system properties override in case this is part of a test suite
         try {
             CfgOverrideUtility.overrideRoot(cfg, CfgOverrideUtility.SOURCE.PROPERTIES);
             
         } catch (IllegalArgumentException | IllegalAccessException e) {
-            Assert.fail("Forced override of DpApiConfig instance threw exception: " + e.getMessage());
+            Assert.fail("Forced override of JalConfig instance threw exception: " + e.getMessage());
             
         }
         
@@ -156,11 +156,11 @@ public class DpApiConfigTest {
     
     /**
      * Test method for {@link CfgOverrideUtility#extractOverrideables(Object, com.ospreydcs.dp.api.config.model.CfgOverrideUtility.SOURCE)}
-     * as applied to {@link DpApiConfig}.
+     * as applied to {@link JalConfig}.
      */
     @Test
     public final void testExtractOverrideables() {
-        DpApiConfig cfg = DpApiConfig.getInstance();
+        JalConfig cfg = JalConfig.getInstance();
         
         try {
             List<CfgOverrideRec> lstRecs = CfgOverrideUtility.extractOverrideables(cfg, CfgOverrideUtility.SOURCE.ENVIRONMENT);

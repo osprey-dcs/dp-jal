@@ -49,8 +49,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ProviderUID;
-import com.ospreydcs.dp.api.config.DpApiConfig;
-import com.ospreydcs.dp.api.config.ingest.DpIngestionConfig;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
@@ -238,7 +238,7 @@ public final class IngestionFrameProcessorDeprecated implements IMessageSupplier
     //
     
     /** The Ingestion Service client API default configuration */
-    private static final DpIngestionConfig  CFG_DEFAULT = DpApiConfig.getInstance().ingest; 
+    private static final JalIngestionConfig  CFG_DEFAULT = JalConfig.getInstance().ingest; 
     
     
     //
