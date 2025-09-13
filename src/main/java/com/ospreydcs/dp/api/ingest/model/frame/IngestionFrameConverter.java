@@ -29,12 +29,12 @@ package com.ospreydcs.dp.api.ingest.model.frame;
 
 import java.security.ProviderException;
 import java.util.MissingResourceException;
-import java.util.UUID;
 
 import com.ospreydcs.dp.api.common.IngestRequestUID;
 import com.ospreydcs.dp.api.common.ProviderUID;
+import com.ospreydcs.dp.api.config.JalConfig;
+import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.api.grpc.util.ProtoTime;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.grpc.v1.common.EventMetadata;
@@ -62,6 +62,16 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * current JVM execution.
  * </p>
  * <p>
+ * <h2>Default Provider UID</h2>
+ * A Data Provider UID is required for every <code>IngestDataRequest</code> message.  The Data Provider UID
+ * must be provided either explicitly to a request creation method <code>createRequest(...)</code> or set
+ * using constructor <code>{@link #IngestionFrameConverter(ProviderUID)}</code> or set using the configuration method
+ * <code>{@link #setDefaultProviderUid(ProviderUID)}</code>.  
+ * If a Data Provider UID is not
+ * available at the time of <code>IngestDataRequest</code> message creation the process will fail with an
+ * exception.
+ * </p>
+ * <p>
  * <h2>gRPC Message Size Limits</h2>
  * Class instances do no data processing, only data conversion.  Specifically, a large ingestion
  * frame will be converted to an equally large, single ingestion data request message.  
@@ -71,9 +81,28 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * gRPC message size limitation should be processed before offering to this class.
  * </p>
  * <p>
+ * <h2>Serialized Data Columns</h2>
+ * The <code>IngestionDataFrame</code> Protocol Buffers message sent to the Data Platform Ingestion Service
+ * can contain sampling vectors as either a <code>DataColumn</code> message or a <code>SerializedDataColumn</code>
+ * message.  The use of <code>SerializedDataColumn</code> messages can be enabled with configuration method
+ * <code>{@link #enableSerialization(boolean)}</code>.  The default setting for serialized data column use
+ * is given by the value of class constant <code>{@link #BOL_SERIALIZE_DEF}</code> whose value it taken
+ * from the JAL configuration file.  
+ * </p>
+ * <p>
+ * Employing <code>SerializedDataColumn</code> can significantly enhance performance, especially for
+ * sampling vectors requiring large memory allocation.  Using <code>SerializedDataColumn</code> messages avoids 
+ * repeated serialization/de-serialization operations for data transport and archiving.  Specifically, it is
+ * explicitly serialized only once, before transport, then transported to the Ingestion Service where it 
+ * is archived in its serialized form.  Conversely, the <code>DataColumn</code> is serialized for transport,
+ * transported, de-serialized by Protocol Buffers after transport, then re-serializezd for archiving by the
+ * Ingestion Service. 
+ * </p>
+ * 
+ * <p>
  * <h2>NOTES:</h2>
  * <ul>
- * <li></li>
+ * <li>No additional notes.</li>
  * </ul>
  * </p>
  *  
@@ -115,13 +144,24 @@ public final class IngestionFrameConverter {
     }
     
     
+    // 
+    // JAL Resources
+    //
+    
+    /** JAL Ingestion Service API default configuration parameters */
+    public static final JalIngestionConfig      CFG_DEF = JalConfig.getInstance().ingest;
+    
+    
     //
     // Class Constants
     //
     
-    /** The name used for the name-based UUID client request identifier for each message (required by Ingestion Service) */
-    public static final String      STR_UUID_NAME = "JavaClientApiLibrary-IngestionFrameConverter";
+//    /** The name used for the name-based UUID client request identifier for each message (required by Ingestion Service) */
+//    public static final String      STR_UUID_NAME = "JavaClientApiLibrary-IngestionFrameConverter";
     
+    /** Data column serialization enable/disable default parameter */
+    public static final boolean     BOL_SERIALIZE_DEF = CFG_DEF.serialize.enabled; 
+            
     
     //
     // Class Resources
@@ -129,9 +169,9 @@ public final class IngestionFrameConverter {
     
 //    /** The locking object for synchronizing access to class resources */ 
 //    private static final Object     objClassLock = new Object();
-    
-    /** The number of ingestion frames converted - used for request ID creation */
-    private static long             cntFrames = 0L;
+//    
+//    /** The number of ingestion frames converted - used for request ID creation */
+//    private static long             cntFrames = 0L;
 
     
     //
@@ -139,9 +179,17 @@ public final class IngestionFrameConverter {
     //
     
     /** The default data provider unique identifier - used when one is not provided or available within the frame */
-    private final ProviderUID       recProviderUidDef;
+    private ProviderUID       recProviderUidDef;
     
 
+    //
+    // Configuration Parameters
+    //
+    
+    /** Data column serialization enable/disable (produce serialized IngestDataRequest message) */
+    private boolean     bolSerialize = BOL_SERIALIZE_DEF;
+    
+    
     //
     // Constructors
     //
@@ -161,10 +209,91 @@ public final class IngestionFrameConverter {
      * Constructs a new instance of <code>IngestionFrameConverter</code> with a default provider UID.
      * </p>
      *
-     * @param recDefProviderId  default Data Provider UID to use when none is provided
+     * @param recProviderIdDef  default Data Provider UID to use when none is provided or in the ingestion frame
      */
-    public IngestionFrameConverter(ProviderUID recDefProviderId) {
-        this.recProviderUidDef = recDefProviderId;
+    public IngestionFrameConverter(ProviderUID recProviderIdDef) {
+        this.recProviderUidDef = recProviderIdDef;
+    }
+    
+    
+    //
+    // Configuration
+    //
+    
+    /**
+     * <p>
+     * Sets the default Data Provider UID to be used whenever one is not explicitly provided or available in the
+     * ingestion frame.
+     * </p>
+     * <p>
+     * A Data Provider UID is required for every <code>IngestDataRequest</code> message.  The given value is used
+     * whenever an explicit value is not provided in a <code>createRequest(...)</code> method <em>and</em> one is
+     * not present in the <code>IngestionFrame</code> instance given to the method.  If a Data Provider UID is not
+     * available at the time of <code>IngestDataRequest</code> message creation the process will fail with an
+     * exception.
+     * </p>
+     * 
+     * @param recProviderUidDef the default Provider UID used for request creation whenever an UID is not otherwise available
+     */
+    public void setDefaultProviderUid(ProviderUID recProviderUidDef) {
+        this.recProviderUidDef = recProviderUidDef;
+    }
+    
+    /**
+     * <p>
+     * Enables/disables the use of serialization for creating data columns within an <code>IngestionFrame</code>.
+     * </p>
+     * <p>
+     * The <code>IngestionDataFrame</code> Protocol Buffers message sent to the Data Platform Ingestion Service
+     * can contain sampling vectors as either a <code>DataColumn</code> message or a <code>SerializedDataColumn</code>
+     * message.  Employing <code>SerializedDataColumn</code> can significantly enhance performance, especially for
+     * sampling vectors requiring large memory allocation.  Using <code>SerializedDataColumn</code> messages avoids 
+     * repeated serialization/de-serialization operations for data transport and archiving.  Specifically, it is
+     * explicitly serialized only once, before transport, then transported to the Ingestion Service where it 
+     * is archived in its serialized form.  Conversely, the <code>DataColumn</code> is serialized for transport,
+     * transported, de-serialized by Protocol Buffers after transport, then re-serializezd for archiving by the
+     * Ingestion Service. 
+     * </p>
+     * 
+     * @param bolSerialize  <code>true</code> if creating <code>SerializedDataColumn</code> messages for transport,
+     *                      <code>false</code> if creating <code>DataColumn</code> messages
+     */
+    public void enableSerialization(boolean bolSerialize) {
+        this.bolSerialize = bolSerialize;
+    }
+    
+    /**
+     * <p>
+     * Returns the default Data Provider UID used whenever an UID is not provided 
+     * (i.e., either explicitly or in the ingestion frame).
+     * </p>
+     * <p>
+     * See <code>{@link #setDefaultProviderUid(ProviderUID)}</code> for a description of the default 
+     * Data Provider UID.
+     * </p>
+     * 
+     * @return  the current value of the default Data Provider UID or <code>null</code> if none has been set
+     */
+    public ProviderUID  getDefaultProviderUid() {
+        return this.recProviderUidDef;
+    }
+    
+    /**
+     * <p>
+     * Determines whether or not <code>DataColumn<code> serialization is enabled.
+     * </p>
+     * <p>
+     * See <code>{@link #enableSerialization(boolean)}</code> for a description of the serialization parameter
+     * and values.
+     * </p>
+     * 
+     * @return  <code>true</code> if creating <code>SerializedDataColumn</code> messages,
+     *          <code>false</code> if creating <code>DataColumn</code> messages
+     *          
+     * @see #enableSerialization(boolean)
+     */
+    public boolean isSerializating() {
+        return this.bolSerialize;
     }
     
     
@@ -293,7 +422,7 @@ public final class IngestionFrameConverter {
 //                .setRequestTime(ProtoTime.now())
                 .addAllAttributes(ProtoMsg.createAttributes(frame.getAttributes()))
                 .setEventMetadata(IngestionFrameConverter.extractEventMetadata(frame))
-                .setIngestionDataFrame(ProtoMsg.from(frame))
+                .setIngestionDataFrame(ProtoMsg.from(frame, this.bolSerialize))
                 .build();
 
         return msgRqst;

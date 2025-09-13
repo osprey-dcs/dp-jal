@@ -2228,8 +2228,8 @@ public class IngestionFrame implements Serializable {
             
             for (IDataColumn<Object> col : this.vecColData) {
                 Object  objVal = col.getValue(iRow);
-                String  strVal = String.format("%10s", objVal.toString());
-                
+//                String  strVal = String.format("%10s", objVal.toString());
+//                
 //                strRow += "\t" + strVal;
                 strRow += "\t" + objVal;
             }

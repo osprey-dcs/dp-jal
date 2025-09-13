@@ -52,6 +52,7 @@ import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.api.ingest.IngestionFrame;
 import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 
 /**
@@ -157,6 +158,24 @@ import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
  * The frame decomposition operations can be performed concurrently.  Specifically, if multiple
  * ingestion frames are offered at the same time each decomposition will be assigned a separate
  * execution thread (up to the concurrency limit).
+ * </p>
+ * <p>
+ * <h2>Serialized Data Columns</h2>
+ * The <code>IngestionDataFrame</code> Protocol Buffers message sent to the Data Platform Ingestion Service
+ * can contain sampling vectors as either a <code>DataColumn</code> message or a <code>SerializedDataColumn</code>
+ * message.  The use of <code>SerializedDataColumn</code> messages can be enabled with configuration method
+ * <code>{@link #enableSerialization(boolean)}</code>.  The default setting for serialized data column use
+ * is given by the value of class constant <code>{@link #BOL_SERIALIZE_DEF}</code> whose value it taken
+ * from the JAL configuration file.  
+ * </p>
+ * <p>
+ * Employing <code>SerializedDataColumn</code> can significantly enhance performance, especially for
+ * sampling vectors requiring large memory allocation.  Using <code>SerializedDataColumn</code> messages avoids 
+ * repeated serialization/de-serialization operations for data transport and archiving.  Specifically, it is
+ * explicitly serialized only once, before transport, then transported to the Ingestion Service where it 
+ * is archived in its serialized form.  Conversely, the <code>DataColumn</code> is serialized for transport,
+ * transported, de-serialized by Protocol Buffers after transport, then re-serializezd for archiving by the
+ * Ingestion Service. 
  * </p>
  * <p>
  * <h2>WARNINGS:</h2>
@@ -323,6 +342,14 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     private static final TimeUnit  TU_TIMEOUT_TASK_POLL = TimeUnit.MILLISECONDS;
     
     
+    //
+    // Class Constants - Default Values
+    //
+    
+    /** Data column serialization enable/disable default parameter */
+    public static final boolean     BOL_SERIALIZE_DEF = CFG_DEFAULT.serialize.enabled; 
+            
+    
     /** General operation timeout limit */
     private static final long       LNG_TIMEOUT_GENERAL = CFG_DEFAULT.timeout.limit;
     
@@ -336,10 +363,6 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     /** Event logging level */
     private static final String     STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
 
-    
-    //
-    // Class Constants - Default Values
-    //
     
     /** Are general concurrency enabled - used for ingestion frame decomposition */
     private static final Boolean    BOL_CONCURRENCY_ACTIVE = CFG_DEFAULT.concurrency.enabled;
@@ -367,21 +390,11 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     //
     
     /** The class event logger */
-    private static final Logger     LOGGER = LogManager.getLogger();
+    private static final Logger     LOGGER = Log4j.getLogger(IngestionFrameProcessor.class, STR_LOGGING_LEVEL);
     
 //    /** The locking object for synchronizing access to class resources */ 
 //    private static final Object   objClassLock = new Object();
 
-    
-    /**
-     * <p>
-     * Class Initialization - Initializes the event logger, sets logging level.
-     * </p>
-     */
-    static {
-        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
-    }
-    
     
     //
     // Configuration Parameters
@@ -389,6 +402,10 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     
     /** The data provider unique identifier used for <code>IngestDataRequest</code> messages */
     private ProviderUID       recProviderUid = null;
+
+    
+    /** Data column serialization enable/disable (produce serialized IngestDataRequest message) */
+    private boolean bolSerialize = BOL_SERIALIZE_DEF;
 
     
     /** Processing concurrency enabled flag */
@@ -451,10 +468,10 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     //
     
     /** Frame decomposition sub-processor for main thread */
-    private IngestionFrameDecomposer      prcrMsgBinner;
+    private IngestionFrameDecomposer    prcrMsgBinner;
     
     /** Frame-to-message sub-processor for main thread */
-    private IngestionFrameConverter   prcMsgConverter;
+    private IngestionFrameConverter     prcMsgConverter;
 
     
     //
@@ -475,7 +492,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     
     
     /** Pending resource counter - number of processing resource owned by by processing threads (not appearing in any queue) */
-    private final AtomicInteger         cntRrcsPending = new AtomicInteger(0);
+    private final AtomicInteger           cntRrcsPending = new AtomicInteger(0);
     
     
 //    /** The message queue buffer back pressure lock */
@@ -534,6 +551,29 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      */
     public void setProviderUid(ProviderUID recProviderUid) {
         this.recProviderUid = recProviderUid;
+    }
+    
+    /**
+     * <p>
+     * Enables/disables the use of serialization for creating data columns within an <code>IngestionFrame</code>.
+     * </p>
+     * <p>
+     * The <code>IngestionDataFrame</code> Protocol Buffers message sent to the Data Platform Ingestion Service
+     * can contain sampling vectors as either a <code>DataColumn</code> message or a <code>SerializedDataColumn</code>
+     * message.  Employing <code>SerializedDataColumn</code> can significantly enhance performance, especially for
+     * sampling vectors requiring large memory allocation.  Using <code>SerializedDataColumn</code> messages avoids 
+     * repeated serialization/de-serialization operations for data transport and archiving.  Specifically, it is
+     * explicitly serialized only once, before transport, then transported to the Ingestion Service where it 
+     * is archived in its serialized form.  Conversely, the <code>DataColumn</code> is serialized for transport,
+     * transported, de-serialized by Protocol Buffers after transport, then re-serializezd for archiving by the
+     * Ingestion Service. 
+     * </p>
+     * 
+     * @param bolSerialize  <code>true</code> if creating <code>SerializedDataColumn</code> messages for transport,
+     *                      <code>false</code> if creating <code>DataColumn</code> messages
+     */
+    public void enableSerialization(boolean bolSerialize) {
+        this.bolSerialize = bolSerialize;
     }
     
     /**
@@ -721,6 +761,24 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     //
     // Configuration Query
     //
+    
+    /**
+     * <p>
+     * Determines whether or not <code>DataColumn<code> serialization is enabled.
+     * </p>
+     * <p>
+     * See <code>{@link #enableSerialization(boolean)}</code> for a description of the serialization parameter
+     * and values.
+     * </p>
+     * 
+     * @return  <code>true</code> if creating <code>SerializedDataColumn</code> messages,
+     *          <code>false</code> if creating <code>DataColumn</code> messages
+     *          
+     * @see #enableSerialization(boolean)
+     */
+    public boolean hasSerializating() {
+        return this.bolSerialize;
+    }
     
     /**
      * <p>
@@ -1051,7 +1109,10 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         // If no multi-threaded concurrency
         if (!this.bolConcurrency) {
             this.prcrMsgBinner = IngestionFrameDecomposer.from(this.szMaxFrmAlloc);
-            this.prcMsgConverter = IngestionFrameConverter.create(this.recProviderUid);
+            this.prcMsgConverter = IngestionFrameConverter.create();
+            
+            this.prcMsgConverter.setDefaultProviderUid(this.recProviderUid);
+            this.prcMsgConverter.enableSerialization(this.bolSerialize);
             
             return true;
         }
@@ -1073,7 +1134,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         // Create all the thread tasks and submit them to their corresponding thread executor 
         for (int iTask=0; iTask<cntTasks; iTask++) {
             Callable<Boolean>   tskDecomp = this.createFrameDecompositionTask();
-            Callable<Boolean>   tskConvert = this.createFrameConvertToMessageTask();
+            Callable<Boolean>   tskConvert = this.createFrameToMessageTask();
 
             Future<Boolean>     futDecomp = this.xtorDecompTasks.submit(tskDecomp);
             Future<Boolean>     futConvert = this.xtorConvertTasks.submit(tskConvert);
@@ -1614,7 +1675,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * 
      * @return  a new <code>Callable</code> instance converting ingestion frames to request messages
      */
-    private Callable<Boolean>   createFrameConvertToMessageTask() {
+    private Callable<Boolean>   createFrameToMessageTask() {
         
         // Define the task operations as a lambda function
         Callable<Boolean>   task = () -> {
@@ -1625,7 +1686,10 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
             
             
             // Ingestion frame converter used for all message creation
-            IngestionFrameConverter converter = IngestionFrameConverter.create(this.recProviderUid);
+            IngestionFrameConverter converter = IngestionFrameConverter.create();
+            
+            converter.setDefaultProviderUid(this.recProviderUid);
+            converter.enableSerialization(this.bolSerialize);
             
             // While enabled - Continuously convert frames in processed frame buffer to gRPC messages 
             // - second OR conditionals allows for soft shutdowns

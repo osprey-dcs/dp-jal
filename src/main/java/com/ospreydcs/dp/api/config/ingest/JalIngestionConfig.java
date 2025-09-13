@@ -29,6 +29,7 @@ package com.ospreydcs.dp.api.config.ingest;
 
 import com.ospreydcs.dp.api.config.common.JalConcurrencyConfig;
 import com.ospreydcs.dp.api.config.common.JalLoggingConfig;
+import com.ospreydcs.dp.api.config.common.JalSerializeConfig;
 import com.ospreydcs.dp.api.config.common.JalTimeoutConfig;
 import com.ospreydcs.dp.api.config.grpc.DpGrpcStreamConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
@@ -56,7 +57,7 @@ public class JalIngestionConfig extends CfgStructure<JalIngestionConfig> {
     
     /** Default parameters for <code>IngestionFrame</code> serialization */
     @ACfgOverride.Struct(pathelem="SERIALIZE")
-    public Serialize            serialize;
+    public JalSerializeConfig   serialize;
     
     /** Default parameters for <code>IngestionFrame</code> decomposition */
     @ACfgOverride.Struct(pathelem="DECOMPOSE")
@@ -78,25 +79,6 @@ public class JalIngestionConfig extends CfgStructure<JalIngestionConfig> {
     @ACfgOverride.Struct(pathelem="LOGGING")
     public JalLoggingConfig      logging;
  
-    
-    /**
-     * <p>
-     * Structure class containing parameters for <code>ingestionFrame</code> serialization.
-     * </p>
-     */
-    public static final class Serialize extends CfgStructure<Serialize> {
-        
-        /** Default constructor required for base class */
-        public Serialize() { super(Serialize.class);  }
-        
-        // 
-        // Configuration Parameters
-        //
-        
-        /** Is serialization enabled */
-        @ACfgOverride.Field(name="ENABLED")
-        public Boolean      enabled;
-    }
     
     /**
      * Structure class containing parameters for <code>IngestionFrame</code> decomposition.

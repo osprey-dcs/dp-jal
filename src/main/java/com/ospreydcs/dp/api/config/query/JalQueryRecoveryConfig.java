@@ -1,5 +1,6 @@
 package com.ospreydcs.dp.api.config.query;
 
+import com.ospreydcs.dp.api.config.common.JalSerializeConfig;
 import com.ospreydcs.dp.api.config.model.ACfgOverride;
 import com.ospreydcs.dp.api.config.model.CfgStructure;
 
@@ -17,6 +18,10 @@ public class JalQueryRecoveryConfig extends CfgStructure<JalQueryRecoveryConfig>
     // Configuration Fields
     //
     
+    /** Default parameters for Query Service data recovery serialization use */
+    @ACfgOverride.Struct(pathelem="SERIALIZE")
+    public JalSerializeConfig       serialize;
+    
     /** Default parameters for Query Service time-series data request queries */
     @ACfgOverride.Struct(pathelem="REQUEST")
     public JalDataRequestConfig      request;
@@ -28,4 +33,26 @@ public class JalQueryRecoveryConfig extends CfgStructure<JalQueryRecoveryConfig>
     /** Default parameters for Query Service time-series data table results */
     @ACfgOverride.Struct(pathelem="TABLE")
     public JalDataTableConfig        table;
+    
+    
+    /**
+     * <p>
+     * Structure class containing parameters for data recovery serialization.
+     * </p>
+     */
+    public static final class Serialize extends CfgStructure<Serialize> {
+        
+        /** Default constructor required for base class */
+        public Serialize() { super(Serialize.class);  }
+        
+        // 
+        // Configuration Parameters
+        //
+        
+        /** Is serialization enabled */
+        @ACfgOverride.Field(name="ENABLED")
+        public Boolean      enabled;
+    }
+    
+    
 }

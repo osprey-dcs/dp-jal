@@ -111,15 +111,17 @@ ingest: # Data Platform Ingestion Service client API default configuration param
 
 query:      # Data Platform Query Service client API default configuration parameters
    data:         # Configuration parameters for time-series data requests and recoveries
-      request:        # Default parameters used in data requests
-         decompose:        # data request decomposition default parameters (for multi-streaming)
+      serialize:   # Request data recovery serialization
+         enabled: true   # Enable serialization of request data : JAL_QUERY_DATA_SERIALIZE_ENABLED
+      request:           # Default parameters used in data requests
+         decompose:          # data request decomposition default parameters (for multi-streaming)
             enabled: true           # use query decomposition  : DP_API_QUERY_DATA_REQUEST_DECOMPOSE_ENABLED
             preferred: HORIZONTAL   # preferred decomposition strategy {HORIZONTAL, VERTICAL, GRID, NONE} : DP_API_QUERY_DATA_REQUEST_DECOMPOSE_PREFERRED
             maxSources: 1000        # max data source count    : DP_API_QUERY_DATA_REQUEST_DECOMPOSE_MAX_SOURCES
             maxDuration: 1          # max time duration (unit)  : DP_API_QUERY_DATA_REQUEST_DECOMPOSE_MAX_DURATION
             durationUnit: SECONDS   # java.concurrent.TimeUnit : DP_API_QUERY_DATA_REQUEST_DECOMPOSE_DURATION_UNIT
-      recovery:       # Default parameters used for raw data recovery
-         stream:           # General gRPC streaming default parameters for raw data recovery
+      recovery:          # Default parameters used for raw data recovery
+         stream:             # General gRPC streaming default parameters for raw data recovery
 #           pageSize: 100      # UNUSED # default bucket count per page  : DP_API_QUERY_PAGE_SIZE
             preferred: BACKWARD     # {BACKWARD, BIDRECTIONAL} : DP_API_QUERY_DATA_REQUEST_STREAM_PREFERENCE
          multistream:      # Multiple gRPC data streaming parameters

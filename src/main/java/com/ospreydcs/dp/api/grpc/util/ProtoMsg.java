@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.ospreydcs.dp.api.annotate.model.DpDataBlock;
 import com.ospreydcs.dp.api.common.BufferedImage;
 import com.ospreydcs.dp.api.common.DpSupportedType;
@@ -68,6 +69,7 @@ import com.ospreydcs.dp.grpc.v1.common.ExceptionalResult.ExceptionalResultStatus
 import com.ospreydcs.dp.grpc.v1.common.Image;
 import com.ospreydcs.dp.grpc.v1.common.Image.FileType;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
+import com.ospreydcs.dp.grpc.v1.common.SerializedDataColumn;
 import com.ospreydcs.dp.grpc.v1.common.Structure;
 import com.ospreydcs.dp.grpc.v1.common.Structure.Field;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
@@ -287,23 +289,36 @@ public final class ProtoMsg {
      * from the given argument.
      * </p>
      * <p>
+     * <h2>Serialization</h2>
+     * The returned <code>IngestionDataFrame</code> is populated with <code>{@link DataColumn}</code> messages when
+     * the second argument is <code>false</code>.  Thus, using this values usually leads to reduced overall performance.
+     * When the second argument is <code>true</code> then the returned <codeIngestionFframe</code> message is populated
+     * with <code>{@link SerializedDataColumn}</code> messages.  This condition reduces serialization/de-serialization
+     * operations throughout data transport and archiving, typically increasing performance.  
+     * </p>
+     * <p>
      * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
      * The returned object contains only the timestamp information and column data 
      * (i.e., time-series data) from the argument.
      * The <code>{@link IngestionFrame}</code> class has additional properties that are
      * available for the <code>{@link IngestDataRequest}</code> message.
+     * </li>
+     * </ul>
      * </p>
      * 
      * @param frame client API library ingestion frame containing timestamps and time-series data
      * 
-     * @return  a new <code>IngestionDataFrame</code> message populated with data from the argument
+     * @return  a new <code>IngestionDataFrame</code> message populated with data from the argument (non-serial form)
      * 
      * @throws MissingResourceException the argument had no timestamp assignments
+     * @throws IllegalStateException    the argument has not been assigned data, i.e., there are no data columns
      * @throws TypeNotPresentException  an unsupported data type was contained in the arugment data
      * @throws ClassCastException       bad type cast or structured data within argument was not converted 
      */
-    public static IngestDataRequest.IngestionDataFrame from(IngestionFrame frame) 
-            throws MissingResourceException, TypeNotPresentException, ClassCastException  {
+    public static IngestDataRequest.IngestionDataFrame from(IngestionFrame frame, boolean bolSerialize) 
+            throws MissingResourceException, IllegalStateException, TypeNotPresentException, ClassCastException  {
 
         // Extract the argument timestamp information (clock or list) and convert 
         DataTimestamps msgDataTms = null;
@@ -324,14 +339,31 @@ public final class ProtoMsg {
         List<DataColumn>    lstMsgCols = frame
                 .getDataColumns()   // throws IllegalStateException
                 .stream()
-                .<DataColumn>map( colFrm -> ProtoMsg.createDataColumn(colFrm.getName(), colFrm.getValues()) ) // throws exceptions
+                .<DataColumn>map( colFrm -> ProtoMsg.createDataColumn(colFrm.getName(), colFrm.getValues()) ) // throws TypeNotPresentException, ClassCastExceeption
                 .toList();
 
+        // If no serialization use Protobuf message builder to populate directly with above DataColumn message and return
+        if (!bolSerialize) {
+
+            IngestDataRequest.IngestionDataFrame msgFrame = IngestDataRequest.IngestionDataFrame.newBuilder()
+                    .setDataTimestamps(msgDataTms)
+                    .addAllDataColumns(lstMsgCols)
+                    .build();
+
+            return msgFrame;
+        }
         
-        // Use Protobuf message builder to populate with argument data
-        IngestDataRequest.IngestionDataFrame msgFrame = IngestDataRequest.IngestionDataFrame.newBuilder()
+        // If serialization convert DataColumn messages to SerializedDataColumn message, populate builder, and return
+        List<SerializedDataColumn>  lstMsgColsSer = lstMsgCols.stream()
+                .<SerializedDataColumn>map(msgCol -> SerializedDataColumn.newBuilder()
+                        .setName(msgCol.getName())
+                        .setDataColumnBytes(msgCol.toByteString())
+                        .build())
+                .toList();
+                
+        IngestDataRequest.IngestionDataFrame    msgFrame = IngestDataRequest.IngestionDataFrame.newBuilder()
                 .setDataTimestamps(msgDataTms)
-                .addAllDataColumns(lstMsgCols)
+                .addAllSerializedDataColumns(lstMsgColsSer)
                 .build();
         
         return msgFrame;
@@ -422,7 +454,9 @@ public final class ProtoMsg {
      * @see #toDatum(Object)
      */
     public static DataColumn createDataColumn(String strName, List<Object> lstVals) throws TypeNotPresentException, ClassCastException {
-        List<DataValue> lstValMsgs = lstVals.stream().map(v -> ProtoMsg.createDataValue(v)).toList();
+        List<DataValue> lstValMsgs = lstVals.stream()
+                .map(v -> ProtoMsg.createDataValue(v))  // throws TypeNotPresentException, ClassCastException
+                .toList(); 
         
         DataColumn.Builder  bldr = DataColumn.newBuilder();
         bldr.setName(strName);
@@ -430,6 +464,39 @@ public final class ProtoMsg {
         
         return bldr.build();
     }
+    
+//    /**
+//     * <p>
+//     * Creates a new Data Platform <code>DataColumn</code> message from the given arguments.
+//     * </p>
+//     * <p>
+//     * The given list of objects are converted to <code>DataValue</code> Protobuf message
+//     * and used to populate the new gRPC message.  The name field of the message
+//     * is set with the given name.  The objects in the argument list must be of
+//     * type supported by the method <code>{@link #createDataValue(Object)}</code> otherwise
+//     * an exception is thrown.
+//     * </p>
+//     * 
+//     * @param strName   value of the name field in the return result 
+//     * @param lstVals   list of values used to populate the returned result
+//     * 
+//     * @return a new <code>DataColumn</code> message populated with the given arguments
+//     * 
+//     * @throws TypeNotPresentException the object argument was not one of the supported types (see {@link #createDataValue(Object)})
+//     * @throws ClassCastException      type conversion failed, or structured data conversion failed
+//     * 
+//     * @see #toDatum(Object)
+//     */
+//    public static SerializedDataColumn createSerializedDataColumn(String strName, List<Object> lstVals) throws TypeNotPresentException, ClassCastException {
+//        DataColumn  msgCol = ProtoMsg.createDataColumn(strName, lstVals);   // throws TypeNotPresentException, ClassCastException
+//        
+//        SerializedDataColumn    msgColSer = SerializedDataColumn.newBuilder()
+//                .setName(strName)
+//                .setDataColumnBytes(msgCol.toByteString())
+//                .build();
+//        
+//        return msgColSer;
+//    }
 
     /**
      * <p>
@@ -1392,8 +1459,61 @@ public final class ProtoMsg {
         
         return recResult;
     }
+
     
+    //
+    // Protocol Buffers Message Conversion
+    //
     
+    /**
+     * <p>
+     * Creates a new Data Platform <code>DataColumn</code> Protocol Buffer message from the given argument.
+     * </p>
+     * <p>
+     * Extracts the data values byte string from the given argument which is then used to create a new 
+     * <code>DataColumn</code> message from the <code>{@link DataColumn#parseFrom(ByteString)</code> method.
+     * A new <code>DataColumn</code> is then created with a builder. The data values of the above are used 
+     * within the builder along with the name field of the argument. 
+     * </p>
+     *  
+     * @param msgColSer source data for the returned message
+     *  
+     * @return  a new <code>DataColumn</code> message created from the argument data
+     * 
+     * @throws InvalidProtocolBufferException   the argument is invalid in some way: malformed, corrupt, or bad length
+     */
+    public static DataColumn    convertTo(SerializedDataColumn msgColSer) throws InvalidProtocolBufferException {
+//        String      strName = msgColSer.getName();
+        ByteString  vecBytes = msgColSer.getDataColumnBytes();
+        DataColumn  msgCol = DataColumn.parseFrom(vecBytes);        // throws InvalidProtocolBufferException
+
+        return msgCol;
+    }
+    
+    /**
+     * <p>
+     * Creates a new Data Platform <code>SerializedDataColumn</code> message from the given argument.
+     * </p>
+     * <p>
+     * The given <code>DataColumn</code> message is used to populate the returned 
+     * <code>SerializedDataValue</code> Protobuf message through byte serialization.
+     * The name field of the returned message is taken from the corresponding field of the argument.
+     * </p>
+     * 
+     * @param msgCol    the source message used for serialization
+     * 
+     * @return  a new <code>SerializedDataColumn</code> message created by serializing the argument
+     */
+    public static SerializedDataColumn convertTo(DataColumn msgCol) {
+        
+        SerializedDataColumn    msgColSer = SerializedDataColumn.newBuilder()
+                .setName(msgCol.getName())
+                .setDataColumnBytes(msgCol.toByteString())
+                .build();
+        
+        return msgColSer;
+    }
+
     //
     // Protobuf Message Field Extraction
     //
