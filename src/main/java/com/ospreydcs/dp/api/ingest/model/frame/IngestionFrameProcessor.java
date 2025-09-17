@@ -41,10 +41,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.api.common.ProviderUID;
 import com.ospreydcs.dp.api.config.JalConfig;
@@ -572,9 +569,61 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * @param bolSerialize  <code>true</code> if creating <code>SerializedDataColumn</code> messages for transport,
      *                      <code>false</code> if creating <code>DataColumn</code> messages
      */
+    synchronized
     public void enableSerialization(boolean bolSerialize) {
         this.bolSerialize = bolSerialize;
     }
+    
+//    /**
+//     * <p>
+//     * Enables the use of concurrent multi-threading for <code>IngestionFrame</code> processing.
+//     * </p>
+//     * <p>
+//     * Enables the use of multiple, concurrent execution threads for ingestion frame processing 
+//     * (i.e., frame decomposition and frame-to-message conversion).
+//     * <s>If concurrency is disabled there are still two independent processing threads, one for frame
+//     * decomposition and one for frame-to-message conversion.</s>
+//     * If concurrency is disabled all processing occurs on the main execution thread.  
+//     * </p>
+//     * <p>
+//     * <h2>Thread Safety</h2>
+//     * This method is synchronized for thread safety.  Changing configuration parameters must
+//     * be done atomically.  Thus, this configuration parameter 
+//     * will not be changed until this method acquires the <code>this</code> lock from any other
+//     * competing threads.
+//     * </p>
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * This method enables or disables concurrency only.  The actual number of concurrent threads is
+//     * set with method <code>{@link setConcurrencyMaxThreads(int)}</code>.  If concurrency is enabled
+//     * then the current maximum thread count is used for processing.
+//     * </p>
+//     * <p>
+//     * For stable operation the maximum thread count and the enabling of concurrency should be set
+//     * before activating the processor (i.e., with the <code>{@link #activate()}</code> method). 
+//     * </p>
+//     * <p>
+//     * <h2>WARNING:</h2>
+//     * This configuration parameter can only be modified <em>while the processor is inactive</em>, 
+//     * otherwise an exception is thrown.
+//     * Specifically, invoke this method either before activation with the <code>{@link #activate()}</code> 
+//     * or after shutdown with the <code>{@link #shutdown()}</code> method. 
+//     * </p>
+//     * 
+//     * @param bolConcurrency    <code>true</code> enables multi-threaded concurrency from ingestion frame processing,
+//     *                          <code>false</code> disables concurrency
+//     * 
+//     * @throws IllegalStateException    method called while processor is enabled
+//     */
+//    synchronized
+//    public void enableConcurrency(boolean bolConcurrency) throws IllegalStateException {
+//        
+//        // Check state
+//        if (this.bolActive)
+//            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once activated.");
+//        
+//        this.bolConcurrency = true;
+//    }
     
     /**
      * <p>
@@ -614,7 +663,8 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      */
     synchronized 
     public void setConcurrency(int cntThreads) throws IllegalStateException {
-        
+
+        // Check state
         if (this.bolActive)
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once activated.");
         
@@ -776,7 +826,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      *          
      * @see #enableSerialization(boolean)
      */
-    public boolean hasSerializating() {
+    public boolean hasSerialization() {
         return this.bolSerialize;
     }
     

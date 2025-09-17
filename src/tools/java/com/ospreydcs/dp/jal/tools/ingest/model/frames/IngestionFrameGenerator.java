@@ -90,17 +90,29 @@ import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
  * </li>
  * <li><b>Sample Period</b>
  * <br/>
- * All timestamps within produced ingestion frames are generated under the assumption of a uniform sampling clock
- * with period given by <code>{@link SampleBlockConfig#tmaPeriod()}</code>.
+ * All timestamps within produced ingestion frames are generated  with period given by 
+ * <code>{@link SampleBlockConfig#tmaPeriod()}</code>.  The timestamps themselves are represented either by  
+ *   <ul>
+ *   <li>
+ *   a uniform sampling clock if 
+ *   <code>{@link SampleBlockConfig#enmTmsCase()}</code> == <code>{@link DpTimestampCase#SAMPLING_CLOCK}</code>
+ *   </li>
+ *   <li> 
+ *   or an explicit timestamp list of
+ *   <code>{@link SampleBlockConfig#enmTmsCase()}</code> == <code>{@link DpTimestampCase#TIMESTAMP_LIST}</code>.
+ *   </li>
+ *   </ul>
  * </li>
  * </ul>
  * <p>
  * <h2>Timestamps</h2>
- * The start time (first timestamp) of the first ingestion frame produced (i.e., via the <code>{@link #build()}</code> method) 
+ * By default the start time (first timestamp) of the first ingestion frame produced 
+ * (i.e., via the <code>{@link #build()}</code> method) 
  * will be the inception time of the Data Platform Test Archive contained in class constant <code>{@link #INS_START}</code>.  
  * In all subsequent ingestion frames the initial timestamp is advanced such that it follows directly from the last timestamp 
  * of the previous ingestion frame.  The interval between timestamps (i.e., the "period") is given by the field
  * <code>{@link SampleBlockConfig#tmaPeriod()}</code> within the configuration record.
+ * The start time can be modified by using the <code>{@link setStartTime}</code> method before building.
  * </p>
  * <p>
  * The method used to express timestamps for all generated ingestion frames is given by the field 
@@ -162,7 +174,10 @@ public class IngestionFrameGenerator {
     //
     
     /** Name of the frame generator */
-    public static final String  STR_NAME = IngestionFrameGenerator.class.getSimpleName();
+    public static final String  STR_SRC_NAME = IngestionFrameGenerator.class.getSimpleName();
+    
+    /** Environment variable for current user */
+    public static final String  STR_USERNAME = "USERNAME";
     
     
     /** The ISO formatted inception time of the Data Platform Test Archive */
@@ -181,9 +196,10 @@ public class IngestionFrameGenerator {
     
     /** Common attributes for each ingestion frame */
     public static final Map<String, String>     MAP_ATTRS = Map.of(
-            "Source", STR_NAME, 
+            "Source", STR_SRC_NAME, 
             "Initiated", Instant.now().toString(),
-            "Values", "Simulated"
+            "Values", "Simulated",
+            "User", System.getenv(STR_USERNAME)
             ); 
     
     
@@ -275,6 +291,27 @@ public class IngestionFrameGenerator {
     
     
     //
+    // Configuration
+    //
+    
+    /**
+     * <p>
+     * Sets the initial timestamp start time for the next <code>IngestionFrame</code> build operation (i.e., <code>{@link #build()}</code>).
+     * </p>
+     * <p>
+     * Overrides the current value of the next ingestion frame's start time.  By default the start time
+     * at the time of creation/construction is that of <code>{@link #INS_START}</code>, which is the
+     * inception time of the Data Platform Test Archive.
+     * </p>
+     * 
+     * @param insStart  new start time for the next <code>IngestionFrame</code> build operation 
+     */
+    public void setStartTime(Instant insStart) {
+        this.insStart = insStart;
+    }
+    
+    
+    //
     // Operations
     //
     
@@ -329,7 +366,7 @@ public class IngestionFrameGenerator {
         frmNext.setFrameTimestamp(this.insStart);
         frmNext.addAttributes(MAP_ATTRS);
         
-        this.insStart = this.nextStartInstant(insStart);
+        this.insStart = this.nextStartInstant(insStart);    // throws DateTimeException, ArithmeticException
         
         return frmNext;
     }
@@ -422,7 +459,7 @@ public class IngestionFrameGenerator {
      * <p>
      * Creates and returns a new ingestion frame label.
      * </p>
-     * The ingestion frame label is created by concatenating the class name <code>{@link #STR_NAME}</code>
+     * The ingestion frame label is created by concatenating the class name <code>{@link #STR_SRC_NAME}</code>
      * with the current frame index <code>{@link #indFrame}</code> value.  The frame index is then
      * incremented for the next frame label.
      * </p>
@@ -430,7 +467,7 @@ public class IngestionFrameGenerator {
      * @return  the next label for an ingestion frame
      */
     private String  nextFrameLabel() {
-        String  strLabel = STR_NAME + "-" + Integer.toString(this.indFrame);
+        String  strLabel = STR_SRC_NAME + "-" + Integer.toString(this.indFrame);
         
         this.indFrame++;
         

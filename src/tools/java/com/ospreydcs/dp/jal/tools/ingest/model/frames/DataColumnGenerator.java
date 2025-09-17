@@ -28,8 +28,6 @@
 package com.ospreydcs.dp.jal.tools.ingest.model.frames;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import com.ospreydcs.dp.api.common.DpSupportedType;
@@ -46,9 +44,35 @@ import com.ospreydcs.dp.jal.tools.ingest.model.values.ScalarGenerator;
  * Instances of this class are used primarily for column generation within <code>IngestionFrameGenerator</code>
  * instances.
  * </p>
+ * <p>
+ * The <code>{@link #build()}</code> method is used to create vectors (i.e., <code>{@link ArrayList}</code>) of
+ * <code>IDataColumn</code> objects according to the <code>{@link SampleBlockConfig}</code> record provided
+ * at creation/construction.  The number of columns returned in the vector is given by the size of the
+ * <code>{@link SampleBlockConfig#setPvNames()}</code> field, while the type of each column data value is
+ * given by <code>{@link SampleBlockConfig#enmDataType()}</code>.  Column values are generated using an
+ * internal <code>{@link IDataValueGenerator}</code> implementation of type <code>{@link ScalarGenerator}</code>.
+ * </p>
+ * <p>
+ * Note that not all fields of a <code>{@link SampleBlockConfig}</code> record are used for configuration.
+ * The following fields are used in <code>DataColumnGenerator</code> configuration:
+ * <ul>
+ * <li><code>{@link SampleBlockConfig#cntSamples()}</code> - specifies the size (i.e., number of values) of each column.</li>
+ * <li><code>{@link SampleBlockConfig#enmDataType()}</code> - specifies the data type of column each data value.</li>
+ * <li><code>{@link SampleBlockConfig#setPvNames()}</code> - species column names and number of columns produced.</li>
+ * </ul>
+ * </p> 
+ * <p>
  * <h2>NOTES:</h2>
+ * <ul>
+ * <li>
  * Instances of this class require a <code>{@link SampleBlockConfig}</code> record class object for 
- * instantiation. 
+ * instantiation.
+ * </li>
+ * <li>
+ * Currently the implementation supports only scalar types of the <code>{@link JalScalarType}</code> enumeration
+ * used in the <code>{@link SampleBlockConfig}</code> record.
+ * </li> 
+ * </ul>
  * </p>
  *
  *
@@ -129,6 +153,7 @@ public class DataColumnGenerator {
         this.cntCols = recCfg.setPvNames().size();
         this.enmDataType = recCfg.enmDataType().getDpType();
         this.setColNms = recCfg.setPvNames();
+        
         this.genValues = ScalarGenerator.from(recCfg.enmDataType());
     }
 

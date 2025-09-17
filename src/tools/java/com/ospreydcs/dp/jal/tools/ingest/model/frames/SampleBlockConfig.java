@@ -28,7 +28,9 @@ package com.ospreydcs.dp.jal.tools.ingest.model.frames;
 import java.io.PrintStream;
 import java.time.Duration;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import com.ospreydcs.dp.api.common.DpTimestampCase;
 import com.ospreydcs.dp.api.common.TimeAbstraction;
@@ -74,6 +76,7 @@ public record SampleBlockConfig(
      * @param enmTmsCase    the timestamp type used for the sampling block
      * @param cntSamples    the number of samples for each PV within the sampling block
      * @param durPeriod     the sample period as a Java <code>{@link Duration}</code> instance 
+     * @param durDelay      the sampling start time delay (e.g., from the Test Archive inception)   
      * 
      * @return  a new <code>SampleBlockConfig</code> record populated with the given arguments
      */
@@ -90,6 +93,84 @@ public record SampleBlockConfig(
         TimeAbstraction tmaDelay = TimeAbstraction.from(durDelay);
         
         return new SampleBlockConfig(setPvNames, enmDataType, enmTmsCase, cntSamples, tmaPeriod, tmaDelay);
+    }
+    
+    /**
+     * <p>
+     * Creates new <code>SampleBlockConfig</code> instance with fields populated by the given arguments.
+     * </p>
+     * <p>
+     * The argument <code>strPvNmPrefix</code> is used to create a <code>{@link Set}</code> of <code>cntPvs</code>
+     * PV name strings of the form
+     * <pre>
+     *      <code>setPvNames</code> = { strPvNmPrefix + "1", ..., strPvNmPrefix + Integer.toString(cntPvs) }
+     * </pre>
+     * Once the set <code>setPvNames</code> is created the method then defers to 
+     * <code>{@link #from(Set, JalScalarType, DpTimestampCase, int, Duration, Duration)}</code>.
+     * </p>
+     * 
+     * @param strPvNmPrefix prefix given to all Process Variable names for the sampling block, suffixed by index 
+     * @param cntPvs        the number of PV names to create
+     * @param enmDataType   the data type for all PVs within the sampling block
+     * @param enmTmsCase    the timestamp type used for the sampling block
+     * @param cntSamples    the number of samples for each PV within the sampling block
+     * @param durPeriod     the sample period as a Java <code>{@link Duration}</code> instance 
+     * @param durDelay      the sampling start time delay (e.g., from the Test Archive inception)   
+     * 
+     * @return  a new <code>SampleBlockConfig</code> record populated with the given arguments
+     */
+    public static SampleBlockConfig from(
+            String          strPvNmPrefix,
+            int             cntPvs,
+            JalScalarType   enmDataType,
+            DpTimestampCase enmTmsCase,
+            int             cntSamples,
+            Duration        durPeriod,
+            Duration        durDelay
+            )
+    {
+        Set<String> setPvNames = IntStream.rangeClosed(1, cntPvs)
+                .mapToObj(i -> Integer.toString(i))
+                .map(str -> strPvNmPrefix + str)
+                .collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
+        
+        return SampleBlockConfig.from(setPvNames, enmDataType, enmTmsCase, cntSamples, durPeriod, durDelay);
+    }
+    
+    /**
+     * <p>
+     * Creates new <code>SampleBlockConfig</code> instance with fields populated by the given arguments.
+     * </p>
+     * <p>
+     * The argument <code>strPvNmPrefix</code> is used to create a <code>{@link Set}</code> of <code>cntPvs</code>
+     * PV name strings of the form
+     * <pre>
+     *      <code>setPvNames</code> = { strPvNmPrefix + "1", ..., strPvNmPrefix + Integer.toString(cntPvs) }
+     * </pre>
+     * Once the set <code>setPvNames</code> is created the method then defers to 
+     * <code>{@link #from(Set, JalScalarType, DpTimestampCase, int, Duration, Duration)}</code>.
+     * </p>
+     * 
+     * @param strPvNmPrefix prefix given to all Process Variable names for the sampling block, suffixed by index 
+     * @param cntPvs        the number of PV names to create
+     * @param enmDataType   the data type for all PVs within the sampling block
+     * @param enmTmsCase    the timestamp type used for the sampling block
+     * @param cntSamples    the number of samples for each PV within the sampling block
+     * @param durPeriod     the sample period as a Java <code>{@link Duration}</code> instance 
+     * @param durDelay      the sampling start time delay (e.g., from the Test Archive inception)   
+     * 
+     * @return  a new <code>SampleBlockConfig</code> record populated with the given arguments
+     */
+    public static SampleBlockConfig from(
+            String          strPvNmPrefix,
+            int             cntPvs,
+            JalScalarType   enmDataType,
+            DpTimestampCase enmTmsCase,
+            int             cntSamples,
+            Duration        durPeriod
+            )
+    {
+        return SampleBlockConfig.from(strPvNmPrefix, cntPvs, enmDataType, enmTmsCase, cntSamples, durPeriod, Duration.ZERO);
     }
     
     /**
@@ -188,8 +269,32 @@ public record SampleBlockConfig(
     
     
     //
+    // Record Resources
+    //
+    
+    /** Maximum number of PV names to print out in <code>{@link #printOut(PrintStream, String)}</code> */
+    public static int   INT_PRINT_PVS_MAX = 10;
+    
+    
+    
+    //
     // Operations
     //
+    
+    /**
+     * <p>
+     * Sets the maximum number of PV names that will appear in an output line within 
+     * <code>{@link #printOut(PrintStream, String)}</code>.
+     * </p>
+     * <p>
+     * If the size of the field <code>{@link #setPvNames}</code> is larger than the given value then the
+     * "PV names" output line within <code>{@link #printOut(PrintStream, String)}</code> is skipped.
+     * </p>
+     * @param cntPvsMax
+     */
+    public static void  setPvCountPrintOutCutoff(int cntPvsMax) {
+        INT_PRINT_PVS_MAX = cntPvsMax;
+    }
     
     /**
      * <p>
@@ -208,7 +313,9 @@ public record SampleBlockConfig(
         if (strPad == null)
             strPad = "";
         
-        ps.println(strPad + "Process Variable name(s) : " + this.setPvNames);
+        if (this.setPvNames.size() <= INT_PRINT_PVS_MAX)
+            ps.println(strPad + "Process Variable name(s) : " + this.setPvNames);
+        ps.println(strPad + "Process Variable count   : " + this.setPvNames.size());
         ps.println(strPad + "Process Variable(s) type : " + this.enmDataType);
         ps.println(strPad + "Timestamp representation : " + this.enmTmsCase);
         ps.println(strPad + "Number of samples per PV : " + this.cntSamples);

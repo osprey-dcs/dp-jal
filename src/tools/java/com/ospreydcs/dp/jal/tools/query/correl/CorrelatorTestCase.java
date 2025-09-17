@@ -36,7 +36,7 @@ import com.ospreydcs.dp.api.common.ResultStatus;
 import com.ospreydcs.dp.api.query.DpDataRequest;
 import com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
-import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
+import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 
 /**
  * <p>
@@ -156,7 +156,7 @@ public record CorrelatorTestCase(
     
     /**
      * <p>
-     * Constructs a new <code>QueryChannelTestCase</code> instance.
+     * Constructs a new <code>CorrelatorTestCase</code> instance.
      * </p>
      * <p>
      * Canonical constructor.  Sets field values and increments record index counter <code>{@link #IND_CASE}</code>

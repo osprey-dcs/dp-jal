@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	TestArchiveRequestCreator.java
- * Package: com.ospreydcs.dp.jal.tools.query.testrequests
+ * Package: com.ospreydcs.dp.jal.tools.query.common
  * Type: 	TestArchiveRequestCreator
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since May 4, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query.testrequests;
+package com.ospreydcs.dp.jal.tools.query.common;
 
 import java.time.Duration;
 import java.time.Instant;

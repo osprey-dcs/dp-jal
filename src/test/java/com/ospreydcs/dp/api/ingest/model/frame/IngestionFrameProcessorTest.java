@@ -215,6 +215,26 @@ public class IngestionFrameProcessorTest {
         processor.disableFrameDecomposition();
         Assert.assertFalse(processor.hasFrameDecomposition());
     }
+    
+    /**
+     * Test method for {@link IngestionFrameProcessor#enableSerialization(boolean)}.
+     */
+    @Test
+    public final void testEnableSerialization() {
+        
+        IngestionFrameProcessor processor = IngestionFrameProcessor.create(REC_PRV_UID);
+        
+        Assert.assertNotEquals(null, processor);
+        Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());
+        
+        final boolean   bolSerialize = processor.hasSerialization();
+        
+        processor.enableSerialization(!bolSerialize);
+        Assert.assertNotEquals(bolSerialize, processor.hasSerialization());
+        
+        processor.enableSerialization(bolSerialize);
+        Assert.assertEquals(bolSerialize, processor.hasSerialization());
+    }
 
 //    /**
 //     * Test method for {@link com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor#disableConcurrency()}.
@@ -408,7 +428,7 @@ public class IngestionFrameProcessorTest {
         
         final IngestionFrame    frame = TestIngestionFrameGenerator.createDoublesFrameWithClock(cntCols, cntRows);
         
-        final long      szFrame = frame.allocationSizeFrame();
+//        final long      szFrame = frame.allocationSizeFrame();
         
         IngestionFrameProcessor processor = new IngestionFrameProcessor(REC_PRV_UID);
         

@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.jal.tools.query
+ * Package: com.ospreydcs.dp.jal.tools.query.common
  * Type: 	package-info
  *
  * Copyright 2010-2025 the original author or authors.
@@ -20,21 +20,16 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since May 3, 2025
+ * @since May 4, 2025
  *
  */
 /**
  * <p>
- * Package containing tools and resources for evaluating the Java API Library Query Service interface.
- * </p>
- * <p>
- * The sub-packages are primarily applications that evaluate one specific aspect of the Query Service.  
- * There is a common package containing resources used by many of the applications.  The primary resource
- * within that package is an enumeration of sampled Data Platform Test Archive time-series data requests.
+ * Package containing query data request resources for Java API Library tools.
  * </p> 
- *  
+ *
  * @author Christopher K. Allen
- * @since May 3, 2025
+ * @since May 4, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query;
+package com.ospreydcs.dp.jal.tools.query.common;

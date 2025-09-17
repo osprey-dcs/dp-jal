@@ -38,8 +38,8 @@ import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
 import com.ospreydcs.dp.api.query.model.assem.SampledAggregate;
 import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
 import com.ospreydcs.dp.api.query.model.superdom.TimeDomainProcessor;
+import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.query.superdom.SuperDomTestResult;
-import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 
 /**
  * <p>

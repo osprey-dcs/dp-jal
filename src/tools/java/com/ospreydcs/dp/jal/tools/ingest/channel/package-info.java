@@ -1,7 +1,7 @@
 /*
- * Project: dp-api-common
+ * Project: dp-jal
  * File:	package-info.java
- * Package: com.ospreydcs.dp.jal.tools.query.testrequests
+ * Package: com.ospreydcs.dp.jal.tools.ingest.channel
  * Type: 	package-info
  *
  * Copyright 2010-2025 the original author or authors.
@@ -20,16 +20,16 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since May 4, 2025
+ * @since Sep 13, 2025
  *
  */
 /**
  * <p>
- * Package containing query data request resources for Java API Library tools.
- * </p> 
+ * Package containing application <code>IngestionChannelEvaluator</code>.
+ * </p>
  *
  * @author Christopher K. Allen
- * @since May 4, 2025
+ * @since Sep 13, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query.testrequests;
+package com.ospreydcs.dp.jal.tools.ingest.channel;

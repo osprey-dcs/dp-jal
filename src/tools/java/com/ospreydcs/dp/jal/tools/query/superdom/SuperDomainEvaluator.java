@@ -54,8 +54,8 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.jal.tools.common.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator;
-import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
 import com.sun.jdi.request.InvalidRequestStateException;
 
 /**

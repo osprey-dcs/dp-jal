@@ -42,7 +42,7 @@ import com.ospreydcs.dp.api.query.model.correl.RawTmsListData;
 import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
 import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.api.query.model.superdom.TimeDomainProcessor;
-import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
+import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 
 /**
  * <p>

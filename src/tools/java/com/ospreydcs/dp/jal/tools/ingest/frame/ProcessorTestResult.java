@@ -1,8 +1,8 @@
 /*
- * Project: dp-api-common
- * File:	package-info.java
- * Package: com.ospreydcs.dp.jal.tools.query
- * Type: 	package-info
+ * Project: dp-jal
+ * File:	ProcessorTestResult.java
+ * Package: com.ospreydcs.dp.jal.tools.ingest.frame
+ * Type: 	ProcessorTestResult
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,21 +20,34 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since May 3, 2025
+ * @since Sep 15, 2025
  *
  */
+package com.ospreydcs.dp.jal.tools.ingest.frame;
+
+import java.time.Duration;
+
+import com.ospreydcs.dp.api.common.ResultStatus;
+
 /**
- * <p>
- * Package containing tools and resources for evaluating the Java API Library Query Service interface.
- * </p>
- * <p>
- * The sub-packages are primarily applications that evaluate one specific aspect of the Query Service.  
- * There is a common package containing resources used by many of the applications.  The primary resource
- * within that package is an enumeration of sampled Data Platform Test Archive time-series data requests.
- * </p> 
- *  
+ * 
+ *
  * @author Christopher K. Allen
- * @since May 3, 2025
+ * @since Sep 15, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.query;
+public record ProcessorTestResult(
+        ResultStatus        recTestStatus,
+        
+        int                 cntRspMsgs,
+        long                szRspMsgs,
+        int                 cntCorrelSet,
+        long                szProcessed,
+        Duration            durProcessed,
+        double              dblDataRate,
+        
+        ProcessorTestCase  recTestCase
+        ) 
+{
+
+}

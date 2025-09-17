@@ -321,8 +321,8 @@ public class JalIngestionStreamImpl extends DpServiceApiBase<JalIngestionStreamI
     private static final String     STR_LOGGING_LEVEL = CFG_DEFAULT.logging.level;
     
     
-    /** General timeout parameters (e.ge., used for awaitTermination(long, TimeUnit) */
-    private static final boolean    BOL_TIMEOUT_WAIT = CFG_DEFAULT.timeout.enabled;
+//    /** General timeout parameters (e.ge., used for awaitTermination(long, TimeUnit) */
+//    private static final boolean    BOL_TIMEOUT_WAIT = CFG_DEFAULT.timeout.enabled;
 
     /** General timeout parameters (e.ge., used for awaitTermination(long, TimeUnit) */
     private static final long       LNG_TIMEOUT_WAIT = CFG_DEFAULT.timeout.limit;

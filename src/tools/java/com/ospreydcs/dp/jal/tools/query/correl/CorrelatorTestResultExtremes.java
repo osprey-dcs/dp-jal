@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
+import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 
 import java.util.NoSuchElementException;
 import java.util.TreeMap;

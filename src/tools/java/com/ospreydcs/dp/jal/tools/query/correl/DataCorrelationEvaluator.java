@@ -57,7 +57,7 @@ import com.ospreydcs.dp.api.util.Log4j;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse.QueryData;
 import com.ospreydcs.dp.jal.tools.common.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.query.testrequests.TestArchiveRequest;
+import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 import com.sun.jdi.request.InvalidRequestStateException;
 
 /**
@@ -135,8 +135,8 @@ public final class DataCorrelationEvaluator extends JalQueryAppBase<DataCorrelat
      * Entry point for the application.
      * </p>
      * <p>
-     * See class documentation and class constant <code>{@link #STR_APP_USAGE}</code> for details
-     * on command-line arguments and usage.
+     * See class documentation and class constants <code>{@link #STR_APP_DESCR}</code> for application description 
+     * and <code>{@link #STR_APP_USAGE}</code> for details on command-line arguments and usage.
      * </p>
      * 
      * @param args  command-line arguments as described in <code>{@link DataCorrelationEvaluator}</code>
