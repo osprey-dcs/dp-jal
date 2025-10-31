@@ -465,10 +465,10 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     //
     
     /** Frame decomposition sub-processor for main thread */
-    private IngestionFrameDecomposer    prcrMsgBinner;
+    private IngestionFrameDecomposer    prcrFrmDecomposer;
     
     /** Frame-to-message sub-processor for main thread */
-    private IngestionFrameConverter     prcMsgConverter;
+    private IngestionFrameConverter     prcFrmConverter;
 
     
     //
@@ -1158,11 +1158,11 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         
         // If no multi-threaded concurrency
         if (!this.bolConcurrency) {
-            this.prcrMsgBinner = IngestionFrameDecomposer.from(this.szMaxFrmAlloc);
-            this.prcMsgConverter = IngestionFrameConverter.create();
+            this.prcrFrmDecomposer = IngestionFrameDecomposer.from(this.szMaxFrmAlloc);
+            this.prcFrmConverter = IngestionFrameConverter.create();
             
-            this.prcMsgConverter.setDefaultProviderUid(this.recProviderUid);
-            this.prcMsgConverter.enableSerialization(this.bolSerialize);
+            this.prcFrmConverter.setDefaultProviderUid(this.recProviderUid);
+            this.prcFrmConverter.enableSerialization(this.bolSerialize);
             
             return true;
         }
@@ -1183,7 +1183,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         
         // Create all the thread tasks and submit them to their corresponding thread executor 
         for (int iTask=0; iTask<cntTasks; iTask++) {
-            Callable<Boolean>   tskDecomp = this.createFrameDecompositionTask();
+            Callable<Boolean>   tskDecomp = this.createFrameDecomposerTask();
             Callable<Boolean>   tskConvert = this.createFrameToMessageTask();
 
             Future<Boolean>     futDecomp = this.xtorDecompTasks.submit(tskDecomp);
@@ -1522,13 +1522,13 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
         List<IngestionFrame>    lstFrames;
         try { 
             // Try horizontal decomposition - least expensive
-            lstFrames = this.prcrMsgBinner.decomposeHorizontally(frame);
+            lstFrames = this.prcrFrmDecomposer.decomposeHorizontally(frame);
             
         } catch (Exception eh) {
             
             // Try vertical decomposition
             try {
-                lstFrames = this.prcrMsgBinner.decomposeVertically(frame);
+                lstFrames = this.prcrFrmDecomposer.decomposeVertically(frame);
                 
             } catch (Exception ev) {
                 
@@ -1554,7 +1554,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * <p>
      * This is a supported method called by <code>{@link #processFrame(IngestionFrame)}</code>. 
      * Attempts to convert the given message to an <code>IngestDataRequest</code> gRPC message
-     * using the single-thread converter <code>{@link #prcMsgConverter}</code>.  If the process
+     * using the single-thread converter <code>{@link #prcFrmConverter}</code>.  If the process
      * succeeds the resulting message is enqueued in the outgoing message buffer
      * <code>{@link #queMsgRequests}</code>.  If the process fails the exception is recorded
      * in the collection <code>{@link #setFramesFailedConvert}</code>.
@@ -1567,7 +1567,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     private boolean convertAndQueueFrame(IngestionFrame frame) {
         
         try {
-            IngestDataRequest   msgRqst = this.prcMsgConverter.createRequest(frame, this.recProviderUid);
+            IngestDataRequest   msgRqst = this.prcFrmConverter.createRequest(frame, this.recProviderUid);
             
             return this.queMsgRequests.offer(msgRqst);
         
@@ -1613,7 +1613,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * 
      * throws InterruptedException interrupted while waiting for an available IngestionFrameDecomposer instance 
      */
-    private Callable<Boolean> createFrameDecompositionTask() /* throws InterruptedException */ {
+    private Callable<Boolean> createFrameDecomposerTask() /* throws InterruptedException */ {
     
         // Define the task operations as a lambda function
         Callable<Boolean>    task = () -> {

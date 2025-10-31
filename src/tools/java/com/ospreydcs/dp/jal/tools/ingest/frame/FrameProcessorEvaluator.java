@@ -70,7 +70,7 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     // Application Resources
     //
     
-    /** Default configuration parameters for the Query Service tools */
+    /** Default configuration parameters for the Ingestion Service tools */
     private static final JalIngestionConfig     CFG_INGEST = JalConfig.getInstance().ingest;
     
     /** Default configuration parameters for the JAL Tools */
