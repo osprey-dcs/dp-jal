@@ -36,13 +36,13 @@ import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.config.JalConfig;
-import com.ospreydcs.dp.api.config.query.JalQueryConfig;
-import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
+import com.ospreydcs.dp.jal.config.JalConfig;
+import com.ospreydcs.dp.jal.config.query.JalQueryConfig;
+import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
+import com.ospreydcs.dp.jal.util.Log4j;
 
 /**
  * <p>

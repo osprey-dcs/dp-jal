@@ -31,9 +31,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.ospreydcs.dp.api.util.JavaRuntime;
 import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.query.recovery.QueryRecoveryTestResult;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>

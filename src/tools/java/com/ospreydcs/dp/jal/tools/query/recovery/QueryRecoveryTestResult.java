@@ -30,9 +30,9 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
@@ -158,7 +158,7 @@ public record QueryRecoveryTestResult(
      * </p>
      * <p>
      * This creator is intended for use whenever a 
-     * <code>{@link QueryRecoveryTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code> 
+     * <code>{@link QueryRecoveryTestCase#evaluate(com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer)}</code> 
      * operation fails; that is, an exception is thrown internally.  The cause of the failure (and a message) should
      * be included in the <code>recTestStatus</code> argument.
      * </p>

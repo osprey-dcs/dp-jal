@@ -30,8 +30,8 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 
-import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>

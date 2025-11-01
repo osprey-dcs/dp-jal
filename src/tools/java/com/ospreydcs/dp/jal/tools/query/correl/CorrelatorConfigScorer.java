@@ -28,7 +28,7 @@ package com.ospreydcs.dp.jal.tools.query.correl;
 import java.io.PrintStream;
 import java.util.Collection;
 
-import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
 import com.ospreydcs.dp.jal.tools.common.ConfigScoreBase;
 import com.ospreydcs.dp.jal.tools.common.ConfigScorerBase;
 
@@ -70,7 +70,7 @@ public class CorrelatorConfigScorer extends
      * </p>
      * <p>
      * Use the <code>score(...)</code> methods to add <code>QueryRecoveryTestResult</code> records generated from
-     * <code>{@link CorrelatorTestCase#evaluate(com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator, java.util.List)}</code>
+     * <code>{@link CorrelatorTestCase#evaluate(com.ospreydcs.dp.jal.query.model.correl.RawDataCorrelator, java.util.List)}</code>
      * test evaluations.
      * </p>
      * 

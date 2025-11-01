@@ -1,11 +1,11 @@
 package com.ospreydcs.dp.jal.tools.config.query;
 
-import com.ospreydcs.dp.api.config.common.JalConcurrencyConfig;
-import com.ospreydcs.dp.api.config.common.JalLoggingConfig;
-import com.ospreydcs.dp.api.config.common.JalTimeoutConfig;
-import com.ospreydcs.dp.api.config.model.ACfgOverride;
-import com.ospreydcs.dp.api.config.model.CfgStructure;
-import com.ospreydcs.dp.api.config.query.JalQueryRecoveryConfig;
+import com.ospreydcs.dp.jal.config.common.JalConcurrencyConfig;
+import com.ospreydcs.dp.jal.config.common.JalLoggingConfig;
+import com.ospreydcs.dp.jal.config.common.JalTimeoutConfig;
+import com.ospreydcs.dp.jal.config.model.ACfgOverride;
+import com.ospreydcs.dp.jal.config.model.CfgStructure;
+import com.ospreydcs.dp.jal.config.query.JalQueryRecoveryConfig;
 import com.ospreydcs.dp.jal.tools.config.request.JalTestRequestConfigDep;
 
 /**

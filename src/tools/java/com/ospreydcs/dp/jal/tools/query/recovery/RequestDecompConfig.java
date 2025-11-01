@@ -28,7 +28,7 @@ package com.ospreydcs.dp.jal.tools.query.recovery;
 import java.io.PrintStream;
 import java.time.Duration;
 
-import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
+import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
 
 /**
  * <p>

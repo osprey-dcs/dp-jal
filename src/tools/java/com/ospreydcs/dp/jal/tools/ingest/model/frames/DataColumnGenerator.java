@@ -30,9 +30,9 @@ package com.ospreydcs.dp.jal.tools.ingest.model.frames;
 import java.util.ArrayList;
 import java.util.Set;
 
-import com.ospreydcs.dp.api.common.DpSupportedType;
-import com.ospreydcs.dp.api.common.IDataColumn;
-import com.ospreydcs.dp.api.model.table.StaticDataColumn;
+import com.ospreydcs.dp.jal.common.DpSupportedType;
+import com.ospreydcs.dp.jal.common.IDataColumn;
+import com.ospreydcs.dp.jal.model.table.StaticDataColumn;
 import com.ospreydcs.dp.jal.tools.ingest.model.values.IDataValueGenerator;
 import com.ospreydcs.dp.jal.tools.ingest.model.values.ScalarGenerator;
 

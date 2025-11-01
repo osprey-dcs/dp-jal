@@ -28,10 +28,10 @@ package com.ospreydcs.dp.jal.tools.query.common;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.config.JalConfig;
-import com.ospreydcs.dp.api.config.query.JalQueryRecoveryConfig;
-import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
+import com.ospreydcs.dp.jal.config.JalConfig;
+import com.ospreydcs.dp.jal.config.query.JalQueryRecoveryConfig;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
 
 /**
  * <p>

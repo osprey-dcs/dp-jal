@@ -27,7 +27,7 @@ package com.ospreydcs.dp.jal.tools.config.request;
 
 import java.util.List;
 
-import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.jal.config.model.CfgStructure;
 
 /**
  * <p>

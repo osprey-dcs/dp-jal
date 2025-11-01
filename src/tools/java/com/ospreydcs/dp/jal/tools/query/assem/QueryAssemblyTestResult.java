@@ -29,9 +29,9 @@ import java.io.PrintStream;
 import java.time.Duration;
 import java.util.Comparator;
 
-import com.ospreydcs.dp.api.common.JalDataTableType;
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.common.JalDataTableType;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
@@ -39,7 +39,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * </p>
  * <p>
  * This record is intended for creation by the evaluation method 
- * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)</code>.
+ * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer)</code>.
  * That method performs the evaluation for its test case condition as described in field <code>#recTestCase()</code>.
  * </p>
  *
@@ -225,7 +225,7 @@ public record QueryAssemblyTestResult(
      * </p>
      * <p>
      * This creator is intended for use whenever a 
-     * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code> 
+     * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer)}</code> 
      * operation fails; that is, an exception is thrown internally.  The cause of the failure (and a message) should
      * be included in the <code>recTestStatus</code> argument.
      * </p>

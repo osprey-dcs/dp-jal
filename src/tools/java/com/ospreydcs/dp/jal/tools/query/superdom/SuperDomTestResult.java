@@ -30,8 +30,8 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.common.TimeInterval;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.common.TimeInterval;
 
 /**
  * <p>
@@ -41,7 +41,7 @@ import com.ospreydcs.dp.api.common.TimeInterval;
  * <h2>Evaluation Cases and Results</h2>
  * Super domain test cases are contained in <code{@link SuperDomTestCase}</code> records.  The results of
  * a test case are provided by the method 
- * <code>@link SuperDomTestCase#evaluate(com.ospreydcs.dp.api.query.impl.QueryRequestRecoverer)}</code>
+ * <code>@link SuperDomTestCase#evaluate(com.ospreydcs.dp.jal.query.impl.QueryRequestRecoverer)}</code>
  * which performs the test case evaluation.
  * The results of the method are returned in a <code>SuperDomTestResult</code> record. 
  * </p>

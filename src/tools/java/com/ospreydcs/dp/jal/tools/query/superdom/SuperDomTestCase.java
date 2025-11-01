@@ -36,16 +36,16 @@ import java.util.ListIterator;
 import java.util.Set;
 import java.util.SortedSet;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
-import com.ospreydcs.dp.api.query.model.correl.RawClockedData;
-import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
-import com.ospreydcs.dp.api.query.model.correl.RawTmsListData;
-import com.ospreydcs.dp.api.query.model.superdom.RawSuperDomData;
-import com.ospreydcs.dp.api.query.model.superdom.TimeDomainProcessor;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.common.TimeInterval;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
+import com.ospreydcs.dp.jal.query.DpQueryException;
+import com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer;
+import com.ospreydcs.dp.jal.query.model.correl.RawClockedData;
+import com.ospreydcs.dp.jal.query.model.correl.RawCorrelatedData;
+import com.ospreydcs.dp.jal.query.model.correl.RawTmsListData;
+import com.ospreydcs.dp.jal.query.model.superdom.RawSuperDomData;
+import com.ospreydcs.dp.jal.query.model.superdom.TimeDomainProcessor;
 import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 
 /**

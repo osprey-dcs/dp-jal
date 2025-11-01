@@ -27,7 +27,7 @@ package com.ospreydcs.dp.jal.tools.query.recovery;
 
 import java.io.PrintStream;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
+import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
 
 /**
  * <p>

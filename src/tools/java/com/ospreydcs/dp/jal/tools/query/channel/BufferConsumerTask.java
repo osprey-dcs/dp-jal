@@ -2,9 +2,9 @@ package com.ospreydcs.dp.jal.tools.query.channel;
 
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.model.IMessageSupplier;
 import com.ospreydcs.dp.grpc.v1.query.QueryDataResponse;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.model.IMessageSupplier;
 
 /**
  * <p>

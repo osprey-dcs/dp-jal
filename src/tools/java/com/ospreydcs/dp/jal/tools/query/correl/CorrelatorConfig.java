@@ -34,7 +34,7 @@ import java.io.PrintStream;
  * </p>
  * <p>
  * Extracts the test case conditions for the <code>RawDataCorrelator</code> object used in
- * <code>{@link CorrelatorTestCase#evaluate(com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator, java.util.List)}</code>
+ * <code>{@link CorrelatorTestCase#evaluate(com.ospreydcs.dp.jal.query.model.correl.RawDataCorrelator, java.util.List)}</code>
  * test evaluations.
  * </p> 
  *

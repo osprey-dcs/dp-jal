@@ -30,9 +30,9 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.function.Function;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.common.ResultStatus;
 import com.ospreydcs.dp.jal.tools.query.assem.QueryAssemblyTestResult;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  *

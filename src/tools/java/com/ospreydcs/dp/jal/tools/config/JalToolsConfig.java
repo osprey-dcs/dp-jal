@@ -30,10 +30,10 @@ import java.io.FileNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.config.model.ACfgOverride;
-import com.ospreydcs.dp.api.config.model.CfgLoaderYaml;
-import com.ospreydcs.dp.api.config.model.CfgOverrideUtility;
-import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.jal.config.model.ACfgOverride;
+import com.ospreydcs.dp.jal.config.model.CfgLoaderYaml;
+import com.ospreydcs.dp.jal.config.model.CfgOverrideUtility;
+import com.ospreydcs.dp.jal.config.model.CfgStructure;
 import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchiveConfig;
 import com.ospreydcs.dp.jal.tools.config.output.JalToolsOutputConfig;
 

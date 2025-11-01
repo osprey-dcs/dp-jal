@@ -29,8 +29,8 @@ import java.io.PrintStream;
 import java.time.Duration;
 import java.util.Comparator;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
@@ -78,7 +78,7 @@ public record CorrelatorTestResult(
      * </p>
      * <p>
      * The returned record is assumed to be created by the 
-     * <code>{@link CorrelatorTestCase#evaluate(com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator, java.util.List)</code> 
+     * <code>{@link CorrelatorTestCase#evaluate(com.ospreydcs.dp.jal.query.model.correl.RawDataCorrelator, java.util.List)</code> 
      * method.
      * </p>
      * 
@@ -123,7 +123,7 @@ public record CorrelatorTestResult(
      * </p>
      * <p>
      * This creator is intended for use whenever a 
-     * <code>{@link CorrelatorTestCase#evaluate(com.ospreydcs.dp.api.query.model.correl.RawDataCorrelator, java.util.List)}</code>. 
+     * <code>{@link CorrelatorTestCase#evaluate(com.ospreydcs.dp.jal.query.model.correl.RawDataCorrelator, java.util.List)}</code>. 
      * operation fails; that is, an exception is thrown internally.  The cause of the failure (and a message) should
      * be included in the <code>recTestStatus</code> argument.
      * </p>

@@ -27,7 +27,7 @@ package com.ospreydcs.dp.jal.tools.ingest.frame;
 
 import java.time.Duration;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
+import com.ospreydcs.dp.jal.common.ResultStatus;
 
 /**
  * 

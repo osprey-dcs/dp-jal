@@ -25,8 +25,8 @@
  */
 package com.ospreydcs.dp.jal.tools.config.archive;
 
-import com.ospreydcs.dp.api.config.model.ACfgOverride;
-import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.jal.config.model.ACfgOverride;
+import com.ospreydcs.dp.jal.config.model.CfgStructure;
 
 /**
  * <p>

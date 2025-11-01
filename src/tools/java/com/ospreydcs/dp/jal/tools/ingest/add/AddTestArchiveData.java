@@ -42,27 +42,27 @@ import javax.naming.ConfigurationException;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
-import com.ospreydcs.dp.api.app.ExitCode;
-import com.ospreydcs.dp.api.app.JalApplicationBase;
-import com.ospreydcs.dp.api.common.DpTimestampCase;
-import com.ospreydcs.dp.api.common.IngestRequestUID;
-import com.ospreydcs.dp.api.common.IngestionResult;
-import com.ospreydcs.dp.api.common.ProviderRegistrar;
-import com.ospreydcs.dp.api.common.ProviderUID;
-import com.ospreydcs.dp.api.config.JalConfig;
-import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
-import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.ingest.JalIngestionApiFactory;
-import com.ospreydcs.dp.api.ingest.JalIngestionException;
-import com.ospreydcs.dp.api.ingest.IIngestionService;
-import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.jal.app.ExitCode;
+import com.ospreydcs.dp.jal.app.JalApplicationBase;
+import com.ospreydcs.dp.jal.common.DpTimestampCase;
+import com.ospreydcs.dp.jal.common.IngestRequestUID;
+import com.ospreydcs.dp.jal.common.IngestionResult;
+import com.ospreydcs.dp.jal.common.ProviderRegistrar;
+import com.ospreydcs.dp.jal.common.ProviderUID;
+import com.ospreydcs.dp.jal.config.JalConfig;
+import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
+import com.ospreydcs.dp.jal.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.jal.ingest.IIngestionService;
+import com.ospreydcs.dp.jal.ingest.IngestionFrame;
+import com.ospreydcs.dp.jal.ingest.JalIngestionApiFactory;
+import com.ospreydcs.dp.jal.ingest.JalIngestionException;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.ingest.model.frames.IngestionFrameGenerator;
 import com.ospreydcs.dp.jal.tools.ingest.model.frames.SampleBlockConfig;
 import com.ospreydcs.dp.jal.tools.ingest.model.values.JalScalarType;
 import com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
+import com.ospreydcs.dp.jal.util.Log4j;
 import com.sun.jdi.request.InvalidRequestStateException;
 
 /**
@@ -461,7 +461,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     //
     
     /**
-     * @see com.ospreydcs.dp.api.app.JalApplicationBase#isLogging()
+     * @see com.ospreydcs.dp.jal.app.JalApplicationBase#isLogging()
      */
     @Override
     protected boolean isLogging() {
@@ -469,7 +469,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     }
 
     /**
-     * @see com.ospreydcs.dp.api.app.JalApplicationBase#getLogger()
+     * @see com.ospreydcs.dp.jal.app.JalApplicationBase#getLogger()
      */
     @Override
     protected Logger getLogger() {

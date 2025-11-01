@@ -29,10 +29,10 @@ import java.util.List;
 
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.app.JalApplicationBase;
-import com.ospreydcs.dp.api.config.JalConfig;
-import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
-import com.ospreydcs.dp.api.config.query.JalQueryConfig;
+import com.ospreydcs.dp.jal.app.JalApplicationBase;
+import com.ospreydcs.dp.jal.config.JalConfig;
+import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
+import com.ospreydcs.dp.jal.config.query.JalQueryConfig;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator;
 
@@ -169,7 +169,7 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     //
     
     /**
-     * @see com.ospreydcs.dp.api.app.JalApplicationBase#isLogging()
+     * @see com.ospreydcs.dp.jal.app.JalApplicationBase#isLogging()
      */
     @Override
     protected boolean isLogging() {
@@ -178,7 +178,7 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     }
 
     /**
-     * @see com.ospreydcs.dp.api.app.JalApplicationBase#getLogger()
+     * @see com.ospreydcs.dp.jal.app.JalApplicationBase#getLogger()
      */
     @Override
     protected Logger getLogger() {

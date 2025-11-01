@@ -33,8 +33,8 @@ import  java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
+import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
+import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 
 /**

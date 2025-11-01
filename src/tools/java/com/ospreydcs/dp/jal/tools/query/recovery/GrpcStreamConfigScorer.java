@@ -28,7 +28,7 @@ package com.ospreydcs.dp.jal.tools.query.recovery;
 import java.io.PrintStream;
 import java.util.Collection;
 
-import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
 import com.ospreydcs.dp.jal.tools.common.ConfigScoreBase;
 import com.ospreydcs.dp.jal.tools.common.ConfigScorerBase;
 
@@ -65,7 +65,7 @@ public class GrpcStreamConfigScorer extends
      * </p>
      * <p>
      * Use the <code>score(...)</code> methods to add <code>QueryRecoveryTestResult</code> records generated from
-     * <code>{@link QueryRecoveryTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code>
+     * <code>{@link QueryRecoveryTestCase#evaluate(com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer)}</code>
      * test evaluations.
      * </p>
      * 

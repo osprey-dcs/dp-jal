@@ -5,10 +5,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
 import com.ospreydcs.dp.jal.tools.query.assem.AggrAssemblyTestConfig;
 import com.ospreydcs.dp.jal.tools.query.assem.QueryAssemblyTestResult;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>

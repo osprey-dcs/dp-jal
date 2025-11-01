@@ -32,8 +32,8 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
-import com.ospreydcs.dp.api.common.DpTimestampCase;
-import com.ospreydcs.dp.api.common.TimeAbstraction;
+import com.ospreydcs.dp.jal.common.DpTimestampCase;
+import com.ospreydcs.dp.jal.common.TimeAbstraction;
 import com.ospreydcs.dp.jal.tools.ingest.model.values.JalScalarType;
 
 /**

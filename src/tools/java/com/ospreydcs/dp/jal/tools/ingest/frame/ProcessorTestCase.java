@@ -30,10 +30,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.ingest.IngestionFrame;
+import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.jal.tools.ingest.common.FrameProcessorConfig;
 import com.ospreydcs.dp.jal.tools.ingest.model.frames.IngestionFrameGenerator;
 import com.ospreydcs.dp.jal.tools.ingest.model.frames.SampleBlockConfig;

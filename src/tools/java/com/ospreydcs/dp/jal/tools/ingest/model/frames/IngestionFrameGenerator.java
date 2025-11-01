@@ -33,15 +33,15 @@ import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.common.DpTimestampCase;
-import com.ospreydcs.dp.api.common.IDataColumn;
-import com.ospreydcs.dp.api.common.UniformSamplingClock;
-import com.ospreydcs.dp.api.config.JalConfig;
-import com.ospreydcs.dp.api.config.ingest.JalIngestionConfig;
-import com.ospreydcs.dp.api.ingest.IngestionFrame;
-import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.jal.common.DpTimestampCase;
+import com.ospreydcs.dp.jal.common.IDataColumn;
+import com.ospreydcs.dp.jal.common.UniformSamplingClock;
+import com.ospreydcs.dp.jal.config.JalConfig;
+import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
+import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
+import com.ospreydcs.dp.jal.util.Log4j;
 
 /**
  * <p>

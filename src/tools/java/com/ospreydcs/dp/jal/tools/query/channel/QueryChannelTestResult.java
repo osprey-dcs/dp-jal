@@ -29,10 +29,10 @@ import java.io.PrintStream;
 import java.time.Duration;
 import java.util.Comparator;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
-import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.query.model.grpc.QueryChannel;
+import com.ospreydcs.dp.jal.query.model.grpc.QueryMessageBuffer;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 
 /**
@@ -58,7 +58,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * @author Christopher K. Allen
  * @since May 9, 2025
  *
- * @see QueryChannelTestCase#evaluate(com.ospreydcs.dp.api.query.model.grpc.QueryChannel, com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer)
+ * @see QueryChannelTestCase#evaluate(com.ospreydcs.dp.jal.query.model.grpc.QueryChannel, com.ospreydcs.dp.jal.query.model.grpc.QueryMessageBuffer)
  */
 public record QueryChannelTestResult(
         String          strRqstId,

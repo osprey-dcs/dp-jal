@@ -27,7 +27,7 @@
  */
 package com.ospreydcs.dp.jal.tools.ingest.model.values;
 
-import com.ospreydcs.dp.api.common.DpSupportedType;
+import com.ospreydcs.dp.jal.common.DpSupportedType;
 
 /**
  * Enumeration of Java scalar values available for simulated data values.

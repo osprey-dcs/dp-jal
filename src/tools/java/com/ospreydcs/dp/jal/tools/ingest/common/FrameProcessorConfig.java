@@ -27,7 +27,7 @@ package com.ospreydcs.dp.jal.tools.ingest.common;
 
 import java.io.PrintStream;
 
-import com.ospreydcs.dp.api.ingest.model.frame.IngestionFrameProcessor;
+import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 
 /**
  * <p>

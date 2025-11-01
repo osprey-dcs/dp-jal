@@ -34,7 +34,7 @@ import java.io.PrintStream;
  * <p>
  * This record is intended for use in configuration scoring.  It contains the configuration parameters of the
  * <code>QueryResponseAssembler</code> used in test evaluation with the method 
- * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code>.
+ * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer)}</code>.
  * </p>
  *
  * @author Christopher K. Allen

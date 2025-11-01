@@ -36,16 +36,16 @@ import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.common.TimeAbstraction;
-import com.ospreydcs.dp.api.config.JalConfig;
-import com.ospreydcs.dp.api.config.query.JalQueryConfig;
-import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
-import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
+import com.ospreydcs.dp.jal.common.TimeAbstraction;
+import com.ospreydcs.dp.jal.config.JalConfig;
+import com.ospreydcs.dp.jal.config.query.JalQueryConfig;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
+import com.ospreydcs.dp.jal.query.model.request.DataRequestDecomposer;
+import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
+import com.ospreydcs.dp.jal.util.Log4j;
 
 /**
  * <p>
@@ -856,7 +856,7 @@ public class QueryRecoveryTestSuiteCreator {
      * The <code>TestArchiveRequest</code> instances within the records will all be augmented by the collection
      * of supplemental PV names assigned by <code>{@link #addSupplementalPv(String)}</code> or 
      * <code>{@link #addSupplementalPvs(Collection)}</code> (if any).  This is done in the method
-     * <code>{@link QueryRecoveryTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code>.
+     * <code>{@link QueryRecoveryTestCase#evaluate(com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer)}</code>.
      * </p>
      * <p>
      * If no time-series test request was added to the test suite an exception is thrown.  If a test suite configuration

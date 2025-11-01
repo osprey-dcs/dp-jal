@@ -28,9 +28,9 @@ package com.ospreydcs.dp.jal.tools.config.archive;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.ospreydcs.dp.api.common.DpSupportedType;
-import com.ospreydcs.dp.api.config.model.ACfgOverride;
-import com.ospreydcs.dp.api.config.model.CfgStructure;
+import com.ospreydcs.dp.jal.common.DpSupportedType;
+import com.ospreydcs.dp.jal.config.model.ACfgOverride;
+import com.ospreydcs.dp.jal.config.model.CfgStructure;
 
 /**
  * <p>

@@ -28,7 +28,7 @@ package com.ospreydcs.dp.jal.tools.query.common;
 import java.io.PrintStream;
 import java.time.Duration;
 
-import com.ospreydcs.dp.api.query.DpDataRequest;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
 
 /**
  * <p>

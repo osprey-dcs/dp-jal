@@ -27,8 +27,8 @@ package com.ospreydcs.dp.jal.tools.query.channel;
 
 import java.io.PrintStream;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
+import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
+import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
 
 /**
  * <p>

@@ -30,8 +30,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
@@ -39,7 +39,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * </p>
  * <p>
  *  If a sampled aggregate assembly failure occurs during an evaluation with 
- *  <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code>
+ *  <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer)}</code>
  *  the failure status is record in the result record field <code>{@link QueryAssemblyTestResult#recTestStatus()}</code>.
  *  This record is intended for use in extracting the failure status and all the available information.
  *  </p>

@@ -36,8 +36,8 @@ import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
@@ -46,7 +46,7 @@ import com.ospreydcs.dp.api.util.JavaRuntime;
  * </p>
  * <p>
  * Use the <code>score(...)</code> methods to add <code>QueryAssemblyTestResult</code> records generated from
- * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code>
+ * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer)}</code>
  * test evaluations.
  * </p>
  *
@@ -72,7 +72,7 @@ public class AggrAssemblyConfigScore {
      * </p>
      * <p>
      * Use the <code>score(...)</code> methods to add <code>QueryAssemblyTestResult</code> records generated from
-     * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer)}</code>
+     * <code>{@link QueryAssemblyTestCase#evaluate(com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer)}</code>
      * test evaluations.
      * </p>
      * 

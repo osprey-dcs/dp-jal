@@ -32,15 +32,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.common.TimeInterval;
-import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
-import com.ospreydcs.dp.api.query.model.assem.SampledAggregate;
-import com.ospreydcs.dp.api.query.model.coalesce.SampledBlock;
-import com.ospreydcs.dp.api.query.model.coalesce.SampledBlockClocked;
-import com.ospreydcs.dp.api.query.model.coalesce.SampledBlockTmsList;
-import com.ospreydcs.dp.api.query.model.coalesce.SampledBlockType;
-import com.ospreydcs.dp.api.query.model.superdom.SampledBlockSuperDom;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.common.TimeInterval;
+import com.ospreydcs.dp.jal.query.model.assem.QueryResponseAssembler;
+import com.ospreydcs.dp.jal.query.model.assem.SampledAggregate;
+import com.ospreydcs.dp.jal.query.model.coalesce.SampledBlock;
+import com.ospreydcs.dp.jal.query.model.coalesce.SampledBlockClocked;
+import com.ospreydcs.dp.jal.query.model.coalesce.SampledBlockTmsList;
+import com.ospreydcs.dp.jal.query.model.coalesce.SampledBlockType;
+import com.ospreydcs.dp.jal.query.model.superdom.SampledBlockSuperDom;
 
 /**
  * <p>

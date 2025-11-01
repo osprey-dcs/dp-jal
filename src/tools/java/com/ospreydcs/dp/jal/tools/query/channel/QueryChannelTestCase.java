@@ -33,16 +33,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
 
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.common.ResultStatus;
-import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.grpc.QueryChannel;
-import com.ospreydcs.dp.api.query.model.grpc.QueryMessageBuffer;
-import com.ospreydcs.dp.api.query.model.request.DataRequestDecomposer;
-import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
+import com.ospreydcs.dp.jal.common.ResultStatus;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
+import com.ospreydcs.dp.jal.query.DpQueryException;
+import com.ospreydcs.dp.jal.query.model.grpc.QueryChannel;
+import com.ospreydcs.dp.jal.query.model.grpc.QueryMessageBuffer;
+import com.ospreydcs.dp.jal.query.model.request.DataRequestDecomposer;
+import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>

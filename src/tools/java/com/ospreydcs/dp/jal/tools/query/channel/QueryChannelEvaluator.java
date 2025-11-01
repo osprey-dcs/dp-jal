@@ -40,19 +40,19 @@ import javax.naming.ConfigurationException;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
-import com.ospreydcs.dp.api.app.ExitCode;
-import com.ospreydcs.dp.api.app.JalApplicationBase;
-import com.ospreydcs.dp.api.app.JalQueryAppBase;
-import com.ospreydcs.dp.api.common.DpGrpcStreamType;
-import com.ospreydcs.dp.api.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.api.util.JavaRuntime;
-import com.ospreydcs.dp.api.util.Log4j;
+import com.ospreydcs.dp.jal.app.ExitCode;
+import com.ospreydcs.dp.jal.app.JalApplicationBase;
+import com.ospreydcs.dp.jal.app.JalQueryAppBase;
+import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
+import com.ospreydcs.dp.jal.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.jal.query.DpQueryException;
+import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
 import com.ospreydcs.dp.jal.tools.common.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.query.correl.DataCorrelationEvaluator;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
+import com.ospreydcs.dp.jal.util.Log4j;
 
 /**
  * <p>
@@ -426,7 +426,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
     //
     
     /**
-     * @see com.ospreydcs.dp.api.app.JalApplicationBase#getLogger()
+     * @see com.ospreydcs.dp.jal.app.JalApplicationBase#getLogger()
      */
     @Override
     protected Logger getLogger() {

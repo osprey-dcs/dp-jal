@@ -31,13 +31,13 @@ import java.time.Instant;
 import java.util.Set;
 import java.util.SortedSet;
 
-import com.ospreydcs.dp.api.query.DpDataRequest;
-import com.ospreydcs.dp.api.query.DpQueryException;
-import com.ospreydcs.dp.api.query.model.assem.QueryRequestRecoverer;
-import com.ospreydcs.dp.api.query.model.assem.QueryResponseAssembler;
-import com.ospreydcs.dp.api.query.model.assem.SampledAggregate;
-import com.ospreydcs.dp.api.query.model.correl.RawCorrelatedData;
-import com.ospreydcs.dp.api.query.model.superdom.TimeDomainProcessor;
+import com.ospreydcs.dp.jal.query.DpDataRequest;
+import com.ospreydcs.dp.jal.query.DpQueryException;
+import com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer;
+import com.ospreydcs.dp.jal.query.model.assem.QueryResponseAssembler;
+import com.ospreydcs.dp.jal.query.model.assem.SampledAggregate;
+import com.ospreydcs.dp.jal.query.model.correl.RawCorrelatedData;
+import com.ospreydcs.dp.jal.query.model.superdom.TimeDomainProcessor;
 import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.query.superdom.SuperDomTestResult;
 

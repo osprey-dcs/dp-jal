@@ -30,8 +30,8 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.function.Function;
 
-import com.ospreydcs.dp.api.common.JalDataTableType;
-import com.ospreydcs.dp.api.util.JavaRuntime;
+import com.ospreydcs.dp.jal.common.JalDataTableType;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
