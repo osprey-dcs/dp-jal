@@ -30,7 +30,7 @@ import java.util.List;
 import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.jal.tools.query.common.TestArchiveRequest;
+import com.ospreydcs.dp.jal.tools.common.requests.TestArchiveRequest;
 
 /**
  * <p>

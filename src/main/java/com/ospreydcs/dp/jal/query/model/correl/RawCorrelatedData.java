@@ -610,8 +610,9 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * The data correlation is performed against either a uniform sampling clock or an explicit timestamp
      * list.  The returned value indicates the this correlation mechanism.
      * <ul>
-     * <li><code>{@link RawDataType#CLOCKED}</code> - uniform sampling clock
-     * <li><code>{@link RawDataType#TIMESTAMPLIST}</code> - explicit timestamp list
+     * <li><code>{@link DpTimestampCase#SAMPLING_CLOCK}</code> - uniform sampling clock </li>
+     * <li><code>{@link DpTimestampCase#TIMESTAMP_LIST}</code> - explicit timestamp list </li>
+     * <li><code>{@link DpTimestampCase#UNSUPPORTED_CASE}</code> - error </li>
      * </ul>
      * Note that timestamp lists are required to store spurious data or any other time-series data sampled
      * at non-uniform intervals.
