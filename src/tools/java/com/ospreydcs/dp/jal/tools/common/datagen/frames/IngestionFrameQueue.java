@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.jal.tools.common.data.frames;
+package com.ospreydcs.dp.jal.tools.common.datagen.frames;
 
 import java.io.File;
 import java.io.FileInputStream;

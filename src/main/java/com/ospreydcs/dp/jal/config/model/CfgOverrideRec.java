@@ -44,10 +44,10 @@ import java.lang.reflect.Field;
  * the "-D<name=value>" convention.
  * </p>
  *
- * @param varName      environment variable name
- * @param varValue     current value of the environment variable 
- * @param cfgClass   the Java class type owning the parameter 
- * @param cfgField   the Java field containing the parameter (Java reflection can get enclosing class, name, etc.)
+ * @param varName   environment variable name
+ * @param varValue  current value of the environment variable 
+ * @param cfgClass  the Java class type owning the parameter 
+ * @param cfgField  the Java field containing the parameter (Java reflection can get enclosing class, name, etc.)
  * @param cfgValue  the Java class object containing the Java field (can be used for reflection)
  *
  * @author Christopher K. Allen

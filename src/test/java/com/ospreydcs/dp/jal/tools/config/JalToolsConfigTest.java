@@ -36,7 +36,6 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.requests.TestArchiveRequest;
-import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchiveConfig;
 import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchivePvsConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;

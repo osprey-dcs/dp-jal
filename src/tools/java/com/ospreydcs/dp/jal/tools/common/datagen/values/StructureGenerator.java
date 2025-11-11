@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.jal.tools.common.data.values;
+package com.ospreydcs.dp.jal.tools.common.datagen.values;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
-import com.ospreydcs.dp.jal.tools.common.data.JalScalarType;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
  * <p>
@@ -365,7 +365,7 @@ public final class StructureGenerator implements IDataValueGenerator {
      * 
      * @throws IllegalArgumentException <code>depth</code> < 1 and/or <code>fanOut</code> < 1
      */
-    public StructureGenerator(int depth, int fanOut, JalScalarType fieldType, int seed) throws IllegalArgumentException {
+    public StructureGenerator(int depth, int fanOut, JalScalarType fieldType, long seed) throws IllegalArgumentException {
         this(depth, fanOut, fieldType, seed, false);
     }
     
@@ -388,7 +388,7 @@ public final class StructureGenerator implements IDataValueGenerator {
      * 
      * @throws IllegalArgumentException <code>depth</code> < 1 and/or <code>fanOut</code> < 1
      */
-    public StructureGenerator(int depth, int fanOut, JalScalarType fieldType, int seed, boolean useRandom) throws IllegalArgumentException {
+    public StructureGenerator(int depth, int fanOut, JalScalarType fieldType, long seed, boolean useRandom) throws IllegalArgumentException {
         
         // Check arguments
         if (depth < 1)
@@ -517,7 +517,7 @@ public final class StructureGenerator implements IDataValueGenerator {
      * 
      * @return  scalar value seed provided at construction  
      */
-    public int  getSeed() {
+    public long  getSeed() {
         return  this.valGenerator.getSeed();
     }
 

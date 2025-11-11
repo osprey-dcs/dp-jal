@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	SampleBlockConfig.java
- * Package: com.ospreydcs.dp.jal.tools.common.data.frames
+ * Package: com.ospreydcs.dp.jal.tools.common.datagen.frames
  * Type: 	SampleBlockConfig
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since Jun 11, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.common.data.frames;
+package com.ospreydcs.dp.jal.tools.common.datagen.frames;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -34,12 +34,16 @@ import java.util.stream.IntStream;
 
 import com.ospreydcs.dp.jal.common.DpTimestampCase;
 import com.ospreydcs.dp.jal.common.TimeAbstraction;
-import com.ospreydcs.dp.jal.tools.common.data.JalScalarType;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
  * <p>
- * Record with fields describing the configuration of a sampling block of simulated data.
+ * Record with fields configuring of an ingestion frame of simulated data.
  * </p> 
+ * <p>
+ * The record contains fields for configuring "ingestion frame factories," that is, classes that
+ * can generate instances of <code>IngestionFrame</code> containing simulated data.
+ * <p>
  *
  * @author Christopher K. Allen
  * @since Jun 11, 2025

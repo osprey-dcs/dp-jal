@@ -25,11 +25,13 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.jal.tools.common.data.values;
+package com.ospreydcs.dp.jal.tools.common.datagen.values;
 
 import java.util.Random;
 
-import com.ospreydcs.dp.jal.tools.common.data.JalScalarType;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
+import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsScalarValuesConfig;
 
 
 /**
@@ -49,8 +51,10 @@ import com.ospreydcs.dp.jal.tools.common.data.JalScalarType;
  *
  * @author Christopher K. Allen
  * @since May 9, 2024
- *
+ * 
+ * @deprecated Replaced by ScalarFactory
  */
+@Deprecated(since="Nov 11, 2025", forRemoval=true)
 public class ScalarGenerator implements IDataValueGenerator {
     
     
@@ -88,7 +92,7 @@ public class ScalarGenerator implements IDataValueGenerator {
      *  
      * @return  a new <code>ScalarGenerator</code> instances ready for simulated number generation
      */
-    public static ScalarGenerator   from(JalScalarType enmType, int seed) {
+    public static ScalarGenerator   from(JalScalarType enmType, long seed) {
         return new ScalarGenerator(enmType, seed);
     }
     
@@ -109,37 +113,53 @@ public class ScalarGenerator implements IDataValueGenerator {
      *  
      * @return  a new <code>ScalarGenerator</code> instances ready for simulated number generation
      */
-    public static ScalarGenerator   from(JalScalarType enmType, int seed, boolean useRandom) {
+    public static ScalarGenerator   from(JalScalarType enmType, long seed, boolean useRandom) {
         return new ScalarGenerator(enmType, seed, useRandom);
     }
+    
+    //
+    // Library Resources
+    //
+    
+    /** The default parameters for scalar-valued simulated data generation */
+    private static final JalToolsScalarValuesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.scalar;
     
     
     //
     // Class Constants - Default Arguments
     //
     
-    /** The default seed value */
-    public static final int     INT_SEED_DEF = 0;
-    
     /** The default enable/disable random number generator */
-    public static final boolean BOL_RAND_DEF = false;
-    
+    public static final boolean BOL_RAND_ENBL_DEF = CFG_DEF.random.enabled;
+
+    /** The default random number generator seed value */
+    public static final long    LNG_RAND_SEED_DEF = CFG_DEF.random.seed;
 
     //
     // Class Constants - Scalar increment values
     //
     
-    /** Float value increment */
-    private final static Float  FLT_INCR = 0.1F;
+    /** String value prefix */
+    private final static String     STR_PREFIX_DEF = CFG_DEF.stringPrefix;
+
     
-    /** Double value increment */
-    private final static Double DBL_INCR = 0.01;
+    /** The default incremental seed value */
+    public static final long        LNG_INCR_SEED_DEF = CFG_DEF.increment.seed;
+    
+    /** Integer value default increment */
+    private final static Integer    INT_INCR_DEF = CFG_DEF.increment.integerv;
+    
+    /** Long value default increment */
+    private final static Long       LNG_INCR_DEF = CFG_DEF.increment.longv;
+    
+    /** Float value default increment */
+    private final static Float      FLT_INCR_DEF = CFG_DEF.increment.floatv;
+    
+    /** Double value default increment */
+    private final static Double     DBL_INCR_DEF = CFG_DEF.increment.doublev;
     
     /** String value increment */
-    private final static Integer INT_STR_INCR = 1;
-    
-    /** String value prefix */
-    private final static String STR_PREFIX = "str:";
+    private final static Integer    INT_STR_INCR_DEF = CFG_DEF.increment.stringv;
     
 
     //
@@ -155,10 +175,10 @@ public class ScalarGenerator implements IDataValueGenerator {
     //
     
     /** The field value type */
-    private final JalScalarType    enmFieldType;
+    private final JalScalarType enmFieldType;
     
     /** The initial seed value */
-    private final int           intSeed;
+    private final long          lngSeed;
     
     
     /** Use randomly generated field values */
@@ -203,7 +223,7 @@ public class ScalarGenerator implements IDataValueGenerator {
      * @param type  scalar value type
      */
     public ScalarGenerator(JalScalarType type) {
-        this(type, INT_SEED_DEF);
+        this(type, LNG_INCR_SEED_DEF);
     }
     
     /**
@@ -217,9 +237,11 @@ public class ScalarGenerator implements IDataValueGenerator {
      *
      * @param type      scalar value type
      * @param seed      initial scalar value 
+     * 
+     * @throws  ArithmeticException the seed was too large to convert to an integer value
      */
-    public ScalarGenerator(JalScalarType type, int seed) {
-        this(type, seed, BOL_RAND_DEF);
+    public ScalarGenerator(JalScalarType type, long seed) throws ArithmeticException {
+        this(type, seed, BOL_RAND_ENBL_DEF);
     }
     
     /**
@@ -235,11 +257,13 @@ public class ScalarGenerator implements IDataValueGenerator {
      *
      * @param type      scalar value type
      * @param seed      initial scalar value or random number seed
-     * @param useRandom <code>true</code> generate random sequence, <code>false</code> generate incremental sequence 
+     * @param useRandom <code>true</code> generate random sequence, <code>false</code> generate incremental sequence
+     * 
+     * @throws  ArithmeticException the seed was too large to convert to an integer value
      */
-    public ScalarGenerator(JalScalarType type, int seed, boolean useRandom) {
+    public ScalarGenerator(JalScalarType type, long seed, boolean useRandom) throws ArithmeticException {
         this.enmFieldType = type;
-        this.intSeed = seed;
+        this.lngSeed = seed;
         this.bolUseRandom = useRandom;
         this.rndNumGenerator = new Random();
 
@@ -294,8 +318,8 @@ public class ScalarGenerator implements IDataValueGenerator {
     /**
      * @return  returns the seed value used to initialize the scalar value sequence
      */
-    public int          getSeed() {
-        return this.intSeed;
+    public long          getSeed() {
+        return this.lngSeed;
     }
     
     
@@ -337,9 +361,11 @@ public class ScalarGenerator implements IDataValueGenerator {
      * Initializes all sequence values for incremental scalar generation.
      * </p>
      * 
-     * @param intSeed   the initial value for the scalar sequence  
+     * @param lngSeed   the initial value for the scalar sequence  
+     * 
+     * @throws  ArithmeticException the argument was too large to convert to an integer
      */
-    private void initSequenceValues(int intSeed) {
+    private void initSequenceValues(long lngSeed) throws ArithmeticException {
 
         if (this.bolUseRandom) {
             this.bolValue = this.rndNumGenerator.nextBoolean();
@@ -351,11 +377,11 @@ public class ScalarGenerator implements IDataValueGenerator {
             
         } else {
             this.bolValue = false;
-            this.intValue = intSeed;
-            this.lngValue = Long.valueOf(intSeed);
-            this.fltValue = Float.valueOf(intSeed);
-            this.dblValue = Double.valueOf(intSeed);
-            this.intStrSuffix = Integer.valueOf(intSeed);
+            this.intValue = Math.toIntExact(lngSeed);   // throws ArithmeticException
+            this.lngValue = Long.valueOf(lngSeed);
+            this.fltValue = Float.valueOf(lngSeed);
+            this.dblValue = Double.valueOf(lngSeed);
+            this.intStrSuffix = Math.toIntExact(lngSeed);
         }
     }
     
@@ -365,8 +391,10 @@ public class ScalarGenerator implements IDataValueGenerator {
      * </p>
      * 
      * @return  current scalar value
+     * 
+     * @throws  UnsupportedOperationException   the scalar type is <code>{@link JalScalarType#UNSUPPORTED}</code>
      */
-    private Object currentValue() {
+    private Object currentValue() throws UnsupportedOperationException {
         
         return switch (this.enmFieldType) {
         case BOOLEAN -> Boolean.valueOf( this.bolValue );
@@ -374,7 +402,8 @@ public class ScalarGenerator implements IDataValueGenerator {
         case LONG -> Long.valueOf( this.lngValue );
         case FLOAT -> Float.valueOf( this.fltValue );
         case DOUBLE -> Double.valueOf( this.dblValue );
-        case STRING -> STR_PREFIX + Integer.toString(this.intStrSuffix);
+        case STRING -> STR_PREFIX_DEF + Integer.toString(this.intStrSuffix);
+        case UNSUPPORTED -> throw new UnsupportedOperationException("Unsuppoted case: " + this.enmFieldType);
         };
     }
     
@@ -382,28 +411,32 @@ public class ScalarGenerator implements IDataValueGenerator {
      * <p>
      * Generate the next scalar value incrementally according to value type and stores it.
      * </p>
+     * 
+     * @throws  UnsupportedOperationException   the scalar type is <code>{@link JalScalarType#UNSUPPORTED}</code>
      */
-    private void nextIncrementalValue() {
+    private void nextIncrementalValue() throws UnsupportedOperationException {
         
         switch (this.enmFieldType) {
         case BOOLEAN:
             this.bolValue = !this.bolValue;
             break;
         case INTEGER:
-            this.intValue++;
+            this.intValue = (this.intValue + INT_INCR_DEF);
             break;
         case LONG: 
-            this.lngValue++;
+            this.lngValue = (this.lngValue + LNG_INCR_DEF);
             break;
         case FLOAT:
-            this.fltValue = (this.fltValue + FLT_INCR);
+            this.fltValue = (this.fltValue + FLT_INCR_DEF);
             break;
         case DOUBLE:
-            this.dblValue = (this.dblValue + DBL_INCR);
+            this.dblValue = (this.dblValue + DBL_INCR_DEF);
             break;
         case STRING:
-            this.intStrSuffix = (this.intStrSuffix + INT_STR_INCR);
+            this.intStrSuffix = (this.intStrSuffix + INT_STR_INCR_DEF);
             break;
+        case UNSUPPORTED:
+            throw new UnsupportedOperationException("Unsuppoted case: " + this.enmFieldType);
         };
     }
     
@@ -411,8 +444,10 @@ public class ScalarGenerator implements IDataValueGenerator {
      * <p>
      * Generate the next scalar value randomly according to value type and stores it.
      * </p>
+     * 
+     * @throws  UnsupportedOperationException   the scalar type is <code>{@link JalScalarType#UNSUPPORTED}</code>
      */
-    private void nextRandomValue() {
+    private void nextRandomValue() throws UnsupportedOperationException {
         
         switch (this.enmFieldType) {
         case BOOLEAN:
@@ -433,6 +468,8 @@ public class ScalarGenerator implements IDataValueGenerator {
         case STRING:
             this.intStrSuffix = rndNumGenerator.nextInt();
             break;
+        case UNSUPPORTED:
+            throw new UnsupportedOperationException("Unsuppoted case: " + this.enmFieldType);
         };
     }
 }

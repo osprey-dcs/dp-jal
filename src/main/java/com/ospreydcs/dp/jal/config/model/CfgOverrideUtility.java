@@ -217,126 +217,126 @@ public final class CfgOverrideUtility {
     }
     
     /**
-         * <p>
-         * Convenience method for overriding substructure fields within an appropriately annotated structure class.
-         * </p>
-         * <p>
-         * <h2>WARNING:</h2>
-         * Use this method with caution.  It is provided to override the fields of substructures within
-         * configuration structure classes without overriding the entire configuration.  
-         * Such a need would likely be rare and discretion is advised.
-         * <p>
-         * If the above application is encounter one could directly call the
-         * <code>{@link #overrideField(Field, Object, String, SOURCE)}</code> method with
-         * the same arguments and essentially the same effect, although the intent is less clear. 
-         * </p>
-         * </p>
-         * <p>
-         * <h2>USE:</h2>
-         * <ul>
-         * <br/>
-         * <li>
-         * The argument <code>struct</code> is assumed (but not required) to be a structure class annotated with 
-         * <code>{@link ACfgOverride.Struct}</code>.  
-         * The generic parameter <code>S</code> is included simply to reinforce this assumption as no 
-         * compile-time requirements are possible.
-         * </li>
-         * <br/>
-         * <li>
-         * Regarding the above: Further, it is not practical to require that argument <code>struct</code> come from 
-         * a <code>{@link ACfgOverride.Struct}</code> annotated field as the annotation is only recoverable from 
-         * the containing structure class.
-         * Again, <em>use this method with caution</em>.  
-         * </li>
-         * <br/>
-         * <li>
-         * The argument <code>struct</code> is assumed to be a substructure field within a configuration class 
-         * (i.e., annotated with <code>{@link ACfgOverride.Root}</code>).  The only situation for this method 
-         * would be the need to override <em>only the fields of this substructure</em> without disturbing the 
-         * entire configuration. 
-         * </li>
-         * <br/>
-         * <li>
-         * The fields within the <code>struct</code> argument are assumed to be annotated with either
-         * <code>{@link ACfgOverride.Struct}</code> or <code>{@link ACfgOverride.Field}</code>.  If not,
-         * nothing is done and the method returns <code>false</code> 
-         * </li>
-         * <br/>
-         * <li>
-         * The argument <code>strVarPrefix</code> must accurately identify the prefix of a system
-         * variable in relation to the structure class.  If the system variable name is constructed incorrectly
-         * it will not be recognized and any override-capable fields within the structure argument will NOT be
-         * overridden.
-         * </li>
-         * <br/>
-         * <li>
-         * Regarding the above: System variable names are constructed recursively using the argument 
-         * <code>strVarPrefix</code>.  This argument specifies the current path, or prefix, of the system variable 
-         * name within the overall configuration.  This prefix is constructed analogously to path elements for file
-         * names where the separator is given by <code>{@link #STR_PATHEL_SEP}</code>.
-         * </li>
-         * </ul>
-         * <p>
-         * <h2>NOTES:</h2>
-         * <ul>
-         * <li>
-         * This method calls the recursive function <code>{@link #overrideField(Field, Object, String, SOURCE)}</code> 
-         * to process each field of the given structure class.  The method calls itself whenever it encounters
-         * a field that is a substructure.
-         * </li>
-         * </p> 
-         *  
-         * @param <S>           structure class type is annotated with <code>{@link ACfgOverride.Struct}</code> 
-         * 
-         * @param struct        structure class assumed to be substructure field of a configuration
-         * @param strVarPrefix  prefix, or "path element", for the system variable name w.r.t. overall configuration
-         * @param enmSrc        enumeration indicating the system cache for the override values
-         * 
-         * @return      <code>true</code> if at least one parameter was overridden, <code>false</code> if none
-         * 
-         * @throws IllegalArgumentException the argument is <code>null</code> or is missing the required annotation
-         * @throws IllegalAccessException   a field or subfield of the argument is inaccessible (e.g., <code>{@link java.lang.reflect.Field#get(Object)}</code>).
-         * 
-         * @see #overrideField(Field, Object, String, SOURCE)
-         */
-        public static <S extends Object> boolean overrideStruct(S struct, String strVarPrefix, SOURCE enmSrc) throws IllegalArgumentException, IllegalAccessException {
-            
-            // Get the class type of the structure
-            Class<? extends Object> clsStruct = struct.getClass();
-            
-            // Runtime check for null argument
-            if ( Objects.isNull(struct) ) {
-                String  strMsg = JavaRuntime.getQualifiedMethodName() + ": Argument is null";
-                LOGGER.error(strMsg);
-                
-                throw new IllegalArgumentException(strMsg);
-            }
-    
-            // NOTE: The following is not practical
-    //        // Runtime check if Struct annotation is present
-    //        if (!clsStruct.isAnnotationPresent(ACfgOverride.Struct.class)) {
-    //            String  strMthdNm = JavaRuntime.getQualifiedCallerName();
-    //            String  strErrMsg = strMthdNm +": Argument type + " + struct.getClass().getCanonicalName() + " is not annotated with " + ACfgOverride.Struct.class.getCanonicalName();
-    //            LOGGER.error(strErrMsg);
-    //            
-    //            throw new IllegalArgumentException(strErrMsg);
-    //        }
-            
-            // Add the path element separator
-            String  strPathExt = strVarPrefix.concat(STR_PATHEL_SEP);
-            
-            // Call recursive function to override fields of structure class 
-            boolean bolResult = false;
-            
-            for (Field fldSub : clsStruct.getDeclaredFields()) {
-                fldSub.setAccessible(true);
-                
-                if (CfgOverrideUtility.overrideField(fldSub, struct, strPathExt, enmSrc))
-                    bolResult = true; // result is true if at least one field was overridden
-            }
-    
-            return bolResult;
+     * <p>
+     * Convenience method for overriding substructure fields within an appropriately annotated structure class.
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * Use this method with caution.  It is provided to override the fields of substructures within
+     * configuration structure classes without overriding the entire configuration.  
+     * Such a need would likely be rare and discretion is advised.
+     * <p>
+     * If the above application is encounter one could directly call the
+     * <code>{@link #overrideField(Field, Object, String, SOURCE)}</code> method with
+     * the same arguments and essentially the same effect, although the intent is less clear. 
+     * </p>
+     * </p>
+     * <p>
+     * <h2>USE:</h2>
+     * <ul>
+     * <br/>
+     * <li>
+     * The argument <code>struct</code> is assumed (but not required) to be a structure class annotated with 
+     * <code>{@link ACfgOverride.Struct}</code>.  
+     * The generic parameter <code>S</code> is included simply to reinforce this assumption as no 
+     * compile-time requirements are possible.
+     * </li>
+     * <br/>
+     * <li>
+     * Regarding the above: Further, it is not practical to require that argument <code>struct</code> come from 
+     * a <code>{@link ACfgOverride.Struct}</code> annotated field as the annotation is only recoverable from 
+     * the containing structure class.
+     * Again, <em>use this method with caution</em>.  
+     * </li>
+     * <br/>
+     * <li>
+     * The argument <code>struct</code> is assumed to be a substructure field within a configuration class 
+     * (i.e., annotated with <code>{@link ACfgOverride.Root}</code>).  The only situation for this method 
+     * would be the need to override <em>only the fields of this substructure</em> without disturbing the 
+     * entire configuration. 
+     * </li>
+     * <br/>
+     * <li>
+     * The fields within the <code>struct</code> argument are assumed to be annotated with either
+     * <code>{@link ACfgOverride.Struct}</code> or <code>{@link ACfgOverride.Field}</code>.  If not,
+     * nothing is done and the method returns <code>false</code> 
+     * </li>
+     * <br/>
+     * <li>
+     * The argument <code>strVarPrefix</code> must accurately identify the prefix of a system
+     * variable in relation to the structure class.  If the system variable name is constructed incorrectly
+     * it will not be recognized and any override-capable fields within the structure argument will NOT be
+     * overridden.
+     * </li>
+     * <br/>
+     * <li>
+     * Regarding the above: System variable names are constructed recursively using the argument 
+     * <code>strVarPrefix</code>.  This argument specifies the current path, or prefix, of the system variable 
+     * name within the overall configuration.  This prefix is constructed analogously to path elements for file
+     * names where the separator is given by <code>{@link #STR_PATHEL_SEP}</code>.
+     * </li>
+     * </ul>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>
+     * This method calls the recursive function <code>{@link #overrideField(Field, Object, String, SOURCE)}</code> 
+     * to process each field of the given structure class.  The method calls itself whenever it encounters
+     * a field that is a substructure.
+     * </li>
+     * </p> 
+     *  
+     * @param <S>           structure class type is annotated with <code>{@link ACfgOverride.Struct}</code> 
+     * 
+     * @param struct        structure class assumed to be substructure field of a configuration
+     * @param strVarPrefix  prefix, or "path element", for the system variable name w.r.t. overall configuration
+     * @param enmSrc        enumeration indicating the system cache for the override values
+     * 
+     * @return      <code>true</code> if at least one parameter was overridden, <code>false</code> if none
+     * 
+     * @throws IllegalArgumentException the argument is <code>null</code> or is missing the required annotation
+     * @throws IllegalAccessException   a field or subfield of the argument is inaccessible (e.g., <code>{@link java.lang.reflect.Field#get(Object)}</code>).
+     * 
+     * @see #overrideField(Field, Object, String, SOURCE)
+     */
+    public static <S extends Object> boolean overrideStruct(S struct, String strVarPrefix, SOURCE enmSrc) throws IllegalArgumentException, IllegalAccessException {
+
+        // Get the class type of the structure
+        Class<? extends Object> clsStruct = struct.getClass();
+
+        // Runtime check for null argument
+        if ( Objects.isNull(struct) ) {
+            String  strMsg = JavaRuntime.getQualifiedMethodName() + ": Argument is null";
+            LOGGER.error(strMsg);
+
+            throw new IllegalArgumentException(strMsg);
         }
+
+        // NOTE: The following is not practical
+        //        // Runtime check if Struct annotation is present
+        //        if (!clsStruct.isAnnotationPresent(ACfgOverride.Struct.class)) {
+        //            String  strMthdNm = JavaRuntime.getQualifiedCallerName();
+        //            String  strErrMsg = strMthdNm +": Argument type + " + struct.getClass().getCanonicalName() + " is not annotated with " + ACfgOverride.Struct.class.getCanonicalName();
+        //            LOGGER.error(strErrMsg);
+        //            
+        //            throw new IllegalArgumentException(strErrMsg);
+        //        }
+
+        // Add the path element separator
+        String  strPathExt = strVarPrefix.concat(STR_PATHEL_SEP);
+
+        // Call recursive function to override fields of structure class 
+        boolean bolResult = false;
+
+        for (Field fldSub : clsStruct.getDeclaredFields()) {
+            fldSub.setAccessible(true);
+
+            if (CfgOverrideUtility.overrideField(fldSub, struct, strPathExt, enmSrc))
+                bolResult = true; // result is true if at least one field was overridden
+        }
+
+        return bolResult;
+    }
 
     /**
      * <p>

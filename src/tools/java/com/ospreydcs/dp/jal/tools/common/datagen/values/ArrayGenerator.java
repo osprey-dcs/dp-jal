@@ -25,13 +25,13 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.jal.tools.common.data.values;
+package com.ospreydcs.dp.jal.tools.common.datagen.values;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import com.ospreydcs.dp.jal.tools.common.data.JalScalarType;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 
 /**
@@ -105,7 +105,7 @@ public class ArrayGenerator implements IDataValueGenerator {
      * @param type      the scalar type of each array element
      * @param seed      seed used to generate scalar types
      */
-    public ArrayGenerator(int[] shape, JalScalarType type, int seed) {
+    public ArrayGenerator(int[] shape, JalScalarType type, long seed) {
         this(shape, type, seed, false);
     }
     
@@ -119,7 +119,7 @@ public class ArrayGenerator implements IDataValueGenerator {
      * @param seed      seed used to generate scalar types
      * @param useRandom use random number generator for scalar values (otherwise incremental values)
      */
-    public ArrayGenerator(int[] shape, JalScalarType type, int seed, boolean useRandom) {
+    public ArrayGenerator(int[] shape, JalScalarType type, long seed, boolean useRandom) {
         this.arrShape = shape.clone();
         this.intRank = shape.length;
         this.szArray = this.computeSize(shape);
@@ -188,7 +188,7 @@ public class ArrayGenerator implements IDataValueGenerator {
      * 
      * @return  value generation seed value provided at construction
      */
-    public int  getSeed() {
+    public long  getSeed() {
         return this.valGenerator.getSeed();
     }
     

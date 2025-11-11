@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.jal.tools.common.data.frames;
+package com.ospreydcs.dp.jal.tools.common.datagen.frames;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -33,8 +33,8 @@ import java.util.Set;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.model.table.StaticDataColumn;
-import com.ospreydcs.dp.jal.tools.common.data.values.IDataValueGenerator;
-import com.ospreydcs.dp.jal.tools.common.data.values.ScalarGenerator;
+import com.ospreydcs.dp.jal.tools.common.datagen.values.IDataValueGenerator;
+import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGenerator;
 
 /**
  * <p>

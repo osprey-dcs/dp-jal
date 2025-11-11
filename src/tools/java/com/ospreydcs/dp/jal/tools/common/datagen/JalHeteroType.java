@@ -1,8 +1,8 @@
 /*
  * Project: dp-data-simulator
- * File:	HeteroType.java
+ * File:	JalHeteroType.java
  * Package: com.ospreydcs.dp.datasim.model
- * Type: 	HeteroType
+ * Type: 	JalHeteroType
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -25,20 +25,20 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.jal.tools.common.data;
+package com.ospreydcs.dp.jal.tools.common.datagen;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 
 /**
  * <p>
- * Enumeration of supported data value types for ingestion frame data columnConfigs.
+ * Enumeration of supported data value types for ingestion frame data column configuration.
  * </p>
  * 
  * @author Christopher K. Allen
  * @since Jun 13, 2024
  *
  */
-public enum HeteroType {
+public enum JalHeteroType {
     
     /** Scalar data type */
     SCALAR(DpSupportedType.UNSUPPORTED_TYPE),
@@ -57,7 +57,7 @@ public enum HeteroType {
     private final DpSupportedType   enmDpType;
     
     /** Enumeration constant constructor */
-    private HeteroType(DpSupportedType enmDpType) { this.enmDpType = enmDpType; };
+    private JalHeteroType(DpSupportedType enmDpType) { this.enmDpType = enmDpType; };
     
     
     //

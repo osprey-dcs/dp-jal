@@ -45,6 +45,22 @@ testArchive:   # Data Platform test archive properties (generated with utility '
       indexes:
          clocked: 0             # 1st clocked PV index (0-based index   : JAL_TOOLS_TEST_ARCHIVE_PVS_INDEXES_CLOCKED
          tmsList: 3800          # 1st timestamp list PV index (0-based) : JAL_TOOLS_TEST_ARCHIVE_PVS_INDEXES_TMS_LIST
+         
+datagen:       # JAL Tools simulated data generation default configuration parameters
+   values:                  # Data value generation parameters
+      scalar:               # Scalar data value generation
+         stringPrefix: "str:"  # prefix for all string values          : JAL_TOOLS_DATAGEN_VALUES_SCALAR_STRING_PREFIX
+         random:            # Random number generation parameters      : JAL_TOOLS_DATAGEN_VALUES_SCALAR_RANDOM_ENABLE_{PROP}
+            enabled: false     # enable/disable random number generator (WARNING: random generation can be expensive)
+            seed: 0            # seed value for random number generator (use 0 for random seed)
+         increment:         # Value increment parameters for non-random generation : JAL_TOOLS_DATAGEN_SCALAR_INCREMENT_{FIELDNAME}
+            seed: 0            # seed (start) value (type long)
+            booleanv: 1        # increment value for boolean value generation
+            integerv: 1        # increment value for integer value generation
+            longv: 5           # increment value for long value generation
+            floatv: 0.1        # increment value for float value generation
+            doublev: 0.01      # increment value for double value generation
+            stringv: 1         # increment value for string value generator (full string includes numeric suffix)
        
 output:         # JAL Tools (General) default output location - this should be related to DP_JAL_OUTPUT environment variable
    path: test/output         # path location relative to execution     : JAL_TOOLS_OUTPUT_PATH

@@ -1,7 +1,7 @@
 /*
- * Project: dp-api-common
+ * Project: dp-jal
  * File:	package-info.java
- * Package: com.ospreydcs.dp.jal.tools.common.data.values
+ * Package: com.ospreydcs.dp.jal.tools.common.datagen.utility
  * Type: 	package-info
  *
  * Copyright 2010-2025 the original author or authors.
@@ -20,16 +20,16 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jun 10, 2025
+ * @since Nov 3, 2025
  *
  */
 /**
  * <p>
- * Packages containing resources for simulated data value generation.
- * </p> 
+ * Package containing utilities for processing and inspecting JAL data resources.
+ * </p>
  *
  * @author Christopher K. Allen
- * @since Jun 10, 2025
+ * @since Nov 3, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.common.data.values;
+package com.ospreydcs.dp.jal.tools.common.datagen.utility;

@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
  * various units according to its exposed method API. 
  * </li>
  * </ol>
- * This record provides quick conversion between the 3 methods offer all options after creation.
+ * This record provides conversions between the 3 methods offer all options after creation.
  * The objective is to create time durations using arbitrary (amount, unit) pairs then
  * convert to a <code>Duration</code> object for unit conversion.
  * </p>

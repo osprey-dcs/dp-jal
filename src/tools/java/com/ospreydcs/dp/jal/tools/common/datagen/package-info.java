@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.jal.tools.common.data.frames
+ * Package: com.ospreydcs.dp.jal.tools.common.datagen
  * Type: 	package-info
  *
  * Copyright 2010-2025 the original author or authors.
@@ -20,16 +20,21 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jun 11, 2025
+ * @since Jun 14, 2025
  *
  */
 /**
  * <p>
- * Package containing resources for creating ingestion frames of simulated data.
+ * Package containing resources for JAL tools supporting Ingestion Service evaluations.
  * </p>
+ * <p>
+ * <h2>Time-Series Data</h2>
+ * The resources contained within this package and its sub-packages are primarily for generating
+ * simulated time-series data for use in evaluation the Data Platform Ingestion Service.
+ * </p> 
  *
  * @author Christopher K. Allen
- * @since Jun 11, 2025
+ * @since Jun 14, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.common.data.frames;
+package com.ospreydcs.dp.jal.tools.common.datagen;

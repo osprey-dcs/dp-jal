@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	IngestionFrameGenerator.java
- * Package: com.ospreydcs.dp.jal.tools.common.data.frames
+ * Package: com.ospreydcs.dp.jal.tools.common.datagen.frames
  * Type: 	IngestionFrameGenerator
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since Jun 11, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.common.data.frames;
+package com.ospreydcs.dp.jal.tools.common.datagen.frames;
 
 import java.time.DateTimeException;
 import java.time.Duration;

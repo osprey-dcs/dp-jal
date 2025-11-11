@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.jal.tools.common.data.values;
+package com.ospreydcs.dp.jal.tools.common.datagen.values;
 
 /**
  * <p>

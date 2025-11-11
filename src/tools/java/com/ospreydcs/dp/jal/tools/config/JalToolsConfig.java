@@ -35,6 +35,7 @@ import com.ospreydcs.dp.jal.config.model.CfgLoaderYaml;
 import com.ospreydcs.dp.jal.config.model.CfgOverrideUtility;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchiveConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsDataGenConfig;
 import com.ospreydcs.dp.jal.tools.config.output.JalToolsOutputConfig;
 
 /**
@@ -136,6 +137,10 @@ public class JalToolsConfig extends CfgStructure<JalToolsConfig> {
     /** Configuration parameters for the Data Platform test archive */
     @ACfgOverride.Struct(pathelem="TEST_ARCHIVE")
     public JalTestArchiveConfig     testArchive;
+    
+    /** Configuration parameters for simulated data value generation */
+    @ACfgOverride.Struct(pathelem="DATAGEN")
+    public JalToolsDataGenConfig    datagen;
     
     /** Default output locations of Java API Library tools */
     @ACfgOverride.Struct(pathelem="OUTPUT")
