@@ -27,6 +27,7 @@ package com.ospreydcs.dp.jal.tools.config.datagen;
 
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGenerator;
 
 /**
@@ -55,17 +56,21 @@ public class JalToolsScalarValuesConfig extends CfgStructure<JalToolsScalarValue
     // Fields
     //
     
+    /** The default scalar value type when none is given */
+    @ACfgOverride.Field(name="TYPE")
+    public JalScalarType    type;
+    
     /** The prefix used for all string value generation - numeric value used as suffix */
     @ACfgOverride.Field(name="STRING_PREFIX")
-    public String       stringPrefix;
+    public String           stringPrefix;
     
     /** Random number generator value creation parameters if used, otherwise use incremental value creation */
     @ACfgOverride.Struct(pathelem="RANDOM")
-    public Random       random;
+    public Random           random;
     
     /** Incremental number generation default parameters (used when random number generation disabled) */
     @ACfgOverride.Struct(pathelem="INCREMENT")
-    public Increment    increment;
+    public Increment        increment;
     
     
     //
@@ -106,7 +111,7 @@ public class JalToolsScalarValuesConfig extends CfgStructure<JalToolsScalarValue
         
         /** Increment value for boolean value generation */
         @ACfgOverride.Field(name="BOOLEANV")
-        public Boolean      booleanv;
+        public Integer      booleanv;
         
         /** Increment value for integer value generation */
         @ACfgOverride.Field(name="INTEGERV")

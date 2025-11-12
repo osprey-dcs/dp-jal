@@ -25,11 +25,8 @@
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.values;
 
-import static org.junit.Assert.*;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.StringReader;
 
 import javax.naming.ConfigurationException;
 
@@ -39,6 +36,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -63,23 +61,16 @@ public class ScalarFactoryConfigTest {
     /** The default parameters for scalar-valued simulated data generation */
     private static final JalToolsScalarValuesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.scalar;
     
-    public static final String  STR_YAML_DOC =
-            "stringPref: str:       # the string prefix \n"
-          + "type: INTEGER          # the scalar type \n"
-          + "random: \n"
-          + "   enabled: true       # enable/disable random number generation\n"
-          + "   seed: 0             # seed value for random number generator (0 is random)\n"
-          + "increment: \n"
-          + "   start: 0            # seed (start) value for incremental number generation \n"
-          + "   value: 0            # the increment value for incremental number generation\n";
-    
     
     //
     // Constants - Default Argument Values
     //
     
-    /** String value prefix */
-    private final static String     STR_PREFIX_DEF = CFG_DEF.stringPrefix;
+    /** The default scalar value type */
+    private final static JalScalarType  ENM_TYPE_DEF = CFG_DEF.type;
+    
+    /** The default string value prefix */
+    private final static String         STR_PREFIX_DEF = CFG_DEF.stringPrefix;
 
     
     /** The default enable/disable random number generator */
@@ -96,6 +87,9 @@ public class ScalarFactoryConfigTest {
     // Constants - Scalar increment values
     //
     
+    /** Boolean value default increment value */
+    public final static Integer     INT_BOL_INCR_DEF = CFG_DEF.increment.booleanv;
+    
     /** Integer value default increment */
     public final static Integer     INT_INCR_DEF = CFG_DEF.increment.integerv;
     
@@ -111,6 +105,59 @@ public class ScalarFactoryConfigTest {
     /** String value increment */
     public final static Integer     INT_STR_INCR_DEF = CFG_DEF.increment.stringv;
 
+    
+    //
+    // Constants - Test Resources
+    //
+    
+    /** Command-line argument set used for application command-line argument parsing */
+    public static final String[]    STR_CMD_ARGS_1 = {"LONG"};
+    
+    /** Command-line argument set used for application command-line argument parsing */
+    public static final String[]    STR_CMD_ARGS_2 = {"DOUBLE", "false"};
+    
+    /** Command-line argument set used for application command-line argument parsing */
+    public static final String[]    STR_CMD_ARGS_3 = {"FLOAT", "false", "0"};
+    
+    /** Command-line argument set used for application command-line argument parsing */
+    public static final String[]    STR_CMD_ARGS_4 = {"INTEGER", "true", "0", "2"};
+    
+    /** Command-line argument set used for application command-line argument parsing */
+    public static final String[]    STR_CMD_ARGS_5 = {"STRING", "true", "0", "2", "str_"};
+    
+    /** The <code>ScalarFactoryConfig</code> record equivalent to <code>{@link #STR_CMD_ARGS_1}</code> */
+    public static final ScalarFactoryConfig REC_ARGS_1 = (BOL_RAND_ENBL_DEF) ? ScalarFactoryConfig.from(JalScalarType.LONG, BOL_RAND_ENBL_DEF, LNG_RAND_SEED_DEF, LNG_INCR_DEF, STR_PREFIX_DEF)
+                                                                             : ScalarFactoryConfig.from(JalScalarType.LONG, BOL_RAND_ENBL_DEF, LNG_INCR_SEED_DEF, LNG_INCR_DEF, STR_PREFIX_DEF);
+    
+    /** The <code>ScalarFactoryConfig</code> record equivalent to <code>{@link #STR_CMD_ARGS_2}</code> */
+    public static final ScalarFactoryConfig REC_ARGS_2 = ScalarFactoryConfig.from(JalScalarType.DOUBLE, false, LNG_INCR_SEED_DEF, DBL_INCR_DEF, STR_PREFIX_DEF);
+    
+    /** The <code>ScalarFactoryConfig</code> record equivalent to <code>{@link #STR_CMD_ARGS_3}</code> */
+    public static final ScalarFactoryConfig REC_ARGS_3 = ScalarFactoryConfig.from(JalScalarType.FLOAT, false, 0, FLT_INCR_DEF, STR_PREFIX_DEF);
+    
+    /** The <code>ScalarFactoryConfig</code> record equivalent to <code>{@link #STR_CMD_ARGS_4}</code> */
+    public static final ScalarFactoryConfig REC_ARGS_4 = ScalarFactoryConfig.from(JalScalarType.INTEGER, true, 0, 2, STR_PREFIX_DEF);
+    
+    /** The <code>ScalarFactoryConfig</code> record equivalent to <code>{@link #STR_CMD_ARGS_5}</code> */
+    public static final ScalarFactoryConfig REC_ARGS_5 = ScalarFactoryConfig.from(JalScalarType.STRING, true, 0, 2, "str_");
+    
+    
+    /** String equivalent to a YAML document - used for testing YAML configuration parsing */ 
+    public static final String  STR_YAML_DOC =
+             "# This is a comment line \n"
+          +  "   # This is an indented comment line \n"
+          +  "stringPrefix: \"str:\" # the string prefix \n"
+          + "type: INTEGER          # the scalar type \n"
+          + "random: \n"
+          + "   enabled: true       # enable/disable random number generation\n"
+          + "   seed: 0             # seed value for random number generator (0 is random)\n"
+          + "increment: \n"
+          + "   start: 0            # seed (start) value for incremental number generation \n"
+          + "   value: 2            # the increment value for incremental number generation\n";
+    
+    /** The <code>ScalarFactoryConfig</code> record equivalent to <code>{@link #STR_YAML_DOC}</code> */
+    public static final ScalarFactoryConfig REC_YML_CFG = ScalarFactoryConfig.from(JalScalarType.INTEGER, true, 0, Integer.valueOf(2), "str:");
+    
     
     //
     // Test Fixture
@@ -153,8 +200,80 @@ public class ScalarFactoryConfigTest {
      * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactoryConfig#parseArgs(java.lang.String[])}.
      */
     @Test
-    public final void testParseArgs() {
-        fail("Not yet implemented"); // TODO
+    public final void testParseArgs1() {
+        
+        try {
+            ScalarFactoryConfig recCfg = ScalarFactoryConfig.parseArgs(STR_CMD_ARGS_1);
+        
+            Assert.assertEquals(REC_ARGS_1, recCfg);
+            
+        } catch (Exception e) {
+            Assert.fail("Record creation failed to parse with exception " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactoryConfig#parseArgs(java.lang.String[])}.
+     */
+    @Test
+    public final void testParseArgs2() {
+        
+        try {
+            ScalarFactoryConfig recCfg = ScalarFactoryConfig.parseArgs(STR_CMD_ARGS_2);
+        
+            Assert.assertEquals(REC_ARGS_2, recCfg);
+            
+        } catch (Exception e) {
+            Assert.fail("Record creation failed to parse with exception " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactoryConfig#parseArgs(java.lang.String[])}.
+     */
+    @Test
+    public final void testParseArgs3() {
+        
+        try {
+            ScalarFactoryConfig recCfg = ScalarFactoryConfig.parseArgs(STR_CMD_ARGS_3);
+        
+            Assert.assertEquals(REC_ARGS_3, recCfg);
+            
+        } catch (Exception e) {
+            Assert.fail("Record creation failed to parse with exception " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactoryConfig#parseArgs(java.lang.String[])}.
+     */
+    @Test
+    public final void testParseArgs4() {
+        
+        try {
+            ScalarFactoryConfig recCfg = ScalarFactoryConfig.parseArgs(STR_CMD_ARGS_4);
+        
+            Assert.assertEquals(REC_ARGS_4, recCfg);
+            
+        } catch (Exception e) {
+            Assert.fail("Record creation failed to parse with exception " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactoryConfig#parseArgs(java.lang.String[])}.
+     */
+    @Test
+    public final void testParseArgs5() {
+        
+        try {
+            ScalarFactoryConfig recCfg = ScalarFactoryConfig.parseArgs(STR_CMD_ARGS_5);
+        
+            Assert.assertEquals(REC_ARGS_5, recCfg);
+            
+        } catch (Exception e) {
+            Assert.fail("Record creation failed to parse with exception " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
 
     /**
@@ -162,7 +281,17 @@ public class ScalarFactoryConfigTest {
      */
     @Test
     public final void testParseYamlDoc() {
-        fail("Not yet implemented"); // TODO
+
+        ByteArrayInputStream    is = new ByteArrayInputStream( STR_YAML_DOC.getBytes() );
+        
+        try {
+            ScalarFactoryConfig recCfg = ScalarFactoryConfig.parseYamlDoc(is);
+            
+            Assert.assertEquals(REC_YML_CFG, recCfg);
+            
+        } catch (YAMLException e) {
+            Assert.fail("Record creation failed to parse with exception " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
 
     /**
@@ -176,9 +305,54 @@ public class ScalarFactoryConfigTest {
         try {
             ScalarFactoryConfig recCfg = ScalarFactoryConfig.parseYamlNode(is);
             
-        } catch (ArrayIndexOutOfBoundsException | NumberFormatException | TypeNotPresentException
+            Assert.assertEquals(REC_YML_CFG, recCfg);
+            
+        } catch (IndexOutOfBoundsException | NumberFormatException | TypeNotPresentException
                 | ConfigurationException | IOException e) {
             Assert.fail("Record creation failed to parse with exception " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactoryConfig#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType)}.
+     */
+    @Test
+    public final void testFrom() {
+        
+        ScalarFactoryConfig recCfg = ScalarFactoryConfig.from();
+        
+        // Check record fields
+        Assert.assertEquals(recCfg.enmValueType(), ENM_TYPE_DEF);
+        Assert.assertEquals(recCfg.strPrefix(), STR_PREFIX_DEF);
+        Assert.assertEquals(recCfg.bolRandEnable(), BOL_RAND_ENBL_DEF);
+
+        if (BOL_RAND_ENBL_DEF)
+            Assert.assertEquals(recCfg.seed(), LNG_RAND_SEED_DEF);
+        else
+            Assert.assertEquals(recCfg.seed(), LNG_INCR_SEED_DEF);
+        
+        switch (ENM_TYPE_DEF) {
+        case STRING:
+            Assert.assertEquals(recCfg.increment(), INT_STR_INCR_DEF);
+            break;
+        case BOOLEAN:
+            Assert.assertEquals(recCfg.increment(), INT_BOL_INCR_DEF);
+            break;
+        case DOUBLE:
+            Assert.assertEquals(recCfg.increment(), DBL_INCR_DEF);
+            break;
+        case FLOAT:
+            Assert.assertEquals(recCfg.increment(), FLT_INCR_DEF);
+            break;
+        case INTEGER:
+            Assert.assertEquals(recCfg.increment(), INT_INCR_DEF);
+            break;
+        case LONG:
+            Assert.assertEquals(recCfg.increment(), LNG_INCR_DEF);
+            break;
+        case UNSUPPORTED:
+            Assert.fail("The default scalar value type is unsupported: " + ENM_TYPE_DEF);
+            break;
         }
     }
 

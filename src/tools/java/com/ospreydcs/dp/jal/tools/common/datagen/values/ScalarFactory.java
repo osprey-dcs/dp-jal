@@ -27,6 +27,7 @@ package com.ospreydcs.dp.jal.tools.common.datagen.values;
 
 import java.util.Random;
 
+import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
@@ -52,7 +53,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @since Nov 6, 2025
  *
  */
-public class ScalarFactory implements IDataValueGenerator {
+public class ScalarFactory implements IDataValueFactory {
 
     
     //
@@ -65,7 +66,7 @@ public class ScalarFactory implements IDataValueGenerator {
      * </p>
      * <p>
      * The returned scalar factory is configured, initialized, and ready to produce scalar values with operation
-     * <code>{@link #nextValue()}</code> of the <code>{@link IDataValueGenerator}</code> interface.
+     * <code>{@link #nextValue()}</code> of the <code>{@link IDataValueFactory}</code> interface.
      * Note that <code>ScalarFactory</code> instances cannot be dynamically configured.  The configuration given
      * at creation is maintained throughout its lifetime.
      * </p>
@@ -178,10 +179,25 @@ public class ScalarFactory implements IDataValueGenerator {
         this.initCurrentValues(this.recConfig);
     }
     
+    
+    //
+    // Configuration
+    //
+    
+    /**
+     * <p>
+     * Returns the configuration of this scalar factory.
+     * </p>
+     * 
+     * @return  the <code>ScalarFactoryConfig</code> record provided at construction/creation
+     */
+    public ScalarFactoryConfig  getConfiguration() {
+        return this.recConfig;
+    }
 
     
     //
-    // IDataValueGenerator Interface
+    // IDataValueFactory Interface
     //
     
     /**

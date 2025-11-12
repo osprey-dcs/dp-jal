@@ -1,8 +1,8 @@
 /*
  * Project: dp-data-simulator
- * File:	IDataValueGenerator.java
+ * File:	IDataValueFactory.java
  * Package: com.ospreydcs.dp.datasim.frame.model
- * Type: 	IDataValueGenerator
+ * Type: 	IDataValueFactory
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -25,7 +25,7 @@
  * TODO:
  * - None
  */
-package com.ospreydcs.dp.jal.tools.common.datagen.values;
+package com.ospreydcs.dp.jal.tools.common.datagen;
 
 /**
  * <p>
@@ -40,7 +40,7 @@ package com.ospreydcs.dp.jal.tools.common.datagen.values;
  * @since May 13, 2024
  *
  */
-public interface IDataValueGenerator {
+public interface IDataValueFactory {
 
     //
     // Operations

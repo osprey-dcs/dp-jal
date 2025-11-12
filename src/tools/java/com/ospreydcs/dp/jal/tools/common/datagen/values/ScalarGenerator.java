@@ -29,6 +29,7 @@ package com.ospreydcs.dp.jal.tools.common.datagen.values;
 
 import java.util.Random;
 
+import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsScalarValuesConfig;
@@ -55,7 +56,7 @@ import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsScalarValuesConfig;
  * @deprecated Replaced by ScalarFactory
  */
 @Deprecated(since="Nov 11, 2025", forRemoval=true)
-public class ScalarGenerator implements IDataValueGenerator {
+public class ScalarGenerator implements IDataValueFactory {
     
     
     //
@@ -324,7 +325,7 @@ public class ScalarGenerator implements IDataValueGenerator {
     
     
     //
-    // IDataValueGenerator Interface
+    // IDataValueFactory Interface
     //
     
     /**

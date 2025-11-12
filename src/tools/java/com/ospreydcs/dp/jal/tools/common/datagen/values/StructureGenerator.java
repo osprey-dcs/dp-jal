@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
+import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
@@ -243,7 +244,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @version May 9, 2024
  *
  */
-public final class StructureGenerator implements IDataValueGenerator {
+public final class StructureGenerator implements IDataValueFactory {
 
 
     //
@@ -523,7 +524,7 @@ public final class StructureGenerator implements IDataValueGenerator {
 
     
     //
-    // IDataValueGenerator Interface
+    // IDataValueFactory Interface
     //
     
     /**
@@ -538,7 +539,7 @@ public final class StructureGenerator implements IDataValueGenerator {
      * 
      * @return the next structure returned as a Java <code>Object</code> within underlying type <code>Map</code>
      *
-     * @see com.ospreydcs.dp.datasim.model.values.IDataValueGenerator#nextValue()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory.model.values.IDataValueGenerator#nextValue()
      */
     @Override
     public Object nextValue() {

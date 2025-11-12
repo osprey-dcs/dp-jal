@@ -30,6 +30,7 @@ package com.ospreydcs.dp.jal.tools.common.datagen.values;
 import java.time.Instant;
 
 import com.ospreydcs.dp.jal.common.BufferedImage;
+import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 
 /**
  * <p>
@@ -42,7 +43,7 @@ import com.ospreydcs.dp.jal.common.BufferedImage;
  * @since May 14, 2024
  *
  */
-public class ImageGenerator implements IDataValueGenerator {
+public class ImageGenerator implements IDataValueFactory {
 
     
     //
@@ -94,7 +95,7 @@ public class ImageGenerator implements IDataValueGenerator {
     
     
     //
-    // IDataValueGenerator Interface
+    // IDataValueFactory Interface
     //
     
     /**

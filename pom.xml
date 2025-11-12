@@ -227,6 +227,7 @@ NOTES:
                         <configuration>
                             <sources>
                                 <source>${project.basedir}/src/tools/java</source>
+                                <source>${project.basedir}/src/tools/test/java</source>
                             </sources>
                         </configuration>
                     </execution>

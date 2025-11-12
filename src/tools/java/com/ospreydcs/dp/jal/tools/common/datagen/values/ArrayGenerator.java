@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 
@@ -55,7 +56,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @since May 13, 2024
  *
  */
-public class ArrayGenerator implements IDataValueGenerator {
+public class ArrayGenerator implements IDataValueFactory {
 
     
     //
@@ -227,7 +228,7 @@ public class ArrayGenerator implements IDataValueGenerator {
     
     
     //
-    // IDataValueGenerator Interface
+    // IDataValueFactory Interface
     //
 
     /**

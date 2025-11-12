@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import javax.naming.ConfigurationException;
 
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
@@ -181,32 +182,34 @@ public record ScalarFactoryConfig(
      * Parses the input stream as if it were a single YAML document containing the record field values.
      * </p>
      * <p>
-     * A Snake YAML parse is used to create a <code>{@link ScalarType}</code> class instance to recover
+     * A Snake YAML parse is used to create a <code>{@link ScalarFactoryYaml}</code> class instance to recover
      * the field values from the given input stream. 
      * Note that the argument stream is assumed to represent a single YAML document and the stream is 
      * thus exhausted after calling this method.
      * </p>
      * <p>
      * <h2>Format</h2>
-     * The format of the YAML document is given in the enclose class <code>{@link ScalarType}</code> documentation.
+     * The format of the YAML document is given in the enclose class <code>{@link ScalarFactoryYaml}</code> documentation.
      * </p>  
      *  
      * @param is    input stream to a single YAML document
      * 
      * @return  a new <code>ScalarFactoryConfig</code> record with field populated by the YAML document
      * 
-     * @see ScalarType
+     * @throws  YAMLException               error occurred while parsing class <code>{@link ScalarFactoryYaml}</code>
+     * @throws IllegalStateException        intermediate structure class was not populated (internal error)
+     * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+     * 
+     * @see ScalarFactoryYaml
      */
-    public static ScalarFactoryConfig   parseYamlDoc(InputStream is) {
+    public static ScalarFactoryConfig   parseYamlDoc(InputStream is) throws YAMLException, IllegalStateException, UnsupportedOperationException {
         
         Yaml    yaml = new Yaml();
         
-        ScalarType  struct = yaml.loadAs(is, ScalarType.class);
-        
-        if (struct.random.enabled)
-            return ScalarFactoryConfig.from(struct.enmValueType, struct.random.enabled, struct.random.seed, struct.increment.value, struct.stringPrefix);
-        else
-            return ScalarFactoryConfig.from(struct.enmValueType, struct.random.enabled, struct.increment.start, struct.increment.value, struct.stringPrefix);
+        ScalarFactoryYaml   struct = yaml.loadAs(is, ScalarFactoryYaml.class); // throws YAMLException
+        ScalarFactoryConfig recCfg = struct.createRecord();
+
+        return recCfg;
     }
     
     /**
@@ -265,13 +268,13 @@ public record ScalarFactoryConfig(
      * @return  a new <code>ScalarFactoryConfig</code> record with field populated by the YAML node
      * 
      * @throws IOException                  I/O error occurred while reading line from argument input stream
-     * @throws ArrayIndexOutOfBoundsException   line contained missing values (tokens) after splitting at delimiters  
+     * @throws IndexOutOfBoundsException    bad 'label: value' format  
      * @throws TypeNotPresentException      an invalid <code>JalScalarType</code> was encountered 
      * @throws NumberFormatException        a bad format for a string represented number was encountered
      * @throws ConfigurationException       missing or corrupt field values
      */
     public static ScalarFactoryConfig   parseYamlNode(InputStream is) 
-            throws IOException, ArrayIndexOutOfBoundsException, TypeNotPresentException, NumberFormatException, ConfigurationException 
+            throws IOException, IndexOutOfBoundsException, TypeNotPresentException, NumberFormatException, ConfigurationException 
     {
 
         // --- Field value labels ---
@@ -304,24 +307,32 @@ public record ScalarFactoryConfig(
 
         // Initialize the loop then continue reading lines until all field labels are found
         int     iValue=0;
+        String  strLabel;
         String  strValue;
         do {
             String      strLine = rdrBuff.readLine().strip();           // throws IOException
-            String[]    arrTokens = strLine.split(STR_YAML_DEL_LBL);    // throws PatternSyntaxException
-            String      strLabel = arrTokens[0];
+            
+            // Extract the field label (note that comment lines are skipped)
+            int         indDel = strLine.indexOf(STR_YAML_DEL_LBL);
+            if (indDel < 0)
+                continue;
+            strLabel = strLine.substring(0, indDel);
+            
+            // Extract the field value if present (empty values are empty string)
+            strValue = strLine.substring(indDel+1);                     // throws IndexOutOfBoundsException
+            strValue = strValue.split(STR_YAML_DEL_CMT)[0];             // throws ArrayIndexOutOfBoundsException
+            strValue = strValue.strip();
             
             switch (strLabel) {
             
             // The scalar value type
             case STR_TYPE:
-                strValue = arrTokens[1].split(STR_YAML_DEL_CMT)[0];         // throws ArrayIndexOutofBoundsException
                 enmValueType = JalScalarType.getConstant(strValue); // throws TypeNotPresentException
                 iValue++;
                 break;
                 
             // The string prefix (for string types) 
             case STR_PREF:
-                strValue = arrTokens[1].split(STR_YAML_DEL_CMT)[0].strip();   // throws ArrayIndexOutOfBoundsException
                 strValue = strValue.replaceAll("\'", "");
                 strValue = strValue.replaceAll("\"", "");
                 stringPref = strValue;
@@ -338,28 +349,25 @@ public record ScalarFactoryConfig(
                 
             // Random number generation enable/disable flag
             case STR_RAND_ENBL:
-                strValue = arrTokens[1].split(STR_YAML_DEL_CMT)[0].strip();     // throws ArrayIndexOutOfBoundsException
                 bolRandEnable = Boolean.valueOf(strValue);
                 iValue++;
                 break;
                 
             // Random number generator seed value
             case STR_RAND_SEED:
-                strValue = arrTokens[1].split(STR_YAML_DEL_CMT)[0].strip();     // throws ArrayIndexOutOfBoundsException
                 lngSeed = Long.valueOf(strValue);                       // throws NumberFormatException
                 iValue++;
                 break;
                 
             // Incremental generator seed value 
             case STR_INCR_START:
-                strValue = arrTokens[1].split(STR_YAML_DEL_CMT)[0].strip();     // throws ArrayIndexOutOfBoundsException
                 incrStart = Long.valueOf(strValue);                     // throws NumberFormatException
                 iValue++;
                 break;
                
             // Incremental generator increment value
             case STR_INCR_VALUE:
-                strIncrValue = arrTokens[1].split(STR_YAML_DEL_CMT)[0].strip(); // throws ArrayIndexOutOfBoundsException
+                strIncrValue = strValue;
                 iValue++;
                 break;
             }
@@ -397,6 +405,23 @@ public record ScalarFactoryConfig(
             return ScalarFactoryConfig.from(enmValueType, bolRandEnable, lngSeed, incrValue, stringPref);
         else
             return ScalarFactoryConfig.from(enmValueType, bolRandEnable, incrStart, incrValue, stringPref);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactory</code> record with all default field values.
+     * </p>
+     * <p>
+     * All field values of the returned instance are taken from the JAL Tools default configuration.
+     * Use with discretion.
+     * </p>
+     * 
+     * @return  a new <code>ScalarFactoryConfig</code> record populated with all default field values
+     * 
+     * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+     */
+    public static ScalarFactoryConfig   from() throws UnsupportedOperationException {
+        return ScalarFactoryConfig.from(ENM_TYPE_DEF);
     }
     
     /**
@@ -592,14 +617,14 @@ public record ScalarFactoryConfig(
         
         if (objCmp instanceof ScalarFactoryConfig rec) {
             if (this.enmValueType == rec.enmValueType
-                    || this.bolRandEnable == rec.bolRandEnable
-                    || this.seed == rec.seed 
-                    || this.increment == rec.increment
-                    || this.strPrefix.equals(rec.strPrefix))
+                    && this.bolRandEnable == rec.bolRandEnable
+                    && this.seed == rec.seed 
+                    && this.increment == rec.increment
+                    && this.strPrefix.equals(rec.strPrefix))
                 return true;
         }
         
-        return true;
+        return false;
     }
     
     /**
@@ -671,16 +696,50 @@ public record ScalarFactoryConfig(
      * </p>
      *
      */
-    public static final class ScalarType extends CfgStructure<ScalarType> {
+    public static final class ScalarFactoryYaml extends CfgStructure<ScalarFactoryYaml> {
+        
+        /**
+         * <p>
+         * Creates and returns a new <code>ScalarFactoryConfig</code> record populated with the attributes of this structure.
+         * </p>
+         * <p>
+         * This instance must be fully populated before method invocation or an exception is thrown.
+         * The assumed to be populated using a Snake YAML document parsing operation.
+         * </p>
+         * 
+         * @return  a new <code>ScalarFactoryConfig</code> record populated with this structure's attributes
+         * 
+         * @throws IllegalStateException            method called before structure class was populated
+         * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+         */
+        public ScalarFactoryConfig  createRecord() throws IllegalStateException, UnsupportedOperationException {
+            
+            //  Check state
+            if (this.stringPrefix==null && type == JalScalarType.UNSUPPORTED)
+                throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Structure class not populated.");
+
+            long    lngSeed = (this.random.enabled) ? this.random.seed : this.increment.start;
+            Number  increment = switch (this.type) {
+            case INTEGER -> this.increment.value.intValue();
+            case BOOLEAN -> this.increment.value.intValue();
+            case DOUBLE -> this.increment.value.doubleValue();
+            case FLOAT -> this.increment.value.floatValue();
+            case LONG -> this.increment.value.longValue();
+            case STRING -> this.increment.value.intValue();
+            case UNSUPPORTED -> throw new UnsupportedOperationException("Increment value unsupported for type: " + this.type);
+            };
+            
+            return ScalarFactoryConfig.from(type, this.random.enabled, lngSeed, increment, stringPrefix);
+        }
         
         /** Default constructor required from base class */
-        public ScalarType() { super(ScalarType.class); };
+        public ScalarFactoryYaml() { super(ScalarFactoryYaml.class); };
         
         @ACfgOverride.Field(name="stringPrefix")
-        public String           stringPrefix;
+        public String           stringPrefix = null;
         
         @ACfgOverride.Field(name="enmValueType")
-        public JalScalarType    enmValueType;
+        public JalScalarType    type = JalScalarType.UNSUPPORTED;
         
         @ACfgOverride.Struct(pathelem="random")
         public Random           random;
@@ -742,8 +801,11 @@ public record ScalarFactoryConfig(
     // Record Constants - Default Arguments
     //
     
-    /** String value prefix */
-    private final static String     STR_PREFIX_DEF = CFG_DEF.stringPrefix;
+    /** The default scalar value type when none is given */
+    private final static JalScalarType  ENM_TYPE_DEF = CFG_DEF.type;
+    
+    /** The default string value prefix */
+    private final static String         STR_PREFIX_DEF = CFG_DEF.stringPrefix;
 
     
     /** The default enable/disable random number generator */

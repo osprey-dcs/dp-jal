@@ -33,7 +33,7 @@ import java.util.Set;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.model.table.StaticDataColumn;
-import com.ospreydcs.dp.jal.tools.common.datagen.values.IDataValueGenerator;
+import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGenerator;
 
 /**
@@ -50,7 +50,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGenerator;
  * at creation/construction.  The number of columns returned in the vector is given by the size of the
  * <code>{@link SampleBlockConfig#setPvNames()}</code> field, while the type of each column data value is
  * given by <code>{@link SampleBlockConfig#enmDataType()}</code>.  Column values are generated using an
- * internal <code>{@link IDataValueGenerator}</code> implementation of type <code>{@link ScalarGenerator}</code>.
+ * internal <code>{@link IDataValueFactory}</code> implementation of type <code>{@link ScalarGenerator}</code>.
  * </p>
  * <p>
  * Note that not all fields of a <code>{@link SampleBlockConfig}</code> record are used for configuration.
@@ -131,7 +131,7 @@ public class DataColumnGenerator {
     //
     
     /** The value factory for generating column values */
-    private final IDataValueGenerator   genValues;
+    private final IDataValueFactory   genValues;
     
     
     //

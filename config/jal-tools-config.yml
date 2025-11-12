@@ -49,13 +49,14 @@ testArchive:   # Data Platform test archive properties (generated with utility '
 datagen:       # JAL Tools simulated data generation default configuration parameters
    values:                  # Data value generation parameters
       scalar:               # Scalar data value generation
+         type: DOUBLE          # JalScalarType enumeration constant    : JAL_TOOLS_DATAGEN_VALUES_SCALAR_TYPE
          stringPrefix: "str_"  # prefix for all string values          : JAL_TOOLS_DATAGEN_VALUES_SCALAR_STRING_PREFIX
          random:            # Random number generation parameters      : JAL_TOOLS_DATAGEN_VALUES_SCALAR_RANDOM_ENABLE_{PROP}
             enabled: false     # enable/disable random number generator (WARNING: random generation can be expensive)
             seed: 0            # seed value for random number generator (use 0 for random seed)
          increment:         # Value increment parameters for non-random generation : JAL_TOOLS_DATAGEN_SCALAR_INCREMENT_{FIELDNAME}
             seed: 0            # seed (start) value (type long)
-            booleanv: 1        # increment value for boolean value generation
+            booleanv: 1        # increment value for boolean value generation 
             integerv: 1        # increment value for integer value generation
             longv: 5           # increment value for long value generation
             floatv: 0.1        # increment value for float value generation
