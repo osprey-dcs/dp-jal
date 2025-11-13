@@ -50,7 +50,7 @@ datagen:       # JAL Tools simulated data generation default configuration param
    values:                  # Data value generation parameters
       scalar:               # Scalar data value generation
          type: DOUBLE          # JalScalarType enumeration constant    : JAL_TOOLS_DATAGEN_VALUES_SCALAR_TYPE
-         stringPrefix: "str_"  # prefix for all string values          : JAL_TOOLS_DATAGEN_VALUES_SCALAR_STRING_PREFIX
+         stringPrefix: "str:"  # prefix for all string values          : JAL_TOOLS_DATAGEN_VALUES_SCALAR_STRING_PREFIX
          random:            # Random number generation parameters      : JAL_TOOLS_DATAGEN_VALUES_SCALAR_RANDOM_ENABLE_{PROP}
             enabled: false     # enable/disable random number generator (WARNING: random generation can be expensive)
             seed: 0            # seed value for random number generator (use 0 for random seed)
