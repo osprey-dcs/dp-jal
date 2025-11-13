@@ -188,11 +188,43 @@ public class ScalarFactory implements IDataValueFactory {
      * <p>
      * Returns the configuration of this scalar factory.
      * </p>
+     * <p>
+     * Returns all configuration parameters for this scalar factory as the full configuration record
+     * provided at creation/construction.
+     * </p> 
      * 
      * @return  the <code>ScalarFactoryConfig</code> record provided at construction/creation
      */
     public ScalarFactoryConfig  getConfiguration() {
         return this.recConfig;
+    }
+    
+    /**
+     * <p>
+     * Returns the scalar value type produced by this scalar factory.
+     * </p>
+     * 
+     * @return  the scalar value type as represented by a <code>{@link JalScalarType}</code> constant
+     */
+    public JalScalarType    getType() {
+        return this.enmValueType;
+    }
+    
+    /**
+     * <p>
+     * Determines whether or not the scalar values are generated randomly.
+     * </p>
+     * <p>
+     * Scalar values are generated using a random number generator if the method returns <code>true</code>.
+     * Otherwise, the values are generated incrementally according to the configuration record
+     * provided at creation/construction.
+     * </p>
+     * 
+     * @return  <code>true</code> if scalar values are generated randomly, 
+     *          <code>false</code> if they are generated incrementally
+     */
+    public boolean  isRandom() {
+        return this.bolRandEnable;
     }
 
     

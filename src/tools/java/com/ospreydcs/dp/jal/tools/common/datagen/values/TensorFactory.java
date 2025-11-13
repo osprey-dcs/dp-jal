@@ -1,10 +1,10 @@
 /*
- * Project: dp-data-simulator
- * File:	ArrayGenerator.java
- * Package: com.ospreydcs.dp.datasim.frame.model
- * Type: 	ArrayGenerator
+ * Project: dp-jal
+ * File:	TensorFactory.java
+ * Package: com.ospreydcs.dp.jal.tools.common.datagen.values
+ * Type: 	TensorFactory
  *
- * Copyright 2010-2023 the original author or authors.
+ * Copyright 2010-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,53 +20,91 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since May 13, 2024
+ * @since Nov 13, 2025
  *
- * TODO:
- * - None
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.values;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+
+import org.epics.pvdata.pv.ScalarType;
 
 import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
-
 /**
  * <p>
- * Creates an Data Platform compatible array suitable for populating an <code>Array</code> Protobuf message.
+ * Creates an Data Platform compatible array suitable for populating an <code>Array</code> Protocol Buffers message.
  * </p>
  * <p>
- * The Data Platform <code>Array</code> messages are linear vectors of heterogeneous data values.  Thus, each
- * element of the vector can contain other <code>Array</code> messages, and so on.  Thus, effectively, arrays
+ * The Data Platform <code>Array</code> Protocol Buffers messages are linear vectors of heterogeneous data values.  
+ * Thus, each element of the vector can contain other <code>Array</code> messages, and so on.  Thus, effectively, arrays
  * of arbitrary shape are supported by the Data Platform heterogeneous data mechanism.
  * The arrays generated here are intended to verify that mechanism. 
  * </p>
  * <p>
+ * <h2>Array Format</h2>
  * Instances of this class essentially create N-dimensional tensors where the shape of the tensor is given by
  * an integer array upon construction.  The values of the tensor are scalar quantities of type 
  * <code>{@link ScalarType}</code> also set at construction.  These values are always contained in the last
  * axis of the tensor.
+ * </p>  
+ * <p>
+ * The axes of each generated tensor are always represented as a Java <code>{@link List}</code> container, specifically,
+ * an <code>{@link ArrayList}</code> as it serves as a vector container.
+ * For example, for a NxM matrix tensor (where rank = 2), the returned values are column-packed
+ * arrays where the 1st axis is an N-length <code>List<code> of M-length <code>List</code> containers, the latter
+ * containing the scalar values of the tensor. 
  * </p> 
  *
  * @author Christopher K. Allen
- * @since May 13, 2024
- * 
- * @deprecated  Replaced by TensorFactory
+ * @since Nov 13, 2025
+ *
  */
-@Deprecated(since="Nov 13, 2025", forRemoval=true)
-public class ArrayGenerator implements IDataValueFactory {
-
+public class TensorFactory implements IDataValueFactory {
     
+    
+    //
+    // Creators
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>TensorFactory</code> instance configured according to the given arguments.
+     * </p>
+     * 
+     * @param shape     array containing size of each array axis
+     * @param recFacCfg configuration record for the scalar value generator used internally for value generation 
+     * 
+     * @return  a new <code>TensorFactory</code> instance ready for array value generation
+     */
+    public static TensorFactory from(int[] shape, ScalarFactoryConfig recFacCfg) {
+        ScalarFactory   facValues = ScalarFactory.from(recFacCfg);
+        
+        return TensorFactory.from(shape, facValues);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>TensorFactory</code> instance configured according to the given arguments.
+     * </p>
+     * 
+     * @param shape     array containing size of each array axis
+     * @param facValues scalar value factory used to generate array element values (i.e., last axis)
+     * 
+     * @return  a new <code>TensorFactory</code> instance ready for array value generation
+     */
+    public static TensorFactory  from(int[] shape, ScalarFactory facValues) {
+        return new TensorFactory(shape, facValues);
+    }
+
     //
     // Resources
     //
     
     /** Generator of scalar field values */
-    private final ScalarGenerator  valGenerator;
+    private final ScalarFactory facValues;
     
     
     //
@@ -89,88 +127,38 @@ public class ArrayGenerator implements IDataValueFactory {
     
     /**
      * <p>
-     * Constructs a new instance of <code>ArrayGenerator</code>.
+     * Constructs a new <code>TensorFactory</code> instance.
      * </p>
      *
      * @param shape     array containing size of each array axis
-     * @param type      the scalar type of each array element
+     * @param facValues scalar value factory used to generate array element values (i.e., last axis)
      */
-    public ArrayGenerator(int[] shape, JalScalarType type) {
-        this(shape, type, 0);
-    }
-    
-    /**
-     * <p>
-     * Constructs a new instance of <code>ArrayGenerator</code>.
-     * </p>
-     *
-     * @param shape     array containing size of each array axis
-     * @param type      the scalar type of each array element
-     * @param seed      seed used to generate scalar types
-     */
-    public ArrayGenerator(int[] shape, JalScalarType type, long seed) {
-        this(shape, type, seed, false);
-    }
-    
-    /**
-     * <p>
-     * Constructs a new instance of <code>ArrayGenerator</code>.
-     * </p>
-     *
-     * @param shape     array containing size of each array axis
-     * @param type      the scalar type of each array element
-     * @param seed      seed used to generate scalar types
-     * @param useRandom use random number generator for scalar values (otherwise incremental values)
-     */
-    public ArrayGenerator(int[] shape, JalScalarType type, long seed, boolean useRandom) {
+    public TensorFactory(int[] shape, ScalarFactory facValues) {
         this.arrShape = shape.clone();
         this.intRank = shape.length;
         this.szArray = this.computeSize(shape);
         
-        this.valGenerator = new ScalarGenerator(type, seed, useRandom);
+        this.facValues = facValues;
     }
-    
-    
+
     //
     // Configuration
     //
     
     /**
      * <p>
-     * Toggles the use of a random value generator for terminal-level array value creation.
-     * </p>
-     * <h2>NOTES:</h2>
-     * <p>
-     * <ul>
-     * <li>
-     * Using random generation can creating a significant resource demand for large number of values.
-     * Internally random values are generated using a <code>{@link Random}</code> Java object.
-     * </li>
-     * <li>
-     * Scalar values are generated incrementally by default.  Random number generation is turned on
-     * using this function.
-     * </li>
-     * </ul>
-     * </p>  
-     * 
-     * @param useRandomValues   <code>true</code> generate scalar values randomly,
-     *                          <code>false</code> generate scalar values incrementally
-     */
-    public void setRandom(boolean useRandomValues) {
-        this.valGenerator.setRandom(useRandomValues);
-    }
-    
-    /**
-     * <p>
      * Determines whether or not terminal-level array values within are generated 
      * randomly (i.e., using a random number generator).
      * </p>
+     * <p>
+     * Note that property of the generated tensor values is determined at creation/construction.
+     * </p> 
      * 
      * @return  <code>true</code> the terminal field values are generated randomly,
      *          <code>false</code> the terminal field values are generated incrementally
      */
     public boolean      isRandom() {
-        return this.valGenerator.isRandom();
+        return this.facValues.isRandom();
     }
     
     /**
@@ -181,24 +169,30 @@ public class ArrayGenerator implements IDataValueFactory {
      * @return  scalar type of terminal-level structure field values. 
      */
     public JalScalarType   getType() {
-        return this.valGenerator.getType();
+        return this.facValues.getType();
     }
     
     /**
      * <p>
      * Returns the seed value used for generating scalar values within the array.
      * </p>
+     * <p>
+     * Note that property of the generated tensor values is determined at creation/construction.
+     * </p> 
      * 
      * @return  value generation seed value provided at construction
      */
     public long  getSeed() {
-        return this.valGenerator.getSeed();
+        return this.facValues.getConfiguration().seed();
     }
     
     /**
      * <p>
-     * Returns the rank of the multi-dimensional array identified at construction.
+     * Returns the rank of each generated tensor value.
      * </p>
+     * <p>
+     * Note that property of the generated tensor values is determined at creation/construction.
+     * </p> 
      * 
      * @return rank of tensor, i.e., number of axes
      */
@@ -208,8 +202,11 @@ public class ArrayGenerator implements IDataValueFactory {
     
     /**
      * <p>
-     * Returns the shape of the target multi-dimensional array identified at construction.
+     * Returns the shape of each generated tensor value.
      * </p>
+     * <p>
+     * Note that property of the generated tensor values is determined at creation/construction.
+     * </p> 
      * 
      * @return  tensor shape as an <code>int</code> array, axis size for each array dimension
      */
@@ -219,10 +216,13 @@ public class ArrayGenerator implements IDataValueFactory {
     
     /**
      * <p>
-     * Returns the total number of elements within the target multi-dimensional array, that is, its size.
+     * Returns the total number of elements within each generated tensor value, that is, the tensor size.
      * </p>
+     * <p>
+     * Note that property of the generated tensor values is determined at creation/construction.
+     * </p> 
      * 
-     * @return  total element count for tensor, i.e., the multiply reduction of the shape
+     * @return  total element count for generated tensor values, i.e., the multiply reduction of the shape
      */
     public int      getSize() {
         return this.szArray;
@@ -234,15 +234,14 @@ public class ArrayGenerator implements IDataValueFactory {
     //
 
     /**
-     *
-     * @see @see com.ospreydcs.dp.datasim.frame.model.IDataValueGenerator#nextValue()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#nextValue()
      */
     @Override
     public Object nextValue() {
         
         // Check for exception case - zero rank tensor, or scalar
         if (this.intRank == 0) {
-            Object  objVal = this.valGenerator.nextValue();
+            Object  objVal = this.facValues.nextValue();
             
             return List.of(objVal);
         }
@@ -300,15 +299,15 @@ public class ArrayGenerator implements IDataValueFactory {
         // - return a vector of (recursive) vectors
         if (cntDepth < (this.intRank-1) ) {
             int             szAxis = this.arrShape[cntDepth];
-            List<Object>    vecTensor = new ArrayList<>(szAxis);
+            List<Object>    vecAxis = new ArrayList<>(szAxis);
             
             for (int i=0; i<szAxis; i++) {
                 List<Object>    vecVals = this.createVector(cntDepth + 1);
                 
-                vecTensor.add(i, vecVals);
+                vecAxis.add(i, vecVals);
             }
             
-            return vecTensor;
+            return vecAxis;
         }
         
         // Otherwise we are at maximum depth
@@ -317,7 +316,7 @@ public class ArrayGenerator implements IDataValueFactory {
         List<Object>    vecVals = new ArrayList<>(szAxis);
         
         for (int i=0; i<szAxis; i++) {
-            Object      objVal = this.valGenerator.nextValue();
+            Object      objVal = this.facValues.nextValue();
             
             vecVals.add(i, objVal);
         }

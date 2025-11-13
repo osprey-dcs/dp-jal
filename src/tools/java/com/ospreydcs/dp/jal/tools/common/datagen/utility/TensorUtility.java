@@ -369,25 +369,25 @@ public final class TensorUtility {
     // Support Methods
     //
     
-    /**
-     * @param lstDims   tensor dimensions list
-     * @param objAxis   the axis vector
-     * 
-     * @deprecated  not used
-     */
-    @Deprecated(since="Nov 3, 2025", forRemoval=true)
-    private void tensorShapeHelper(List<Integer> lstDims, Object objAxis) {
-        
-        if (objAxis instanceof List vec) {
-            Integer intDim = vec.size();
-            
-            lstDims.add(intDim);
-            
-            Object  objElement = vec.get(0);
-            
-            this.tensorShapeHelper(lstDims, objElement);
-        }
-    }
+//    /**
+//     * @param lstDims   tensor dimensions list
+//     * @param objAxis   the axis vector
+//     * 
+//     * @deprecated  not used
+//     */
+//    @Deprecated(since="Nov 3, 2025", forRemoval=true)
+//    private void tensorShapeHelper(List<Integer> lstDims, Object objAxis) {
+//        
+//        if (objAxis instanceof List vec) {
+//            Integer intDim = vec.size();
+//            
+//            lstDims.add(intDim);
+//            
+//            Object  objElement = vec.get(0);
+//            
+//            this.tensorShapeHelper(lstDims, objElement);
+//        }
+//    }
     
     /**
      * <p>
