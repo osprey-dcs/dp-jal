@@ -35,7 +35,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
  * <p>
- * Creates an Data Platform compatible array suitable for populating an <code>Array</code> Protocol Buffers message.
+ * Creates Data Platform compatible arrays of simulated data suitable for populating an <code>Array</code> Protocol Buffers message.
  * </p>
  * <p>
  * The Data Platform <code>Array</code> Protocol Buffers messages are linear vectors of heterogeneous data values.  

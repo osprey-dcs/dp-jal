@@ -71,8 +71,13 @@ public class JalToolsDataGenConfig extends CfgStructure<JalToolsDataGenConfig> {
         // Fields
         //
         
-        /** Default configuration parameters for data value generation - scalar values */
+        /** Default configuration parameters for scalar value generation */
         @ACfgOverride.Struct(pathelem="VALUES")
         public JalToolsScalarValuesConfig       scalar;
+        
+        /** Default configuration parameters for structure value generation */
+        @ACfgOverride.Struct(pathelem="STRUCTURE")
+        public JalToolsStructValuesConfig       structure;
+        
     }
 }

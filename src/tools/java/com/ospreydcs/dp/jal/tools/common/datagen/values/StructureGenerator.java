@@ -243,7 +243,9 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @since Oct 21, 2022
  * @version May 9, 2024
  *
+ * @deprecated Replaced by StructureFactory
  */
+@Deprecated(since="Nov 14, 2025", forRemoval=true)
 public final class StructureGenerator implements IDataValueFactory {
 
 
