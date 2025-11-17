@@ -79,5 +79,9 @@ public class JalToolsDataGenConfig extends CfgStructure<JalToolsDataGenConfig> {
         @ACfgOverride.Struct(pathelem="STRUCTURE")
         public JalToolsStructValuesConfig       structure;
         
+        /** Default configuration parameters for image value generation */
+        @ACfgOverride.Struct(pathelem="IMAGE")
+        public JalToolsImageValuesConfig        image;
+        
     }
 }

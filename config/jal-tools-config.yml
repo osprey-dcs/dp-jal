@@ -62,7 +62,7 @@ datagen:       # JAL Tools simulated data generation default configuration param
             floatv: 0.1        # increment value for float value generation
             doublev: 0.01      # increment value for double value generation
             stringv: 1         # increment value for string value generator (full string includes numeric suffix)
-      structure:            # Structure data value generation
+      structure:            # Structure data value generation default parameters
          fieldNames:           # Properties for structure field name generation
             prefix: "F"        # prefix given to structure field names  : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_PREFIX
             separator: ":"     # separator placed between field indices : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_SEPARATOR
@@ -70,7 +70,11 @@ datagen:       # JAL Tools simulated data generation default configuration param
               enabled: false   # enable/disable unique field name generation : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_ENABLED 
               prefix: "S"      # name token prefix prepended to field name   : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_PREFIX
               separator1: "#"  # separator placed between structure indices  : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_SEPARATOR1
-              separator2: "-"  # separator between struct token and field nm : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_SEPARATOR2 
+              separator2: "-"  # separator between struct token and field nm : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_SEPARATOR2
+      image:                # Image data value generation default parameters
+         namePrefix: "img"     # image name prefix (suffixed by image count) : JAL_TOOLS_DATAGEN_VALUES_IMAGE_NAME_PREFIX
+         separator: ":"        # separator between prefix and image count    : JAL_TOOLS_DATAGEN_VALUES_IMAGE_SEPARATOR
+         format: RAW           # BufferedImage.Format enumeration            : JAL_TOOLS_DATAGEN_VALUES_IMAGE_FORMAT 
        
 output:         # JAL Tools (General) default output location - this should be related to DP_JAL_OUTPUT environment variable
    path: test/output         # path location relative to execution     : JAL_TOOLS_OUTPUT_PATH

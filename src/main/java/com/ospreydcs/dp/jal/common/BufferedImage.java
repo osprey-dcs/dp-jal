@@ -29,6 +29,7 @@ package com.ospreydcs.dp.jal.common;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Date;
@@ -430,8 +431,7 @@ public class BufferedImage implements Serializable {
     }
 
     /**
-     * Returns the timestamp of the image, or <code>null</code> if none
-     * has been set.
+     * Returns the timestamp of the image, or <code>null</code> if none has been set.
      * 
      * @return the image timestamp
      */
@@ -449,13 +449,16 @@ public class BufferedImage implements Serializable {
     }
 
     /**
+     * <p>
      * Returns the list of image dimension attributes.
+     * </p>
+     * <p>
      * If the image has a user-specified format (@see {@link Format#CUSTOM}}
      * then the dimensions list may be used.  If the image is in a standard
      * format this attribute may not be used.
+     * </p>
      * 
-     * @return the list of image dimension attributes, 
-     *         may be empty if unused
+     * @return the list of image dimension attributes, may be empty if unused
      *         
      * @see Format
      */
@@ -464,9 +467,13 @@ public class BufferedImage implements Serializable {
     }
 
     /**
-     * Returns the data for the image as a raw byte array.  The format attribute
-     * specifies how the byte array is translated (or the dimensions list for
+     * <p>
+     * Returns the data for the image as a raw byte array.  
+     * </p>
+     * <p>
+     * The format attribute specifies how the byte array is translated (or the dimensions list for
      * custom formats).
+     * </p>
      * 
      * @return image data byte array
      * 
@@ -475,6 +482,53 @@ public class BufferedImage implements Serializable {
      */
     public byte[] getData() {
         return arrData;
+    }
+    
+    /**
+     * <p>
+     * Returns the size of the image in bytes.
+     * </p>
+     * <p>
+     * The returned values is simply the size of the image data array.  This method is equivalent to 
+     * calling <code>{@link #getData()}.length</code>.
+     * </p>
+     * 
+     * @return  the size of the image data array in bytes
+     */
+    public int  getSize() {
+        return arrData.length;
+    }
+    
+    /**
+     * <p>
+     * Prints out the image properties to the given output stream.
+     * </p>
+     * <p>
+     * Prints out a line-by-line text listing of the properties of this image, specifically,
+     * the values returned by methods
+     * <ul>
+     * <li><code>{@link #getName()}</code>,<li>
+     * <li><code>{@link #getTimestamp()}</code>,<li>
+     * <li><code>{@link #getFormat()}</code>,</li>
+     * <li><code>{@link #getDimensions()}</code>,<li>
+     * <li><code>{@link #getSize()}</code>.</li>
+     * </ul>
+     * The second argument is available as left-hand side whitespace padding inserted at
+     * each line heading.
+     * </p>
+     * 
+     * @param ps        output stream to receive text description
+     * @param strPad    optional left-hand side line padding, or <code>null</code> if none
+     */
+    public void printOutProperties(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad ="";
+        
+        ps.println(strPad + "name         : " + this.getName());
+        ps.println(strPad + "timestamp    : " + this.getTimestamp());
+        ps.println(strPad + "foramt       : " + this.getFormat());
+        ps.println(strPad + "dimensions   : " + this.getDimensions());
+        ps.println(strPad + "size (bytes) : " + this.getSize());
     }
 
     

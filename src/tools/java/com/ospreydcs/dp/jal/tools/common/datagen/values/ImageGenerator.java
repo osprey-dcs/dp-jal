@@ -42,7 +42,9 @@ import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
  * @author Christopher K. Allen
  * @since May 14, 2024
  *
+ * @deprecated Replaced by ImageFactory
  */
+@Deprecated(since="Nov 14, 2025", forRemoval=true)
 public class ImageGenerator implements IDataValueFactory {
 
     

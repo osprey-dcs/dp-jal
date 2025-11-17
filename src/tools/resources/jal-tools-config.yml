@@ -71,6 +71,10 @@ datagen:       # JAL Tools simulated data generation default configuration param
               prefix: "S"      # name token prefix prepended to field name   : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_PREFIX
               separator1: "#"  # separator placed between structure indices  : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_SEPARATOR1
               separator2: "-"  # separator between struct token and field nm : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_SEPARATOR2 
+      image:                # Image data value generation default parameters
+         namePrefix: "img"     # image name prefix (suffixed by image count) : JAL_TOOLS_DATAGEN_VALUES_IMAGE_NAME_PREFIX
+         separator: ":"        # separator between prefix and image count    : JAL_TOOLS_DATAGEN_VALUES_IMAGE_SEPARATOR
+         format: RAW           # BufferedImage.Format enumeration            : JAL_TOOLS_DATAGEN_VALUES_IMAGE_FORMAT 
        
 output:         # JAL Tools (General) default output location - this should be related to DP_JAL_OUTPUT environment variable
    path: test/output         # path location relative to execution     : JAL_TOOLS_OUTPUT_PATH
