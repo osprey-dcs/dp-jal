@@ -27,6 +27,7 @@ package com.ospreydcs.dp.jal.tools.common.datagen.values;
 
 import java.util.Random;
 
+import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
@@ -39,6 +40,15 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * supported are all those enumerated in <code>{@link JalScalarType}</code>.
  * </p>
  * <p>
+ * <h2>Configuration</h2>
+ * All <code>ScalarFactory</code> instances require a <code>{@link ScalarFactoryConfig}</code> record for 
+ * creation/construction.  This record contains all parameters required for instance configuration.  The
+ * record is able to configure scalar factories for a wide variety of situations.  See the record documentation
+ * for <code>{@link ScalarFactoryConfig}</code> for instruction on record creation and configuration of scalar
+ * factory instances. 
+ * </p>
+ * <p>
+ * <h2>Simulated Data</h2>
  * Scalar value sequences have the following properties:
  * <ul>
  * <li>All scalar values are returns as Java <code>Object</code> instances.</li>
@@ -46,12 +56,15 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * <li>Sequences are generated incrementally or randomly according to configuration at creation/construction.</li>.
  * </ul>
  * Values in the sequence are obtained using repeated invocations of <code>{@link #nextValue()}</code>.
+ * The data type of the simulated data is obtained as a <code>{@link DpSupportedType}</code> enumeration constant
+ * through the method <code>{@link #getValueType()}</code>
  * </p>  
- *
  *
  * @author Christopher K. Allen
  * @since Nov 6, 2025
  *
+ * @see ScalarFactoryConfig
+ * @see IDataValueFactory
  */
 public class ScalarFactory implements IDataValueFactory {
 
@@ -206,7 +219,7 @@ public class ScalarFactory implements IDataValueFactory {
      * 
      * @return  the scalar value type as represented by a <code>{@link JalScalarType}</code> constant
      */
-    public JalScalarType    getType() {
+    public JalScalarType    getScalarType() {
         return this.enmValueType;
     }
     
@@ -231,6 +244,14 @@ public class ScalarFactory implements IDataValueFactory {
     //
     // IDataValueFactory Interface
     //
+    
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     */
+    @Override
+    public DpSupportedType  getValueType() {
+        return this.getScalarType().getDpType();
+    }
     
     /**
      * <p>

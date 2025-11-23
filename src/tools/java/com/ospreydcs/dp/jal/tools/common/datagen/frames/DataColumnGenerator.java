@@ -34,7 +34,7 @@ import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.model.table.StaticDataColumn;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
-import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGenerator;
+import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGeneratorDeprecated;
 
 /**
  * <p>
@@ -50,7 +50,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGenerator;
  * at creation/construction.  The number of columns returned in the vector is given by the size of the
  * <code>{@link SampleBlockConfig#setPvNames()}</code> field, while the type of each column data value is
  * given by <code>{@link SampleBlockConfig#enmDataType()}</code>.  Column values are generated using an
- * internal <code>{@link IDataValueFactory}</code> implementation of type <code>{@link ScalarGenerator}</code>.
+ * internal <code>{@link IDataValueFactory}</code> implementation of type <code>{@link ScalarGeneratorDeprecated}</code>.
  * </p>
  * <p>
  * Note that not all fields of a <code>{@link SampleBlockConfig}</code> record are used for configuration.
@@ -79,7 +79,9 @@ import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGenerator;
  * @author Christopher K. Allen
  * @since Aug 28, 2024
  *
+ * @deprecated  Replaced by DataColumnsGenerator and DataColumnGenerator
  */
+@Deprecated(since="Nov 20, 2025", forRemoval=true)
 public class DataColumnGenerator {
 
     
@@ -154,7 +156,7 @@ public class DataColumnGenerator {
         this.enmDataType = recCfg.enmDataType().getDpType();
         this.setColNms = recCfg.setPvNames();
         
-        this.genValues = ScalarGenerator.from(recCfg.enmDataType());
+        this.genValues = ScalarGeneratorDeprecated.from(recCfg.enmDataType());
     }
 
     

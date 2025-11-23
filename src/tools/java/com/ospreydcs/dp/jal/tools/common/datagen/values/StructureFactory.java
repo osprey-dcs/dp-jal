@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -524,6 +525,10 @@ public class StructureFactory implements IDataValueFactory {
     /** Unique field name prefix separator */
     public static final String STR_UNIQ_FLD_NM_SEP_PREF_TO_NM = CFG_DEF.fieldNames.unique.separator2;
     
+
+    /** Value type of all simulated data produced by this data value factory */
+    public static final DpSupportedType     ENM_TYPE = DpSupportedType.STRUCTURE;
+    
     
     //
     // Resources
@@ -650,7 +655,7 @@ public class StructureFactory implements IDataValueFactory {
      * @return  scalar type of terminal-level structure field values. 
      */
     public JalScalarType   getType() {
-        return this.facValues.getType();
+        return this.facValues.getScalarType();
     }
     
     /**
@@ -669,6 +674,14 @@ public class StructureFactory implements IDataValueFactory {
     //
     // IDataValueFactory Interface
     //
+    
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     */
+    @Override
+    public DpSupportedType  getValueType() {
+        return ENM_TYPE;
+    }
     
     /**
      * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#nextValue()

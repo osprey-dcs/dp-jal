@@ -36,7 +36,7 @@ import javax.naming.ConfigurationException;
 import com.ospreydcs.dp.jal.common.BufferedImage;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalHeteroType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGenerator;
+import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGeneratorDeprecated;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -91,7 +91,7 @@ public record DataColumCfg<DataConfig extends Record>(
      * one type for each data type supported for column data value creation. 
      * Currently there are the following:
      * <ol>
-     * <li>Scalar - <code>{@link ScalarGenerator.ScalarConfig}</code>,</li>
+     * <li>Scalar - <code>{@link ScalarGeneratorDeprecated.ScalarConfig}</code>,</li>
      * <li>Array - <code>{@link ArrayConfig}</code>,</li>
      * <li>Structure - <code>{@link StructConfig}</code>,</li>
      * <li>Image - <code>{@link ImageConfig}</code>.
@@ -130,7 +130,7 @@ public record DataColumCfg<DataConfig extends Record>(
      * </code>
      * The type of configuration record returned is given by the <code>DTYPE</code> value:
      * <ul>
-     * <li><code>{@link JalHeteroType#SCALAR}</code> - <code>{@link ScalarGenerator.ScalarConfig}</code>.</li>
+     * <li><code>{@link JalHeteroType#SCALAR}</code> - <code>{@link ScalarGeneratorDeprecated.ScalarConfig}</code>.</li>
      * <li><code>{@link JalHeteroType#ARRAY}</code> - <code>{@link ArrayConfig}</code>.</li>
      * <li><code>{@link JalHeteroType#STRUCTURE}</code> - <code>{@link StructConfig}</code>.</li>
      * <li><code>{@link JalHeteroType#IMAGE}</code> - <code>{@link ImageConfig}</code>.</li>

@@ -1,8 +1,8 @@
 /*
  * Project: dp-data-simulator
- * File:	StructureGenerator.java
+ * File:	StructureGeneratorDeprecated.java
  * Package: com.ospreydcs.dp.datasim.frame.model
- * Type: 	StructureGenerator
+ * Type: 	StructureGeneratorDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
+import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
@@ -246,7 +247,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @deprecated Replaced by StructureFactory
  */
 @Deprecated(since="Nov 14, 2025", forRemoval=true)
-public final class StructureGenerator implements IDataValueFactory {
+public final class StructureGeneratorDeprecated implements IDataValueFactory {
 
 
     //
@@ -269,6 +270,9 @@ public final class StructureGenerator implements IDataValueFactory {
     public static final String STR_SEPARATOR_UNIQ_FIELD_PREFIX_TO_NAME = "-";
     
     
+    /** Value type of all simulated data produced by this data value factory */
+    public static final DpSupportedType     ENM_TYPE = DpSupportedType.STRUCTURE;
+    
 
 
 //    /** Name of the system property used to store structure count */
@@ -277,7 +281,7 @@ public final class StructureGenerator implements IDataValueFactory {
 //
 //    static {
 //        String  strCntStructs = System.getProperty(STR_PROP_NAME_STRUCT_COUNT, "0");
-//        StructureGenerator.cntStructsTotal = Integer.valueOf(strCntStructs);
+//        StructureGeneratorDeprecated.cntStructsTotal = Integer.valueOf(strCntStructs);
 //    }
 //    
 //    
@@ -302,7 +306,7 @@ public final class StructureGenerator implements IDataValueFactory {
     //
     
     /** Generator of scalar field values */
-    private final ScalarGenerator  valGenerator;
+    private final ScalarGeneratorDeprecated  valGenerator;
     
     
     //
@@ -337,7 +341,7 @@ public final class StructureGenerator implements IDataValueFactory {
     
     /**
      * <p>
-     * Constructs a new instance of <code>StructureGenerator</code>.
+     * Constructs a new instance of <code>StructureGeneratorDeprecated</code>.
      * </p>
      * <p>
      * Field values are generated sequentially with the first value given as 0.
@@ -349,13 +353,13 @@ public final class StructureGenerator implements IDataValueFactory {
      * 
      * @throws IllegalArgumentException <code>depth</code> < 1 and/or <code>fanOut</code> < 1
      */
-    public StructureGenerator(int depth, int fanOut, JalScalarType fieldType) throws IllegalArgumentException {
+    public StructureGeneratorDeprecated(int depth, int fanOut, JalScalarType fieldType) throws IllegalArgumentException {
         this(depth, fanOut, fieldType, 0, false);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>StructureGenerator</code>.
+     * Constructs a new instance of <code>StructureGeneratorDeprecated</code>.
      * </p>
      * <p>
      * Field values are generated sequentially with the first value given as by the seed value.
@@ -368,13 +372,13 @@ public final class StructureGenerator implements IDataValueFactory {
      * 
      * @throws IllegalArgumentException <code>depth</code> < 1 and/or <code>fanOut</code> < 1
      */
-    public StructureGenerator(int depth, int fanOut, JalScalarType fieldType, long seed) throws IllegalArgumentException {
+    public StructureGeneratorDeprecated(int depth, int fanOut, JalScalarType fieldType, long seed) throws IllegalArgumentException {
         this(depth, fanOut, fieldType, seed, false);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>StructureGenerator</code>.
+     * Constructs a new instance of <code>StructureGeneratorDeprecated</code>.
      * </p>
      * <p>
      * <h2>NOTES</h2>
@@ -391,7 +395,7 @@ public final class StructureGenerator implements IDataValueFactory {
      * 
      * @throws IllegalArgumentException <code>depth</code> < 1 and/or <code>fanOut</code> < 1
      */
-    public StructureGenerator(int depth, int fanOut, JalScalarType fieldType, long seed, boolean useRandom) throws IllegalArgumentException {
+    public StructureGeneratorDeprecated(int depth, int fanOut, JalScalarType fieldType, long seed, boolean useRandom) throws IllegalArgumentException {
         
         // Check arguments
         if (depth < 1)
@@ -401,7 +405,7 @@ public final class StructureGenerator implements IDataValueFactory {
         
         this.intDepth = depth;
         this.intFanOut = fanOut;
-        this.valGenerator = new ScalarGenerator(fieldType, seed, useRandom);
+        this.valGenerator = new ScalarGeneratorDeprecated(fieldType, seed, useRandom);
     }
 
     
@@ -528,6 +532,14 @@ public final class StructureGenerator implements IDataValueFactory {
     //
     // IDataValueFactory Interface
     //
+    
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     */
+    @Override
+    public DpSupportedType  getValueType() {
+        return ENM_TYPE;
+    }
     
     /**
      * <p>

@@ -274,7 +274,7 @@ public class StaticDataColumn<T extends Object> implements IDataColumn<T>, Seria
 
 
     /**
-     * @see com.ospreydcs.dp.jal.model.IDataColumn#getType()
+     * @see com.ospreydcs.dp.jal.model.IDataColumn#getScalarType()
      */
     @Override
     public final DpSupportedType getType() {

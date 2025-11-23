@@ -30,8 +30,10 @@ import java.util.List;
 
 import org.epics.pvdata.pv.ScalarType;
 
+import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
@@ -78,8 +80,10 @@ public class TensorFactory implements IDataValueFactory {
      * @param recFacCfg configuration record for the scalar value generator used internally for value generation 
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
+     * 
+     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
      */
-    public static TensorFactory from(int[] shape, ScalarFactoryConfig recFacCfg) {
+    public static TensorFactory from(int[] shape, ScalarFactoryConfig recFacCfg) throws IllegalArgumentException {
         ScalarFactory   facValues = ScalarFactory.from(recFacCfg);
         
         return TensorFactory.from(shape, facValues);
@@ -94,10 +98,20 @@ public class TensorFactory implements IDataValueFactory {
      * @param facValues scalar value factory used to generate array element values (i.e., last axis)
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
+     * 
+     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
      */
-    public static TensorFactory  from(int[] shape, ScalarFactory facValues) {
+    public static TensorFactory  from(int[] shape, ScalarFactory facValues) throws IllegalArgumentException {
         return new TensorFactory(shape, facValues);
     }
+    
+    //
+    // Class Constants
+    //
+    
+    /** The value type of all simulated data returned by this value factory */
+    public static final DpSupportedType         ENM_TYPE = DpSupportedType.ARRAY;
+    
 
     //
     // Resources
@@ -132,8 +146,17 @@ public class TensorFactory implements IDataValueFactory {
      *
      * @param shape     array containing size of each array axis
      * @param facValues scalar value factory used to generate array element values (i.e., last axis)
+     * 
+     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
      */
     public TensorFactory(int[] shape, ScalarFactory facValues) {
+        
+        // Check arguments
+        if (shape.length < 1)
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Tensor rank must be > 0");
+        if (facValues == null)
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Scalar factory cannot be null.");
+        
         this.arrShape = shape.clone();
         this.intRank = shape.length;
         this.szArray = this.computeSize(shape);
@@ -169,7 +192,7 @@ public class TensorFactory implements IDataValueFactory {
      * @return  scalar type of terminal-level structure field values. 
      */
     public JalScalarType   getType() {
-        return this.facValues.getType();
+        return this.facValues.getScalarType();
     }
     
     /**
@@ -233,6 +256,14 @@ public class TensorFactory implements IDataValueFactory {
     // IDataValueFactory Interface
     //
 
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     */
+    @Override
+    public DpSupportedType  getValueType() {
+        return ENM_TYPE;
+    }
+    
     /**
      * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#nextValue()
      */

@@ -40,16 +40,43 @@ import com.ospreydcs.dp.jal.common.DpSupportedType;
  */
 public enum JalHeteroType {
     
-    /** Scalar data type */
+    /** 
+     * Scalar data type
+     * <p>
+     * A value representable by a primitive type.  
+     */
     SCALAR(DpSupportedType.UNSUPPORTED_TYPE),
     
-    /** Multi-dimensional array (tensor) type */
+    /** Timestamp data type
+     * <p>
+     * Format is <code>Instant</code> = (seconds, nanosecond offset).
+     */
+    TIMESTAMP(DpSupportedType.TIMESTAMP),
+    
+    /** Byte array type
+     * <p>
+     * Format is a bytes array <code>byte[]</code>
+     */
+    BYTES(DpSupportedType.BYTE_ARRAY),
+    
+    /** Multi-dimensional array (tensor) type
+     * <p>
+     * Format is <code>ArrayList&lt;ArrayList&lt; ...ArrayList&lt;Scalar&gt; ...&gt;&gt; 
+     */
     ARRAY(DpSupportedType.ARRAY),
     
-    /** Complex data structure type */
+    /** Complex data structure type
+     * <p>
+     * Format is <code>Map&ltString, Object&gt;</code> representing (name, value) where 
+     * 'name' is field name and
+     * 'value' is field value, potentially other structures or complex data types.
+     */
     STRUCTURE(DpSupportedType.STRUCTURE),
     
-    /** Image data type */
+    /** Image data type
+     * <p>
+     * Format is <code>BufferedImage</code> 
+     */
     IMAGE(DpSupportedType.IMAGE);
 
     
@@ -64,6 +91,6 @@ public enum JalHeteroType {
     // Operations
     //
     
-    /** Returns the Data Platform suported data type for this constant */
+    /** Returns the Data Platform supported data type for this constant */
     public DpSupportedType  getDpType() { return this.enmDpType; };
 }

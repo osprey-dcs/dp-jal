@@ -1,7 +1,7 @@
 /*
- * Project: dp-api-common
+ * Project: dp-jal
  * File:	package-info.java
- * Package: com.ospreydcs.dp.jal.tools.common
+ * Package: com.ospreydcs.dp.jal.tools.common.datagen.factories
  * Type: 	package-info
  *
  * Copyright 2010-2025 the original author or authors.
@@ -20,16 +20,16 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Aug 18, 2025
+ * @since Nov 22, 2025
  *
  */
 /**
  * <p>
- * Package containing common resources for JAL Tools and applications.
+ * Package containing pre-defined simulated time-series data factories.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Aug 18, 2025
+ * @since Nov 22, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.common;
+package com.ospreydcs.dp.jal.tools.common.datagen.factories;

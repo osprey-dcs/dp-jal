@@ -495,7 +495,7 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
     }
 
     /**
-     * @see com.ospreydcs.dp.jal.model.IDataColumn#getType()
+     * @see com.ospreydcs.dp.jal.model.IDataColumn#getScalarType()
      */
     @Override
     public DpSupportedType getType() {

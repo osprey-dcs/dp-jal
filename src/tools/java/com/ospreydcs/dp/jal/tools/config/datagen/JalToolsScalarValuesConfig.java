@@ -28,7 +28,9 @@ package com.ospreydcs.dp.jal.tools.config.datagen;
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGenerator;
+
+import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory;
+
 
 /**
  * <p>
@@ -36,7 +38,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGenerator;
  * </p>
  * <p>
  * The parameters within this structure class are used for default configurations of the
- * JAL Tools <code>{@link ScalarGenerator}</code> instances. Note that the scalar-value generator
+ * JAL Tools <code>{@link ScalarFactory}</code> instances. Note that the scalar-value generator
  * class is used to generated field values within more complex data structures such as arrays and
  * structures.
  * </p>

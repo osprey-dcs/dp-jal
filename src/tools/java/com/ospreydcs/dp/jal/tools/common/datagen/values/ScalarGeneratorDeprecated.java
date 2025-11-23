@@ -1,8 +1,8 @@
 /*
  * Project: dp-data-simulator
- * File:	ScalarGenerator.java
+ * File:	ScalarGeneratorDeprecated.java
  * Package: com.ospreydcs.dp.datasim.frame.model
- * Type: 	ScalarGenerator
+ * Type: 	ScalarGeneratorDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -29,6 +29,7 @@ package com.ospreydcs.dp.jal.tools.common.datagen.values;
 
 import java.util.Random;
 
+import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -56,7 +57,7 @@ import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsScalarValuesConfig;
  * @deprecated Replaced by ScalarFactory
  */
 @Deprecated(since="Nov 11, 2025", forRemoval=true)
-public class ScalarGenerator implements IDataValueFactory {
+public class ScalarGeneratorDeprecated implements IDataValueFactory {
     
     
     //
@@ -65,7 +66,7 @@ public class ScalarGenerator implements IDataValueFactory {
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>ScalarGenerator</code> providing simulated scalar values.
+     * Creates and returns a new instance of <code>ScalarGeneratorDeprecated</code> providing simulated scalar values.
      * </p>
      * <p>
      * Scalar values are generated incrementally by default.
@@ -73,15 +74,15 @@ public class ScalarGenerator implements IDataValueFactory {
      *
      * @param type  scalar value type
      * 
-     * @return  a new <code>ScalarGenerator</code> instances ready for simulated number generation
+     * @return  a new <code>ScalarGeneratorDeprecated</code> instances ready for simulated number generation
      */
-    public static ScalarGenerator   from(JalScalarType enmType) {
-        return new ScalarGenerator(enmType);
+    public static ScalarGeneratorDeprecated   from(JalScalarType enmType) {
+        return new ScalarGeneratorDeprecated(enmType);
     }
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>ScalarGenerator</code> providing simulated scalar values.
+     * Creates and returns a new instance of <code>ScalarGeneratorDeprecated</code> providing simulated scalar values.
      * </p>
      * <p>
      * Scalar values are generated incrementally by default (i.e., not random).  
@@ -91,15 +92,15 @@ public class ScalarGenerator implements IDataValueFactory {
      * @param type      scalar value type
      * @param seed      initial scalar value
      *  
-     * @return  a new <code>ScalarGenerator</code> instances ready for simulated number generation
+     * @return  a new <code>ScalarGeneratorDeprecated</code> instances ready for simulated number generation
      */
-    public static ScalarGenerator   from(JalScalarType enmType, long seed) {
-        return new ScalarGenerator(enmType, seed);
+    public static ScalarGeneratorDeprecated   from(JalScalarType enmType, long seed) {
+        return new ScalarGeneratorDeprecated(enmType, seed);
     }
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>ScalarGenerator</code> providing simulated scalar values.
+     * Creates and returns a new instance of <code>ScalarGeneratorDeprecated</code> providing simulated scalar values.
      * </p>
      * <p>
      * Scalar values are generated randomly if <code>random</code> is <code>true</code> and incrementally if
@@ -112,10 +113,10 @@ public class ScalarGenerator implements IDataValueFactory {
      * @param seed      initial scalar value or random number seed
      * @param useRandom <code>true</code> generate random sequence, <code>false</code> generate incremental sequence
      *  
-     * @return  a new <code>ScalarGenerator</code> instances ready for simulated number generation
+     * @return  a new <code>ScalarGeneratorDeprecated</code> instances ready for simulated number generation
      */
-    public static ScalarGenerator   from(JalScalarType enmType, long seed, boolean useRandom) {
-        return new ScalarGenerator(enmType, seed, useRandom);
+    public static ScalarGeneratorDeprecated   from(JalScalarType enmType, long seed, boolean useRandom) {
+        return new ScalarGeneratorDeprecated(enmType, seed, useRandom);
     }
     
     //
@@ -215,7 +216,7 @@ public class ScalarGenerator implements IDataValueFactory {
     
     /**
      * <p>
-     * Constructs a new instance of <code>ScalarGenerator</code> providing simulated scalar values.
+     * Constructs a new instance of <code>ScalarGeneratorDeprecated</code> providing simulated scalar values.
      * </p>
      * <p>
      * Scalar values are generated incrementally by default.
@@ -223,13 +224,13 @@ public class ScalarGenerator implements IDataValueFactory {
      *
      * @param type  scalar value type
      */
-    public ScalarGenerator(JalScalarType type) {
+    public ScalarGeneratorDeprecated(JalScalarType type) {
         this(type, LNG_INCR_SEED_DEF);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>ScalarGenerator</code> providing simulated scalar values.
+     * Constructs a new instance of <code>ScalarGeneratorDeprecated</code> providing simulated scalar values.
      * </p>
      * <p>
      * Scalar values are generated incrementally by default (i.e., not random).  
@@ -241,13 +242,13 @@ public class ScalarGenerator implements IDataValueFactory {
      * 
      * @throws  ArithmeticException the seed was too large to convert to an integer value
      */
-    public ScalarGenerator(JalScalarType type, long seed) throws ArithmeticException {
+    public ScalarGeneratorDeprecated(JalScalarType type, long seed) throws ArithmeticException {
         this(type, seed, BOL_RAND_ENBL_DEF);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>ScalarGenerator</code> providing simulated scalar values.
+     * Constructs a new instance of <code>ScalarGeneratorDeprecated</code> providing simulated scalar values.
      * </p>
      * <p>
      * Scalar values are generated randomly if <code>random</code> is <code>true</code> and incrementally if
@@ -262,7 +263,7 @@ public class ScalarGenerator implements IDataValueFactory {
      * 
      * @throws  ArithmeticException the seed was too large to convert to an integer value
      */
-    public ScalarGenerator(JalScalarType type, long seed, boolean useRandom) throws ArithmeticException {
+    public ScalarGeneratorDeprecated(JalScalarType type, long seed, boolean useRandom) throws ArithmeticException {
         this.enmFieldType = type;
         this.lngSeed = seed;
         this.bolUseRandom = useRandom;
@@ -327,6 +328,14 @@ public class ScalarGenerator implements IDataValueFactory {
     //
     // IDataValueFactory Interface
     //
+    
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     */
+    @Override
+    public DpSupportedType  getValueType() {
+        return this.getType().getDpType();
+    }
     
     /**
      * <p>

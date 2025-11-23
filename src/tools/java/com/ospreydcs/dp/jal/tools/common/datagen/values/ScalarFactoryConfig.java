@@ -434,7 +434,7 @@ public record ScalarFactoryConfig(
      * <li>Field <code>{@link #bolRandEnable()}</code> is taken directly from the JAL default configuration.</li>
      * <li>Field <code>{@link #seed()}</code> is determined by the random enable/disable flag.</li>
      * <li>Field <code>{@link #increment()}</code> is determined by the <code>JalScalarType</code> argument.</li>
-     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX_DEF}</code>.</li>
+     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
      * 
@@ -461,7 +461,7 @@ public record ScalarFactoryConfig(
      * <ul>
      * <li>Field <code>{@link #bolRandEnable()}</code> is taken directly from the JAL default configuration.</li>
      * <li>Field <code>{@link #increment()}</code> is determined by the <code>JalScalarType</code> argument.</li>
-     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX_DEF}</code>.</li>
+     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
      * 
@@ -488,7 +488,7 @@ public record ScalarFactoryConfig(
      * <ul>
      * <li>Field <code>{@link #seed()}</code> is determined by the random enable/disable flag.</li>
      * <li>Field <code>{@link #increment()}</code> is determined by the <code>JalScalarType</code> argument.</li>
-     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX_DEF}</code>.</li>
+     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
      * 
@@ -518,7 +518,7 @@ public record ScalarFactoryConfig(
      * Record fields not supplied are taken from the JAL Tools default configuration.
      * <ul>
      * <li>Field <code>{@link #increment()}</code> is determined by the <code>JalScalarType</code> argument.</li>
-     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX_DEF}</code>.</li>
+     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
      * 
@@ -553,7 +553,7 @@ public record ScalarFactoryConfig(
      * <p>
      * Record fields not supplied are taken from the JAL Tools default configuration.
      * <ul>
-     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX_DEF}</code>.</li>
+     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
      * 
@@ -802,10 +802,10 @@ public record ScalarFactoryConfig(
     //
     
     /** The default scalar value type when none is given */
-    private final static JalScalarType  ENM_TYPE_DEF = CFG_DEF.type;
+    public final static JalScalarType  ENM_TYPE_DEF = CFG_DEF.type;
     
     /** The default string value prefix */
-    private final static String         STR_PREFIX_DEF = CFG_DEF.stringPrefix;
+    public final static String         STR_PREFIX_DEF = CFG_DEF.stringPrefix;
 
     
     /** The default enable/disable random number generator */

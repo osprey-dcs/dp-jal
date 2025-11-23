@@ -1,8 +1,8 @@
 /*
  * Project: dp-data-simulator
- * File:	ImageGenerator.java
+ * File:	ImageGeneratorDeprecated.java
  * Package: com.ospreydcs.dp.datasim.model.values
- * Type: 	ImageGenerator
+ * Type: 	ImageGeneratorDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -30,6 +30,7 @@ package com.ospreydcs.dp.jal.tools.common.datagen.values;
 import java.time.Instant;
 
 import com.ospreydcs.dp.jal.common.BufferedImage;
+import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 
 /**
@@ -45,8 +46,16 @@ import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
  * @deprecated Replaced by ImageFactory
  */
 @Deprecated(since="Nov 14, 2025", forRemoval=true)
-public class ImageGenerator implements IDataValueFactory {
+public class ImageGeneratorDeprecated implements IDataValueFactory {
 
+    
+    //
+    // Class Constants
+    //
+    
+    /** The value type of all simulated data returned by this data value factory */
+    public static final DpSupportedType     ENM_TYPE = DpSupportedType.IMAGE;
+    
     
     //
     // Configuration
@@ -77,7 +86,7 @@ public class ImageGenerator implements IDataValueFactory {
     
     /**
      * <p>
-     * Constructs a new instance of <code>ImageGenerator</code>.
+     * Constructs a new instance of <code>ImageGeneratorDeprecated</code>.
      * </p>
      *
      * @param strNamePrefix prefix given to all image names (e.g., filename prefix)
@@ -86,7 +95,7 @@ public class ImageGenerator implements IDataValueFactory {
      * 
      * @throws IllegalArgumentException image size must be greater than zero
      */
-    public ImageGenerator(String strNamePrefix, BufferedImage.Format enmFormat, int szAlloc) throws IllegalArgumentException {
+    public ImageGeneratorDeprecated(String strNamePrefix, BufferedImage.Format enmFormat, int szAlloc) throws IllegalArgumentException {
         this.strNamePrefix = strNamePrefix;
         this.enmFormat = enmFormat;
         this.szAlloc = szAlloc;
@@ -101,8 +110,16 @@ public class ImageGenerator implements IDataValueFactory {
     //
     
     /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     */
+    @Override
+    public DpSupportedType  getValueType() {
+        return ENM_TYPE;
+    }
+    
+    /**
      *
-     * @see @see com.ospreydcs.dp.datasim.model.values.IDataValueGenerator#nextValue()
+     * @see com.ospreydcs.dp.datasim.model.values.IDataValueGenerator#nextValue()
      */
     @Override
     public Object nextValue() {

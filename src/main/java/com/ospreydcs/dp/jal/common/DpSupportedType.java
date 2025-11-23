@@ -158,11 +158,18 @@ public enum DpSupportedType {
     STRING(String.class),
     
     /**
+     * Timestamp of the form (Epoch seconds, nanoseconds offset).
+     * <p>
+     * <code>Timestamp</code> -> <code>java.time.Instant</code>
+     */
+    TIMESTAMP(Instant.class),
+    
+    /**
      * Raw data type, that is, a string of <code>byte</code> values.
      * <p>
      * <code>bytes</code> -> <code>com.google.Protobuf.ByteString</code>
      */
-    BYTE_ARRAY(ByteString.class),
+    BYTE_ARRAY(byte[].class),
     
     /**
      * Image data type.
@@ -187,13 +194,6 @@ public enum DpSupportedType {
      */
     @AUnavailable(status=STATUS.ACCEPTED, note="Currently unimplemented within dp-services")
     STRUCTURE(Map.class),
-    
-    /**
-     * Timestamp of the form (Epoch seconds, nanoseconds offset).
-     * <p>
-     * <code>Timestamp</code> -> <code>java.time.Instant</code>
-     */
-    TIMESTAMP(Instant.class),
     
     /**
      * Enumeration for unsupported or unrecognized data types.

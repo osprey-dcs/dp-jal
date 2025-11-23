@@ -1,8 +1,8 @@
 /*
  * Project: dp-data-simulator
- * File:	ArrayGenerator.java
+ * File:	ArrayGeneratorDeprecated.java
  * Package: com.ospreydcs.dp.datasim.frame.model
- * Type: 	ArrayGenerator
+ * Type: 	ArrayGeneratorDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
@@ -58,7 +59,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @deprecated  Replaced by TensorFactory
  */
 @Deprecated(since="Nov 13, 2025", forRemoval=true)
-public class ArrayGenerator implements IDataValueFactory {
+public class ArrayGeneratorDeprecated implements IDataValueFactory {
 
     
     //
@@ -66,7 +67,7 @@ public class ArrayGenerator implements IDataValueFactory {
     //
     
     /** Generator of scalar field values */
-    private final ScalarGenerator  valGenerator;
+    private final ScalarGeneratorDeprecated  valGenerator;
     
     
     //
@@ -89,32 +90,32 @@ public class ArrayGenerator implements IDataValueFactory {
     
     /**
      * <p>
-     * Constructs a new instance of <code>ArrayGenerator</code>.
+     * Constructs a new instance of <code>ArrayGeneratorDeprecated</code>.
      * </p>
      *
      * @param shape     array containing size of each array axis
      * @param type      the scalar type of each array element
      */
-    public ArrayGenerator(int[] shape, JalScalarType type) {
+    public ArrayGeneratorDeprecated(int[] shape, JalScalarType type) {
         this(shape, type, 0);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>ArrayGenerator</code>.
+     * Constructs a new instance of <code>ArrayGeneratorDeprecated</code>.
      * </p>
      *
      * @param shape     array containing size of each array axis
      * @param type      the scalar type of each array element
      * @param seed      seed used to generate scalar types
      */
-    public ArrayGenerator(int[] shape, JalScalarType type, long seed) {
+    public ArrayGeneratorDeprecated(int[] shape, JalScalarType type, long seed) {
         this(shape, type, seed, false);
     }
     
     /**
      * <p>
-     * Constructs a new instance of <code>ArrayGenerator</code>.
+     * Constructs a new instance of <code>ArrayGeneratorDeprecated</code>.
      * </p>
      *
      * @param shape     array containing size of each array axis
@@ -122,12 +123,12 @@ public class ArrayGenerator implements IDataValueFactory {
      * @param seed      seed used to generate scalar types
      * @param useRandom use random number generator for scalar values (otherwise incremental values)
      */
-    public ArrayGenerator(int[] shape, JalScalarType type, long seed, boolean useRandom) {
+    public ArrayGeneratorDeprecated(int[] shape, JalScalarType type, long seed, boolean useRandom) {
         this.arrShape = shape.clone();
         this.intRank = shape.length;
         this.szArray = this.computeSize(shape);
         
-        this.valGenerator = new ScalarGenerator(type, seed, useRandom);
+        this.valGenerator = new ScalarGeneratorDeprecated(type, seed, useRandom);
     }
     
     
@@ -233,6 +234,14 @@ public class ArrayGenerator implements IDataValueFactory {
     // IDataValueFactory Interface
     //
 
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     */
+    @Override
+    public DpSupportedType  getValueType() {
+        return DpSupportedType.ARRAY;
+    }
+    
     /**
      *
      * @see @see com.ospreydcs.dp.datasim.frame.model.IDataValueGenerator#nextValue()
