@@ -45,6 +45,8 @@ NOTES:
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <maven-plugin-build-helper.version>3.6.0</maven-plugin-build-helper.version>
         <maven-plugin-shade.version>3.6.0</maven-plugin-shade.version>
+        <maven-plugin-surefire.version>3.5.4</maven-plugin-surefire.version>
+        <maven-surefire-report-plugin.version>3.5.4</maven-surefire-report-plugin.version>
         
         <!-- Java - Override Version -->
         <java.version>16</java.version>
@@ -210,7 +212,7 @@ NOTES:
             </plugin>
             
             <!-- Maven "Add Source" Plugin -->
-            <!-- CKA: We need to add the source and resources directories for the Java API Library tools -->
+            <!-- CKA: We need to add the source and resources directories for the Java API Library Tools -->
             <plugin>
     	        <groupId>org.codehaus.mojo</groupId>
     	        <artifactId>build-helper-maven-plugin</artifactId>
@@ -225,6 +227,7 @@ NOTES:
                         <configuration>
                             <sources>
                                 <source>${project.basedir}/src/tools/java</source>
+                                <source>${project.basedir}/src/tools/test/java</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -245,6 +248,28 @@ NOTES:
                     </execution>
                 </executions>
            </plugin>
+
+           <!-- Maven Surefire Plugin - Unit Test Support -->
+           <!-- Source - https://stackoverflow.com/a -->
+           <!--  Posted by subhashis, modified by community. See post 'Timeline' for change history-->
+           <!--  Retrieved 2025-11-11, License - CC BY-SA 4.0 -->
+           <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-plugin-surefire.version}</version>
+                <configuration>
+                    <parallel>methods</parallel>
+                    <threadCount>10</threadCount>
+                    <includes>
+                        <include>**/Test*.java</include>
+                        <include>**/Test.java</include>
+                        <include>**/TestCase.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*Abstract*Test.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
 
             <!--
             Maven shade plugin configuration: this is required so that if you build a single JAR file (an "uber-jar")
@@ -300,5 +325,15 @@ NOTES:
             
         </plugins>
     </build>
+    
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>${maven-surefire-report-plugin.version}</version>
+            </plugin>
+        </plugins>
+    </reporting>
     
 </project>

@@ -25,7 +25,7 @@
  */
 /**
  * <p>
- * Package containing common resources for JAL tools and applications.
+ * Package containing common resources for JAL Tools and applications.
  * </p>
  *
  * @author Christopher K. Allen
