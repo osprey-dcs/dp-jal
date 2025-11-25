@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	JalSerializeConfig.java
- * Package: com.ospreydcs.dp.jal.config.common
- * Type: 	JalSerializeConfig
+ * File:    JalToolsRandomConfig.java
+ * Package: com.ospreydcs.dp.jal.tools.config.datagen
+ * Type:    JalToolsRandomConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,35 +20,30 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Sep 10, 2025
+ * @since Nov 24, 2025
  *
  */
-package com.ospreydcs.dp.jal.config.common;
+package com.ospreydcs.dp.jal.tools.config.datagen;
 
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 
 /**
  * <p>
- * Structure class containing parameters for <code>IngestionFrame</code> and data recovery serialization.
+ * Structure class for random number generator default parameters.
  * </p>
- *
- * @author Christopher K. Allen
- * @since Sep 10, 2025
- *
  */
-public class JalSerializeConfig extends CfgStructure<JalSerializeConfig> {
-
+public class JalToolsRandomConfig extends CfgStructure<JalToolsRandomConfig> {
+    
     /** Default constructor required for base class */
-    public JalSerializeConfig() { super(JalSerializeConfig.class);  }
+    public JalToolsRandomConfig() { super(JalToolsRandomConfig.class); };
     
     
-    // 
-    // Configuration Parameters
-    //
-    
-    /** Is serialization enabled */
+    /** Enable/disable the use of a random number generator for value creation (random generation can be expensive) */
     @ACfgOverride.Field(name="ENABLED")
     public Boolean      enabled;
-
+    
+    /** The seed value for random number generator - use 0 for default field generation */
+    @ACfgOverride.Field(name="SEED")
+    public Long         seed;
 }

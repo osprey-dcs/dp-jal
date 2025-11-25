@@ -45,7 +45,7 @@ public class JalToolsQueryConfigDep extends CfgStructure<JalToolsQueryConfigDep>
     
 //    /** The Data Platform test archive configuration parameter set */
 //    @ACfgOverride.Struct(pathelem="TEST_ARCHIVE")
-//    public JalTestArchiveConfig      testArchive;
+//    public JalToolsTestArchiveConfig      testArchive;
 
     /** Collection of common test requests and and request suites for tool use */
     @ACfgOverride.Struct(pathelem="TEST_REQUESTS")

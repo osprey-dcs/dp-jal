@@ -60,43 +60,24 @@ public class JalToolsScalarValuesConfig extends CfgStructure<JalToolsScalarValue
     
     /** The default scalar value type when none is given */
     @ACfgOverride.Field(name="TYPE")
-    public JalScalarType    type;
+    public JalScalarType        type;
     
     /** The prefix used for all string value generation - numeric value used as suffix */
     @ACfgOverride.Field(name="STRING_PREFIX")
-    public String           stringPrefix;
+    public String               stringPrefix;
     
     /** Random number generator value creation parameters if used, otherwise use incremental value creation */
     @ACfgOverride.Struct(pathelem="RANDOM")
-    public Random           random;
+    public JalToolsRandomConfig random;
     
     /** Incremental number generation default parameters (used when random number generation disabled) */
     @ACfgOverride.Struct(pathelem="INCREMENT")
-    public Increment        increment;
+    public Increment            increment;
     
     
     //
     // Internal Structure Classes
     //
-    
-    /**
-     *  Structure class for scalar value random number generator default parameters
-     */
-    @ACfgOverride.Root(root="JAL_TOOLS_DATAGEN_VALUES_SCALAR_RANDOM")
-    public static class Random extends CfgStructure<Random> {
-        
-        /** Default constructor required for base class */
-        public Random() { super(Random.class); };
-        
-        
-        /** Enable/disable the use of a random number generator for value creation (random generation can be expensive) */
-        @ACfgOverride.Field(name="ENABLED")
-        public Boolean      enabled;
-        
-        /** The seed value for random number generator - use 0 for default field generation */
-        @ACfgOverride.Field(name="SEED")
-        public Long         seed;
-    }
     
     /**
      * Structure class for scalar value incremental number generation default parameters

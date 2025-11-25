@@ -83,5 +83,9 @@ public class JalToolsDataGenConfig extends CfgStructure<JalToolsDataGenConfig> {
         @ACfgOverride.Struct(pathelem="IMAGE")
         public JalToolsImageValuesConfig        image;
         
+        /** Default configuration parameters for timestamp value generation */
+        @ACfgOverride.Struct(pathelem="TIMESTAMP")
+        public JalToolsTmsValuesConfig          timestamp;
+        
     }
 }

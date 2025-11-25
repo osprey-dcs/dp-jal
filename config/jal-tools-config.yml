@@ -29,8 +29,8 @@
          
 testArchive:   # Data Platform test archive properties (generated with utility 'app-run-test-data-generator')
    range:
-     start: 2023-10-31T15:51:02.000+00:00 # first timestap w/in archive : JAL_TOOLS_TEST_ARCHIVE_RANGE_START
-     end: 2023-10-31T15:52:01.999+00:00  # last timestamp w/in archive  : JAL_TOOLS_TEST_ARCHIVE_RANGE_END 
+     start: 2023-10-31T15:51:02.000+00:00 # first timestamp w/in archive : JAL_TOOLS_TEST_ARCHIVE_RANGE_START
+     end: 2023-10-31T15:52:01.999+00:00  # last timestamp w/in archive   : JAL_TOOLS_TEST_ARCHIVE_RANGE_END 
    pvs:
       prefix: "dpTest_"         # PV name prefix - suffix is index         : JAL_TOOLS_TEST_ARCHIVE_PVS_PREFIX
       types:                    # types list - DpSupportedType enumeration : JAL_TOOLS_TEST_ARCHIVE_PVS_TYPES
@@ -53,7 +53,7 @@ datagen:       # JAL Tools simulated data generation default configuration param
          stringPrefix: "str:"  # prefix for all string values          : JAL_TOOLS_DATAGEN_VALUES_SCALAR_STRING_PREFIX
          random:            # Random number generation parameters      : JAL_TOOLS_DATAGEN_VALUES_SCALAR_RANDOM_ENABLE_{PROP}
             enabled: false     # enable/disable random number generator (WARNING: random generation can be expensive)
-            seed: 0            # seed value for random number generator (use 0 for random seed)
+            seed: 0            # random  generator seed (0 for random seed) : JAL_TOOLS_DATA_GEN_VALUES_SCALAR_RANDOM_SEED
          increment:         # Value increment parameters for non-random generation : JAL_TOOLS_DATAGEN_SCALAR_INCREMENT_{FIELDNAME}
             seed: 0            # seed (start) value (type long)
             booleanv: 1        # increment value for boolean value generation 
@@ -74,7 +74,14 @@ datagen:       # JAL Tools simulated data generation default configuration param
       image:                # Image data value generation default parameters
          namePrefix: "img"     # image name prefix (suffixed by image count) : JAL_TOOLS_DATAGEN_VALUES_IMAGE_NAME_PREFIX
          separator: ":"        # separator between prefix and image count    : JAL_TOOLS_DATAGEN_VALUES_IMAGE_SEPARATOR
-         format: RAW           # BufferedImage.Format enumeration            : JAL_TOOLS_DATAGEN_VALUES_IMAGE_FORMAT 
+         format: RAW           # BufferedImage.Format enumeration            : JAL_TOOLS_DATAGEN_VALUES_IMAGE_FORMAT
+      timestamp:            # Timestamp data value generation default parameters
+         random:               # Random timestamp generation parameters
+            enabled: false     # enable/disable random timestamp values      : JAL_TOOLS_DATA_GEN_VALUES_TIMESTAMP_RANDOM_ENDABLED
+            seed: 0            # random  generator seed (0 for random seed)  : JAL_TOOLS_DATA_GEN_VALUES_TIMESTAMP_RANDOM_SEED
+         increment:
+            start: 1970-01-01T00:00:00Z # first timestamp (ISO format) : JAL_TOOLS_DATAGEN_TIMESTAMP_INCREMENT_START
+            period: PT0.001S   # duration between timestamps (ISO PnDTnHnMn.nS format) : JAL_TOOLS_DATAGEN_TIMESTAMP_INCREMENT_PERIOD 
        
 output:         # JAL Tools (General) default output location - this should be related to DP_JAL_OUTPUT environment variable
    path: test/output         # path location relative to execution     : JAL_TOOLS_OUTPUT_PATH

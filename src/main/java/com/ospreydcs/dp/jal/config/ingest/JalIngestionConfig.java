@@ -29,7 +29,7 @@ package com.ospreydcs.dp.jal.config.ingest;
 
 import com.ospreydcs.dp.jal.config.common.JalConcurrencyConfig;
 import com.ospreydcs.dp.jal.config.common.JalLoggingConfig;
-import com.ospreydcs.dp.jal.config.common.JalSerializeConfig;
+import com.ospreydcs.dp.jal.config.common.JalColSerializeConfig;
 import com.ospreydcs.dp.jal.config.common.JalTimeoutConfig;
 import com.ospreydcs.dp.jal.config.grpc.DpGrpcStreamConfig;
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
@@ -57,7 +57,7 @@ public class JalIngestionConfig extends CfgStructure<JalIngestionConfig> {
     
     /** Default parameters for <code>IngestionFrame</code> serialization */
     @ACfgOverride.Struct(pathelem="SERIALIZE")
-    public JalSerializeConfig   serialize;
+    public JalColSerializeConfig   serialize;
     
     /** Default parameters for <code>IngestionFrame</code> decomposition */
     @ACfgOverride.Struct(pathelem="DECOMPOSE")

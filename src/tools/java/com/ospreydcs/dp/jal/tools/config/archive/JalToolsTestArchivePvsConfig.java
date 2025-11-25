@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:    JalTestArchivePvsConfig.java
+ * File:    JalToolsTestArchivePvsConfig.java
  * Package: com.ospreydcs.dp.jal.tools.config
- * Type:    JalTestArchivePvsConfig
+ * Type:    JalToolsTestArchivePvsConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -40,10 +40,10 @@ import com.ospreydcs.dp.jal.config.model.CfgStructure;
  * @author Christopher K. Allen
  * @since Jun 10, 2025
  */
-public class JalTestArchivePvsConfig extends CfgStructure<JalTestArchivePvsConfig> {
+public class JalToolsTestArchivePvsConfig extends CfgStructure<JalToolsTestArchivePvsConfig> {
     
     /** Required default constructor for base class */
-    public JalTestArchivePvsConfig() { super(JalTestArchivePvsConfig.class); };
+    public JalToolsTestArchivePvsConfig() { super(JalToolsTestArchivePvsConfig.class); };
     
     
     //

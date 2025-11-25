@@ -36,8 +36,8 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.requests.TestArchiveRequest;
-import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchiveConfig;
-import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchivePvsConfig;
+import com.ospreydcs.dp.jal.tools.config.archive.JalToolsTestArchiveConfig;
+import com.ospreydcs.dp.jal.tools.config.archive.JalToolsTestArchivePvsConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -143,11 +143,11 @@ public class JalToolsConfigTest {
     }
     
     /**
-     * Test method for inspection of <code>{@link JalTestArchiveConfig}</code> class recovered by <code>JalToolsConfig</code>.
+     * Test method for inspection of <code>{@link JalToolsTestArchiveConfig}</code> class recovered by <code>JalToolsConfig</code>.
      */
     @Test
     public final void testTestArchive() {
-        final JalTestArchiveConfig    cfgArch = JalToolsConfig.getInstance().testArchive;
+        final JalToolsTestArchiveConfig    cfgArch = JalToolsConfig.getInstance().testArchive;
         
         // Parameters
         final Instant   insStart = Instant.parse(cfgArch.range.start);
@@ -181,7 +181,7 @@ public class JalToolsConfigTest {
      * @param strPad    optional left-hand side white space padding (or <code>null</code>)
      * @param cfg       the structure class containing configuration parameters
      */
-    private void printOut(PrintStream ps, String strPad, JalTestArchivePvsConfig cfg) {
+    private void printOut(PrintStream ps, String strPad, JalToolsTestArchivePvsConfig cfg) {
         if (strPad == null)
             strPad = "";
         

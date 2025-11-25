@@ -1,6 +1,6 @@
 package com.ospreydcs.dp.jal.config.query;
 
-import com.ospreydcs.dp.jal.config.common.JalSerializeConfig;
+import com.ospreydcs.dp.jal.config.common.JalColSerializeConfig;
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 
@@ -20,7 +20,7 @@ public class JalQueryRecoveryConfig extends CfgStructure<JalQueryRecoveryConfig>
     
     /** Default parameters for Query Service data recovery serialization use */
     @ACfgOverride.Struct(pathelem="SERIALIZE")
-    public JalSerializeConfig       serialize;
+    public JalColSerializeConfig       serialize;
     
     /** Default parameters for Query Service time-series data request queries */
     @ACfgOverride.Struct(pathelem="REQUEST")

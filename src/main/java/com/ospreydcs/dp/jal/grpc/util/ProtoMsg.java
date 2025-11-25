@@ -591,6 +591,8 @@ public final class ProtoMsg {
             bldrDatum.setStringValue(val);
         } else if (objValue instanceof byte[] val) {
             bldrDatum.setByteArrayValue(ByteString.copyFrom(val));
+        } else if (objValue instanceof Instant val) {
+            bldrDatum.setTimestampValue(ProtoMsg.from(val));
             
         } else if (objValue instanceof List list) {
             bldrDatum.setArrayValue( ProtoMsg.createArray(list) );

@@ -276,8 +276,10 @@ public enum DpSupportedType {
         return false;
     }
     
+//    public boolean isAssignable
+    
     /**
-     * Returns whether or not this type is compatible (assignable) with the given type.
+     * Returns whether or not this type representation is compatible (assignable) with the given type.
      * <p>
      * Specifically, returns <code>true</code> only if objects of this type can be assigned
      * values with objects of type <code>T</code>.

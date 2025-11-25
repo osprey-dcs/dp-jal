@@ -2,7 +2,7 @@
  * Project: dp-api-common
  * File:    JalToolsConfig.java
  * Package: com.ospreydcs.dp.jal.tools.config
- * Type:    JalTestArchiveConfig
+ * Type:    JalToolsTestArchiveConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -34,10 +34,10 @@ import com.ospreydcs.dp.jal.config.model.CfgStructure;
  * </p>
  */
 @ACfgOverride.Root(root="JAL_TEST_ARCHIVE")
-public class JalTestArchiveConfig extends CfgStructure<JalTestArchiveConfig>{
+public class JalToolsTestArchiveConfig extends CfgStructure<JalToolsTestArchiveConfig>{
 
     /** Default constructor required for base class */
-    public JalTestArchiveConfig() { super(JalTestArchiveConfig.class); }
+    public JalToolsTestArchiveConfig() { super(JalToolsTestArchiveConfig.class); }
     
     
     //
@@ -50,7 +50,7 @@ public class JalTestArchiveConfig extends CfgStructure<JalTestArchiveConfig>{
     
     /** The Data Platform Test Archive Process Variable (PV) configuration parameters */
     @ACfgOverride.Struct(pathelem="PVS")
-    public JalTestArchivePvsConfig      pvs;
+    public JalToolsTestArchivePvsConfig      pvs;
     
     
     

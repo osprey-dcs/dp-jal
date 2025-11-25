@@ -39,7 +39,7 @@ import com.ospreydcs.dp.jal.config.JalConfig;
 import com.ospreydcs.dp.jal.config.common.JalLoggingConfig;
 import com.ospreydcs.dp.jal.query.DpDataRequest;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.archive.JalTestArchiveConfig;
+import com.ospreydcs.dp.jal.tools.config.archive.JalToolsTestArchiveConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -118,7 +118,7 @@ public class TestArchiveRequestCreator {
     //
     
     /** Default DP API library testing parameters */
-    public static final JalTestArchiveConfig     CFG_ARCHIVE = JalToolsConfig.getInstance().testArchive;
+    public static final JalToolsTestArchiveConfig     CFG_ARCHIVE = JalToolsConfig.getInstance().testArchive;
 
     /** General Query Service tools logging configuration */
     public static final JalLoggingConfig         CFG_LOGGING = JalConfig.getInstance().query.logging;
@@ -167,7 +167,7 @@ public class TestArchiveRequestCreator {
     /**
      * The prefix for each data source name within the Data Platform test archive.
      * <p>
-     * The value is taken from default configuration parameter <code>{@link JalTestArchiveConfig#pvPrefix}</code>.
+     * The value is taken from default configuration parameter <code>{@link JalToolsTestArchiveConfig#pvPrefix}</code>.
      */
     public static final String      STR_PV_PREFIX = CFG_ARCHIVE.pvs.prefix; // "dpTest_";
 
@@ -175,21 +175,21 @@ public class TestArchiveRequestCreator {
     /** 
      * The total number of unique data source within the Data Platform data archive test data set.
      * <p>
-     * The value is taken from default configuration parameter <code>{@link JalTestArchiveConfig#pvCountTotal}</code>.
+     * The value is taken from default configuration parameter <code>{@link JalToolsTestArchiveConfig#pvCountTotal}</code>.
      */
     public static final int         CNT_PVS_TOTAL = CFG_ARCHIVE.pvs.count.total; // 4000;
     
     /**
      * The number of unique data sources that are sampled with a uniform sampling clock
      * <p>
-     * The value is taken from the default configuration parameter <code>{@link JalTestArchiveConfig#pvCountClock}</code>.
+     * The value is taken from the default configuration parameter <code>{@link JalToolsTestArchiveConfig#pvCountClock}</code>.
      */
     public static final int         CNT_PVS_CLOCKED = CFG_ARCHIVE.pvs.count.clocked;
     
     /**
      * The number of unique data sources that are sampled using an explicit timestamp list
      * <p>
-     * The value is taken from the default configuration parameter <code>{@link JalTestArchiveConfig#pvCountTmsList}</code>.
+     * The value is taken from the default configuration parameter <code>{@link JalToolsTestArchiveConfig#pvCountTmsList}</code>.
      */
     public static final int         CNT_PVS_TMS_LIST = CFG_ARCHIVE.pvs.count.tmsList;
     
@@ -197,7 +197,7 @@ public class TestArchiveRequestCreator {
     /**
      * The starting index (i.e., first index) of the data sources using a uniform sampling clock
      * <p>
-     * The value is taken from the default configuration parameter <code>{@link JalTestArchiveConfig#pvIndexStartClock}</code>
+     * The value is taken from the default configuration parameter <code>{@link JalToolsTestArchiveConfig#pvIndexStartClock}</code>
      */
     public static final int         IND_FIRST_PV_CLOCKED = CFG_ARCHIVE.pvs.indexes.clocked;
     
@@ -211,7 +211,7 @@ public class TestArchiveRequestCreator {
     /**
      * The starting index (i.e., first index) of the data sources using an explicit timestamp list
      * <p>
-     * The value is taken from the default configuration parameter <code>{@link JalTestArchiveConfig#pvIndexStartTmsList}</code>
+     * The value is taken from the default configuration parameter <code>{@link JalToolsTestArchiveConfig#pvIndexStartTmsList}</code>
      */
     public static final int         IND_FIRST_PV_TMS_LIST = CFG_ARCHIVE.pvs.indexes.tmsList;
     
