@@ -1,8 +1,8 @@
 /*
- * Project: dp-api-common
- * File:	IngestionFrameGenerator.java
+ * Project: dp-jal
+ * File:	IngestionFrameFactory.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.frames
- * Type: 	IngestionFrameGenerator
+ * Type: 	IngestionFrameFactory
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,7 +20,7 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Jun 11, 2025
+ * @since Dec 1, 2025
  *
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.frames;
@@ -29,35 +29,39 @@ import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.Logger;
+import javax.naming.ConfigurationException;
 
 import com.ospreydcs.dp.jal.common.DpTimestampCase;
 import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.common.UniformSamplingClock;
-import com.ospreydcs.dp.jal.config.JalConfig;
-import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.jal.ingest.IngestionFrame;
+import com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
-import com.ospreydcs.dp.jal.util.Log4j;
 
 /**
  * <p>
  * Class for generating <code>IngestionFrame</code> instances containing simulated data.
  * </p>
  * <p>
- * A single class instance of <code>IngestionFrameGenerator</code> can create multiple <code>IngestionFrame</code>
- * objects, which will contain different data and sequential time stamps.  Use the <code>{@link #build()}</code>
+ * A single class instance of <code>IngestionFrameFactory</code> can create multiple <code>IngestionFrame</code>
+ * objects, which will contain different data and sequential time stamps.  Use the <code>{@link #nextFrame()}</code>
  * for <code>IngestionFrame</code> generation after class instantiation.
  * </p>
  * <p>
  * <h2>Configuration</h2>
- * Instances of <code>IngestionFrameGenerator</code> are configured upon creation/construction.  A record object of
+ * Instances of <code>IngestionFrameFactory</code> are configured upon creation/construction.  A record object of
  * type <code>{@link SampleBlockConfig}</code> is required for instantiation.  The record contains all fields necessary
- * for full configuration and all <code>IngestionFrameGenerator</code> objects are ready for ingestion frame creation
- * (i.e., invoking the <code>{@link #build()}</code> method) after instantiation.
+ * for full configuration and all <code>IngestionFrameFactory</code> objects are ready for ingestion frame creation
+ * (i.e., invoking the <code>{@link #nextFrame()}</code> method) after instantiation.
  * <p> 
  * </p>
  * <p>
@@ -107,8 +111,8 @@ import com.ospreydcs.dp.jal.util.Log4j;
  * <p>
  * <h2>Timestamps</h2>
  * By default the start time (first timestamp) of the first ingestion frame produced 
- * (i.e., via the <code>{@link #build()}</code> method) 
- * will be the inception time of the Data Platform Test Archive contained in class constant <code>{@link #INS_START}</code>.  
+ * (i.e., via the <code>{@link #nextFrame()}</code> method) 
+ * will be the inception time of the Data Platform Test Archive contained in class constant <code>{@link #INS_TMS_START_DEF}</code>.  
  * In all subsequent ingestion frames the initial timestamp is advanced such that it follows directly from the last timestamp 
  * of the previous ingestion frame.  The interval between timestamps (i.e., the "period") is given by the field
  * <code>{@link SampleBlockConfig#tmaPeriod()}</code> within the configuration record.
@@ -125,48 +129,20 @@ import com.ospreydcs.dp.jal.util.Log4j;
  * of a <code>DataTimestamps</code> message).  
  * </p>
  *
+ *
  * @author Christopher K. Allen
- * @since Jun 11, 2025
+ * @since Dec 1, 2025
  *
  */
-public class IngestionFrameGenerator {
-    
-    
-    //
-    // Creators
-    //
-    
-    /**
-    /**
-     * <p>
-     * Creates and returns a new <code>IngestionFrameGenerator</code> instance configured from the given record.
-     * </p>
-     * <p>
-     * The new <code>IngestionFrameGenerator</code> is fully operational after construction.  Use the
-     * <code>{@link #build()}</code> method to create new <code>IngestionFrame</code> instances as
-     * desired.
-     * </p>
-     *
-     * @param recCfg    record containing the configuration parameters for ingestion frame creation 
-     * 
-     * @return  a new <code>IngestionFrameGenerator</code> instance ready from <code>IngestionFrame</code> creation
-     * 
-     * @throws IllegalArgumentException invalid and/or inconsistent record configuration (see message and cause) 
-     */
-    public static IngestionFrameGenerator   from(SampleBlockConfig recCfg) throws IllegalArgumentException {
-        return new IngestionFrameGenerator(recCfg);
-    }
+public class IngestionFrameFactory {
 
     
     //
-    // Application Resources
+    // JAL Library Resources
     //
     
-    /** Default configuration parameters for the Query Service tools */
-    private static final JalIngestionConfig  CFG_INGEST = JalConfig.getInstance().ingest;
-    
     /** Default configuration parameters for the JAL Tools */
-    private static final JalToolsConfig     CFG_TOOLS = JalToolsConfig.getInstance();
+    private static final JalToolsFramesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frames;
     
     
     //
@@ -174,57 +150,55 @@ public class IngestionFrameGenerator {
     //
     
     /** Name of the frame generator */
-    public static final String  STR_SRC_NAME = IngestionFrameGenerator.class.getSimpleName();
+    public static final String  STR_SRC_NAME = IngestionFrameFactory.class.getSimpleName();
     
     /** Environment variable for current user */
     public static final String  STR_USERNAME = "USERNAME";
     
     
-    /** The ISO formatted inception time of the Data Platform Test Archive */
-    public static final String STR_TM_START = CFG_TOOLS.testArchive.range.start;
+    /** Default timestamp type for ingestion frames */
+    public static final DpTimestampCase     ENM_TMS_TYPE = CFG_DEF.timestamps.type;
     
-    /** The ISO formatted final time of the Data Platform Test Archive */
-    public static final String STR_TM_FINAL = CFG_TOOLS.testArchive.range.end;
+    /** Default starting time instant for ingestion frame timestamps */
+    public static final Instant             INS_TMS_START_DEF = CFG_DEF.timestamps.startInstant();
     
+    /** Default sampling period for ingestion frame timestamps */
+    public static final Duration            DUR_TMS_PER_DEF = CFG_DEF.timestamps.periodDuration();
     
-    /** The inception time instant of the Data Platform Test Archive */
-    public static final Instant    INS_START = Instant.parse(STR_TM_START);
-    
-    /** The final time instant within the Data Platform Test Archive */
-    public static final Instant    INS_FINAL = Instant.parse(STR_TM_FINAL);
-    
-    
-    /** Common attributes for each ingestion frame */
-    public static final Map<String, String>     MAP_ATTRS = Map.of(
-            "Source", STR_SRC_NAME, 
-            "Initiated", Instant.now().toString(),
-            "Values", "Simulated",
-            "User", System.getenv(STR_USERNAME)
-            ); 
+    /** Default sample count per ingestion frame */
+    public static final int                 INT_TMS_CNT_DEF = CFG_DEF.timestamps.count;
     
     
-    //
-    // Class Resources
-    //
+    /** Default ingestion frame tag values */
+    private static final List<String>        LST_FRM_TAGS_DEF = new ArrayList<>( CFG_DEF.tags );
     
-    /** The event logging enabled/disabled flag */
-    private static final boolean    BOL_LOGGING = CFG_INGEST.logging.enabled;
-    
-    /** The event logging level */
-    private static final String     STR_LOGGING_LEVEL = CFG_INGEST.logging.level;
+    /** Default ingestion frame attribute pairs */
+    private static final Map<String, String> MAP_FRM_ATTRS_DEF = new HashMap<>( CFG_DEF.attributes );
     
     
-    /** The class event logger - used for ISO parsing */
-    private static final Logger LOGGER = Log4j.getLogger(IngestionFrameGenerator.class, STR_LOGGING_LEVEL);
+    /** Common ingestion frame tag values */
+    private static final List<String>       LST_FRM_TAGS_CMN = new LinkedList<>();
     
+    /** Common ingestion frame attribute pairs */
+    private static final Map<String, String> MAP_FRM_ATTRS_CMN = new HashMap<>();
+    
+    
+    /** Common tags and attributes for ingestion frames */
+    static {
+        LST_FRM_TAGS_CMN.add(STR_SRC_NAME);
+        
+        String  strUser = System.getenv(STR_USERNAME);
+        Instant insNow = Instant.now();
+        
+        MAP_FRM_ATTRS_CMN.put("Source", STR_SRC_NAME);
+        MAP_FRM_ATTRS_CMN.put("Initiatiated", insNow.toString());
+        MAP_FRM_ATTRS_CMN.put("User", strUser);
+    }
     
     
     //
     // Defining Attributes
     //
-    
-//    /** Record containing configuration parameters for generating ingestion frames */
-//    private final SampleBlockConfig recCfg;
     
     /** The number of samples for each process variable in the ingestion frame */
     private final int               cntSamples;
@@ -241,7 +215,7 @@ public class IngestionFrameGenerator {
     //
     
     /** The data column generator used for creating sample processes within each ingestion frame - configured from input record */
-    private final DataColumnGenerator   genCols;
+    private final List<IDataColumnFactory<Object>>    lstColFacs = new LinkedList<>();
     
     
     //
@@ -252,7 +226,7 @@ public class IngestionFrameGenerator {
     private int         indFrame; // = 0;
     
     /** The start time for each ingestion frame - advanced after each frame created */
-    private Instant     insStart; // = INS_START;
+    private Instant     insStart; // = INS_TMS_START_DEF;
     
     
     //
@@ -261,34 +235,21 @@ public class IngestionFrameGenerator {
     
     /**
      * <p>
-     * Constructs a new <code>IngestionFrameGenerator</code> instance configured from the given record.
-     * </p>
-     * <p>
-     * The new <code>IngestionFrameGenerator</code> is fully operational after construction.  Use the
-     * <code>{@link #build()}</code> method to create new <code>IngestionFrame</code> instances as
-     * desired.
+     * Constructs a new <code>IngestionFrameFactory</code> instance.
      * </p>
      *
-     * @param recCfg    record containing the configuration parameters for ingestion frame creation
-     *  
-     * @throws IllegalArgumentException invalid and/or inconsistent record configuration (see message and cause) 
      */
-    public IngestionFrameGenerator(SampleBlockConfig recCfg) throws IllegalArgumentException {
-//        this.recCfg = recCfg;
+    public IngestionFrameFactory(Instant insStart, int cntSamples, Duration durPeriod, DpTimestampCase enmTmsCase, Collection<IDataColumnFactory<Object>> setColFacs) {
+        this.insStart = insStart;
+        this.cntSamples = cntSamples;
+        this.durPeriod = durPeriod;
+        this.enmTmsCase = enmTmsCase;
         
-        // Record configuration parameters
-        this.cntSamples = recCfg.cntSamples();
-        this.durPeriod = recCfg.tmaPeriod().getDuration();
-        this.enmTmsCase = recCfg.enmTmsCase();
+        this.lstColFacs.addAll(setColFacs);
         
-        // Initialize state variables
-        this.indFrame =0;
-        this.insStart = INS_START.plus(recCfg.tmaDelay().getDuration());
-        
-        // Create the data column generator
-        this.genCols = DataColumnGenerator.from(recCfg);
+        this.indFrame = 0;
     }
-    
+
     
     //
     // Configuration
@@ -296,11 +257,11 @@ public class IngestionFrameGenerator {
     
     /**
      * <p>
-     * Sets the initial timestamp start time for the next <code>IngestionFrame</code> build operation (i.e., <code>{@link #build()}</code>).
+     * Sets the initial timestamp start time for the next <code>IngestionFrame</code> build operation (i.e., <code>{@link #nextFrame()}</code>).
      * </p>
      * <p>
      * Overrides the current value of the next ingestion frame's start time.  By default the start time
-     * at the time of creation/construction is that of <code>{@link #INS_START}</code>, which is the
+     * at the time of creation/construction is that of <code>{@link #INS_TMS_START_DEF}</code>, which is the
      * inception time of the Data Platform Test Archive.
      * </p>
      * 
@@ -310,7 +271,107 @@ public class IngestionFrameGenerator {
         this.insStart = insStart;
     }
     
+    /**
+     * <p>
+     * Adds a new column to the ingestion frame factory column factory collection.
+     * </p>
+     * <p>
+     * Adds the column factory to the current collection of column factories.  The given column
+     * factory is then used for all subsequent invocations of <code>{@link #nextFrame()}</code>;
+     * ingestion frames will contain the additional data column at the end of the returned
+     * data column vector.  
+     * The given column factory must create columns of the appropriate size or an exception is
+     * thrown.
+     * </p>
+     * 
+     * @param facCol    new column factory for ingestion frame column creation
+     * 
+     * @throws ConfigurationException   data column factory has the wrong size (sample count) 
+     */
+    public void addDataColumn(IDataColumnFactory<Object> facCol) throws ConfigurationException {
+        
+        // Check factory configuration
+        if (facCol.getColumnSize() != this.getSampleCount())
+            throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() 
+                        + " Column factory " + facCol.getColumnName() 
+                        + " has wrong size " + facCol.getColumnSize()
+                        + " != " + this.getSampleCount()
+                        );
+        
+        this.lstColFacs.add(facCol);
+    }
     
+    
+    /**
+     * <p>
+     * Returns the number of samples within each ingestion frame (i.e., the row count).
+     * </p>
+     * 
+     * @return   the number of sample values in each data column
+     */
+    public int  getSampleCount() {
+        return this.cntSamples;
+    }
+    
+    /**
+     * <p>
+     * Returns the current timestamp start time instance for the next ingestion frame.
+     * </p>
+     * <p>
+     * Note that this value is a state variable and increases with the number of ingestion
+     * frames produced.
+     * </p>
+     * 
+     * @return  the timestamp start time of the next ingestion frame
+     */
+    public Instant  getSampleStartTime() {
+        return this.insStart;
+    }
+    
+    /**
+     * <p>
+     * Returns the sampling period for the timestamps in each ingestion frame.
+     * </p>
+     * <p>
+     * For explicit timestamp lists this value is the time interval between timestamps.
+     * </p> 
+     * 
+     * @return  the sampling period for sample values 
+     */
+    public Duration getSamplePeriod() {
+        return this.durPeriod;
+    }
+    
+    /**
+     * <p>
+     * Returns the timestamp representation used for each ingestion frame.
+     * </p>
+     * <p>
+     * Timestamp can be represented as uniform sampling clocks (i.e., <code>{@link DpTimestampCase#SAMPLING_CLOCK}</code>)
+     * or as explicit timestamp lists (i.e., <code>{@link DpTimestampCase#TIMESTAMP_LIST}</code>).  Explicit timestamp
+     * lists are more general but require more memory and processing resources.
+     * </p>
+     * 
+     * @return  the timestamp representation for all ingestion frames as a <code>{@link DpTimestampCase}</code> constant
+     * 
+     * @see DpTimestampCase
+     */
+    public DpTimestampCase  getTimestampType() {
+        return this.enmTmsCase;
+    }
+    
+    /**
+     * <p>
+     * Returns the current number of data columns in each ingestion frame.
+     * </p>
+     * 
+     * @return  the number of data columns in each ingestion frame
+     */
+    public int  getColumnCount() {
+        return this.lstColFacs.size();
+    }
+    
+
     //
     // Operations
     //
@@ -331,13 +392,19 @@ public class IngestionFrameGenerator {
      * @return  a new <code>IngestionFrame</code> containing simulated data
      * 
      * @throws IllegalArgumentException     the sample count was negative and/or the period was non-positive
+     * @throws IllegalStateException        there are no <code>IDataColumnFactory</code> instances
+     * @throws ConfigurationException       created a data column with the wrong size (sample count) 
      * @throws DateTimeException            internal <code>Instant</code> addition failed
      * @throws ArithmeticException          numeric overflow occurred in <code>Instant</code> addition 
      * @throws UnsupportedOperationException an unsupported timestamp case was encountered
      */
-    public IngestionFrame   build() throws IllegalArgumentException, DateTimeException, ArithmeticException, UnsupportedOperationException {
+    public IngestionFrame   nextFrame() throws IllegalArgumentException, IllegalStateException, ConfigurationException, DateTimeException, ArithmeticException, UnsupportedOperationException {
         
-        ArrayList<IDataColumn<Object>>  vecCols = this.genCols.build();
+        // Check state
+        if (this.lstColFacs.isEmpty())
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - There are no IDataColumnFactory for column creation.");
+        
+        ArrayList<IDataColumn<Object>>  vecCols = this.nextColumns();
         
         IngestionFrame frmNext = switch (this.enmTmsCase) {
         case SAMPLING_CLOCK -> IngestionFrame.from(this.nextUniformClock(insStart), vecCols);   // throws IllegalArgumentException
@@ -346,25 +413,20 @@ public class IngestionFrameGenerator {
             String strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - Timestamp case " + this.enmTmsCase + " is not viable.";
             
-            if (BOL_LOGGING)
-                LOGGER.error(strMsg);
-
             throw new UnsupportedOperationException(strMsg);
             }
         default -> { 
             String strMsg = JavaRuntime.getQualifiedMethodNameSimple()
                     + " - Timestamp case " + this.enmTmsCase + " is not supported.";
             
-            if (BOL_LOGGING)
-                LOGGER.error(strMsg);
-
             throw new UnsupportedOperationException(strMsg);
             }
         };
         
         frmNext.setFrameLabel(this.nextFrameLabel());
         frmNext.setFrameTimestamp(this.insStart);
-        frmNext.addAttributes(MAP_ATTRS);
+        frmNext.addTags(LST_FRM_TAGS_CMN);
+        frmNext.addAttributes(MAP_FRM_ATTRS_CMN);
         
         this.insStart = this.nextStartInstant(insStart);    // throws DateTimeException, ArithmeticException
         
@@ -375,6 +437,42 @@ public class IngestionFrameGenerator {
     //
     // Support Methods
     //
+    
+    /**
+     * <p>
+     * Creates a new collection of simulated data columns for the ingestion frame.
+     * </p>
+     * <p>
+     * Uses the collection <code>{@link #lstColFacs}</code> to create each <code>IDataColumn</code>
+     * containing simulated data.  One data column is created for each <code>IDataColumnFactory</code>
+     * instance.  The returned vector of contains the data column created from each data column
+     * factory currently maintained by this ingestion frame factory.
+     * </p>   
+     *  
+     * @return  a new vector of <code>IDataColumn</code> instances containing simulated data
+     * 
+     * @throws ConfigurationException   created a data column with the wrong size (sample count) 
+     */
+    private ArrayList<IDataColumn<Object>>  nextColumns() throws ConfigurationException {
+        
+        // Create the returned vector container
+        ArrayList<IDataColumn<Object>>  vecCols = new ArrayList<>(this.getColumnCount());
+
+        // Populate the vector of columns - check size as we go
+        for (IDataColumnFactory<Object> fac : this.lstColFacs) {
+            if (fac.getColumnSize() != this.cntSamples)
+                throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple()
+                            + " - Column " + fac.getColumnName() + " has wrong size "
+                            + fac.getColumnSize() + " != " + this.cntSamples
+                            );
+            
+            IDataColumn<Object>     col = fac.nextColumn();
+            
+            vecCols.add(col);
+        }
+        
+        return vecCols;
+    }
     
     /**
      * <p>

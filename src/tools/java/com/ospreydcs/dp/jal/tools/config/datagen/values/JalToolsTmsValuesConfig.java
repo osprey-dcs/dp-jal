@@ -23,7 +23,7 @@
  * @since Nov 24, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.config.datagen;
+package com.ospreydcs.dp.jal.tools.config.datagen.values;
 
 import java.time.Duration;
 import java.time.Instant;

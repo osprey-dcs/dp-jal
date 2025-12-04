@@ -31,8 +31,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.epics.pvdata.pv.ScalarType;
+
 import com.ospreydcs.dp.jal.common.DpSupportedType;
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 
@@ -59,7 +62,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @deprecated  Replaced by TensorFactory
  */
 @Deprecated(since="Nov 13, 2025", forRemoval=true)
-public class ArrayGeneratorDeprecated implements IDataValueFactory {
+public class ArrayGeneratorDeprecated implements IDatumFactory {
 
     
     //
@@ -231,27 +234,43 @@ public class ArrayGeneratorDeprecated implements IDataValueFactory {
     
     
     //
-    // IDataValueFactory Interface
+    // IDatumFactory Interface
     //
 
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getDatumType()
      */
     @Override
-    public DpSupportedType  getValueType() {
+    public DpSupportedType  getDatumType() {
         return DpSupportedType.ARRAY;
     }
     
+
     /**
-     *
-     * @see @see com.ospreydcs.dp.datasim.frame.model.IDataValueGenerator#nextValue()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getScalarType()
      */
     @Override
-    public Object nextValue() {
+    public JalScalarType getScalarType() {
+        return this.valGenerator.getScalarType();
+    }
+
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getComplexType()
+     */
+    @Override
+    public JalComplexType getComplexType() {
+        return JalComplexType.ARRAY;
+    }
+    /**
+     *
+     * @see com.ospreydcs.dp.datasim.frame.model.IDatumFactory#nextDatum()
+     */
+    @Override
+    public Object nextDatum() {
         
         // Check for exception case - zero rank tensor, or scalar
         if (this.intRank == 0) {
-            Object  objVal = this.valGenerator.nextValue();
+            Object  objVal = this.valGenerator.nextDatum();
             
             return List.of(objVal);
         }
@@ -326,7 +345,7 @@ public class ArrayGeneratorDeprecated implements IDataValueFactory {
         List<Object>    vecVals = new ArrayList<>(szAxis);
         
         for (int i=0; i<szAxis; i++) {
-            Object      objVal = this.valGenerator.nextValue();
+            Object      objVal = this.valGenerator.nextDatum();
             
             vecVals.add(i, objVal);
         }

@@ -35,7 +35,7 @@ import com.ospreydcs.dp.jal.common.ResultStatus;
 import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.jal.tools.apps.ingest.common.FrameProcessorConfig;
-import com.ospreydcs.dp.jal.tools.common.datagen.frames.IngestionFrameGenerator;
+import com.ospreydcs.dp.jal.tools.common.datagen.frames.IngestionFrameGeneratorDeprecated;
 import com.ospreydcs.dp.jal.tools.common.datagen.frames.SampleBlockConfig;
 
 /**
@@ -267,7 +267,7 @@ public record ProcessorTestCase(
      * Creates and returns the <code>IngestionFrame</code> payload for the processor evaluation.
      * </p>
      * <p>
-     * Instantiates a new <code>IngestionFrameGenerator</code> object configured for <code>IngestionGrame</code>
+     * Instantiates a new <code>IngestionFrameGeneratorDeprecated</code> object configured for <code>IngestionGrame</code>
      * building with the <code>{@link #recFrmCfg}</code> field.  Then <code>{@link #cntFrames}</code> 
      * <code>IngestionFrame</code> objects are built and used to populate the returned collection.
      * </p>
@@ -276,7 +276,7 @@ public record ProcessorTestCase(
      */
     private List<IngestionFrame>    createPayload() {
         
-        IngestionFrameGenerator     generator = IngestionFrameGenerator.from(this.recFrmCfg());
+        IngestionFrameGeneratorDeprecated     generator = IngestionFrameGeneratorDeprecated.from(this.recFrmCfg());
         
         List<IngestionFrame>    lstFrames = new ArrayList<>(this.cntFrames);
         

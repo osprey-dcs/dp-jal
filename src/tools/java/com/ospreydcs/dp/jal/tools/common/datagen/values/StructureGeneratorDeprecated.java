@@ -33,8 +33,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
+import org.epics.pvdata.pv.ScalarType;
+
 import com.ospreydcs.dp.jal.common.DpSupportedType;
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
@@ -247,7 +250,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @deprecated Replaced by StructureFactory
  */
 @Deprecated(since="Nov 14, 2025", forRemoval=true)
-public final class StructureGeneratorDeprecated implements IDataValueFactory {
+public final class StructureGeneratorDeprecated implements IDatumFactory {
 
 
     //
@@ -271,7 +274,10 @@ public final class StructureGeneratorDeprecated implements IDataValueFactory {
     
     
     /** Value type of all simulated data produced by this data value factory */
-    public static final DpSupportedType     ENM_TYPE = DpSupportedType.STRUCTURE;
+    public static final DpSupportedType     ENM_DATUM_TYPE = DpSupportedType.STRUCTURE;
+    
+    /** The complex type of all data produced by this data factory */
+    public static final JalComplexType       ENM_CMPLX_TYPE = JalComplexType.STRUCTURE;
     
 
 
@@ -530,17 +536,33 @@ public final class StructureGeneratorDeprecated implements IDataValueFactory {
 
     
     //
-    // IDataValueFactory Interface
+    // IDatumFactory Interface
     //
     
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getDatumType()
      */
     @Override
-    public DpSupportedType  getValueType() {
-        return ENM_TYPE;
+    public DpSupportedType  getDatumType() {
+        return ENM_DATUM_TYPE;
     }
     
+
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getScalarType()
+     */
+    @Override
+    public JalScalarType getScalarType() {
+        return this.valGenerator.getScalarType();
+    }
+
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getComplexType()
+     */
+    @Override
+    public JalComplexType getComplexType() {
+        return ENM_CMPLX_TYPE;
+    }
     /**
      * <p>
      * Creates the next structure in the generated sequence.
@@ -553,10 +575,10 @@ public final class StructureGeneratorDeprecated implements IDataValueFactory {
      * 
      * @return the next structure returned as a Java <code>Object</code> within underlying type <code>Map</code>
      *
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory.model.values.IDataValueGenerator#nextValue()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory.model.values.IDataValueGenerator#nextDatum()
      */
     @Override
-    public Object nextValue() {
+    public Object nextDatum() {
         
         // Reset terminal-level field counter (for field name generation)
         this.cntTermFlds = 0;
@@ -598,6 +620,7 @@ public final class StructureGeneratorDeprecated implements IDataValueFactory {
      * 
      * @deprecated replaced by {@link #createStructure(List)}
      */
+    @SuppressWarnings("unused")
     @Deprecated(since="May 20, 2024", forRemoval=true)
     private Map<String, Object> createStructure(int cntDepth) {
 
@@ -609,7 +632,7 @@ public final class StructureGeneratorDeprecated implements IDataValueFactory {
             
             for (int iFld = 0; iFld<intFanOut; iFld++) {
                 String strFldNm = this.createFieldName(cntDepth, iFld, true);
-                Object objVal   = this.valGenerator.nextValue();
+                Object objVal   = this.valGenerator.nextDatum();
                 
                 map.put(strFldNm, objVal);
             }
@@ -675,7 +698,7 @@ public final class StructureGeneratorDeprecated implements IDataValueFactory {
                 
                 // Create name and scalar value for each terminal field
                 String strFldNm = this.createNodeName(lstSubNodeIndex);
-                Object objVal   = this.valGenerator.nextValue();
+                Object objVal   = this.valGenerator.nextDatum();
                 
                 map.put(strFldNm, objVal);
             }

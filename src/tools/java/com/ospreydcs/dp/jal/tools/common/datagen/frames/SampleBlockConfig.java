@@ -53,8 +53,11 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @param enmTmsCase    the timestamp type used for the sampling block
  * @param cntSamples    the number of samples for each PV within the sampling block
  * @param tmaPeriod     the sample period
- * @param tmaDelay      the sampling start time delay (typically from the Test Archive inception)   
+ * @param tmaDelay      the sampling start time delay (typically from the Test Archive inception)
+ * 
+ * @deprecated Replaced by IngestionFrameConfig
  */
+@Deprecated(since="Nov 26, 2025", forRemoval=true)
 public record SampleBlockConfig(
         Set<String>     setPvNames,
         JalScalarType   enmDataType,

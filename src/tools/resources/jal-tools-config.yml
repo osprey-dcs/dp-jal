@@ -47,6 +47,29 @@ testArchive:   # Data Platform test archive properties (generated with utility '
          tmsList: 3800          # 1st timestamp list PV index (0-based) : JAL_TOOLS_TEST_ARCHIVE_PVS_INDEXES_TMS_LIST
          
 datagen:       # JAL Tools simulated data generation default configuration parameters
+   frames:                  # Ingestion frame generation parameter
+      tags:                    # common tag values given to frames   : JAL_TOOLS_DATAGEN_FRAMES_TAGS
+         - "Simulated"
+         - "JAL Tools"
+         - "Default"
+      attributes:              # common attribute pairs given to frames: JAL_TOOLS_DATAGEN_ATTRIBUTES
+         Location: "Testbed"
+         Source: "Simulator"
+         Configuration: "jal-tools-config.yml"
+      timestamps:              # Default timestamps for frames        
+         type: SAMPLING_CLOCK  # 'DpTimestampCase' enumeration         : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_TYPE
+         start: 2023-10-31T15:51:02.000+00:00 # first timestamp        : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_START
+         period: PT0.001S      # sampling period (ISO-8605 format)     : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_PERIOD
+         count: 1000           # samples per frame (row count)         : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMP_COUNT
+      columns:                 # Default columns for ingestion frames
+         - name: JalDbl_       # column bank name (also prefix for cols)
+           count: 100          # number of columns in column bank
+           colType: SCALAR     # 'JalHeteroType' enumeration - data type of all columns in column bank
+           dataType: DOUBLE    # 'JalScalarType' enumeration - data type of heterogeneous data values in columns
+         - name: JalStruct_
+           count: 1
+           colType: STRUCTURE
+           dataType: INTEGER
    values:                  # Data value generation parameters
       scalar:               # Scalar data value generation
          type: DOUBLE          # JalScalarType enumeration constant    : JAL_TOOLS_DATAGEN_VALUES_SCALAR_TYPE
@@ -82,7 +105,7 @@ datagen:       # JAL Tools simulated data generation default configuration param
          increment:
             start: 1970-01-01T00:00:00Z # first timestamp (ISO format) : JAL_TOOLS_DATAGEN_TIMESTAMP_INCREMENT_START
             period: PT0.001S   # duration between timestamps (ISO PnDTnHnMn.nS format) : JAL_TOOLS_DATAGEN_TIMESTAMP_INCREMENT_PERIOD 
-       
+             
 output:         # JAL Tools (General) default output location - this should be related to DP_JAL_OUTPUT environment variable
    path: test/output         # path location relative to execution     : JAL_TOOLS_OUTPUT_PATH
          

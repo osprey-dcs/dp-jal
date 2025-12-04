@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.IntStream;
 
 import org.epics.nt.NTTable;
@@ -311,7 +312,10 @@ public class IngestionFrame implements Serializable {
     /** Optional timestamp for ingestion frame itself */
     private Instant             insTmsFrame = null;
     
-    /** Optional collection of (name, value) attribute pairs for the data frame */
+    /** Optional tags for ingestion request */
+    private Set<String>         setTags = new TreeSet<>();
+    
+    /** Optional collection of (name, value) attribute pairs for the ingestion request */
     private Map<String, String> mapAttributes = new HashMap<>();
 
     
@@ -801,6 +805,7 @@ public class IngestionFrame implements Serializable {
         this.setClientRequestUid(frmSource.recClientUid);
         this.setFrameLabel(frmSource.strLabelFrame);
         this.setFrameTimestamp(frmSource.insTmsFrame);
+        this.addTags(frmSource.setTags);
         this.addAttributes(frmSource.mapAttributes);
         
         // Assign snapshot properties from source to this ingestion frame
@@ -903,6 +908,51 @@ public class IngestionFrame implements Serializable {
      */
     public void setSnapshotDomain(final TimeInterval domSnapshot) {
         this.domSnapshot = domSnapshot;
+    }
+    
+    /**
+     * <p>
+     * Adds a single tag value to the ingestion frame data.
+     * </p>
+     * <p>
+     * Tag values can be optionally assigned to an ingestion frame which then appear as metadata within the
+     * time-series archive.  Tags do not affect the ingestion of data by the Data Platform.  However,
+     * they can potentially be used to search and query for time-series data by metadata properties.
+     * </p>  
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method can be called repeatedly to established multiple tags for an ingestion frame.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param strTag    tag value to associate with this ingestion frame
+     */
+    public void addTag(String strTag) {
+        this.setTags.add(strTag);
+    }
+    
+    /**
+     * <p>
+     * Adds a collection of tag values to the ingestion frame data.
+     * </p>
+     * <p>
+     * Tag values can be optionally assigned to an ingestion frame which then appear as metadata within the
+     * time-series archive.  Tags do not affect the ingestion of data by the Data Platform.  However,
+     * they can potentially be used to search and query for time-series data by metadata properties.
+     * </p>  
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method can be called repeatedly to established multiple tags for an ingestion frame.</li>
+     * <li>Tag values are unique.  If repeated tags are included in the argument they are ignored.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param setTags
+     */
+    public void addTags(Collection<String> setTags) {
+        this.setTags.addAll(setTags);
     }
     
     /**
@@ -1888,6 +1938,17 @@ public class IngestionFrame implements Serializable {
      */
     public Instant  getFrameTimestamp() {
         return this.insTmsFrame;
+    }
+    
+    /**
+     * <p>
+     * Returns the collection of optional tag values for the ingestion frame.
+     * </p>
+     * 
+     * @return  the set of tag values associated with the ingestion frame
+     */
+    public Set<String>  getTags() {
+        return this.setTags;
     }
     
     /**

@@ -146,7 +146,7 @@ public class ScalarFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueBoolean1() {
@@ -163,7 +163,7 @@ public class ScalarFactoryTest {
         
         Boolean bolVal = bolSeed;
         for (int iVal=0; iVal<cntVals; iVal++) {
-            Object  objVal = facTest.nextValue();
+            Object  objVal = facTest.nextDatum();
             
             if (objVal instanceof Boolean bolNext) {
                 Assert.assertEquals(bolVal, bolNext);
@@ -176,7 +176,7 @@ public class ScalarFactoryTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueBoolean2() {
@@ -193,7 +193,7 @@ public class ScalarFactoryTest {
         
         Boolean bolVal = bolSeed;
         for (int iVal=0; iVal<cntVals; iVal++) {
-            Object  objVal = facTest.nextValue();
+            Object  objVal = facTest.nextDatum();
             
             if (objVal instanceof Boolean bolNext) {
                 Assert.assertEquals(bolVal, bolNext);
@@ -206,7 +206,7 @@ public class ScalarFactoryTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueString1() {
@@ -222,7 +222,7 @@ public class ScalarFactoryTest {
         
         Integer     intSuff = Math.toIntExact(lngSeed);
         for (int iVal=0; iVal<cntVals; iVal++) {
-            Object  objVal = facTest.nextValue();
+            Object  objVal = facTest.nextDatum();
             
             if (objVal instanceof String strNext) {
                 String  strVal = STR_PREFIX + intSuff;
@@ -237,7 +237,7 @@ public class ScalarFactoryTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueInteger1() {
@@ -253,7 +253,7 @@ public class ScalarFactoryTest {
         
         Integer     intVal = Math.toIntExact(lngSeed);
         for (int iVal=0; iVal<cntVals; iVal++) {
-            Object  objVal = facTest.nextValue();
+            Object  objVal = facTest.nextDatum();
             
             if (objVal instanceof Integer intNext) 
                 Assert.assertEquals(intVal, intNext);
@@ -265,7 +265,7 @@ public class ScalarFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueInteger2() {
@@ -281,7 +281,7 @@ public class ScalarFactoryTest {
         
         Integer     intVal = Math.toIntExact(lngSeed);
         for (int iVal=0; iVal<cntVals; iVal++) {
-            Object  objVal = facTest.nextValue();
+            Object  objVal = facTest.nextDatum();
             
             if (objVal instanceof Integer intNext) 
                 Assert.assertEquals(intVal, intNext);
@@ -293,7 +293,7 @@ public class ScalarFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueLong1() {
@@ -309,7 +309,7 @@ public class ScalarFactoryTest {
         
         Long    lngVal = lngSeed;
         for (int iVal=0; iVal<cntVals; iVal++) {
-            Object  objVal = facTest.nextValue();
+            Object  objVal = facTest.nextDatum();
             
             if (objVal instanceof Long lngNext) 
                 Assert.assertEquals(lngVal, lngNext);
@@ -321,7 +321,7 @@ public class ScalarFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueFloat1() {
@@ -337,7 +337,7 @@ public class ScalarFactoryTest {
         
         Float   fltVal = (float) lngSeed;
         for (int iVal=0; iVal<cntVals; iVal++) {
-            Object  objVal = facTest.nextValue();
+            Object  objVal = facTest.nextDatum();
             
             if (objVal instanceof Float fltNext) 
                 Assert.assertEquals(fltVal, fltNext);
@@ -349,7 +349,7 @@ public class ScalarFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueDouble1() {
@@ -365,7 +365,7 @@ public class ScalarFactoryTest {
         
         Double  dblVal = (double) lngSeed;
         for (int iVal=0; iVal<cntVals; iVal++) {
-            Object  objVal = facTest.nextValue();
+            Object  objVal = facTest.nextDatum();
             
             if (objVal instanceof Double dblNext) 
                 Assert.assertEquals(dblVal, dblNext);
@@ -377,7 +377,7 @@ public class ScalarFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueDoubleRand() {
@@ -391,14 +391,14 @@ public class ScalarFactoryTest {
         
         // Test start value
         Double  dblStart = null;
-        Object  objStart = facTest.nextValue();
+        Object  objStart = facTest.nextDatum();
         if (objStart instanceof Double dblVal)
             dblStart = dblVal;
         else
             Assert.fail("Start value bad type " + objStart.getClass().getName());
 
         // Generate sequence of random values
-        List<Object>    lstVals = IntStream.range(0, cntVals).mapToObj(i -> facTest.nextValue()).toList();
+        List<Object>    lstVals = IntStream.range(0, cntVals).mapToObj(i -> facTest.nextDatum()).toList();
         
         // Test types of all generated double values
         boolean         bolTypes = lstVals.stream().allMatch(obj -> (obj instanceof Double));

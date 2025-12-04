@@ -125,7 +125,7 @@ public class ByteArrayFactoryTest {
             ByteArrayFactory    facTest = ByteArrayFactory.from(szArrays);
             
             Assert.assertEquals(szArrays, facTest.getArraySize());
-            Assert.assertEquals(enmType, facTest.getValueType());
+            Assert.assertEquals(enmType, facTest.getDatumType());
             
         } catch (Exception e) {
             Assert.fail("ByteArrayFactory creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
@@ -147,7 +147,7 @@ public class ByteArrayFactoryTest {
             ByteArrayFactory    facTest = ByteArrayFactory.from(szArrays);
             
             Assert.assertEquals(szArrays, facTest.getArraySize());
-            Assert.assertEquals(enmType, facTest.getValueType());
+            Assert.assertEquals(enmType, facTest.getDatumType());
             
         } catch (Exception e) {
             Assert.fail("ByteArrayFactory construction failed with exception " + e.getClass().getName() + ": " + e.getMessage());
@@ -171,7 +171,7 @@ public class ByteArrayFactoryTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ByteArrayFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ByteArrayFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueMultiple() {
@@ -188,7 +188,7 @@ public class ByteArrayFactoryTest {
             facTest = ByteArrayFactory.from(szArrays);
             
             Assert.assertEquals(szArrays, facTest.getArraySize());
-            Assert.assertEquals(enmType, facTest.getValueType());
+            Assert.assertEquals(enmType, facTest.getDatumType());
             
         } catch (Exception e) {
             Assert.fail("ByteArrayFactory creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
@@ -199,7 +199,7 @@ public class ByteArrayFactoryTest {
         List<byte[]>    lstArrays = new ArrayList<>(cntArrays);
         
         for (int iArray=0; iArray<cntArrays; iArray++) {
-            Object objVal = facTest.nextValue();
+            Object objVal = facTest.nextDatum();
             
             if (objVal instanceof byte[] arrVal) {
                 Assert.assertEquals(szArrays, arrVal.length);
@@ -217,7 +217,7 @@ public class ByteArrayFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ByteArrayFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ByteArrayFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueToDataValue() {
@@ -234,7 +234,7 @@ public class ByteArrayFactoryTest {
             facTest = ByteArrayFactory.from(szArrays);
             
             Assert.assertEquals(szArrays, facTest.getArraySize());
-            Assert.assertEquals(enmType, facTest.getValueType());
+            Assert.assertEquals(enmType, facTest.getDatumType());
             
         } catch (Exception e) {
             Assert.fail("ByteArrayFactory creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
@@ -243,7 +243,7 @@ public class ByteArrayFactoryTest {
         
         // Creates some bytes arrays and check size and DataValue conversion
         for (int iArray=0; iArray<cntArrays; iArray++) {
-            Object objVal = facTest.nextValue();
+            Object objVal = facTest.nextDatum();
             
             if (objVal instanceof byte[] arrVal) {
                 Assert.assertEquals(szArrays, arrVal.length);

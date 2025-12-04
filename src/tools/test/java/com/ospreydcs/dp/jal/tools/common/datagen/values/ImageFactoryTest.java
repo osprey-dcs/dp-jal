@@ -34,7 +34,7 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.jal.common.BufferedImage;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsImageValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsImageValuesConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -179,7 +179,7 @@ public class ImageFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ImageFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ImageFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueBmp() {
@@ -201,7 +201,7 @@ public class ImageFactoryTest {
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         
         for (int iImg=0; iImg<cntImgs; iImg++) {
-            Object  objVal = facTest.nextValue();
+            Object  objVal = facTest.nextDatum();
             
             if (objVal instanceof BufferedImage img) {
                 String  strName = strPref + STR_SEP + Integer.toString(iImg);
@@ -220,7 +220,7 @@ public class ImageFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ImageFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ImageFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueAllFormats() {
@@ -245,7 +245,7 @@ public class ImageFactoryTest {
 
             // Create images and check properties
             for (int iImg=0; iImg<cntImgs; iImg++) {
-                Object  objVal = facTest.nextValue();
+                Object  objVal = facTest.nextDatum();
 
                 if (objVal instanceof BufferedImage img) {
                     String  strName = strPref + STR_SEP + Integer.toString(iImg);

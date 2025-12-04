@@ -179,7 +179,7 @@ public class TensorFactoryTest {
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
         
-        Object objTensor = facTest.nextValue();
+        Object objTensor = facTest.nextDatum();
         
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objTensor));
     }
@@ -204,7 +204,7 @@ public class TensorFactoryTest {
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
         
-        Object objTensor = facTest.nextValue();
+        Object objTensor = facTest.nextDatum();
         
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objTensor));
     }
@@ -230,7 +230,7 @@ public class TensorFactoryTest {
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
         
-        Object objTensor = facTest.nextValue();
+        Object objTensor = facTest.nextDatum();
         
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objTensor));
     }
@@ -284,7 +284,7 @@ public class TensorFactoryTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueEmpty() {
@@ -306,7 +306,7 @@ public class TensorFactoryTest {
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
         
-        Object objValue = facTest.nextValue();
+        Object objValue = facTest.nextDatum();
         if (objValue instanceof ArrayList vec) 
             Assert.assertTrue(vec.size() == 0);
         else
@@ -314,7 +314,7 @@ public class TensorFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueDoubleScalar() {
@@ -339,7 +339,7 @@ public class TensorFactoryTest {
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
         
-        Object objTensor = facTest.nextValue();
+        Object objTensor = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objTensor));
         
         if (objTensor instanceof ArrayList vec) 
@@ -352,7 +352,7 @@ public class TensorFactoryTest {
         
         Double  dblCurr = dblIncr;
         for (int iVal=0; iVal<cntVals; iVal++) {
-            objTensor = facTest.nextValue();
+            objTensor = facTest.nextDatum();
             
             if (objTensor instanceof ArrayList vec) {
                 Assert.assertEquals(1, vec.size());
@@ -377,7 +377,7 @@ public class TensorFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueStringScalar() {
@@ -402,7 +402,7 @@ public class TensorFactoryTest {
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
         
-        Object objTensor = facTest.nextValue();
+        Object objTensor = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objTensor));
         
         if (objTensor instanceof ArrayList vec) 
@@ -416,7 +416,7 @@ public class TensorFactoryTest {
         int     intCurr = intIncr;
         String  strCurr = STR_PREFIX + intCurr;
         for (int iVal=0; iVal<cntVals; iVal++) {
-            objTensor = facTest.nextValue();
+            objTensor = facTest.nextDatum();
             
             if (objTensor instanceof ArrayList vec) {
                 Assert.assertEquals(1, vec.size());
@@ -442,7 +442,7 @@ public class TensorFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueBooleanArraySmall() {
@@ -465,7 +465,7 @@ public class TensorFactoryTest {
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
         
-        Object objArray = facTest.nextValue();
+        Object objArray = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objArray));
 
         // Check the values of the first tensor
@@ -489,7 +489,7 @@ public class TensorFactoryTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueIntegerArraySmall() {
@@ -512,7 +512,7 @@ public class TensorFactoryTest {
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
         
-        Object objTensor = facTest.nextValue();
+        Object objTensor = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objTensor));
 
         // Check the values of the first tensor
@@ -543,7 +543,7 @@ public class TensorFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueDouble3TensorMed() {
@@ -566,7 +566,7 @@ public class TensorFactoryTest {
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
         
-        Object objArray = facTest.nextValue();
+        Object objArray = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objArray));
 
         // Check the values of the first tensor
@@ -587,7 +587,7 @@ public class TensorFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueInteger4TensorSmal() {
@@ -612,7 +612,7 @@ public class TensorFactoryTest {
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
         
-        Object objValue = facTest.nextValue();
+        Object objValue = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objValue));
 
         // Check the values of the first tensor
@@ -636,7 +636,7 @@ public class TensorFactoryTest {
                 
                 intCurr += intIncr;
             }
-            objValue = facTest.nextValue();
+            objValue = facTest.nextDatum();
             facIndexes.resetIndexCounter();
         }
         

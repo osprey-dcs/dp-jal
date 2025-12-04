@@ -43,7 +43,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.utility.StructureUtility;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.StructureUtility.IndexValuePair;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.StructureUtility.NameValuePair;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsStructValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsStructValuesConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -291,7 +291,7 @@ public class StructureFactoryTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextDatum()}.
      */
     @Test
     public final void testNextValue1_firstElement() {
@@ -307,7 +307,7 @@ public class StructureFactoryTest {
         
         StructureFactory    facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
 
-        Object  objStruct = facTest.nextValue();
+        Object  objStruct = facTest.nextDatum();
         
         int cntTermFlds = this.computeNumTerminalFields(cntDepth, cntFanout);
         int cntNodes = this.computeNumNodesTotal(cntDepth, cntFanout);
@@ -322,7 +322,7 @@ public class StructureFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextDatum()}.
      */
     @Test
     public final void testNextValue2_extractFieldNames() {
@@ -336,7 +336,7 @@ public class StructureFactoryTest {
         
         StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, recCfg);
 
-        Object  objStruct = facTest.nextValue();
+        Object  objStruct = facTest.nextDatum();
         
         int cntTermFlds = this.computeNumTerminalFields(cntDepth, cntFanout);
         int cntNodes = this.computeNumNodesTotal(cntDepth, cntFanout);
@@ -354,7 +354,7 @@ public class StructureFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextDatum()}.
      */
     @Test
     public final void testNextValue3_extractFieldNamesUnique() {
@@ -369,7 +369,7 @@ public class StructureFactoryTest {
         
         StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
 
-        Object  objStruct = facTest.nextValue();
+        Object  objStruct = facTest.nextDatum();
         
         int cntTermFlds = this.computeNumTerminalFields(cntDepth, cntFanout);
         int cntNodes = this.computeNumNodesTotal(cntDepth, cntFanout);
@@ -388,12 +388,12 @@ public class StructureFactoryTest {
         this.writeOutFieldNames(cntDepth, cntFanout, objStruct);
         
         // Do it again
-        objStruct = facTest.nextValue();
+        objStruct = facTest.nextDatum();
         this.writeOutFieldNames(cntDepth, cntFanout, objStruct);
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextDatum()}.
      */
     @Test
     public final void testNextValue4_extractValueAt() {
@@ -407,7 +407,7 @@ public class StructureFactoryTest {
         
         StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, recCfg);
 
-        Object  objStruct = facTest.nextValue();
+        Object  objStruct = facTest.nextDatum();
         
         int cntTermFlds = this.computeNumTerminalFields(cntDepth, cntFanout);
         int cntNodes = this.computeNumNodesTotal(cntDepth, cntFanout);
@@ -437,7 +437,7 @@ public class StructureFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextDatum()}.
      */
     @Test
     public final void testNextValue5_extractTerminalValuesWithIndexMap() {
@@ -452,7 +452,7 @@ public class StructureFactoryTest {
         
         StructureFactory    facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
 
-        Object  objStruct = facTest.nextValue();
+        Object  objStruct = facTest.nextDatum();
         
         int cntTermFlds = this.computeNumTerminalFields(cntDepth, cntFanout);
         int cntNodes = this.computeNumNodesTotal(cntDepth, cntFanout);
@@ -473,7 +473,7 @@ public class StructureFactoryTest {
     }
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextDatum()}.
      */
     @Test
     public final void testNextValue6_extractTerminalValuesWithNameAsMap() {
@@ -489,7 +489,7 @@ public class StructureFactoryTest {
         
         StructureFactory facTest = new StructureFactory(cntDepth, cntFanout, bolUniqFldNms, facVals);
 
-        Object  objStruct = facTest.nextValue();
+        Object  objStruct = facTest.nextDatum();
         
         int cntTermFlds = this.computeNumTerminalFields(cntDepth, cntFanout);
         int cntNodes = this.computeNumNodesTotal(cntDepth, cntFanout);
@@ -503,7 +503,7 @@ public class StructureFactoryTest {
         Assert.assertTrue(enmType.isAssignable(objElem));
 
         Map<String, Object>  mapValues1 = StructureUtility.extractTerminalValuesWithNameAsMap(objStruct);
-        Map<String, Object>  mapValues2 = StructureUtility.extractTerminalValuesWithNameAsMap(facTest.nextValue());
+        Map<String, Object>  mapValues2 = StructureUtility.extractTerminalValuesWithNameAsMap(facTest.nextDatum());
         
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
         System.out.println("  Structure: depth=" + cntDepth + ", fanout=" + cntFanout);
@@ -512,7 +512,7 @@ public class StructureFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextDatum()}.
      */
     @Test
     public final void testNextValue7_extractTerminalValuesWithIndex() {
@@ -526,7 +526,7 @@ public class StructureFactoryTest {
         
         StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
 
-        Object  objStruct = facTest.nextValue();
+        Object  objStruct = facTest.nextDatum();
         
         int cntTermFlds = this.computeNumTerminalFields(cntDepth, cntFanout);
         int cntNodes = this.computeNumNodesTotal(cntDepth, cntFanout);
@@ -548,7 +548,7 @@ public class StructureFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextDatum()}.
      */
     @Test
     public final void testNextValue8_extractTerminalValuesWithName() {
@@ -562,7 +562,7 @@ public class StructureFactoryTest {
         
         StructureFactory    facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
 
-        Object  objStruct = facTest.nextValue();
+        Object  objStruct = facTest.nextDatum();
         
         int cntTermFlds = this.computeNumTerminalFields(cntDepth, cntFanout);
         int cntNodes = this.computeNumNodesTotal(cntDepth, cntFanout);
@@ -584,7 +584,7 @@ public class StructureFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextDatum()}.
      */
     @Test
     public final void testNextValue9_extractNodeWithName() {
@@ -599,7 +599,7 @@ public class StructureFactoryTest {
         
         StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
 
-        Object  objStruct = facTest.nextValue();
+        Object  objStruct = facTest.nextDatum();
         
         int cntTermFlds = this.computeNumTerminalFields(cntDepth, cntFanout);
         int cntNodes = this.computeNumNodesTotal(cntDepth, cntFanout);
@@ -626,7 +626,7 @@ public class StructureFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory#nextDatum()}.
      */
     @Test
     public final void testNextValue10_extractNodeByIndex() {
@@ -645,7 +645,7 @@ public class StructureFactoryTest {
         // Create the index generator
         StructureIndexGenerator genIndexes = new StructureIndexGenerator(cntDepth, cntFanout, enmNodeSet);
 
-        Object  objStruct = facTest.nextValue();
+        Object  objStruct = facTest.nextDatum();
         
         // Iterate through selected index set
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());;
@@ -660,7 +660,7 @@ public class StructureFactoryTest {
         System.out.print("\n");
         
         // Reset and do it again
-        objStruct = facTest.nextValue();
+        objStruct = facTest.nextDatum();
         genIndexes.resetIndexIteration();
         System.out.print("  node set " + enmNodeSet + ": ");
         while(genIndexes.hasNext()) {
@@ -674,7 +674,7 @@ public class StructureFactoryTest {
             
         // Reset and check internal nodes
         enmNodeSet = NodeSet.INTERNAL;
-        objStruct = facTest.nextValue();
+        objStruct = facTest.nextDatum();
         genIndexes.resetIndexIteration(enmNodeSet);
         System.out.print("  node set " + enmNodeSet + ": ");
         for (List<Integer> lstIndex : genIndexes) {

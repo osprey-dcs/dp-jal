@@ -115,7 +115,7 @@ public class DataColumnsFactoryTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnsFactory#from(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnsFactory#from(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
      */
     @Test
     public final void testFromFail() {
@@ -142,7 +142,7 @@ public class DataColumnsFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnsFactory#from(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnsFactory#from(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
      */
     @Test
     public final void testFrom() {
@@ -171,7 +171,7 @@ public class DataColumnsFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnsFactory#DataColumnsFactory(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnsFactory#DataColumnsFactory(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
      */
     @Test
     public final void testDataColumnsFactory() {
@@ -244,7 +244,7 @@ public class DataColumnsFactoryTest {
         
         final int               cntCols = setColNms.size();
         final ScalarFactory     facVals = ScalarFactoryEnum.INTEGER_INCR_1.newFactory();
-        final DpSupportedType   enmType = facVals.getValueType();
+        final DpSupportedType   enmType = facVals.getDatumType();
         final int               intSeed = Math.toIntExact( enmFac.getConfiguration().seed() );
         final int               intIncr = facVals.getConfiguration().increment().intValue();
         
@@ -319,7 +319,7 @@ public class DataColumnsFactoryTest {
         
         final int               cntCols = setColNms.size();
         final ScalarFactory     facVals = enmFac.newFactory();
-        final DpSupportedType   enmType = facVals.getValueType();
+        final DpSupportedType   enmType = facVals.getDatumType();
         final int               intSeed = Math.toIntExact( enmFac.getConfiguration().seed() );
         final int               intIncr = facVals.getConfiguration().increment().intValue();
         
@@ -393,7 +393,7 @@ public class DataColumnsFactoryTest {
         
         final int               cntCols = setColNms.size();
         final TensorFactory     facVals = enmFac.newFactory(shape);
-        final DpSupportedType   enmType = facVals.getValueType();
+        final DpSupportedType   enmType = facVals.getDatumType();
         final JalScalarType     enmElemType = enmFac.getJalScalarType();
         final int               intSeed = Math.toIntExact( enmFac.getScalarFactoryConfig().seed() );
         final int               intIncr = enmFac.getScalarFactoryConfig().increment().intValue();

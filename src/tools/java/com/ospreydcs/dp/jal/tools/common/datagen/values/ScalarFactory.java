@@ -28,7 +28,7 @@ package com.ospreydcs.dp.jal.tools.common.datagen.values;
 import java.util.Random;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
@@ -64,9 +64,9 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @since Nov 6, 2025
  *
  * @see ScalarFactoryConfig
- * @see IDataValueFactory
+ * @see IScalarFactory
  */
-public class ScalarFactory implements IDataValueFactory {
+public class ScalarFactory implements IScalarFactory {
 
     
     //
@@ -79,7 +79,7 @@ public class ScalarFactory implements IDataValueFactory {
      * </p>
      * <p>
      * The returned scalar factory is configured, initialized, and ready to produce scalar values with operation
-     * <code>{@link #nextValue()}</code> of the <code>{@link IDataValueFactory}</code> interface.
+     * <code>{@link #nextValue()}</code> of the <code>{@link IScalarFactory}</code> interface.
      * Note that <code>ScalarFactory</code> instances cannot be dynamically configured.  The configuration given
      * at creation is maintained throughout its lifetime.
      * </p>
@@ -214,17 +214,6 @@ public class ScalarFactory implements IDataValueFactory {
     
     /**
      * <p>
-     * Returns the scalar value type produced by this scalar factory.
-     * </p>
-     * 
-     * @return  the scalar value type as represented by a <code>{@link JalScalarType}</code> constant
-     */
-    public JalScalarType    getScalarType() {
-        return this.enmValueType;
-    }
-    
-    /**
-     * <p>
      * Determines whether or not the scalar values are generated randomly.
      * </p>
      * <p>
@@ -242,15 +231,27 @@ public class ScalarFactory implements IDataValueFactory {
 
     
     //
-    // IDataValueFactory Interface
+    // IScalarFactory Interface
     //
     
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory#getDatumType()
      */
     @Override
-    public DpSupportedType  getValueType() {
+    public DpSupportedType  getDatumType() {
         return this.getScalarType().getDpType();
+    }
+    
+    /**
+     * <p>
+     * Returns the scalar value type produced by this scalar factory.
+     * </p>
+     * 
+     * @return  the scalar value type as represented by a <code>{@link JalScalarType}</code> constant
+     */
+    @Override
+    public JalScalarType    getScalarType() {
+        return this.enmValueType;
     }
     
     /**
@@ -263,7 +264,7 @@ public class ScalarFactory implements IDataValueFactory {
      * @throws  UnsupportedOperationException   the scalar type is <code>{@link JalScalarType#UNSUPPORTED}</code>
      */
     @Override
-    public Object nextValue() throws UnsupportedOperationException {
+    public Object nextDatum() throws UnsupportedOperationException {
         
         // Get the current value as object
         // - This should be the seed value if first invocation and random=false

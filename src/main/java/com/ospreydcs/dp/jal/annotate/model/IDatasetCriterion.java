@@ -122,7 +122,7 @@ public interface IDatasetCriterion {
      */
     public static record   OwnerCriterion(OwnerUID recOwnerUid) implements IDatasetCriterion {
 
-        /** @see com.ospreydcs.dp.jal.annotate.DpDatasetsRequest.ICriterion#build() */
+        /** @see com.ospreydcs.dp.jal.annotate.DpDatasetsRequest.ICriterion#nextColumn() */
         @Override
         public QueryDataSetsCriterion build() {
             QueryDataSetsCriterion.OwnerCriterion msgOwn = QueryDataSetsCriterion.OwnerCriterion

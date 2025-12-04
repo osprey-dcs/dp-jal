@@ -40,7 +40,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsScalarValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarValuesConfig;
 
 /**
  * <p>

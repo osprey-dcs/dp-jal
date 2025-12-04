@@ -38,6 +38,8 @@ import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.requests.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.config.archive.JalToolsTestArchiveConfig;
 import com.ospreydcs.dp.jal.tools.config.archive.JalToolsTestArchivePvsConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsDataGenConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesTmsConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -157,10 +159,41 @@ public class JalToolsConfigTest {
         // Announce test method
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
 
-        System.out.println("Archive inception : " + insStart);
-        System.out.println("Last timestamp    : " + insEnd);
+        System.out.println("  Archive inception : " + insStart);
+        System.out.println("  Last timestamp    : " + insEnd);
 
         this.printOut(System.out, "", cfgArch.pvs);
+    }
+    
+    /**
+     * Test method for inspection of <code>{@link JalToolsDataGenConfig}</code> class recovered by <code>JalToolsConfig</code>.
+     */
+    @Test
+    public final void testDataGen() {
+        final JalToolsDataGenConfig     cfgData = JalToolsConfig.getInstance().datagen;
+
+        // Announce test method
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
+
+        System.out.println("  Frame tag values: " + cfgData.frames.tags);
+        System.out.println("  Frame attribute pairs: " + cfgData.frames.attributes);
+    }
+    
+    /**
+     * Test method for inspection of <code>{@link JalToolsFramesTmsConfig}</code> class recovered by <code>JalToolsConfig</code>.
+     */
+    @Test
+    public final void testJalToolsFramesTmsConfig() {
+        final JalToolsFramesTmsConfig     cfgTms = JalToolsConfig.getInstance().datagen.frames.timestamps;
+
+        // Announce test method
+        System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
+
+        System.out.println("  type: " + cfgTms.type);
+        System.out.println("  start: " + cfgTms.start);
+        System.out.println("  period: " + cfgTms.period);
+        System.out.println("  start Instant: " + cfgTms.startInstant());
+        System.out.println("  period Duration: " + cfgTms.periodDuration());
     }
     
     

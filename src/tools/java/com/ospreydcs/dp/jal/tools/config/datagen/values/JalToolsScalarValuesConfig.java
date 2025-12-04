@@ -23,7 +23,7 @@
  * @since Nov 6, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.config.datagen;
+package com.ospreydcs.dp.jal.tools.config.datagen.values;
 
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;

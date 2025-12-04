@@ -30,10 +30,10 @@ package com.ospreydcs.dp.jal.tools.common.datagen.values;
 import java.util.Random;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsScalarValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarValuesConfig;
 
 
 /**
@@ -57,7 +57,7 @@ import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsScalarValuesConfig;
  * @deprecated Replaced by ScalarFactory
  */
 @Deprecated(since="Nov 11, 2025", forRemoval=true)
-public class ScalarGeneratorDeprecated implements IDataValueFactory {
+public class ScalarGeneratorDeprecated implements IScalarFactory {
     
     
     //
@@ -326,17 +326,24 @@ public class ScalarGeneratorDeprecated implements IDataValueFactory {
     
     
     //
-    // IDataValueFactory Interface
+    // IScalarFactory Interface
     //
     
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory#getDatumType()
      */
     @Override
-    public DpSupportedType  getValueType() {
+    public DpSupportedType  getDatumType() {
         return this.getType().getDpType();
     }
     
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getScalarType()
+     */
+    @Override
+    public JalScalarType getScalarType() {
+        return this.enmFieldType;
+    }
     /**
      * <p>
      * Returns the next simulated scalar value in the sequence according to the internal configuration.
@@ -345,7 +352,7 @@ public class ScalarGeneratorDeprecated implements IDataValueFactory {
      * @return  next scalar value as a Java <code>Object</code>
      */
     @Override
-    public Object nextValue() {
+    public Object nextDatum() {
         
         // Get the current value as object
         // - This should be the seed value if first invocation and random=false
@@ -482,4 +489,5 @@ public class ScalarGeneratorDeprecated implements IDataValueFactory {
             throw new UnsupportedOperationException("Unsuppoted case: " + this.enmFieldType);
         };
     }
+
 }

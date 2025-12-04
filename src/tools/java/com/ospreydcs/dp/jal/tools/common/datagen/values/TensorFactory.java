@@ -31,7 +31,8 @@ import java.util.List;
 import org.epics.pvdata.pv.ScalarType;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
@@ -64,7 +65,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * @since Nov 13, 2025
  *
  */
-public class TensorFactory implements IDataValueFactory {
+public class TensorFactory implements IDatumFactory {
     
     
     //
@@ -110,7 +111,10 @@ public class TensorFactory implements IDataValueFactory {
     //
     
     /** The value type of all simulated data returned by this value factory */
-    public static final DpSupportedType         ENM_TYPE = DpSupportedType.ARRAY;
+    public static final DpSupportedType     ENM_DATUM_TYPE = DpSupportedType.ARRAY;
+    
+    /** Complex value type of all simulated data produced by this data value factory */
+    public static final JalComplexType       ENM_CMPLX_TYPE = JalComplexType.ARRAY;
     
 
     //
@@ -253,26 +257,42 @@ public class TensorFactory implements IDataValueFactory {
     
     
     //
-    // IDataValueFactory Interface
+    // IDatumFactory Interface
     //
 
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getDatumType()
      */
     @Override
-    public DpSupportedType  getValueType() {
-        return ENM_TYPE;
+    public DpSupportedType  getDatumType() {
+        return ENM_DATUM_TYPE;
     }
     
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#nextValue()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getScalarType()
      */
     @Override
-    public Object nextValue() {
+    public JalScalarType getScalarType() {
+        return this.facValues.getScalarType();
+    }
+
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getComplexType()
+     */
+    @Override
+    public JalComplexType getComplexType() {
+        return ENM_CMPLX_TYPE;
+    }
+    
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#nextDatum()
+     */
+    @Override
+    public Object nextDatum() {
         
         // Check for exception case - zero rank tensor, or scalar
         if (this.intRank == 0) {
-            Object  objVal = this.facValues.nextValue();
+            Object  objVal = this.facValues.nextDatum();
             
             return List.of(objVal);
         }
@@ -347,7 +367,7 @@ public class TensorFactory implements IDataValueFactory {
         List<Object>    vecVals = new ArrayList<>(szAxis);
         
         for (int i=0; i<szAxis; i++) {
-            Object      objVal = this.facValues.nextValue();
+            Object      objVal = this.facValues.nextDatum();
             
             vecVals.add(i, objVal);
         }

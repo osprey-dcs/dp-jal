@@ -1,8 +1,8 @@
 /*
  * Project: dp-data-simulator
- * File:	JalHeteroType.java
+ * File:	JalComplexType.java
  * Package: com.ospreydcs.dp.datasim.model
- * Type: 	JalHeteroType
+ * Type: 	JalComplexType
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -31,14 +31,29 @@ import com.ospreydcs.dp.jal.common.DpSupportedType;
 
 /**
  * <p>
- * Enumeration of supported data value types for ingestion frame data column configuration.
+ * Enumeration of JAL recognized complex heterogeneous data types.
  * </p>
+ * <p>
+ * The supported data value types enumerated here are for identification of complex 
+ * data types.  The composite fields or elements of the complex data type may then allow further
+ * type identification with the <code>{@link JalScalarType}</code> enumeration.  
+ * </p>
+ * <p>
+ * The constant <code>{@link #SCALAR}</code> is included to indicate a scalar-value data type, that is,
+ * rather than a complex type.
+ * Again, the enumeration <code>{@link JalScalarType}</code> can then be used to further clarify
+ * the exact data type of the scalar.
+ * </p>
+ * <p>
+ * Note that the <code>{@link DpSupportType}</code> constant associated with each <code>JalComplexType</code>
+ * constant is available with method <code>{@link #getDpType()}</code>.
+ * </p> 
  * 
  * @author Christopher K. Allen
  * @since Jun 13, 2024
  *
  */
-public enum JalHeteroType {
+public enum JalComplexType {
     
     /** 
      * Scalar data type
@@ -47,25 +62,29 @@ public enum JalHeteroType {
      */
     SCALAR(DpSupportedType.UNSUPPORTED_TYPE),
     
-    /** Timestamp data type
+    /** 
+     * Timestamp data type
      * <p>
      * Format is <code>Instant</code> = (seconds, nanosecond offset).
      */
     TIMESTAMP(DpSupportedType.TIMESTAMP),
     
-    /** Byte array type
+    /** 
+     * Byte array type
      * <p>
      * Format is a bytes array <code>byte[]</code>
      */
     BYTES(DpSupportedType.BYTE_ARRAY),
     
-    /** Multi-dimensional array (tensor) type
+    /** 
+     * Multi-dimensional array (tensor) type
      * <p>
      * Format is <code>ArrayList&lt;ArrayList&lt; ...ArrayList&lt;Scalar&gt; ...&gt;&gt; 
      */
     ARRAY(DpSupportedType.ARRAY),
     
-    /** Complex data structure type
+    /** 
+     * Complex data structure type
      * <p>
      * Format is <code>Map&ltString, Object&gt;</code> representing (name, value) where 
      * 'name' is field name and
@@ -73,18 +92,28 @@ public enum JalHeteroType {
      */
     STRUCTURE(DpSupportedType.STRUCTURE),
     
-    /** Image data type
+    /** 
+     * Image data type
      * <p>
      * Format is <code>BufferedImage</code> 
      */
     IMAGE(DpSupportedType.IMAGE);
 
     
+    //
+    // Constant Attributes
+    //
+    
     /** The Data Platform supported type for this type */
     private final DpSupportedType   enmDpType;
     
+    
+    //
+    // Constant Constructors
+    //
+    
     /** Enumeration constant constructor */
-    private JalHeteroType(DpSupportedType enmDpType) { this.enmDpType = enmDpType; };
+    private JalComplexType(DpSupportedType enmDpType) { this.enmDpType = enmDpType; };
     
     
     //

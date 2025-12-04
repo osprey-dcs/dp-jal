@@ -58,7 +58,7 @@ import com.ospreydcs.dp.jal.ingest.JalIngestionApiFactory;
 import com.ospreydcs.dp.jal.ingest.JalIngestionException;
 import com.ospreydcs.dp.jal.tools.apps.query.correl.DataCorrelationEvaluator;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.frames.IngestionFrameGenerator;
+import com.ospreydcs.dp.jal.tools.common.datagen.frames.IngestionFrameGeneratorDeprecated;
 import com.ospreydcs.dp.jal.tools.common.datagen.frames.SampleBlockConfig;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
@@ -377,7 +377,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     private final   IIngestionService           apiIngest;
     
     /** The ingestion frame generator */
-    private final   IngestionFrameGenerator     genFrames;
+    private final   IngestionFrameGeneratorDeprecated     genFrames;
     
     
     //
@@ -449,7 +449,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
                     this.recPrvdrId.isNew());
 
         // Create the ingestion frame generator and ingestion result list
-        this.genFrames = IngestionFrameGenerator.from(recFrmCfg);
+        this.genFrames = IngestionFrameGeneratorDeprecated.from(recFrmCfg);
         
         this.lstIngRslts = new LinkedList<>(); 
         this.lstIngRqstIds = new LinkedList<>();

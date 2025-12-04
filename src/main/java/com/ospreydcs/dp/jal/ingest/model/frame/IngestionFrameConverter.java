@@ -420,6 +420,7 @@ public final class IngestionFrameConverter {
                 .setProviderId(recPrvUid.uid())
                 .setClientRequestId(recRqstId.requestId())
 //                .setRequestTime(ProtoTime.now())
+                .addAllTags(frame.getTags())
                 .addAllAttributes(ProtoMsg.createAttributes(frame.getAttributes()))
                 .setEventMetadata(IngestionFrameConverter.extractEventMetadata(frame))
                 .setIngestionDataFrame(ProtoMsg.from(frame, this.bolSerialize))

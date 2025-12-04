@@ -42,7 +42,7 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsTmsValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTmsValuesConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -219,7 +219,7 @@ public class TimestampFactoryTest {
         
         Assert.assertEquals(durPeriod, facTest.getPeriod());
         Assert.assertEquals(insStart, facTest.getStartInstant());
-        Assert.assertEquals(enmType, facTest.getValueType());
+        Assert.assertEquals(enmType, facTest.getDatumType());
     }
 
     /**
@@ -238,7 +238,7 @@ public class TimestampFactoryTest {
         
         Assert.assertEquals(durPeriod, facTest.getPeriod());
         Assert.assertEquals(insStart, facTest.getStartInstant());
-        Assert.assertEquals(enmType, facTest.getValueType());
+        Assert.assertEquals(enmType, facTest.getDatumType());
     }
 
     /**
@@ -257,7 +257,7 @@ public class TimestampFactoryTest {
         
         Assert.assertEquals(durPeriod, facTest.getPeriod());
         Assert.assertEquals(insStart, facTest.getStartInstant());
-        Assert.assertEquals(enmType, facTest.getValueType());
+        Assert.assertEquals(enmType, facTest.getDatumType());
     }
 
     /**
@@ -293,7 +293,7 @@ public class TimestampFactoryTest {
         
         Assert.assertEquals(durPeriod, facTest.getPeriod());
         Assert.assertEquals(insStart, facTest.getStartInstant());
-        Assert.assertEquals(enmType, facTest.getValueType());
+        Assert.assertEquals(enmType, facTest.getDatumType());
     }
 
 //    /**
@@ -329,7 +329,7 @@ public class TimestampFactoryTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TimestampFactory#getValueType()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TimestampFactory#getDatumType()}.
      */
     @Test
     public final void testGetValueType() {
@@ -340,11 +340,11 @@ public class TimestampFactoryTest {
         // Create test factory and check value type
         TimestampFactory    facTest = TimestampFactory.from();
         
-        Assert.assertEquals(enmType, facTest.getValueType());
+        Assert.assertEquals(enmType, facTest.getDatumType());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TimestampFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TimestampFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueRandom() {
@@ -361,13 +361,13 @@ public class TimestampFactoryTest {
         
         Assert.assertEquals(bolRandom, facTest.isRandom());
         Assert.assertEquals(lngSeed, facTest.getRandomSeedValue());
-        Assert.assertEquals(enmType, facTest.getValueType());
+        Assert.assertEquals(enmType, facTest.getDatumType());
         
         // Create timestamp sequence and inspect
         List<Instant>       lstTms = new ArrayList<>(cntTms);
         
         for (int iTms=0; iTms<cntTms; iTms++) {
-            Object      objVal = facTest.nextValue();
+            Object      objVal = facTest.nextDatum();
             
             Assert.assertTrue(enmType.isAssignableFrom(objVal));
             
@@ -382,7 +382,7 @@ public class TimestampFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TimestampFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TimestampFactory#nextDatum()}.
      */
     @Test
     public final void testNextValuePseudoRandom() {
@@ -400,19 +400,19 @@ public class TimestampFactoryTest {
         
         Assert.assertEquals(bolRandom, facTest1.isRandom());
         Assert.assertEquals(lngSeed, facTest1.getRandomSeedValue());
-        Assert.assertEquals(enmType, facTest1.getValueType());
+        Assert.assertEquals(enmType, facTest1.getDatumType());
         
         Assert.assertEquals(bolRandom, facTest2.isRandom());
         Assert.assertEquals(lngSeed, facTest2.getRandomSeedValue());
-        Assert.assertEquals(enmType, facTest2.getValueType());
+        Assert.assertEquals(enmType, facTest2.getDatumType());
         
         // Create timestamp sequence and inspect
         List<Instant>       lstTms1 = new ArrayList<>(cntTms);
         List<Instant>       lstTms2 = new ArrayList<>(cntTms);
         
         for (int iTms=0; iTms<cntTms; iTms++) {
-            Object      objVal1 = facTest1.nextValue();
-            Object      objVal2 = facTest2.nextValue();
+            Object      objVal1 = facTest1.nextDatum();
+            Object      objVal2 = facTest2.nextDatum();
             
             Assert.assertTrue(enmType.isAssignableFrom(objVal1));
             Assert.assertTrue(enmType.isAssignableFrom(objVal2));
@@ -442,7 +442,7 @@ public class TimestampFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TimestampFactory#nextValue()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TimestampFactory#nextDatum()}.
      */
     @Test
     public final void testNextValueIncremental() {
@@ -461,12 +461,12 @@ public class TimestampFactoryTest {
         
         Assert.assertEquals(durPeriod, facTest.getPeriod());
         Assert.assertEquals(insStart, facTest.getStartInstant());
-        Assert.assertEquals(enmType, facTest.getValueType());
+        Assert.assertEquals(enmType, facTest.getDatumType());
 
         // Create timestamp sequence and inspect
         List<Instant>       lstTms = new ArrayList<>(cntTms);
         for (int iTms=0; iTms<cntTms; iTms++) {
-            Object      objVal = facTest.nextValue();
+            Object      objVal = facTest.nextDatum();
             
             Assert.assertTrue(enmType.isAssignableFrom(objVal));
             

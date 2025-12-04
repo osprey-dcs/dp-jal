@@ -37,13 +37,34 @@ import com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory;
  * </p>
  * <p>
  * The collection of pre-defined tensor factories mirrors the enumeration <code>{@link ScalarFactoryEnum}</code>.
- * The underlying scalar factory used for the array factory is given by the configuration in the scalar
+ * The underlying scalar factory used for the tensor factory is given by the configuration in the scalar
  * factory enumeration.
+ * </p>
+ * <p>
+ * <h2>Tensor Factories</h2>
+ * The tensor factories available here are of type <code>{@link TensorFactory}</code>.  The 
+ * <code>TensorFactory</code> class instances produce tensors of arbitrary shape whose values are packed in the last axis. 
+ * For more information on tensor factories see the class documentation <code>{@link TensorFactory}</code>.
+ * </p>
+ * <p>
+ * <h2>Factory Configuration</h2>
+ * Each enumeration constant represents a particular configuration of tensor factory, specifically identifying the 
+ * type of tensor element values the factory produces.  Other configurations are also required for 
+ * <code>TensorFactory</code> creation, specifically, the tensor 'shape'.
+ * </p>
+ * <p>
+ * <h2>Factory Creation</h2>
+ * Tensor factories for an enumeration constant are created with method <code>{@link #newFactory(int[])}</code>.
+ * Note that a new <code>{@link ScalarFactory}</code> is created and assigned to every new <code>TensorFactory</code>
+ * created.  Thus, for incremental scalar generation the tensor element values will be repeated in new instances.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Nov 22, 2025
  *
+ * @see TensorFactory
+ * @see ScalarFactory
+ * @see ScalarFactoryEnum
  */
 public enum TensorFactoryEnum {
     
@@ -232,7 +253,7 @@ public enum TensorFactoryEnum {
     //
     
     /** The underlying scalar factory enumeration constant used for element value creation */
-    private final ScalarFactoryEnum     enmFacScalars;
+    private final ScalarFactoryEnum     enmFacElemVals;
     
     
     //
@@ -241,13 +262,13 @@ public enum TensorFactoryEnum {
     
     /**
      * <p>
-     * Constructs a new <code>TensorFactoryEnum</code> constant.
+     * Constructs a new <code>TensorFactoryEnum</code> constant with the given scalar factory.
      * </p>
      *
-     * @param enmFacVals    the <code>ScalarFactoryEnum</code> used to create tensor element values
+     * @param enmFacElemVals    the <code>ScalarFactoryEnum</code> used to create tensor element values
      */
-    private TensorFactoryEnum(ScalarFactoryEnum enmFacVals) {
-        this.enmFacScalars = enmFacVals;
+    private TensorFactoryEnum(ScalarFactoryEnum enmElemFac) {
+        this.enmFacElemVals = enmElemFac;
     }
     
     
@@ -272,7 +293,7 @@ public enum TensorFactoryEnum {
      * @return  the associated <code>ScalarFactoryEnum</code> constant used to create <code>ScalarFactory</code> instances
      */
     public ScalarFactoryEnum    getScalarFactoryEnum() {
-        return this.enmFacScalars;
+        return this.enmFacElemVals;
     }
     
     /**

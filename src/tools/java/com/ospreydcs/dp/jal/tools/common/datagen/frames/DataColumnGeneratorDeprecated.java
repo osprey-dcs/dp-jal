@@ -1,8 +1,8 @@
 /*
  * Project: dp-data-simulator
- * File:	DataColumnGenerator.java
+ * File:	DataColumnGeneratorDeprecated.java
  * Package: com.ospreydcs.dp.datasim.model.frame
- * Type: 	DataColumnGenerator
+ * Type: 	DataColumnGeneratorDeprecated
  *
  * Copyright 2010-2023 the original author or authors.
  *
@@ -33,7 +33,7 @@ import java.util.Set;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.model.table.StaticDataColumn;
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGeneratorDeprecated;
 
 /**
@@ -41,7 +41,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGeneratorDeprecate
  * Class for generating data columns of simulated data for an <code>IngestionFrame</code>.
  * </p>
  * <p>
- * Instances of this class are used primarily for column generation within <code>IngestionFrameGenerator</code>
+ * Instances of this class are used primarily for column generation within <code>IngestionFrameGeneratorDeprecated</code>
  * instances.
  * </p>
  * <p>
@@ -50,11 +50,11 @@ import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGeneratorDeprecate
  * at creation/construction.  The number of columns returned in the vector is given by the size of the
  * <code>{@link SampleBlockConfig#setPvNames()}</code> field, while the type of each column data value is
  * given by <code>{@link SampleBlockConfig#enmDataType()}</code>.  Column values are generated using an
- * internal <code>{@link IDataValueFactory}</code> implementation of type <code>{@link ScalarGeneratorDeprecated}</code>.
+ * internal <code>{@link IScalarFactory}</code> implementation of type <code>{@link ScalarGeneratorDeprecated}</code>.
  * </p>
  * <p>
  * Note that not all fields of a <code>{@link SampleBlockConfig}</code> record are used for configuration.
- * The following fields are used in <code>DataColumnGenerator</code> configuration:
+ * The following fields are used in <code>DataColumnGeneratorDeprecated</code> configuration:
  * <ul>
  * <li><code>{@link SampleBlockConfig#cntSamples()}</code> - specifies the size (i.e., number of values) of each column.</li>
  * <li><code>{@link SampleBlockConfig#enmDataType()}</code> - specifies the data type of column each data value.</li>
@@ -79,10 +79,10 @@ import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGeneratorDeprecate
  * @author Christopher K. Allen
  * @since Aug 28, 2024
  *
- * @deprecated  Replaced by DataColumnsGenerator and DataColumnGenerator
+ * @deprecated  Replaced by DataColumnsGenerator and DataColumnGeneratorDeprecated
  */
 @Deprecated(since="Nov 20, 2025", forRemoval=true)
-public class DataColumnGenerator {
+public class DataColumnGeneratorDeprecated {
 
     
     //
@@ -91,7 +91,7 @@ public class DataColumnGenerator {
     
     /**
      * <p>
-     * Creates a new <code>DataColumnGenerator</code> instance configured according to the parameters
+     * Creates a new <code>DataColumnGeneratorDeprecated</code> instance configured according to the parameters
      * in the given record class.
      * </p>
      * <p>
@@ -106,8 +106,8 @@ public class DataColumnGenerator {
      * 
      * @throws IllegalArgumentException inconsistent configuration record parameters (see detail message)
      */
-    public static DataColumnGenerator from(SampleBlockConfig cfgCols) throws IllegalArgumentException {
-        return new DataColumnGenerator(cfgCols);
+    public static DataColumnGeneratorDeprecated from(SampleBlockConfig cfgCols) throws IllegalArgumentException {
+        return new DataColumnGeneratorDeprecated(cfgCols);
     }
 
     
@@ -133,7 +133,7 @@ public class DataColumnGenerator {
     //
     
     /** The value factory for generating column values */
-    private final IDataValueFactory   genValues;
+    private final IScalarFactory   genValues;
     
     
     //
@@ -142,7 +142,7 @@ public class DataColumnGenerator {
     
     /**
      * <p>
-     * Constructs a new, initialized instance of <code>DataColumnGenerator</code> ready for
+     * Constructs a new, initialized instance of <code>DataColumnGeneratorDeprecated</code> ready for
      * data column creation.
      * </p>
      *
@@ -150,7 +150,7 @@ public class DataColumnGenerator {
      * 
      * @throws IllegalArgumentException inconsistent configuration record parameters (see message)
      */
-    public DataColumnGenerator(SampleBlockConfig recCfg) {
+    public DataColumnGeneratorDeprecated(SampleBlockConfig recCfg) {
         this.szCols = recCfg.cntSamples();
         this.cntCols = recCfg.setPvNames().size();
         this.enmDataType = recCfg.enmDataType().getDpType();
@@ -267,7 +267,7 @@ public class DataColumnGenerator {
         // Create the value vector container and pack it with new values
         ArrayList<Object>   vecVals = new ArrayList<>(this.szCols);
         for (int i=0; i<this.szCols; i++) {
-            Object objVal = this.genValues.nextValue();
+            Object objVal = this.genValues.nextDatum();
             
             vecVals.add(objVal);
         }

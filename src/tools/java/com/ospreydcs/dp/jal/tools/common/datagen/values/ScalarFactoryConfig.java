@@ -39,7 +39,7 @@ import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsScalarValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarValuesConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -120,7 +120,7 @@ public record ScalarFactoryConfig(
      * are strings, thus, type cannot be determined at runtime but must be inferred.
      * </p> 
      * 
-     * Thus, the number of elements within the argument string array is dependent upon the <code>JalHeteroType</code>
+     * Thus, the number of elements within the argument string array is dependent upon the <code>JalComplexType</code>
      * identified by the first element.  If the number of arguments is not appropriate for the given type
      * a <code>ConfigurationException</code> is thrown.
      * </p>
@@ -130,7 +130,7 @@ public record ScalarFactoryConfig(
      * @return  a new configuration record populated by the parsed argument elements
      * 
      * @throws IllegalArgumentException the argument contained no data (length = 0)
-     * @throws TypeNotPresentException  the 1st element was not a <code>JalHeteroType</code> enumeration constant
+     * @throws TypeNotPresentException  the 1st element was not a <code>JalComplexType</code> enumeration constant
      * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
      */
     public static ScalarFactoryConfig   parseArgs(String...args) throws IllegalArgumentException, TypeNotPresentException, UnsupportedOperationException {
@@ -589,6 +589,30 @@ public record ScalarFactoryConfig(
         return new ScalarFactoryConfig(enmValueType, bolRandEnable, seed, increment, strPrefix);
     }
     
+    
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactory</code> instance with this configuration.
+     * </p>
+     * <p>
+     * A new <code>{@link ScalarFactory}</code> instance is created according to the configuration parameters in 
+     * this record.  The <code>ScalarFactory</code> is then returned in its initialized state, ready for scalar
+     * value creation.
+     * </p>
+     * 
+     * @return  a new <code>ScalarFactory</code> instance ready for scalar value creation
+     */
+    public ScalarFactory    newFactory() {
+        ScalarFactory   fac = ScalarFactory.from(this);
+        
+        return fac;
+    }
+    
+    
     //
     // Record Overrides
     //
@@ -796,7 +820,6 @@ public record ScalarFactoryConfig(
     private static final JalToolsScalarValuesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.scalar;
     
     
-    
     //
     // Record Constants - Default Arguments
     //
@@ -819,7 +842,7 @@ public record ScalarFactoryConfig(
     
     
     //
-    // Class Constants - Scalar increment values
+    // Record Constants - Scalar increment values
     //
     
     /** Integer value default increment */

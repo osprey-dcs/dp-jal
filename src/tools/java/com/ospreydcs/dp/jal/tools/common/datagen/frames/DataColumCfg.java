@@ -26,22 +26,22 @@
 package com.ospreydcs.dp.jal.tools.common.datagen.frames;
 
 import java.lang.reflect.MalformedParametersException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
-import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
-import java.util.stream.Stream;
 
 import javax.naming.ConfigurationException;
 
 import com.ospreydcs.dp.jal.common.BufferedImage;
-import com.ospreydcs.dp.jal.tools.common.datagen.JalHeteroType;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarGeneratorDeprecated;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
- * Record containing parameters for configuring <code>{@link DataColumnGenerator}</code> instances.
+ * Record containing parameters for configuring <code>{@link DataColumnGeneratorDeprecated}</code> instances.
  * </p>
  *
  * @author Christopher K. Allen
@@ -52,15 +52,39 @@ public record DataColumCfg<DataConfig extends Record>(
         String          strNmPref,
         int             cntCols,
         int             cntRows,
-        JalHeteroType   enmDataType,
+        JalComplexType   enmDataType,
         JalScalarType   enmValueType,
         DataConfig      recDataCfg
         ) 
 {
+    
+    //
+    // Creators
+    // 
+    
+    
+    //
+    // Internal Types
+    //
+
+    /** Record containing <code>ScalarFactory</code> parameters */
     public static record ScalarConfig() {};
-    static record ArrayConfig(int[] shape) {};
-    static record StructConfig(int depth, int fanout) {};
-    static record ImageConfig(String strPref, BufferedImage.Format enmFmt, int size) {};
+    
+    /** Record containing <code>TimestampFactory</code> parameters */
+    public static record TimestampConfig(boolean bolRand, long lngSeed, Duration durPeriod, Instant insStart) {};
+    
+    /** Record containing <code>ByteArrayFactory</code> parameters */
+    public static record ByteArrayConfig(int size) {};
+    
+    /** Record containing <code>TensorFactory</code> parameters */
+    public static record TensorConfig(int[] shape) {};
+    
+    /** Record containing <code>StructureFactory</code> parameters */
+    public static record StructConfig(int depth, int fanout) {};
+    
+    /** Record containing <code>ImageFactory</code> parameters */
+    public static record ImageConfig(String strPref, BufferedImage.Format enmFmt, int size) {};
+
 
     
     /**
@@ -74,7 +98,7 @@ public record DataColumCfg<DataConfig extends Record>(
         
         return switch (enmDataType) {
         case SCALAR -> (this.recDataCfg instanceof ScalarConfig);
-        case ARRAY -> (this.recDataCfg instanceof ArrayConfig);
+        case ARRAY -> (this.recDataCfg instanceof TensorConfig);
         case STRUCTURE -> (this.recDataCfg instanceof StructConfig);
         case IMAGE -> (this.recDataCfg instanceof ImageConfig);
         default -> false;
@@ -116,7 +140,7 @@ public record DataColumCfg<DataConfig extends Record>(
      * </code>
      * where 
      * <ul>
-     * <li>DTYPE is a <code>JalHeteroType</code> enumeration constant,</li>
+     * <li>DTYPE is a <code>JalComplexType</code> enumeration constant,</li>
      * <li>DTYPE is a <code>JalScalarType</code> enumeration constant,</li>
      * <li>field1 is a configuration record field,</li>
      * <li>field2 is a configuration record field,</li>
@@ -130,12 +154,12 @@ public record DataColumCfg<DataConfig extends Record>(
      * </code>
      * The type of configuration record returned is given by the <code>DTYPE</code> value:
      * <ul>
-     * <li><code>{@link JalHeteroType#SCALAR}</code> - <code>{@link ScalarGeneratorDeprecated.ScalarConfig}</code>.</li>
-     * <li><code>{@link JalHeteroType#ARRAY}</code> - <code>{@link ArrayConfig}</code>.</li>
-     * <li><code>{@link JalHeteroType#STRUCTURE}</code> - <code>{@link StructConfig}</code>.</li>
-     * <li><code>{@link JalHeteroType#IMAGE}</code> - <code>{@link ImageConfig}</code>.</li>
+     * <li><code>{@link JalComplexType#SCALAR}</code> - <code>{@link ScalarGeneratorDeprecated.ScalarConfig}</code>.</li>
+     * <li><code>{@link JalComplexType#ARRAY}</code> - <code>{@link ArrayConfig}</code>.</li>
+     * <li><code>{@link JalComplexType#STRUCTURE}</code> - <code>{@link StructConfig}</code>.</li>
+     * <li><code>{@link JalComplexType#IMAGE}</code> - <code>{@link ImageConfig}</code>.</li>
      * </ul>
-     * Thus, the number of elements within the argument string array is dependent upon the <code>JalHeteroType</code>
+     * Thus, the number of elements within the argument string array is dependent upon the <code>JalComplexType</code>
      * identified by the first element.  If the number of arguments is not appropriate for the given type
      * a <code>ConfigurationException</code> is thrown.
      * </p>
@@ -145,8 +169,8 @@ public record DataColumCfg<DataConfig extends Record>(
      * @return  the configuration record defined and populated by the arguments
      * 
      * @throws IllegalArgumentException the argument contained no data
-     * @throws TypeNotPresentException  the 1st argument was not a <code>JalHeteroType</code> enumeration constant
-     * @throws ConfigurationException   the argument contained the wrong number of arguments for the <code>JalHeteroType</code>
+     * @throws TypeNotPresentException  the 1st argument was not a <code>JalComplexType</code> enumeration constant
+     * @throws ConfigurationException   the argument contained the wrong number of arguments for the <code>JalComplexType</code>
      * @throws MalformedParametersException an enumeration constant within the argument set was not recognized (IMAGE)
      */
     public static Record    parseDataConfig(String...args) throws IllegalArgumentException, TypeNotPresentException, ConfigurationException, MalformedParametersException {
@@ -157,9 +181,9 @@ public record DataColumCfg<DataConfig extends Record>(
 
         // Get the Data Type of the arguments list
         String  strDataType = args[0];
-        JalHeteroType   enmDataType;
+        JalComplexType   enmDataType;
         try {
-            enmDataType = JalHeteroType.valueOf(JalHeteroType.class, strDataType); // throws IllegalArgumentException
+            enmDataType = JalComplexType.valueOf(JalComplexType.class, strDataType); // throws IllegalArgumentException
         } catch (Exception e) {
             throw new TypeNotPresentException(strDataType, e);
         }
@@ -171,6 +195,14 @@ public record DataColumCfg<DataConfig extends Record>(
             recConfig = new ScalarConfig();
             break;
             
+        case BYTES:
+            if (args.length < 2)
+                throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple()
+                        + " - BYTES must have a 'size' attribute: " + args);
+            int cntBytes = Integer.parseInt(args[1]);
+            recConfig = new ByteArrayConfig(cntBytes);
+            break;
+            
         case ARRAY:
             if (args.length < 2)
                 throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple()
@@ -178,7 +210,7 @@ public record DataColumCfg<DataConfig extends Record>(
             int[] shape = Arrays.<String>stream(args, 1, args.length)
                             .mapToInt(arg -> Integer.parseInt(arg))     // throws NumberFormatException
                             .toArray();
-            recConfig = new ArrayConfig(shape);
+            recConfig = new TensorConfig(shape);
             break;
             
         case STRUCTURE:

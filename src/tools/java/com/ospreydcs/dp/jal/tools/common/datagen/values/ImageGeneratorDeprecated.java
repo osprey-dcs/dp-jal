@@ -31,12 +31,14 @@ import java.time.Instant;
 
 import com.ospreydcs.dp.jal.common.BufferedImage;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
  * <p>
- * Generates random image of type <code>{@link BufferedImage}</code> available in the Data Platform
- * Java client API.
+ * Generates random image of type <code>{@link BufferedImage}</code> available
+ * in the Data Platform Java client API.
  * </p>
  * 
  *
@@ -45,45 +47,40 @@ import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
  *
  * @deprecated Replaced by ImageFactory
  */
-@Deprecated(since="Nov 14, 2025", forRemoval=true)
-public class ImageGeneratorDeprecated implements IDataValueFactory {
+@Deprecated(since = "Nov 14, 2025", forRemoval = true)
+public class ImageGeneratorDeprecated implements IDatumFactory {
 
-    
     //
     // Class Constants
     //
-    
+
     /** The value type of all simulated data returned by this data value factory */
-    public static final DpSupportedType     ENM_TYPE = DpSupportedType.IMAGE;
-    
-    
+    public static final DpSupportedType ENM_TYPE = DpSupportedType.IMAGE;
+
     //
     // Configuration
     //
-    
+
     /** Image name prefix */
-    private final String                strNamePrefix;
-    
+    private final String strNamePrefix;
+
     /** Image format enumeration */
-    private final BufferedImage.Format  enmFormat;
-    
+    private final BufferedImage.Format enmFormat;
+
     /** Image size, that is, memory allocation */
-    private final int                  szAlloc;
-    
-    
+    private final int szAlloc;
+
     //
     // Variables
     //
-    
+
     /** Image counter - used for image name generation */
-    private int         cntImages = 0;
-    
-    
-    
+    private int cntImages = 0;
+
     //
     // Constructor
     //
-    
+
     /**
      * <p>
      * Constructs a new instance of <code>ImageGeneratorDeprecated</code>.
@@ -95,46 +92,62 @@ public class ImageGeneratorDeprecated implements IDataValueFactory {
      * 
      * @throws IllegalArgumentException image size must be greater than zero
      */
-    public ImageGeneratorDeprecated(String strNamePrefix, BufferedImage.Format enmFormat, int szAlloc) throws IllegalArgumentException {
+    public ImageGeneratorDeprecated(String strNamePrefix, BufferedImage.Format enmFormat, int szAlloc)
+            throws IllegalArgumentException {
         this.strNamePrefix = strNamePrefix;
         this.enmFormat = enmFormat;
         this.szAlloc = szAlloc;
-        
+
         if (this.szAlloc <= 0)
             throw new IllegalArgumentException("Image size must be greater than zero.");
     }
-    
-    
+
     //
-    // IDataValueFactory Interface
+    // IDatumFactory Interface
     //
-    
+
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getScalarType()
      */
     @Override
-    public DpSupportedType  getValueType() {
+    public JalScalarType getScalarType() {
+        return JalScalarType.UNSUPPORTED;
+    }
+
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getComplexType()
+     */
+    @Override
+    public JalComplexType getComplexType() {
+        return JalComplexType.IMAGE;
+    }
+
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getDatumType()
+     */
+    @Override
+    public DpSupportedType getDatumType() {
         return ENM_TYPE;
     }
-    
+
     /**
      *
-     * @see com.ospreydcs.dp.datasim.model.values.IDataValueGenerator#nextValue()
+     * @see com.ospreydcs.dp.datasim.model.values.IDatumFactory#nextDatum()
      */
     @Override
-    public Object nextValue() {
-        
+    public Object nextDatum() {
+
         // Create a new image with empty data vector (raw allocation)
 //        String  strName = this.strNamePrefix + "-" + Integer.toString(this.cntImages);
-        String  strName = this.strNamePrefix + Integer.toString(this.cntImages);
+        String strName = this.strNamePrefix + Integer.toString(this.cntImages);
         Instant insTms = Instant.now();
-        byte[]  arrData = new byte[this.szAlloc];
-        
-        BufferedImage   image = new BufferedImage(strName, insTms, this.enmFormat, arrData);
-        
+        byte[] arrData = new byte[this.szAlloc];
+
+        BufferedImage image = new BufferedImage(strName, insTms, this.enmFormat, arrData);
+
         // Increment image counter then return image
         this.cntImages++;
-        
+
         return image;
     }
 

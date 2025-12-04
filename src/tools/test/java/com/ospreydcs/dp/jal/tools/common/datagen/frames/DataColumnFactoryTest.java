@@ -96,7 +96,7 @@ public class DataColumnFactoryTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#from(java.lang.String, int, com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#from(java.lang.String, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
      */
     @Test
     public final void testFrom() {
@@ -105,7 +105,7 @@ public class DataColumnFactoryTest {
         final String            strColNm = "PV1";
         final int               szCol = 100;
         final ScalarFactory     facVals = ScalarFactoryEnum.BOOLEAN_ALT.newFactory();
-        final DpSupportedType   enmType = facVals.getValueType();
+        final DpSupportedType   enmType = facVals.getDatumType();
         
         try {
             // Create the column factory and check configuration
@@ -121,7 +121,7 @@ public class DataColumnFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#from(java.lang.String, int, com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#from(java.lang.String, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
      */
     @Test
     public final void testFromFail() {
@@ -144,7 +144,7 @@ public class DataColumnFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#DataColumnFactory(java.lang.String, int, com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#DataColumnFactory(java.lang.String, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
      */
     @Test
     public final void testDataColumnFactory() {
@@ -153,7 +153,7 @@ public class DataColumnFactoryTest {
         final String            strColNm = "PV1";
         final int               szCol = 100;
         final ScalarFactory     facVals = ScalarFactoryEnum.DEFAULT.newFactory();
-        final DpSupportedType   enmType = facVals.getValueType();
+        final DpSupportedType   enmType = facVals.getDatumType();
         
         try {
             // Construct the column factory and check configuration
@@ -193,7 +193,7 @@ public class DataColumnFactoryTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#build()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#nextColumn()}.
      */
     @Test
     public final void testBuildBooleanAlt() {
@@ -202,7 +202,7 @@ public class DataColumnFactoryTest {
         final String            strColNm = "PV1";
         final int               szCol = 10;
         final ScalarFactory     facVals = ScalarFactoryEnum.BOOLEAN_ALT.newFactory();
-        final DpSupportedType   enmType = facVals.getValueType();
+        final DpSupportedType   enmType = facVals.getDatumType();
         
         final int               cntCols = 5;
 
@@ -231,7 +231,7 @@ public class DataColumnFactoryTest {
         
         Boolean bolCurr = false;
         for (int iCol=0; iCol<cntCols; iCol++) {
-            IDataColumn<Object>     col = facTest.build();
+            IDataColumn<Object>     col = facTest.nextColumn();
             
             Assert.assertEquals(strColNm, col.getName());
             Assert.assertEquals(Integer.valueOf(szCol), col.getSize());
@@ -259,7 +259,7 @@ public class DataColumnFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#build()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#nextColumn()}.
      */
     @Test
     public final void testBuildIntegerIncr1() {
@@ -268,7 +268,7 @@ public class DataColumnFactoryTest {
         final String            strColNm = "IntIncr1Test";
         final int               szCol = 25;
         final ScalarFactory     facVals = ScalarFactoryEnum.INTEGER_INCR_1.newFactory();
-        final DpSupportedType   enmType = facVals.getValueType();
+        final DpSupportedType   enmType = facVals.getDatumType();
         
         final int               cntCols = 10;
 
@@ -297,7 +297,7 @@ public class DataColumnFactoryTest {
         
         Integer intCurr = 0;
         for (int iCol=0; iCol<cntCols; iCol++) {
-            IDataColumn<Object>     col = facTest.build();
+            IDataColumn<Object>     col = facTest.nextColumn();
             
             Assert.assertEquals(strColNm, col.getName());
             Assert.assertEquals(Integer.valueOf(szCol), col.getSize());
@@ -325,7 +325,7 @@ public class DataColumnFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#build()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#nextColumn()}.
      */
     @Test
     public final void testBuildDoubleIncr1em16() {
@@ -365,7 +365,7 @@ public class DataColumnFactoryTest {
         
         Double dblCurr = dblSeed;
         for (int iCol=0; iCol<cntCols; iCol++) {
-            IDataColumn<Object>     col = facTest.build();
+            IDataColumn<Object>     col = facTest.nextColumn();
             
             Assert.assertEquals(strColNm, col.getName());
             Assert.assertEquals(Integer.valueOf(szCol), col.getSize());
@@ -393,7 +393,7 @@ public class DataColumnFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#build()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#nextColumn()}.
      */
     @Test
     public final void testBuildDoubleRnd() {
@@ -430,7 +430,7 @@ public class DataColumnFactoryTest {
         List<Double>           lstVals = new ArrayList<>(szCol);
         
         for (int iCol=0; iCol<cntCols; iCol++) {
-            IDataColumn<Object>     col = facTest.build();
+            IDataColumn<Object>     col = facTest.nextColumn();
             
             Assert.assertEquals(strColNm, col.getName());
             Assert.assertEquals(Integer.valueOf(szCol), col.getSize());
@@ -456,7 +456,7 @@ public class DataColumnFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#build()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.frames.DataColumnFactory#nextColumn()}.
      */
     @Test
     public final void testBuildTensorIntegerIncr1() {
@@ -469,7 +469,7 @@ public class DataColumnFactoryTest {
         
         final TensorFactory     facVals = enmFac.newFactory(shape);
         final JalScalarType     enmJalType = enmFac.getJalScalarType();
-        final DpSupportedType   enmDpType = facVals.getValueType();
+        final DpSupportedType   enmDpType = facVals.getDatumType();
         
         final int               cntCols = 10;
 
@@ -495,7 +495,7 @@ public class DataColumnFactoryTest {
 
         // Create some columns and check configuration and values
         for (int iCol=0; iCol<cntCols; iCol++) {
-            IDataColumn<Object>     col = facTest.build();
+            IDataColumn<Object>     col = facTest.nextColumn();
             
             Assert.assertEquals(strColNm, col.getName());
             Assert.assertEquals(Integer.valueOf(szCol), col.getSize());

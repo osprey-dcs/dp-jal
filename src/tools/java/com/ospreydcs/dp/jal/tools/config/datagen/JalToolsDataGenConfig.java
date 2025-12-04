@@ -27,6 +27,11 @@ package com.ospreydcs.dp.jal.tools.config.datagen;
 
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
+import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsImageValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsStructValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTmsValuesConfig;
 
 /**
  * <p>
@@ -48,9 +53,13 @@ public class JalToolsDataGenConfig extends CfgStructure<JalToolsDataGenConfig> {
     // Fields
     //
     
+    /** Default configuration parameters for ingestion frame generation */
+    @ACfgOverride.Struct(pathelem="FRAMES")
+    public JalToolsFramesConfig frames;
+    
     /** Default configuration parameters for data value generation */
     @ACfgOverride.Struct(pathelem="VALUES")
-    public Values           values;
+    public Values               values;
     
     
     //

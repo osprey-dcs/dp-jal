@@ -31,13 +31,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.Random;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsTmsValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTmsValuesConfig;
 
 /**
  * <p>
- * Class for generating simulated data of timestamps.
+ * Class for generating simulated sequences of timestamp data.
  * </p> 
  * <p>
  * Class objects <code>TimestampFactory</code> can be configured for either <em>random</em> timestamp generation or
@@ -69,7 +71,7 @@ import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsTmsValuesConfig;
  * @since Nov 23, 2025
  *
  */
-public class TimestampFactory implements IDataValueFactory {
+public class TimestampFactory implements IDatumFactory {
 
     
     //
@@ -327,6 +329,16 @@ public class TimestampFactory implements IDataValueFactory {
     // Class Constant
     //
     
+    /** The datum type of all data produced by this data factory */
+    public static final DpSupportedType     ENM_DATUM_TYPE = DpSupportedType.TIMESTAMP;
+    
+    /** The scalar type of all data produced by this data factory */
+    public static final JalScalarType       ENM_SCALAR_TYPE = JalScalarType.UNSUPPORTED;
+    
+    /** The complex type of all data produced by this data factory */
+    public static final JalComplexType       ENM_CMPLX_TYPE = JalComplexType.TIMESTAMP;
+    
+    
     /** The units for randomly generated long values added to <code>{@link Instant#EPOCH}</code> for random timestamp values*/
     public static final ChronoUnit  CU_RND_EPOCH_ADD = ChronoUnit.NANOS;
 
@@ -482,7 +494,7 @@ public class TimestampFactory implements IDataValueFactory {
      * Returns the start timestamp instant for incremental timestamp factories.
      * </p>
      * <p>
-     * The returned value is the first timestamp producted by <code>{@link #nextValue()}</code> when the timestamp factory 
+     * The returned value is the first timestamp producted by <code>{@link #nextDatum()}</code> when the timestamp factory 
      * is configured for incremental timestamp value generation.  When the timestamp factory is configured for random
      * timestamp value generation the returned value is <code>{@link Instant#EPOCH}</code>, however, the value is
      * never used.
@@ -519,17 +531,33 @@ public class TimestampFactory implements IDataValueFactory {
     
     
     //
-    // IDataValueFactory Interface
+    // IDatumFactory Interface
     //
 
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#getValueType()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getDatumType()
      */
     @Override
-    public DpSupportedType getValueType() {
-        return DpSupportedType.TIMESTAMP;
+    public DpSupportedType getDatumType() {
+        return ENM_DATUM_TYPE;
     }
 
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getScalarType()
+     */
+    @Override
+    public JalScalarType getScalarType() {
+        return ENM_SCALAR_TYPE;
+    }
+
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#getComplexType()
+     */
+    @Override
+    public JalComplexType getComplexType() {
+        return ENM_CMPLX_TYPE;
+    }
+        
     /**
      * <p>
      * Returns the next timestamp in the sequence of generated timestamp values.
@@ -553,10 +581,10 @@ public class TimestampFactory implements IDataValueFactory {
      * creation/construction.
      * </p> 
      * 
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataValueFactory#nextValue()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory#nextDatum()
      */
     @Override
-    public Object nextValue() {
+    public Object nextDatum() {
         
         // Locally store the timestamp value to be returned
         Instant     insVal = this.insNext;
@@ -648,5 +676,5 @@ public class TimestampFactory implements IDataValueFactory {
         
         return insVal;
     }
-        
+    
 }

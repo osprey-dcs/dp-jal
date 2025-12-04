@@ -485,7 +485,7 @@ public class IngestionFrameQueue implements Iterator<IngestionFrame>, Iterable<I
      * @throws IOException              an I/O error occurred while writing the serialization header to disk
      * @throws InterruptedException     the main thread was interrupted while waiting to check disk manager status 
      */
-    public boolean fill(IngestionFrameGenerator facFrames) throws IllegalStateException, FileNotFoundException, IOException, InterruptedException {
+    public boolean fill(IngestionFrameGeneratorDeprecated facFrames) throws IllegalStateException, FileNotFoundException, IOException, InterruptedException {
         
         // Check state
         if (this.cntFrames > 0) {
@@ -703,7 +703,7 @@ public class IngestionFrameQueue implements Iterator<IngestionFrame>, Iterable<I
      * @throws FileNotFoundException    the temporary file does not exist, cannot be created, etc. (see message)
      * @throws IOException              an I/O error occurred while writing the serialization header to disk
      */
-    private boolean    loadDiskQueue(IngestionFrameGenerator facFrames) throws FileNotFoundException, IOException {
+    private boolean    loadDiskQueue(IngestionFrameGeneratorDeprecated facFrames) throws FileNotFoundException, IOException {
         
         // Initialize ingestion frame counter and allocation 
         this.cntFrames= 0;
