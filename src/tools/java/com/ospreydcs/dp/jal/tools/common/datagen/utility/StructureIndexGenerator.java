@@ -33,7 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**

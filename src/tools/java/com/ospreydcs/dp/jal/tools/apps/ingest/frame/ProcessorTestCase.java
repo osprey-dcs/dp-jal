@@ -35,8 +35,8 @@ import com.ospreydcs.dp.jal.common.ResultStatus;
 import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.jal.tools.apps.ingest.common.FrameProcessorConfig;
-import com.ospreydcs.dp.jal.tools.common.datagen.frames.IngestionFrameGeneratorDeprecated;
-import com.ospreydcs.dp.jal.tools.common.datagen.frames.SampleBlockConfig;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.IngestionFrameGeneratorDeprecated;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.SampleBlockConfig;
 
 /**
  * <p>
