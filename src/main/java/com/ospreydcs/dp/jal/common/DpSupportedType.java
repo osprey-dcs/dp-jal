@@ -31,7 +31,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import com.google.protobuf.ByteString;
 import com.ospreydcs.dp.jal.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.jal.model.AUnavailable;
 import com.ospreydcs.dp.jal.model.AUnavailable.STATUS;
@@ -310,4 +309,34 @@ public enum DpSupportedType {
     public <T extends Object>   boolean isAssignableFrom(T val) {
         return this.isAssignableFrom( val.getClass() );
     }
+    
+    /**
+     * <p>
+     * Returns the <code>DpSupportedType</code> enumeration constant with the given name.
+     * </p>
+     * <p>
+     * This a a convenience method that simply calls the method <code>{@link Enum#valueOf(Class, String)}</code>
+     * with first argument given by <code>DpSupportedType.class</code> and the second argument given by
+     * the argument of this method.  Any exception thrown is caught an returned as a 
+     * <code>{@link TypeNotPresentException}</code>.
+     * </p>
+     * 
+     * @param strName   name of the <code>DpSupportedType</code> enumeration constant
+     * 
+     * @return  the <code>DpSupportedType</code> constant with the given name
+     * 
+     * @throws TypeNotPresentException  the name was invalid
+     */
+    public static DpSupportedType    getConstant(String strName) throws TypeNotPresentException {
+        
+        try {
+            DpSupportedType   enmConstant = DpSupportedType.valueOf(DpSupportedType.class, strName);
+            return enmConstant;
+            
+        } catch (Exception e) {
+            throw new TypeNotPresentException(strName, e);
+        }
+    }
+    
+    
 }

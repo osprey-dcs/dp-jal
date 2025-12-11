@@ -338,7 +338,7 @@ public class StructureFactory implements IDatumFactory {
      * 
      * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
      */
-    public static StructureFactory  from(int depth, int fanout, ScalarFactoryConfig recCfgFac) throws IllegalArgumentException {
+    public static StructureFactory  from(int depth, int fanout, ScalarFactorySpec recCfgFac) throws IllegalArgumentException {
         return StructureFactory.from(depth, fanout, BOL_UNIQ_FLD_NM_ENBL_DEF, recCfgFac);   // throws IllegalArgumentException
     }
     
@@ -381,16 +381,16 @@ public class StructureFactory implements IDatumFactory {
      * @param depth         node depth of the tree structure
      * @param fanout        node fan-out at each sub-tree 
      * @param bolUniqFldNms enable/disable unique field names for all generated tree structures
-     * @param recCfgFac     configuration record for scalar value factory generating terminal node values
+     * @param recFacSpec    configuration specification for scalar value factory generating terminal node values
      * 
      * @return  a new <code>StructureFactory</code> instance ready for tree structure instance generation
      * 
      * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
      */
-    public static StructureFactory  from(int depth, int fanout, boolean uniqFldNms, ScalarFactoryConfig recCfgFac) throws IllegalArgumentException {
-        ScalarFactory   facValues = ScalarFactory.from(recCfgFac);
+    public static StructureFactory  from(int depth, int fanout, boolean uniqFldNms, ScalarFactorySpec recFacSpec) throws IllegalArgumentException {
+        ScalarFactory   facValues = recFacSpec.newFactory();
         
-        return new StructureFactory(depth, fanout, uniqFldNms, facValues);      // throws IllegalArgumentException
+        return StructureFactory.from(depth, fanout, uniqFldNms, facValues);      // throws IllegalArgumentException
     }
     
     /**
@@ -671,7 +671,7 @@ public class StructureFactory implements IDatumFactory {
      * @return  scalar value seed of the scalar factory provided at creation/construction  
      */
     public long  getSeed() {
-        return  this.facValues.getConfiguration().seed();
+        return  this.facValues.getSeed();
     }
 
     

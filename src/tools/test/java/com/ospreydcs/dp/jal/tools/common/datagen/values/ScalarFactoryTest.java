@@ -59,31 +59,31 @@ public class ScalarFactoryTest {
     
     
     /** A <code>ScalarFactory</code> configuration for string values */
-    public static final ScalarFactoryConfig     REC_CFG_STR_1 = ScalarFactoryConfig.from(JalScalarType.STRING, false, 0, Integer.valueOf(1), STR_PREFIX);
+    public static final ScalarFactorySpec     REC_CFG_STR_1 = ScalarFactorySpec.from(JalScalarType.STRING, false, 0, Integer.valueOf(1), STR_PREFIX);
     
     /** A <code>ScalarFactory</code> configuration for boolean values */
-    public static final ScalarFactoryConfig     REC_CFG_BOL_1 = ScalarFactoryConfig.from(JalScalarType.BOOLEAN, false, 0, Integer.valueOf(1), "NotUsed");
+    public static final ScalarFactorySpec     REC_CFG_BOL_1 = ScalarFactorySpec.from(JalScalarType.BOOLEAN, false, 0, Integer.valueOf(1), "NotUsed");
 
     /** A <code>ScalarFactory</code> configuration for boolean values */
-    public static final ScalarFactoryConfig     REC_CFG_BOL_2 = ScalarFactoryConfig.from(JalScalarType.BOOLEAN, false, 1, Integer.valueOf(0), "NotUsed");
+    public static final ScalarFactorySpec     REC_CFG_BOL_2 = ScalarFactorySpec.from(JalScalarType.BOOLEAN, false, 1, Integer.valueOf(0), "NotUsed");
 
     /** A <code>ScalarFactory</code> configuration for integer values */
-    public static final ScalarFactoryConfig     REC_CFG_INT_1 = ScalarFactoryConfig.from(JalScalarType.INTEGER, false, 0, Integer.valueOf(2), "NotUsed");
+    public static final ScalarFactorySpec     REC_CFG_INT_1 = ScalarFactorySpec.from(JalScalarType.INTEGER, false, 0, Integer.valueOf(2), "NotUsed");
 
     /** A <code>ScalarFactory</code> configuration for integer values */
-    public static final ScalarFactoryConfig     REC_CFG_INT_2 = ScalarFactoryConfig.from(JalScalarType.INTEGER, false, 100, Integer.valueOf(23));
+    public static final ScalarFactorySpec     REC_CFG_INT_2 = ScalarFactorySpec.from(JalScalarType.INTEGER, false, 100, Integer.valueOf(23));
 
     /** A <code>ScalarFactory</code> configuration for long values */
-    public static final ScalarFactoryConfig     REC_CFG_LNG_1 = ScalarFactoryConfig.from(JalScalarType.LONG, false, 1_000_000_000, Long.valueOf(5_000_000));
+    public static final ScalarFactorySpec     REC_CFG_LNG_1 = ScalarFactorySpec.from(JalScalarType.LONG, false, 1_000_000_000, Long.valueOf(5_000_000));
 
     /** A <code>ScalarFactory</code> configuration for float values */
-    public static final ScalarFactoryConfig     REC_CFG_FLT_1 = ScalarFactoryConfig.from(JalScalarType.FLOAT, false, 0, Float.valueOf(0.025f));
+    public static final ScalarFactorySpec     REC_CFG_FLT_1 = ScalarFactorySpec.from(JalScalarType.FLOAT, false, 0, Float.valueOf(0.025f));
 
     /** A <code>ScalarFactory</code> configuration for double values */
-    public static final ScalarFactoryConfig     REC_CFG_DBL_1 = ScalarFactoryConfig.from(JalScalarType.DOUBLE, false, 0, Double.valueOf(1.602e-19));
+    public static final ScalarFactorySpec     REC_CFG_DBL_1 = ScalarFactorySpec.from(JalScalarType.DOUBLE, false, 0, Double.valueOf(1.602e-19));
 
     /** A <code>ScalarFactory</code> configuration for random double values */
-    public static final ScalarFactoryConfig     REC_CFG_DBL_RND = ScalarFactoryConfig.from(JalScalarType.DOUBLE, true, 0);
+    public static final ScalarFactorySpec     REC_CFG_DBL_RND = ScalarFactorySpec.from(JalScalarType.DOUBLE, true, 0);
 
     
     //
@@ -124,25 +124,39 @@ public class ScalarFactoryTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#from(com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactoryConfig)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#from(com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactorySpec)}.
      */
     @Test
     public final void testFrom() {
         
-        ScalarFactory   facTest = ScalarFactory.from(REC_CFG_INT_1);
+        // Test Parameters
+        final ScalarFactorySpec    recSpec = REC_CFG_INT_1;
         
-        Assert.assertEquals(REC_CFG_INT_1, facTest.getConfiguration());
+        ScalarFactory   facTest = recSpec.newFactory();
+        
+        Assert.assertEquals(recSpec.enmType(), facTest.getScalarType());
+        Assert.assertEquals(recSpec.bolRandEnbl(), facTest.isRandom());
+        Assert.assertEquals(recSpec.lngSeed(), facTest.getSeed());
+        Assert.assertEquals(recSpec.numIncr(), facTest.getIncrement());
+        Assert.assertEquals(recSpec.strPrefix(), facTest.getStringPrefix());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#ScalarFactory(com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactoryConfig)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory#ScalarFactory(com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactorySpec)}.
      */
     @Test
     public final void testScalarFactory() {
         
-        ScalarFactory   facTest = new ScalarFactory(REC_CFG_STR_1);
+        // Test Parameters
+        final ScalarFactorySpec    recSpec = REC_CFG_INT_1;
+        
+        ScalarFactory   facTest = new ScalarFactory(recSpec.enmType(), recSpec.bolRandEnbl(), recSpec.lngSeed(), recSpec.numIncr(), recSpec.strPrefix());
 
-        Assert.assertEquals(REC_CFG_STR_1, facTest.getConfiguration());
+        Assert.assertEquals(recSpec.enmType(), facTest.getScalarType());
+        Assert.assertEquals(recSpec.bolRandEnbl(), facTest.isRandom());
+        Assert.assertEquals(recSpec.lngSeed(), facTest.getSeed());
+        Assert.assertEquals(recSpec.numIncr(), facTest.getIncrement());
+        Assert.assertEquals(recSpec.strPrefix(), facTest.getStringPrefix());
     }
 
     /**
@@ -152,14 +166,14 @@ public class ScalarFactoryTest {
     public final void testNextValueBoolean1() {
         
         // Test Parameters
-        final ScalarFactoryConfig     recCfg = REC_CFG_BOL_1;
+        final ScalarFactorySpec     recSpec = REC_CFG_BOL_1;
         
-        final long    lngSeed = recCfg.seed();
+        final long    lngSeed = recSpec.lngSeed();
         final boolean bolSeed = (lngSeed % 2) == 0 ? false : true;
-        final boolean bolIncr = (recCfg.increment().intValue() % 2) == 0 ? false : true;
+        final boolean bolIncr = (recSpec.numIncr().intValue() % 2) == 0 ? false : true;
         final int     cntVals = 10;
         
-        ScalarFactory   facTest = ScalarFactory.from(recCfg);
+        ScalarFactory   facTest = recSpec.newFactory();
         
         Boolean bolVal = bolSeed;
         for (int iVal=0; iVal<cntVals; iVal++) {
@@ -182,14 +196,14 @@ public class ScalarFactoryTest {
     public final void testNextValueBoolean2() {
         
         // Test Parameters
-        final ScalarFactoryConfig     recCfg = REC_CFG_BOL_2;
+        final ScalarFactorySpec     recSpec = REC_CFG_BOL_2;
         
-        final long    lngSeed = recCfg.seed();
+        final long    lngSeed = recSpec.lngSeed();
         final boolean bolSeed = (lngSeed % 2) == 0 ? false : true;
-        final boolean bolIncr = (recCfg.increment().intValue() % 2) == 0 ? false : true;
+        final boolean bolIncr = (recSpec.numIncr().intValue() % 2) == 0 ? false : true;
         final int     cntVals = 10;
         
-        ScalarFactory   facTest = ScalarFactory.from(recCfg);
+        ScalarFactory   facTest = recSpec.newFactory();
         
         Boolean bolVal = bolSeed;
         for (int iVal=0; iVal<cntVals; iVal++) {
@@ -212,13 +226,13 @@ public class ScalarFactoryTest {
     public final void testNextValueString1() {
         
         // Test Parameters
-        final ScalarFactoryConfig     recCfg = REC_CFG_STR_1;
+        final ScalarFactorySpec     recSpec = REC_CFG_STR_1;
         
-        final long    lngSeed = recCfg.seed();
-        final int     intIncr = recCfg.increment().intValue();
+        final long    lngSeed = recSpec.lngSeed();
+        final int     intIncr = recSpec.numIncr().intValue();
         final int     cntVals = 10;
         
-        ScalarFactory   facTest = ScalarFactory.from(recCfg);
+        ScalarFactory   facTest = recSpec.newFactory();
         
         Integer     intSuff = Math.toIntExact(lngSeed);
         for (int iVal=0; iVal<cntVals; iVal++) {
@@ -243,13 +257,13 @@ public class ScalarFactoryTest {
     public final void testNextValueInteger1() {
         
         // Test Parameters
-        final ScalarFactoryConfig     recCfg = REC_CFG_INT_1;
+        final ScalarFactorySpec     recCfg = REC_CFG_INT_1;
         
-        final long    lngSeed = recCfg.seed();
-        final int     intIncr = recCfg.increment().intValue();
+        final long    lngSeed = recCfg.lngSeed();
+        final int     intIncr = recCfg.numIncr().intValue();
         final int     cntVals = 10;
         
-        ScalarFactory   facTest = ScalarFactory.from(recCfg);
+        ScalarFactory   facTest = recCfg.newFactory();
         
         Integer     intVal = Math.toIntExact(lngSeed);
         for (int iVal=0; iVal<cntVals; iVal++) {
@@ -271,13 +285,13 @@ public class ScalarFactoryTest {
     public final void testNextValueInteger2() {
         
         // Test Parameters
-        final ScalarFactoryConfig     recCfg = REC_CFG_INT_2;
+        final ScalarFactorySpec     recCfg = REC_CFG_INT_2;
         
-        final long    lngSeed = recCfg.seed();
-        final int     intIncr = recCfg.increment().intValue();
+        final long    lngSeed = recCfg.lngSeed();
+        final int     intIncr = recCfg.numIncr().intValue();
         final int     cntVals = 10;
         
-        ScalarFactory   facTest = ScalarFactory.from(recCfg);
+        ScalarFactory   facTest = recCfg.newFactory();
         
         Integer     intVal = Math.toIntExact(lngSeed);
         for (int iVal=0; iVal<cntVals; iVal++) {
@@ -299,13 +313,13 @@ public class ScalarFactoryTest {
     public final void testNextValueLong1() {
         
         // Test Parameters
-        final ScalarFactoryConfig     recCfg = REC_CFG_LNG_1;
+        final ScalarFactorySpec     recCfg = REC_CFG_LNG_1;
         
-        final long    lngSeed = recCfg.seed();
-        final long    lngIncr = recCfg.increment().longValue();
+        final long    lngSeed = recCfg.lngSeed();
+        final long    lngIncr = recCfg.numIncr().longValue();
         final int     cntVals = 10;
         
-        ScalarFactory   facTest = ScalarFactory.from(recCfg);
+        ScalarFactory   facTest = recCfg.newFactory();
         
         Long    lngVal = lngSeed;
         for (int iVal=0; iVal<cntVals; iVal++) {
@@ -327,13 +341,13 @@ public class ScalarFactoryTest {
     public final void testNextValueFloat1() {
         
         // Test Parameters
-        final ScalarFactoryConfig     recCfg = REC_CFG_FLT_1;
+        final ScalarFactorySpec     recCfg = REC_CFG_FLT_1;
         
-        final long    lngSeed = recCfg.seed();
-        final float   fltIncr = recCfg.increment().floatValue();
+        final long    lngSeed = recCfg.lngSeed();
+        final float   fltIncr = recCfg.numIncr().floatValue();
         final int     cntVals = 10;
         
-        ScalarFactory   facTest = ScalarFactory.from(recCfg);
+        ScalarFactory   facTest = recCfg.newFactory();
         
         Float   fltVal = (float) lngSeed;
         for (int iVal=0; iVal<cntVals; iVal++) {
@@ -355,13 +369,13 @@ public class ScalarFactoryTest {
     public final void testNextValueDouble1() {
         
         // Test Parameters
-        final ScalarFactoryConfig     recCfg = REC_CFG_DBL_1;
+        final ScalarFactorySpec     recCfg = REC_CFG_DBL_1;
         
-        final long    lngSeed = recCfg.seed();
-        final double  dblIncr = recCfg.increment().doubleValue();
+        final long    lngSeed = recCfg.lngSeed();
+        final double  dblIncr = recCfg.numIncr().doubleValue();
         final int     cntVals = 10;
         
-        ScalarFactory   facTest = ScalarFactory.from(recCfg);
+        ScalarFactory   facTest = recCfg.newFactory();
         
         Double  dblVal = (double) lngSeed;
         for (int iVal=0; iVal<cntVals; iVal++) {
@@ -383,11 +397,11 @@ public class ScalarFactoryTest {
     public final void testNextValueDoubleRand() {
         
         // Test Parameters
-        final ScalarFactoryConfig     recCfg = REC_CFG_DBL_RND;
+        final ScalarFactorySpec     recCfg = REC_CFG_DBL_RND;
         
         final int     cntVals = 10;
         
-        ScalarFactory   facTest = ScalarFactory.from(recCfg);
+        ScalarFactory   facTest = recCfg.newFactory();
         
         // Test start value
         Double  dblStart = null;

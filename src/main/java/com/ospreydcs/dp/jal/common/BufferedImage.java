@@ -196,6 +196,35 @@ public class BufferedImage implements Serializable {
                     return enm;
             return null;
         }
+        
+        /**
+         * <p>
+         * Returns the <code>Format</code> enumeration constant with the given name.
+         * </p>
+         * <p>
+         * This a a convenience method that simply calls the method <code>{@link Enum#valueOf(Class, String)}</code>
+         * with first argument given by <code>Foramt.class</code> and the second argument given by
+         * the argument of this method.  Any exception thrown is caught an returned as a 
+         * <code>{@link TypeNotPresentException}</code>.
+         * </p>
+         * 
+         * @param strName   name of the <code>Format</code> enumeration constant
+         * 
+         * @return  the <code>Format</code> constant with the given name
+         * 
+         * @throws TypeNotPresentException  the name was invalid
+         */
+        public static Format    getConstant(String strName) throws TypeNotPresentException {
+            
+            try {
+                Format enmConstant = Format.valueOf(Format.class, strName);
+                return enmConstant;
+                
+            } catch (Exception e) {
+                throw new TypeNotPresentException(strName, e);
+            }
+        }
+        
     }
     
     

@@ -77,15 +77,15 @@ public class TensorFactory implements IDatumFactory {
      * Creates and returns a new <code>TensorFactory</code> instance configured according to the given arguments.
      * </p>
      * 
-     * @param shape     array containing size of each array axis
-     * @param recFacCfg configuration record for the scalar value generator used internally for value generation 
+     * @param shape      array containing size of each array axis
+     * @param recFacSpec configuration record for the scalar value generator used internally for value generation 
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
      * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
      */
-    public static TensorFactory from(int[] shape, ScalarFactoryConfig recFacCfg) throws IllegalArgumentException {
-        ScalarFactory   facValues = ScalarFactory.from(recFacCfg);
+    public static TensorFactory from(int[] shape, ScalarFactorySpec recFacSpec) throws IllegalArgumentException {
+        ScalarFactory   facValues = recFacSpec.newFactory();
         
         return TensorFactory.from(shape, facValues);
     }
@@ -210,7 +210,7 @@ public class TensorFactory implements IDatumFactory {
      * @return  value generation seed value provided at construction
      */
     public long  getSeed() {
-        return this.facValues.getConfiguration().seed();
+        return this.facValues.getSeed();
     }
     
     /**

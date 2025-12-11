@@ -60,18 +60,19 @@ datagen:       # JAL Tools simulated data generation default configuration param
          type: SAMPLING_CLOCK  # 'DpTimestampCase' enumeration         : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_TYPE
          start: 2023-10-31T15:51:02.000+00:00 # first timestamp        : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_START
          period: PT0.001S      # sampling period (ISO-8605 format)     : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_PERIOD
+         delay: P0.0S          # sampling delay from start instant     : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_DELAY
          count: 1000           # samples per frame (row count)         : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMP_COUNT
       columns:                 # Default columns for ingestion frames
          - name: JalDbl_       # column bank name (also prefix for cols)
            count: 100          # number of columns in column bank
-           colType: SCALAR     # 'JalHeteroType' enumeration - data type of all columns in column bank
-           dataType: DOUBLE    # 'JalScalarType' enumeration - data type of heterogeneous data values in columns
+           type: SCALAR        # 'JalHeteroType' enumeration - datum type of all columns in column bank
+           factory: "DOUBLE"   # parameters for datum factory (depends on 'type')
          - name: JalStruct_
            count: 1
-           colType: STRUCTURE
-           dataType: INTEGER
+           type: STRUCTURE
+           factory: "2 3 INTEGER false"
    values:                  # Data value generation parameters
-      scalar:               # Scalar data value generation
+      scalar:               # Scalar factory default configuration parameters
          type: DOUBLE          # JalScalarType enumeration constant    : JAL_TOOLS_DATAGEN_VALUES_SCALAR_TYPE
          stringPrefix: "str:"  # prefix for all string values          : JAL_TOOLS_DATAGEN_VALUES_SCALAR_STRING_PREFIX
          random:            # Random number generation parameters      : JAL_TOOLS_DATAGEN_VALUES_SCALAR_RANDOM_ENABLE_{PROP}
@@ -85,7 +86,21 @@ datagen:       # JAL Tools simulated data generation default configuration param
             floatv: 0.1        # increment value for float value generation
             doublev: 0.01      # increment value for double value generation
             stringv: 1         # increment value for string value generator (full string includes numeric suffix)
-      structure:            # Structure data value generation
+      timestamp:            # Timestamp factory default configuration parameters
+         random:               # Random timestamp generation parameters
+            enabled: false     # enable/disable random timestamp values      : JAL_TOOLS_DATA_GEN_VALUES_TIMESTAMP_RANDOM_ENDABLED
+            seed: 0            # random  generator seed (0 for random seed)  : JAL_TOOLS_DATA_GEN_VALUES_TIMESTAMP_RANDOM_SEED
+         increment:
+            start: 1970-01-01T00:00:00Z # first timestamp (ISO format) : JAL_TOOLS_DATAGEN_TIMESTAMP_INCREMENT_START
+            period: PT0.001S   # duration between timestamps (ISO PnDTnHnMn.nS format) : JAL_TOOLS_DATAGEN_TIMESTAMP_INCREMENT_PERIOD 
+      bytes:                # Byte array factory default configuration parameters
+         size: 65536           # byte array size (in bytes)                  : JAL_TOOLS_DATAGEN_VALUES_BYTES_SIZE
+      image:                # Image factory default configuration parameters
+         separator: ":"        # separator between prefix and image count    : JAL_TOOLS_DATAGEN_VALUES_IMAGE_SEPARATOR
+         namePrefix: "img"     # image name prefix (suffixed by image count) : JAL_TOOLS_DATAGEN_VALUES_IMAGE_NAME_PREFIX
+         format: RAW           # BufferedImage.Format enumeration            : JAL_TOOLS_DATAGEN_VALUES_IMAGE_FORMAT 
+         size: 65536           # image size (in bytes)                       : JAL_TOOLS_DATAGEN_VALUES_IMAGE_SIZE
+      structure:            # Structure factory default configuration parameters
          fieldNames:           # Properties for structure field name generation
             prefix: "F"        # prefix given to structure field names  : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_PREFIX
             separator: ":"     # separator placed between field indices : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_SEPARATOR
@@ -94,17 +109,6 @@ datagen:       # JAL Tools simulated data generation default configuration param
               prefix: "S"      # name token prefix prepended to field name   : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_PREFIX
               separator1: "#"  # separator placed between structure indices  : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_SEPARATOR1
               separator2: "-"  # separator between struct token and field nm : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_UNIQUE_SEPARATOR2 
-      image:                # Image data value generation default parameters
-         namePrefix: "img"     # image name prefix (suffixed by image count) : JAL_TOOLS_DATAGEN_VALUES_IMAGE_NAME_PREFIX
-         separator: ":"        # separator between prefix and image count    : JAL_TOOLS_DATAGEN_VALUES_IMAGE_SEPARATOR
-         format: RAW           # BufferedImage.Format enumeration            : JAL_TOOLS_DATAGEN_VALUES_IMAGE_FORMAT 
-      timestamp:            # Timestamp data value generation default parameters
-         random:               # Random timestamp generation parameters
-            enabled: false     # enable/disable random timestamp values      : JAL_TOOLS_DATA_GEN_VALUES_TIMESTAMP_RANDOM_ENDABLED
-            seed: 0            # random  generator seed (0 for random seed)  : JAL_TOOLS_DATA_GEN_VALUES_TIMESTAMP_RANDOM_SEED
-         increment:
-            start: 1970-01-01T00:00:00Z # first timestamp (ISO format) : JAL_TOOLS_DATAGEN_TIMESTAMP_INCREMENT_START
-            period: PT0.001S   # duration between timestamps (ISO PnDTnHnMn.nS format) : JAL_TOOLS_DATAGEN_TIMESTAMP_INCREMENT_PERIOD 
              
 output:         # JAL Tools (General) default output location - this should be related to DP_JAL_OUTPUT environment variable
    path: test/output         # path location relative to execution     : JAL_TOOLS_OUTPUT_PATH

@@ -28,6 +28,7 @@ package com.ospreydcs.dp.jal.tools.config.datagen;
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsBytesFactoryConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsImageValuesConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarValuesConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsStructValuesConfig;
@@ -84,17 +85,21 @@ public class JalToolsDataGenConfig extends CfgStructure<JalToolsDataGenConfig> {
         @ACfgOverride.Struct(pathelem="VALUES")
         public JalToolsScalarValuesConfig       scalar;
         
-        /** Default configuration parameters for structure value generation */
-        @ACfgOverride.Struct(pathelem="STRUCTURE")
-        public JalToolsStructValuesConfig       structure;
+        /** Default configuration parameters for timestamp value generation */
+        @ACfgOverride.Struct(pathelem="TIMESTAMP")
+        public JalToolsTmsValuesConfig          timestamp;
+        
+        /** Default configuration parameters for byte array value generation */
+        @ACfgOverride.Struct(pathelem="BYTES")
+        public JalToolsBytesFactoryConfig       bytes;
         
         /** Default configuration parameters for image value generation */
         @ACfgOverride.Struct(pathelem="IMAGE")
         public JalToolsImageValuesConfig        image;
         
-        /** Default configuration parameters for timestamp value generation */
-        @ACfgOverride.Struct(pathelem="TIMESTAMP")
-        public JalToolsTmsValuesConfig          timestamp;
+        /** Default configuration parameters for structure value generation */
+        @ACfgOverride.Struct(pathelem="STRUCTURE")
+        public JalToolsStructValuesConfig       structure;
         
     }
 }

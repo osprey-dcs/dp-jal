@@ -104,22 +104,22 @@ public class TensorFactoryTest {
     
 
     /** Configuration for a unit increment string-value scalar factory */
-    public static final ScalarFactoryConfig     REC_CFG_STR_1 = ScalarFactoryConfig.from(JalScalarType.STRING, false, 0, Integer.valueOf(1), STR_PREFIX);
+    public static final ScalarFactorySpec     REC_CFG_STR_1 = ScalarFactorySpec.from(JalScalarType.STRING, false, 0, Integer.valueOf(1), STR_PREFIX);
     
     /** Configuration for an incremental boolean-value scalar factory */
-    public static final ScalarFactoryConfig     REC_CFG_BOL_1 = ScalarFactoryConfig.from(JalScalarType.BOOLEAN, false, 0, Integer.valueOf(1));
+    public static final ScalarFactorySpec     REC_CFG_BOL_1 = ScalarFactorySpec.from(JalScalarType.BOOLEAN, false, 0, Integer.valueOf(1));
     
     /** Configuration for a unit increment integer-value scalar factory */
-    public static final ScalarFactoryConfig     REC_CFG_INT_1 = ScalarFactoryConfig.from(JalScalarType.INTEGER, false, 0, Integer.valueOf(1));
+    public static final ScalarFactorySpec     REC_CFG_INT_1 = ScalarFactorySpec.from(JalScalarType.INTEGER, false, 0, Integer.valueOf(1));
     
     /** Configuration for a 2 increment integer-value scalar factory */
-    public static final ScalarFactoryConfig     REC_CFG_INT_2 = ScalarFactoryConfig.from(JalScalarType.INTEGER, false, 0, Integer.valueOf(2));
+    public static final ScalarFactorySpec     REC_CFG_INT_2 = ScalarFactorySpec.from(JalScalarType.INTEGER, false, 0, Integer.valueOf(2));
     
     /** Configuration for an incremental double-value scalar factory */
-    public static final ScalarFactoryConfig     REC_CFG_DBL_1 = ScalarFactoryConfig.from(JalScalarType.DOUBLE, false, 0, Double.valueOf(1.602e-19));
+    public static final ScalarFactorySpec     REC_CFG_DBL_1 = ScalarFactorySpec.from(JalScalarType.DOUBLE, false, 0, Double.valueOf(1.602e-19));
     
     /** Configuration for a random double-value scalar factory */
-    public static final ScalarFactoryConfig     REC_CFG_DBL_RND = ScalarFactoryConfig.from(JalScalarType.DOUBLE, true, 0);
+    public static final ScalarFactorySpec     REC_CFG_DBL_RND = ScalarFactorySpec.from(JalScalarType.DOUBLE, true, 0);
     
 
     //
@@ -160,21 +160,21 @@ public class TensorFactoryTest {
     //
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#from(int[], com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactoryConfig)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.values.TensorFactory#from(int[], com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactorySpec)}.
      */
     @Test
     public final void testFromIntArrayScalarFactoryConfig() {
 
         // Parameters
         final int[]                 arrShape = ARR_SHAPE_3TENSOR_MED;
-        final ScalarFactoryConfig   recCfg = REC_CFG_INT_1;
+        final ScalarFactorySpec   recCfg = REC_CFG_INT_1;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
-        final JalScalarType enmType = recCfg.enmValueType();
+        final JalScalarType enmType = recCfg.enmType();
         
         TensorFactory   facTest = TensorFactory.from(arrShape, recCfg);
-        Assert.assertEquals(recCfg.bolRandEnable(), facTest.isRandom());
+        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandom());
         Assert.assertEquals(intRank, facTest.getRank());
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
@@ -192,14 +192,14 @@ public class TensorFactoryTest {
 
         // Parameters
         final int[]                 arrShape = ARR_SHAPE_VECTOR;
-        final ScalarFactoryConfig   recCfg = REC_CFG_DBL_1;
+        final ScalarFactorySpec   recCfg = REC_CFG_DBL_1;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
-        final JalScalarType enmType = recCfg.enmValueType();
+        final JalScalarType enmType = recCfg.enmType();
         
         TensorFactory   facTest = TensorFactory.from(arrShape, recCfg);
-        Assert.assertEquals(recCfg.bolRandEnable(), facTest.isRandom());
+        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandom());
         Assert.assertEquals(intRank, facTest.getRank());
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
@@ -216,16 +216,16 @@ public class TensorFactoryTest {
     public final void testTensorFactory() {
 
         // Parameters
-        final int[]                 arrShape = ARR_SHAPE_ARRAY_LARGE;
-        final ScalarFactoryConfig   recCfg = REC_CFG_DBL_RND;
-        final ScalarFactory         facVals = ScalarFactory.from(recCfg);
+        final int[]               arrShape = ARR_SHAPE_ARRAY_LARGE;
+        final ScalarFactorySpec   recCfg = REC_CFG_DBL_RND;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
-        final JalScalarType enmType = recCfg.enmValueType();
+        final JalScalarType enmType = recCfg.enmType();
         
         TensorFactory   facTest = new TensorFactory(arrShape, facVals);
-        Assert.assertEquals(recCfg.bolRandEnable(), facTest.isRandom());
+        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandom());
         Assert.assertEquals(intRank, facTest.getRank());
         Assert.assertEquals(intSize, facTest.getSize());
         Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
@@ -290,13 +290,13 @@ public class TensorFactoryTest {
     public final void testNextValueEmpty() {
 
         // Parameters
-        final ScalarFactoryConfig   recCfg = REC_CFG_INT_1;
+        final ScalarFactorySpec   recCfg = REC_CFG_INT_1;
         final int[]                 arrShape = ARR_SHAPE_EMPTY;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
-        final int           intSeed = Math.toIntExact( recCfg.seed() );
-        final boolean       bolRand = recCfg.bolRandEnable();
+        final int           intSeed = Math.toIntExact( recCfg.lngSeed() );
+        final boolean       bolRand = recCfg.bolRandEnbl();
         
         // Create the tensor factory and check configuration
         TensorFactory  facTest = TensorFactory.from(arrShape, recCfg);
@@ -320,15 +320,15 @@ public class TensorFactoryTest {
     public final void testNextValueDoubleScalar() {
 
         // Parameters
-        final ScalarFactoryConfig   recCfg = REC_CFG_DBL_1;
+        final ScalarFactorySpec   recCfg = REC_CFG_DBL_1;
         final int[]                 arrShape = ARR_SHAPE_SCALAR;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
-        final JalScalarType enmType = recCfg.enmValueType();
-        final int           intSeed = Math.toIntExact( recCfg.seed() );
-        final double        dblIncr = recCfg.increment().doubleValue();
-        final boolean       bolRand = recCfg.bolRandEnable();
+        final JalScalarType enmType = recCfg.enmType();
+        final int           intSeed = Math.toIntExact( recCfg.lngSeed() );
+        final double        dblIncr = recCfg.numIncr().doubleValue();
+        final boolean       bolRand = recCfg.bolRandEnbl();
         final int           cntVals = 10;
         
         // Create the tensor factory and check configuration
@@ -383,15 +383,15 @@ public class TensorFactoryTest {
     public final void testNextValueStringScalar() {
 
         // Parameters
-        final ScalarFactoryConfig   recCfg = REC_CFG_STR_1;
+        final ScalarFactorySpec   recCfg = REC_CFG_STR_1;
         final int[]                 arrShape = ARR_SHAPE_SCALAR;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
-        final JalScalarType enmType = recCfg.enmValueType();
-        final int           intSeed = Math.toIntExact( recCfg.seed() );
-        final int           intIncr = recCfg.increment().intValue();
-        final boolean       bolRand = recCfg.bolRandEnable();
+        final JalScalarType enmType = recCfg.enmType();
+        final int           intSeed = Math.toIntExact( recCfg.lngSeed() );
+        final int           intIncr = recCfg.numIncr().intValue();
+        final boolean       bolRand = recCfg.bolRandEnbl();
         final int           cntVals = 10;
         
         // Create the tensor factory and check configuration
@@ -449,13 +449,13 @@ public class TensorFactoryTest {
 
         // Parameters
         final int[]                 arrShape = ARR_SHAPE_ARRAY_SMALL;
-        final ScalarFactoryConfig   recCfg = REC_CFG_BOL_1;
+        final ScalarFactorySpec   recCfg = REC_CFG_BOL_1;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
-        final JalScalarType enmType = recCfg.enmValueType();
-        final int           intSeed = Math.toIntExact( recCfg.seed() );
-        final boolean       bolRand = recCfg.bolRandEnable();
+        final JalScalarType enmType = recCfg.enmType();
+        final int           intSeed = Math.toIntExact( recCfg.lngSeed() );
+        final boolean       bolRand = recCfg.bolRandEnbl();
         
         // Create the tensor factory and check configuration
         TensorFactory facTest = TensorFactory.from(arrShape, recCfg);
@@ -495,14 +495,14 @@ public class TensorFactoryTest {
     public final void testNextValueIntegerArraySmall() {
 
         // Parameters
-        final ScalarFactoryConfig   recCfg = REC_CFG_INT_1;
+        final ScalarFactorySpec   recCfg = REC_CFG_INT_1;
         final int[]                 arrShape = ARR_SHAPE_ARRAY_SMALL;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
-        final JalScalarType enmType = recCfg.enmValueType();
-        final int           intSeed = Math.toIntExact( recCfg.seed() );
-        final boolean       bolRand = recCfg.bolRandEnable();
+        final JalScalarType enmType = recCfg.enmType();
+        final int           intSeed = Math.toIntExact( recCfg.lngSeed() );
+        final boolean       bolRand = recCfg.bolRandEnbl();
         
         // Create the tensor factory and check configuration
         TensorFactory  facTest = TensorFactory.from(arrShape, recCfg);
@@ -550,13 +550,13 @@ public class TensorFactoryTest {
 
         // Parameters
         final int[]                 arrShape = ARR_SHAPE_3TENSOR_MED;
-        final ScalarFactoryConfig   recCfg = REC_CFG_INT_1;
+        final ScalarFactorySpec   recCfg = REC_CFG_INT_1;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
-        final JalScalarType enmType = recCfg.enmValueType();
-        final long          lngSeed = recCfg.seed();
-        final boolean       bolRand = recCfg.bolRandEnable();
+        final JalScalarType enmType = recCfg.enmType();
+        final long          lngSeed = recCfg.lngSeed();
+        final boolean       bolRand = recCfg.bolRandEnbl();
         
         // Create the tensor factory and check configuration
         TensorFactory   facTest = TensorFactory.from(arrShape, recCfg);
@@ -594,14 +594,14 @@ public class TensorFactoryTest {
 
         // Parameters
         final int[]                 arrShape = ARR_SHAPE_4TENSOR_SMALL;
-        final ScalarFactoryConfig   recCfg = REC_CFG_INT_2;
+        final ScalarFactorySpec   recCfg = REC_CFG_INT_2;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
-        final JalScalarType enmType = recCfg.enmValueType();
-        final long          lngSeed = recCfg.seed();
-        final int           intIncr = recCfg.increment().intValue();
-        final boolean       bolRand = recCfg.bolRandEnable();
+        final JalScalarType enmType = recCfg.enmType();
+        final long          lngSeed = recCfg.lngSeed();
+        final int           intIncr = recCfg.numIncr().intValue();
+        final boolean       bolRand = recCfg.bolRandEnbl();
         final int           cntVals = 10;
         
         // Create the tensor factory and check configuration

@@ -52,15 +52,20 @@ public class JalToolsImageValuesConfig extends CfgStructure<JalToolsImageValuesC
     // Fields
     //
     
-    /** The default name prefix given to all generated images (suffix is image count) */
-    @ACfgOverride.Field(name="NAME_PREFIX")
-    public String                   namePrefix;
-    
     /** The default separator placed between name prefix and image count */
     @ACfgOverride.Field(name="SEPARATOR")
     public String                   separator;
     
+    /** The default name prefix given to all generated images (suffix is image count) */
+    @ACfgOverride.Field(name="NAME_PREFIX")
+    public String                   namePrefix;
+    
     /** The default image format used for generated images */
     @ACfgOverride.Field(name="FORMAT")
     public BufferedImage.Format     format;
+    
+    /** The default image size (in bytes) used for generated images */
+    @ACfgOverride.Field(name="SIZE")
+    public Integer                  size;
+    
 }

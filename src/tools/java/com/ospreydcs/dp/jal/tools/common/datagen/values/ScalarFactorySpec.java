@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	ScalarFactoryConfig.java
+ * File:	ScalarFactorySpec.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.values
- * Type: 	ScalarFactoryConfig
+ * Type: 	ScalarFactorySpec
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -44,23 +44,65 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
- * Record containing configuration parameters for a <code>{@link ScalarFactory}</code> instance.
+ * Record containing specification for a datum factory producing scalar values.
  * </p> 
+ * <p>
+ * The record fields values contain the configuration parameters for a <code>{@link ScalarFactory}</code>
+ * instance.  The scalar type of the datum factory is given by the field <code>{@link #enmType()}</code>.
+ * There are 2 basic types of scalar factories: 1) a scalar factory producing random values, and 2) a scalar
+ * factory producing incremental values.  The type of scalar factory is determined by the value of field
+ * <code>{@link #bolRandEnbl}</code>.  The interpretation of the remaining fields <code>#lngSeed()}</code>
+ * and <code>{@link #numIncr()}</code> is determined by the value of <code>{@link #bolRandEnbl()}</code>.
+ * </p>
+ * <p>
+ * <h2>The {@link #strPrefix()} Field</h2>
+ * The field <code>{@link #strPrefix()}</code> is used only when 
+ * <code>{@link #enmType()} = {@link JalScalarType#STRING}</code>.  In that case the field contains
+ * the prefix of all generated string values, with the suffix given by the string value index. 
+ * </p>
+ * <p>
+ * <h2>Random Factories</h2>
+ * When the random value generation is enabled, scalar factories produce a 'random' sequence of datum values
+ * according to the datum type.  The field values are interpreted as follows:
+ * <ul>
+ * <li><code>{@link #bolRandEnbl()} = true</code>.</li>
+ * <li><code>{@link #lngSeed()} = 0</code> - random number lngSeed is 'randomly' generated.</li>
+ * <li><code>{@link #lngSeed()} &ne; 0</code> - random number generator lngSeed is <code>{@link #lngSeed()}</code> producing 
+ *     repeatable 'random' sequences.</li>
+ * <li><code>{@link #numIncr()}</code> - ignored.</li>
+ * </ul>  
+ * Note that random scalar factories are more expensive than incremental factories as they require the use of a 
+ * random number generator.  For large data sets this can be computationally significant.
+ * </p>
+ * <p>
+ * <h2>Incremental Factories</h2>
+ * When the random value generation is disabled, scalar factories produce incremental sequence of datum values
+ * according to the datum type and the seed value.  The field values are interpreted as follows:
+ * <ul>
+ * <li><code>{@link #bolRandEnbl()} = false</code>.</li>
+ * <li><code>{@link #lngSeed()}</code> - 1st value of the numeric sequence or 1st suffix of a string sequence.</li>
+ * <li><code>{@link #numIncr()}</code> - the numeric increment for numeric sequence or suffix increment for strings.</li>
+ * </ul>
+ * Note that the <code>{@link #numIncr()}</code> type is interpreted according to the value of 
+ * <code>{@link #enmType()}</code>.  When <code>{@link #enmType()} = {@link JalScalarType#STRING}</code>
+ * the increment is assumed to be an integer.  
+ * Incremental factories can be significantly faster than random factories since only an arithmetic operation is required.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Nov 7, 2025
  * 
- * @param   enmValueType    the data type of the scalar values to generate
- * @param   bolRandEnable   enable/disable the use of random number generation for scalar values
- * @param   seed            seed value for random number generation or start value for incremental value generation   
- * @param   increment       numeric incremental value used when random generation is disabled (type depends upon data type)
- * @param   strPrefix       prefix used for all string value generation (suffix given by integer value)
+ * @param   enmType     the data type of the scalar values to generate
+ * @param   bolRandEnbl enable/disable the use of random number generation for scalar values
+ * @param   lngSeed     seed value for random number generation or start value for incremental value generation   
+ * @param   numIncr     numeric incremental value used when random generation is disabled (type depends upon data type)
+ * @param   strPrefix   prefix used for all string value generation (suffix given by integer value)
  */
-public record ScalarFactoryConfig(
-        JalScalarType   enmValueType,
-        boolean         bolRandEnable,
-        long            seed,
-        Number          increment,
+public record ScalarFactorySpec(
+        JalScalarType   enmType,
+        boolean         bolRandEnbl,
+        long            lngSeed,
+        Number          numIncr,
         String          strPrefix
         ) 
 {
@@ -71,11 +113,11 @@ public record ScalarFactoryConfig(
     
     /**
      * <p>
-     * Parses argument string array to identify and create a <code>ScalarFactoryConfig</code> configuration record.
+     * Parses argument string array to identify and create a <code>ScalarFactorySpec</code> configuration record.
      * </p>
      * <p>
      * The argument is typically part of an application command-line argument set obtained by parsing a delimited 
-     * variable such as "--vtype INTEGER FALSE 0 1".  The method parses the variable parameters returning the
+     * variable such as "--stype INTEGER FALSE 0 1".  The method parses the variable parameters returning the
      * corresponding configuration record.  An exception is thrown if the argument collection is not properly
      * formatted as described below.
      * </p> 
@@ -83,63 +125,69 @@ public record ScalarFactoryConfig(
      * <h2>Caveat</h2>
      * Clearly it is not necessary for the arguments to be obtained from an application command line as described.  
      * So long as the stated conditions and formats are followed the method will create and return an appropriate 
-     * <code>ScalarFactoryConfig</code> configuration record.
+     * <code>ScalarFactorySpec</code> configuration record.
      * </p> 
      * <p>
      * <h2>Usage</h2>
      * The argument is assumed to be part of an application command line.  For example, the command-line could
-     * contain the delimited variable "--vtype" which appears as
+     * contain the delimited variable "--stype" which appears as
      * <code>
      * <pre>
-     * > java application --vtype VTYPE bolRandEnable seed increment strPrefix
+     * > java application --stype STYPE bolRandEnbl lngSeed numIncr strPrefix
      * </pre>
      * </code>
      * where 
      * <ul>
-     * <li>'VTYPE' is a <code>JalScalarType</code> enumeration constant,</li>
-     * <li>'bolRandEnable' is the <code>{@link #bolRandEnable()} record field,</li>
-     * <li>'seed' is the <code>{@link #seed()}</code> record field,</li>
-     * <li>'increment' is the <code>{@link #increment()} record field,</li>
+     * <li>'STYPE' is a <code>JalScalarType</code> enumeration constant,</li>
+     * <li>'bolRandEnbl' is the <code>{@link #bolRandEnbl()}</code> record field,</li>
+     * <li>'lngSeed' is the <code>{@link #lngSeed()}</code> record field,</li>
+     * <li>'numIncr' is the <code>{@link #numIncr()}</code> record field,</li>
      * <li>'strPrefix' is the <code>{@link #strPrefix()}</code> record field.</li>
      * </ul>
      * The argument to this method is then the set of command-line strings
      * <code>
      * <pre>
-     * VTYPE [bolRandEnable [seed [increment [strPrefix]]]]
+     * [STYPE [bolRandEnbl [lngSeed [numIncr [strPrefix]]]]]
      * </pre>
      * </code>
-     * The brackets '[...]' indicate optional inclusion.  Thus, the field 'VTYPE' must always be included
-     * in the arguments (i.e., the argument length must be greater than or equal to 1), or an exception is thrown.
-     * Note that the options are nested. For example, if the 'seed' field is included then the 'bolRandEnable'
+     * The brackets '[...]' indicate optional inclusion.
+     * Note that the options are nested. For example, if the 'lngSeed' field is included then the 'bolRandEnbl'
      * field must also be included.  If the 'strPrefix' field is included then all fields must be included.
      * </p>
      * <p>
-     * <h2>Optional Fields<h2>
+     * <s>  
+     * Thus, the field 'STYPE' must always be included
+     * in the arguments (i.e., the argument length must be greater than or equal to 1), or an exception is thrown.
+     * </s>
+     * </p>
+     * <p>
+     * <h2>Optional Fields</h2>
      * All optional field values not included in the argument collection are taken from the JAL Tools default
      * configuration.  Note that the nesting of optional field values is necessary because all argument values
      * are strings, thus, type cannot be determined at runtime but must be inferred.
      * </p> 
      * 
-     * Thus, the number of elements within the argument string array is dependent upon the <code>JalComplexType</code>
-     * identified by the first element.  If the number of arguments is not appropriate for the given type
-     * a <code>ConfigurationException</code> is thrown.
-     * </p>
+     * @apiNote
+     * The implementation has been modified so that an empty argument collection returns the default 
+     * <code>ScalarFactorySpec</code> given by <code>{@link #from()}</code>.  This configuration is completely
+     * determined by the JAL Tools default configuration for scalar value factories. 
      *  
      * @param args  argument string defining a configuration record
      * 
      * @return  a new configuration record populated by the parsed argument elements
      * 
-     * @throws IllegalArgumentException the argument contained no data (length = 0)
-     * @throws TypeNotPresentException  the 1st element was not a <code>JalComplexType</code> enumeration constant
-     * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+     * @throws TypeNotPresentException          the 1st element was not a <code>JalScalarType</code> enumeration constant
+     * @throws NumberFormatException            invalid numeric format (e.g., 'lngSeed', 'numIncr')
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIcr()}</code> field for numeric value type  
      */
-    public static ScalarFactoryConfig   parseArgs(String...args) throws IllegalArgumentException, TypeNotPresentException, UnsupportedOperationException {
+    public static ScalarFactorySpec   parseArgs(String...args) throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException {
 
         // Check argument length
         if (args.length < 1)
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() 
-                    + " - Argument must contain at least one argument: " 
-                    + args);
+            return ScalarFactorySpec.from();
+//            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() 
+//                    + " - Argument must contain at least one argument: " 
+//                    + args);
 
         // Get the value type of the scalars to generate
         String          strValueType = args[0];
@@ -147,34 +195,35 @@ public record ScalarFactoryConfig(
         
         // --- Parse the random number generation enable/disable flag ---
         if (args.length < 2)
-            return ScalarFactoryConfig.from(enmValueType);
+            return ScalarFactorySpec.from(enmValueType);
         Boolean bolRandEnable = Boolean.valueOf(args[1]);
         
-        // --- Parse the seed field value ---
+        // --- Parse the lngSeed field value ---
         if (args.length < 3)
-            return ScalarFactoryConfig.from(enmValueType, bolRandEnable);
-        Long    lngSeed = Long.valueOf(args[2]);
+            return ScalarFactorySpec.from(enmValueType, bolRandEnable);
+        Long    lngSeed = Long.valueOf(args[2]);    // throws NumberFormatException
         
         // --- Parse the increment field value ---
         if (args.length < 4)
-            return ScalarFactoryConfig.from(enmValueType, bolRandEnable, lngSeed);
+            return ScalarFactorySpec.from(enmValueType, bolRandEnable, lngSeed);
         String  strIncr = args[3];
         
         Number  numIncr = switch (enmValueType) {
-        case BOOLEAN -> Integer.valueOf(strIncr);
-        case INTEGER -> Integer.valueOf(strIncr);
-        case LONG -> Long.valueOf(strIncr);
-        case DOUBLE -> Double.valueOf(strIncr);
-        case FLOAT -> Float.valueOf(strIncr);
-        case STRING -> Integer.valueOf(strIncr);
+        case BOOLEAN -> Integer.valueOf(strIncr);   // throws NumberFormatException
+        case INTEGER -> Integer.valueOf(strIncr);   // throws NumberFormatException
+        case LONG -> Long.valueOf(strIncr);         // throws NumberFormatException
+        case DOUBLE -> Double.valueOf(strIncr);     // throws NumberFormatException
+        case FLOAT -> Float.valueOf(strIncr);       // throws NumberFormatException
+        case STRING -> Integer.valueOf(strIncr);    // throws NumberFormatException
         default -> throw new UnsupportedOperationException("Increment value not available for type: " + enmValueType);
         };
         
         // --- Parse the string prefix field value ---
         if (args.length < 5)
-            return ScalarFactoryConfig.from(enmValueType, bolRandEnable, lngSeed, numIncr);
+            return ScalarFactorySpec.from(enmValueType, bolRandEnable, lngSeed, numIncr);
         
-        return ScalarFactoryConfig.from(enmValueType, bolRandEnable, lngSeed, numIncr, args[4]);
+        String  strPrefix = args[4];
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable, lngSeed, numIncr, strPrefix);
     }
     
     /**
@@ -182,42 +231,42 @@ public record ScalarFactoryConfig(
      * Parses the input stream as if it were a single YAML document containing the record field values.
      * </p>
      * <p>
-     * A Snake YAML parse is used to create a <code>{@link ScalarFactoryYaml}</code> class instance to recover
+     * A Snake YAML parse is used to create a <code>{@link ScalarFactoryYamlSpec}</code> class instance to recover
      * the field values from the given input stream. 
      * Note that the argument stream is assumed to represent a single YAML document and the stream is 
      * thus exhausted after calling this method.
      * </p>
      * <p>
      * <h2>Format</h2>
-     * The format of the YAML document is given in the enclose class <code>{@link ScalarFactoryYaml}</code> documentation.
+     * The format of the YAML document is given in the enclose class <code>{@link ScalarFactoryYamlSpec}</code> documentation.
      * </p>  
      *  
      * @param is    input stream to a single YAML document
      * 
-     * @return  a new <code>ScalarFactoryConfig</code> record with field populated by the YAML document
+     * @return  a new <code>ScalarFactorySpec</code> record with field populated by the YAML document
      * 
-     * @throws  YAMLException               error occurred while parsing class <code>{@link ScalarFactoryYaml}</code>
+     * @throws  YAMLException               error occurred while parsing class <code>{@link ScalarFactoryYamlSpec}</code>
      * @throws IllegalStateException        intermediate structure class was not populated (internal error)
-     * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
      * 
-     * @see ScalarFactoryYaml
+     * @see ScalarFactoryYamlSpec
      */
-    public static ScalarFactoryConfig   parseYamlDoc(InputStream is) throws YAMLException, IllegalStateException, UnsupportedOperationException {
+    public static ScalarFactorySpec   parseYamlDoc(InputStream is) throws YAMLException, IllegalStateException, UnsupportedOperationException {
         
         Yaml    yaml = new Yaml();
         
-        ScalarFactoryYaml   struct = yaml.loadAs(is, ScalarFactoryYaml.class); // throws YAMLException
-        ScalarFactoryConfig recCfg = struct.createRecord();
+        ScalarFactoryYamlSpec   struct = yaml.loadAs(is, ScalarFactoryYamlSpec.class); // throws YAMLException
+        ScalarFactorySpec recCfg = struct.createRecord();
 
         return recCfg;
     }
     
     /**
      * <p>
-     * Parses a single YAML node for the field values of a <code>ScalarFactoryConfig</code> record.
+     * Parses a single YAML node for the field values of a <code>ScalarFactorySpec</code> record.
      * </p>
      * <p>
-     * The input stream is parsed for a single node containing the fields of a <code>ScalarFactoryConfig</code>
+     * The input stream is parsed for a single node containing the fields of a <code>ScalarFactorySpec</code>
      * record.  The stream is left in the line position directly after the node parsed (i.e., no further
      * parsing is pursued). 
      * The input stream is parsed according to the following:
@@ -265,7 +314,7 @@ public record ScalarFactoryConfig(
      * 
      * @param is    input stream containing YAML scalar value generation configuration node
      * 
-     * @return  a new <code>ScalarFactoryConfig</code> record with field populated by the YAML node
+     * @return  a new <code>ScalarFactorySpec</code> record with field populated by the YAML node
      * 
      * @throws IOException                  I/O error occurred while reading line from argument input stream
      * @throws IndexOutOfBoundsException    bad 'label: value' format  
@@ -273,7 +322,7 @@ public record ScalarFactoryConfig(
      * @throws NumberFormatException        a bad format for a string represented number was encountered
      * @throws ConfigurationException       missing or corrupt field values
      */
-    public static ScalarFactoryConfig   parseYamlNode(InputStream is) 
+    public static ScalarFactorySpec   parseYamlNode(InputStream is) 
             throws IOException, IndexOutOfBoundsException, TypeNotPresentException, NumberFormatException, ConfigurationException 
     {
 
@@ -295,11 +344,11 @@ public record ScalarFactoryConfig(
         // Field values
         JalScalarType   enmValueType = JalScalarType.UNSUPPORTED;
         String          stringPref = null;
-        Boolean         bolRandEnable = null;
-        Long            lngSeed = null;
-        Long            incrStart = null;
-        Number          incrValue = null;
-        String          strIncrValue = null;
+        Boolean         randBolEnbl = null;
+        Long            randLngSeed = null;
+        Long            incrLngStart = null;
+        Number          incrNumValue = null;
+        String          incrStrValue = null;
         
         // Create a reader for the input stream for line-based parsing
         InputStreamReader   rdrStrm = new InputStreamReader(is);
@@ -349,25 +398,25 @@ public record ScalarFactoryConfig(
                 
             // Random number generation enable/disable flag
             case STR_RAND_ENBL:
-                bolRandEnable = Boolean.valueOf(strValue);
+                randBolEnbl = Boolean.valueOf(strValue);
                 iValue++;
                 break;
                 
             // Random number generator seed value
             case STR_RAND_SEED:
-                lngSeed = Long.valueOf(strValue);                       // throws NumberFormatException
+                randLngSeed = Long.valueOf(strValue);                       // throws NumberFormatException
                 iValue++;
                 break;
                 
             // Incremental generator seed value 
             case STR_INCR_START:
-                incrStart = Long.valueOf(strValue);                     // throws NumberFormatException
+                incrLngStart = Long.valueOf(strValue);                     // throws NumberFormatException
                 iValue++;
                 break;
                
             // Incremental generator increment value
             case STR_INCR_VALUE:
-                strIncrValue = strValue;
+                incrStrValue = strValue;
                 iValue++;
                 break;
             }
@@ -376,35 +425,35 @@ public record ScalarFactoryConfig(
         
         // Check for missing field values 
         if (enmValueType == JalScalarType.UNSUPPORTED)
-            throw ScalarFactoryConfig.missingFieldLabel(STR_TYPE);
+            throw ScalarFactorySpec.missingFieldLabel(STR_TYPE);
         if (stringPref == null)
-            throw ScalarFactoryConfig.missingFieldLabel(STR_PREF);
-        if (bolRandEnable == null)
-            throw ScalarFactoryConfig.missingFieldLabel(STR_RAND_ENBL);
-        if (lngSeed == null)
-            throw ScalarFactoryConfig.missingFieldLabel(STR_RAND_SEED);
-        if (incrStart == null)
-            throw ScalarFactoryConfig.missingFieldLabel(STR_INCR_START);
-        if (strIncrValue == null)
-            throw ScalarFactoryConfig.missingFieldLabel(STR_INCR_VALUE);
+            throw ScalarFactorySpec.missingFieldLabel(STR_PREF);
+        if (randBolEnbl == null)
+            throw ScalarFactorySpec.missingFieldLabel(STR_RAND_ENBL);
+        if (randLngSeed == null)
+            throw ScalarFactorySpec.missingFieldLabel(STR_RAND_SEED);
+        if (incrLngStart == null)
+            throw ScalarFactorySpec.missingFieldLabel(STR_INCR_START);
+        if (incrStrValue == null)
+            throw ScalarFactorySpec.missingFieldLabel(STR_INCR_VALUE);
         
         if (enmValueType != JalScalarType.STRING)
             try {
-                incrValue = (Number) enmValueType.parseValue(strIncrValue);
+                incrNumValue = (Number) enmValueType.parseValue(incrStrValue);
                 
             } catch (Exception e) {
                 throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() 
-                        + " - Increment value " + strIncrValue + " cannot be converted to type " + enmValueType 
+                        + " - Increment value " + incrStrValue + " cannot be converted to type " + enmValueType 
                         + ": " + e.getMessage());
             }
         else 
-            incrValue = Integer.valueOf(strIncrValue);  // throws NumberFormatException
+            incrNumValue = Integer.valueOf(incrStrValue);  // throws NumberFormatException
 
         // Create and return the record according to random number enable/disable flag
-        if (bolRandEnable)
-            return ScalarFactoryConfig.from(enmValueType, bolRandEnable, lngSeed, incrValue, stringPref);
+        if (randBolEnbl)
+            return ScalarFactorySpec.from(enmValueType, randBolEnbl, randLngSeed, incrNumValue, stringPref);
         else
-            return ScalarFactoryConfig.from(enmValueType, bolRandEnable, incrStart, incrValue, stringPref);
+            return ScalarFactorySpec.from(enmValueType, randBolEnbl, incrLngStart, incrNumValue, stringPref);
     }
     
     /**
@@ -416,90 +465,94 @@ public record ScalarFactoryConfig(
      * Use with discretion.
      * </p>
      * 
-     * @return  a new <code>ScalarFactoryConfig</code> record populated with all default field values
+     * @return  a new <code>ScalarFactorySpec</code> record populated with all default field values
      * 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
      */
-    public static ScalarFactoryConfig   from() throws UnsupportedOperationException {
-        return ScalarFactoryConfig.from(ENM_TYPE_DEF);
+    public static ScalarFactorySpec   from() throws UnsupportedOperationException {
+        return ScalarFactorySpec.from(ENM_TYPE_DEF);
     }
     
     /**
      * <p>
-     * Creates and returns a new <code>ScalarFactoryConfig</code> record from the given arguments.
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
      * </p>
      * <p>
      * Record fields not supplied are taken from the JAL Tools default configuration.
      * <ul>
-     * <li>Field <code>{@link #bolRandEnable()}</code> is taken directly from the JAL default configuration.</li>
-     * <li>Field <code>{@link #seed()}</code> is determined by the random enable/disable flag.</li>
-     * <li>Field <code>{@link #increment()}</code> is determined by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #bolRandEnbl()}</code> is taken directly from the JAL default configuration.</li>
+     * <li>Field <code>{@link #lngSeed()}</code> is determined by the random enable/disable flag.</li>
+     * <li>Field <code>{@link #numIncr()}</code> is determined by the <code>JalScalarType</code> argument.</li>
      * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
      * 
-     * @param   enmValueType    the data type of the scalar values to generate
-     * @param   seed            seed value for random number generation or start value for incremental value generation   
+     * @param   enmType    the data type of the scalar values to generate
      * 
-     * @return  a new <code>ScalarFactoryConfig</code> record populated with the given argument values
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
      * 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
      */
-    public static ScalarFactoryConfig   from(JalScalarType enmValueType) throws UnsupportedOperationException {
+    public static ScalarFactorySpec   from(JalScalarType enmValueType) throws UnsupportedOperationException {
         
         boolean bolRandEnable = BOL_RAND_ENBL_DEF;
         
-        return ScalarFactoryConfig.from(enmValueType, bolRandEnable);
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable);
     }
     
     /**
      * <p>
-     * Creates and returns a new <code>ScalarFactoryConfig</code> record from the given arguments.
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
      * </p>
      * <p>
      * Record fields not supplied are taken from the JAL Tools default configuration.
      * <ul>
-     * <li>Field <code>{@link #bolRandEnable()}</code> is taken directly from the JAL default configuration.</li>
-     * <li>Field <code>{@link #increment()}</code> is determined by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #bolRandEnbl()}</code> is taken directly from the JAL default configuration.</li>
+     * <li>Field <code>{@link #numIncr()}</code> is determined by the <code>JalScalarType</code> argument.</li>
      * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * Use this creator with caution as the 'lngSeed' value is interpreted according to the default value of
+     * the 'bolRandEnbl' parameter (i.e., <code>{@link #BOL_RAND_ENBL_DEF}</code>).
+     * </p>
      * 
-     * @param   enmValueType    the data type of the scalar values to generate
-     * @param   seed            seed value for random number generation or start value for incremental value generation   
+     * @param   enmType    the data type of the scalar values to generate
+     * @param   lngSeed    lngSeed value for random number generation or start value for incremental value generation   
      * 
-     * @return  a new <code>ScalarFactoryConfig</code> record populated with the given argument values
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
      * 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
      */
-    public static ScalarFactoryConfig   from(JalScalarType enmValueType, long seed) throws UnsupportedOperationException {
+    public static ScalarFactorySpec   from(JalScalarType enmValueType, long lngSeed) throws UnsupportedOperationException {
         
         boolean bolRandEnable = BOL_RAND_ENBL_DEF;
         
-        return ScalarFactoryConfig.from(enmValueType, bolRandEnable, seed);
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable, lngSeed);
     }
     
     /**
      * <p>
-     * Creates and returns a new <code>ScalarFactoryConfig</code> record from the given arguments.
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
      * </p>
      * <p>
      * Record fields not supplied are taken from the JAL Tools default configuration.
      * <ul>
-     * <li>Field <code>{@link #seed()}</code> is determined by the random enable/disable flag.</li>
-     * <li>Field <code>{@link #increment()}</code> is determined by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #lngSeed()}</code> is determined by the random enable/disable flag.</li>
+     * <li>Field <code>{@link #numIncr()}</code> is determined by the <code>JalScalarType</code> argument.</li>
      * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
      * 
-     * @param   enmValueType    the data type of the scalar values to generate
-     * @param   bolRandEnable   enable/disable the use of random number generation for scalar values
+     * @param   enmType    the data type of the scalar values to generate
+     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
      * 
-     * @return  a new <code>ScalarFactoryConfig</code> record populated with the given argument values
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
      * 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
      */
-    public static ScalarFactoryConfig   from(JalScalarType enmValueType, boolean bolRandEnable) throws UnsupportedOperationException {
+    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable) throws UnsupportedOperationException {
         
         long    seed;
         if (bolRandEnable)
@@ -507,33 +560,33 @@ public record ScalarFactoryConfig(
         else
             seed = LNG_INCR_SEED_DEF;
             
-        return ScalarFactoryConfig.from(enmValueType, bolRandEnable, seed);
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable, seed);
     }
     
     /**
      * <p>
-     * Creates and returns a new <code>ScalarFactoryConfig</code> record from the given arguments.
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
      * </p>
      * <p>
      * Record fields not supplied are taken from the JAL Tools default configuration.
      * <ul>
-     * <li>Field <code>{@link #increment()}</code> is determined by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #numIncr()()}</code> is determined by the <code>JalScalarType</code> argument.</li>
      * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
      * 
-     * @param   enmValueType    the data type of the scalar values to generate
-     * @param   bolRandEnable   enable/disable the use of random number generation for scalar values
-     * @param   seed            seed value for random number generation or start value for incremental value generation   
+     * @param   enmType       the data type of the scalar values to generate
+     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
+     * @param   lngSeed       lngSeed value for random number generation or start value for incremental value generation   
      * 
-     * @return  a new <code>ScalarFactoryConfig</code> record populated with the given argument values
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
      * 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
      */
-    public static ScalarFactoryConfig   from(JalScalarType enmValueType, boolean bolRandEnable, long seed) throws UnsupportedOperationException {
+    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable, long lngSeed) throws UnsupportedOperationException {
         
         // Extract the incremental value from the JAL default parameters
-        Number increment = switch (enmValueType) {
+        Number numIncr = switch (enmValueType) {
         case BOOLEAN -> Integer.valueOf(0);
         case INTEGER -> INT_INCR_DEF;
         case LONG -> LNG_INCR_DEF;
@@ -543,12 +596,12 @@ public record ScalarFactoryConfig(
         default -> throw new UnsupportedOperationException("Increment value not available for type: " + enmValueType);
         };
         
-        return ScalarFactoryConfig.from(enmValueType, bolRandEnable, seed, increment);
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable, lngSeed, numIncr);
     }
     
     /**
      * <p>
-     * Creates and returns a new <code>ScalarFactoryConfig</code> record from the given arguments.
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
      * </p>
      * <p>
      * Record fields not supplied are taken from the JAL Tools default configuration.
@@ -557,36 +610,36 @@ public record ScalarFactoryConfig(
      * </ul>
      * </p>
      * 
-     * @param   enmValueType    the data type of the scalar values to generate
-     * @param   bolRandEnable   enable/disable the use of random number generation for scalar values
-     * @param   seed            seed value for random number generation or start value for incremental value generation   
-     * @param   increment       numeric incremental value used when random generation is disabled (type depends upon data type)
+     * @param   enmType       the data type of the scalar values to generate
+     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
+     * @param   lngSeed       lngSeed value for random number generation or start value for incremental value generation   
+     * @param   numIncr       numeric incremental value used when random generation is disabled (type depends upon data type)
      * 
-     * @return  a new <code>ScalarFactoryConfig</code> record populated with the given argument values
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
      */
-    public static ScalarFactoryConfig   from(JalScalarType enmValueType, boolean bolRandEnable, long seed, Number increment) {
+    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable, long seed, Number numIncr) {
         
-        return ScalarFactoryConfig.from(enmValueType, bolRandEnable, seed, increment, STR_PREFIX_DEF); 
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable, seed, numIncr, STR_PREFIX_DEF); 
     }
     
     /**
      * <p>
-     * Creates and returns a new <code>ScalarFactoryConfig</code> record from the given arguments.
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
      * </p>
      * <p>
      * This creator is equivalent to the canonical constructors.
      * </p>
      * 
-     * @param   enmValueType    the data type of the scalar values to generate
-     * @param   bolRandEnable   enable/disable the use of random number generation for scalar values
-     * @param   seed            seed value for random number generation or start value for incremental value generation   
-     * @param   increment       numeric incremental value used when random generation is disabled (type depends upon data type)
-     * @param   strPrefix       prefix used for all string value generation (suffix given by integer value)
+     * @param   enmType       the data type of the scalar values to generate
+     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
+     * @param   lngSeed       lngSeed value for random number generation or start value for incremental value generation   
+     * @param   numIncr       numeric incremental value used when random generation is disabled (type depends upon data type)
+     * @param   strPrefix     prefix used for all string value generation (suffix given by integer value)
      * 
-     * @return  a new <code>ScalarFactoryConfig</code> record populated with the given argument values
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
      */
-    public static ScalarFactoryConfig   from(JalScalarType enmValueType, boolean bolRandEnable, long seed, Number increment, String strPrefix) {
-        return new ScalarFactoryConfig(enmValueType, bolRandEnable, seed, increment, strPrefix);
+    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable, long lngSeed, Number numIncr, String strPrefix) {
+        return new ScalarFactorySpec(enmValueType, bolRandEnable, lngSeed, numIncr, strPrefix);
     }
     
     
@@ -607,7 +660,7 @@ public record ScalarFactoryConfig(
      * @return  a new <code>ScalarFactory</code> instance ready for scalar value creation
      */
     public ScalarFactory    newFactory() {
-        ScalarFactory   fac = ScalarFactory.from(this);
+        ScalarFactory   fac = ScalarFactory.from(this.enmType, this.bolRandEnbl, this.lngSeed, this.numIncr, this.strPrefix);
         
         return fac;
     }
@@ -624,14 +677,14 @@ public record ScalarFactoryConfig(
      * <p>
      * Tests the given argument for equivalence, that is, do all the record fields have the same value.
      * The argument is first tested for correct data type, specifically, it must be of type
-     * <code>ScalarFactoryConfig</code> or the method returns <code>false</code>.
+     * <code>ScalarFactorySpec</code> or the method returns <code>false</code>.
      * Note that the argument can be a different record instance but if all field values are equal then 
      * the method returns <code>true</code>.
      * </p>
      * 
      * @param   objCmp  object under equivalence comparison
      * 
-     * @return  <code>true</code> if the argument is a <code>ScalarFactoryConfig</code> record with equal field values,
+     * @return  <code>true</code> if the argument is a <code>ScalarFactorySpec</code> record with equal field values,
      *          <code>false</code> otherwise
      * 
      * @see Record#equals(Object)
@@ -639,11 +692,11 @@ public record ScalarFactoryConfig(
     @Override
     public boolean equals(Object objCmp) {
         
-        if (objCmp instanceof ScalarFactoryConfig rec) {
-            if (this.enmValueType == rec.enmValueType
-                    && this.bolRandEnable == rec.bolRandEnable
-                    && this.seed == rec.seed 
-                    && this.increment == rec.increment
+        if (objCmp instanceof ScalarFactorySpec rec) {
+            if (this.enmType == rec.enmType
+                    && this.bolRandEnbl == rec.bolRandEnbl
+                    && this.lngSeed == rec.lngSeed 
+                    && this.numIncr == rec.numIncr
                     && this.strPrefix.equals(rec.strPrefix))
                 return true;
         }
@@ -663,10 +716,11 @@ public record ScalarFactoryConfig(
     @Override
     public String   toString() {
         String  str = "";
-        str += "Scalar value type: " + this.enmValueType + "\n";
-        str += "Random enabled   : " + this.bolRandEnable + "\n";
-        str += "Seed value       : " + this.seed + "\n";
-        str += "Increment value  : " + this.increment + "\n";
+        str += "Scalar value type: " + this.enmType + "\n";
+        str += "Random enabled   : " + this.bolRandEnbl + "\n";
+        str += "Seed value       : " + this.lngSeed + "\n";
+        str += "Increment value  : " + this.numIncr + "\n";
+        str += "String prefix    : " + this.strPrefix + "\n";
         
         return str;
     }
@@ -683,9 +737,9 @@ public record ScalarFactoryConfig(
      * </p>
      * <p>
      * Instances of this class are created during the parsing of YAML files or YAML formatted 
-     * string in method <code>{@link ScalarFactoryConfig#parseYamlDoc(InputStream)}</code> of
+     * string in method <code>{@link ScalarFactorySpec#parseYamlDoc(InputStream)}</code> of
      * the enclosing record.  Once parsed the class instance contains all the field values
-     * of the <code>{@link ScalarFactoryConfig}</code> record.  The instance is then used
+     * of the <code>{@link ScalarFactorySpec}</code> record.  The instance is then used
      * to create a new record.
      * </p>
      * <p>
@@ -720,30 +774,30 @@ public record ScalarFactoryConfig(
      * </p>
      *
      */
-    public static final class ScalarFactoryYaml extends CfgStructure<ScalarFactoryYaml> {
+    public static final class ScalarFactoryYamlSpec extends CfgStructure<ScalarFactoryYamlSpec> {
         
         /**
          * <p>
-         * Creates and returns a new <code>ScalarFactoryConfig</code> record populated with the attributes of this structure.
+         * Creates and returns a new <code>ScalarFactorySpec</code> record populated with the attributes of this structure.
          * </p>
          * <p>
          * This instance must be fully populated before method invocation or an exception is thrown.
          * The assumed to be populated using a Snake YAML document parsing operation.
          * </p>
          * 
-         * @return  a new <code>ScalarFactoryConfig</code> record populated with this structure's attributes
+         * @return  a new <code>ScalarFactorySpec</code> record populated with this structure's attributes
          * 
          * @throws IllegalStateException            method called before structure class was populated
-         * @throws UnsupportedOperationException    unable to create <code>{@link #increment}</code> field for value type  
+         * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
          */
-        public ScalarFactoryConfig  createRecord() throws IllegalStateException, UnsupportedOperationException {
+        public ScalarFactorySpec  createRecord() throws IllegalStateException, UnsupportedOperationException {
             
             //  Check state
             if (this.stringPrefix==null && type == JalScalarType.UNSUPPORTED)
                 throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Structure class not populated.");
 
             long    lngSeed = (this.random.enabled) ? this.random.seed : this.increment.start;
-            Number  increment = switch (this.type) {
+            Number  numIncr = switch (this.type) {
             case INTEGER -> this.increment.value.intValue();
             case BOOLEAN -> this.increment.value.intValue();
             case DOUBLE -> this.increment.value.doubleValue();
@@ -753,22 +807,22 @@ public record ScalarFactoryConfig(
             case UNSUPPORTED -> throw new UnsupportedOperationException("Increment value unsupported for type: " + this.type);
             };
             
-            return ScalarFactoryConfig.from(type, this.random.enabled, lngSeed, increment, stringPrefix);
+            return ScalarFactorySpec.from(type, this.random.enabled, lngSeed, numIncr, stringPrefix);
         }
         
         /** Default constructor required from base class */
-        public ScalarFactoryYaml() { super(ScalarFactoryYaml.class); };
+        public ScalarFactoryYamlSpec() { super(ScalarFactoryYamlSpec.class); };
         
-        @ACfgOverride.Field(name="stringPrefix")
+        @ACfgOverride.Field(name="STRING_PREFIX")
         public String           stringPrefix = null;
         
-        @ACfgOverride.Field(name="enmValueType")
+        @ACfgOverride.Field(name="TYPE")
         public JalScalarType    type = JalScalarType.UNSUPPORTED;
         
-        @ACfgOverride.Struct(pathelem="random")
+        @ACfgOverride.Struct(pathelem="RANDOM")
         public Random           random;
         
-        @ACfgOverride.Struct(pathelem="increment")
+        @ACfgOverride.Struct(pathelem="INCREMENT")
         public Increment        increment;
         
         
@@ -777,10 +831,10 @@ public record ScalarFactoryConfig(
             /** Default constructor required of base class */
             public Random() { super(Random.class); };
             
-            @ACfgOverride.Field(name="enabled")
+            @ACfgOverride.Field(name="ENABLED")
             public Boolean      enabled;
             
-            @ACfgOverride.Field(name="seed")
+            @ACfgOverride.Field(name="SEED")
             public Long         seed;
         };
         
@@ -790,10 +844,10 @@ public record ScalarFactoryConfig(
             public Increment()  { super(Increment.class); };
             
             
-            @ACfgOverride.Field(name="start")
+            @ACfgOverride.Field(name="START")
             public Long         start;
             
-            @ACfgOverride.Field(name="value")
+            @ACfgOverride.Field(name="VALUE")
             public Number       value;
         };
                 
@@ -810,7 +864,6 @@ public record ScalarFactoryConfig(
     /** YAML line comment delimiter */
     public static final String    STR_YAML_DEL_CMT = "#";
     
-
     
     //
     // Library Resources
@@ -882,123 +935,5 @@ public record ScalarFactoryConfig(
         
         return new ConfigurationException(strMsg);
     }
-    
-//    /**
-//     * <p>
-//     * Perform a direct parsing of an input stream in YAML format.
-//     * </p>
-//     * 
-//     * @param is
-//     * 
-//     * @return
-//     * 
-//     * @throws IOException
-//     * @throws IndexOutOfBoundsException
-//     * @throws TypeNotPresentException
-//     * @throws ConfigurationException
-//     */
-//    public static ScalarFactoryConfig   parseYamlNode(InputStream is) throws IOException, IndexOutOfBoundsException, TypeNotPresentException, ConfigurationException {
-//
-//        // Line delimiters
-//        final String    STR_DELM = ":";
-//        final String    STR_CMMT = "#";
-//        
-//        // Field labels
-//        final String    STR_TYPE = "type";
-//        final String    STR_PREF = "stringPrefix";
-//        final String    STR_RAND = "random";
-//        final String    STR_INCR = "increment";
-//        
-//        // Random number field labels
-//        final String    STR_RAND_ENBL = "enabled";
-//        final String    STR_RAND_SEED = "seed";
-//        
-//        // Increment value field labels
-//        final String    STR_INCR_START = "start";
-//        final String    STR_INCR_VALUE = "value";
-//        
-//        // Field values
-//        JalScalarType   enmValueType;
-//        String          stringPref;
-//        Boolean         bolRandEnable;
-//        long            seedRand;
-//        Number          increment;
-//        long            seedIncr;
-//        
-//        // Create a reader for the input stream for line-based parsing
-//        InputStreamReader   rdrStrm = new InputStreamReader(is);
-//        BufferedReader      rdrBuff = new BufferedReader(rdrStrm);
-//
-//        for (int iGroup=0; iGroup<4; iGroup++) {
-//            String      strLine = rdrBuff.readLine();               // throws IOException
-//            String[]    arrTokens = strLine.split(STR_DELM);
-//            
-//            switch (arrTokens[0]) {
-//            
-//            // The scalar value type
-//            case STR_TYPE:
-//                String  strTypeNm = arrTokens[1].split(STR_CMMT)[0];    // throws IndexOutofBoundsException
-//                enmValueType = JalScalarType.getConstant(strTypeNm);    // throws TypeNotPresentException
-//                break;
-//                
-//            // The string prefix (for string types) 
-//            case STR_PREF:
-//                stringPref = arrTokens[1].split(STR_CMMT)[0];           // throws IndexOutOfBoundsException   
-//                break;
-//               
-//            // The random number generator parameters
-//            case STR_RAND:
-//                for (int i=0; i<2; i++) {
-//                    strLine = rdrBuff.readLine();
-//                    arrTokens = strLine.split(STR_DELM);
-//                    switch (arrTokens[0]) {
-//                    case STR_RAND_ENBL:
-//                        String  strBolRandEnable = arrTokens[1].split(STR_CMMT)[0]; // throws IndexOutOfBoundsException
-//                        bolRandEnable = Boolean.valueOf(strBolRandEnable);
-//                        break;
-//                    case STR_RAND_SEED:
-//                        String strSeedRand = arrTokens[1].split(STR_CMMT)[0];       // throws IndexOutOfBoundsException
-//                        seedRand = Long.valueOf(strSeedRand);                       // throws NumberFormatException
-//                        break;
-//                    default:
-//                        throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() + " - Unknown " + STR_RAND + " parameter: " + arrTokens[0]);
-//                    }
-//                }
-//                break;
-//                
-//            // The incremental number generator parameters
-//            case STR_INCR:
-//                for (int i=0; i<2; i++) {
-//                    strLine = rdrBuff.readLine();
-//                    arrTokens = strLine.split(STR_DELM);
-//                    switch (arrTokens[0]) {
-//                    case STR_INCR_START: 
-//                        String strIncrSeed = arrTokens[1].split(STR_CMMT)[0];       // throws IndexOutOfBoundsException
-//                        seedIncr = Long.valueOf(strIncrSeed);                       // throws NumberFormatException
-//                        break;
-//                    case STR_INCR_VALUE:
-//                        String strIncrValue = arrTokens[1].split(STR_CMMT)[0];      // throws IndexOutOfBoundsException
-//                        if (enmValueType != JalScalarType.STRING)
-//                            increment = (Number) enmValueType.parseValue(strIncrValue);
-//                        else 
-//                            increment = Integer.valueOf(strIncrValue);
-//                        break;
-//                    default:
-//                        throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() + " - Unknown " + STR_RAND + " parameter: " + arrTokens[0]);
-//                    }
-//                }
-//                break;
-//                
-//            default:
-//                throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() + " - Unknown parameter: " + arrTokens[0]);
-//            }
-//        }   // for iGroup
-//
-//        // Create and return the configuration record
-//        if (bolRandEnable) 
-//            return ScalarFactoryConfig.from(enmValueType, bolRandEnable, seedRand, increment, stringPref);
-//        else
-//            return ScalarFactoryConfig.from(enmValueType, bolRandEnable, seedIncr, increment, stringPref);
-//    }
     
 }

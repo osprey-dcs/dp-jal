@@ -40,8 +40,8 @@ import org.junit.Test;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.ScalarFactoryEnum;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.TensorFactoryEnum;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.ScalarFactoryLib;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.TensorFactoryLib;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.TensorIndexGenerator;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.TensorUtility;
 import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory;
@@ -122,15 +122,16 @@ public class DataColumnsFactoryTest {
         
         // Test Parameters
         final Set<String>           setColNms = SET_COL_NMS_0;
-        final int                   szCol = 100;
-        final ScalarFactoryEnum     enmFac = ScalarFactoryEnum.DEFAULT;
+//        final int                   szCol = 100;
+        final ScalarFactoryLib     enmFac = ScalarFactoryLib.DEFAULT;
         
         final ScalarFactory         facVals = enmFac.newFactory();
 
         // Attempt new columns factory creation with bad arguments 
         try {
             @SuppressWarnings("unused")
-            DataColumnsFactory  facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
+//            DataColumnsFactory  facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
+            DataColumnsFactory  facTest = DataColumnsFactory.from(setColNms, facVals);
 
             Assert.fail("DataColumnsFactory creation success with bad arguments.");
             
@@ -149,8 +150,8 @@ public class DataColumnsFactoryTest {
         
         // Test Parameters
         final Set<String>           setColNms = SET_COL_NMS_1;
-        final int                   szCol = 100;
-        final ScalarFactoryEnum     enmFac = ScalarFactoryEnum.BOOLEAN_ALT;
+//        final int                   szCol = 100;
+        final ScalarFactoryLib     enmFac = ScalarFactoryLib.BOOLEAN_ALT;
 
         final int                   cntCols = setColNms.size();
         final DpSupportedType       enmType = enmFac.getDpType();
@@ -158,10 +159,11 @@ public class DataColumnsFactoryTest {
 
         // Create new columns factory and check configuration
         try {
-            DataColumnsFactory  facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
+//            DataColumnsFactory  facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
+            DataColumnsFactory  facTest = DataColumnsFactory.from(setColNms, facVals);
             
             Assert.assertEquals(cntCols, facTest.getColumnCount());
-            Assert.assertEquals(szCol, facTest.getColumnSize());
+//            Assert.assertEquals(szCol, facTest.getColumnSize());
             Assert.assertEquals(enmType, facTest.getColumnType());
             Assert.assertEquals(setColNms, facTest.getColumnNames());
             
@@ -178,8 +180,8 @@ public class DataColumnsFactoryTest {
         
         // Test Parameters
         final Set<String>           setColNms = SET_COL_NMS_3;
-        final int                   szCol = 100;
-        final ScalarFactoryEnum     enmFac = ScalarFactoryEnum.INTEGER_INCR_1;
+//        final int                   szCol = 100;
+        final ScalarFactoryLib     enmFac = ScalarFactoryLib.INTEGER_INCR_1;
 
         final int                   cntCols = setColNms.size();
         final DpSupportedType       enmType = enmFac.getDpType();
@@ -187,10 +189,11 @@ public class DataColumnsFactoryTest {
 
         // Construct new columns factory and check configuration
         try {
-            DataColumnsFactory  facTest = new DataColumnsFactory(setColNms, szCol, facVals);
+//            DataColumnsFactory  facTest = new DataColumnsFactory(setColNms, szCol, facVals);
+            DataColumnsFactory  facTest = new DataColumnsFactory(setColNms, facVals);
             
             Assert.assertEquals(cntCols, facTest.getColumnCount());
-            Assert.assertEquals(szCol, facTest.getColumnSize());
+//            Assert.assertEquals(szCol, facTest.getColumnSize());
             Assert.assertEquals(enmType, facTest.getColumnType());
             Assert.assertEquals(setColNms, facTest.getColumnNames());
             
@@ -240,23 +243,24 @@ public class DataColumnsFactoryTest {
         // Test Parameters
         final Set<String>       setColNms = SET_COL_NMS_3;
         final int               szCol = 25;
-        final ScalarFactoryEnum enmFac = ScalarFactoryEnum.INTEGER_INCR_1;
+        final ScalarFactoryLib enmFac = ScalarFactoryLib.INTEGER_INCR_1;
         
         final int               cntCols = setColNms.size();
-        final ScalarFactory     facVals = ScalarFactoryEnum.INTEGER_INCR_1.newFactory();
+        final ScalarFactory     facVals = ScalarFactoryLib.INTEGER_INCR_1.newFactory();
         final DpSupportedType   enmType = facVals.getDatumType();
-        final int               intSeed = Math.toIntExact( enmFac.getConfiguration().seed() );
-        final int               intIncr = facVals.getConfiguration().increment().intValue();
+        final int               intSeed = Math.toIntExact( enmFac.getConfiguration().lngSeed() );
+        final int               intIncr = facVals.getIncrement().intValue();
         
 
         // Create the column factory and check configuration
         DataColumnsFactory   facTest;
         try {
-            facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
+//            facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
+            facTest = DataColumnsFactory.from(setColNms, facVals);
             
             Assert.assertEquals(setColNms, facTest.getColumnNames());
             Assert.assertEquals(cntCols, facTest.getColumnCount());
-            Assert.assertEquals(szCol, facTest.getColumnSize());
+//            Assert.assertEquals(szCol, facTest.getColumnSize());
             Assert.assertEquals(enmType, facTest.getColumnType());
             
         } catch (Exception e) {
@@ -274,7 +278,7 @@ public class DataColumnsFactoryTest {
         // Create a column and check configuration and values
         List<Integer>           lstVals = new ArrayList<>(szCol);
         
-        ArrayList<IDataColumn<Object>>  vecCols = facTest.build();
+        ArrayList<IDataColumn<Object>>  vecCols = facTest.build(szCol);
         Iterator<String>                itrColNms = setColNms.iterator();
         Integer                         intCurr = intSeed;
         for (int iCol=0; iCol<cntCols; iCol++) {
@@ -315,24 +319,25 @@ public class DataColumnsFactoryTest {
         // Test Parameters
         final Set<String>       setColNms = SET_COL_NMS_5;
         final int               szCol = 10;
-        final ScalarFactoryEnum enmFac = ScalarFactoryEnum.INTEGER_INCR_2;
+        final ScalarFactoryLib enmFac = ScalarFactoryLib.INTEGER_INCR_2;
         
         final int               cntCols = setColNms.size();
         final ScalarFactory     facVals = enmFac.newFactory();
         final DpSupportedType   enmType = facVals.getDatumType();
-        final int               intSeed = Math.toIntExact( enmFac.getConfiguration().seed() );
-        final int               intIncr = facVals.getConfiguration().increment().intValue();
+        final int               intSeed = Math.toIntExact( enmFac.getConfiguration().lngSeed() );
+        final int               intIncr = facVals.getIncrement().intValue();
         
         final int               cntBlds = 3;
 
         // Create the column factory and check configuration
         DataColumnsFactory   facTest;
         try {
-            facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
+//            facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
+            facTest = DataColumnsFactory.from(setColNms, facVals);
             
             Assert.assertEquals(setColNms, facTest.getColumnNames());
             Assert.assertEquals(cntCols, facTest.getColumnCount());
-            Assert.assertEquals(szCol, facTest.getColumnSize());
+//            Assert.assertEquals(szCol, facTest.getColumnSize());
             Assert.assertEquals(enmType, facTest.getColumnType());
             
         } catch (Exception e) {
@@ -351,7 +356,7 @@ public class DataColumnsFactoryTest {
         Integer     intCurr = intSeed;
         
         for (int iBld=0; iBld<cntBlds; iBld++) {
-            ArrayList<IDataColumn<Object>>  vecCols = facTest.build();
+            ArrayList<IDataColumn<Object>>  vecCols = facTest.build(szCol);
             Iterator<String>                itrColNms = setColNms.iterator();
             for (int iCol=0; iCol<cntCols; iCol++) {
                 IDataColumn<Object>     col = vecCols.get(iCol);
@@ -389,25 +394,26 @@ public class DataColumnsFactoryTest {
         final Set<String>       setColNms = SET_COL_NMS_5;
         final int               szCol = 10;
         final int[]             shape = { 1, 2, 3 };
-        final TensorFactoryEnum enmFac = TensorFactoryEnum.INTEGER_INCR_1;
+        final TensorFactoryLib  enmFac = TensorFactoryLib.INTEGER_INCR_1;
         
         final int               cntCols = setColNms.size();
         final TensorFactory     facVals = enmFac.newFactory(shape);
         final DpSupportedType   enmType = facVals.getDatumType();
         final JalScalarType     enmElemType = enmFac.getJalScalarType();
-        final int               intSeed = Math.toIntExact( enmFac.getScalarFactoryConfig().seed() );
-        final int               intIncr = enmFac.getScalarFactoryConfig().increment().intValue();
+        final int               intSeed = Math.toIntExact( enmFac.getScalarFactoryConfig().lngSeed() );
+        final int               intIncr = enmFac.getScalarFactoryConfig().numIncr().intValue();
         
         final int               cntBlds = 3;
 
         // Create the column factory and check configuration
         DataColumnsFactory   facTest;
         try {
-            facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
+//            facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
+            facTest = DataColumnsFactory.from(setColNms, facVals);
             
             Assert.assertEquals(setColNms, facTest.getColumnNames());
             Assert.assertEquals(cntCols, facTest.getColumnCount());
-            Assert.assertEquals(szCol, facTest.getColumnSize());
+//            Assert.assertEquals(szCol, facTest.getColumnSize());
             Assert.assertEquals(enmType, facTest.getColumnType());
             
         } catch (Exception e) {
@@ -426,7 +432,7 @@ public class DataColumnsFactoryTest {
         Integer     intCurr = intSeed;
         
         for (int iBld=0; iBld<cntBlds; iBld++) {
-            ArrayList<IDataColumn<Object>>  vecCols = facTest.build();
+            ArrayList<IDataColumn<Object>>  vecCols = facTest.build(szCol);
             Iterator<String>                itrColNms = setColNms.iterator();
             for (int iCol=0; iCol<cntCols; iCol++) {
                 IDataColumn<Object>     col = vecCols.get(iCol);

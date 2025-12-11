@@ -122,4 +122,33 @@ public enum JalComplexType {
     
     /** Returns the Data Platform supported data type for this constant */
     public DpSupportedType  getDpType() { return this.enmDpType; };
+    
+    /**
+     * <p>
+     * Returns the <code>JalComplexType</code> enumeration constant with the given name.
+     * </p>
+     * <p>
+     * This a a convenience method that simply calls the method <code>{@link Enum#valueOf(Class, String)}</code>
+     * with first argument given by <code>JalComplexType.class</code> and the second argument given by
+     * the argument of this method.  Any exception thrown is caught an returned as a 
+     * <code>{@link TypeNotPresentException}</code>.
+     * </p>
+     * 
+     * @param strName   name of the <code>JalComplexType</code> enumeration constant
+     * 
+     * @return  the <code>JalComplexType</code> constant with the given name
+     * 
+     * @throws TypeNotPresentException  the name was invalid
+     */
+    public static JalComplexType    getConstant(String strName) throws TypeNotPresentException {
+        
+        try {
+            JalComplexType   enmConstant = JalComplexType.valueOf(JalComplexType.class, strName);
+            return enmConstant;
+            
+        } catch (Exception e) {
+            throw new TypeNotPresentException(strName, e);
+        }
+    }
+    
 }

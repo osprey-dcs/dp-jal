@@ -30,6 +30,8 @@ import java.util.Random;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
+import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarValuesConfig;
 
 /**
  * <p>
@@ -37,14 +39,36 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * </p> 
  * <p>
  * Creates a sequence of scalar values meant to supply artificial, or "simulated", data.  Scalar value types
- * supported are all those enumerated in <code>{@link JalScalarType}</code>.
+ * supported are all those enumerated in <code>{@link JalScalarType}</code>.  There are 2 basic types of 
+ * <code>ScalarFactory</code> configurations: 1) random sequence factories, and 2) incremental sequence factories.
+ * <ol>
+ * <li>Random Factories - produce sequences of random data values using a random number generator.</li>
+ * <li>Incremental Factories - produce incremental sequences of data values starting from a seed value.</li>
+ * </ol>
+ * Random factories can be more computationally expensive due to their use of an internal random
+ * number generator.  This condition can significant when creating large data sets.  Best practice is to prefer
+ * incremental factories, especially when simulated data values are essentially irrelevant.  
  * </p>
  * <p>
  * <h2>Configuration</h2>
- * All <code>ScalarFactory</code> instances require a <code>{@link ScalarFactoryConfig}</code> record for 
- * creation/construction.  This record contains all parameters required for instance configuration.  The
+ * A <code>ScalarFactory</code> instance requires 5 parameters for configuration.  
+ * <ol>
+ * <li>'enmType' = the datum type for the simulated data, specified as a <code>{@link JalScalarType}</code> constant.</li>
+ * <li>'bolRandEnbl' = enable/disable flag; <code>true</code> indicates random factory, <code>false</code> indicates incremental factory.</li>
+ * <li>'lngSeed' = seed value for random number generator (0 indicates 'random' seed), or 1st value for incremental sequence.</li>
+ * <li>'numIncr' = the increment value for incremental factories, this value is ignored for random factories.</li>
+ * <li>'strPrefix' = the prefix given to string values when 'enmType' = <code>{@link JalScalarType#STRING}</code>, ignored for all others.</li>
+ * </ol>
+ * Note that the parameters are interpreted differently, or ignored completely, depending upon the value of parameters 
+ * 'enmType' and 'bolRandEnbl'. 
+ * </p>
+ * <p>
+ * <h2>Specification Records</h2>
+ * The <code>ScalarFactory</code> class instances can be configured by <code>{@link ScalarFactorySpec}</code> records, 
+ * which can also be used for creation/construction and parsing of application command-line arguments.  
+ * This record contains all parameters required for instance configuration.  The
  * record is able to configure scalar factories for a wide variety of situations.  See the record documentation
- * for <code>{@link ScalarFactoryConfig}</code> for instruction on record creation and configuration of scalar
+ * for <code>{@link ScalarFactorySpec}</code> for instruction on record creation and configuration of scalar
  * factory instances. 
  * </p>
  * <p>
@@ -53,17 +77,17 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * <ul>
  * <li>All scalar values are returns as Java <code>Object</code> instances.</li>
  * <li>Scalar value types (i.e. <code>Object</code> types) are determined by enumeration <code>{@link JalScalarType}</code>.</li>
- * <li>Sequences are generated incrementally or randomly according to configuration at creation/construction.</li>.
+ * <li>Sequences are generated incrementally or randomly according to configuration at creation/construction.</li>
  * </ul>
- * Values in the sequence are obtained using repeated invocations of <code>{@link #nextValue()}</code>.
+ * Values in the sequence are obtained using repeated invocations of <code>{@link #nextDatum()}</code>.
  * The data type of the simulated data is obtained as a <code>{@link DpSupportedType}</code> enumeration constant
- * through the method <code>{@link #getValueType()}</code>
+ * through the method <code>{@link #getDatumType()}</code>
  * </p>  
  *
  * @author Christopher K. Allen
  * @since Nov 6, 2025
  *
- * @see ScalarFactoryConfig
+ * @see ScalarFactorySpec
  * @see IScalarFactory
  */
 public class ScalarFactory implements IScalarFactory {
@@ -75,50 +99,329 @@ public class ScalarFactory implements IScalarFactory {
     
     /**
      * <p>
-     * Creates and returns a new <code>ScalarFactory</code> instance configured according to the argument.
+     * Creates and returns a new <code>ScalarFactory</code> instance configured with all default parameters.
      * </p>
      * <p>
-     * The returned scalar factory is configured, initialized, and ready to produce scalar values with operation
-     * <code>{@link #nextValue()}</code> of the <code>{@link IScalarFactory}</code> interface.
-     * Note that <code>ScalarFactory</code> instances cannot be dynamically configured.  The configuration given
-     * at creation is maintained throughout its lifetime.
+     * This creator uses all default parameter values from the JAL Tools default configuration.  The following
+     * parameters are supplied from the default configuration:
+     * <ul>
+     * <li>'enmType' = <code>{@link #ENM_TYPE_DEF}</code>.</li>
+     * <li>'bolRandEnbl' = <code>{@link #BOL_RAND_ENBL_DEF}</code>.</li>
+     * <li>'lngSeed' is dependent upon the value of 'bolRandEnbl'. We have the following:
+     *   <ul>
+     *   <li>'bolRandEnbl' = <code>false</code> &rarr; 'lngSeed' = <code>{@link #LNG_INCR_SEED_DEF}</code>.</li>
+     *   <li>'bolRandEnbl' = <code>true</code> &rarr; 'numIncr' = <code>{@link #LNG_RAND_SEED_DEF}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>'numIncr' is dependent upon the value of 'enmType'. For example, we have the following:
+     *   <ul>
+     *   <li>'enmType' = <code>{@link JalScalarType#BOOLEAN}</code> &rarr; 'numIncr' = <code>{@link #BOL_INCR_DEF}</code>.</li>
+     *   <li>'enmType' = <code>{@link JalScalarType#INTEGER}</code> &rarr; 'numIncr' = <code>{@link #INT_INCR_DEF}</code>.</li>
+     *   <li>'enmType' = <code>{@link JalScalarType#LONG}</code> &rarr; 'numIncr' = <code>{@link #LONG_INCR_DEF}</code>.</li>
+     *   <li> &#8942; </li>
+     *   <li>'enmType' = <code>{@link JalScalarType#STRING}</code> &rarr; 'numIncr' = <code>{@link #INT_STR_INCR_DEF}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>'strPrefix' = <code>{@link #STR_PREFIX_DEF}</code>.</li>
+     * </ul>  
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * parameter 'numIncr' is ignored but populated according to the above. 
      * </p>
-     * 
-     * @param recConfig record containing configuration fields for the returned scalar factory
-     * 
-     * @return  a new <code>ScalarFactory</code> instance with the given configuration.
-     * 
-     * @see ScalarFactoryConfig
+     * <p>
+     * The new <code>ScalarFactory</code> instance is fully configured and ready for simulated scalar value
+     * creation using the <code>{@link IDataFactory}</code> interface.
+     * </p>
+     *
+     * @return  a new <code>ScalarFactory</code> instance ready for simulated data production
      */
-    public static ScalarFactory from(ScalarFactoryConfig recConfig) {
-        return new ScalarFactory(recConfig);
+    public static ScalarFactory from() {
+
+        return ScalarFactory.from(ENM_TYPE_DEF);
     }
     
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactory</code> instance configured with the given argument(s).
+     * </p>
+     * <p>
+     * This creator uses default parameter values from the JAL Tools default configuration.  The following
+     * parameters are supplied from the default configuration:
+     * <ul>
+     * <li>'bolRandEnbl' = <code>{@link #BOL_RAND_ENBL_DEF}</code>.</li>
+     * <li>'lngSeed' is dependent upon the value of 'bolRandEnbl'. We have the following:
+     *   <ul>
+     *   <li>'bolRandEnbl' = <code>false</code> &rarr; 'lngSeed' = <code>{@link #LNG_INCR_SEED_DEF}</code>.</li>
+     *   <li>'bolRandEnbl' = <code>true</code> &rarr; 'numIncr' = <code>{@link #LNG_RAND_SEED_DEF}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>'numIncr' is dependent upon the value of 'enmType'. For example, we have the following:
+     *   <ul>
+     *   <li>'enmType' = <code>{@link JalScalarType#BOOLEAN}</code> &rarr; 'numIncr' = <code>{@link #BOL_INCR_DEF}</code>.</li>
+     *   <li>'enmType' = <code>{@link JalScalarType#INTEGER}</code> &rarr; 'numIncr' = <code>{@link #INT_INCR_DEF}</code>.</li>
+     *   <li>'enmType' = <code>{@link JalScalarType#LONG}</code> &rarr; 'numIncr' = <code>{@link #LONG_INCR_DEF}</code>.</li>
+     *   <li> &#8942; </li>
+     *   <li>'enmType' = <code>{@link JalScalarType#STRING}</code> &rarr; 'numIncr' = <code>{@link #INT_STR_INCR_DEF}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>'strPrefix' = <code>{@link #STR_PREFIX_DEF}</code>.</li>
+     * </ul>  
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * parameter 'numIncr' is ignored but populated according to the above. 
+     * </p>
+     * <p>
+     * The new <code>ScalarFactory</code> instance is fully configured and ready for simulated scalar value
+     * creation using the <code>{@link IDataFactory}</code> interface.
+     * </p>
+     *
+     * @param enmType       the data type of the simulated data produced
+     * 
+     * @return  a new <code>ScalarFactory</code> instance ready for simulated data production
+     */
+    public static ScalarFactory from(JalScalarType enmType) {
+
+        return ScalarFactory.from(enmType, BOL_RAND_ENBL_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactory</code> instance configured with the given argument(s).
+     * </p>
+     * <p>
+     * This creator uses default parameter values from the JAL Tools default configuration.  The following
+     * parameters are supplied from the default configuration:
+     * <ul>
+     * <li>'lngSeed' is dependent upon the value of 'bolRandEnbl'. We have the following:
+     *   <ul>
+     *   <li>'bolRandEnbl' = <code>false</code> &rarr; 'lngSeed' = <code>{@link #LNG_INCR_SEED_DEF}</code>.</li>
+     *   <li>'bolRandEnbl' = <code>true</code> &rarr; 'numIncr' = <code>{@link #LNG_RAND_SEED_DEF}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>'numIncr' is dependent upon the value of 'enmType'. For example, we have the following:
+     *   <ul>
+     *   <li>'enmType' = <code>{@link JalScalarType#BOOLEAN}</code> &rarr; 'numIncr' = <code>{@link #BOL_INCR_DEF}</code>.</li>
+     *   <li>'enmType' = <code>{@link JalScalarType#INTEGER}</code> &rarr; 'numIncr' = <code>{@link #INT_INCR_DEF}</code>.</li>
+     *   <li>'enmType' = <code>{@link JalScalarType#LONG}</code> &rarr; 'numIncr' = <code>{@link #LONG_INCR_DEF}</code>.</li>
+     *   <li> &#8942; </li>
+     *   <li>'enmType' = <code>{@link JalScalarType#STRING}</code> &rarr; 'numIncr' = <code>{@link #INT_STR_INCR_DEF}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>'strPrefix' = <code>{@link #STR_PREFIX_DEF}</code>.</li>
+     * </ul>  
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * parameter 'numIncr' is ignored but populated according to the above. 
+     * </p>
+     * <p>
+     * The new <code>ScalarFactory</code> instance is fully configured and ready for simulated scalar value
+     * creation using the <code>{@link IDataFactory}</code> interface.
+     * </p>
+     *
+     * @param enmType       the data type of the simulated data produced
+     * @param bolRandEnbl   enable/disable the use of random sequence generation, <code>false</code> indicates an incremental factory
+     * 
+     * @return  a new <code>ScalarFactory</code> instance ready for simulated data production
+     */
+    public static ScalarFactory from(JalScalarType enmType, boolean bolRandEnbl) {
+
+        long    lngSeed;
+        if (bolRandEnbl)
+            lngSeed = LNG_RAND_SEED_DEF;
+        else
+            lngSeed = LNG_INCR_SEED_DEF;
+            
+        return ScalarFactory.from(enmType, bolRandEnbl, lngSeed);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactory</code> instance configured with the given argument(s).
+     * </p>
+     * <p>
+     * This creator uses default parameter values from the JAL Tools default configuration.  The following
+     * parameters are supplied from the default configuration:
+     * <ul>
+     * <li>'numIncr' is dependent upon the value of 'enmType'. For example, we have the following:
+     *   <ul>
+     *   <li>'enmType' = <code>{@link JalScalarType#BOOLEAN}</code> &rarr; 'numIncr' = <code>{@link #BOL_INCR_DEF}</code>.</li>
+     *   <li>'enmType' = <code>{@link JalScalarType#INTEGER}</code> &rarr; 'numIncr' = <code>{@link #INT_INCR_DEF}</code>.</li>
+     *   <li>'enmType' = <code>{@link JalScalarType#LONG}</code> &rarr; 'numIncr' = <code>{@link #LONG_INCR_DEF}</code>.</li>
+     *   <li> &#8942; </li>
+     *   <li>'enmType' = <code>{@link JalScalarType#STRING}</code> &rarr; 'numIncr' = <code>{@link #INT_STR_INCR_DEF}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>'strPrefix' = <code>{@link #STR_PREFIX_DEF}</code>.</li>
+     * </ul>  
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * parameter 'numIncr' is ignored but populated according to the above. 
+     * </p>
+     * <p>
+     * The new <code>ScalarFactory</code> instance is fully configured and ready for simulated scalar value
+     * creation using the <code>{@link IDataFactory}</code> interface.
+     * </p>
+     *
+     * @param enmType       the data type of the simulated data produced
+     * @param bolRandEnbl   enable/disable the use of random sequence generation, <code>false</code> indicates an incremental factory
+     * @param lngSeed       seed value for random number generator (0 indicates 'random' seed) or 1st incremental value
+     * 
+     * @return  a new <code>ScalarFactory</code> instance ready for simulated data production
+     */
+    public static ScalarFactory from(JalScalarType enmType, boolean bolRandEnbl, long lngSeed) {
+        
+        // Extract the incremental value from the JAL default parameters
+        Number numIncr = switch (enmType) {
+        case BOOLEAN -> INT_BOL_INCR_DEF;
+        case INTEGER -> INT_INCR_DEF;
+        case LONG -> LNG_INCR_DEF;
+        case FLOAT -> FLT_INCR_DEF;
+        case DOUBLE -> DBL_INCR_DEF;
+        case STRING -> INT_STR_INCR_DEF;
+        case UNSUPPORTED -> throw new UnsupportedOperationException("Unimplemented case: " + enmType);
+        default -> throw new IllegalArgumentException("Unexpected value: " + enmType);
+        };
+        
+        return ScalarFactory.from(enmType, bolRandEnbl, lngSeed, numIncr);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactory</code> instance configured with the given argument(s).
+     * </p>
+     * <p>
+     * This creator uses default parameter values from the JAL Tools default configuration.  The following
+     * parameters are supplied from the default configuration:
+     * <ul>
+     * <li>'strPrefix' = <code>{@link #STR_PREFIX_DEF}</code>.</li>
+     * </ul>  
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * parameter 'numIncr' is ignored. 
+     * </p>
+     * <p>
+     * The new <code>ScalarFactory</code> instance is fully configured and ready for simulated scalar value
+     * creation using the <code>{@link IDataFactory}</code> interface.
+     * </p>
+     *
+     * @param enmType       the data type of the simulated data produced
+     * @param bolRandEnbl   enable/disable the use of random sequence generation, <code>false</code> indicates an incremental factory
+     * @param lngSeed       seed value for random number generator (0 indicates 'random' seed) or 1st incremental value
+     * @param numIncr       increment value for incremental factories, ignored for random factories
+     * 
+     * @return  a new <code>ScalarFactory</code> instance ready for simulated data production
+     */
+    public static ScalarFactory from(JalScalarType enmType, boolean bolRandEnbl, long lngSeed, Number numIncr) {
+     
+        return ScalarFactory.from(enmType, bolRandEnbl, lngSeed, numIncr, STR_PREFIX_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactory</code> instance configured with the given arguments.
+     * </p>
+     * <p>
+     * This creator is equivalent to the default (canonical) constructor 
+     * <code>{@link #ScalarFactory(JalScalarType, boolean, long, Number, String)}</code> requiring all configuration 
+     * parameter values.  There are no default values.
+     * </p>
+     * <p>
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * parameter 'numIncr' is ignored but populated according to the above. 
+     * </p> 
+     * <p>
+     * The new <code>ScalarFactory</code> instance is fully configured and ready for simulated scalar value
+     * creation using the <code>{@link IDataFactory}</code> interface.
+     * </p>
+     *
+     * @param enmType       the data type of the simulated data produced
+     * @param bolRandEnbl   enable/disable the use of random sequence generation, <code>false</code> indicates an incremental factory
+     * @param lngSeed       seed value for random number generator (0 indicates 'random' seed) or 1st incremental value
+     * @param numIncr       increment value for incremental factories, ignored for random factories
+     * @param strPrefix     prefix given to all string values when <code>enmType = {@link JalScalarType#STRING}</code>
+     * 
+     * @return  a new <code>ScalarFactory</code> instance ready for simulated data production
+     */
+    public static ScalarFactory from(JalScalarType enmType, boolean bolRandEnbl, long lngSeed, Number numIncr, String strPrefix) {
+     
+        return new ScalarFactory(enmType, bolRandEnbl, lngSeed, numIncr, strPrefix);
+    }
+
+    
+    //
+    // Library Resources
+    //
+    
+    /** The default parameters for scalar-valued simulated data generation */
+    private static final JalToolsScalarValuesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.scalar;
+    
+    
+    //
+    // Constants - Default Arguments
+    //
+    
+    /** The default scalar value type when none is given */
+    public final static JalScalarType  ENM_TYPE_DEF = CFG_DEF.type;
+    
+    /** The default string value prefix */
+    public final static String         STR_PREFIX_DEF = CFG_DEF.stringPrefix;
+
+    
+    /** The default enable/disable random number generator */
+    public static final boolean BOL_RAND_ENBL_DEF = CFG_DEF.random.enabled;
+
+    /** The default random number generator seed value */
+    public static final long    LNG_RAND_SEED_DEF = CFG_DEF.random.seed;
+
+    /** The default incremental seed value */
+    public static final long    LNG_INCR_SEED_DEF = CFG_DEF.increment.seed;
+    
+    
+    //
+    // Constants - Scalar increment values
+    //
+    
+    /** Boolean value default increment */
+    public final static Integer     INT_BOL_INCR_DEF = CFG_DEF.increment.booleanv;
+    
+    /** Integer value default increment */
+    public final static Integer     INT_INCR_DEF = CFG_DEF.increment.integerv;
+    
+    /** Long value default increment */
+    public final static Long        LNG_INCR_DEF = CFG_DEF.increment.longv;
+    
+    /** Float value default increment */
+    public final static Float       FLT_INCR_DEF = CFG_DEF.increment.floatv;
+    
+    /** Double value default increment */
+    public final static Double      DBL_INCR_DEF = CFG_DEF.increment.doublev;
+    
+    /** String value increment */
+    public final static Integer     INT_STR_INCR_DEF = CFG_DEF.increment.stringv;
+
     
     //
     // Resources
     //
     
     /** Random number generator used to create random values */
-    private final Random        genRandNumbers;
+    private final Random        facRandom;
     
 
     //
     // Configuration
     //
     
-    /** The configuration record provided at construction */
-    private final ScalarFactoryConfig   recConfig;
-    
     /** String value prefix (suffix is numeric) */
-    private final String                strPrefix;
+    private final String        strPrefix;
     
 
     /** The field value type */
-    private final JalScalarType enmValueType;
+    private final JalScalarType enmType;
     
     /** Random generated value generation enabled/disabled */
-    private final boolean       bolRandEnable;
+    private final boolean       bolRandEnbl;
+    
+    /** The seed value for generated value sequence (random number generation or 1st value) */
+    private final long          lngSeed;
+    
+    /** The increment value for incremental scalar factories */
+    private final Number        numIncr;
 
     
     /** Boolean increment value */
@@ -169,48 +472,41 @@ public class ScalarFactory implements IScalarFactory {
     
     /**
      * <p>
-     * Constructs a new <code>ScalarFactory</code> instance configured to the given argument.
+     * Constructs a new <code>ScalarFactory</code> instance configured according to the given arguments.
+     * </p>
+     * <p>
+     * The new <code>ScalarFactory</code> instance is fully configured and ready for simulated scalar value
+     * creation using the <code>{@link IDataFactory}</code> interface.
      * </p>
      *
-     * @param recConfig the configuration for the new <code>ScalarFactory</code>
+     * @param enmType       the data type of the simulated data produced
+     * @param bolRandEnbl   enable/disable the use of random sequence generation, <code>false</code> indicates an incremental factory
+     * @param lngSeed       seed value for random number generator (0 indicates 'random' seed) or 1st incremental value
+     * @param numIncr       increment value for incremental factories, ignored for random factories
+     * @param strPrefix     prefix given to all string values when <code>enmType = {@link JalScalarType#STRING}</code>
      */
-    public ScalarFactory(ScalarFactoryConfig recConfig) {
-        this.recConfig = recConfig;
+    public ScalarFactory(JalScalarType enmType, boolean bolRandEnbl, long lngSeed, Number numIncr, String strPrefix) {
+        this.enmType = enmType;
+        this.bolRandEnbl = bolRandEnbl;
+        this.lngSeed = lngSeed;
+        this.numIncr = numIncr;
+        this.strPrefix = strPrefix;
         
-        this.enmValueType = recConfig.enmValueType();
-        this.bolRandEnable = recConfig.bolRandEnable();
-        this.strPrefix = recConfig.strPrefix();
+        this.bolIncr = numIncr.intValue() % 2;
+        this.intIncr = numIncr.intValue();
+        this.lngIncr = numIncr.longValue();
+        this.fltIncr = numIncr.floatValue();
+        this.dblIncr = numIncr.doubleValue();
+        this.strIncr = numIncr.intValue();
         
-        this.bolIncr = recConfig.increment().intValue() % 2;
-        this.intIncr = recConfig.increment().intValue();
-        this.lngIncr = recConfig.increment().longValue();
-        this.fltIncr = recConfig.increment().floatValue();
-        this.dblIncr = recConfig.increment().doubleValue();
-        this.strIncr = recConfig.increment().intValue();
-        
-        this.genRandNumbers = this.initRandomGenator(this.recConfig);
-        this.initCurrentValues(this.recConfig);
+        this.facRandom = this.initRandomGenator(bolRandEnbl, lngSeed);
+        this.initCurrentValues(bolRandEnbl, lngSeed);
     }
-    
+
     
     //
     // Configuration
     //
-    
-    /**
-     * <p>
-     * Returns the configuration of this scalar factory.
-     * </p>
-     * <p>
-     * Returns all configuration parameters for this scalar factory as the full configuration record
-     * provided at creation/construction.
-     * </p> 
-     * 
-     * @return  the <code>ScalarFactoryConfig</code> record provided at construction/creation
-     */
-    public ScalarFactoryConfig  getConfiguration() {
-        return this.recConfig;
-    }
     
     /**
      * <p>
@@ -226,7 +522,49 @@ public class ScalarFactory implements IScalarFactory {
      *          <code>false</code> if they are generated incrementally
      */
     public boolean  isRandom() {
-        return this.bolRandEnable;
+        return this.bolRandEnbl;
+    }
+    
+    /**
+     * <p>
+     * Returns the seed parameter provided at creation/construction.
+     * </p>
+     * 
+     * @return  the seed value used for random number generator or 1st incremental value
+     */
+    public long getSeed() {
+        return this.lngSeed;
+    }
+    
+    /**
+     * <p>
+     * Returns the numeric increment parameter provided at creation/construction.
+     * </p>
+     * 
+     * @return  the numeric increment value used for incremental factories
+     */
+    public Number   getIncrement() {
+        return this.numIncr;
+    }
+    
+    /**
+     * <p>
+     * Returns the prefix used for string value generation.
+     * </p>
+     * <p>
+     * The returned value only has context when the scalar factory is configured for string value generation.
+     * The configuration is confirmed when the method <code>{@link #getScalarType()}</code> 
+     * returns <code>{@link JalScalarType#STRING}</code>.
+     * </p>
+     * <p>
+     * Note that string values are the concatenation of the returned value with an index integer which is
+     * generated incrementally or randomly depending upon the scalar factory configuration.
+     * </p>
+     * 
+     * @return  prefix all all generated string values when this factory produces string values
+     */
+    public String   getStringPrefix() {
+        return this.strPrefix;
     }
 
     
@@ -251,7 +589,7 @@ public class ScalarFactory implements IScalarFactory {
      */
     @Override
     public JalScalarType    getScalarType() {
-        return this.enmValueType;
+        return this.enmType;
     }
     
     /**
@@ -271,7 +609,7 @@ public class ScalarFactory implements IScalarFactory {
         Object objCurr = this.currentValue();   // throws UnsupportedOperationException
         
         // Increment to the next value
-        if (this.bolRandEnable)
+        if (this.bolRandEnbl)
             this.nextRandomValue();             // throws UnsupportedOperationException
         else
             this.nextIncrementalValue();        // throws UnsuppotedOperationException
@@ -292,11 +630,11 @@ public class ScalarFactory implements IScalarFactory {
      * <p>
      * The returned value is given according to the following conditions on the argument:
      * <ul>
-     * <li><code>{@link ScalarFactoryConfig#bolRandEnable()}</code> = <code>false</code>: <code>null</code>, </li>
-     * <li><code>{@link ScalarFactoryConfig#bolRandEnable()}</code> = <code>false</code>:
+     * <li><code>{@link bolRandEnbl}</code> = <code>false</code>: <code>null</code>, </li>
+     * <li><code>{@link bolRandEnbl}</code> = <code>true</code>:
      *     <ul>
-     *     <li><code>{@link ScalarFactoryConfig#seed()}</code> = <code>0</code>: new <code>Random</code> instance with random seed.</li>
-     *     <li><code>{@link ScalarFactoryConfig#seed()}</code> &ne; <code>0</code>: new <code>Random</code> instance with given seed value.</li>
+     *     <li><code>{@link lngSeed}</code> = <code>0</code>: new <code>Random</code> instance with random seed.</li>
+     *     <li><code>{@link lngSeed}</code> &ne; <code>0</code>: new <code>Random</code> instance with given seed value.</li>
      *     </ul>
      * </li>
      * </ul>
@@ -304,24 +642,25 @@ public class ScalarFactory implements IScalarFactory {
      * 
      * @implSpec
      * This method must be invoked <em>before</em> <code>{@link #initCurrentValues(long)}</code>. 
-     * If random number generation is enabled that method requires the <code>{@link #genRandNumbers}</code>
-     * instance for initial value generation.  
+     * If random number generation is enabled that method requires the <code>{@link #facRandom}</code>
+     * resource for initial value generation.  
      * 
-     * @param recConfig     the configuration record for the scalar factory
+     * @param bolRandEnbl   enable/disable flag for random number generation
+     * @param lngSeed       seed value for random number generator if random enabled (0L indicates "random" seed)
      * 
-     * @return  new <code>Random</code> instance, or <code>null</code> if <code>bolRandEnable</code> is <code>false</code> 
+     * @return  new <code>Random</code> instance, or <code>null</code> if <code>bolRandEnbl</code> is <code>false</code> 
      */
-    private Random  initRandomGenator(ScalarFactoryConfig recConfig) {
+    private Random  initRandomGenator(boolean bolRandEnbl, long lngSeed) {
         
         // If random number generation is disabled return null
-        if (!recConfig.bolRandEnable())
+        if (!bolRandEnbl)
             return null;
         
         // Create random number generator according to seed value
-        if (recConfig.seed() == 0L)
+        if (lngSeed == 0L)
             return new Random();
         
-        return new Random(recConfig.seed());
+        return new Random(lngSeed);
     }
     
     /**
@@ -331,25 +670,25 @@ public class ScalarFactory implements IScalarFactory {
      * 
      * @param lngIncrSeed   the initial value for the scalar sequence  
      * 
-     * @throws  ArithmeticException the argument was too large to convert to an integer
+     * @throws  ArithmeticException the argument was too large to convert to an integer (overflow condition)
      */
-    private void initCurrentValues(ScalarFactoryConfig recConfig) throws ArithmeticException {
+    private void initCurrentValues(boolean bolRandEnbl, long lngSeed) throws ArithmeticException {
 
-        if (this.bolRandEnable) {
-            this.bolValue = this.genRandNumbers.nextBoolean();
-            this.intValue = this.genRandNumbers.nextInt();
-            this.lngValue = this.genRandNumbers.nextLong();
-            this.fltValue = this.genRandNumbers.nextFloat();
-            this.dblValue = this.genRandNumbers.nextDouble();
-            this.strValue = this.genRandNumbers.nextInt();
+        if (bolRandEnbl) {
+            this.bolValue = this.facRandom.nextBoolean();
+            this.intValue = this.facRandom.nextInt();
+            this.lngValue = this.facRandom.nextLong();
+            this.fltValue = this.facRandom.nextFloat();
+            this.dblValue = this.facRandom.nextDouble();
+            this.strValue = this.facRandom.nextInt();
             
         } else {
-            this.bolValue = (Math.toIntExact(recConfig.seed()) % 2 == 0) ? false : true;
-            this.intValue = Math.toIntExact(recConfig.seed());   // throws ArithmeticException
-            this.lngValue = recConfig.seed();
-            this.fltValue = (float)recConfig.seed();
-            this.dblValue = (double)recConfig.seed();
-            this.strValue = Math.toIntExact(recConfig.seed());
+            this.bolValue = (Math.toIntExact(lngSeed) % 2 == 0) ? false : true;
+            this.intValue = Math.toIntExact(lngSeed);   // throws ArithmeticException
+            this.lngValue = lngSeed;
+            this.fltValue = (float)lngSeed;
+            this.dblValue = (double)lngSeed;
+            this.strValue = Math.toIntExact(lngSeed);   // throws ArithmeticException
         }
     }
     
@@ -364,14 +703,14 @@ public class ScalarFactory implements IScalarFactory {
      */
     private Object currentValue() throws UnsupportedOperationException {
         
-        return switch (this.enmValueType) {
+        return switch (this.enmType) {
         case BOOLEAN -> this.bolValue;
         case INTEGER -> this.intValue;
         case LONG -> this.lngValue;
         case FLOAT -> this.fltValue;
         case DOUBLE -> this.dblValue;
         case STRING -> this.strPrefix + Integer.toString(this.strValue);
-        case UNSUPPORTED -> throw new UnsupportedOperationException("Unsupported type case: " + this.enmValueType);
+        case UNSUPPORTED -> throw new UnsupportedOperationException("Unsupported type case: " + this.enmType);
         };
     }
     
@@ -384,7 +723,7 @@ public class ScalarFactory implements IScalarFactory {
      */
     private void nextIncrementalValue() throws UnsupportedOperationException {
         
-        switch (this.enmValueType) {
+        switch (this.enmType) {
         case BOOLEAN:
             this.bolValue = (this.bolIncr==0) ? this.bolValue : !this.bolValue;
             break;
@@ -404,7 +743,7 @@ public class ScalarFactory implements IScalarFactory {
             this.strValue += this.strIncr;
             break;
         case UNSUPPORTED:
-            throw new UnsupportedOperationException("Unsupported type case: " + this.enmValueType);
+            throw new UnsupportedOperationException("Unsupported type case: " + this.enmType);
         };
     }
     
@@ -417,27 +756,33 @@ public class ScalarFactory implements IScalarFactory {
      */
     private void nextRandomValue() throws UnsupportedOperationException {
         
-        switch (this.enmValueType) {
+        switch (this.enmType) {
         case BOOLEAN:
-            this.bolValue = genRandNumbers.nextBoolean();
+            this.bolValue = facRandom.nextBoolean();
             break;
         case INTEGER:
-            this.intValue = genRandNumbers.nextInt();
+            this.intValue = facRandom.nextInt();
             break;
         case LONG:
-            this.lngValue = genRandNumbers.nextLong();
+            this.lngValue = facRandom.nextLong();
             break;
         case FLOAT:
-            this.fltValue = genRandNumbers.nextFloat();
+            this.fltValue = facRandom.nextFloat();
             break;
         case DOUBLE:
-            this.dblValue = genRandNumbers.nextDouble();
+            this.dblValue = facRandom.nextDouble();
             break;
         case STRING:
-            this.strValue = genRandNumbers.nextInt();
+            this.strValue = facRandom.nextInt();
             break;
         case UNSUPPORTED:
-            throw new UnsupportedOperationException("Unsupported type case: " + this.enmValueType);
+            throw new UnsupportedOperationException("Unsupported type case: " + this.enmType);
         };
     }
+    
+    
+    // 
+    // Creator Support Methods
+    //
+    
 }

@@ -28,7 +28,6 @@ package com.ospreydcs.dp.jal.tools.config.datagen.frames;
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
-import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
  * <p>
@@ -51,52 +50,24 @@ public class JalToolsColumnsConfig extends CfgStructure<JalToolsColumnsConfig> {
     public JalToolsColumnsConfig() { super(JalToolsColumnsConfig.class); }
 
     
-//    //
-//    // Attributes
-//    //
-//    
-//    public List<ColumnBankConfig>       columns;
-//    
-//    //
-//    // Internal Types
-//    //
-//    
-//    /**
-//     * <p>
-//     * Structure class containing the default parameters for a bank of ingestion frame data columns.
-//     * </p>
-//     * 
-//     * @implNote
-//     * The <code>{@link ACfgOverride}</code> annotation is attached to attributes within this structure,
-//     * however, its use it impractical in that there are potential multiple <code>ColumnBankConfig</code>
-//     * structures within the JAL Tools default configuration.  The annotations are included to indicate
-//     * the intent and status of the field.
-//     */
-//    public static class ColumnBankConfig extends CfgStructure<ColumnBankConfig> {
-//        
-//        /** Default constructor required of base class */
-//        public ColumnBankConfig()   { super(ColumnBankConfig.class); };
-//        
-        
-        //
-        // Attributes
-        //
-        
-        /** Name of the column bank - also the prefix given to all columns within bank */
-        @ACfgOverride.Field(name="NAME")
-        public String           name;
-        
-        /** The number of columns in the column bank */
-        @ACfgOverride.Field(name="COUNT")
-        public Integer          count;
-        
-        /** The heterogeneous data type of all columns in this bank */
-        @ACfgOverride.Field(name="COL_TYPE")
-        public JalComplexType    colType;
-        
-        /** The data type of all heterogenerous values in the columns */
-        @ACfgOverride.Field(name="DATA_TYPE")
-        public JalScalarType    dataType;
-        
-//    }
+    //
+    // Attributes
+    //
+
+    /** Name of the column bank - also the prefix given to all columns within bank */
+    @ACfgOverride.Field(name="NAME")
+    public String           name;
+
+    /** The number of columns in the column bank */
+    @ACfgOverride.Field(name="COUNT")
+    public Integer          count;
+
+    /** The heterogeneous data type of all columns in this bank */
+    @ACfgOverride.Field(name="TYPE")
+    public JalComplexType   type;
+
+    /** The datum factory parameters for data column value generation */
+    @ACfgOverride.Field(name="FACTORY")
+    public String           factory;
+
 }

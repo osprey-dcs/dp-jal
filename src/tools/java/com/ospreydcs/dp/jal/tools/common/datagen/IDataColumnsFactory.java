@@ -71,14 +71,14 @@ public interface IDataColumnsFactory<T extends Object> {
      */
     public Set<String> getColumnNames(); 
     
-    /**
-     * <p>
-     * Returns the size of each column generated, that is, the number of values in the column.
-     * </p>
-     * 
-     * @return  number column values (or "rows")
-     */
-    public int getColumnSize();
+//    /**
+//     * <p>
+//     * Returns the size of each column generated, that is, the number of values in the column.
+//     * </p>
+//     * 
+//     * @return  number column values (or "rows")
+//     */
+//    public int getColumnSize();
     
     /**
      * <p>
@@ -105,8 +105,10 @@ public interface IDataColumnsFactory<T extends Object> {
      * returned by <code>{@link #getColumnNames()}</code> .  
      * </p>
      * 
+     * @param   szCol   the size of the returned data columns (i.e., the number of rows)
+     * 
      * @return  vector of data columns containing simulated data
      */
-    public ArrayList<IDataColumn<T>> build();
+    public ArrayList<IDataColumn<T>> build(int szCol);
 
 }

@@ -30,6 +30,7 @@ package com.ospreydcs.dp.jal.common;
 import java.awt.List;
 
 import com.ospreydcs.dp.jal.grpc.util.ProtoMsg;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
  * <h1>Enumeration of the Data Platform supported data timestamp mechanisms</h1>
@@ -182,5 +183,33 @@ public enum DpTimestampCase {
     public <T extends Object>   boolean isAssignableFrom(T val) {
         return this.isAssignableFrom( val.getClass() );
     }
-
+    
+    /**
+     * <p>
+     * Returns the <code>DpTimestampCase</code> enumeration constant with the given name.
+     * </p>
+     * <p>
+     * This a a convenience method that simply calls the method <code>{@link Enum#valueOf(Class, String)}</code>
+     * with first argument given by <code>DpTimestampCase.class</code> and the second argument given by
+     * the argument of this method.  Any exception thrown is caught an returned as a 
+     * <code>{@link TypeNotPresentException}</code>.
+     * </p>
+     * 
+     * @param strName   name of the <code>DpTimestampCase</code> enumeration constant
+     * 
+     * @return  the <code>DpTimestampCase</code> constant with the given name
+     * 
+     * @throws TypeNotPresentException  the name was invalid
+     */
+    public static DpTimestampCase   getConstant(String strName) throws TypeNotPresentException {
+        
+        try {
+            DpTimestampCase enmConstant = DpTimestampCase.valueOf(DpTimestampCase.class, strName);
+            return enmConstant;
+            
+        } catch (Exception e) {
+            throw new TypeNotPresentException(strName, e);
+        }
+    }
+    
 }

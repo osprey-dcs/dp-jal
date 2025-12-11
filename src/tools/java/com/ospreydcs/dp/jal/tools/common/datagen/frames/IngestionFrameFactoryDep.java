@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	IngestionFrameFactory.java
+ * File:	IngestionFrameFactoryDep.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.frames
- * Type: 	IngestionFrameFactory
+ * Type: 	IngestionFrameFactoryDep
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -52,15 +52,15 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * Class for generating <code>IngestionFrame</code> instances containing simulated data.
  * </p>
  * <p>
- * A single class instance of <code>IngestionFrameFactory</code> can create multiple <code>IngestionFrame</code>
+ * A single class instance of <code>IngestionFrameFactoryDep</code> can create multiple <code>IngestionFrame</code>
  * objects, which will contain different data and sequential time stamps.  Use the <code>{@link #nextFrame()}</code>
  * for <code>IngestionFrame</code> generation after class instantiation.
  * </p>
  * <p>
  * <h2>Configuration</h2>
- * Instances of <code>IngestionFrameFactory</code> are configured upon creation/construction.  A record object of
+ * Instances of <code>IngestionFrameFactoryDep</code> are configured upon creation/construction.  A record object of
  * type <code>{@link SampleBlockConfig}</code> is required for instantiation.  The record contains all fields necessary
- * for full configuration and all <code>IngestionFrameFactory</code> objects are ready for ingestion frame creation
+ * for full configuration and all <code>IngestionFrameFactoryDep</code> objects are ready for ingestion frame creation
  * (i.e., invoking the <code>{@link #nextFrame()}</code> method) after instantiation.
  * <p> 
  * </p>
@@ -132,9 +132,11 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  *
  * @author Christopher K. Allen
  * @since Dec 1, 2025
- *
+ * 
+ * @deprecated  Replaced by IngestionFrameFactory
  */
-public class IngestionFrameFactory {
+@Deprecated(since="Dec 5, 2025", forRemoval=true)
+public class IngestionFrameFactoryDep {
 
     
     //
@@ -150,7 +152,7 @@ public class IngestionFrameFactory {
     //
     
     /** Name of the frame generator */
-    public static final String  STR_SRC_NAME = IngestionFrameFactory.class.getSimpleName();
+    public static final String  STR_SRC_NAME = IngestionFrameFactoryDep.class.getSimpleName();
     
     /** Environment variable for current user */
     public static final String  STR_USERNAME = "USERNAME";
@@ -235,11 +237,11 @@ public class IngestionFrameFactory {
     
     /**
      * <p>
-     * Constructs a new <code>IngestionFrameFactory</code> instance.
+     * Constructs a new <code>IngestionFrameFactoryDep</code> instance.
      * </p>
      *
      */
-    public IngestionFrameFactory(Instant insStart, int cntSamples, Duration durPeriod, DpTimestampCase enmTmsCase, Collection<IDataColumnFactory<Object>> setColFacs) {
+    public IngestionFrameFactoryDep(Instant insStart, int cntSamples, Duration durPeriod, DpTimestampCase enmTmsCase, Collection<IDataColumnFactory<Object>> setColFacs) {
         this.insStart = insStart;
         this.cntSamples = cntSamples;
         this.durPeriod = durPeriod;
@@ -286,17 +288,17 @@ public class IngestionFrameFactory {
      * 
      * @param facCol    new column factory for ingestion frame column creation
      * 
-     * @throws ConfigurationException   data column factory has the wrong size (sample count) 
+     * @throws ConfigurationException   <s>data column factory has the wrong size (sample count)</s> 
      */
-    public void addDataColumn(IDataColumnFactory<Object> facCol) throws ConfigurationException {
+    public void addDataColumn(IDataColumnFactory<Object> facCol) /*throws ConfigurationException */{
         
         // Check factory configuration
-        if (facCol.getColumnSize() != this.getSampleCount())
-            throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() 
-                        + " Column factory " + facCol.getColumnName() 
-                        + " has wrong size " + facCol.getColumnSize()
-                        + " != " + this.getSampleCount()
-                        );
+//        if (facCol.getColumnSize() != this.getSampleCount())
+//            throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() 
+//                        + " Column factory " + facCol.getColumnName() 
+//                        + " has wrong size " + facCol.getColumnSize()
+//                        + " != " + this.getSampleCount()
+//                        );
         
         this.lstColFacs.add(facCol);
     }
@@ -393,12 +395,12 @@ public class IngestionFrameFactory {
      * 
      * @throws IllegalArgumentException     the sample count was negative and/or the period was non-positive
      * @throws IllegalStateException        there are no <code>IDataColumnFactory</code> instances
-     * @throws ConfigurationException       created a data column with the wrong size (sample count) 
+     * @throws ConfigurationException       <s>created a data column with the wrong size (sample count)</s> 
      * @throws DateTimeException            internal <code>Instant</code> addition failed
      * @throws ArithmeticException          numeric overflow occurred in <code>Instant</code> addition 
      * @throws UnsupportedOperationException an unsupported timestamp case was encountered
      */
-    public IngestionFrame   nextFrame() throws IllegalArgumentException, IllegalStateException, ConfigurationException, DateTimeException, ArithmeticException, UnsupportedOperationException {
+    public IngestionFrame   nextFrame() throws IllegalArgumentException, IllegalStateException, /* ConfigurationException,*/ DateTimeException, ArithmeticException, UnsupportedOperationException {
         
         // Check state
         if (this.lstColFacs.isEmpty())
@@ -453,20 +455,21 @@ public class IngestionFrameFactory {
      * 
      * @throws ConfigurationException   created a data column with the wrong size (sample count) 
      */
-    private ArrayList<IDataColumn<Object>>  nextColumns() throws ConfigurationException {
+    private ArrayList<IDataColumn<Object>>  nextColumns() /* throws ConfigurationException */ {
         
         // Create the returned vector container
         ArrayList<IDataColumn<Object>>  vecCols = new ArrayList<>(this.getColumnCount());
 
         // Populate the vector of columns - check size as we go
         for (IDataColumnFactory<Object> fac : this.lstColFacs) {
-            if (fac.getColumnSize() != this.cntSamples)
-                throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple()
-                            + " - Column " + fac.getColumnName() + " has wrong size "
-                            + fac.getColumnSize() + " != " + this.cntSamples
-                            );
-            
-            IDataColumn<Object>     col = fac.nextColumn();
+//            if (fac.getColumnSize() != this.cntSamples)
+//                throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple()
+//                            + " - Column " + fac.getColumnName() + " has wrong size "
+//                            + fac.getColumnSize() + " != " + this.cntSamples
+//                            );
+//            
+//            IDataColumn<Object>     col = fac.nextColumn();
+            IDataColumn<Object>     col = fac.nextColumn(this.cntSamples);
             
             vecCols.add(col);
         }

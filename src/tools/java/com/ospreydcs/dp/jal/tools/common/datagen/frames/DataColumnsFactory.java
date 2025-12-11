@@ -105,10 +105,8 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
      * 
      * @see DataColumnsFactory
      */
-    public static final DataColumnsFactory from(Set<String> setColNms, int szCols, IDatumFactory facValues) throws IllegalArgumentException 
-    {
-        
-        return new DataColumnsFactory(setColNms, szCols, facValues);
+    public static final DataColumnsFactory from(Set<String> setColNms, IDatumFactory facValues) throws IllegalArgumentException {
+        return new DataColumnsFactory(setColNms, facValues);
     }
 
     
@@ -119,8 +117,8 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
     /** The names of each column */
     private final Set<String>           setColNms; 
     
-    /** The size of each column - number of data values */
-    private final int                   szCols;
+//    /** The size of each column - number of data values */
+//    private final int                   szCols;
     
     /** The value factory for generating column values */
     private final IDatumFactory     facValues;
@@ -152,18 +150,18 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
      * 
      * @throws IllegalArgumentException either empty name collection, column size < 1, or value factory is <code>null</code>
      */
-    public DataColumnsFactory(Set<String> setColNms, int szCols, IDatumFactory facValues) throws IllegalArgumentException {
+    public DataColumnsFactory(Set<String> setColNms, IDatumFactory facValues) throws IllegalArgumentException {
         
         // Check arguments
         if (setColNms.size() < 1)
             throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Empty column name set.");
-        if (szCols < 1) 
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Column size must be > 0.");
+//        if (szCols < 1) 
+//            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Column size must be > 0.");
         if (facValues == null)
             throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Must provide a non-null value factory.");
         
         this.setColNms = setColNms;
-        this.szCols = szCols;
+//        this.szCols = szCols;
         this.facValues = facValues;
         
         this.cntCols = this.setColNms.size();
@@ -191,13 +189,13 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
         return this.setColNms;
     }
     
-    /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory#getColumnSize()
-     */
-    @Override
-    public final int getColumnSize() {
-        return this.szCols;
-    }
+//    /**
+//     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory#getColumnSize()
+//     */
+//    @Override
+//    public final int getColumnSize() {
+//        return this.szCols;
+//    }
     
     /**
      * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory#getColumnType()
@@ -219,17 +217,19 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
      * data factory <code>{@link IDatumFactory}</code> provided at creation/construction.
      * </p>
      * 
+     * @param   szCols  the size of all data columns returned (i.e., the number of rows)
+     * 
      * @return  vector of data columns containing simulated data
      * 
      * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory#build()
      */
     @Override
-    public ArrayList<IDataColumn<Object>> build() {
+    public ArrayList<IDataColumn<Object>> build(int szCols) {
 
         // Create (immutable) list of columns
         ArrayList<IDataColumn<Object>>   lstCols = this.setColNms
                 .stream()
-                .<IDataColumn<Object>>map(name -> this.buildColumn(name))
+                .<IDataColumn<Object>>map(name -> this.buildColumn(name, szCols))
                 .collect(
                         ArrayList::new, 
                         (vec, col) -> vec.add(col), 
@@ -259,14 +259,15 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
      * </p>
      * 
      * @param strName   data column name
+     * @param szCols    the size of the data column returned (i.e., the number of rows)
      * 
      * @return  new, populated implementation of the <code>IDataColumn</code> interface.
      */
-    private IDataColumn<Object> buildColumn(String strName) {
+    private IDataColumn<Object> buildColumn(String strName, int szCols) {
         
         // Create the value vector container and pack it with new values
-        ArrayList<Object>   vecVals = new ArrayList<>(this.szCols);
-        for (int i=0; i<this.szCols; i++) {
+        ArrayList<Object>   vecVals = new ArrayList<>(szCols);
+        for (int i=0; i<szCols; i++) {
             Object objVal = this.facValues.nextDatum();
             
             vecVals.add(objVal);

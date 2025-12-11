@@ -100,6 +100,41 @@ public class ImageFactory implements IDatumFactory {
     
     /**
      * <p>
+     * Creates and returns a new <code>ImageFactory</code> instance configured with all default arguments.
+     * </p>
+     * <p>
+     * The returned <code>ImageFactory</code> instance creates images of type <code>{@link BufferedImage}</code>.
+     * The <code>BufferedImage</code> type is compatible with the Data Platform <code>Image</code> Protocol
+     * Buffers message for transport to and from the Data Platform archive.
+     * </p>
+     * <p>
+     * Note that any images produced by the returned <code>ImageFactory</code> are noise, image data is
+     * simply allocated from the heap and not processed.  See the class documentation <code>{@link ImageFactory}</code>
+     * for more information.
+     * </p>
+     * <p>
+     * <h2>Default Values</h2>
+     * This method uses JAL Tools configuration default values for missing constructor arguments in 
+     * <code>{@link #ImageFactory(int, com.ospreydcs.dp.jal.common.BufferedImage.Format, String)}</code>.
+     * <br/>
+     * <br/>
+     * <ul>
+     * <li>name prefix = <code>{@link #STR_NM_PREF_DEF}</code> = {@value #STR_NM_PREF_DEF}.</li>
+     * <li>format = <code>{@link #ENM_FMT_DEF}</code> = {@value #ENM_FMT_DEF}.</li>
+     * <li>size = <code>{@link #INT_SIZE_DEF}</code> = {@value #INT_SIZE_DEF}.</li> 
+     * </ul>
+     * </p> 
+     * 
+     * @param szAlloc   size (in bytes) of all generated images
+     * 
+     * @return  a new <code>ImageFactory</code> instance ready for image generation
+     */
+    public static ImageFactory  from() {
+        return ImageFactory.from(INT_SIZE_DEF);
+    }
+    
+    /**
+     * <p>
      * Creates and returns a new <code>ImageFactory</code> instance configured by the given arguments.
      * </p>
      * <p>
@@ -125,12 +160,11 @@ public class ImageFactory implements IDatumFactory {
      * </p> 
      * 
      * @param szAlloc   size (in bytes) of all generated images
-     * @param enmFormat the format of all generated images
      * 
      * @return  a new <code>ImageFactory</code> instance ready for image generation
      */
     public static ImageFactory  from(int szAlloc) {
-        return ImageFactory.from(szAlloc, ENM_FMT_DEF, STR_NM_PREF_DEF);
+        return ImageFactory.from(szAlloc, ENM_FMT_DEF);
     }
     
     /**
@@ -172,6 +206,10 @@ public class ImageFactory implements IDatumFactory {
      * Creates and returns a new <code>ImageFactory</code> instance configured by the given arguments.
      * </p>
      * <p>
+     * This creator is equivalent to the canonical constructor 
+     * <code>{@link #ImageFactory(int, com.ospreydcs.dp.jal.common.BufferedImage.Format, String)}</code>.
+     * </p>
+     * <p>
      * The returned <code>ImageFactory</code> instance creates images of type <code>{@link BufferedImage}</code>.
      * The <code>BufferedImage</code> type is compatible with the Data Platform <code>Image</code> Protocol
      * Buffers message for transport to and from the Data Platform archive.
@@ -205,14 +243,18 @@ public class ImageFactory implements IDatumFactory {
     // Class Constants - Default Values
     //
     
+    /** The separator between image name prefix and image count */
+    public static final String                  STR_SEP_DEF = CFG_DEF.separator;
+
+    
     /** The default value for image name prefixes */
     public static final String                  STR_NM_PREF_DEF = CFG_DEF.namePrefix;
     
-    /** The separator between image name prefix and image count */
-    public static final String                  STR_SEP_DEF = CFG_DEF.separator;
-    
     /** The default value for image format */
     public static final BufferedImage.Format    ENM_FMT_DEF = CFG_DEF.format;
+    
+    /** The default value for image size (in bytes) */
+    public static final int                     INT_SIZE_DEF = CFG_DEF.size;
     
     
     //

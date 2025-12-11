@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	StructureFactoryEnum.java
+ * File:	StructureFactoryLib.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.factories
- * Type: 	StructureFactoryEnum
+ * Type: 	StructureFactoryLib
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -28,7 +28,7 @@ package com.ospreydcs.dp.jal.tools.common.datagen.factories;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactory;
-import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactoryConfig;
+import com.ospreydcs.dp.jal.tools.common.datagen.values.ScalarFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory;
 
 /**
@@ -36,7 +36,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory;
  * An enumeration of pre-defined structure factories available for testing and evaluation.
  * </p>
  * <p>
- * The collection of pre-defined structure factories mirrors the enumeration <code>{@link ScalarFactoryEnum}</code>.
+ * The collection of pre-defined structure factories mirrors the enumeration <code>{@link ScalarFactoryLib}</code>.
  * The underlying scalar factory used for the structure factory is given by the configuration in the scalar
  * factory enumeration.
  * </p>
@@ -66,186 +66,186 @@ import com.ospreydcs.dp.jal.tools.common.datagen.values.StructureFactory;
  *
  * @see ScalarFactory
  * @see StructureFactory
- * @see ScalarFactoryEnum
+ * @see ScalarFactoryLib
  */
-public enum StructureFactoryEnum {
+public enum StructureFactoryLib {
 
     
     /**
      * A structure factory producing elements using the default <code>ScalarFactory</code> configuration as defined 
      * in the JAL default configuration.
      * 
-     * @see ScalarFactoryEnum#DEFAULT
+     * @see ScalarFactoryLib#DEFAULT
      */
-    DEFAULT( ScalarFactoryEnum.DEFAULT ),
+    DEFAULT( ScalarFactoryLib.DEFAULT ),
     
     /**
      * A tensor factory producing string field values whose string suffix starts at 0 then increments by 1.
      * 
-     * @see ScalarFactoryEnum#STRING_INCR_1
+     * @see ScalarFactoryLib#STRING_INCR_1
      */
-    STRING_INCR_1( ScalarFactoryEnum.STRING_INCR_1 ),
+    STRING_INCR_1( ScalarFactoryLib.STRING_INCR_1 ),
     
     /**
      * A structure factory producing string field values whose string suffix starts at 0 then increments by 2.
      * 
-     * @see ScalarFactoryEnum#STRING_INCR_2
+     * @see ScalarFactoryLib#STRING_INCR_2
      */
-    STRING_INCR_2( ScalarFactoryEnum.STRING_INCR_2 ),
+    STRING_INCR_2( ScalarFactoryLib.STRING_INCR_2 ),
 
     /**
      * A tensor factory producing string field values whose string suffixes are randomly generated integers.
      * 
-     * @see ScalarFactoryEnum#STRING_INCR_RND
+     * @see ScalarFactoryLib#STRING_INCR_RND
      */
-    STRING_INCR_RND( ScalarFactoryEnum.STRING_INCR_RND ),
+    STRING_INCR_RND( ScalarFactoryLib.STRING_INCR_RND ),
 
     /**
      * A structure factory producing boolean field values that are all <code>false</code>.
      * 
-     * @see ScalarFactoryEnum#BOOLEAN_FALSE
+     * @see ScalarFactoryLib#BOOLEAN_FALSE
      */
-    BOOLEAN_FALSE( ScalarFactoryEnum.BOOLEAN_FALSE ),
+    BOOLEAN_FALSE( ScalarFactoryLib.BOOLEAN_FALSE ),
     
     /**
      * A structure factory producing boolean field values that are all <code>true</code>.
      * 
-     * @see ScalarFactoryEnum#BOOLEAN_TRUE
+     * @see ScalarFactoryLib#BOOLEAN_TRUE
      */
-    BOOLEAN_TRUE( ScalarFactoryEnum.BOOLEAN_TRUE ),
+    BOOLEAN_TRUE( ScalarFactoryLib.BOOLEAN_TRUE ),
     
     /**
      * A structure factory producing boolean field values that alternate between <code>false</code> and <code>true</code>.
      * 
-     * @see ScalarFactoryEnum#BOOLEAN_ALT
+     * @see ScalarFactoryLib#BOOLEAN_ALT
      */
-    BOOLEAN_ALT( ScalarFactoryEnum.BOOLEAN_ALT ),
+    BOOLEAN_ALT( ScalarFactoryLib.BOOLEAN_ALT ),
 
     /**
      * A structure factory producing boolean field values that are randomly generated.
      * 
-     * @see ScalarFactoryEnum#BOOLEAN_RND
+     * @see ScalarFactoryLib#BOOLEAN_RND
      */
-    BOOLEAN_RND( ScalarFactoryEnum.BOOLEAN_RND ),
+    BOOLEAN_RND( ScalarFactoryLib.BOOLEAN_RND ),
 
     /**
      * A structure factory producing integer field values whose initial value is 0 then increments by 1.
      *
-     * @see ScalarFactoryEnum#INTEGER_INCR_1
+     * @see ScalarFactoryLib#INTEGER_INCR_1
      */
-    INTEGER_INCR_1( ScalarFactoryEnum.INTEGER_INCR_1 ),
+    INTEGER_INCR_1( ScalarFactoryLib.INTEGER_INCR_1 ),
     
     /**
      * A structure factory producing integer field values whose initial value is 0 then increments by 2.
      *
-     * @see ScalarFactoryEnum#INTEGER_INCR_2
+     * @see ScalarFactoryLib#INTEGER_INCR_2
      */
-    INTEGER_INCR_2( ScalarFactoryEnum.INTEGER_INCR_2 ),
+    INTEGER_INCR_2( ScalarFactoryLib.INTEGER_INCR_2 ),
     
     /**
      * A structure factory producing integer field values whose initial value is 0 then increments by 3.
      *
-     * @see ScalarFactoryEnum#INTEGER_INCR_3
+     * @see ScalarFactoryLib#INTEGER_INCR_3
      */
-    INTEGER_INCR_3( ScalarFactoryEnum.INTEGER_INCR_3 ),
+    INTEGER_INCR_3( ScalarFactoryLib.INTEGER_INCR_3 ),
     
     /**
      * A structure factory producing integer field values that are randomly generated. 
      *
-     * @see ScalarFactoryEnum#INTEGER_RND
+     * @see ScalarFactoryLib#INTEGER_RND
      */
-    INTEGER_RND( ScalarFactoryEnum.INTEGER_RND ),
+    INTEGER_RND( ScalarFactoryLib.INTEGER_RND ),
     
     /**
      * A structure factory producing long field values whose initial value is 0 then increments by 1.
      *
-     * @see ScalarFactoryEnum#LONG_INCR_1
+     * @see ScalarFactoryLib#LONG_INCR_1
      */
-    LONG_INCR_1( ScalarFactoryEnum.LONG_INCR_1 ),
+    LONG_INCR_1( ScalarFactoryLib.LONG_INCR_1 ),
     
     /**
      * A structure factory producing long field values whose initial value is 0 then increments by 2.
      *
-     * @see ScalarFactoryEnum#LONG_INCR_2
+     * @see ScalarFactoryLib#LONG_INCR_2
      */
-    LONG_INCR_2( ScalarFactoryEnum.LONG_INCR_2 ),
+    LONG_INCR_2( ScalarFactoryLib.LONG_INCR_2 ),
     
     /**
      * A structure factory producing long field values whose initial value is 0 then increments by 3.
      *
-     * @see ScalarFactoryEnum#LONG_INCR_3
+     * @see ScalarFactoryLib#LONG_INCR_3
      */
-    LONG_INCR_3( ScalarFactoryEnum.LONG_INCR_3 ),
+    LONG_INCR_3( ScalarFactoryLib.LONG_INCR_3 ),
     
     /**
      * A structure factory producing long field values that are randomly generated. 
      *
-     * @see ScalarFactoryEnum#LONG_RND
+     * @see ScalarFactoryLib#LONG_RND
      */
-    LONG_RND( ScalarFactoryEnum.LONG_RND ),
+    LONG_RND( ScalarFactoryLib.LONG_RND ),
     
     /**
      * A structure factor producing float field values whose initial value is 0 then increments by 0.1.
      * 
-     * @see ScalarFactoryEnum#FLOAT_INCR_P1
+     * @see ScalarFactoryLib#FLOAT_INCR_P1
      */
-    FLOAT_INCR_P1( ScalarFactoryEnum.FLOAT_INCR_P1 ),
+    FLOAT_INCR_P1( ScalarFactoryLib.FLOAT_INCR_P1 ),
     
     /**
      * A structure factor producing float field values whose initial value is 0 then increments by 0.2.
      * 
-     * @see ScalarFactoryEnum#FLOAT_INCR_P2
+     * @see ScalarFactoryLib#FLOAT_INCR_P2
      */
-    FLOAT_INCR_P2( ScalarFactoryEnum.FLOAT_INCR_P2 ),
+    FLOAT_INCR_P2( ScalarFactoryLib.FLOAT_INCR_P2 ),
     
     /**
      * A structure factor producing float field values whose initial value is 0 then increments by 0.01.
      * 
-     * @see ScalarFactoryEnum#FLOAT_INCR_P01
+     * @see ScalarFactoryLib#FLOAT_INCR_P01
      */
-    FLOAT_INCR_P01( ScalarFactoryEnum.FLOAT_INCR_P01 ),
+    FLOAT_INCR_P01( ScalarFactoryLib.FLOAT_INCR_P01 ),
     
     /**
      * A structure factory producing float field values that are randomly generated in [0, 1].
      * 
-     * @see ScalarFactoryEnum#FLOAT_RND
+     * @see ScalarFactoryLib#FLOAT_RND
      */
-    FLOAT_RND( ScalarFactoryEnum.FLOAT_RND ),
+    FLOAT_RND( ScalarFactoryLib.FLOAT_RND ),
     
     /**
      * A structure factor producing double field values whose initial value is 0 then increments by 0.1.
      * 
-     * @see ScalarFactoryEnum#DOUBLE_INCR_P1
+     * @see ScalarFactoryLib#DOUBLE_INCR_P1
      */
-    DOUBLE_INCR_P1( ScalarFactoryEnum.DOUBLE_INCR_P1 ),
+    DOUBLE_INCR_P1( ScalarFactoryLib.DOUBLE_INCR_P1 ),
     
     /**
      * A structure factor producing double field values whose initial value is 0 then increments by 0.01.
      * 
-     * @see ScalarFactoryEnum#DOUBLE_INCR_P01
+     * @see ScalarFactoryLib#DOUBLE_INCR_P01
      */
-    DOUBLE_INCR_P01( ScalarFactoryEnum.DOUBLE_INCR_P01 ),
+    DOUBLE_INCR_P01( ScalarFactoryLib.DOUBLE_INCR_P01 ),
     
     /**
      * A structure factor producing double field values whose initial value is 0 then increments by 0.001.
      * 
-     * @see ScalarFactoryEnum#DOUBLE_INCR_P001
+     * @see ScalarFactoryLib#DOUBLE_INCR_P001
      */
-    DOUBLE_INCR_P001( ScalarFactoryEnum.DOUBLE_INCR_P001 ),
+    DOUBLE_INCR_P001( ScalarFactoryLib.DOUBLE_INCR_P001 ),
     
     /**
      * A structure factor producing double field values whose initial value is 0 then increments by 1.0e-16.
      * 
-     * @see ScalarFactoryEnum#DOUBLE_INCR_EM16
+     * @see ScalarFactoryLib#DOUBLE_INCR_EM16
      */
-    DOUBLE_INCR_EM16( ScalarFactoryEnum.DOUBLE_INCR_EM16 ),
+    DOUBLE_INCR_EM16( ScalarFactoryLib.DOUBLE_INCR_EM16 ),
     
     /**
      * A structure factory that produces double field values that are randomly generated in [0, 1].
      * 
-     * @see ScalarFactoryEnum#DOUBLE_RND
+     * @see ScalarFactoryLib#DOUBLE_RND
      */
-    DOUBLE_RND( ScalarFactoryEnum.DOUBLE_RND ),
+    DOUBLE_RND( ScalarFactoryLib.DOUBLE_RND ),
     
     ;
     
@@ -255,7 +255,7 @@ public enum StructureFactoryEnum {
     //
     
     /** The scalar factory constant representing the scalar factor used to create structure field values */
-    private final ScalarFactoryEnum     enmFacFldVals;
+    private final ScalarFactoryLib     enmFacFldVals;
     
     
     //
@@ -264,12 +264,12 @@ public enum StructureFactoryEnum {
     
     /**
      * <p>
-     * Constructs a new <code>StructureFactoryEnum</code> constant with the given scalar factory representation.
+     * Constructs a new <code>StructureFactoryLib</code> constant with the given scalar factory representation.
      * </p>
      *
      * @param enmFacFldVals scalar factory constant representing the scalar factory used to create structure field values
      */
-    private StructureFactoryEnum(ScalarFactoryEnum enmFacFldVals) {
+    private StructureFactoryLib(ScalarFactoryLib enmFacFldVals) {
         this.enmFacFldVals = enmFacFldVals;
     }
     
@@ -280,7 +280,7 @@ public enum StructureFactoryEnum {
     
     /**
      * <p>
-     * Returns the <code>ScalarFactoryEnum</code> constant associated with this structure factory.
+     * Returns the <code>ScalarFactoryLib</code> constant associated with this structure factory.
      * </p>
      * <p>
      * The returned enumeration constant is used to create <code>{@link ScalarFactory}</code> instances
@@ -292,9 +292,9 @@ public enum StructureFactoryEnum {
      * is used to create all <code>ScalarFactory</code> instances.  
      * </p>
      *   
-     * @return  the associated <code>ScalarFactoryEnum</code> constant used to create <code>ScalarFactory</code> instances
+     * @return  the associated <code>ScalarFactoryLib</code> constant used to create <code>ScalarFactory</code> instances
      */
-    public ScalarFactoryEnum    getScalarFactoryEnum() {
+    public ScalarFactoryLib    getScalarFactoryEnum() {
         return this.enmFacFldVals;
     }
     
@@ -304,12 +304,12 @@ public enum StructureFactoryEnum {
      * </p>
      * <p>
      * This is a convenience method which is the equivalent of 
-     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryEnum#getConfiguration()}</code>.
+     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryLib#getConfiguration()}</code>.
      * </p>
      * 
      * @return  configuration of the <code>ScalarFactory</code> used for all <code>StructureFactory</code> created by this constant
      */
-    public ScalarFactoryConfig  getScalarFactoryConfig() {
+    public ScalarFactorySpec  getScalarFactoryConfig() {
         return this.getScalarFactoryEnum().getConfiguration();
     }
     
@@ -319,7 +319,7 @@ public enum StructureFactoryEnum {
      * </p>
      * <p>
      * This is a convenience method which is the equivalent of
-     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryEnum#getJalType()}</code>.
+     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryLib#getJalType()}</code>.
      * </p>
      * 
      * @return  the data type of all structure field values produced by all associated factories as a <code>JalScalarType</code>
@@ -334,7 +334,7 @@ public enum StructureFactoryEnum {
      * </p>
      * <p>
      * This is a convenience method which is the equivalent of
-     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryEnum#getDpType()}</code>.
+     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryLib#getDpType()}</code>.
      * </p>
      * 
      * @return  the data type of all tensor elements produced by all associated factories as a <code>DpSupportedType</code>

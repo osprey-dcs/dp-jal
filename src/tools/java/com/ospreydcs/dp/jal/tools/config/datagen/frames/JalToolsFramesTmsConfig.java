@@ -60,9 +60,13 @@ public class JalToolsFramesTmsConfig extends CfgStructure<JalToolsFramesTmsConfi
     @ACfgOverride.Field(name="START")
     public String                   start;
     
-    /** The default sampling period for ingestion frame timestamps (ISO-8605 duration format string 'PnDTnHnMnS') */
+    /** The default sampling period for ingestion frame timestamps (ISO-8605 duration format string 'PnDTnHnMn.nS') */
     @ACfgOverride.Field(name="PERIOD")
     public String                   period;
+    
+    /** The default sampling delay from the start instant (ISO-8605 duration format string 'PnDTnHnMn.nS') */
+    @ACfgOverride.Field(name="DELAY")
+    public String                   delay;
     
     /** The number of timestamps per ingestion frame - this is the row count for each ingestion frame */
     @ACfgOverride.Field(name="COUNT")
@@ -91,7 +95,7 @@ public class JalToolsFramesTmsConfig extends CfgStructure<JalToolsFramesTmsConfi
      * @see {@link Instant#parse(CharSequence)}
      */
     public Instant  startInstant()  throws DateTimeParseException {
-        Instant insStart = Instant.parse(start);    // throws DateTimeParseException
+        Instant insStart = Instant.parse(this.start);    // throws DateTimeParseException
         
         return insStart;
     }
@@ -115,8 +119,32 @@ public class JalToolsFramesTmsConfig extends CfgStructure<JalToolsFramesTmsConfi
      * @see {@link Duration#parse(CharSequence)}
      */
     public Duration periodDuration() throws DateTimeParseException {
-        Duration    durPeriod = Duration.parse(period);     // throws DateTimeParseException
+        Duration    durPeriod = Duration.parse(this.period);     // throws DateTimeParseException
         
         return durPeriod;
+    }
+    
+    /**
+     * <p>
+     * Returns the <code>{@link #delay}</code> attribute as a Java <code>{@link Duration}</code> object.
+     * </p>
+     * <p>
+     * The <code>{@link #delay}</code> attribute of this structure class is parsed as an ISO-8601 time duration
+     * format string with the <code>{@link Duration#parse(CharSequence)}</code> method.  The result is returned
+     * as a new <code>Duration</code> object.  The <code>{@link #delay}</code> must be a valid UTC time duration
+     * expression formatted such as 'PnD<em>T</em>nH:nM:n.nS'.  The seconds resolution is to the nanosecond
+     * (i.e., 'PT0.000000001S').
+     * </p>
+     * 
+     * @return  a new Java <code>Duration</code> object parsed from the <code>{@link #delay}</code> attribute
+     * 
+     * @throws DateTimeParseException   invalid ISO-8605 duration format or <code>null</code> attribute value
+     * 
+     * @see {@link Duration#parse(CharSequence)}
+     */
+    public Duration delayDuration() throws DateTimeParseException {
+        Duration    durDelay = Duration.parse(this.delay);      // throws DateTimeParseException
+        
+        return durDelay;
     }
 }

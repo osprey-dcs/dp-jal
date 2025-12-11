@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  * </li>
  * </ol>
  * This record provides conversions between the 3 methods offer all options after creation.
- * The objective is to create time durations using arbitrary (amount, unit) pairs then
+ * The objective is to create time durations using arbitrary (interval, unit) pairs then
  * convert to a <code>Duration</code> object for unit conversion.
  * </p>
  * <p>
@@ -65,7 +65,7 @@ import java.util.concurrent.TimeUnit;
  * </li>
  * <li>
  * Class <code>{@link Duration}</code> explicitly abstracts a time duration providing the
- * amount of time in arbitrary units.  This record is essentially an extension of that class where the
+ * interval of time in arbitrary units.  This record is essentially an extension of that class where the
  * original time units are preserved.
  * </li>
  * </ul>
@@ -74,7 +74,7 @@ import java.util.concurrent.TimeUnit;
  * @author Christopher K. Allen
  * @since Jul 6, 2024
  * 
- * @param amount        the time duration quantity 
+ * @param interval      the time duration interval
  * @param chronoUnit    the time duration units as <code>{@link ChronoUnit}</code> enumeration
  * @param timeUnit      the time duration units as <code>{@link TimeUnit}</code> enumeration
  * @param duration      The equivalent <code>Duration</code> instance  
@@ -91,13 +91,13 @@ public class TimeAbstraction {
      * Creates a new, initialized <code>TimeAbstraction</code> instance with the given properties.
      * </p>
      * 
-     * @param amount    time duration amount
+     * @param interval  time duration interval
      * @param enmUnits  time duration units as <code>ChronoUnit</code> enumeration constant
      * 
-     * @return  new <code>TimeAbstraction</code> instance with the given amount of time
+     * @return  new <code>TimeAbstraction</code> instance with the given interval of time
      */
-    public static TimeAbstraction  from(long amount, ChronoUnit enmUnits) {
-        return new TimeAbstraction(amount, enmUnits);
+    public static TimeAbstraction  from(long interval, ChronoUnit enmUnits) {
+        return new TimeAbstraction(interval, enmUnits);
     }
     
     /**
@@ -105,13 +105,13 @@ public class TimeAbstraction {
      * Creates a new, initialized <code>TimeAbstraction</code> instance with the given properties.
      * </p>
      * 
-     * @param amount    time duration amount
+     * @param interval  time duration interval
      * @param enmUnits  time duration units as <code>TimeUnit</code> enumeration constant
      * 
-     * @return  new <code>TimeAbstraction</code> instance with the given amount of time
+     * @return  new <code>TimeAbstraction</code> instance with the given interval of time
      */
-    public static TimeAbstraction  from(long amount, TimeUnit enmUnits) {
-        return new TimeAbstraction(amount, enmUnits);
+    public static TimeAbstraction  from(long interval, TimeUnit enmUnits) {
+        return new TimeAbstraction(interval, enmUnits);
     }
     
     /**
@@ -148,8 +148,8 @@ public class TimeAbstraction {
     // Instance Attributes
     //
     
-    /** The time duration quantity */
-    public final long          amount;
+    /** The time duration interval */
+    public final long          interval;
     
     /** The time duration units as <code>{@link ChronoUnit}</code> enumeration */
     public final ChronoUnit    chronoUnit;
@@ -170,14 +170,14 @@ public class TimeAbstraction {
      * Constructs a new instance of <code>TimeAbstraction</code> from the arguments.
      * </p>
      *
-     * @param amount    the time duration quantity
+     * @param interval  the time duration interval
      * @param enmUnits  the time duration units as <code>ChronoUnit</code> enumeration
      */
-    public TimeAbstraction(long amount, ChronoUnit enmUnits) {
-        this.amount = amount;
+    public TimeAbstraction(long interval, ChronoUnit enmUnits) {
+        this.interval = interval;
         this.chronoUnit = enmUnits;
         this.timeUnit = TimeUnit.of(enmUnits);
-        this.duration = Duration.of(amount, enmUnits);
+        this.duration = Duration.of(interval, enmUnits);
     }
     
     /**
@@ -185,11 +185,11 @@ public class TimeAbstraction {
      * Constructs a new instance of <code>TimeAbstraction</code> from the arguments.
      * </p>
      *
-     * @param amount    the time duration amount
+     * @param interval  the time duration interval
      * @param enmUnits  the time duration units as <code>TimeUnit</code> enumeration
      */
-    public TimeAbstraction(long amount, TimeUnit enmUnits) {
-        this(amount, enmUnits.toChronoUnit());
+    public TimeAbstraction(long interval, TimeUnit enmUnits) {
+        this(interval, enmUnits.toChronoUnit());
     }
     
     /**
@@ -214,7 +214,7 @@ public class TimeAbstraction {
     
     /**
      * <p>
-     * Return the time duration amount as specified at construction.
+     * Return the time duration interval as specified at construction.
      * </p>
      * <p>
      * The units of the time duration are available through <code>{@link #getChronoUnit()}</code> or
@@ -222,10 +222,10 @@ public class TimeAbstraction {
      * time duration in abstract form.
      * </p>
      * 
-     * @return  the length of time within the duration
+     * @return  the interval of time within the duration
      */
-    public long getAmount() {
-        return this.amount;
+    public long getInterval() {
+        return this.interval;
     }
     
     /**
@@ -237,7 +237,7 @@ public class TimeAbstraction {
      * instance was provided.
      * </p>
      * 
-     * @return  the units of the time duration corresponding to the amount <code>{@link #getAmount()}</code>
+     * @return  the units of the time duration corresponding to the interval <code>{@link #getInterval()}</code>
      */
     public ChronoUnit getChronoUnit() {
         return this.chronoUnit;
@@ -252,7 +252,7 @@ public class TimeAbstraction {
      * instance was provided.
      * </p>
      * 
-     * @return  the units of the time duration corresponding to the amount <code>{@link #getAmount()}</code>
+     * @return  the units of the time duration corresponding to the interval <code>{@link #getInterval()}</code>
      */
     public TimeUnit getTimeUnit() {
         return this.timeUnit;
@@ -263,7 +263,7 @@ public class TimeAbstraction {
      * Return time duration as Java <code>{@link Duration}</code> instance.
      * </p>
      * <p>
-     * Note that the <code>Duration</code> class maintains the duration amount in arbitrary units.
+     * Note that the <code>Duration</code> class maintains the duration interval in arbitrary units.
      * The returned quantity may be readily converted between time units.
      * </p>
      *   
