@@ -1,8 +1,8 @@
 /*
  * Project: dp-api-common
- * File:	SampleBlockConfig.java
+ * File:	SampleBlockConfigDep.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.factories.frames
- * Type: 	SampleBlockConfig
+ * Type: 	SampleBlockConfigDep
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -58,7 +58,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
  * @deprecated Replaced by IngestionFrameConfig
  */
 @Deprecated(since="Nov 26, 2025", forRemoval=true)
-public record SampleBlockConfig(
+public record SampleBlockConfigDep(
         Set<String>     setPvNames,
         JalScalarType   enmDataType,
         DpTimestampCase enmTmsCase,
@@ -75,7 +75,7 @@ public record SampleBlockConfig(
     
     /**
      * <p>
-     * Creates new <code>SampleBlockConfig</code> instance with fields populated by the given arguments.
+     * Creates new <code>SampleBlockConfigDep</code> instance with fields populated by the given arguments.
      * </p>
      * 
      * @param setPvNames    collection of Process Variable names for the sampling block 
@@ -85,9 +85,9 @@ public record SampleBlockConfig(
      * @param durPeriod     the sample period as a Java <code>{@link Duration}</code> instance 
      * @param durDelay      the sampling start time delay (e.g., from the Test Archive inception)   
      * 
-     * @return  a new <code>SampleBlockConfig</code> record populated with the given arguments
+     * @return  a new <code>SampleBlockConfigDep</code> record populated with the given arguments
      */
-    public static SampleBlockConfig from(
+    public static SampleBlockConfigDep from(
             Set<String>     setPvNames, 
             JalScalarType   enmDataType, 
             DpTimestampCase enmTmsCase, 
@@ -99,12 +99,12 @@ public record SampleBlockConfig(
         TimeAbstraction tmaPeriod = TimeAbstraction.from(durPeriod);
         TimeAbstraction tmaDelay = TimeAbstraction.from(durDelay);
         
-        return new SampleBlockConfig(setPvNames, enmDataType, enmTmsCase, cntSamples, tmaPeriod, tmaDelay);
+        return new SampleBlockConfigDep(setPvNames, enmDataType, enmTmsCase, cntSamples, tmaPeriod, tmaDelay);
     }
     
     /**
      * <p>
-     * Creates new <code>SampleBlockConfig</code> instance with fields populated by the given arguments.
+     * Creates new <code>SampleBlockConfigDep</code> instance with fields populated by the given arguments.
      * </p>
      * <p>
      * The argument <code>strPvNmPrefix</code> is used to create a <code>{@link Set}</code> of <code>cntPvs</code>
@@ -124,9 +124,9 @@ public record SampleBlockConfig(
      * @param durPeriod     the sample period as a Java <code>{@link Duration}</code> instance 
      * @param durDelay      the sampling start time delay (e.g., from the Test Archive inception)   
      * 
-     * @return  a new <code>SampleBlockConfig</code> record populated with the given arguments
+     * @return  a new <code>SampleBlockConfigDep</code> record populated with the given arguments
      */
-    public static SampleBlockConfig from(
+    public static SampleBlockConfigDep from(
             String          strPvNmPrefix,
             int             cntPvs,
             JalScalarType   enmDataType,
@@ -141,12 +141,12 @@ public record SampleBlockConfig(
                 .map(str -> strPvNmPrefix + str)
                 .collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
         
-        return SampleBlockConfig.from(setPvNames, enmDataType, enmTmsCase, cntSamples, durPeriod, durDelay);
+        return SampleBlockConfigDep.from(setPvNames, enmDataType, enmTmsCase, cntSamples, durPeriod, durDelay);
     }
     
     /**
      * <p>
-     * Creates new <code>SampleBlockConfig</code> instance with fields populated by the given arguments.
+     * Creates new <code>SampleBlockConfigDep</code> instance with fields populated by the given arguments.
      * </p>
      * <p>
      * The argument <code>strPvNmPrefix</code> is used to create a <code>{@link Set}</code> of <code>cntPvs</code>
@@ -166,9 +166,9 @@ public record SampleBlockConfig(
      * @param durPeriod     the sample period as a Java <code>{@link Duration}</code> instance 
      * @param durDelay      the sampling start time delay (e.g., from the Test Archive inception)   
      * 
-     * @return  a new <code>SampleBlockConfig</code> record populated with the given arguments
+     * @return  a new <code>SampleBlockConfigDep</code> record populated with the given arguments
      */
-    public static SampleBlockConfig from(
+    public static SampleBlockConfigDep from(
             String          strPvNmPrefix,
             int             cntPvs,
             JalScalarType   enmDataType,
@@ -177,12 +177,12 @@ public record SampleBlockConfig(
             Duration        durPeriod
             )
     {
-        return SampleBlockConfig.from(strPvNmPrefix, cntPvs, enmDataType, enmTmsCase, cntSamples, durPeriod, Duration.ZERO);
+        return SampleBlockConfigDep.from(strPvNmPrefix, cntPvs, enmDataType, enmTmsCase, cntSamples, durPeriod, Duration.ZERO);
     }
     
     /**
      * <p>
-     * Creates new <code>SampleBlockConfig</code> instance with fields populated by the given arguments.
+     * Creates new <code>SampleBlockConfigDep</code> instance with fields populated by the given arguments.
      * </p>
      * <p>
      * The sampling delay defaults to <code>{@link TimeAbstraction#ZERO}</code>.
@@ -194,9 +194,9 @@ public record SampleBlockConfig(
      * @param cntSamples    the number of samples for each PV within the sampling block
      * @param durPeriod     the sample period as a Java <code>{@link Duration}</code> instance 
      * 
-     * @return  a new <code>SampleBlockConfig</code> record populated with the given arguments
+     * @return  a new <code>SampleBlockConfigDep</code> record populated with the given arguments
      */
-    public static SampleBlockConfig from(
+    public static SampleBlockConfigDep from(
             Set<String>     setPvNames, 
             JalScalarType   enmDataType, 
             DpTimestampCase enmTmsCase, 
@@ -206,12 +206,12 @@ public record SampleBlockConfig(
     {
         TimeAbstraction tmaPeriod = TimeAbstraction.from(durPeriod);
         
-        return new SampleBlockConfig(setPvNames, enmDataType, enmTmsCase, cntSamples, tmaPeriod, TimeAbstraction.ZERO);
+        return new SampleBlockConfigDep(setPvNames, enmDataType, enmTmsCase, cntSamples, tmaPeriod, TimeAbstraction.ZERO);
     }
     
     /**
      * <p>
-     * Creates new <code>SampleBlockConfig</code> instance with fields populated by the given arguments.
+     * Creates new <code>SampleBlockConfigDep</code> instance with fields populated by the given arguments.
      * </p>
      * <p>
      * The sampling delay defaults to <code>{@link TimeAbstraction#ZERO}</code>.
@@ -224,9 +224,9 @@ public record SampleBlockConfig(
      * @param lngPeriod     the sample period 
      * @param tuPeriod      the time units for the sample period
      * 
-     * @return  a new <code>SampleBlockConfig</code> record populated with the given arguments
+     * @return  a new <code>SampleBlockConfigDep</code> record populated with the given arguments
      */
-    public static SampleBlockConfig from(
+    public static SampleBlockConfigDep from(
             Set<String>     setPvNames, 
             JalScalarType   enmDataType, 
             DpTimestampCase enmTmsCase, 
@@ -240,12 +240,12 @@ public record SampleBlockConfig(
         TimeAbstraction tmaPeriod = TimeAbstraction.from(lngPeriod, tuPeriod);
         TimeAbstraction tmaDelay = TimeAbstraction.from(lngDelay, tuDelay);
         
-        return new SampleBlockConfig(setPvNames, enmDataType, enmTmsCase, cntSamples, tmaPeriod, tmaDelay);
+        return new SampleBlockConfigDep(setPvNames, enmDataType, enmTmsCase, cntSamples, tmaPeriod, tmaDelay);
     }
     
     /**
      * <p>
-     * Creates new <code>SampleBlockConfig</code> instance with fields populated by the given arguments.
+     * Creates new <code>SampleBlockConfigDep</code> instance with fields populated by the given arguments.
      * </p>
      * <p>
      * The sampling delay defaults to <code>{@link TimeAbstraction#ZERO}</code>.
@@ -258,9 +258,9 @@ public record SampleBlockConfig(
      * @param lngPeriod     the sample period 
      * @param tuPeriod      the time units for the sample period
      * 
-     * @return  a new <code>SampleBlockConfig</code> record populated with the given arguments
+     * @return  a new <code>SampleBlockConfigDep</code> record populated with the given arguments
      */
-    public static SampleBlockConfig from(
+    public static SampleBlockConfigDep from(
             Set<String>     setPvNames, 
             JalScalarType   enmDataType, 
             DpTimestampCase enmTmsCase, 
@@ -271,7 +271,7 @@ public record SampleBlockConfig(
     {
         TimeAbstraction tmaPeriod = TimeAbstraction.from(lngPeriod, tuPeriod);
         
-        return new SampleBlockConfig(setPvNames, enmDataType, enmTmsCase, cntSamples, tmaPeriod, TimeAbstraction.ZERO);
+        return new SampleBlockConfigDep(setPvNames, enmDataType, enmTmsCase, cntSamples, tmaPeriod, TimeAbstraction.ZERO);
     }
     
     

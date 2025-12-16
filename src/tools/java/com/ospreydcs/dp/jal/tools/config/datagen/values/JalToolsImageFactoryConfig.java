@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	JalToolsImageValuesConfig.java
+ * File:	JalToolsImageFactoryConfig.java
  * Package: com.ospreydcs.dp.jal.tools.config.datagen
- * Type: 	JalToolsImageValuesConfig
+ * Type: 	JalToolsImageFactoryConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -42,10 +42,10 @@ import com.ospreydcs.dp.jal.config.model.CfgStructure;
  * @since Nov 15, 2025
  *
  */
-public class JalToolsImageValuesConfig extends CfgStructure<JalToolsImageValuesConfig> {
+public class JalToolsImageFactoryConfig extends CfgStructure<JalToolsImageFactoryConfig> {
 
     /** Default constructor required of base class */
-    public JalToolsImageValuesConfig() { super(JalToolsImageValuesConfig.class); }
+    public JalToolsImageFactoryConfig() { super(JalToolsImageFactoryConfig.class); }
 
     
     //

@@ -34,6 +34,8 @@ import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
+import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTensorFactoryConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -74,38 +76,327 @@ public class TensorFactory implements IDatumFactory {
     
     /**
      * <p>
-     * Creates and returns a new <code>TensorFactory</code> instance configured according to the given arguments.
+     * Creates and returns a new <code>TensorFactory</code> instance configured with all default parameters.
      * </p>
-     * 
-     * @param shape      array containing size of each array axis
-     * @param recFacSpec configuration record for the scalar value generator used internally for value generation 
+     * <p>
+     * This creator uses all default parameters.  All are taken from the JAL Tools default configuration.
+     * Some are used for the internal <code>{@link ScalarFactory}</code> and some for the 
+     * <code>{@link TensorFactory}</code> configuration.  
+     * <ul>
+     * <li><code>arrShape = {@link #ARR_SHAPE_DEF}</code>.</i>
+     * <li><code>enmType = {@link #ENM_TYPE_DEF}</code>.</li>
+     * <li><code>bolRandEnbl = {@link #BOL_RAND_ENBL_DEF}</code>.</li>
+     * <li><code>{@link #BOL_RAND_ENBL_DEF} == true</code>
+     *   <ul>
+     *   <li><code>lngSeed = {@link #LNG_RAND_SEED_DEF}</code>.</li>
+     *   <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li><code>{@link #BOL_RAND_ENBL_DEF} == false</code>
+     *   <ul>
+     *   <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * </p>
+     * <p>
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * scalar factory configuration parameter 'numIncr' is ignored.
+     * When 'bolRandEnbl' is set to <code>false</code> the  but populated according to the above. 
+     * </p> 
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
      * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
      */
-    public static TensorFactory from(int[] shape, ScalarFactorySpec recFacSpec) throws IllegalArgumentException {
-        ScalarFactory   facValues = recFacSpec.newFactory();
+    public static TensorFactory  from() throws IllegalArgumentException {
+
+        return TensorFactory.from(ARR_SHAPE_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>TensorFactory</code> instance configured according to the given argument(s).
+     * </p>
+     * <p>
+     * This creator uses some default parameters from the JAL Tools default configuration for the 
+     * internal <code>{@link ScalarFactory}</code> and for some of the <code>{@link TensorFactory}</code>
+     * configuration.  
+     * <ul>
+     * <li><code>enmType = {@link #ENM_TYPE_DEF}</code>.</li>
+     * <li><code>bolRandEnbl = {@link #BOL_RAND_ENBL_DEF}</code>.</li>
+     * <li><code>{@link #BOL_RAND_ENBL_DEF} == true</code>
+     *   <ul>
+     *   <li><code>lngSeed = {@link #LNG_RAND_SEED_DEF}</code>.</li>
+     *   <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li><code>{@link #BOL_RAND_ENBL_DEF} == false</code>
+     *   <ul>
+     *   <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * </p>
+     * <p>
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * scalar factory configuration parameter 'numIncr' is ignored.
+     * When 'bolRandEnbl' is set to <code>false</code> the  but populated according to the above. 
+     * </p> 
+     * 
+     * @param arrShape      array containing size of each tensor axis
+     * 
+     * @return  a new <code>TensorFactory</code> instance ready for array value generation
+     * 
+     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     */
+    public static TensorFactory  from(int[] arrShape) throws IllegalArgumentException {
+
+        return TensorFactory.from(arrShape, ENM_TYPE_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>TensorFactory</code> instance configured according to the given argument(s).
+     * </p>
+     * <p>
+     * This creator uses some default parameters from the JAL Tools default configuration for the 
+     * internal <code>{@link ScalarFactory}</code> and for some of the <code>{@link TensorFactory}</code>
+     * configuration.  
+     * <ul>
+     * <li><code>bolRandEnbl = {@link #BOL_RAND_ENBL_DEF}</code>.</li>
+     * <li><code>{@link #BOL_RAND_ENBL_DEF} == true</code>
+     *   <ul>
+     *   <li><code>lngSeed = {@link #LNG_RAND_SEED_DEF}</code>.</li>
+     *   <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li><code>{@link #BOL_RAND_ENBL_DEF} == false</code>
+     *   <ul>
+     *   <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * </p>
+     * <p>
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * scalar factory configuration parameter 'numIncr' is ignored.
+     * When 'bolRandEnbl' is set to <code>false</code> the  but populated according to the above. 
+     * </p> 
+     * 
+     * @param arrShape      array containing size of each tensor axis
+     * @param enmType       the data type of the generated tensor elements
+     * 
+     * @return  a new <code>TensorFactory</code> instance ready for array value generation
+     * 
+     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     */
+    public static TensorFactory  from(int[] arrShape, JalScalarType enmType) throws IllegalArgumentException {
+
+        return TensorFactory.from(arrShape, enmType, BOL_RAND_ENBL_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>TensorFactory</code> instance configured according to the given argument(s).
+     * </p>
+     * <p>
+     * This creator uses some default parameters from the JAL Tools default configuration for the 
+     * internal <code>{@link ScalarFactory}</code> and for some of the <code>{@link TensorFactory}</code>
+     * configuration.  
+     * <ul>
+     * <li><code>bolRandEnbl == true</code>
+     *   <ul>
+     *   <li><code>lngSeed = {@link #LNG_RAND_SEED_DEF}</code>.</li>
+     *   <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li><code>bolRandEnbl == false</code>
+     *   <ul>
+     *   <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * </p>
+     * <p>
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * scalar factory configuration parameter 'numIncr' is ignored.
+     * When 'bolRandEnbl' is set to <code>false</code> the  but populated according to the above. 
+     * </p> 
+     * 
+     * @param arrShape      array containing size of each tensor axis
+     * @param enmType       the data type of the generated tensor elements
+     * @param bolRandEnbl   enable/disable the use of random sequence generation, <code>false</code> indicates an incremental factory
+     * 
+     * @return  a new <code>TensorFactory</code> instance ready for array value generation
+     * 
+     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     */
+    public static TensorFactory  from(int[] arrShape, JalScalarType enmType, boolean bolRandEnbl) throws IllegalArgumentException {
+
+        return TensorFactory.from(arrShape, enmType, bolRandEnbl, LNG_RAND_SEED_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>TensorFactory</code> instance configured according to the given argument(s).
+     * </p>
+     * <p>
+     * This creator uses some default parameters from the JAL Tools default configuration for the 
+     * internal <code>{@link ScalarFactory}</code> and for some of the <code>{@link TensorFactory}</code>
+     * configuration.  
+     * <ul>
+     * <li><code>bolRandEnbl == true</code>
+     *   <ul>
+     *   <li><code>lngSeed = {@link #LNG_RAND_SEED_DEF}</code>.</li>
+     *   <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li><code>bolRandEnbl == false</code>
+     *   <ul>
+     *   <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * </p>
+     * <p>
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * scalar factory configuration parameter 'numIncr' is ignored.
+     * When 'bolRandEnbl' is set to <code>false</code> the  but populated according to the above. 
+     * </p> 
+     * 
+     * @param arrShape      array containing size of each tensor axis
+     * @param enmType       the data type of the generated tensor elements
+     * @param bolRandEnbl   enable/disable the use of random sequence generation, <code>false</code> indicates an incremental factory
+     * @param lngSeed       seed value for random number generator (0 indicates 'random' seed) or 1st incremental value
+     * 
+     * @return  a new <code>TensorFactory</code> instance ready for array value generation
+     * 
+     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     */
+    public static TensorFactory  from(int[] arrShape, JalScalarType enmType, boolean bolRandEnbl, long lngSeed) throws IllegalArgumentException {
         
-        return TensorFactory.from(shape, facValues);
+        // Create scalar factory according to random flag
+        ScalarFactory   facValues; 
+        if (bolRandEnbl)
+            facValues = ScalarFactory.from(enmType, bolRandEnbl, lngSeed);
+        else 
+            facValues = ScalarFactory.from(enmType, bolRandEnbl);
+        
+        return TensorFactory.from(arrShape, facValues);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>TensorFactory</code> instance configured according to the given argument(s).
+     * </p>
+     * <p>
+     * This creator uses some default parameters from the JAL Tools default configuration for the 
+     * internal <code>{@link ScalarFactory}</code>.  
+     * <ul>
+     * <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean, long, Number)}</code>.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * parameter 'numIncr' is ignored but populated according to the above. 
+     * </p> 
+     * 
+     * @param arrShape      array containing size of each tensor axis
+     * @param enmType       the data type of the generated tensor elements
+     * @param bolRandEnbl   enable/disable the use of random sequence generation, <code>false</code> indicates an incremental factory
+     * @param lngSeed       seed value for random number generator (0 indicates 'random' seed) or 1st incremental value
+     * @param numIncr       increment value for incremental factories, ignored for random factories
+     * 
+     * @return  a new <code>TensorFactory</code> instance ready for array value generation
+     * 
+     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     */
+    public static TensorFactory  from(int[] arrShape, JalScalarType enmType, boolean bolRandEnbl, long lngSeed, Number numIncr) throws IllegalArgumentException {
+        ScalarFactory   facValues = ScalarFactory.from(enmType, bolRandEnbl, lngSeed, numIncr);
+        
+        return TensorFactory.from(arrShape, facValues);
     }
     
     /**
      * <p>
      * Creates and returns a new <code>TensorFactory</code> instance configured according to the given arguments.
      * </p>
+     * <p>
+     * This creator contains all the required parameters for the <code>{@link ScalarFactory}</code>.  It is
+     * essentially equivalent to creator <code>{@link #from(int[], ScalarFactory)}</code> where the scalar
+     * factory is created here as a convenience.
+     * <ul>
+     * <li><code>facValues = {@link ScalarFactory#from(JalScalarType, boolean, long, Number, String)}</code>.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * Note that when the parameter 'bolRandEnbl' is set to <code>true</code> the 
+     * parameter 'numIncr' is ignored but populated according to the above. 
+     * </p> 
      * 
-     * @param shape     array containing size of each array axis
+     * @param arrShape      array containing size of each tensor axis
+     * @param enmType       the data type of the generated tensor elements
+     * @param bolRandEnbl   enable/disable the use of random sequence generation, <code>false</code> indicates an incremental factory
+     * @param lngSeed       seed value for random number generator (0 indicates 'random' seed) or 1st incremental value
+     * @param numIncr       increment value for incremental factories, ignored for random factories
+     * @param strPrefix     prefix given to all string values when <code>enmType = {@link JalScalarType#STRING}</code>
+     * 
+     * @return  a new <code>TensorFactory</code> instance ready for array value generation
+     * 
+     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     */
+    public static TensorFactory  from(int[] arrShape, JalScalarType enmType, boolean bolRandEnbl, long lngSeed, Number numIncr, String strPrefx) throws IllegalArgumentException {
+        ScalarFactory   facValues = ScalarFactory.from(enmType, bolRandEnbl, lngSeed, numIncr, strPrefx);
+        
+        return TensorFactory.from(arrShape, facValues);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>TensorFactory</code> instance configured according to the given arguments.
+     * </p>
+     * <p>
+     * This creator is equivalent to the default constructor.
+     * </p>
+     * 
+     * @param arrShape  array containing size of each tensor axis
      * @param facValues scalar value factory used to generate array element values (i.e., last axis)
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
      * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
      */
-    public static TensorFactory  from(int[] shape, ScalarFactory facValues) throws IllegalArgumentException {
-        return new TensorFactory(shape, facValues);
+    public static TensorFactory  from(int[] arrShape, ScalarFactory facValues) throws IllegalArgumentException {
+        return new TensorFactory(arrShape, facValues);
     }
     
+
+    //
+    // Library Resources
+    //
+    
+    /** The default parameters for scalar-valued simulated data generation */
+    private static final JalToolsTensorFactoryConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.tensor;
+    
+    
+    //
+    // Class Constants - Default Arguments
+    //
+    
+    /** The default scalar value type when none is given */
+    public final static JalScalarType   ENM_TYPE_DEF = CFG_DEF.elements.type;
+    
+    /** The default string value prefix */
+    public final static int[]           ARR_SHAPE_DEF = CFG_DEF.shapeArray();
+    
+    /** The default enable/disable random number generator */
+    public static final boolean         BOL_RAND_ENBL_DEF = CFG_DEF.elements.random.enabled;
+
+    /** The default random number generator seed value */
+    public static final long            LNG_RAND_SEED_DEF = CFG_DEF.elements.random.seed;
+
+
     //
     // Class Constants
     //
@@ -148,22 +439,22 @@ public class TensorFactory implements IDatumFactory {
      * Constructs a new <code>TensorFactory</code> instance.
      * </p>
      *
-     * @param shape     array containing size of each array axis
+     * @param arrShape  array containing size of each array axis
      * @param facValues scalar value factory used to generate array element values (i.e., last axis)
      * 
      * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
      */
-    public TensorFactory(int[] shape, ScalarFactory facValues) {
+    public TensorFactory(int[] arrShape, ScalarFactory facValues) {
         
         // Check arguments
-        if (shape.length < 1)
+        if (arrShape.length < 1)
             throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Tensor rank must be > 0");
         if (facValues == null)
             throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Scalar factory cannot be null.");
         
-        this.arrShape = shape.clone();
-        this.intRank = shape.length;
-        this.szArray = this.computeSize(shape);
+        this.arrShape = arrShape.clone();
+        this.intRank = arrShape.length;
+        this.szArray = this.computeSize(arrShape);
         
         this.facValues = facValues;
     }

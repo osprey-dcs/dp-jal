@@ -74,7 +74,7 @@ datagen:       # JAL Tools simulated data generation default configuration param
    values:                  # Data value generation parameters
       scalar:               # Scalar factory default configuration parameters
          type: DOUBLE          # JalScalarType enumeration constant    : JAL_TOOLS_DATAGEN_VALUES_SCALAR_TYPE
-         stringPrefix: "str:"  # prefix for all string values          : JAL_TOOLS_DATAGEN_VALUES_SCALAR_STRING_PREFIX
+         stringPrefix: "str:"  # prefix for string values (type=STRING): JAL_TOOLS_DATAGEN_VALUES_SCALAR_STRING_PREFIX
          random:            # Random number generation parameters      : JAL_TOOLS_DATAGEN_VALUES_SCALAR_RANDOM_ENABLE_{PROP}
             enabled: false     # enable/disable random number generator (WARNING: random generation can be expensive)
             seed: 0            # random  generator seed (0 for random seed) : JAL_TOOLS_DATA_GEN_VALUES_SCALAR_RANDOM_SEED
@@ -98,9 +98,27 @@ datagen:       # JAL Tools simulated data generation default configuration param
       image:                # Image factory default configuration parameters
          separator: ":"        # separator between prefix and image count    : JAL_TOOLS_DATAGEN_VALUES_IMAGE_SEPARATOR
          namePrefix: "img"     # image name prefix (suffixed by image count) : JAL_TOOLS_DATAGEN_VALUES_IMAGE_NAME_PREFIX
-         format: RAW           # BufferedImage.Format enumeration            : JAL_TOOLS_DATAGEN_VALUES_IMAGE_FORMAT
+         format: RAW           # 'BufferedImage.Format' enumeration          : JAL_TOOLS_DATAGEN_VALUES_IMAGE_FORMAT
          size: 65536           # image size (in bytes)                       : JAL_TOOLS_DATAGEN_VALUES_IMAGE_SIZE
+      tensor:              # Tensor (multi-dimensional array) factory default configuration parameters
+         shape:                # tensor default shape- axes sizes 1st to last: JAL_TOOLS_DATAGEN_VALUES_TENSOR_SHAPE
+         - 2                   # 1st axis size
+         - 3                   # 2nd axis size
+         - 4                   # 3rd axis size (..., etc.)
+         elements:             # Tensor element properties - scalar factory configuration (default parameters taken from 'scalar' configuration)
+            type: DOUBLE       # 'JalScalarType' constant - element data type : JAL_TOOLS_DATAGEN_VALUES_TENSOR_ELEMENTS_TYPE 
+            random:            # random number generation of tensor elements
+               enabled: false  # enable/disable random number generation      : JAL_TOOLS_DATAGEN_VALUES_TENSOR_ELEMENTS_RANDOM_ENABLED
+               seed: 0         # random number generator seed (0 for 'random'): JAL_TOOLS_DATAGEN_VALUES_TENSOR_ELEMENTS_RANDOM_SEED
       structure:            # Structure factory default configuration parameters
+         tree:                 # Tree structure default configuration  
+            depth: 3           # depth of tree (nodes until terminal nodes)  : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_TREE_DEPTH
+            fanout: 2          # sub-node fan-out of each tree node          : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_TREE_FANOUT
+         fieldValues:          # Properties for structure field value generation
+            type: INTEGER      # 'JalScalarType' enumeration - field type     : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_VALUES_TYPE
+            random:            # random number generation of structure field values
+               enabled: false  # enable/disable random number generation      : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_VALUES_RANDOM_ENABLED
+               seed: 0         # random number generator seed (0 for 'random'): JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_VALUES_RANDOM_SEED
          fieldNames:           # Properties for structure field name generation
             prefix: "F"        # prefix given to structure field names  : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_PREFIX
             separator: ":"     # separator placed between field indices : JAL_TOOLS_DATAGEN_VALUES_STRUCTURE_FIELD_NAMES_SEPARATOR

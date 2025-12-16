@@ -35,7 +35,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsStructValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsStructFactoryConfig;
 
 /**
  * <p>
@@ -293,13 +293,43 @@ public class StructureFactory implements IDatumFactory {
 
     /**
      * <p>
-     * Creates and returns a new <code>{@link StructureFactory}</code> instance configured according to the given arguments.
+     * Creates and returns a new <code>{@link StructureFactory}</code> instance configured with all default arguments.
      * </p>
      * <p>
      * The returns structure factory produces symmetric tree structures with the given depth and node fan-out.  The
      * Java type of the produced tree structures is <code>Map&lt;String, Object&gt;</code> which is a container of
      * (name, value) pairs for each tree node.  The 'name' element is the tree-structure field name and the 'value'
      * element is the tree-structure field value (potentially another sub-structure).  
+     * </p>
+     * <p>
+     * <h2>Scalar Factory and Configuration</h2>
+     * This creator is provided as a convenience where a <code>{@link ScalarFactory}</code> object is created according 
+     * to default parameter values.  Default parameters for some of the scalar factory configuration are taken from the
+     * JAL Tools default configuration.  The configuration of the scalar factory is determined by argument 
+     * <code>bolRandEnbl</code> and the <code>StructureFactory</code> default parameters:
+     * <ul>
+     * <li><code>intDepth = {@link #INT_TREE_DEPTH_DEF}</code>.</li>
+     * <li><code>intFanout = {@link #INT_TREE_FANOUT_DEF}</code>.</li> 
+     * <li><code>bolUniqFldNms = {@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.</li>
+     * <li><code>enmValType = {@link #ENM_FLD_VALS_TYPE_DEF}</code>.</li>
+     * <li><code>bolRandEnbl = {@link #BOL_FLD_VALS_RAND_ENBL_DEF}</code>.</li>
+     * <li><code>lngSeed = {@link #LNG_FLD_VALS_RAND_SEED_DEF}</code>.</li>
+     * <li>
+     * <code>bolRandEnbl == true</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>
+     * <code>bolRandEnbl == false</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * The arguments to the <code>ScalarFactory</code> creator <code>from()</code> are taken from the this creator's 
+     * default argument collection.
+     * Note that the argument <code>lngSeed</code> is ignored when argument <code>bolRandEnbl</code> is <code>false</code>.
      * </p>
      * <p>
      * <h2>Field Values</h2>
@@ -312,9 +342,9 @@ public class StructureFactory implements IDatumFactory {
      * <p>
      * <h2>Field Names</h2>
      * Tree structure field names are generation according to the node index within the tree, prefixed by the value
-     * of class constant <code>{@link #STR_FLD_NM_PREF}</code> = {@value #STR_FLD_NM_PREF}.
+     * of class constant <code>{@link #STR_FLD_NMS_PREF}</code> = {@value #STR_FLD_NMS_PREF}.
      * Node indices are determined by depth and fan-out with values separated by the value of 
-     * <code>{@link #STR_FLD_NM_SEP}</code> = {@value #STR_FLD_NM_SEP}.
+     * <code>{@link #STR_FLD_NMS_SEP}</code> = {@value #STR_FLD_NMS_SEP}.
      * </p>
      * <p>
      * <h2>Unique Field Names</h2>
@@ -322,24 +352,25 @@ public class StructureFactory implements IDatumFactory {
      * have the same field name at each corresponding node position)
      * Unique field names are created by prepending the generated structure count all field names.
      * The structure count is prefixed by the class constant 
-     * <code>{@link #STR_UNIQ_FLD_NM_PREF}</code> = {@value #STR_UNIQ_FLD_NM_PREF}.    
+     * <code>{@link #STR_FLD_NMS_UNIQ_PREF}</code> = {@value #STR_FLD_NMS_UNIQ_PREF}.
+     * </p>
+     * <p>
      * For <code>StructureFactory</code> instance returned by this method, 
      * the creation of unique field names for all generated tree structure instances is determined by the JAL Tools
-     * default configuration and held in class constant <code>{@link #BOL_UNIQ_FLD_NM_ENBL_DEF}</code>.  The value
+     * default configuration and held in class constant <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.  The value
      * at the time of document generation is 
-     * <code>{@link #BOL_UNIQ_FLD_NM_ENBL_DEF}</code> = {@value #BOL_UNIQ_FLD_NM_ENBL_DEF}. 
+     * <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code> = {@value #BOL_FLD_NMS_UNIQ_ENBL_DEF}. 
      * </p> 
      * 
      * @param depth         node depth of the tree structure
      * @param fanout        node fan-out at each sub-tree 
-     * @param recCfgFac     configuration record for scalar value factory generating terminal node values
      * 
      * @return  a new <code>StructureFactory</code> instance ready for tree structure instance generation
      * 
      * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
      */
-    public static StructureFactory  from(int depth, int fanout, ScalarFactorySpec recCfgFac) throws IllegalArgumentException {
-        return StructureFactory.from(depth, fanout, BOL_UNIQ_FLD_NM_ENBL_DEF, recCfgFac);   // throws IllegalArgumentException
+    public static StructureFactory  from() throws IllegalArgumentException {
+        return StructureFactory.from(INT_TREE_DEPTH_DEF, INT_TREE_FANOUT_DEF);   // throws IllegalArgumentException
     }
     
     /**
@@ -352,6 +383,35 @@ public class StructureFactory implements IDatumFactory {
      * (name, value) pairs for each tree node.  The 'name' element is the tree-structure field name and the 'value'
      * element is the tree-structure field value (potentially another sub-structure).  
      * </p>
+     * <p>
+     * <h2>Scalar Factory and Configuration</h2>
+     * This creator is provided as a convenience where a <code>{@link ScalarFactory}</code> object is created according 
+     * to the argument values.  Default parameters for some of the scalar factory configuration are taken from the
+     * JAL Tools default configuration.  The configuration of the scalar factory is determined by argument 
+     * <code>bolRandEnbl</code> and the <code>StructureFactory</code> default parameters:
+     * <ul>
+     * <li><code>bolUniqFldNms = {@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.</li>
+     * <li><code>enmValType = {@link #ENM_FLD_VALS_TYPE_DEF}</code>.</li>
+     * <li><code>bolRandEnbl = {@link #BOL_FLD_VALS_RAND_ENBL_DEF}</code>.</li>
+     * <li><code>lngSeed = {@link #LNG_FLD_VALS_RAND_SEED_DEF}</code>.</li>
+     * <li>
+     * <code>bolRandEnbl == true</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>
+     * <code>bolRandEnbl == false</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * The arguments to the <code>ScalarFactory</code> creator <code>from()</code> are taken from the this creator's 
+     * default argument collection.
+     * Note that the argument <code>lngSeed</code> is ignored when argument <code>bolRandEnbl</code> is <code>false</code>.
+     * </p>
+     * <p>
      * <h2>Field Values</h2>
      * All field values are sub-structures
      * until the final depth is reach, that is the "terminal level".  At the terminal level all field value are produced 
@@ -362,9 +422,9 @@ public class StructureFactory implements IDatumFactory {
      * <p>
      * <h2>Field Names</h2>
      * Tree structure field names are generation according to the node index within the tree, prefixed by the value
-     * of class constant <code>{@link #STR_FLD_NM_PREF}</code> = {@value #STR_FLD_NM_PREF}.
+     * of class constant <code>{@link #STR_FLD_NMS_PREF}</code> = {@value #STR_FLD_NMS_PREF}.
      * Node indices are determined by depth and fan-out with values separated by the value of 
-     * <code>{@link #STR_FLD_NM_SEP}</code> = {@value #STR_FLD_NM_SEP}.
+     * <code>{@link #STR_FLD_NMS_SEP}</code> = {@value #STR_FLD_NMS_SEP}.
      * </p>
      * <p>
      * <h2>Unique Field Names</h2>
@@ -372,25 +432,423 @@ public class StructureFactory implements IDatumFactory {
      * have the same field name at each corresponding node position)
      * Unique field names are created by prepending the generated structure count all field names.
      * The structure count is prefixed by the class constant 
-     * <code>{@link #STR_UNIQ_FLD_NM_PREF}</code> = {@value #STR_UNIQ_FLD_NM_PREF}.    
+     * <code>{@link #STR_FLD_NMS_UNIQ_PREF}</code> = {@value #STR_FLD_NMS_UNIQ_PREF}.
+     * </p>
+     * <p>
      * For <code>StructureFactory</code> instance returned by this method, 
-     * the creation of unique field names for all generated tree structure instances is determined by the 
-     * <code>boolean</code> argument. 
+     * the creation of unique field names for all generated tree structure instances is determined by the JAL Tools
+     * default configuration and held in class constant <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.  The value
+     * at the time of document generation is 
+     * <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code> = {@value #BOL_FLD_NMS_UNIQ_ENBL_DEF}. 
+     * </p> 
+     * 
+     * @param depth         node depth of the tree structure
+     * @param fanout        node fan-out at each sub-tree 
+     * 
+     * @return  a new <code>StructureFactory</code> instance ready for tree structure instance generation
+     * 
+     * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
+     */
+    public static StructureFactory  from(int depth, int fanout) throws IllegalArgumentException {
+        return StructureFactory.from(depth, fanout, ENM_FLD_VALS_TYPE_DEF);   // throws IllegalArgumentException
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>{@link StructureFactory}</code> instance configured according to the given arguments.
+     * </p>
+     * <p>
+     * The returns structure factory produces symmetric tree structures with the given depth and node fan-out.  The
+     * Java type of the produced tree structures is <code>Map&lt;String, Object&gt;</code> which is a container of
+     * (name, value) pairs for each tree node.  The 'name' element is the tree-structure field name and the 'value'
+     * element is the tree-structure field value (potentially another sub-structure).  
+     * </p>
+     * <p>
+     * <h2>Scalar Factory and Configuration</h2>
+     * This creator is provided as a convenience where a <code>{@link ScalarFactory}</code> object is created according 
+     * to the argument values.  Default parameters for some of the scalar factory configuration are taken from the
+     * JAL Tools default configuration.  The configuration of the scalar factory is determined by argument 
+     * <code>bolRandEnbl</code> and the <code>StructureFactory</code> default parameters:
+     * <ul>
+     * <li><code>bolUniqFldNms = {@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.</li>
+     * <li><code>bolRandEnbl = {@link #BOL_FLD_VALS_RAND_ENBL_DEF}</code>.</li>
+     * <li><code>lngSeed = {@link #LNG_FLD_VALS_RAND_SEED_DEF}</code>.</li>
+     * <li>
+     * <code>bolRandEnbl == true</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>
+     * <code>bolRandEnbl == false</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * The arguments to the <code>ScalarFactory</code> creator <code>from()</code> are taken from the this creator's 
+     * argument collection and the abode default values.
+     * Note that the argument <code>lngSeed</code> is ignored when argument <code>bolRandEnbl</code> is <code>false</code>.
+     * </p>
+     * <p>
+     * <h2>Field Values</h2>
+     * All field values are sub-structures
+     * until the final depth is reach, that is the "terminal level".  At the terminal level all field value are produced 
+     * using the <code>{@link ScalarFactory}</code> instance provided in the argument list.  
+     * See the <code>{@link StructureFactory}</code> class documentation for further explanations of the generated tree 
+     * structures and their relationship to the given argument values.
+     * </p>
+     * <p>
+     * <h2>Field Names</h2>
+     * Tree structure field names are generation according to the node index within the tree, prefixed by the value
+     * of class constant <code>{@link #STR_FLD_NMS_PREF}</code> = {@value #STR_FLD_NMS_PREF}.
+     * Node indices are determined by depth and fan-out with values separated by the value of 
+     * <code>{@link #STR_FLD_NMS_SEP}</code> = {@value #STR_FLD_NMS_SEP}.
+     * </p>
+     * <p>
+     * <h2>Unique Field Names</h2>
+     * It is possible to generate tree structures with all unique field name (otherwise each structure instance will
+     * have the same field name at each corresponding node position)
+     * Unique field names are created by prepending the generated structure count all field names.
+     * The structure count is prefixed by the class constant 
+     * <code>{@link #STR_FLD_NMS_UNIQ_PREF}</code> = {@value #STR_FLD_NMS_UNIQ_PREF}.
+     * </p>
+     * <p>
+     * For <code>StructureFactory</code> instance returned by this method, 
+     * the creation of unique field names for all generated tree structure instances is determined by the JAL Tools
+     * default configuration and held in class constant <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.  The value
+     * at the time of document generation is 
+     * <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code> = {@value #BOL_FLD_NMS_UNIQ_ENBL_DEF}. 
+     * </p> 
+     * 
+     * @param depth         node depth of the tree structure
+     * @param fanout        node fan-out at each sub-tree 
+     * @param enmValType    scalar type of all field values generated within tree structures
+     * 
+     * @return  a new <code>StructureFactory</code> instance ready for tree structure instance generation
+     * 
+     * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
+     */
+    public static StructureFactory  from(int depth, int fanout, JalScalarType enmValType) throws IllegalArgumentException {
+        return StructureFactory.from(depth, fanout, enmValType, BOL_FLD_VALS_RAND_ENBL_DEF);   // throws IllegalArgumentException
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>{@link StructureFactory}</code> instance configured according to the given arguments.
+     * </p>
+     * <p>
+     * The returns structure factory produces symmetric tree structures with the given depth and node fan-out.  The
+     * Java type of the produced tree structures is <code>Map&lt;String, Object&gt;</code> which is a container of
+     * (name, value) pairs for each tree node.  The 'name' element is the tree-structure field name and the 'value'
+     * element is the tree-structure field value (potentially another sub-structure).  
+     * </p>
+     * <p>
+     * <h2>Scalar Factory and Configuration</h2>
+     * This creator is provided as a convenience where a <code>{@link ScalarFactory}</code> object is created according 
+     * to the argument values.  Default parameters for some of the scalar factory configuration are taken from the
+     * JAL Tools default configuration.  The configuration of the scalar factory is determined by argument 
+     * <code>bolRandEnbl</code> and the <code>StructureFactory</code> default parameters:
+     * <ul>
+     * <li><code>bolUniqFldNms = {@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.</li>
+     * <li><code>lngSeed = {@link #LNG_FLD_VALS_RAND_SEED_DEF}</code>.</li>
+     * <li>
+     * <code>bolRandEnbl == true</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>
+     * <code>bolRandEnbl == false</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * The arguments to the <code>ScalarFactory</code> creator <code>from()</code> are taken from the this creator's 
+     * argument collection and the abode default values.
+     * Note that the argument <code>lngSeed</code> is ignored when argument <code>bolRandEnbl</code> is <code>false</code>.
+     * </p>
+     * <p>
+     * <h2>Field Values</h2>
+     * All field values are sub-structures
+     * until the final depth is reach, that is the "terminal level".  At the terminal level all field value are produced 
+     * using the <code>{@link ScalarFactory}</code> instance provided in the argument list.  
+     * See the <code>{@link StructureFactory}</code> class documentation for further explanations of the generated tree 
+     * structures and their relationship to the given argument values.
+     * </p>
+     * <p>
+     * <h2>Field Names</h2>
+     * Tree structure field names are generation according to the node index within the tree, prefixed by the value
+     * of class constant <code>{@link #STR_FLD_NMS_PREF}</code> = {@value #STR_FLD_NMS_PREF}.
+     * Node indices are determined by depth and fan-out with values separated by the value of 
+     * <code>{@link #STR_FLD_NMS_SEP}</code> = {@value #STR_FLD_NMS_SEP}.
+     * </p>
+     * <p>
+     * <h2>Unique Field Names</h2>
+     * It is possible to generate tree structures with all unique field name (otherwise each structure instance will
+     * have the same field name at each corresponding node position)
+     * Unique field names are created by prepending the generated structure count all field names.
+     * The structure count is prefixed by the class constant 
+     * <code>{@link #STR_FLD_NMS_UNIQ_PREF}</code> = {@value #STR_FLD_NMS_UNIQ_PREF}.
+     * </p>
+     * <p>
+     * For <code>StructureFactory</code> instance returned by this method, 
+     * the creation of unique field names for all generated tree structure instances is determined by the JAL Tools
+     * default configuration and held in class constant <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.  The value
+     * at the time of document generation is 
+     * <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code> = {@value #BOL_FLD_NMS_UNIQ_ENBL_DEF}. 
+     * </p> 
+     * 
+     * @param depth         node depth of the tree structure
+     * @param fanout        node fan-out at each sub-tree 
+     * @param enmValType    scalar type of all field values generated within tree structures
+     * @param bolRandEnbl   enable/disable random generation of field values with tree structures
+     * 
+     * @return  a new <code>StructureFactory</code> instance ready for tree structure instance generation
+     * 
+     * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
+     */
+    public static StructureFactory  from(int depth, int fanout, JalScalarType enmValType, boolean bolRandEnbl) throws IllegalArgumentException {
+        return StructureFactory.from(depth, fanout, BOL_FLD_NMS_UNIQ_ENBL_DEF, enmValType, bolRandEnbl, LNG_FLD_VALS_RAND_SEED_DEF);   // throws IllegalArgumentException
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>{@link StructureFactory}</code> instance configured according to the given arguments.
+     * </p>
+     * <p>
+     * The returns structure factory produces symmetric tree structures with the given depth and node fan-out.  The
+     * Java type of the produced tree structures is <code>Map&lt;String, Object&gt;</code> which is a container of
+     * (name, value) pairs for each tree node.  The 'name' element is the tree-structure field name and the 'value'
+     * element is the tree-structure field value (potentially another sub-structure).  
+     * </p>
+     * <p>
+     * <h2>Scalar Factory and Configuration</h2>
+     * This creator is provided as a convenience where a <code>{@link ScalarFactory}</code> object is created according 
+     * to the argument values.  Default parameters for some of the scalar factory configuration are taken from the
+     * JAL Tools default configuration.  The configuration of the scalar factory is determined by argument 
+     * <code>bolRandEnbl</code>:
+     * <ul>
+     * <li><code>bolUniqFldNms = {@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.</li>
+     * <li>
+     * <code>bolRandEnbl == true</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>
+     * <code>bolRandEnbl == false</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * The arguments to the <code>ScalarFactory</code> creator <code>from()</code> are taken from the this creator's 
+     * argument collection.
+     * Note that the argument <code>lngSeed</code> is ignored when argument <code>bolRandEnbl</code> is <code>false</code>.
+     * </p>
+     * <p>
+     * <h2>Field Values</h2>
+     * All field values are sub-structures
+     * until the final depth is reach, that is the "terminal level".  At the terminal level all field value are produced 
+     * using the <code>{@link ScalarFactory}</code> instance provided in the argument list.  
+     * See the <code>{@link StructureFactory}</code> class documentation for further explanations of the generated tree 
+     * structures and their relationship to the given argument values.
+     * </p>
+     * <p>
+     * <h2>Field Names</h2>
+     * Tree structure field names are generation according to the node index within the tree, prefixed by the value
+     * of class constant <code>{@link #STR_FLD_NMS_PREF}</code> = {@value #STR_FLD_NMS_PREF}.
+     * Node indices are determined by depth and fan-out with values separated by the value of 
+     * <code>{@link #STR_FLD_NMS_SEP}</code> = {@value #STR_FLD_NMS_SEP}.
+     * </p>
+     * <p>
+     * <h2>Unique Field Names</h2>
+     * It is possible to generate tree structures with all unique field name (otherwise each structure instance will
+     * have the same field name at each corresponding node position)
+     * Unique field names are created by prepending the generated structure count all field names.
+     * The structure count is prefixed by the class constant 
+     * <code>{@link #STR_FLD_NMS_UNIQ_PREF}</code> = {@value #STR_FLD_NMS_UNIQ_PREF}.
+     * </p>
+     * <p>
+     * For <code>StructureFactory</code> instance returned by this method, 
+     * the creation of unique field names for all generated tree structure instances is determined by the JAL Tools
+     * default configuration and held in class constant <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.  The value
+     * at the time of document generation is 
+     * <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code> = {@value #BOL_FLD_NMS_UNIQ_ENBL_DEF}. 
      * </p> 
      * 
      * @param depth         node depth of the tree structure
      * @param fanout        node fan-out at each sub-tree 
      * @param bolUniqFldNms enable/disable unique field names for all generated tree structures
-     * @param recFacSpec    configuration specification for scalar value factory generating terminal node values
+     * @param enmValType    scalar type of all field values generated within tree structures
+     * @param bolRandEnbl   enable/disable random generation of field values with tree structures
+     * @param lngSeed       the seed value for random number generator when random generation is enabled (0 indicates 'random' seed)
      * 
      * @return  a new <code>StructureFactory</code> instance ready for tree structure instance generation
      * 
      * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
      */
-    public static StructureFactory  from(int depth, int fanout, boolean uniqFldNms, ScalarFactorySpec recFacSpec) throws IllegalArgumentException {
-        ScalarFactory   facValues = recFacSpec.newFactory();
+    public static StructureFactory  from(int depth, int fanout, JalScalarType enmValType, boolean bolRandEnbl, long lngSeed) throws IllegalArgumentException {
+        return StructureFactory.from(depth, fanout, BOL_FLD_NMS_UNIQ_ENBL_DEF, enmValType, bolRandEnbl, lngSeed);   // throws IllegalArgumentException
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>{@link StructureFactory}</code> instance configured according to the given arguments.
+     * </p>
+     * <p>
+     * The returns structure factory produces symmetric tree structures with the given depth and node fan-out.  The
+     * Java type of the produced tree structures is <code>Map&lt;String, Object&gt;</code> which is a container of
+     * (name, value) pairs for each tree node.  The 'name' element is the tree-structure field name and the 'value'
+     * element is the tree-structure field value (potentially another sub-structure).  
+     * </p>
+     * <p>
+     * <h2>Scalar Factory and Configuration</h2>
+     * This creator is provided as a convenience where a <code>{@link ScalarFactory}</code> object is created according 
+     * to the argument values.  Default parameters for some of the scalar factory configuration are taken from the
+     * JAL Tools default configuration.  The configuration of the scalar factory is determined by argument 
+     * <code>bolRandEnbl</code>:
+     * <ul>
+     * <li>
+     * <code>bolRandEnbl == true</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean, long)}</code>.</li>
+     *   </ul>
+     * </li>
+     * <li>
+     * <code>bolRandEnbl == false</code>:
+     *   <ul>
+     *   <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean)}</code>.</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     * The arguments to the <code>ScalarFactory</code> creator <code>from()</code> are taken from the this creator's 
+     * argument collection past <code>bolUniqFldNms</code>.
+     * Note that the argument <code>lngSeed</code> is ignored when argument <code>bolRandEnbl</code> is <code>false</code>.
+     * </p>
+     * <p>
+     * <h2>Field Values</h2>
+     * All field values are sub-structures
+     * until the final depth is reach, that is the "terminal level".  At the terminal level all field value are produced 
+     * using the <code>{@link ScalarFactory}</code> instance provided in the argument list.  
+     * See the <code>{@link StructureFactory}</code> class documentation for further explanations of the generated tree 
+     * structures and their relationship to the given argument values.
+     * </p>
+     * <p>
+     * <h2>Field Names</h2>
+     * Tree structure field names are generation according to the node index within the tree, prefixed by the value
+     * of class constant <code>{@link #STR_FLD_NMS_PREF}</code> = {@value #STR_FLD_NMS_PREF}.
+     * Node indices are determined by depth and fan-out with values separated by the value of 
+     * <code>{@link #STR_FLD_NMS_SEP}</code> = {@value #STR_FLD_NMS_SEP}.
+     * </p>
+     * <p>
+     * <h2>Unique Field Names</h2>
+     * It is possible to generate tree structures with all unique field name (otherwise each structure instance will
+     * have the same field name at each corresponding node position)
+     * Unique field names are created by prepending the generated structure count all field names.
+     * The structure count is prefixed by the class constant 
+     * <code>{@link #STR_FLD_NMS_UNIQ_PREF}</code> = {@value #STR_FLD_NMS_UNIQ_PREF}.
+     * </p>
+     * <p>
+     * For <code>StructureFactory</code> instance returned by this method, 
+     * the creation of unique field names for all generated tree structure instances is determined by the 
+     * <code>bolUniqFldNms</code> argument.
+     * </p> 
+     * 
+     * @param depth         node depth of the tree structure
+     * @param fanout        node fan-out at each sub-tree 
+     * @param bolUniqFldNms enable/disable unique field names for all generated tree structures
+     * @param enmValType    scalar type of all field values generated within tree structures
+     * @param bolRandEnbl   enable/disable random generation of field values with tree structures
+     * @param lngSeed       the seed value for random number generator when random generation is enabled (0 indicates 'random' seed)
+     * 
+     * @return  a new <code>StructureFactory</code> instance ready for tree structure instance generation
+     * 
+     * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
+     */
+    public static StructureFactory  from(int depth, int fanout, boolean bolUniqFldNms, JalScalarType enmValType, boolean bolRandEnbl, long lngSeed) throws IllegalArgumentException {
         
-        return StructureFactory.from(depth, fanout, uniqFldNms, facValues);      // throws IllegalArgumentException
+        // Create scalar factory according to random enable flag
+        ScalarFactory   facValues;
+        if (bolRandEnbl) 
+            facValues = ScalarFactory.from(enmValType, bolRandEnbl, lngSeed);
+        else
+            facValues = ScalarFactory.from(enmValType, bolRandEnbl);
+        
+        return StructureFactory.from(depth, fanout, bolUniqFldNms, facValues);   // throws IllegalArgumentException
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>{@link StructureFactory}</code> instance configured according to the given arguments.
+     * </p>
+     * <p>
+     * The returns structure factory produces symmetric tree structures with the given depth and node fan-out.  The
+     * Java type of the produced tree structures is <code>Map&lt;String, Object&gt;</code> which is a container of
+     * (name, value) pairs for each tree node.  The 'name' element is the tree-structure field name and the 'value'
+     * element is the tree-structure field value (potentially another sub-structure).  
+     * </p>
+     * <p>
+     * <h2>Scalar Factory and Configuration</h2>
+     * This creator is provided as a convenience where a <code>{@link ScalarFactory}</code> object is created according 
+     * to the argument values.  Default parameters for some of the scalar factory configuration are taken from the
+     * JAL Tools default configuration.  
+     * <ul>
+     * <li><code>facScalar = {@link ScalarFactory#from(JalScalarType, boolean, long, Number)}</code>.</li>
+     * </ul>
+     * The arguments to the <code>ScalarFactory</code> creator <code>from()</code> are taken from the this creator's 
+     * argument collection past <code>bolUniqFldNms</code>.
+     * Note that the argument <code>lngSeed</code> is ignored when argument <code>bolRandEnbl</code> is <code>false</code>.
+     * </p>
+     * <p>
+     * <h2>Field Values</h2>
+     * All field values are sub-structures
+     * until the final depth is reach, that is the "terminal level".  At the terminal level all field value are produced 
+     * using the <code>{@link ScalarFactory}</code> instance provided in the argument list.  
+     * See the <code>{@link StructureFactory}</code> class documentation for further explanations of the generated tree 
+     * structures and their relationship to the given argument values.
+     * </p>
+     * <p>
+     * <h2>Field Names</h2>
+     * Tree structure field names are generation according to the node index within the tree, prefixed by the value
+     * of class constant <code>{@link #STR_FLD_NMS_PREF}</code> = {@value #STR_FLD_NMS_PREF}.
+     * Node indices are determined by depth and fan-out with values separated by the value of 
+     * <code>{@link #STR_FLD_NMS_SEP}</code> = {@value #STR_FLD_NMS_SEP}.
+     * </p>
+     * <p>
+     * <h2>Unique Field Names</h2>
+     * It is possible to generate tree structures with all unique field name (otherwise each structure instance will
+     * have the same field name at each corresponding node position)
+     * Unique field names are created by prepending the generated structure count all field names.
+     * The structure count is prefixed by the class constant 
+     * <code>{@link #STR_FLD_NMS_UNIQ_PREF}</code> = {@value #STR_FLD_NMS_UNIQ_PREF}.
+     * </p>
+     * <p>
+     * For <code>StructureFactory</code> instance returned by this method, 
+     * the creation of unique field names for all generated tree structure instances is determined by the 
+     * <code>bolUniqFldNms</code> argument.
+     * </p> 
+     * 
+     * @param depth         node depth of the tree structure
+     * @param fanout        node fan-out at each sub-tree 
+     * @param bolUniqFldNms enable/disable unique field names for all generated tree structures
+     * @param enmValType    scalar type of all field values generated within tree structures
+     * @param bolRandEnbl   enable/disable random generation of field values with tree structures
+     * @param lngSeed       the seed value for random number generator when random generation is enabled (0 indicates 'random' seed)
+     * @param numIncr       increment value for incremental scalar factories, ignored for random factories
+     *  
+     * @return  a new <code>StructureFactory</code> instance ready for tree structure instance generation
+     * 
+     * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
+     */
+    public static StructureFactory  from(int depth, int fanout, boolean bolUniqFldNms, JalScalarType enmValType, boolean bolRandEnbl, long lngSeed, Number numIncr) throws IllegalArgumentException {
+        
+        // Create scalar factory with argument values
+        ScalarFactory   facValues = ScalarFactory.from(enmValType, bolRandEnbl, lngSeed, numIncr);
+        
+        return StructureFactory.from(depth, fanout, bolUniqFldNms, facValues);   // throws IllegalArgumentException
     }
     
     /**
@@ -414,9 +872,9 @@ public class StructureFactory implements IDatumFactory {
      * <p>
      * <h2>Field Names</h2>
      * Tree structure field names are generation according to the node index within the tree, prefixed by the value
-     * of class constant <code>{@link #STR_FLD_NM_PREF}</code> = {@value #STR_FLD_NM_PREF}.
+     * of class constant <code>{@link #STR_FLD_NMS_PREF}</code> = {@value #STR_FLD_NMS_PREF}.
      * Node indices are determined by depth and fan-out with values separated by the value of 
-     * <code>{@link #STR_FLD_NM_SEP}</code> = {@value #STR_FLD_NM_SEP}.
+     * <code>{@link #STR_FLD_NMS_SEP}</code> = {@value #STR_FLD_NMS_SEP}.
      * </p>
      * <p>
      * <h2>Unique Field Names</h2>
@@ -424,12 +882,14 @@ public class StructureFactory implements IDatumFactory {
      * have the same field name at each corresponding node position)
      * Unique field names are created by prepending the generated structure count all field names.
      * The structure count is prefixed by the class constant 
-     * <code>{@link #STR_UNIQ_FLD_NM_PREF}</code> = {@value #STR_UNIQ_FLD_NM_PREF}.    
+     * <code>{@link #STR_FLD_NMS_UNIQ_PREF}</code> = {@value #STR_FLD_NMS_UNIQ_PREF}.
+     * </p>
+     * <p>    
      * For <code>StructureFactory</code> instance returned by this method, 
      * the creation of unique field names for all generated tree structure instances is determined by the JAL Tools
-     * default configuration and held in class constant <code>{@link #BOL_UNIQ_FLD_NM_ENBL_DEF}</code>.  The value
+     * default configuration and held in class constant <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.  The value
      * at the time of document generation is 
-     * <code>{@link #BOL_UNIQ_FLD_NM_ENBL_DEF}</code> = {@value #BOL_UNIQ_FLD_NM_ENBL_DEF}. 
+     * <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code> = {@value #BOL_FLD_NMS_UNIQ_ENBL_DEF}. 
      * </p> 
      * 
      * @param depth         node depth of the tree structure
@@ -441,7 +901,7 @@ public class StructureFactory implements IDatumFactory {
      * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
      */
     public static StructureFactory  from(int depth, int fanout, ScalarFactory facValues) throws IllegalArgumentException {
-        return StructureFactory.from(depth, fanout, BOL_UNIQ_FLD_NM_ENBL_DEF, facValues);   // throws IllegalArgumentException
+        return StructureFactory.from(depth, fanout, BOL_FLD_NMS_UNIQ_ENBL_DEF, facValues);   // throws IllegalArgumentException
     }
     
     /**
@@ -464,9 +924,9 @@ public class StructureFactory implements IDatumFactory {
      * <p>
      * <h2>Field Names</h2>
      * Tree structure field names are generation according to the node index within the tree, prefixed by the value
-     * of class constant <code>{@link #STR_FLD_NM_PREF}</code> = {@value #STR_FLD_NM_PREF}.
+     * of class constant <code>{@link #STR_FLD_NMS_PREF}</code> = {@value #STR_FLD_NMS_PREF}.
      * Node indices are determined by depth and fan-out with values separated by the value of 
-     * <code>{@link #STR_FLD_NM_SEP}</code> = {@value #STR_FLD_NM_SEP}.
+     * <code>{@link #STR_FLD_NMS_SEP}</code> = {@value #STR_FLD_NMS_SEP}.
      * </p>
      * <p>
      * <h2>Unique Field Names</h2>
@@ -474,10 +934,12 @@ public class StructureFactory implements IDatumFactory {
      * have the same field name at each corresponding node position)
      * Unique field names are created by prepending the generated structure count all field names.
      * The structure count is prefixed by the class constant 
-     * <code>{@link #STR_UNIQ_FLD_NM_PREF}</code> = {@value #STR_UNIQ_FLD_NM_PREF}.    
+     * <code>{@link #STR_FLD_NMS_UNIQ_PREF}</code> = {@value #STR_FLD_NMS_UNIQ_PREF}.    
+     * </p>
+     * <p>
      * For <code>StructureFactory</code> instance returned by this method, 
      * the creation of unique field names for all generated tree structure instances is determined by the 
-     * <code>boolean</code> argument. 
+     * <code>bolUniqFldNms</code> argument. 
      * </p> 
      * 
      * @param depth         node depth of the tree structure
@@ -487,10 +949,10 @@ public class StructureFactory implements IDatumFactory {
      * 
      * @return  a new <code>StructureFactory</code> instance ready for tree structure instance generation
      * 
-     * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
+     * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be <code>null</code> 
      */
-    public static StructureFactory  from(int depth, int fanout, boolean uniqFldNms, ScalarFactory facValues) throws IllegalArgumentException {
-        return new StructureFactory(depth, fanout, uniqFldNms, facValues);      // throws IllegalArgumentException
+    public static StructureFactory  from(int depth, int fanout, boolean bolUniqFldNms, ScalarFactory facValues) throws IllegalArgumentException {
+        return new StructureFactory(depth, fanout, bolUniqFldNms, facValues);      // throws IllegalArgumentException
     }
     
 
@@ -499,32 +961,48 @@ public class StructureFactory implements IDatumFactory {
     //
     
     /** The default parameters used for structure instance creation - NOTE - all field name parameters are taken from here */
-    private static final JalToolsStructValuesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.structure;
+    private static final JalToolsStructFactoryConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.structure;
 
     
     //
     // Class Constants
     //
+
+    /** Default tree-structure node depth */
+    public static final int             INT_TREE_DEPTH_DEF = CFG_DEF.tree.depth;
     
-    /** Enable/disable unique field name generation default configuration */
-    public static final boolean BOL_UNIQ_FLD_NM_ENBL_DEF = CFG_DEF.fieldNames.unique.enabled;
+    /** Default tree-structure node fan-out (i.e., before terminal nodes) */
+    public static final int             INT_TREE_FANOUT_DEF = CFG_DEF.tree.fanout;
     
 
+    /** Default field value scalar type */
+    public static final JalScalarType   ENM_FLD_VALS_TYPE_DEF = CFG_DEF.fieldValues.type;
+    
+    /** Default field value random generation enable/disable flag value */
+    public static final boolean         BOL_FLD_VALS_RAND_ENBL_DEF = CFG_DEF.fieldValues.random.enabled;
+    
+    /** Default field value random generator seed value (0 for 'random' seed) */
+    public static final long            LNG_FLD_VALS_RAND_SEED_DEF = CFG_DEF.fieldValues.random.seed;
+    
+    
     /** Prefix added to all structure field names */
-    public static final String STR_FLD_NM_PREF = CFG_DEF.fieldNames.prefix;
+    public static final String  STR_FLD_NMS_PREF = CFG_DEF.fieldNames.prefix;
 
     /** Separator used within field names */
-    public static final String STR_FLD_NM_SEP = CFG_DEF.fieldNames.separator;
+    public static final String  STR_FLD_NMS_SEP = CFG_DEF.fieldNames.separator;
 
+    
+    /** Enable/disable unique field name generation default configuration */
+    public static final boolean BOL_FLD_NMS_UNIQ_ENBL_DEF = CFG_DEF.fieldNames.unique.enabled;
     
     /** Unique field name prefix - added to field names when unique field names are specified */
-    public static final String STR_UNIQ_FLD_NM_PREF = CFG_DEF.fieldNames.unique.prefix;
+    public static final String  STR_FLD_NMS_UNIQ_PREF = CFG_DEF.fieldNames.unique.prefix;
 
     /** Unique field name prefix separator */
-    public static final String STR_UNIQ_FLD_NM_SEP_STRUCT_IND = CFG_DEF.fieldNames.unique.separator1;
+    public static final String  STR_FLD_NMS_UNIQ_SEP_STRUCT_IND = CFG_DEF.fieldNames.unique.separator1;
     
     /** Unique field name prefix separator */
-    public static final String STR_UNIQ_FLD_NM_SEP_PREF_TO_NM = CFG_DEF.fieldNames.unique.separator2;
+    public static final String  STR_FLD_NMS_UNIQ_SEP_PREF_TO_NM = CFG_DEF.fieldNames.unique.separator2;
     
 
     /** Datum value type of all simulated data produced by this data value factory */
@@ -573,25 +1051,25 @@ public class StructureFactory implements IDatumFactory {
      * Constructs a new <code>StructureFactory</code> instance configured with the given arguments.
      * </p>
      *
-     * @param depth         node depth of the tree structure
-     * @param fanout        node fan-out at each sub-tree 
+     * @param intDepth      node depth of the tree structure
+     * @param intFanout     node fan-out at each sub-tree 
      * @param bolUniqFldNms enable/disable unique field names for all generated tree structures
      * @param facValues     scalar value factory for terminal node values
      * 
      * @throws  IllegalArgumentException    depth and fan-out must both be greater than 1, scalar factory cannot be null 
      */
-    public StructureFactory(int depth, int fanout, boolean bolUniqFldNms, ScalarFactory facValues) throws IllegalArgumentException {
+    public StructureFactory(int intDepth, int intFanout, boolean bolUniqFldNms, ScalarFactory facValues) throws IllegalArgumentException {
 
         // Check arguments
-        if (depth < 1)
-            throw new IllegalArgumentException("Argument depth = " + depth + " must be > 0.");
-        if (fanout < 1)
-            throw new IllegalArgumentException("Argument fanout = " + fanout + " must be > 0.");
+        if (intDepth < 1)
+            throw new IllegalArgumentException("Argument depth = " + intDepth + " must be > 0.");
+        if (intFanout < 1)
+            throw new IllegalArgumentException("Argument fanout = " + intFanout + " must be > 0.");
         if (facValues == null)
             throw new IllegalArgumentException("Argument facValue = " + facValues);
         
-        this.intDepth = depth;
-        this.intFanOut = fanout;
+        this.intDepth = intDepth;
+        this.intFanOut = intFanout;
         this.bolUniqFldNms = bolUniqFldNms;
         this.facValues = facValues;
     }
@@ -610,7 +1088,7 @@ public class StructureFactory implements IDatumFactory {
      * @return  <code>true</code> the terminal field values are generated randomly,
      *          <code>false</code> the terminal field values are generated incrementally
      */
-    public boolean      hasRandomValues() {
+    public boolean      isRandomValued() {
         return this.facValues.isRandom();
     }
     
@@ -622,7 +1100,7 @@ public class StructureFactory implements IDatumFactory {
      * @return  <code>true</code> if all generated structures have unique field names,
      *          <code>false</code> all generated structures have the same field names
      */
-    public boolean      hasUniqueFieldNames() {
+    public boolean      isUniqueFieldNamed() {
         return this.bolUniqFldNms;
     }
     
@@ -651,16 +1129,16 @@ public class StructureFactory implements IDatumFactory {
         return this.intFanOut;
     }
     
-    /**
-     * <p>
-     * Returns the scalar type of the terminal-level field values.
-     * </p>
-     * 
-     * @return  scalar type of terminal-level structure field values. 
-     */
-    public JalScalarType   getType() {
-        return this.facValues.getScalarType();
-    }
+//    /**
+//     * <p>
+//     * Returns the scalar type of the terminal-level field values.
+//     * </p>
+//     * 
+//     * @return  scalar type of terminal-level structure field values. 
+//     */
+//    public JalScalarType   getType() {
+//        return this.facValues.getScalarType();
+//    }
     
     /**
      * <p>
@@ -812,20 +1290,20 @@ public class StructureFactory implements IDatumFactory {
         
         // If field names are unique prefix with structure number
         if (this.bolUniqFldNms) {
-            bufNodeNm.append(STR_UNIQ_FLD_NM_PREF);
-            bufNodeNm.append(STR_UNIQ_FLD_NM_SEP_STRUCT_IND);
+            bufNodeNm.append(STR_FLD_NMS_UNIQ_PREF);
+            bufNodeNm.append(STR_FLD_NMS_UNIQ_SEP_STRUCT_IND);
             bufNodeNm.append(this.cntStructs);
-            bufNodeNm.append(STR_UNIQ_FLD_NM_SEP_PREF_TO_NM);
+            bufNodeNm.append(STR_FLD_NMS_UNIQ_SEP_PREF_TO_NM);
         }
         
         // Create field name with structure node index
-        bufNodeNm.append(STR_FLD_NM_PREF);
-        bufNodeNm.append(STR_FLD_NM_SEP);
+        bufNodeNm.append(STR_FLD_NMS_PREF);
+        bufNodeNm.append(STR_FLD_NMS_SEP);
         for (Integer intDepthIndex : lstNodeIndex) {
             bufNodeNm.append(intDepthIndex);
-            bufNodeNm.append(STR_FLD_NM_SEP);
+            bufNodeNm.append(STR_FLD_NMS_SEP);
         }
-        int     indLast = bufNodeNm.lastIndexOf(STR_FLD_NM_SEP);
+        int     indLast = bufNodeNm.lastIndexOf(STR_FLD_NMS_SEP);
         String  strNodeNm = bufNodeNm.substring(0, indLast);
         
         return strNodeNm;

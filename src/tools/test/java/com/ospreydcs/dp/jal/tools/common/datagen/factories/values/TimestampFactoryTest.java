@@ -25,9 +25,6 @@
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.factories.values;
 
-import static org.junit.Assert.*;
-import org.junit.Assert;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -36,14 +33,14 @@ import java.util.List;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TimestampFactory;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTmsValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTmsFactoryConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -63,7 +60,7 @@ public class TimestampFactoryTest {
     //
     
     /** The default configuration parameters for simulated timestamp value generation */
-    private static final JalToolsTmsValuesConfig    CFG_DEF = JalToolsConfig.getInstance().datagen.values.timestamp;
+    private static final JalToolsTmsFactoryConfig    CFG_DEF = JalToolsConfig.getInstance().datagen.values.timestamp;
     
     
     //

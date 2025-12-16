@@ -36,8 +36,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -126,7 +126,7 @@ public class ScalarFactoryTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory#from(com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory#from(com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec)}.
      */
     @Test
     public final void testFrom() {
@@ -144,7 +144,7 @@ public class ScalarFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory#ScalarFactory(com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory#ScalarFactory(com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec)}.
      */
     @Test
     public final void testScalarFactory() {

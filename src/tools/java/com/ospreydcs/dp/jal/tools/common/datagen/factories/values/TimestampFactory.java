@@ -35,7 +35,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTmsValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTmsFactoryConfig;
 
 /**
  * <p>
@@ -322,7 +322,7 @@ public class TimestampFactory implements IDatumFactory {
     //
     
     /** The default configuration parameters for simulated timestamp value generation */
-    private static final JalToolsTmsValuesConfig    CFG_DEF = JalToolsConfig.getInstance().datagen.values.timestamp;
+    private static final JalToolsTmsFactoryConfig    CFG_DEF = JalToolsConfig.getInstance().datagen.values.timestamp;
     
     
     //

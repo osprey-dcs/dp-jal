@@ -29,10 +29,11 @@ import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsBytesFactoryConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsImageValuesConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarValuesConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsStructValuesConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTmsValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsImageFactoryConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarFactoryConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsStructFactoryConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTensorFactoryConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTmsFactoryConfig;
 
 /**
  * <p>
@@ -83,11 +84,11 @@ public class JalToolsDataGenConfig extends CfgStructure<JalToolsDataGenConfig> {
         
         /** Default configuration parameters for scalar value generation */
         @ACfgOverride.Struct(pathelem="VALUES")
-        public JalToolsScalarValuesConfig       scalar;
+        public JalToolsScalarFactoryConfig      scalar;
         
         /** Default configuration parameters for timestamp value generation */
         @ACfgOverride.Struct(pathelem="TIMESTAMP")
-        public JalToolsTmsValuesConfig          timestamp;
+        public JalToolsTmsFactoryConfig         timestamp;
         
         /** Default configuration parameters for byte array value generation */
         @ACfgOverride.Struct(pathelem="BYTES")
@@ -95,11 +96,15 @@ public class JalToolsDataGenConfig extends CfgStructure<JalToolsDataGenConfig> {
         
         /** Default configuration parameters for image value generation */
         @ACfgOverride.Struct(pathelem="IMAGE")
-        public JalToolsImageValuesConfig        image;
+        public JalToolsImageFactoryConfig       image;
+        
+        /** Default configuration parameters for tensor factory instances */
+        @ACfgOverride.Struct(pathelem="TENSOR")
+        public JalToolsTensorFactoryConfig      tensor;
         
         /** Default configuration parameters for structure value generation */
         @ACfgOverride.Struct(pathelem="STRUCTURE")
-        public JalToolsStructValuesConfig       structure;
+        public JalToolsStructFactoryConfig      structure;
         
     }
 }

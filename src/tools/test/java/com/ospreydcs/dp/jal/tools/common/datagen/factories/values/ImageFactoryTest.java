@@ -35,7 +35,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.jal.common.BufferedImage;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ImageFactory;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsImageValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsImageFactoryConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -55,7 +55,7 @@ public class ImageFactoryTest {
     //
     
     /** The default configuration parameters for simulated image value generation */
-    public static final JalToolsImageValuesConfig   CFG_DEF = JalToolsConfig.getInstance().datagen.values.image;
+    public static final JalToolsImageFactoryConfig   CFG_DEF = JalToolsConfig.getInstance().datagen.values.image;
     
     
     // 

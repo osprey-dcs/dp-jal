@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	TimestampFacSpec.java
+ * File:	TimestampFactorySpec.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.factories.frames
- * Type: 	TimestampFacSpec
+ * Type: 	TimestampFactorySpec
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -72,10 +72,10 @@ public record TimestampSpec(
     
     /**
      * <p>
-     * Creates and returns a new <code>TimestampFacSpec</code> instance with the default configuration.
+     * Creates and returns a new <code>TimestampFactorySpec</code> instance with the default configuration.
      * </p>
      * <p>
-     * This creator uses all default values for the <code>TimestampFacSpec</code> field values. 
+     * This creator uses all default values for the <code>TimestampFactorySpec</code> field values. 
      * The default values are taken from the JAL Tools configuration and available in the record constants:
      * <ul>
      * <li><code>{@link #cntSamples()}</code> = <code>{@link #CNT_SAMPLES_DEF}</code>.
@@ -86,7 +86,7 @@ public record TimestampSpec(
      * </ul>
      * </p>
      * 
-     * @return  a new <code>TimestampFacSpec</code> record populated with all default arguments
+     * @return  a new <code>TimestampFactorySpec</code> record populated with all default arguments
      */
     public static TimestampSpec   from() {
         return TimestampSpec.from(CNT_SAMPLES_DEF);
@@ -94,10 +94,10 @@ public record TimestampSpec(
     
     /**
      * <p>
-     * Creates and returns a new <code>TimestampFacSpec</code> instance configured according to the available arguments.
+     * Creates and returns a new <code>TimestampFactorySpec</code> instance configured according to the available arguments.
      * </p>
      * <p>
-     * This creator uses default values for the missing <code>TimestampFacSpec</code> field value (i.e., those not
+     * This creator uses default values for the missing <code>TimestampFactorySpec</code> field value (i.e., those not
      * included in the argument collection.  The default values are taken from the JAL Tools configuration and
      * available in the record constants:
      * <ul>
@@ -111,7 +111,7 @@ public record TimestampSpec(
      * 
      * @param cntSamples    number of samples in each data column of the ingestion frame
      * 
-     * @return  a new <code>TimestampFacSpec</code> record populated with the given arguments
+     * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
     public static TimestampSpec   from(int cntSamples) {
         return TimestampSpec.from(cntSamples, ENM_TYPE);
@@ -119,10 +119,10 @@ public record TimestampSpec(
     
     /**
      * <p>
-     * Creates and returns a new <code>TimestampFacSpec</code> instance configured according to the available arguments.
+     * Creates and returns a new <code>TimestampFactorySpec</code> instance configured according to the available arguments.
      * </p>
      * <p>
-     * This creator uses default values for the missing <code>TimestampFacSpec</code> field value (i.e., those not
+     * This creator uses default values for the missing <code>TimestampFactorySpec</code> field value (i.e., those not
      * included in the argument collection.  The default values are taken from the JAL Tools configuration and
      * available in the record constants:
      * <ul>
@@ -136,7 +136,7 @@ public record TimestampSpec(
      * @param cntSamples    number of samples in each data column of the ingestion frame
      * @param enmType       the timestamp type, either a uniform sampling clock or an explicit timestamp list
      * 
-     * @return  a new <code>TimestampFacSpec</code> record populated with the given arguments
+     * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
     public static TimestampSpec   from(int cntSamples, DpTimestampCase enmType ) {
         return TimestampSpec.from(cntSamples, enmType, DUR_PERIOD_DEF);
@@ -144,10 +144,10 @@ public record TimestampSpec(
     
     /**
      * <p>
-     * Creates and returns a new <code>TimestampFacSpec</code> instance configured according to the available arguments.
+     * Creates and returns a new <code>TimestampFactorySpec</code> instance configured according to the available arguments.
      * </p>
      * <p>
-     * This creator uses default values for the missing <code>TimestampFacSpec</code> field value (i.e., those not
+     * This creator uses default values for the missing <code>TimestampFactorySpec</code> field value (i.e., those not
      * included in the argument collection.  The default values are taken from the JAL Tools configuration and
      * available in the record constants:
      * <ul>
@@ -161,7 +161,7 @@ public record TimestampSpec(
      * @param enmType       the timestamp type, either a uniform sampling clock or an explicit timestamp list
      * @param durPeriod     the sampling period for the timestamp collection
      * 
-     * @return  a new <code>TimestampFacSpec</code> record populated with the given arguments
+     * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
     public static TimestampSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod) {
         return TimestampSpec.from(cntSamples, enmType, durPeriod, INS_START_DEF);
@@ -169,10 +169,10 @@ public record TimestampSpec(
     
     /**
      * <p>
-     * Creates and returns a new <code>TimestampFacSpec</code> instance configured according to the available arguments.
+     * Creates and returns a new <code>TimestampFactorySpec</code> instance configured according to the available arguments.
      * </p>
      * <p>
-     * This creator uses default values for the missing <code>TimestampFacSpec</code> field value (i.e., those not
+     * This creator uses default values for the missing <code>TimestampFactorySpec</code> field value (i.e., those not
      * included in the argument collection.  The default values are taken from the JAL Tools configuration and
      * available in the record constants:
      * <ul>
@@ -186,7 +186,7 @@ public record TimestampSpec(
      * @param durPeriod     the sampling period for the timestamp collection
      * @param insStart      the starting time instant for the timestamps (i.e., the 1st timestamp value)
      * 
-     * @return  a new <code>TimestampFacSpec</code> record populated with the given arguments
+     * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
     public static TimestampSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod, Instant insStart) {
         return TimestampSpec.from(cntSamples, enmType, durPeriod, insStart, DUR_DELAY_DEF);
@@ -194,11 +194,11 @@ public record TimestampSpec(
     
     /**
      * <p>
-     * Creates and returns a new <code>TimestampFacSpec</code> instance configured according to the given arguments.
+     * Creates and returns a new <code>TimestampFactorySpec</code> instance configured according to the given arguments.
      * </p>
      * <p>
      * This creation is equivalent to the canonical constructor 
-     * <code>{@link #TimestampFacSpec(int, DpTimestampCase, Duration, Instant, Duration)}</code>.
+     * <code>{@link #TimestampFactorySpec(int, DpTimestampCase, Duration, Instant, Duration)}</code>.
      * There are no default field values, all field values are provided in the arguments collection.
      * </p>
      * 
@@ -208,7 +208,7 @@ public record TimestampSpec(
      * @param insStart      the starting time instant for the timestamps (i.e., the 1st timestamp value)
      * @param durDelay      sampling delay from starting time instant (i.e., the 1st timestamp will be offset by this value)
      * 
-     * @return  a new <code>TimestampFacSpec</code> record populated with the given arguments
+     * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
     public static TimestampSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod, Instant insStart, Duration durDelay) {
         return new TimestampSpec(cntSamples, enmType, durPeriod, insStart, durDelay);
@@ -216,7 +216,7 @@ public record TimestampSpec(
     
     /**
      * <p>
-     * Parses the collection of arguments as values of the <code>TimestampFacSpec</code> record fields.
+     * Parses the collection of arguments as values of the <code>TimestampFactorySpec</code> record fields.
      * </p>
      * <p>
      * The element strings of the argument array are parsed as formatted, string values of the record
@@ -256,7 +256,7 @@ public record TimestampSpec(
      * 
      * @param args  ordered collection of field values of format [samples [type [period [start [delay]]]]]
      * 
-     * @return  a new <code>TimestampFacSpec</code> record populated with the parsed argument strings
+     * @return  a new <code>TimestampFactorySpec</code> record populated with the parsed argument strings
      * 
      * @throws NumberFormatException    invalid numeric format for 'samples'
      * @throws TypeNotPresentException  invalid <code>{@link DpTimestampCase}</code> constant for 'type'  
@@ -431,6 +431,44 @@ public record TimestampSpec(
         }
         
         return vecTms;
+    }
+
+    
+    // 
+    // Record Overrides
+    //
+    
+    /**
+     * @see java.lang.Record#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        
+        if (obj instanceof TimestampSpec spec)  {
+            boolean bolResult = (this.cntSamples == spec.cntSamples)
+                    && (this.enmType == spec.enmType)
+                    && (this.durPeriod.equals(spec.durPeriod))
+                    && (this.insStart.equals(spec.insStart))
+                    && (this.durDelay.equals(spec.durDelay));
+            return bolResult;
+        }
+        
+        return false;
+    }
+
+    /**
+     * @see java.lang.Record#toString()
+     */
+    @Override
+    public String toString() {
+        String  str = "";
+        str += "Sample count           : " + this.cntSamples + "\n";
+        str += "Timestamp case         : " + this.enmType + "\n";
+        str += "Sampling period        : " + this.durPeriod + "\n";
+        str += "Sampling start instant : " + this.insStart + "\n";
+        str += "Sampling start delay   : " + this.durDelay + "\n";
+        
+        return str;
     }
     
 }

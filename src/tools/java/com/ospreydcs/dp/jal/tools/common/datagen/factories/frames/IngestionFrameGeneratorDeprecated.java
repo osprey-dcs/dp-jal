@@ -55,7 +55,7 @@ import com.ospreydcs.dp.jal.util.Log4j;
  * <p>
  * <h2>Configuration</h2>
  * Instances of <code>IngestionFrameGeneratorDeprecated</code> are configured upon creation/construction.  A record object of
- * type <code>{@link SampleBlockConfig}</code> is required for instantiation.  The record contains all fields necessary
+ * type <code>{@link SampleBlockConfigDep}</code> is required for instantiation.  The record contains all fields necessary
  * for full configuration and all <code>IngestionFrameGeneratorDeprecated</code> objects are ready for ingestion frame creation
  * (i.e., invoking the <code>{@link #build()}</code> method) after instantiation.
  * <p> 
@@ -66,40 +66,40 @@ import com.ospreydcs.dp.jal.util.Log4j;
  * <li><b>Data Columns</b>
  * <br/>
  * The number columns within each in ingestion frame is given by the size of the 
- * <code>{@link SampleBlockConfig#setPvNames()}</code> set.  Each column has a name taken from the given set.
+ * <code>{@link SampleBlockConfigDep#setPvNames()}</code> set.  Each column has a name taken from the given set.
  * </li>
  * <li><b>Data Types</b>
  * <br/>
  * This class currently supports only scalar data types of that described by the enumeration 
- * <code>{@link JalScalarType}</code>, and given by the field <code>{@link SampleBlockConfig#enmDataType()}</code>
+ * <code>{@link JalScalarType}</code>, and given by the field <code>{@link SampleBlockConfigDep#enmDataType()}</code>
  * within the creation configuration record. The data types of all data within each generated ingestion frame will 
  * all be identical (although the data values will not).
  * <li><b>Timestamps</b>
  * <br/>
  * The timestaps are generated internally according to the number of samples specified by 
- * <code>{@link SampleBlockConfig#cntSamples()}</code>, the sampling period <code>{@link SampleBlockConfig#tmaPeriod()}</code>,
- * and by the desired timestamp representation <code>{@link SampleBlockConfig#enmTmsCase()}</code>.  
+ * <code>{@link SampleBlockConfigDep#cntSamples()}</code>, the sampling period <code>{@link SampleBlockConfigDep#tmaPeriod()}</code>,
+ * and by the desired timestamp representation <code>{@link SampleBlockConfigDep#enmTmsCase()}</code>.  
  * See more details below.
  * </li>
  * <li><b>Sample Count</b>
  * <br/>
  * The number of samples for each sample process within each ingestion frame created is given by the field
- * <code>{@link SampleBlockConfig#cntSamples()}</code>.  That is, all data columns within the generated
- * ingestion frames have size <code>{@link SampleBlockConfig#cntSamples()}</code>.  That is, the generated 
- * ingestion frames have <code>{@link SampleBlockConfig#cntSamples()}</code> rows.
+ * <code>{@link SampleBlockConfigDep#cntSamples()}</code>.  That is, all data columns within the generated
+ * ingestion frames have size <code>{@link SampleBlockConfigDep#cntSamples()}</code>.  That is, the generated 
+ * ingestion frames have <code>{@link SampleBlockConfigDep#cntSamples()}</code> rows.
  * </li>
  * <li><b>Sample Period</b>
  * <br/>
  * All timestamps within produced ingestion frames are generated  with period given by 
- * <code>{@link SampleBlockConfig#tmaPeriod()}</code>.  The timestamps themselves are represented either by  
+ * <code>{@link SampleBlockConfigDep#tmaPeriod()}</code>.  The timestamps themselves are represented either by  
  *   <ul>
  *   <li>
  *   a uniform sampling clock if 
- *   <code>{@link SampleBlockConfig#enmTmsCase()}</code> == <code>{@link DpTimestampCase#SAMPLING_CLOCK}</code>
+ *   <code>{@link SampleBlockConfigDep#enmTmsCase()}</code> == <code>{@link DpTimestampCase#SAMPLING_CLOCK}</code>
  *   </li>
  *   <li> 
  *   or an explicit timestamp list of
- *   <code>{@link SampleBlockConfig#enmTmsCase()}</code> == <code>{@link DpTimestampCase#TIMESTAMP_LIST}</code>.
+ *   <code>{@link SampleBlockConfigDep#enmTmsCase()}</code> == <code>{@link DpTimestampCase#TIMESTAMP_LIST}</code>.
  *   </li>
  *   </ul>
  * </li>
@@ -111,12 +111,12 @@ import com.ospreydcs.dp.jal.util.Log4j;
  * will be the inception time of the Data Platform Test Archive contained in class constant <code>{@link #INS_START}</code>.  
  * In all subsequent ingestion frames the initial timestamp is advanced such that it follows directly from the last timestamp 
  * of the previous ingestion frame.  The interval between timestamps (i.e., the "period") is given by the field
- * <code>{@link SampleBlockConfig#tmaPeriod()}</code> within the configuration record.
+ * <code>{@link SampleBlockConfigDep#tmaPeriod()}</code> within the configuration record.
  * The start time can be modified by using the <code>{@link setStartTime}</code> method before building.
  * </p>
  * <p>
  * The method used to express timestamps for all generated ingestion frames is given by the field 
- * <code>{@link SampleBlockConfig#enmTmsCase()}</code>.
+ * <code>{@link SampleBlockConfigDep#enmTmsCase()}</code>.
  * Within <code>IngestionFrame</code> instances timestamps can be specified with either a <code>UniformSamplingClock</code>
  * object (for sampling processes that have a constant period) or with an explicit list of timestamp <code>Instant</code>
  * values (i.e., a <code>List&lt;Instant&gt;</code> object).  Clearly the former method is less expensive but not
@@ -155,7 +155,7 @@ public class IngestionFrameGeneratorDeprecated {
      * 
      * @throws IllegalArgumentException invalid and/or inconsistent record configuration (see message and cause) 
      */
-    public static IngestionFrameGeneratorDeprecated   from(SampleBlockConfig recCfg) throws IllegalArgumentException {
+    public static IngestionFrameGeneratorDeprecated   from(SampleBlockConfigDep recCfg) throws IllegalArgumentException {
         return new IngestionFrameGeneratorDeprecated(recCfg);
     }
 
@@ -226,7 +226,7 @@ public class IngestionFrameGeneratorDeprecated {
     //
     
 //    /** Record containing configuration parameters for generating ingestion frames */
-//    private final SampleBlockConfig recCfg;
+//    private final SampleBlockConfigDep recCfg;
     
     /** The number of samples for each process variable in the ingestion frame */
     private final int               cntSamples;
@@ -275,7 +275,7 @@ public class IngestionFrameGeneratorDeprecated {
      *  
      * @throws IllegalArgumentException invalid and/or inconsistent record configuration (see message and cause) 
      */
-    public IngestionFrameGeneratorDeprecated(SampleBlockConfig recCfg) throws IllegalArgumentException {
+    public IngestionFrameGeneratorDeprecated(SampleBlockConfigDep recCfg) throws IllegalArgumentException {
 //        this.recCfg = recCfg;
         
         // Record configuration parameters

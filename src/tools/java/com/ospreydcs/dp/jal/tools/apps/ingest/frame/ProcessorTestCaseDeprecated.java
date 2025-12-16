@@ -55,7 +55,7 @@ import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
  * 
  * @param   bolSerial       Processor Configuration - enable/disable <code>DataColumn</code> serialization for transport
  * 
- * @deprecated  Replaced by ProcessorTestCase which uses <code>SampleBlockConfig</code>
+ * @deprecated  Replaced by ProcessorTestCase which uses <code>SampleBlockConfigDep</code>
  */
 @Deprecated(since="Sept 15, 2025", forRemoval=true)
 public record ProcessorTestCaseDeprecated(

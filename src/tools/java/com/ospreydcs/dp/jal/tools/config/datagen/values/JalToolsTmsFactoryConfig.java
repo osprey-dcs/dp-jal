@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	JalToolsTmsValuesConfig.java
+ * File:	JalToolsTmsFactoryConfig.java
  * Package: com.ospreydcs.dp.jal.tools.config.datagen
- * Type: 	JalToolsTmsValuesConfig
+ * Type: 	JalToolsTmsFactoryConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -41,10 +41,10 @@ import com.ospreydcs.dp.jal.config.model.CfgStructure;
  * @since Nov 24, 2025
  *
  */
-public class JalToolsTmsValuesConfig extends CfgStructure<JalToolsTmsValuesConfig> {
+public class JalToolsTmsFactoryConfig extends CfgStructure<JalToolsTmsFactoryConfig> {
 
     /** Default constructor required of base class */
-    public JalToolsTmsValuesConfig() { super(JalToolsTmsValuesConfig.class); }
+    public JalToolsTmsFactoryConfig() { super(JalToolsTmsFactoryConfig.class); }
     
     
     //

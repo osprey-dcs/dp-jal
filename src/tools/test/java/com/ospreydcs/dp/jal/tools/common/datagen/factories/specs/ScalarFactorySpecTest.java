@@ -23,7 +23,7 @@
  * @since Nov 11, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.common.datagen.factories.values;
+package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -39,9 +39,9 @@ import org.junit.Test;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarFactoryConfig;
 
 /**
  * <p>
@@ -60,7 +60,7 @@ public class ScalarFactorySpecTest {
     //
     
     /** The default parameters for scalar-valued simulated data generation */
-    private static final JalToolsScalarValuesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.scalar;
+    private static final JalToolsScalarFactoryConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.scalar;
     
     
     //
@@ -198,7 +198,7 @@ public class ScalarFactorySpecTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#parseArgs(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseArgs(java.lang.String[])}.
      */
     @Test
     public final void testParseArgs1() {
@@ -214,7 +214,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#parseArgs(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseArgs(java.lang.String[])}.
      */
     @Test
     public final void testParseArgs2() {
@@ -230,7 +230,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#parseArgs(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseArgs(java.lang.String[])}.
      */
     @Test
     public final void testParseArgs3() {
@@ -246,7 +246,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#parseArgs(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseArgs(java.lang.String[])}.
      */
     @Test
     public final void testParseArgs4() {
@@ -262,7 +262,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#parseArgs(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseArgs(java.lang.String[])}.
      */
     @Test
     public final void testParseArgs5() {
@@ -278,7 +278,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#parseYamlDoc(java.io.InputStream)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseYamlDoc(java.io.InputStream)}.
      */
     @Test
     public final void testParseYamlDoc() {
@@ -296,7 +296,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#parseYamlNode(java.io.InputStream)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseYamlNode(java.io.InputStream)}.
      */
     @Test
     public final void testParseYamlNode() {
@@ -315,7 +315,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType)}.
      */
     @Test
     public final void testFrom() {
@@ -358,7 +358,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType)}.
      */
     @Test
     public final void testFromJalScalarType() {
@@ -380,7 +380,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType, long)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType, long)}.
      */
     @Test
     public final void testFromJalScalarTypeLong() {
@@ -400,7 +400,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType, boolean)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType, boolean)}.
      */
     @Test
     public final void testFromJalScalarTypeBoolean() {
@@ -420,7 +420,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType, boolean, long)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType, boolean, long)}.
      */
     @Test
     public final void testFromJalScalarTypeBooleanLong() {
@@ -441,7 +441,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType, boolean, long, java.lang.Number)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType, boolean, long, java.lang.Number)}.
      */
     @Test
     public final void testFromJalScalarTypeBooleanLongNumber() {
@@ -463,7 +463,7 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType, boolean, long, java.lang.Number, java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType, boolean, long, java.lang.Number, java.lang.String)}.
      */
     @Test
     public final void testFromJalScalarTypeBooleanLongNumberString() {
@@ -483,6 +483,56 @@ public class ScalarFactorySpecTest {
         Assert.assertEquals(recCfg.lngSeed(), lngSeed);
         Assert.assertEquals(recCfg.numIncr(), numIncr);
         Assert.assertEquals(recCfg.strPrefix(), strPref);
+    }
+    
+    /**
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#newFactory()}}.
+     */
+    @Test
+    public final void testNewFactory() {
+        
+        // Test values
+        final JalScalarType     enmType = JalScalarType.STRING;
+        final boolean           bolRand = false;
+        final long              lngSeed = 0;
+        final Number            numIncr = Integer.valueOf(1);
+        final String            strPref = "str:";
+        
+        final int               cntVals = 10;
+        
+        // Create specification and check record fields
+        ScalarFactorySpec recSpec = ScalarFactorySpec.from(enmType, bolRand, lngSeed, numIncr, strPref);
+        
+        Assert.assertEquals(recSpec.enmType(), enmType);
+        Assert.assertEquals(recSpec.bolRandEnbl(), bolRand);
+        Assert.assertEquals(recSpec.lngSeed(), lngSeed);
+        Assert.assertEquals(recSpec.numIncr(), numIncr);
+        Assert.assertEquals(recSpec.strPrefix(), strPref);
+        
+        // Create scalar factory and check configuration
+        ScalarFactory   facTest = recSpec.newFactory();
+        
+        Assert.assertEquals(enmType, facTest.getScalarType());
+        Assert.assertEquals(bolRand, facTest.isRandom());
+        Assert.assertEquals(lngSeed, facTest.getSeed());
+        Assert.assertEquals(numIncr, facTest.getIncrement());
+        Assert.assertEquals(strPref, facTest.getStringPrefix());
+        
+        // Create some values and check
+        int     intSuffix = Math.toIntExact(lngSeed);
+        for (int iVal=0; iVal<cntVals; iVal++) {
+            Object  objVal = facTest.nextDatum();
+            
+            if (objVal instanceof String strVal) {
+                String  strExpect = strPref + Integer.toString(intSuffix);
+                
+                Assert.assertEquals(strExpect, strVal);
+                
+            } else
+                Assert.fail("Scalar factory value " + objVal + " was not a String.");
+            
+            intSuffix += numIncr.intValue();
+        }
     }
 
 }

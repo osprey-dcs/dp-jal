@@ -38,9 +38,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TensorFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.TensorIndexGenerator;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.TensorUtility;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
@@ -163,20 +161,21 @@ public class TensorFactoryTest {
     //
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TensorFactory#from(int[], com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TensorFactory#from(int[], com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec)}.
      */
     @Test
     public final void testFromIntArrayScalarFactoryConfig() {
 
         // Parameters
         final int[]                 arrShape = ARR_SHAPE_3TENSOR_MED;
-        final ScalarFactorySpec   recCfg = REC_CFG_INT_1;
+        final ScalarFactorySpec     recCfg = REC_CFG_INT_1;
+        final ScalarFactory         facVals = recCfg.newFactory();
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
         final JalScalarType enmType = recCfg.enmType();
         
-        TensorFactory   facTest = TensorFactory.from(arrShape, recCfg);
+        TensorFactory   facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandom());
         Assert.assertEquals(intRank, facTest.getRank());
         Assert.assertEquals(intSize, facTest.getSize());
@@ -194,14 +193,15 @@ public class TensorFactoryTest {
     public final void testFromIntArrayScalarFactory() {
 
         // Parameters
-        final int[]                 arrShape = ARR_SHAPE_VECTOR;
+        final int[]               arrShape = ARR_SHAPE_VECTOR;
         final ScalarFactorySpec   recCfg = REC_CFG_DBL_1;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
         final JalScalarType enmType = recCfg.enmType();
         
-        TensorFactory   facTest = TensorFactory.from(arrShape, recCfg);
+        TensorFactory   facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandom());
         Assert.assertEquals(intRank, facTest.getRank());
         Assert.assertEquals(intSize, facTest.getSize());
@@ -294,7 +294,8 @@ public class TensorFactoryTest {
 
         // Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_INT_1;
-        final int[]                 arrShape = ARR_SHAPE_EMPTY;
+        final ScalarFactory       facVals = recCfg.newFactory();
+        final int[]               arrShape = ARR_SHAPE_EMPTY;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
@@ -302,7 +303,7 @@ public class TensorFactoryTest {
         final boolean       bolRand = recCfg.bolRandEnbl();
         
         // Create the tensor factory and check configuration
-        TensorFactory  facTest = TensorFactory.from(arrShape, recCfg);
+        TensorFactory  facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(intSeed, facTest.getSeed());
         Assert.assertEquals(bolRand, facTest.isRandom() );
         Assert.assertEquals(intRank, facTest.getRank());
@@ -324,7 +325,8 @@ public class TensorFactoryTest {
 
         // Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_DBL_1;
-        final int[]                 arrShape = ARR_SHAPE_SCALAR;
+        final ScalarFactory       facVals = recCfg.newFactory();
+        final int[]               arrShape = ARR_SHAPE_SCALAR;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
@@ -335,7 +337,7 @@ public class TensorFactoryTest {
         final int           cntVals = 10;
         
         // Create the tensor factory and check configuration
-        TensorFactory  facTest = TensorFactory.from(arrShape, recCfg);
+        TensorFactory  facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(intSeed, facTest.getSeed());
         Assert.assertEquals(bolRand, facTest.isRandom() );
         Assert.assertEquals(intRank, facTest.getRank());
@@ -387,7 +389,8 @@ public class TensorFactoryTest {
 
         // Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_STR_1;
-        final int[]                 arrShape = ARR_SHAPE_SCALAR;
+        final ScalarFactory       facVals = recCfg.newFactory();
+        final int[]               arrShape = ARR_SHAPE_SCALAR;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
@@ -398,7 +401,7 @@ public class TensorFactoryTest {
         final int           cntVals = 10;
         
         // Create the tensor factory and check configuration
-        TensorFactory  facTest = TensorFactory.from(arrShape, recCfg);
+        TensorFactory  facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(intSeed, facTest.getSeed());
         Assert.assertEquals(bolRand, facTest.isRandom() );
         Assert.assertEquals(intRank, facTest.getRank());
@@ -451,8 +454,9 @@ public class TensorFactoryTest {
     public final void testNextValueBooleanArraySmall() {
 
         // Parameters
-        final int[]                 arrShape = ARR_SHAPE_ARRAY_SMALL;
+        final int[]               arrShape = ARR_SHAPE_ARRAY_SMALL;
         final ScalarFactorySpec   recCfg = REC_CFG_BOL_1;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
@@ -461,7 +465,7 @@ public class TensorFactoryTest {
         final boolean       bolRand = recCfg.bolRandEnbl();
         
         // Create the tensor factory and check configuration
-        TensorFactory facTest = TensorFactory.from(arrShape, recCfg);
+        TensorFactory facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(intSeed, facTest.getSeed());
         Assert.assertEquals(bolRand, facTest.isRandom() );
         Assert.assertEquals(intRank, facTest.getRank());
@@ -499,7 +503,8 @@ public class TensorFactoryTest {
 
         // Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_INT_1;
-        final int[]                 arrShape = ARR_SHAPE_ARRAY_SMALL;
+        final ScalarFactory       facVals = recCfg.newFactory();
+        final int[]               arrShape = ARR_SHAPE_ARRAY_SMALL;
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
@@ -508,7 +513,7 @@ public class TensorFactoryTest {
         final boolean       bolRand = recCfg.bolRandEnbl();
         
         // Create the tensor factory and check configuration
-        TensorFactory  facTest = TensorFactory.from(arrShape, recCfg);
+        TensorFactory  facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(intSeed, facTest.getSeed());
         Assert.assertEquals(bolRand, facTest.isRandom() );
         Assert.assertEquals(intRank, facTest.getRank());
@@ -552,8 +557,9 @@ public class TensorFactoryTest {
     public final void testNextValueDouble3TensorMed() {
 
         // Parameters
-        final int[]                 arrShape = ARR_SHAPE_3TENSOR_MED;
+        final int[]               arrShape = ARR_SHAPE_3TENSOR_MED;
         final ScalarFactorySpec   recCfg = REC_CFG_INT_1;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
@@ -562,7 +568,7 @@ public class TensorFactoryTest {
         final boolean       bolRand = recCfg.bolRandEnbl();
         
         // Create the tensor factory and check configuration
-        TensorFactory   facTest = TensorFactory.from(arrShape, recCfg);
+        TensorFactory   facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(lngSeed, facTest.getSeed());
         Assert.assertEquals(bolRand, facTest.isRandom() );
         Assert.assertEquals(intRank, facTest.getRank());
@@ -596,8 +602,9 @@ public class TensorFactoryTest {
     public final void testNextValueInteger4TensorSmal() {
 
         // Parameters
-        final int[]                 arrShape = ARR_SHAPE_4TENSOR_SMALL;
+        final int[]               arrShape = ARR_SHAPE_4TENSOR_SMALL;
         final ScalarFactorySpec   recCfg = REC_CFG_INT_2;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           intRank = TensorUtility.computeTensorRank(arrShape);
         final int           intSize = TensorUtility.computeTensorSize(arrShape);
@@ -608,7 +615,7 @@ public class TensorFactoryTest {
         final int           cntVals = 10;
         
         // Create the tensor factory and check configuration
-        TensorFactory   facTest = TensorFactory.from(arrShape, recCfg);
+        TensorFactory   facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(lngSeed, facTest.getSeed());
         Assert.assertEquals(bolRand, facTest.isRandom() );
         Assert.assertEquals(intRank, facTest.getRank());

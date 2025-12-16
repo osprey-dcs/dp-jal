@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	JalToolsScalarValuesConfig.java
+ * File:	JalToolsScalarFactoryConfig.java
  * Package: com.ospreydcs.dp.jal.tools.config.datagen
- * Type: 	JalToolsScalarValuesConfig
+ * Type: 	JalToolsScalarFactoryConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -47,10 +47,10 @@ import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
  *
  */
 @ACfgOverride.Root(root="JAL_TOOLS_DATAGEN_VALUES_SCALAR")
-public class JalToolsScalarValuesConfig extends CfgStructure<JalToolsScalarValuesConfig> {
+public class JalToolsScalarFactoryConfig extends CfgStructure<JalToolsScalarFactoryConfig> {
 
     /** Default constructor required from base class */
-    public JalToolsScalarValuesConfig()    { super(JalToolsScalarValuesConfig.class); };
+    public JalToolsScalarFactoryConfig()    { super(JalToolsScalarFactoryConfig.class); };
     
     
     //

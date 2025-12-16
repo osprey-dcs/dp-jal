@@ -27,8 +27,8 @@ package com.ospreydcs.dp.jal.tools.common.datagen.factories.lib;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec;
 
 /**
  * <p>

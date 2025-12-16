@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	JalToolsStructValuesConfig.java
+ * File:	JalToolsStructFactoryConfig.java
  * Package: com.ospreydcs.dp.jal.tools.config.datagen
- * Type: 	JalToolsStructValuesConfig
+ * Type: 	JalToolsStructFactoryConfig
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -27,6 +27,7 @@ package com.ospreydcs.dp.jal.tools.config.datagen.values;
 
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
  * <p>
@@ -37,17 +38,25 @@ import com.ospreydcs.dp.jal.config.model.CfgStructure;
  * @since Nov 14, 2025
  *
  */
-public final class JalToolsStructValuesConfig extends CfgStructure<JalToolsStructValuesConfig> {
+public final class JalToolsStructFactoryConfig extends CfgStructure<JalToolsStructFactoryConfig> {
 
     /** Default constructor required of base class */
-    public JalToolsStructValuesConfig() { super(JalToolsStructValuesConfig.class); }
+    public JalToolsStructFactoryConfig() { super(JalToolsStructFactoryConfig.class); }
     
     
     // 
-    // Field Values
+    // Attributes
     //
     
-    /** The parameters used to build structure field names */
+    /** The default configuration for all tree structures generation */
+    @ACfgOverride.Struct(pathelem="TREE")
+    public Tree             tree;
+    
+    /** The default configuration for (scalar) field value generation */
+    @ACfgOverride.Struct(pathelem="FIELD_VALUES")
+    public FieldValues      fieldValues;
+    
+    /** The default parameters used to build structure field names */
     @ACfgOverride.Struct(pathelem="FIELD_NAMES")
     public FieldNames       fieldNames;
     
@@ -56,8 +65,49 @@ public final class JalToolsStructValuesConfig extends CfgStructure<JalToolsStruc
     // Internal Structure Classes
     //
     
+    public static final class Tree extends CfgStructure<Tree> {
+        
+        /** Default constructor require of base class */
+        public Tree() { super(Tree.class); };
+            
+        
+        // 
+        // Attributes
+        //
+        
+        /** The tree structure default node depth (i.e., number of nodes traversed before terminal nodes) */
+        @ACfgOverride.Field(name="DEPTH")
+        public Integer      depth;
+        
+        /** The tree structure default fan-out for all sub-nodes before terminal nodes */
+        @ACfgOverride.Field(name="FANOUT")
+        public Integer      fanout;
+    }
+    
     /**
-     * Structure class containing structure field name creation properties. 
+     * Structure class containing structure field value default generation properties. 
+     */
+    public static final class FieldValues extends CfgStructure<FieldValues> {
+        
+        /** Default constructor required of base class */
+        public FieldValues() { super(FieldValues.class); };
+        
+        
+        //
+        // Attributes
+        //
+        
+        /** The (scalar) data type of structure field values */
+        @ACfgOverride.Field(name="TYPE")
+        public JalScalarType            type;
+        
+        /** Field value random number generation default configuration */
+        @ACfgOverride.Struct(pathelem="RANDOM")
+        public JalToolsRandomConfig     random;
+    }
+    
+    /**
+     * Structure class containing structure field name default creation properties. 
      */
     public static final class FieldNames extends CfgStructure<FieldNames> {
         
@@ -66,7 +116,7 @@ public final class JalToolsStructValuesConfig extends CfgStructure<JalToolsStruc
         
         
         //
-        // Fields
+        // Attributes
         //
         
         /** The prefix for structure field names, full name contains field index */
@@ -97,7 +147,7 @@ public final class JalToolsStructValuesConfig extends CfgStructure<JalToolsStruc
             
             
             //
-            // Fields
+            // Attributes
             //
             
             /** Enable/disable unique field name generation for structure instances */

@@ -59,7 +59,7 @@ import com.ospreydcs.dp.jal.ingest.JalIngestionException;
 import com.ospreydcs.dp.jal.tools.apps.query.correl.DataCorrelationEvaluator;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.IngestionFrameGeneratorDeprecated;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.SampleBlockConfig;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.SampleBlockConfigDep;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 import com.ospreydcs.dp.jal.util.Log4j;
@@ -78,7 +78,7 @@ import com.sun.jdi.request.InvalidRequestStateException;
  * </p>
  * <p>
  * The configuration of the <code>IngestionFrame</code> instances sent to the Ingestion Service is
- * given by a record <code>{@link SampleBlockConfig}</code>, whose fields are parsed from the command line.
+ * given by a record <code>{@link SampleBlockConfigDep}</code>, whose fields are parsed from the command line.
  * Ingestion frames are sent to the Ingestion Service using an <code>{@link IIngestionService}</code>
  * interface obtain from the connection factory using a default connection.  All data transmission
  * with this interface is done using unary gRPC operations.  Thus, this application is not intended to
@@ -148,7 +148,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         }
         
         // Get the test suite configuration and output location from the application arguments
-        SampleBlockConfig   recFrmCfg;
+        SampleBlockConfigDep   recFrmCfg;
         int                 cntFrms;
         String              strOutputLoc;
         try {
@@ -363,7 +363,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     //
     
     /** Record containing configuration parameters for the ingestion frames */
-    private final SampleBlockConfig     recFrmCfg;
+    private final SampleBlockConfigDep     recFrmCfg;
     
     /** The requested execution report path location, or null if none */
     private final String                strOutputLoc;
@@ -424,7 +424,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * @throws FileNotFoundException         unable to create the output file (see cause and message)
      * @throws SecurityException             unable to write to the output file
      */
-    public AddTestArchiveData(SampleBlockConfig recFrmCfg, String strOutputLoc, String...args) throws DpGrpcException, JalIngestionException, IllegalArgumentException, UnsupportedOperationException, FileNotFoundException, SecurityException {
+    public AddTestArchiveData(SampleBlockConfigDep recFrmCfg, String strOutputLoc, String...args) throws DpGrpcException, JalIngestionException, IllegalArgumentException, UnsupportedOperationException, FileNotFoundException, SecurityException {
         super(AddTestArchiveData.class, args);
         
         // Record defining attributes
@@ -522,7 +522,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * </p>
      * <p>
      * Note that the returned value does not include the initialization time required by constructor 
-     * <code>{@link AddTestArchiveData#AddSimulatedData(SampleBlockConfig, String)}</code> or the shutdown
+     * <code>{@link AddTestArchiveData#AddSimulatedData(SampleBlockConfigDep, String)}</code> or the shutdown
      * time from <code>{@link #shutdown()}</code>.
      * 
      * @return  the execution time of the application, 
@@ -747,10 +747,10 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * <p>
      * The configuration parameters for the produced ingestion frames are supplied by the client from the command
      * line as variable values and switches.  This method parses the command line arguments recovering all the
-     * configuration parameters and returns them as a <code>{@link SampleBlockConfig}</code> record. 
+     * configuration parameters and returns them as a <code>{@link SampleBlockConfigDep}</code> record. 
      * </p>
      * <p>
-     * Each field of the return <code>{@link SampleBlockConfig}</code> record is recovered separately with an
+     * Each field of the return <code>{@link SampleBlockConfigDep}</code> record is recovered separately with an
      * internal support method prefixed with <code>recover...()</code> where the suffix indicates the parameter.  
      * Any exceptions in the parsing process are generated from these methods.
      * </p>
@@ -773,7 +773,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * @see #recoverSampleCount(String[])
      * @see #recoverTimestampCase(String[])
      */
-    private static SampleBlockConfig    parseFrameConfiguration(String[] args) 
+    private static SampleBlockConfigDep    parseFrameConfiguration(String[] args) 
             throws MissingResourceException, IndexOutOfBoundsException, IllegalArgumentException, DateTimeParseException, NumberFormatException, ConfigurationException {
 
         // Recover the PV names 
@@ -795,7 +795,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         DpTimestampCase enmTmsCase = AddTestArchiveData.recoverTimestampCase(args); // throws ConfigurationException
         
         // Create the ingestion frame configuration record and return it
-        SampleBlockConfig   recFrmCfg = SampleBlockConfig.from(setPvNms, enmType, enmTmsCase, cntSmpls, durPeriod, durDelay);
+        SampleBlockConfigDep   recFrmCfg = SampleBlockConfigDep.from(setPvNms, enmType, enmTmsCase, cntSmpls, durPeriod, durDelay);
         
         return recFrmCfg;
     }

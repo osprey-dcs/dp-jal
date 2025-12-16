@@ -33,7 +33,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsImageValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsImageFactoryConfig;
 
 /**
  * <p>
@@ -236,7 +236,7 @@ public class ImageFactory implements IDatumFactory {
     //
     
     /** Default image generation parameters */
-    private static final JalToolsImageValuesConfig  CFG_DEF = JalToolsConfig.getInstance().datagen.values.image;
+    private static final JalToolsImageFactoryConfig  CFG_DEF = JalToolsConfig.getInstance().datagen.values.image;
     
     
     //

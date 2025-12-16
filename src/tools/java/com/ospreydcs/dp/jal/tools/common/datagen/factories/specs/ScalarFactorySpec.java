@@ -23,7 +23,7 @@
  * @since Nov 7, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.common.datagen.factories.values;
+package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,8 +38,9 @@ import org.yaml.snakeyaml.error.YAMLException;
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarFactoryConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -66,8 +67,8 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * according to the datum type.  The field values are interpreted as follows:
  * <ul>
  * <li><code>{@link #bolRandEnbl()} = true</code>.</li>
- * <li><code>{@link #lngSeed()} = 0</code> - random number lngSeed is 'randomly' generated.</li>
- * <li><code>{@link #lngSeed()} &ne; 0</code> - random number generator lngSeed is <code>{@link #lngSeed()}</code> producing 
+ * <li><code>{@link #lngSeed()} = 0</code> - random number seed is 'randomly' generated.</li>
+ * <li><code>{@link #lngSeed()} &ne; 0</code> - random number generator seed is <code>{@link #lngSeed()}</code> producing 
  *     repeatable 'random' sequences.</li>
  * <li><code>{@link #numIncr()}</code> - ignored.</li>
  * </ul>  
@@ -481,8 +482,8 @@ public record ScalarFactorySpec(
      * Record fields not supplied are taken from the JAL Tools default configuration.
      * <ul>
      * <li>Field <code>{@link #bolRandEnbl()}</code> is taken directly from the JAL default configuration.</li>
-     * <li>Field <code>{@link #lngSeed()}</code> is determined by the random enable/disable flag.</li>
-     * <li>Field <code>{@link #numIncr()}</code> is determined by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #lngSeed()}</code> is interpreted by the random enable/disable flag.</li>
+     * <li>Field <code>{@link #numIncr()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
      * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
@@ -508,7 +509,7 @@ public record ScalarFactorySpec(
      * Record fields not supplied are taken from the JAL Tools default configuration.
      * <ul>
      * <li>Field <code>{@link #bolRandEnbl()}</code> is taken directly from the JAL default configuration.</li>
-     * <li>Field <code>{@link #numIncr()}</code> is determined by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #numIncr()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
      * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
@@ -539,8 +540,8 @@ public record ScalarFactorySpec(
      * <p>
      * Record fields not supplied are taken from the JAL Tools default configuration.
      * <ul>
-     * <li>Field <code>{@link #lngSeed()}</code> is determined by the random enable/disable flag.</li>
-     * <li>Field <code>{@link #numIncr()}</code> is determined by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #lngSeed()}</code> is interpreted by the random enable/disable flag.</li>
+     * <li>Field <code>{@link #numIncr()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
      * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
@@ -570,7 +571,7 @@ public record ScalarFactorySpec(
      * <p>
      * Record fields not supplied are taken from the JAL Tools default configuration.
      * <ul>
-     * <li>Field <code>{@link #numIncr()()}</code> is determined by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #numIncr()()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
      * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
      * </ul>
      * </p>
@@ -632,7 +633,7 @@ public record ScalarFactorySpec(
      * 
      * @param   enmType       the data type of the scalar values to generate
      * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
-     * @param   lngSeed       lngSeed value for random number generation or start value for incremental value generation   
+     * @param   lngSeed       seed value for random number generation or start value for incremental value generation   
      * @param   numIncr       numeric incremental value used when random generation is disabled (type depends upon data type)
      * @param   strPrefix     prefix used for all string value generation (suffix given by integer value)
      * 
@@ -696,7 +697,7 @@ public record ScalarFactorySpec(
             if (this.enmType == rec.enmType
                     && this.bolRandEnbl == rec.bolRandEnbl
                     && this.lngSeed == rec.lngSeed 
-                    && this.numIncr == rec.numIncr
+                    && this.numIncr.equals(rec.numIncr)
                     && this.strPrefix.equals(rec.strPrefix))
                 return true;
         }
@@ -870,7 +871,7 @@ public record ScalarFactorySpec(
     //
     
     /** The default parameters for scalar-valued simulated data generation */
-    private static final JalToolsScalarValuesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.scalar;
+    private static final JalToolsScalarFactoryConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.scalar;
     
     
     //

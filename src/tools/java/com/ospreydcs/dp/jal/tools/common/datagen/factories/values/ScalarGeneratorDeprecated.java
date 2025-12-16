@@ -33,7 +33,7 @@ import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsScalarFactoryConfig;
 
 
 /**
@@ -124,7 +124,7 @@ public class ScalarGeneratorDeprecated implements IScalarFactory {
     //
     
     /** The default parameters for scalar-valued simulated data generation */
-    private static final JalToolsScalarValuesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.scalar;
+    private static final JalToolsScalarFactoryConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.values.scalar;
     
     
     //

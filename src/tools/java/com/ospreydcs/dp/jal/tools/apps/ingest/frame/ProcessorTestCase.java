@@ -36,7 +36,7 @@ import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.jal.tools.apps.ingest.common.FrameProcessorConfig;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.IngestionFrameGeneratorDeprecated;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.SampleBlockConfig;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.SampleBlockConfigDep;
 
 /**
  * <p>
@@ -63,7 +63,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.SampleBlockCon
 public record ProcessorTestCase(
         int                     indCase,
         int                     cntFrames,
-        SampleBlockConfig       recFrmCfg,
+        SampleBlockConfigDep       recFrmCfg,
         FrameProcessorConfig    recPrcrCfg
         ) 
 {
@@ -87,7 +87,7 @@ public record ProcessorTestCase(
      * 
      * @return  a new <code>ProcessorTestCase</code> record with fields populated with the given arguments
      */
-    public static ProcessorTestCase from(int cntFrames, SampleBlockConfig recFrmCfg, FrameProcessorConfig recPrcrCfg) {
+    public static ProcessorTestCase from(int cntFrames, SampleBlockConfigDep recFrmCfg, FrameProcessorConfig recPrcrCfg) {
         return new ProcessorTestCase(IND_CASE, cntFrames, recFrmCfg, recPrcrCfg);
     }
 

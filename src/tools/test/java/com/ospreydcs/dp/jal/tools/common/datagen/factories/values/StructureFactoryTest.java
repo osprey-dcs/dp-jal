@@ -37,16 +37,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.StructureIndexGenerator;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.StructureIndexGenerator.NodeSet;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.StructureUtility;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.StructureUtility.IndexValuePair;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.StructureUtility.NameValuePair;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsStructValuesConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsStructFactoryConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -66,7 +64,7 @@ public class StructureFactoryTest {
     //
     
     /** The default parameters for structure value generation */
-    public static final JalToolsStructValuesConfig  CFG_DEF = JalToolsConfig.getInstance().datagen.values.structure;
+    public static final JalToolsStructFactoryConfig  CFG_DEF = JalToolsConfig.getInstance().datagen.values.structure;
     
     
     //
@@ -141,13 +139,14 @@ public class StructureFactoryTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory#from(int, int, com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory#from(int, int, com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec)}.
      */
     @Test
     public final void testFromIntIntScalarFactoryConfigIllegal() {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_STR_1;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int depthGood = 3;
         final int fanoutGood = 5;
@@ -156,7 +155,7 @@ public class StructureFactoryTest {
         
         try {
             @SuppressWarnings("unused")
-            StructureFactory    facStruct = StructureFactory.from(depthBad, fanoutGood, recCfg);
+            StructureFactory    facStruct = StructureFactory.from(depthBad, fanoutGood, facVals);
             Assert.fail("StructureFactory creator illegal depth did not throw exception.");
             
         } catch (IllegalArgumentException e) {
@@ -165,7 +164,7 @@ public class StructureFactoryTest {
         
         try {
             @SuppressWarnings("unused")
-            StructureFactory    facStruct = StructureFactory.from(depthGood, fanoutBad, recCfg);
+            StructureFactory    facStruct = StructureFactory.from(depthGood, fanoutBad, facVals);
             Assert.fail("StructureFactory creator illegal fanout did not throw exception.");
             
         } catch (IllegalArgumentException e) {
@@ -174,50 +173,52 @@ public class StructureFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory#from(int, int, com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory#from(int, int, com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec)}.
      */
     @Test
     public final void testFromIntIntScalarFactoryConfig() {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_BOL_1;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           cntDepth = 1;
         final int           cntFanout = 5;
         final boolean       bolUniqNms = BOL_UNIQ_FLD_NM_ENBL;
         
-        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, recCfg);
+        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, facVals);
         
-        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.hasRandomValues());
-        Assert.assertEquals(bolUniqNms, facTest.hasUniqueFieldNames());
+        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandomValued());
+        Assert.assertEquals(bolUniqNms, facTest.isUniqueFieldNamed());
         
         Assert.assertEquals(cntDepth, facTest.getDepth());
         Assert.assertEquals(cntFanout, facTest.getFanout());
-        Assert.assertEquals(recCfg.enmType(), facTest.getType());
+        Assert.assertEquals(recCfg.enmType(), facTest.getScalarType());
         Assert.assertEquals(recCfg.lngSeed(), facTest.getSeed());
     }
         
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory#from(int, int, boolean, com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactorySpec)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory#from(int, int, boolean, com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec)}.
      */
     @Test
     public final void testFromIntIntBooleanScalarFactoryConfig() {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_DBL_RND;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           cntDepth = 1;
         final int           cntFanout = 5;
         final boolean       bolUniqNms = true;
         
-        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqNms, recCfg);
+        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqNms, facVals);
         
-        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.hasRandomValues());
-        Assert.assertEquals(bolUniqNms, facTest.hasUniqueFieldNames());
+        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandomValued());
+        Assert.assertEquals(bolUniqNms, facTest.isUniqueFieldNamed());
         
         Assert.assertEquals(cntDepth, facTest.getDepth());
         Assert.assertEquals(cntFanout, facTest.getFanout());
-        Assert.assertEquals(recCfg.enmType(), facTest.getType());
+        Assert.assertEquals(recCfg.enmType(), facTest.getScalarType());
         Assert.assertEquals(recCfg.lngSeed(), facTest.getSeed());
     }
 
@@ -236,12 +237,12 @@ public class StructureFactoryTest {
         
         StructureFactory facTest = new StructureFactory(cntDepth, cntFanout, bolUniqNms, facVals);
         
-        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.hasRandomValues());
-        Assert.assertEquals(bolUniqNms, facTest.hasUniqueFieldNames());
+        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandomValued());
+        Assert.assertEquals(bolUniqNms, facTest.isUniqueFieldNamed());
         
         Assert.assertEquals(cntDepth, facTest.getDepth());
         Assert.assertEquals(cntFanout, facTest.getFanout());
-        Assert.assertEquals(recCfg.enmType(), facTest.getType());
+        Assert.assertEquals(recCfg.enmType(), facTest.getScalarType());
         Assert.assertEquals(recCfg.lngSeed(), facTest.getSeed());
     }
 
@@ -301,6 +302,7 @@ public class StructureFactoryTest {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_INT_1;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           cntDepth = 1;
         final int           cntFanout = 5;
@@ -308,7 +310,7 @@ public class StructureFactoryTest {
 
         final JalScalarType enmType = recCfg.enmType();
         
-        StructureFactory    facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
+        StructureFactory    facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, facVals);
 
         Object  objStruct = facTest.nextDatum();
         
@@ -332,12 +334,13 @@ public class StructureFactoryTest {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_INT_2;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           cntDepth = 2;
         final int           cntFanout = 3;
         final JalScalarType enmType = recCfg.enmType();
         
-        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, recCfg);
+        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, facVals);
 
         Object  objStruct = facTest.nextDatum();
         
@@ -364,13 +367,15 @@ public class StructureFactoryTest {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_BOL_1;
+        final ScalarFactory       facVals = recCfg.newFactory();
+        
         final int           cntDepth = 3;
         final int           cntFanout = 2;
         final boolean       bolUniqFldNms = true;
         
         final JalScalarType enmType = recCfg.enmType();
         
-        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
+        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, facVals);
 
         Object  objStruct = facTest.nextDatum();
         
@@ -403,12 +408,13 @@ public class StructureFactoryTest {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_DBL_1;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           cntDepth = 3;
         final int           cntFanout = 2;
         final JalScalarType enmType = recCfg.enmType();
         
-        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, recCfg);
+        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, facVals);
 
         Object  objStruct = facTest.nextDatum();
         
@@ -447,13 +453,14 @@ public class StructureFactoryTest {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_BOL_1;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           cntDepth = 3;
         final int           cntFanout = 2;
         final boolean       bolUniqFldNms = false;
         final JalScalarType enmType = recCfg.enmType();
         
-        StructureFactory    facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
+        StructureFactory    facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, facVals);
 
         Object  objStruct = facTest.nextDatum();
         
@@ -522,12 +529,14 @@ public class StructureFactoryTest {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_DBL_1; 
+        final ScalarFactory       facVals = recCfg.newFactory();
+
         final int           cntDepth = 3;
         final int           cntFanout = 2;
         final boolean       bolUniqFldNms = false;
         final JalScalarType enmType = recCfg.enmType();
         
-        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
+        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, facVals);
 
         Object  objStruct = facTest.nextDatum();
         
@@ -558,12 +567,14 @@ public class StructureFactoryTest {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_INT_1;
+        final ScalarFactory       facVals = recCfg.newFactory();
+
         final int           cntDepth = 3;
         final int           cntFanout = 2;
         final boolean       bolUniqFldNms = false;
         final JalScalarType enmType = recCfg.enmType();
         
-        StructureFactory    facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
+        StructureFactory    facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, facVals);
 
         Object  objStruct = facTest.nextDatum();
         
@@ -594,13 +605,14 @@ public class StructureFactoryTest {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_INT_2;
+        final ScalarFactory       facVals = recCfg.newFactory();
         
         final int           cntDepth = 3;
         final int           cntFanout = 2;
         final boolean       bolUniqFldNms = false;
         final JalScalarType enmType = recCfg.enmType();
         
-        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
+        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, facVals);
 
         Object  objStruct = facTest.nextDatum();
         
@@ -636,6 +648,8 @@ public class StructureFactoryTest {
         
         // Test Parameters
         final ScalarFactorySpec   recCfg = REC_CFG_INT_2; 
+        final ScalarFactory       facVals = recCfg.newFactory();
+
         final int           cntDepth = 3;
         final int           cntFanout = 2;
         final boolean       bolUniqFldNms = false;
@@ -643,7 +657,7 @@ public class StructureFactoryTest {
         final JalScalarType enmType = recCfg.enmType();
         
         // Create the structure generator
-        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, recCfg);
+        StructureFactory facTest = StructureFactory.from(cntDepth, cntFanout, bolUniqFldNms, facVals);
         
         // Create the index generator
         StructureIndexGenerator genIndexes = new StructureIndexGenerator(cntDepth, cntFanout, enmNodeSet);
