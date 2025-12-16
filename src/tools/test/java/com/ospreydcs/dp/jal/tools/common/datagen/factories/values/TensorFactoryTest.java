@@ -176,10 +176,10 @@ public class TensorFactoryTest {
         final JalScalarType enmType = recCfg.enmType();
         
         TensorFactory   facTest = TensorFactory.from(arrShape, facVals);
-        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandom());
-        Assert.assertEquals(intRank, facTest.getRank());
-        Assert.assertEquals(intSize, facTest.getSize());
-        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
+        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandomValued());
+        Assert.assertEquals(intRank, facTest.getTensorRank());
+        Assert.assertEquals(intSize, facTest.getTensorSize());
+        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getTensorShape()));
         
         Object objTensor = facTest.nextDatum();
         
@@ -202,10 +202,10 @@ public class TensorFactoryTest {
         final JalScalarType enmType = recCfg.enmType();
         
         TensorFactory   facTest = TensorFactory.from(arrShape, facVals);
-        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandom());
-        Assert.assertEquals(intRank, facTest.getRank());
-        Assert.assertEquals(intSize, facTest.getSize());
-        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
+        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandomValued());
+        Assert.assertEquals(intRank, facTest.getTensorRank());
+        Assert.assertEquals(intSize, facTest.getTensorSize());
+        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getTensorShape()));
         
         Object objTensor = facTest.nextDatum();
         
@@ -228,10 +228,10 @@ public class TensorFactoryTest {
         final JalScalarType enmType = recCfg.enmType();
         
         TensorFactory   facTest = new TensorFactory(arrShape, facVals);
-        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandom());
-        Assert.assertEquals(intRank, facTest.getRank());
-        Assert.assertEquals(intSize, facTest.getSize());
-        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
+        Assert.assertEquals(recCfg.bolRandEnbl(), facTest.isRandomValued());
+        Assert.assertEquals(intRank, facTest.getTensorRank());
+        Assert.assertEquals(intSize, facTest.getTensorSize());
+        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getTensorShape()));
         
         Object objTensor = facTest.nextDatum();
         
@@ -305,10 +305,10 @@ public class TensorFactoryTest {
         // Create the tensor factory and check configuration
         TensorFactory  facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(intSeed, facTest.getSeed());
-        Assert.assertEquals(bolRand, facTest.isRandom() );
-        Assert.assertEquals(intRank, facTest.getRank());
-        Assert.assertEquals(intSize, facTest.getSize());
-        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
+        Assert.assertEquals(bolRand, facTest.isRandomValued() );
+        Assert.assertEquals(intRank, facTest.getTensorRank());
+        Assert.assertEquals(intSize, facTest.getTensorSize());
+        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getTensorShape()));
         
         Object objValue = facTest.nextDatum();
         if (objValue instanceof ArrayList vec) 
@@ -339,10 +339,10 @@ public class TensorFactoryTest {
         // Create the tensor factory and check configuration
         TensorFactory  facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(intSeed, facTest.getSeed());
-        Assert.assertEquals(bolRand, facTest.isRandom() );
-        Assert.assertEquals(intRank, facTest.getRank());
-        Assert.assertEquals(intSize, facTest.getSize());
-        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
+        Assert.assertEquals(bolRand, facTest.isRandomValued() );
+        Assert.assertEquals(intRank, facTest.getTensorRank());
+        Assert.assertEquals(intSize, facTest.getTensorSize());
+        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getTensorShape()));
         
         Object objTensor = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objTensor));
@@ -403,10 +403,10 @@ public class TensorFactoryTest {
         // Create the tensor factory and check configuration
         TensorFactory  facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(intSeed, facTest.getSeed());
-        Assert.assertEquals(bolRand, facTest.isRandom() );
-        Assert.assertEquals(intRank, facTest.getRank());
-        Assert.assertEquals(intSize, facTest.getSize());
-        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
+        Assert.assertEquals(bolRand, facTest.isRandomValued() );
+        Assert.assertEquals(intRank, facTest.getTensorRank());
+        Assert.assertEquals(intSize, facTest.getTensorSize());
+        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getTensorShape()));
         
         Object objTensor = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objTensor));
@@ -467,16 +467,16 @@ public class TensorFactoryTest {
         // Create the tensor factory and check configuration
         TensorFactory facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(intSeed, facTest.getSeed());
-        Assert.assertEquals(bolRand, facTest.isRandom() );
-        Assert.assertEquals(intRank, facTest.getRank());
-        Assert.assertEquals(intSize, facTest.getSize());
-        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
+        Assert.assertEquals(bolRand, facTest.isRandomValued() );
+        Assert.assertEquals(intRank, facTest.getTensorRank());
+        Assert.assertEquals(intSize, facTest.getTensorSize());
+        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getTensorShape()));
         
         Object objArray = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objArray));
 
         // Check the values of the first tensor
-        List<ValueRecord>    lstValues = new ArrayList<>(facTest.getSize());
+        List<ValueRecord>    lstValues = new ArrayList<>(facTest.getTensorSize());
         TensorIndexGenerator facIndexes = TensorIndexGenerator.from(arrShape);
         
         for (Integer[] arrIndex : facIndexes) {
@@ -515,16 +515,16 @@ public class TensorFactoryTest {
         // Create the tensor factory and check configuration
         TensorFactory  facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(intSeed, facTest.getSeed());
-        Assert.assertEquals(bolRand, facTest.isRandom() );
-        Assert.assertEquals(intRank, facTest.getRank());
-        Assert.assertEquals(intSize, facTest.getSize());
-        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
+        Assert.assertEquals(bolRand, facTest.isRandomValued() );
+        Assert.assertEquals(intRank, facTest.getTensorRank());
+        Assert.assertEquals(intSize, facTest.getTensorSize());
+        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getTensorShape()));
         
         Object objTensor = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objTensor));
 
         // Check the values of the first tensor
-        List<ValueRecord>       lstValues = new ArrayList<>(facTest.getSize());
+        List<ValueRecord>       lstValues = new ArrayList<>(facTest.getTensorSize());
         Map<String, Integer>    mapValues = new HashMap<>();
         TensorIndexGenerator    facIndexes = TensorIndexGenerator.from(arrShape);
         
@@ -570,16 +570,16 @@ public class TensorFactoryTest {
         // Create the tensor factory and check configuration
         TensorFactory   facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(lngSeed, facTest.getSeed());
-        Assert.assertEquals(bolRand, facTest.isRandom() );
-        Assert.assertEquals(intRank, facTest.getRank());
-        Assert.assertEquals(intSize, facTest.getSize());
-        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
+        Assert.assertEquals(bolRand, facTest.isRandomValued() );
+        Assert.assertEquals(intRank, facTest.getTensorRank());
+        Assert.assertEquals(intSize, facTest.getTensorSize());
+        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getTensorShape()));
         
         Object objArray = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objArray));
 
         // Check the values of the first tensor
-        List<ValueRecord>    lstValues = new ArrayList<>(facTest.getSize());
+        List<ValueRecord>    lstValues = new ArrayList<>(facTest.getTensorSize());
         TensorIndexGenerator genIndexes = TensorIndexGenerator.from(arrShape);
         
         for (Integer[] arrIndex : genIndexes) {
@@ -591,7 +591,7 @@ public class TensorFactoryTest {
             Assert.assertTrue(enmType.isAssignable(objElem));
         }
         
-        Assert.assertEquals(facTest.getSize(), lstValues.size());
+        Assert.assertEquals(facTest.getTensorSize(), lstValues.size());
         Assert.assertEquals(genIndexes.getTensorSize(), lstValues.size());
     }
 
@@ -617,16 +617,16 @@ public class TensorFactoryTest {
         // Create the tensor factory and check configuration
         TensorFactory   facTest = TensorFactory.from(arrShape, facVals);
         Assert.assertEquals(lngSeed, facTest.getSeed());
-        Assert.assertEquals(bolRand, facTest.isRandom() );
-        Assert.assertEquals(intRank, facTest.getRank());
-        Assert.assertEquals(intSize, facTest.getSize());
-        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getShape()));
+        Assert.assertEquals(bolRand, facTest.isRandomValued() );
+        Assert.assertEquals(intRank, facTest.getTensorRank());
+        Assert.assertEquals(intSize, facTest.getTensorSize());
+        Assert.assertTrue(TensorUtility.equivalent(arrShape, facTest.getTensorShape()));
         
         Object objValue = facTest.nextDatum();
         Assert.assertTrue(TensorUtility.isElementValueOfType(enmType, objValue));
 
         // Check the values of the first tensor
-        List<ValueRecord>    lstElems = new ArrayList<>(facTest.getSize());
+        List<ValueRecord>    lstElems = new ArrayList<>(facTest.getTensorSize());
         TensorIndexGenerator facIndexes = TensorIndexGenerator.from(arrShape);
         
         Integer     intCurr = Math.toIntExact(lngSeed);
@@ -650,7 +650,7 @@ public class TensorFactoryTest {
             facIndexes.resetIndexCounter();
         }
         
-        Assert.assertEquals(facTest.getSize() * cntVals, lstElems.size());
+        Assert.assertEquals(facTest.getTensorSize() * cntVals, lstElems.size());
         Assert.assertEquals(facIndexes.getTensorSize() * cntVals, lstElems.size());
     }
 }

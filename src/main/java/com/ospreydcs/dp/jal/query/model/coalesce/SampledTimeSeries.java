@@ -503,7 +503,7 @@ public class SampledTimeSeries<T extends Object> implements IDataColumn<T>, Seri
     }
     
     /**
-     * @see com.ospreydcs.dp.jal.model.IDataColumn#getSize()
+     * @see com.ospreydcs.dp.jal.model.IDataColumn#getTensorSize()
      */
     @Override
     public final Integer getSize() {

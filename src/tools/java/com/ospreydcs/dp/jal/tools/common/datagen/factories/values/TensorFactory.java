@@ -475,20 +475,20 @@ public class TensorFactory implements IDatumFactory {
      * @return  <code>true</code> the terminal field values are generated randomly,
      *          <code>false</code> the terminal field values are generated incrementally
      */
-    public boolean      isRandom() {
+    public boolean      isRandomValued() {
         return this.facValues.isRandom();
     }
     
-    /**
-     * <p>
-     * Returns the scalar type of the terminal-level array values.
-     * </p>
-     * 
-     * @return  scalar type of terminal-level structure field values. 
-     */
-    public JalScalarType   getType() {
-        return this.facValues.getScalarType();
-    }
+//    /**
+//     * <p>
+//     * Returns the scalar type of the terminal-level array values.
+//     * </p>
+//     * 
+//     * @return  scalar type of terminal-level structure field values. 
+//     */
+//    public JalScalarType   getType() {
+//        return this.facValues.getScalarType();
+//    }
     
     /**
      * <p>
@@ -514,7 +514,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return rank of tensor, i.e., number of axes
      */
-    public int      getRank() {
+    public int      getTensorRank() {
         return this.intRank;
     }
     
@@ -528,7 +528,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return  tensor shape as an <code>int</code> array, axis size for each array dimension
      */
-    public int[]    getShape() {
+    public int[]    getTensorShape() {
         return this.arrShape;
     }
     
@@ -542,7 +542,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return  total element count for generated tensor values, i.e., the multiply reduction of the shape
      */
-    public int      getSize() {
+    public int      getTensorSize() {
         return this.szArray;
     }
     

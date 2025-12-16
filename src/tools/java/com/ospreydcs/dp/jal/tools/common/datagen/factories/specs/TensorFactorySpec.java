@@ -171,6 +171,34 @@ public record TensorFactorySpec(int[] arrShape, ScalarFactorySpec recScalarSpec)
      * Creates and returns a new <code>TensorFactorySpec</code> record configured according to the given argument(s).
      * </p>
      * <p>
+     * This creator uses default values taken from the JAL Tools default configuration for fields not contained 
+     * in the arguments.  The default parameters are inherited from the <code>{@link ScalarFactorySpec}</code>
+     * creator(s).
+     * <ul>
+     * <li><code>{@link #recScalarSpec} = {@link ScalarFactorySpec#from(JalScalarType, boolean, long, Number)}</code>.</li>
+     * <li><code>{@link #TensorFactorySpec(int[], ScalarFactorySpec)} = {@link #from(int[], ScalarFactorySpec)}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param   arrShape      the shape of the tensors produced
+     * @param   enmType       the data type of the tensor element scalar values to generate
+     * @param   bolRandEnbl   enable/disable the use of random number generation for tensor element scalar values
+     * @param   lngSeed       seed value for random number generation or start value for incremental value generation   
+     * @param   numIncr       numeric incremental value used when random generation is disabled (type depends upon data type)
+     * 
+     * @return  a new <code>TensorFactorySpec</code> instance populated with the above argument(s)
+     */
+    public static TensorFactorySpec    from(int[] arrShape, JalScalarType enmType, boolean bolRandEnbl, long lngSeed, Number numIncr) {
+        ScalarFactorySpec   recScalarSpec = ScalarFactorySpec.from(enmType, bolRandEnbl, lngSeed, numIncr);
+        
+        return TensorFactorySpec.from(arrShape, recScalarSpec);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>TensorFactorySpec</code> record configured according to the given argument(s).
+     * </p>
+     * <p>
      * This is a convenience method where the scalar factory specification record is created here then attached
      * to the returned tensor factory specification record.
      * </p>
@@ -356,7 +384,7 @@ public record TensorFactorySpec(int[] arrShape, ScalarFactorySpec recScalarSpec)
     @Override
     public String toString() {
         String  str = "";
-        str += "Tensor shape : " + this.arrShape + "\n";
+        str += "Tensor shape : " + Arrays.toString(this.arrShape) + "\n";
         str += "Scalar Factory Configuration \n";
         str += this.recScalarSpec.toString();
         
