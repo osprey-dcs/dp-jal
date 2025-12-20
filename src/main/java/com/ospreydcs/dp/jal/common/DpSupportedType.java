@@ -327,7 +327,7 @@ public enum DpSupportedType {
      * 
      * @throws TypeNotPresentException  the name was invalid
      */
-    public static DpSupportedType    getConstant(String strName) throws TypeNotPresentException {
+    public static DpSupportedType    valueFrom(String strName) throws TypeNotPresentException {
         
         try {
             DpSupportedType   enmConstant = DpSupportedType.valueOf(DpSupportedType.class, strName);

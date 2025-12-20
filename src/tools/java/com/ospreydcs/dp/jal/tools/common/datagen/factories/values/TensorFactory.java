@@ -107,7 +107,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
-     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     * @throws IllegalArgumentException tensor rank must be > 0, each axis size must be >= 1, scalar factory must not be <code>null</code>
      */
     public static TensorFactory  from() throws IllegalArgumentException {
 
@@ -148,7 +148,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
-     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     * @throws IllegalArgumentException tensor rank must be > 0, each axis size must be >= 1, scalar factory must not be <code>null</code>
      */
     public static TensorFactory  from(int[] arrShape) throws IllegalArgumentException {
 
@@ -189,7 +189,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
-     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     * @throws IllegalArgumentException tensor rank must be > 0, each axis size must be >= 1, scalar factory must not be <code>null</code>
      */
     public static TensorFactory  from(int[] arrShape, JalScalarType enmType) throws IllegalArgumentException {
 
@@ -230,7 +230,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
-     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     * @throws IllegalArgumentException tensor rank must be > 0, each axis size must be >= 1, scalar factory must not be <code>null</code>
      */
     public static TensorFactory  from(int[] arrShape, JalScalarType enmType, boolean bolRandEnbl) throws IllegalArgumentException {
 
@@ -272,7 +272,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
-     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     * @throws IllegalArgumentException tensor rank must be > 0, each axis size must be >= 1, scalar factory must not be <code>null</code>
      */
     public static TensorFactory  from(int[] arrShape, JalScalarType enmType, boolean bolRandEnbl, long lngSeed) throws IllegalArgumentException {
         
@@ -310,7 +310,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
-     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     * @throws IllegalArgumentException tensor rank must be > 0, each axis size must be >= 1, scalar factory must not be <code>null</code>
      */
     public static TensorFactory  from(int[] arrShape, JalScalarType enmType, boolean bolRandEnbl, long lngSeed, Number numIncr) throws IllegalArgumentException {
         ScalarFactory   facValues = ScalarFactory.from(enmType, bolRandEnbl, lngSeed, numIncr);
@@ -344,7 +344,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
-     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     * @throws IllegalArgumentException tensor rank must be > 0, each axis size must be >= 1, scalar factory must not be <code>null</code>
      */
     public static TensorFactory  from(int[] arrShape, JalScalarType enmType, boolean bolRandEnbl, long lngSeed, Number numIncr, String strPrefx) throws IllegalArgumentException {
         ScalarFactory   facValues = ScalarFactory.from(enmType, bolRandEnbl, lngSeed, numIncr, strPrefx);
@@ -365,7 +365,7 @@ public class TensorFactory implements IDatumFactory {
      * 
      * @return  a new <code>TensorFactory</code> instance ready for array value generation
      * 
-     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     * @throws IllegalArgumentException tensor rank must be > 0, each axis size must be >= 1, scalar factory must not be <code>null</code>
      */
     public static TensorFactory  from(int[] arrShape, ScalarFactory facValues) throws IllegalArgumentException {
         return new TensorFactory(arrShape, facValues);
@@ -442,7 +442,7 @@ public class TensorFactory implements IDatumFactory {
      * @param arrShape  array containing size of each array axis
      * @param facValues scalar value factory used to generate array element values (i.e., last axis)
      * 
-     * @throws IllegalArgumentException tensor shape equals 0 or scalar factory is <code>null</code>
+     * @throws IllegalArgumentException tensor rank must be > 0, each axis size must be >= 1, scalar factory must not be <code>null</code>
      */
     public TensorFactory(int[] arrShape, ScalarFactory facValues) {
         

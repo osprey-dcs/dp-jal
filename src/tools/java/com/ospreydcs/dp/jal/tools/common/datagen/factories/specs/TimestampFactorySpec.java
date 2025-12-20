@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 
+import com.ospreydcs.dp.jal.common.DpSupportedType;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TimestampFactory;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.JalToolsDataGenConfig;
@@ -300,14 +302,40 @@ public record TimestampFactorySpec(boolean bolRand, long lngSeed, Duration durPe
     
     /**
      * <p>
+     * Returns the Data Platform supported type of all data values produced by any created datum factory.
+     * </p>
+     * 
+     * @return  the <code>DpSupportedType</code> constant representing the datum type produced by all created factories
+     * 
+     * @see DpSupportedType
+     */
+    public static DpSupportedType   getFactoryDpType() {
+        return TimestampFactorySpec.ENM_DP_TYPE;
+    }
+    
+    /**
+     * <p>
+     * Returns the JAL complex type of all data values produced by any created datum factory.
+     * </p>
+     * 
+     * @return  the <code>JalComplexType</code> constant representing the datum type produced by all created factories
+     * 
+     * @see JalComplexType
+     */
+    public static JalComplexType    getFactoryJalType() {
+        return TimestampFactorySpec.ENM_JAL_CMPLX_TYPE;
+    }
+    
+    /**
+     * <p>
      * Create and return a new <code>TimestampFactory</code> instance according to this configuration.
      * </p>
      * <p>
      * Only two field values are used for <code>TimestampFactory</code> instance creation, this depends upon the
      * value of <code>{@link #bolRand()}</code>.
      * <ul>
-     * <li><code>{@link #bolRand()} = true</code> &rarr; <code>{@link TimestampFactory#from(boolean, long)}</code></li>.
-     * <li><code>{@link #bolRand()} = true</code> &rarr; <code>{@link TimestampFactory#from(Duration, Instant)}</code></li>.
+     * <li><code>{@link #bolRand()} = true</code> &rarr; <code>{@link TimestampFactory#from(boolean, long)}</code>.</li>
+     * <li><code>{@link #bolRand()} = true</code> &rarr; <code>{@link TimestampFactory#from(Duration, Instant)}</code>.</li>
      * </ul>
      * </p>
      * 
@@ -381,5 +409,16 @@ public record TimestampFactorySpec(boolean bolRand, long lngSeed, Duration durPe
     
     /** Timestamp factory default starting instant for incremental timestamp generation */
     public static final Instant     INS_INCR_START_DEF = CFG_DEF.timestamp.increment.startInstant();
+    
+    
+    //
+    // Record Constants
+    //
+    
+    /** The JAL complex type produced by the timestamp factories */
+    public static final JalComplexType      ENM_JAL_CMPLX_TYPE = JalComplexType.TIMESTAMP;
+    
+    /** The Data Platform supported type produced by the timestamp factories */
+    public static final DpSupportedType     ENM_DP_TYPE = DpSupportedType.TIMESTAMP;
     
 }

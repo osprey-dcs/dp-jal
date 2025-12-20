@@ -30,10 +30,13 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TensorFactory;
+import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTensorFactoryConfig;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
- * An enumeration of pre-defined tensor factories available for testing and evaluations.
+ * An enumeration (library) of pre-defined tensor factories available for testing and evaluations.
  * </p>
  * <p>
  * The collection of pre-defined tensor factories mirrors the enumeration <code>{@link ScalarFactoryLib}</code>.
@@ -54,7 +57,11 @@ import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TensorFactory;
  * </p>
  * <p>
  * <h2>Factory Creation</h2>
- * Tensor factories for an enumeration constant are created with method <code>{@link #newFactory(int[])}</code>.
+ * Tensor factories for an enumeration constant are created with following methods
+ * <ul> 
+ * <li><code>{@link #newFactory()}</code> - tensor factory configured to constant parameters JAL Tools default shape.</li>
+ * <li><code>{@link #newFactory(int[])}</code> - tensor factory configured to constant parameters given shape.</li>
+ * </ul>
  * Note that a new <code>{@link ScalarFactory}</code> is created and assigned to every new <code>TensorFactory</code>
  * created.  Thus, for incremental scalar generation the tensor element values will be repeated in new instances.
  * </p>
@@ -248,6 +255,22 @@ public enum TensorFactoryLib {
     ;
 
     
+    // 
+    // JAL Tools Resources
+    //
+    
+    /** The tensor factory default configuration */
+    private static final JalToolsTensorFactoryConfig        CFG_DEF = JalToolsConfig.getInstance().datagen.values.tensor;
+    
+    
+    //
+    // Enumeration Collection Constants
+    //
+    
+    /** The default tensor shape */
+    public static final int[]       ARR_SHAPE_TENSOR_DEF = CFG_DEF.shapeArray();
+    
+    
     //
     // Constant Attributes
     //
@@ -292,7 +315,7 @@ public enum TensorFactoryLib {
      *   
      * @return  the associated <code>ScalarFactoryLib</code> constant used to create <code>ScalarFactory</code> instances
      */
-    public ScalarFactoryLib    getScalarFactoryEnum() {
+    public ScalarFactoryLib    getScalarFactoryLib() {
         return this.enmFacElemVals;
     }
     
@@ -302,13 +325,13 @@ public enum TensorFactoryLib {
      * </p>
      * <p>
      * This is a convenience method which is the equivalent of 
-     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryLib#getConfiguration()}</code>.
+     * <code>{@link #getScalarFactoryLib()}.{@link ScalarFactoryLib#getConfiguration()}</code>.
      * </p>
      * 
      * @return  configuration of the <code>ScalarFactory</code> used for all <code>TensorFactory</code> created by this constant
      */
     public ScalarFactorySpec  getScalarFactoryConfig() {
-        return this.getScalarFactoryEnum().getConfiguration();
+        return this.getScalarFactoryLib().getConfiguration();
     }
     
     /**
@@ -317,13 +340,13 @@ public enum TensorFactoryLib {
      * </p>
      * <p>
      * This is a convenience method which is the equivalent of
-     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryLib#getJalType()}</code>.
+     * <code>{@link #getScalarFactoryLib()}.{@link ScalarFactoryLib#getJalType()}</code>.
      * </p>
      * 
      * @return  the data type of all tensor elements produced by all associated factories as a <code>JalScalarType</code>
      */
     public JalScalarType    getJalScalarType() {
-        return this.getScalarFactoryEnum().getJalType();
+        return this.getScalarFactoryLib().getJalType();
     }
     
     /**
@@ -332,15 +355,38 @@ public enum TensorFactoryLib {
      * </p>
      * <p>
      * This is a convenience method which is the equivalent of
-     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryLib#getDpType()}</code>.
+     * <code>{@link #getScalarFactoryLib()}.{@link ScalarFactoryLib#getDpType()}</code>.
      * </p>
      * 
      * @return  the data type of all tensor elements produced by all associated factories as a <code>DpSupportedType</code>
      */
     public DpSupportedType  getDpScalarType() {
-        return this.getScalarFactoryEnum().getDpType();
+        return this.getScalarFactoryLib().getDpType();
     }
     
+
+    /**
+     * <p>
+     * Creates a new <code>TensorFactory</code> instances with the given shape configured according to this constant.
+     * </p>
+     * <p>
+     * The returned <code>{@link TensorFactory}</code> produces tensors with the default shape defined in the
+     * JAL Tools default configuration as follows:
+     * <ul>
+     * <li><code>shape = {@link #ARR_SHAPE_TENSOR_DEF}</code>.</li>
+     * </ul>
+     * The tensor element types and value generation strategy is determined by the this enumeration constant.  
+     * For specific details on the <code>ScalarFactory</code> used to generate tensor elements see 
+     * <code>{@link #getScalarFactoryConfig()}</code>.
+     * </p>
+     * 
+     * @return  new <code>TensorFactory</code> ready for simulated-valued tensor creation
+     * 
+     * @throws IllegalArgumentException tensor shape must be > 0
+     */
+    public TensorFactory newFactory() throws IllegalArgumentException {
+        return this.newFactory(ARR_SHAPE_TENSOR_DEF);
+    }
     /**
      * <p>
      * Creates a new <code>TensorFactory</code> instances with the given shape configured according to this constant.
@@ -355,12 +401,42 @@ public enum TensorFactoryLib {
      * 
      * @return  new <code>TensorFactory</code> ready for simulated-valued tensor creation
      * 
-     * @throws IllegalArgumentException tensor shape must be > 0
+     * @throws IllegalArgumentException tensor rank must be > 0 and each axis size >= 1
      */
     public TensorFactory newFactory(int[] shape) throws IllegalArgumentException {
-        ScalarFactory   facVals = this.getScalarFactoryEnum().newFactory();
+        ScalarFactory   facVals = this.getScalarFactoryLib().newFactory();
         TensorFactory   facTnsr = TensorFactory.from(shape, facVals);
         
         return facTnsr;
     }
+    
+    /**
+     * <p>
+     * Returns the <code>TensorFactoryLib</code> enumeration constant with the given name.
+     * </p>
+     * <p>
+     * This a a convenience method that simply calls the method <code>{@link Enum#valueOf(Class, String)}</code>
+     * with first argument given by <code>TensorFactoryLib.class</code> and the second argument given by
+     * the argument of this method.  Any exception thrown is caught an returned as a 
+     * <code>{@link TypeNotPresentException}</code>.
+     * </p>
+     * 
+     * @param strName   name of the <code>TensorFactoryLib</code> enumeration constant
+     * 
+     * @return  the <code>TensorFactoryLib</code> constant with the given name
+     * 
+     * @throws TypeNotPresentException  the name was invalid
+     */
+    public static TensorFactoryLib  valueFrom(String strName) throws TypeNotPresentException {
+        
+        try {
+            TensorFactoryLib    enmConst = TensorFactoryLib.valueOf(TensorFactoryLib.class, strName);
+            
+            return enmConst;
+            
+        } catch (Exception e) {
+            throw new TypeNotPresentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Unrecognized name: " + strName, e);
+        }
+    }
+    
 }

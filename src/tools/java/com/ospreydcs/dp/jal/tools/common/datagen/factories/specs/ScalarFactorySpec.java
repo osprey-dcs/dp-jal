@@ -192,7 +192,7 @@ public record ScalarFactorySpec(
 
         // Get the value type of the scalars to generate
         String          strValueType = args[0];
-        JalScalarType   enmValueType = JalScalarType.getConstant(strValueType);     // throws TypeNotPresentException
+        JalScalarType   enmValueType = JalScalarType.valueFrom(strValueType);     // throws TypeNotPresentException
         
         // --- Parse the random number generation enable/disable flag ---
         if (args.length < 2)
@@ -377,7 +377,7 @@ public record ScalarFactorySpec(
             
             // The scalar value type
             case STR_TYPE:
-                enmValueType = JalScalarType.getConstant(strValue); // throws TypeNotPresentException
+                enmValueType = JalScalarType.valueFrom(strValue); // throws TypeNotPresentException
                 iValue++;
                 break;
                 

@@ -30,7 +30,6 @@ package com.ospreydcs.dp.jal.common;
 import java.awt.List;
 
 import com.ospreydcs.dp.jal.grpc.util.ProtoMsg;
-import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 
 /**
  * <h1>Enumeration of the Data Platform supported data timestamp mechanisms</h1>
@@ -201,7 +200,7 @@ public enum DpTimestampCase {
      * 
      * @throws TypeNotPresentException  the name was invalid
      */
-    public static DpTimestampCase   getConstant(String strName) throws TypeNotPresentException {
+    public static DpTimestampCase   valueFrom(String strName) throws TypeNotPresentException {
         
         try {
             DpTimestampCase enmConstant = DpTimestampCase.valueOf(DpTimestampCase.class, strName);

@@ -30,6 +30,7 @@ import java.util.Map;
 
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
+import com.ospreydcs.dp.jal.tools.config.datagen.cols.JalToolsColumnsConfig;
 
 /**
  * <p>

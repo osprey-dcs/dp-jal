@@ -201,7 +201,7 @@ public enum JalScalarType {
      * 
      * @throws TypeNotPresentException  the name was invalid
      */
-    public static JalScalarType    getConstant(String strName) throws TypeNotPresentException {
+    public static JalScalarType    valueFrom(String strName) throws TypeNotPresentException {
         
         try {
             JalScalarType   enmConstant = JalScalarType.valueOf(JalScalarType.class, strName);

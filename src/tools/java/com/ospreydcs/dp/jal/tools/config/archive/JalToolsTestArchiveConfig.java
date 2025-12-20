@@ -25,6 +25,9 @@
  */
 package com.ospreydcs.dp.jal.tools.config.archive;
 
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
 
@@ -46,7 +49,7 @@ public class JalToolsTestArchiveConfig extends CfgStructure<JalToolsTestArchiveC
     
     /** The Data Platform Test Archive sampling range for all test PVs */
     @ACfgOverride.Struct(pathelem="RANGE")
-    public SampleRange                  range;
+    public SampleRange                      range;
     
     /** The Data Platform Test Archive Process Variable (PV) configuration parameters */
     @ACfgOverride.Struct(pathelem="PVS")
@@ -79,5 +82,49 @@ public class JalToolsTestArchiveConfig extends CfgStructure<JalToolsTestArchiveC
         @ACfgOverride.Field(name="END")
         public String       end; 
         
+        
+        //
+        // Operations
+        //
+        
+        /**
+         * <p>
+         * Parses the <code>{@link #start}</code> attribute and returns the value as a Java <code>{@link Instant}</code> object.
+         * </p>
+         * <p>
+         * The <code>{@link #start}</code> attribute must be an ISO-8605 date/time format string or an exception is thrown.
+         * The general format is 'YEAR-MONTH-DAY<em>T</em>HOUR:MINUTE:SECOND.FRACTION' with resolution up to 1 nanosecond.
+         * See <code>{@link Instant#parse(CharSequence)}</code> for more information on parsing ISO-8605 format strings.
+         * </p>
+         *   
+         * @return  a new Java <code>Instant</code> parsed from the <code>{@link #start}</code> attribute
+         * 
+         * @throws DateTimeParseException   invalid or empty <code>{@link #start}</code> attribute
+         */
+        public Instant  startInstant() throws DateTimeParseException {
+            Instant insStart = Instant.parse(this.start);    // throws DateTimeParseException
+            
+            return insStart;
+        }
+        
+        /**
+         * <p>
+         * Parses the <code>{@link #end}</code> attribute and returns the value as a Java <code>{@link Instant}</code> object.
+         * </p>
+         * <p>
+         * The <code>{@link #end}</code> attribute must be an ISO-8605 date/time format string or an exception is thrown.
+         * The general format is 'YEAR-MONTH-DAY<em>T</em>HOUR:MINUTE:SECOND.FRACTION' with resolution up to 1 nanosecond.
+         * See <code>{@link Instant#parse(CharSequence)}</code> for more information on parsing ISO-8605 format strings.
+         * </p>
+         *   
+         * @return  a new Java <code>Instant</code> parsed from the <code>{@link #end}</code> attribute
+         * 
+         * @throws DateTimeParseException   invalid or empty <code>{@link #end}</code> attribute
+         */
+        public Instant  endInstant() throws DateTimeParseException {
+            Instant insEnd = Instant.parse(this.end);    // throws DateTimeParseException
+            
+            return insEnd;
+        }
     }
 }

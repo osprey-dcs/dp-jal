@@ -29,6 +29,7 @@ import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
@@ -269,5 +270,34 @@ public enum ScalarFactoryLib {
      */
     public ScalarFactory    newFactory() {
         return this.recCfg.newFactory();
+    }
+    
+    /**
+     * <p>
+     * Returns the <code>ScalarFactoryLib</code> enumeration constant with the given name.
+     * </p>
+     * <p>
+     * This a a convenience method that simply calls the method <code>{@link Enum#valueOf(Class, String)}</code>
+     * with first argument given by <code>ScalarFactoryLib.class</code> and the second argument given by
+     * the argument of this method.  Any exception thrown is caught an returned as a 
+     * <code>{@link TypeNotPresentException}</code>.
+     * </p>
+     * 
+     * @param strName   name of the <code>ScalarFactoryLib</code> enumeration constant
+     * 
+     * @return  the <code>ScalarFactoryLib</code> constant with the given name
+     * 
+     * @throws TypeNotPresentException  the name was invalid
+     */
+    public static ScalarFactoryLib  valueFrom(String strName) throws TypeNotPresentException {
+        
+        try {
+            ScalarFactoryLib    enmConst = ScalarFactoryLib.valueOf(ScalarFactoryLib.class, strName);
+            
+            return enmConst;
+            
+        } catch (Exception e) {
+            throw new TypeNotPresentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Unrecognized name: " + strName, e);
+        }
     }
 }

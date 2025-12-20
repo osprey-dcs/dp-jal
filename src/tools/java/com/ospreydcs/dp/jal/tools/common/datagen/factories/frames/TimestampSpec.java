@@ -276,7 +276,7 @@ public record TimestampSpec(
         
         // Get the timestamp type within the arguments list
         String  strTmsType = args[1];
-        DpTimestampCase enmType = DpTimestampCase.getConstant(strTmsType);  // throws TypeNotPresentException
+        DpTimestampCase enmType = DpTimestampCase.valueFrom(strTmsType);  // throws TypeNotPresentException
         if (args.length < 3)
             return TimestampSpec.from(cntSamples, enmType);
         

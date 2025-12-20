@@ -140,7 +140,7 @@ public enum JalComplexType {
      * 
      * @throws TypeNotPresentException  the name was invalid
      */
-    public static JalComplexType    getConstant(String strName) throws TypeNotPresentException {
+    public static JalComplexType    valueFrom(String strName) throws TypeNotPresentException {
         
         try {
             JalComplexType   enmConstant = JalComplexType.valueOf(JalComplexType.class, strName);

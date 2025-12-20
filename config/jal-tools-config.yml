@@ -47,7 +47,7 @@ testArchive:   # Data Platform test archive properties (generated with utility '
          tmsList: 3800          # 1st timestamp list PV index (0-based) : JAL_TOOLS_TEST_ARCHIVE_PVS_INDEXES_TMS_LIST
        
 datagen:       # JAL Tools simulated data generation default configuration parameters
-   frames:                  # Ingestion frame generation parameter
+   frames:                  # Ingestion frame factory default configurate
       tags:                    # common tag values given to frames   : JAL_TOOLS_DATAGEN_FRAMES_TAGS
          - "Simulated"
          - "JAL Tools"
@@ -65,13 +65,18 @@ datagen:       # JAL Tools simulated data generation default configuration param
       columns:                 # Default columns for ingestion frames
          - name: JalDbl_       # column bank name (also prefix for cols)
            count: 100          # number of columns in column bank
-           type: SCALAR        # 'JalHeteroType' enumeration - datum type of all columns in column bank
-           factory: "DOUBLE"   # parameters for datum factory (depends upon 'type')
+           type: SCALAR        # 'JalComplexType' enumeration - datum type of all columns in column bank
+           factory: [DOUBLE]   # 'String[]' parsable parameters for datum factory specification (see ScalarFactorySpec.parse())
          - name: JalStruct_
            count: 1
            type: STRUCTURE
-           factory: "2 3 INTEGER false"
-   values:                  # Data value generation parameters
+           factory: [2, 3, INTEGER, false] # 'depth' 'fanout' 'enmfldValType' 'bolRandEnbl' (see StructureFactorySpec.parse())
+   columns:                # Column factory default configuration 
+      name: "JalPV:"           # name prefix given to each column       : JAL_TOOLS_DATAGEN_COLUMNS_NAME
+      count: 1000              # number of columns generated            : JAL_TOOLS_DATAGEN_COLUMNS_COUNT
+      type: SCALAR             # 'JalComplexType' data column type      : JAL_TOOLS_DATAGEN_COLUMNS_TYPE
+      factory: [DOUBLE, false, 0, 0.001]  # 'enmType' 'bolRandEnbl' 'lngSeed' 'numIncr' (see ScalarFactorySpec.parse()) : JAL_TOOLS_DATAGEN_COLUMNS_FACTORY
+   values:                  # Datum factories default configuration parameters
       scalar:               # Scalar factory default configuration parameters
          type: DOUBLE          # JalScalarType enumeration constant    : JAL_TOOLS_DATAGEN_VALUES_SCALAR_TYPE
          stringPrefix: "str:"  # prefix for string values (type=STRING): JAL_TOOLS_DATAGEN_VALUES_SCALAR_STRING_PREFIX

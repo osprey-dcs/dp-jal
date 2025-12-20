@@ -28,12 +28,16 @@ package com.ospreydcs.dp.jal.tools.common.datagen.factories.lib;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.StructureFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory;
+import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsStructFactoryConfig;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
- * An enumeration of pre-defined structure factories available for testing and evaluation.
+ * An enumeration (library) of pre-defined structure factories available for testing and evaluation.
  * </p>
  * <p>
  * The collection of pre-defined structure factories mirrors the enumeration <code>{@link ScalarFactoryLib}</code>.
@@ -55,8 +59,12 @@ import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFacto
  * </p>
  * <p>
  * <h2>Factory Creation</h2>
- * Structure factories for an enumeration constant are created with methods <code>{@link #newFactory(int, int)}</code>
- * and <code>{@link #newFactory(int, int, boolean)}</code>.
+ * Structure factories for an enumeration constant are created with the following methods 
+ * <ul>
+ * <li><code>{@link #newFactory()}</code> - structure factory with JAL Tools default depth, fan-out, and unique field name flag.</li>
+ * <li><code>{@link #newFactory(int, int)}</code> - structure factory with JAL Tools unique field name flag..</li>
+ * <li><code>{@link #newFactory(int, int, boolean)}</code> - structure factory with given depth, fan-out, and unique field name flag.</li>
+ * </ul>
  * Note that a new <code>{@link ScalarFactory}</code> is created and assigned to every new <code>StructureFactory</code>
  * created.  Thus, for incremental scalar generation the structure field values will be repeated in new instances.
  * </p>
@@ -251,6 +259,28 @@ public enum StructureFactoryLib {
     
     
     //
+    // JAL Tools Resources
+    //
+    
+    /** The structure factory default configuration */
+    private static final JalToolsStructFactoryConfig    CFG_DEF = JalToolsConfig.getInstance().datagen.values.structure;
+    
+    //
+    // Enumeration Collection Constants
+    //
+    
+    /** The default tree-structure node depth */
+    public static final int         INT_TREE_DEPTH_DEF = CFG_DEF.tree.depth;
+    
+    /** The default tree-structure node fan-out (i.e., before terminal nodes) */
+    public static final int         INT_TREE_FANOUT_DEF = CFG_DEF.tree.fanout;
+    
+    
+    /** The unique field name generation enable/disable flag default value */
+    public static final boolean     BOL_FLD_NMS_UNIQ_ENBL_DEF = CFG_DEF.fieldNames.unique.enabled;
+    
+    
+    //
     // Constant Attributes
     //
     
@@ -294,7 +324,7 @@ public enum StructureFactoryLib {
      *   
      * @return  the associated <code>ScalarFactoryLib</code> constant used to create <code>ScalarFactory</code> instances
      */
-    public ScalarFactoryLib    getScalarFactoryEnum() {
+    public ScalarFactoryLib    getScalarFactoryLib() {
         return this.enmFacFldVals;
     }
     
@@ -304,13 +334,13 @@ public enum StructureFactoryLib {
      * </p>
      * <p>
      * This is a convenience method which is the equivalent of 
-     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryLib#getConfiguration()}</code>.
+     * <code>{@link #getScalarFactoryLib()}.{@link ScalarFactoryLib#getConfiguration()}</code>.
      * </p>
      * 
      * @return  configuration of the <code>ScalarFactory</code> used for all <code>StructureFactory</code> created by this constant
      */
-    public ScalarFactorySpec  getScalarFactoryConfig() {
-        return this.getScalarFactoryEnum().getConfiguration();
+    public ScalarFactorySpec  getScalarFactorySpec() {
+        return this.getScalarFactoryLib().getConfiguration();
     }
     
     /**
@@ -319,13 +349,13 @@ public enum StructureFactoryLib {
      * </p>
      * <p>
      * This is a convenience method which is the equivalent of
-     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryLib#getJalType()}</code>.
+     * <code>{@link #getScalarFactoryLib()}.{@link ScalarFactoryLib#getJalType()}</code>.
      * </p>
      * 
      * @return  the data type of all structure field values produced by all associated factories as a <code>JalScalarType</code>
      */
     public JalScalarType    getJalScalarType() {
-        return this.getScalarFactoryEnum().getJalType();
+        return this.getScalarFactoryLib().getJalType();
     }
     
     /**
@@ -334,13 +364,45 @@ public enum StructureFactoryLib {
      * </p>
      * <p>
      * This is a convenience method which is the equivalent of
-     * <code>{@link #getScalarFactoryEnum()}.{@link ScalarFactoryLib#getDpType()}</code>.
+     * <code>{@link #getScalarFactoryLib()}.{@link ScalarFactoryLib#getDpType()}</code>.
      * </p>
      * 
      * @return  the data type of all tensor elements produced by all associated factories as a <code>DpSupportedType</code>
      */
     public DpSupportedType  getDpScalarType() {
-        return this.getScalarFactoryEnum().getDpType();
+        return this.getScalarFactoryLib().getDpType();
+    }
+    
+    public StructureFactorySpec newFactorySpec(int intDepth, int intFanout, boolean bolUniqFldNms) {
+        StructureFactorySpec    spec = StructureFactorySpec.from(intDepth, intFanout, bolUniqFldNms, this.getScalarFactorySpec());
+        
+        return spec;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>StructureFactory</code> instance configured according to this constant with default arguments.
+     * </p>
+     * <p>
+     * <p>
+     * The returned <code>{@link StructureFactory}</code> produces tree structures with the default depth and node fan-out
+     * according to the following:
+     * <ul>
+     * <li><code>depth = {@link #INT_TREE_DEPTH_DEF}</code>.</li>
+     * <li><code>fanout = {@link #INT_TREE_FANOUT_DEF}</code>.</li>
+     * <li><code>bolUniqFldNms = {@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>.</li>
+     * </ul>
+     * The structure field values types and value generation strategy is determined by the this enumeration constant.  
+     * For specific details on the <code>ScalarFactory</code> used to generate tensor elements see 
+     * <code>{@link #getScalarFactorySpec()}</code>.
+     * </p>
+     * 
+     * @return  a new <code>StructureFactory</code> instance ready for simulated-value tree structure creation
+     * 
+     * @throws IllegalArgumentException depth and fan-out must both be greater than 0
+     */
+    public StructureFactory newFactory() throws IllegalArgumentException {
+        return this.newFactory(INT_TREE_DEPTH_DEF, INT_TREE_FANOUT_DEF);        // throws IllegalArgumentException
     }
     
     /**
@@ -350,9 +412,11 @@ public enum StructureFactoryLib {
      * <p>
      * <p>
      * The returned <code>{@link StructureFactory}</code> produces tree structures with the given depth and node fan-out
-     * while the field value types and value generation strategy is determined by the this enumeration constant.  For specific 
+     * The unique field name generation enabled/disabled flag is given by the JAL Tools default configuration
+     * <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>. 
+     * The field value types and value generation strategy is determined by the this enumeration constant.  For specific 
      * details on the <code>ScalarFactory</code> used to generate tensor elements see 
-     * <code>{@link #getScalarFactoryConfig()}</code>.
+     * <code>{@link #getScalarFactorySpec()}</code>.
      * </p>
      * 
      * @param depth         node depth of tree structures produced
@@ -363,10 +427,7 @@ public enum StructureFactoryLib {
      * @throws IllegalArgumentException depth and fan-out must both be greater than 0
      */
     public StructureFactory newFactory(int depth, int fanout) throws IllegalArgumentException {
-        ScalarFactory       facFldVals = this.enmFacFldVals.newFactory();
-        StructureFactory    facStruct = StructureFactory.from(depth, fanout, facFldVals); // throws IllegalArgumentException
-        
-        return facStruct;
+        return this.newFactory(depth, fanout, BOL_FLD_NMS_UNIQ_ENBL_DEF);       // throws IllegalArgumentException
     }
     
     /**
@@ -378,7 +439,7 @@ public enum StructureFactoryLib {
      * The returned <code>{@link StructureFactory}</code> produces tree structures with the given depth and node fan-out
      * while the field value types and value generation strategy is determined by the this enumeration constant.  For specific 
      * details on the <code>ScalarFactory</code> used to generate tensor elements see 
-     * <code>{@link #getScalarFactoryConfig()}</code>.
+     * <code>{@link #getScalarFactorySpec()}</code>.
      * </p>
      * <p>
      * This method provides the option of creating structure factories that generate unique structure field names for each
@@ -400,4 +461,34 @@ public enum StructureFactoryLib {
         
         return facStruct;
     }
+    
+    /**
+     * <p>
+     * Returns the <code>StructureFactoryLib</code> enumeration constant with the given name.
+     * </p>
+     * <p>
+     * This a a convenience method that simply calls the method <code>{@link Enum#valueOf(Class, String)}</code>
+     * with first argument given by <code>StructureFactoryLib.class</code> and the second argument given by
+     * the argument of this method.  Any exception thrown is caught an returned as a 
+     * <code>{@link TypeNotPresentException}</code>.
+     * </p>
+     * 
+     * @param strName   name of the <code>StructureFactoryLib</code> enumeration constant
+     * 
+     * @return  the <code>StructureFactoryLib</code> constant with the given name
+     * 
+     * @throws TypeNotPresentException  the name was invalid
+     */
+    public static StructureFactoryLib  valueFrom(String strName) throws TypeNotPresentException {
+        
+        try {
+            StructureFactoryLib    enmConst = StructureFactoryLib.valueOf(StructureFactoryLib.class, strName);
+            
+            return enmConst;
+            
+        } catch (Exception e) {
+            throw new TypeNotPresentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Unrecognized name: " + strName, e);
+        }
+    }
+    
 }

@@ -3,7 +3,6 @@ package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 import java.util.Arrays;
 
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsSpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TensorFactory;
@@ -461,7 +460,7 @@ public record StructureFactorySpec(int intDepth, int intFanout, boolean bolUniqN
      *     <code>{@link ScalarFactorySpec#from()}</code>.
      * </li>
      * <li>If the 'bolUniqNms' value is not present the value is taken from the JAL Tools default configuration
-     *     with value <code>{@link DataColumnsSpec#BOL_FLD_NMS_UNIQ_DEF}</code>
+     *     with value <code>{@link #BOL_FLD_NMS_UNIQ_DEF}</code>
      * </li>
      * </ul>
      * </p>
@@ -496,7 +495,7 @@ public record StructureFactorySpec(int intDepth, int intFanout, boolean bolUniqN
         boolean bolUniqNms;     // the enable/disable unique field names flag
         try {
             @SuppressWarnings("unused")
-            JalScalarType   enmType = JalScalarType.getConstant(args[2]);   // throws TypeNotPresentException
+            JalScalarType   enmType = JalScalarType.valueFrom(args[2]);   // throws TypeNotPresentException
 
             // The scalar factory configuration exists and starts here (at index 2)
             //  No enable/disable unique field name provided - use default

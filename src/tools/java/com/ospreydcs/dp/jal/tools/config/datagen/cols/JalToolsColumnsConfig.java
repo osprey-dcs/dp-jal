@@ -23,7 +23,7 @@
  * @since Dec 1, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.config.datagen.frames;
+package com.ospreydcs.dp.jal.tools.config.datagen.cols;
 
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
@@ -36,9 +36,9 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
  *
  * @implNote
  * The <code>{@link ACfgOverride}</code> annotation is attached to attributes within this structure,
- * however, its use it impractical in that there are potential multiple <code>ColumnBankConfig</code>
- * structures within the JAL Tools default configuration.  The annotations are included to indicate
- * the intent and status of the field.
+ * Note that its use is impractical where there are multiple <code>JalToolsColumnsConfig</code>
+ * structures within the JAL Tools <code>JalToolsFramesConfig</code> default configuration.  
+ * In that case the annotations indicate the intent and status of the field.
  * 
  * @author Christopher K. Allen
  * @since Dec 1, 2025
@@ -68,6 +68,6 @@ public class JalToolsColumnsConfig extends CfgStructure<JalToolsColumnsConfig> {
 
     /** The datum factory parameters for data column value generation */
     @ACfgOverride.Field(name="FACTORY")
-    public String           factory;
+    public String[]         factory;
 
 }
