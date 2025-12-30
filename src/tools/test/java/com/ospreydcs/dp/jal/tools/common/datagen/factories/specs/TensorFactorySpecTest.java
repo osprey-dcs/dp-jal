@@ -401,7 +401,7 @@ public class TensorFactorySpecTest {
         final String                strPref = "Happy String";
         final ScalarFactorySpec     specScalar = ScalarFactorySpec.from(enmType, bolRandEnbl, lngSeed, numIncr, strPref);
         
-        final JalComplexType        enmCmplxType = JalComplexType.ARRAY;
+        final JalComplexType        enmCmplxType = JalComplexType.TENSOR;
         final DpSupportedType       enmDpType = DpSupportedType.ARRAY;
         
         final int                   cntVals = 10;

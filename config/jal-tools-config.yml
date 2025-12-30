@@ -76,7 +76,7 @@ datagen:       # JAL Tools simulated data generation default configuration param
       count: 1000              # number of columns generated            : JAL_TOOLS_DATAGEN_COLUMNS_COUNT
       type: SCALAR             # 'JalComplexType' data column type      : JAL_TOOLS_DATAGEN_COLUMNS_TYPE
       factory: [DOUBLE, false, 0, 0.001]  # 'enmType' 'bolRandEnbl' 'lngSeed' 'numIncr' (see ScalarFactorySpec.parse()) : JAL_TOOLS_DATAGEN_COLUMNS_FACTORY
-   values:                  # Datum factories default configuration parameters
+   values:                  # Datum factory specification default configuration parameters
       scalar:               # Scalar factory default configuration parameters
          type: DOUBLE          # JalScalarType enumeration constant    : JAL_TOOLS_DATAGEN_VALUES_SCALAR_TYPE
          stringPrefix: "str:"  # prefix for string values (type=STRING): JAL_TOOLS_DATAGEN_VALUES_SCALAR_STRING_PREFIX

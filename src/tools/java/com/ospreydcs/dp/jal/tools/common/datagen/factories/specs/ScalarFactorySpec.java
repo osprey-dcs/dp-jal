@@ -181,7 +181,7 @@ public record ScalarFactorySpec(
      * @throws NumberFormatException            invalid numeric format (e.g., 'lngSeed', 'numIncr')
      * @throws UnsupportedOperationException    unable to create <code>{@link #numIcr()}</code> field for numeric value type  
      */
-    public static ScalarFactorySpec   parseArgs(String...args) throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException {
+    public static ScalarFactorySpec   parse(String...args) throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException {
 
         // Check argument length
         if (args.length < 1)

@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	DataColumnsFactoryTest.java
+ * File:	FrameColumnsFactoryTest.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.factories.frames
- * Type: 	DataColumnsFactoryTest
+ * Type: 	FrameColumnsFactoryTest
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -40,7 +40,6 @@ import org.junit.Test;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.lib.ScalarFactoryLib;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.lib.TensorFactoryLib;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
@@ -51,14 +50,14 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
- * JUnit test cases for class <code>DataColumnsFactory</code>.
+ * JUnit test cases for class <code>FrameColumnsFactory</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Nov 21, 2025
  *
  */
-public class DataColumnsFactoryTest {
+public class FrameColumnsFactoryTest {
 
     
     //
@@ -116,7 +115,7 @@ public class DataColumnsFactoryTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory#from(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#from(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
      */
     @Test
     public final void testFromFail() {
@@ -131,10 +130,10 @@ public class DataColumnsFactoryTest {
         // Attempt new columns factory creation with bad arguments 
         try {
             @SuppressWarnings("unused")
-//            DataColumnsFactory  facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
-            DataColumnsFactory  facTest = DataColumnsFactory.from(setColNms, facVals);
+//            FrameColumnsFactory  facTest = FrameColumnsFactory.from(setColNms, szCol, facVals);
+            FrameColumnsFactory  facTest = FrameColumnsFactory.from(setColNms, facVals);
 
-            Assert.fail("DataColumnsFactory creation success with bad arguments.");
+            Assert.fail("FrameColumnsFactory creation success with bad arguments.");
             
         } catch (Exception e) {
             // We should land here
@@ -144,7 +143,7 @@ public class DataColumnsFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory#from(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#from(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
      */
     @Test
     public final void testFrom() {
@@ -160,8 +159,8 @@ public class DataColumnsFactoryTest {
 
         // Create new columns factory and check configuration
         try {
-//            DataColumnsFactory  facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
-            DataColumnsFactory  facTest = DataColumnsFactory.from(setColNms, facVals);
+//            FrameColumnsFactory  facTest = FrameColumnsFactory.from(setColNms, szCol, facVals);
+            FrameColumnsFactory  facTest = FrameColumnsFactory.from(setColNms, facVals);
             
             Assert.assertEquals(cntCols, facTest.getColumnCount());
 //            Assert.assertEquals(szCol, facTest.getColumnSize());
@@ -169,12 +168,12 @@ public class DataColumnsFactoryTest {
             Assert.assertEquals(setColNms, facTest.getColumnNames());
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsFactory creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("FrameColumnsFactory creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory#DataColumnsFactory(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#DataColumnsFactory(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
      */
     @Test
     public final void testDataColumnsFactory() {
@@ -190,8 +189,8 @@ public class DataColumnsFactoryTest {
 
         // Construct new columns factory and check configuration
         try {
-//            DataColumnsFactory  facTest = new DataColumnsFactory(setColNms, szCol, facVals);
-            DataColumnsFactory  facTest = new DataColumnsFactory(setColNms, facVals);
+//            FrameColumnsFactory  facTest = new FrameColumnsFactory(setColNms, szCol, facVals);
+            FrameColumnsFactory  facTest = new FrameColumnsFactory(setColNms, facVals);
             
             Assert.assertEquals(cntCols, facTest.getColumnCount());
 //            Assert.assertEquals(szCol, facTest.getColumnSize());
@@ -199,12 +198,12 @@ public class DataColumnsFactoryTest {
             Assert.assertEquals(setColNms, facTest.getColumnNames());
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsFactory construction failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("FrameColumnsFactory construction failed with exception " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory#getColumnCount()}.
+//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#getColumnCount()}.
 //     */
 //    @Test
 //    public final void testGetColumnCount() {
@@ -212,7 +211,7 @@ public class DataColumnsFactoryTest {
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory#getColumnNames()}.
+//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#getColumnNames()}.
 //     */
 //    @Test
 //    public final void testGetColumnNames() {
@@ -220,7 +219,7 @@ public class DataColumnsFactoryTest {
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory#getColumnSize()}.
+//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#getColumnSize()}.
 //     */
 //    @Test
 //    public final void testGetColumnSize() {
@@ -228,7 +227,7 @@ public class DataColumnsFactoryTest {
 //    }
 //
 //    /**
-//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory#getColumnType()}.
+//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#getColumnType()}.
 //     */
 //    @Test
 //    public final void testGetColumnType() {
@@ -236,7 +235,7 @@ public class DataColumnsFactoryTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory#build()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#build()}.
      */
     @Test
     public final void testBuildIntegerIncr1() {
@@ -254,10 +253,10 @@ public class DataColumnsFactoryTest {
         
 
         // Create the column factory and check configuration
-        DataColumnsFactory   facTest;
+        FrameColumnsFactory   facTest;
         try {
-//            facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
-            facTest = DataColumnsFactory.from(setColNms, facVals);
+//            facTest = FrameColumnsFactory.from(setColNms, szCol, facVals);
+            facTest = FrameColumnsFactory.from(setColNms, facVals);
             
             Assert.assertEquals(setColNms, facTest.getColumnNames());
             Assert.assertEquals(cntCols, facTest.getColumnCount());
@@ -265,7 +264,7 @@ public class DataColumnsFactoryTest {
             Assert.assertEquals(enmType, facTest.getColumnType());
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsFactory creation/construction failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("FrameColumnsFactory creation/construction failed with exception " + e.getClass().getName() + ": " + e.getMessage());
             return;
         }
         
@@ -312,7 +311,7 @@ public class DataColumnsFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory#build()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#build()}.
      */
     @Test
     public final void testBuildMultiIntegerIncr2() {
@@ -331,10 +330,10 @@ public class DataColumnsFactoryTest {
         final int               cntBlds = 3;
 
         // Create the column factory and check configuration
-        DataColumnsFactory   facTest;
+        FrameColumnsFactory   facTest;
         try {
-//            facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
-            facTest = DataColumnsFactory.from(setColNms, facVals);
+//            facTest = FrameColumnsFactory.from(setColNms, szCol, facVals);
+            facTest = FrameColumnsFactory.from(setColNms, facVals);
             
             Assert.assertEquals(setColNms, facTest.getColumnNames());
             Assert.assertEquals(cntCols, facTest.getColumnCount());
@@ -342,7 +341,7 @@ public class DataColumnsFactoryTest {
             Assert.assertEquals(enmType, facTest.getColumnType());
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsFactory creation/construction failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("FrameColumnsFactory creation/construction failed with exception " + e.getClass().getName() + ": " + e.getMessage());
             return;
         }
         
@@ -386,7 +385,7 @@ public class DataColumnsFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory#build()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#build()}.
      */
     @Test
     public final void testBuildTensorMultiIntegerIncr1() {
@@ -407,10 +406,10 @@ public class DataColumnsFactoryTest {
         final int               cntBlds = 3;
 
         // Create the column factory and check configuration
-        DataColumnsFactory   facTest;
+        FrameColumnsFactory   facTest;
         try {
-//            facTest = DataColumnsFactory.from(setColNms, szCol, facVals);
-            facTest = DataColumnsFactory.from(setColNms, facVals);
+//            facTest = FrameColumnsFactory.from(setColNms, szCol, facVals);
+            facTest = FrameColumnsFactory.from(setColNms, facVals);
             
             Assert.assertEquals(setColNms, facTest.getColumnNames());
             Assert.assertEquals(cntCols, facTest.getColumnCount());
@@ -418,7 +417,7 @@ public class DataColumnsFactoryTest {
             Assert.assertEquals(enmType, facTest.getColumnType());
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsFactory creation/construction failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("FrameColumnsFactory creation/construction failed with exception " + e.getClass().getName() + ": " + e.getMessage());
             return;
         }
         

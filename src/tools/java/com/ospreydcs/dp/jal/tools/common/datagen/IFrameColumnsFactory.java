@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	IDataColumnsFactory.java
+ * File:	IFrameColumnsFactory.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen
- * Type: 	IDataColumnsFactory
+ * Type: 	IFrameColumnsFactory
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -44,7 +44,7 @@ import com.ospreydcs.dp.jal.common.IDataColumn;
  * @since Nov 28, 2025
  *
  */
-public interface IDataColumnsFactory<T extends Object> {
+public interface IFrameColumnsFactory<T extends Object> {
 
     
     //

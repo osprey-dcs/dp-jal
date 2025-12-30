@@ -31,6 +31,8 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 
+import com.ospreydcs.dp.jal.ingest.IngestionFrame;
+
 import com.ospreydcs.dp.jal.common.DpTimestampCase;
 import com.ospreydcs.dp.jal.common.UniformSamplingClock;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -38,7 +40,7 @@ import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesTmsConfig;
 
 /**
  * <p>
- * Timestamp definition and management for ingestion frame timestamps.
+ * Timestamp specification (and management) for ingestion frame timestamps.
  * </p>
  * <p>
  * Record instances are intended to define the timestamps for an ingestion data frame, and to manage the
@@ -57,7 +59,7 @@ import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesTmsConfig;
  * @param insStart      the starting time instant for the timestamps (i.e., the 1st timestamp value)
  * @param durDelay      sampling delay from starting time instant (i.e., the 1st timestamp will be offset by this value)
  */
-public record TimestampSpec(
+public record FrameTimestampsSpec(
         int                 cntSamples,
         DpTimestampCase     enmType,
         Duration            durPeriod,
@@ -79,7 +81,7 @@ public record TimestampSpec(
      * The default values are taken from the JAL Tools configuration and available in the record constants:
      * <ul>
      * <li><code>{@link #cntSamples()}</code> = <code>{@link #CNT_SAMPLES_DEF}</code>.
-     * <li><code>{@link #enmType()}</code> = <code>{@link #ENM_TYPE}</code>.
+     * <li><code>{@link #enmType()}</code> = <code>{@link #ENM_TMS_TYPE_DEF}</code>.
      * <li><code>{@link #durPeriod()}</code> = <code>{@link #DUR_PERIOD_DEF}</code>.
      * <li><code>{@link #insStart()}</code> = <code>{@link #INS_START_DEF}</code>.
      * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.
@@ -88,8 +90,8 @@ public record TimestampSpec(
      * 
      * @return  a new <code>TimestampFactorySpec</code> record populated with all default arguments
      */
-    public static TimestampSpec   from() {
-        return TimestampSpec.from(CNT_SAMPLES_DEF);
+    public static FrameTimestampsSpec   from() {
+        return FrameTimestampsSpec.from(CNT_SAMPLES_DEF);
     }
     
     /**
@@ -101,7 +103,7 @@ public record TimestampSpec(
      * included in the argument collection.  The default values are taken from the JAL Tools configuration and
      * available in the record constants:
      * <ul>
-     * <li><code>{@link #enmType()}</code> = <code>{@link #ENM_TYPE}</code>.
+     * <li><code>{@link #enmType()}</code> = <code>{@link #ENM_TMS_TYPE_DEF}</code>.
      * <li><code>{@link #durPeriod()}</code> = <code>{@link #DUR_PERIOD_DEF}</code>.
      * <li><code>{@link #insStart()}</code> = <code>{@link #INS_START_DEF}</code>.
      * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.
@@ -113,8 +115,8 @@ public record TimestampSpec(
      * 
      * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
-    public static TimestampSpec   from(int cntSamples) {
-        return TimestampSpec.from(cntSamples, ENM_TYPE);
+    public static FrameTimestampsSpec   from(int cntSamples) {
+        return FrameTimestampsSpec.from(cntSamples, ENM_TMS_TYPE_DEF);
     }
     
     /**
@@ -138,8 +140,8 @@ public record TimestampSpec(
      * 
      * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
-    public static TimestampSpec   from(int cntSamples, DpTimestampCase enmType ) {
-        return TimestampSpec.from(cntSamples, enmType, DUR_PERIOD_DEF);
+    public static FrameTimestampsSpec   from(int cntSamples, DpTimestampCase enmType ) {
+        return FrameTimestampsSpec.from(cntSamples, enmType, DUR_PERIOD_DEF);
     }
     
     /**
@@ -163,8 +165,8 @@ public record TimestampSpec(
      * 
      * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
-    public static TimestampSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod) {
-        return TimestampSpec.from(cntSamples, enmType, durPeriod, INS_START_DEF);
+    public static FrameTimestampsSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod) {
+        return FrameTimestampsSpec.from(cntSamples, enmType, durPeriod, INS_START_DEF);
     }
     
     /**
@@ -188,8 +190,8 @@ public record TimestampSpec(
      * 
      * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
-    public static TimestampSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod, Instant insStart) {
-        return TimestampSpec.from(cntSamples, enmType, durPeriod, insStart, DUR_DELAY_DEF);
+    public static FrameTimestampsSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod, Instant insStart) {
+        return FrameTimestampsSpec.from(cntSamples, enmType, durPeriod, insStart, DUR_DELAY_DEF);
     }
     
     /**
@@ -210,8 +212,8 @@ public record TimestampSpec(
      * 
      * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
-    public static TimestampSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod, Instant insStart, Duration durDelay) {
-        return new TimestampSpec(cntSamples, enmType, durPeriod, insStart, durDelay);
+    public static FrameTimestampsSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod, Instant insStart, Duration durDelay) {
+        return new FrameTimestampsSpec(cntSamples, enmType, durPeriod, insStart, durDelay);
     }
     
     /**
@@ -233,7 +235,7 @@ public record TimestampSpec(
      * The strings following the variable <code>--tms</code> are the field values parsed here, in order.
      * <ol>
      * <li>'samples' &rarr; <code>{@link #cntSamples()}</code> [default <code>{@link #CNT_SAMPLES_DEF}</code>],
-     * <li>'type' &rarr; <code>{@link #enmType()}</code> [default <code>{@link #ENM_TYPE}</code>],
+     * <li>'type' &rarr; <code>{@link #enmType()}</code> [default <code>{@link #ENM_TMS_TYPE_DEF}</code>],
      * <li>'period' &rarr; <code>{@link #durPeriod()}</code> [default <code>{@link #DUR_PERIOD_DEF}</code>],
      * <li>'start' &rarr; <code>{@link #insStart()}</code> [default <code>{@link #INS_START_DEF}</code>],
      * <li>'delay' &rarr; <code>{@link #durDelay()}</code> [default <code>{@link #DUR_DELAY_DEF}</code>],
@@ -262,41 +264,69 @@ public record TimestampSpec(
      * @throws TypeNotPresentException  invalid <code>{@link DpTimestampCase}</code> constant for 'type'  
      * @throws DateTimeParseException   invalid ISO-8605 date/time/duration format for 'period', 'start', or 'delay' 
      */
-    public static TimestampSpec   parse(String...args) throws NumberFormatException, TypeNotPresentException, DateTimeParseException {
+    public static FrameTimestampsSpec   parse(String...args) throws NumberFormatException, TypeNotPresentException, DateTimeParseException {
 
         // If the argument collection is empty return the default configuration
         if (args.length < 1)
-            return TimestampSpec.from();
+            return FrameTimestampsSpec.from();
 
         // Get the number of samples
         String  strCntSamples   = args[0];
         int     cntSamples = Integer.valueOf(strCntSamples);    // throws NumberFormatException
         if (args.length < 2)
-            return TimestampSpec.from(cntSamples);
+            return FrameTimestampsSpec.from(cntSamples);
         
         // Get the timestamp type within the arguments list
         String  strTmsType = args[1];
         DpTimestampCase enmType = DpTimestampCase.valueFrom(strTmsType);  // throws TypeNotPresentException
         if (args.length < 3)
-            return TimestampSpec.from(cntSamples, enmType);
+            return FrameTimestampsSpec.from(cntSamples, enmType);
         
         // Get the period within the argument list
         String      strPeriod = args[2];
         Duration    durPeriod = Duration.parse(strPeriod);  // DateTimeParseException
         if (args.length < 4)
-            return TimestampSpec.from(cntSamples, enmType, durPeriod);
+            return FrameTimestampsSpec.from(cntSamples, enmType, durPeriod);
         
         // Get the start instant from the argument list
         String      strStart = args[3];
         Instant     insStart = Instant.parse(strStart);     // throws DateTimeParseException
         if (args.length < 5)
-            return TimestampSpec.from(cntSamples, enmType, durPeriod, insStart);
+            return FrameTimestampsSpec.from(cntSamples, enmType, durPeriod, insStart);
         
         // Get the start delay from the argument collection
         String      strDelay = args[4];
         Duration    durDelay = Duration.parse(strDelay);    // throws DateTimeParseException
-        return TimestampSpec.from(cntSamples, enmType, durPeriod, insStart, durDelay);
+        return FrameTimestampsSpec.from(cntSamples, enmType, durPeriod, insStart, durDelay);
     }    
+    
+    /**
+     * <p>
+     * Retrieves the default ingestion frame timestamp specifications for the default ingestion frame factory configuration.
+     * </p>
+     * <p>
+     * The JAL Tools default configuration contains a default ingestion frame configuration.  This configuration is
+     * used by ingestion frame factories to create <code>{@link IngestionFrame}</code> instances when no explicit
+     * configuration is given.
+     * </p>
+     * The returned <code>FrameTimestampsSpec</code> record specifies the timestamps in the 
+     * default ingestion frame.  The data column specifications for the default ingestion frame can be
+     * obtained from the <code>{@link DataColumns2}</code> record.  
+     * </p>
+     * <p>
+     * The method retrieves the default timestamps specifications contained in the <code>{@link JalToolsFramesTmsConfig}</code>
+     * structure class list within the <code>{@link JalToolsConfig}</code> default configuration.  The parameters
+     * for the timestamp specification are extracted and a new <code>FrameTimestampsSpec</code> record is created.
+     * </p>
+     * @apiNote
+     * This method is essentially equivalent to the creator <code>{@link #from()}</code> which uses all default 
+     * parameters for record field values.
+     * 
+     * @return  a new <code>FrameTimestampsSpec</code> record as specified in the JAL Tools default configuration
+     */
+    public static FrameTimestampsSpec    defaultFrame() {
+        return FrameTimestampsSpec.from(CNT_SAMPLES_DEF, ENM_TMS_TYPE_DEF, DUR_PERIOD_DEF, INS_START_DEF, DUR_DELAY_DEF);
+    }
 
     
     //
@@ -312,7 +342,7 @@ public record TimestampSpec(
     //
     
     /** Default timestamp type for ingestion frames */
-    public static final DpTimestampCase     ENM_TYPE = CFG_DEF.type;
+    public static final DpTimestampCase     ENM_TMS_TYPE_DEF = CFG_DEF.type;
     
     /** Default starting time instant for ingestion frame timestamps */
     public static final Instant             INS_START_DEF = CFG_DEF.startInstant();
@@ -444,7 +474,7 @@ public record TimestampSpec(
     @Override
     public boolean equals(Object obj) {
         
-        if (obj instanceof TimestampSpec spec)  {
+        if (obj instanceof FrameTimestampsSpec spec)  {
             boolean bolResult = (this.cntSamples == spec.cntSamples)
                     && (this.enmType == spec.enmType)
                     && (this.durPeriod.equals(spec.durPeriod))

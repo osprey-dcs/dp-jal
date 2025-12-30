@@ -301,7 +301,7 @@ public record TensorFactorySpec(int[] arrShape, ScalarFactorySpec recScalarSpec)
      * @throws NumberFormatException            invalid numeric format (bad 'numIncr' or 'lngSeed') 
      * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr}</code> field for numeric value type  
      */
-    public static TensorFactorySpec    parse(String...args) throws IllegalArgumentException, ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException {
+    public static TensorFactorySpec    parse(String...args) throws /* IllegalArgumentException, */ ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException {
         
         // Check arguments
         if (args.length < 1)
@@ -336,7 +336,7 @@ public record TensorFactorySpec(int[] arrShape, ScalarFactorySpec recScalarSpec)
         // Extract the remaining arguments from the original argument set
         //  These are the configuration parameters for the scalar factory
         String[]            arrScalCfg = Arrays.copyOfRange(args, indAxes, args.length);
-        ScalarFactorySpec   recScalarSpec  = ScalarFactorySpec.parseArgs(arrScalCfg); // throws TypeNotPresentException, NumericFormatException, UnsupportedOperationException
+        ScalarFactorySpec   recScalarSpec  = ScalarFactorySpec.parse(arrScalCfg); // throws TypeNotPresentException, NumericFormatException, UnsupportedOperationException
         
         return TensorFactorySpec.from(shape, recScalarSpec);
     }

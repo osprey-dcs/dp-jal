@@ -405,7 +405,7 @@ public class TensorFactory implements IDatumFactory {
     public static final DpSupportedType     ENM_DATUM_TYPE = DpSupportedType.ARRAY;
     
     /** Complex value type of all simulated data produced by this data value factory */
-    public static final JalComplexType       ENM_CMPLX_TYPE = JalComplexType.ARRAY;
+    public static final JalComplexType       ENM_CMPLX_TYPE = JalComplexType.TENSOR;
     
 
     //

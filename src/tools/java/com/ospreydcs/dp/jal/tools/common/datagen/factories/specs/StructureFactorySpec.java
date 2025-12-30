@@ -511,7 +511,7 @@ public record StructureFactorySpec(int intDepth, int intFanout, boolean bolUniqN
         }
         
         String[]            arrScalCfg = Arrays.copyOfRange(args, indScalCfg, args.length);
-        ScalarFactorySpec   recScalarSpec = ScalarFactorySpec.parseArgs(arrScalCfg); // throws TypeNotPresentException, NumericFormatException, UnsupportedOperationException
+        ScalarFactorySpec   recScalarSpec = ScalarFactorySpec.parse(arrScalCfg); // throws TypeNotPresentException, NumericFormatException, UnsupportedOperationException
 
         return StructureFactorySpec.from(depth, fanout, bolUniqNms, recScalarSpec);
     }

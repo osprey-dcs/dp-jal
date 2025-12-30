@@ -96,7 +96,7 @@ public record ByteArrayFactorySpec(int szArrays) {
      * 
      * @return  a new <code>ByteArrayFactorySpec</code> record populated with the parsed argument values
      * 
-     * @throws NumberFormatException    the 'seed' value could not be parsed
+     * @throws NumberFormatException    the 'count' value could not be parsed
      */
     public static ByteArrayFactorySpec parse(String...args) throws NumberFormatException {
     

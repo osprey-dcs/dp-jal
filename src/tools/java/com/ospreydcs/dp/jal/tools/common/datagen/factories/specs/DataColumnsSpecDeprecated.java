@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	DataColumnsSpec.java
+ * File:	DataColumnsSpecDeprecated.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.factories.frames
- * Type: 	DataColumnsSpec
+ * Type: 	DataColumnsSpecDeprecated
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -39,9 +39,9 @@ import java.util.stream.IntStream;
 import javax.naming.ConfigurationException;
 
 import com.ospreydcs.dp.jal.ingest.IngestionFrame;
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnsFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ByteArrayFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ImageFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
@@ -59,8 +59,8 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * </p>
  * <p>
  * The record represents a specification for data columns factories exposing the 
- * <code>{@link IDataColumnsFactory}</code> interface.  
- * Implementations of the <code>{@link IDataColumnsFactory}</code> interface
+ * <code>{@link IFrameColumnsFactory}</code> interface.  
+ * Implementations of the <code>{@link IFrameColumnsFactory}</code> interface
  * are typically used in ingestion frame factories for creating ingestion frames of simulated data.
  * The specifications for the column configurations and simulated data are provided here;
  * that is, the record fields are configuration parameters for creating column factories.
@@ -69,18 +69,18 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * </p>
  * <p>
  * <h2>Data Column Factories</h2>
- * A <code>DataColumnsSpec</code> record is a specification for a particular data column factory configuration.
- * A <code>DataColumnsSpec</code> instance produces data columns factories with the <code>{@link #newFactory()}</code>
+ * A <code>DataColumnsSpecDeprecated</code> record is a specification for a particular data column factory configuration.
+ * A <code>DataColumnsSpecDeprecated</code> instance produces data columns factories with the <code>{@link #newFactory()}</code>
  * method.  This method can be invoked multiple times to create multiple factories, all of the same configuration.
  * </p>
  * <p> 
- * Note that the <code>{@link IDataColumnsFactory#build(int)}</code> operation creates multiple data columns.
+ * Note that the <code>{@link IFrameColumnsFactory#build(int)}</code> operation creates multiple data columns.
  * Each data column is the same size and contains simulated data of the same type.  Thus, instances of 
- * <code>DataColumnsSpec</code> specify a fixed number of data columns with a given data type.
+ * <code>DataColumnsSpecDeprecated</code> specify a fixed number of data columns with a given data type.
  * </p>
  * <p>
  * <h2>Heterogeneous Data</h2> 
- * Data column factories exposing the <code>{@link IDataColumnsFactory}</code> produce <em>heterogeneous data</em>,
+ * Data column factories exposing the <code>{@link IFrameColumnsFactory}</code> produce <em>heterogeneous data</em>,
  * that is, the simulated data within a column can be of any supported type.  However, the data produced by any
  * given data column factory is all of the same type, that is, all data columns are of the same type.
  * The data type of the column data is determined by the field <code>{@link #enmColType()}</code>, which must be
@@ -91,7 +91,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * Ingestion frame factories can contain multiple data column factories, see for example 
  * <code>{@link IngestionFrameFactory#addDataColumns(Collection)}</code>.  Thus, ingestion frame factories
  * can be configured to produce <code>IngestionFrame</code> instances with heterogeneous data, columns with
- * different data types.  To achieve this condition multiple <code>DataColumnsSpec</code> instances are used
+ * different data types.  To achieve this condition multiple <code>DataColumnsSpecDeprecated</code> instances are used
  * each with different values for <code>{@link #enmColType()}</code> and <code>{@link #recFacSpec}</code>.
  * </p>  
  * <p>
@@ -117,7 +117,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * </p>
  * <p>
  * <h2>Creators</h2>
- * There are creators available for <code>DataColumnsSpec</code> records configured to specific datum factory types.
+ * There are creators available for <code>DataColumnsSpecDeprecated</code> records configured to specific datum factory types.
  * Typically, there are multiple creators available for each datum factory type where the additional creators offer
  * the use of default parameter values.  Default parameters are taken from the JAL Tools default configuration.
  * </p>
@@ -127,7 +127,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * (i.e., of the form <code>{@link #recFacSpec}.parse(String...)</code>).
  * </p>
  * <p>
- * There is the special creator <code>{@link #defaultFrameColumns()}</code> which creates a new <code>DataColumnsSpec</code>
+ * There is the special creator <code>{@link #defaultFrameColumns()}</code> which creates a new <code>DataColumnsSpecDeprecated</code>
  * record list according to the JAL Tools default configuration.
  * </p>
  * 
@@ -137,12 +137,15 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  *
  * @param   <FactorySpec>   specification for datum factory producing column data 
  * 
- * @param   cntCols         number of columns in the configuration (i.e., produced by <code>{@link IDataColumnsFactory#build(int)}</code>)
+ * @param   cntCols         number of columns in the configuration (i.e., produced by <code>{@link IFrameColumnsFactory#build(int)}</code>)
  * @param   strNmPref       prefix given to all column names (full name appended with index)
  * @param   enmColType      the datum type for all column column data for all columns
  * @param   recFacSpec      configuration for the data factory producing the column data
+ * 
+ * @deprecated Replaced by DataColumnsSpecDeprecated
  */
-public record DataColumnsSpec<FactorySpec extends Record>(
+@Deprecated(since="Dec 29, 2025", forRemoval=true)
+public record DataColumnsSpecDeprecated<FactorySpec extends Record>(
         int                 cntCols,
         String              strNmPref,
         JalComplexType      enmColType,
@@ -156,7 +159,7 @@ public record DataColumnsSpec<FactorySpec extends Record>(
     
     /**
      * <p>
-     * Parses and argument string to identify and create a data columns configuration (i.e., <code>DataColumnsSpec</code> record).
+     * Parses and argument string to identify and create a data columns configuration (i.e., <code>DataColumnsSpecDeprecated</code> record).
      * </p>
      * <p>
      * <h2>Factory Specification Records</h2>
@@ -206,7 +209,7 @@ public record DataColumnsSpec<FactorySpec extends Record>(
      * The type of configuration record returned is given by the <code>DTYPE</code> value:
      * <ul>
      * <li><code>{@link JalComplexType#SCALAR}</code> - <code>{@link ScalarSpec}</code>.</li>
-     * <li><code>{@link JalComplexType#ARRAY}</code> - <code>{@link TensorFactorySpec}</code>.</li>
+     * <li><code>{@link JalComplexType#TENSOR}</code> - <code>{@link TensorFactorySpec}</code>.</li>
      * <li><code>{@link JalComplexType#STRUCTURE}</code> - <code>{@link StructureFactorySpec}</code>.</li>
      * <li><code>{@link JalComplexType#IMAGE}</code> - <code>{@link ImageFactorySpec}</code>.</li>
      * </ul>
@@ -225,19 +228,19 @@ public record DataColumnsSpec<FactorySpec extends Record>(
      * @throws MalformedParametersException an enumeration constant within the argument set was not recognized (IMAGE)
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static DataColumnsSpec parse(String...args) throws TypeNotPresentException, ConfigurationException, MalformedParametersException {
+    public static DataColumnsSpecDeprecated parse(String...args) throws TypeNotPresentException, ConfigurationException, MalformedParametersException {
         if (args.length < 1) 
-            return DataColumnsSpec.from();
+            return DataColumnsSpecDeprecated.from();
         
         // Get the column count 
         int     cntCols = Integer.valueOf(args[0]);
         if (args.length < 2)
-            return DataColumnsSpec.from(cntCols);
+            return DataColumnsSpecDeprecated.from(cntCols);
         
         // Get the column name prefix
         String  strNmPref = args[1];
         if (args.length < 3)
-            return DataColumnsSpec.from(cntCols, strNmPref); // throws UnsupportedOperationException
+            return DataColumnsSpecDeprecated.from(cntCols, strNmPref); // throws UnsupportedOperationException
 
         
         // Get the Datum Type of the column values
@@ -247,17 +250,17 @@ public record DataColumnsSpec<FactorySpec extends Record>(
         String[]    arrFacCfg = (args.length < 4) ? new String[0] : Arrays.copyOfRange(args, 3, args.length);
         
         Record      recFacSpec = switch (enmColType) {
-        case SCALAR -> ScalarFactorySpec.parseArgs(arrFacCfg);    // throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException
+        case SCALAR -> ScalarFactorySpec.parse(arrFacCfg);    // throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException
         case BYTES -> ByteArrayFactorySpec.parse(arrFacCfg);   // throws NumberFormatException
         case IMAGE -> ImageFactorySpec.parse(arrFacCfg);       // throws NumberFormatException, TypeNotPresentException
-        case ARRAY -> TensorFactorySpec.parse(arrFacCfg);      // throws IllegalArgumentException, ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException 
+        case TENSOR -> TensorFactorySpec.parse(arrFacCfg);      // throws IllegalArgumentException, ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException 
         case STRUCTURE -> StructureFactorySpec.parse(arrFacCfg);  // throws ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException
         default ->
             throw new NoSuchElementException(JavaRuntime.getQualifiedMethodNameSimple() + " - Data type not supported: " + enmColType);
         };
         
         // Create and return the data columns configuration
-        return new DataColumnsSpec(cntCols, strNmPref, enmColType, recFacSpec);
+        return new DataColumnsSpecDeprecated(cntCols, strNmPref, enmColType, recFacSpec);
     }
  
     /**
@@ -267,7 +270,7 @@ public record DataColumnsSpec<FactorySpec extends Record>(
      * <p>
      * Retrieves the default column configurations contained in the <code>{@link JalToolsColumnsConfig}</code>
      * structure class list within the <code>{@link JalToolsConfig}</code> default configuration.  The parameters
-     * for each column are parsed and a new <code>DataColumnsSpec</code> record is created for each column.
+     * for each column are parsed and a new <code>DataColumnsSpecDeprecated</code> record is created for each column.
      * The column configurations are returned in the order in which they appear in the default configuration.
      * </p>
      * 
@@ -282,9 +285,9 @@ public record DataColumnsSpec<FactorySpec extends Record>(
      * @throws NoSuchElementException   the column type is unrecognized (unsupported) 
      */
     @SuppressWarnings("rawtypes")
-    public static List<DataColumnsSpec> defaultFrameColumns() throws NumberFormatException, IllegalArgumentException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
+    public static List<DataColumnsSpecDeprecated> defaultFrameColumns() throws NumberFormatException, IllegalArgumentException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
         List<JalToolsColumnsConfig> lstColCfgDef =  CFG_FRM_DEF.columns;
-        List<DataColumnsSpec>       lstColSpec = new ArrayList<>(lstColCfgDef.size());
+        List<DataColumnsSpecDeprecated>       lstColSpec = new ArrayList<>(lstColCfgDef.size());
         
         for (JalToolsColumnsConfig cfg : lstColCfgDef) {
             int             cntCols = cfg.count;
@@ -293,17 +296,17 @@ public record DataColumnsSpec<FactorySpec extends Record>(
             String[]        arrArgsFactory = cfg.factory;
             
             Record  recFacSpec = switch (enmType) {
-            case SCALAR -> ScalarFactorySpec.parseArgs(arrArgsFactory);   // throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException
+            case SCALAR -> ScalarFactorySpec.parse(arrArgsFactory);   // throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException
             case TIMESTAMP -> TimestampFactorySpec.parse(arrArgsFactory);  // throws IllegalArgumentException, NumberFormatException, DateTimeParseException
             case BYTES -> ByteArrayFactorySpec.parse(arrArgsFactory);      // throws NumberFormatException
             case IMAGE -> ImageFactorySpec.parse(arrArgsFactory);          // throws NumberFormatException, TypeNotPresentException
-            case ARRAY -> TensorFactorySpec.parse(arrArgsFactory);         // throws IllegalArgumentException, NumberFormatException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException
+            case TENSOR -> TensorFactorySpec.parse(arrArgsFactory);         // throws IllegalArgumentException, NumberFormatException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException
             case STRUCTURE -> StructureFactorySpec.parse(arrArgsFactory);     // throws ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException
             default -> throw new NoSuchElementException("Unrecognized (unsupported) column type value: " + enmType);
             };
             
             @SuppressWarnings("unchecked")
-            DataColumnsSpec recColSpec = new DataColumnsSpec(cntCols, strNmPref, enmType, recFacSpec);
+            DataColumnsSpecDeprecated recColSpec = new DataColumnsSpecDeprecated(cntCols, strNmPref, enmType, recFacSpec);
             
             lstColSpec.add(recColSpec);
         }
@@ -312,8 +315,8 @@ public record DataColumnsSpec<FactorySpec extends Record>(
     }
     
     @SuppressWarnings("rawtypes")
-    public static DataColumnsSpec   from() throws NumberFormatException, UnsupportedOperationException, TypeNotPresentException, ConfigurationException, NoSuchElementException {
-        return DataColumnsSpec.from(INT_COL_CNT_DEF);
+    public static DataColumnsSpecDeprecated   from() throws NumberFormatException, UnsupportedOperationException, TypeNotPresentException, ConfigurationException, NoSuchElementException {
+        return DataColumnsSpecDeprecated.from(INT_COL_CNT_DEF);
     }
     
     /**
@@ -328,49 +331,49 @@ public record DataColumnsSpec<FactorySpec extends Record>(
      * @throws NoSuchElementException   the value of <code>{@link #ENM_COL_TYPE_DEF}</code> was unrecognized
      */
     @SuppressWarnings("rawtypes")
-    public static DataColumnsSpec   from(int cntCols) throws UnsupportedOperationException, NumberFormatException, TypeNotPresentException, ConfigurationException, NoSuchElementException {
-        Record  recFac = DataColumnsSpec.parseDefaultFactorySpec();
+    public static DataColumnsSpecDeprecated   from(int cntCols) throws UnsupportedOperationException, NumberFormatException, TypeNotPresentException, ConfigurationException, NoSuchElementException {
+        Record  recFac = DataColumnsSpecDeprecated.extractDefaultFactorySpec();
         
-        return DataColumnsSpec.from(cntCols, recFac);
+        return DataColumnsSpecDeprecated.from(cntCols, recFac);
     }
     
     @SuppressWarnings("rawtypes")
-    public static DataColumnsSpec   from(Record recFacSpec) throws UnsupportedOperationException {
-        return DataColumnsSpec.from(INT_COL_CNT_DEF, recFacSpec);
+    public static DataColumnsSpecDeprecated   from(Record recFacSpec) throws UnsupportedOperationException {
+        return DataColumnsSpecDeprecated.from(INT_COL_CNT_DEF, recFacSpec);
     }
     
     @SuppressWarnings("rawtypes")
-    public static DataColumnsSpec   from(int cntCols, Record recFacSpec) throws UnsupportedOperationException {
-        return DataColumnsSpec.from(cntCols, STR_NM_PREF_DEF, recFacSpec);
+    public static DataColumnsSpecDeprecated   from(int cntCols, Record recFacSpec) throws UnsupportedOperationException {
+        return DataColumnsSpecDeprecated.from(cntCols, STR_NM_PREF_DEF, recFacSpec);
     }
     
     @SuppressWarnings("rawtypes")
-    public static DataColumnsSpec   from(int cntCols, String strNmPref) throws UnsupportedOperationException, NumberFormatException, TypeNotPresentException, ConfigurationException, NoSuchElementException {
-        Record  recFac = DataColumnsSpec.parseDefaultFactorySpec();
+    public static DataColumnsSpecDeprecated   from(int cntCols, String strNmPref) throws UnsupportedOperationException, NumberFormatException, TypeNotPresentException, ConfigurationException, NoSuchElementException {
+        Record  recFac = DataColumnsSpecDeprecated.extractDefaultFactorySpec();
         
-        return DataColumnsSpec.from(cntCols, strNmPref, recFac);
+        return DataColumnsSpecDeprecated.from(cntCols, strNmPref, recFac);
     }
     
     @SuppressWarnings("rawtypes")
-    public static DataColumnsSpec   from(int cntCols, String strNmPref, Record recFacSpec) throws UnsupportedOperationException {
+    public static DataColumnsSpecDeprecated   from(int cntCols, String strNmPref, Record recFacSpec) throws UnsupportedOperationException {
 
         if (recFacSpec instanceof ScalarFactorySpec spec) 
-            return new DataColumnsSpec<ScalarFactorySpec>(cntCols, strNmPref, JalComplexType.SCALAR, spec);
+            return new DataColumnsSpecDeprecated<ScalarFactorySpec>(cntCols, strNmPref, JalComplexType.SCALAR, spec);
         
         else if (recFacSpec instanceof TimestampFactorySpec spec)
-            return new DataColumnsSpec<TimestampFactorySpec>(cntCols, strNmPref, JalComplexType.TIMESTAMP, spec);
+            return new DataColumnsSpecDeprecated<TimestampFactorySpec>(cntCols, strNmPref, JalComplexType.TIMESTAMP, spec);
         
         else if (recFacSpec instanceof ByteArrayFactorySpec spec)
-            return new DataColumnsSpec<ByteArrayFactorySpec>(cntCols, strNmPref, JalComplexType.BYTES, spec);
+            return new DataColumnsSpecDeprecated<ByteArrayFactorySpec>(cntCols, strNmPref, JalComplexType.BYTES, spec);
         
         else if (recFacSpec instanceof ImageFactorySpec spec)
-            return new DataColumnsSpec<ImageFactorySpec>(cntCols, strNmPref, JalComplexType.IMAGE, spec);
+            return new DataColumnsSpecDeprecated<ImageFactorySpec>(cntCols, strNmPref, JalComplexType.IMAGE, spec);
         
         else if (recFacSpec instanceof TensorFactorySpec spec)
-            return new DataColumnsSpec<TensorFactorySpec>(cntCols, strNmPref, JalComplexType.ARRAY, spec);
+            return new DataColumnsSpecDeprecated<TensorFactorySpec>(cntCols, strNmPref, JalComplexType.TENSOR, spec);
         
         else if (recFacSpec instanceof StructureFactorySpec spec)
-            return new DataColumnsSpec<StructureFactorySpec>(cntCols, strNmPref, JalComplexType.STRUCTURE, spec);
+            return new DataColumnsSpecDeprecated<StructureFactorySpec>(cntCols, strNmPref, JalComplexType.STRUCTURE, spec);
         
         else
             throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() 
@@ -378,133 +381,133 @@ public record DataColumnsSpec<FactorySpec extends Record>(
                     + recFacSpec.getClass().getName());
     }
     
-    public static <FactorySpec extends Record>    DataColumnsSpec<FactorySpec>  from(int cntCols, String strPrefix, JalComplexType enmColType, FactorySpec recFacSpec) {
-        return new DataColumnsSpec<FactorySpec>(cntCols, strPrefix, enmColType, recFacSpec);
+    public static <FactorySpec extends Record>    DataColumnsSpecDeprecated<FactorySpec>  from(int cntCols, String strPrefix, JalComplexType enmColType, FactorySpec recFacSpec) {
+        return new DataColumnsSpecDeprecated<FactorySpec>(cntCols, strPrefix, enmColType, recFacSpec);
     }
     
     
-//    public static DataColumnsSpec<ScalarFactorySpec> newScalarCols(int cntCols, String strNmPref, ScalarFactorySpec recScalarSpec) {
-//        DataColumnsSpec<ScalarFactorySpec>  recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.SCALAR, recScalarSpec);
+//    public static DataColumnsSpecDeprecated<ScalarFactorySpec> newScalarCols(int cntCols, String strNmPref, ScalarFactorySpec recScalarSpec) {
+//        DataColumnsSpecDeprecated<ScalarFactorySpec>  recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.SCALAR, recScalarSpec);
 //        
 //        return recColSpec;
 //    }
 //    
 //    
-//    public static DataColumnsSpec<TimestampFactorySpec> newTimestamps(int cntCols, TimestampFactorySpec specTms) {
-//        return DataColumnsSpec.newTimestamps(cntCols, STR_NM_PREF_DEF, specTms);
+//    public static DataColumnsSpecDeprecated<TimestampFactorySpec> newTimestamps(int cntCols, TimestampFactorySpec specTms) {
+//        return DataColumnsSpecDeprecated.newTimestamps(cntCols, STR_NM_PREF_DEF, specTms);
 //    }
 //    
-//    public static DataColumnsSpec<TimestampFactorySpec> newTimestamps(int cntCols, String strNmPref, TimestampFactorySpec specTms) {
-//        return new DataColumnsSpec<TimestampFactorySpec>(cntCols, strNmPref, JalComplexType.TIMESTAMP, specTms);
+//    public static DataColumnsSpecDeprecated<TimestampFactorySpec> newTimestamps(int cntCols, String strNmPref, TimestampFactorySpec specTms) {
+//        return new DataColumnsSpecDeprecated<TimestampFactorySpec>(cntCols, strNmPref, JalComplexType.TIMESTAMP, specTms);
 //    }
 //    
 //    
-//    public static DataColumnsSpec<TimestampFactorySpec>    newTimestampCols(int cntCols, String strNmPref, boolean bolRand) {
+//    public static DataColumnsSpecDeprecated<TimestampFactorySpec>    newTimestampCols(int cntCols, String strNmPref, boolean bolRand) {
 //        TimestampFactorySpec                   recTmsSpec = TimestampFactorySpec.from(bolRand);
-//        DataColumnsSpec<TimestampFactorySpec>  recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.TIMESTAMP, recTmsSpec);
+//        DataColumnsSpecDeprecated<TimestampFactorySpec>  recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.TIMESTAMP, recTmsSpec);
 //        
 //        return recColSpec;
 //    }
 //    
-//    public static DataColumnsSpec<TimestampFactorySpec>    newTimestampCols(int cntCols, String strNmPref, boolean bolRand, long lngSeed) {
+//    public static DataColumnsSpecDeprecated<TimestampFactorySpec>    newTimestampCols(int cntCols, String strNmPref, boolean bolRand, long lngSeed) {
 //        TimestampFactorySpec                   recTmsSpec = TimestampFactorySpec.from(bolRand, lngSeed);
-//        DataColumnsSpec<TimestampFactorySpec>  recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.TIMESTAMP, recTmsSpec);
+//        DataColumnsSpecDeprecated<TimestampFactorySpec>  recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.TIMESTAMP, recTmsSpec);
 //        
 //        return recColSpec;
 //    }
 //    
-//    public static DataColumnsSpec<TimestampFactorySpec>    newTimestampCols(int cntCols, String strNmPref, Duration durPeriod, Instant insStart) {
+//    public static DataColumnsSpecDeprecated<TimestampFactorySpec>    newTimestampCols(int cntCols, String strNmPref, Duration durPeriod, Instant insStart) {
 //        TimestampFactorySpec                   recTmsSpec = TimestampFactorySpec.from(durPeriod, insStart);
-//        DataColumnsSpec<TimestampFactorySpec>  recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.TIMESTAMP, recTmsSpec);
+//        DataColumnsSpecDeprecated<TimestampFactorySpec>  recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.TIMESTAMP, recTmsSpec);
 //        
 //        return recColSpec;
 //    }
 //    
 //    
-//    public static DataColumnsSpec<ByteArrayFactorySpec>    newByteArrayCols(int cntCols, String strNmPref) {
+//    public static DataColumnsSpecDeprecated<ByteArrayFactorySpec>    newByteArrayCols(int cntCols, String strNmPref) {
 //        ByteArrayFactorySpec               recBytSpec = ByteArrayFactorySpec.from();
-//        DataColumnsSpec<ByteArrayFactorySpec>  recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.BYTES, recBytSpec);
+//        DataColumnsSpecDeprecated<ByteArrayFactorySpec>  recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.BYTES, recBytSpec);
 //        
 //        return recColSpec;
 //    }
 //    
-//    public static DataColumnsSpec<ByteArrayFactorySpec>    newByteArrayCols(String strNmPref, int cntCols, int cntBytes) {
+//    public static DataColumnsSpecDeprecated<ByteArrayFactorySpec>    newByteArrayCols(String strNmPref, int cntCols, int cntBytes) {
 //        ByteArrayFactorySpec                   recArrSpec = ByteArrayFactorySpec.from(cntBytes);
-//        DataColumnsSpec<ByteArrayFactorySpec>  recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.BYTES, recArrSpec);
+//        DataColumnsSpecDeprecated<ByteArrayFactorySpec>  recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.BYTES, recArrSpec);
 //        
 //        return recColSpec;
 //    }
 //    
 //    
-//    public static DataColumnsSpec<ImageFactorySpec>    newImageCols(int cntCols, String strNmPref) {
+//    public static DataColumnsSpecDeprecated<ImageFactorySpec>    newImageCols(int cntCols, String strNmPref) {
 //        ImageFactorySpec                   recImgSpec = ImageFactorySpec.from();
-//        DataColumnsSpec<ImageFactorySpec>  recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.IMAGE, recImgSpec);
+//        DataColumnsSpecDeprecated<ImageFactorySpec>  recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.IMAGE, recImgSpec);
 //        
 //        return recColSpec;
 //    }
 //    
-//    public static DataColumnsSpec<ImageFactorySpec>    newImageCols(int cntCols, String strNmPref, int size) {
+//    public static DataColumnsSpecDeprecated<ImageFactorySpec>    newImageCols(int cntCols, String strNmPref, int size) {
 //        ImageFactorySpec                   recImgSpec = ImageFactorySpec.from(size);
-//        DataColumnsSpec<ImageFactorySpec>  recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.IMAGE, recImgSpec);
+//        DataColumnsSpecDeprecated<ImageFactorySpec>  recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.IMAGE, recImgSpec);
 //        
 //        return recColSpec;
 //    }
 //    
-//    public static DataColumnsSpec<ImageFactorySpec>    newImageCols(String strNmPref, int cntCols, int size, BufferedImage.Format enmFmt) {
+//    public static DataColumnsSpecDeprecated<ImageFactorySpec>    newImageCols(String strNmPref, int cntCols, int size, BufferedImage.Format enmFmt) {
 //        ImageFactorySpec                   recImgSpec = ImageFactorySpec.from(size, enmFmt);
-//        DataColumnsSpec<ImageFactorySpec>  recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.IMAGE, recImgSpec);
+//        DataColumnsSpecDeprecated<ImageFactorySpec>  recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.IMAGE, recImgSpec);
 //        
 //        return recColSpec;
 //    }
 //    
-//    public static DataColumnsSpec<ImageFactorySpec>    newImageCols(int cntCols, String strNmPref, int size, BufferedImage.Format enmFmt, String strImgPref) {
+//    public static DataColumnsSpecDeprecated<ImageFactorySpec>    newImageCols(int cntCols, String strNmPref, int size, BufferedImage.Format enmFmt, String strImgPref) {
 //        ImageFactorySpec                   recImgSpec = ImageFactorySpec.from(size, enmFmt, strImgPref);
-//        DataColumnsSpec<ImageFactorySpec>  recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.IMAGE, recImgSpec);
+//        DataColumnsSpecDeprecated<ImageFactorySpec>  recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.IMAGE, recImgSpec);
 //        
 //        return recColSpec;
 //    }
 //    
 //    
-//    public static DataColumnsSpec<TensorFactorySpec>   newTensorCols(String strNmPref, int cntCols, int[] shape) {
+//    public static DataColumnsSpecDeprecated<TensorFactorySpec>   newTensorCols(String strNmPref, int cntCols, int[] shape) {
 //        TensorFactorySpec                  recTenSpec = TensorFactorySpec.from(shape);
-//        DataColumnsSpec<TensorFactorySpec> recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.ARRAY, recTenSpec);
+//        DataColumnsSpecDeprecated<TensorFactorySpec> recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.TENSOR, recTenSpec);
 //        
 //        return recColSpec;
 //    }
 //    
-//    public static DataColumnsSpec<TensorFactorySpec>   newTensorCols(String strNmPref, int cntCols, int[] shape, ScalarFactorySpec recScalarSpec) {
+//    public static DataColumnsSpecDeprecated<TensorFactorySpec>   newTensorCols(String strNmPref, int cntCols, int[] shape, ScalarFactorySpec recScalarSpec) {
 //        TensorFactorySpec                  recTenSpec = TensorFactorySpec.from(shape, recScalarSpec);
-//        DataColumnsSpec<TensorFactorySpec> recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.ARRAY, recTenSpec);
+//        DataColumnsSpecDeprecated<TensorFactorySpec> recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.TENSOR, recTenSpec);
 //        
 //        return recColSpec;
 //    }
 //    
 //    
-//    public static DataColumnsSpec<StructureFactorySpec>  newStructCols(int cntCols, String strNmPref, boolean bolUniqFldNms, StructureFactoryLib enmLib) {
+//    public static DataColumnsSpecDeprecated<StructureFactorySpec>  newStructCols(int cntCols, String strNmPref, boolean bolUniqFldNms, StructureFactoryLib enmLib) {
 //        ScalarFactorySpec                       specScal = enmLib.getScalarFactorySpec();
 //        StructureFactorySpec                    specStruct = StructureFactorySpec.from(cntCols, cntCols, bolUniqFldNms, specScal);
-//        DataColumnsSpec<StructureFactorySpec>   specCols = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.STRUCTURE, specStruct);
+//        DataColumnsSpecDeprecated<StructureFactorySpec>   specCols = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.STRUCTURE, specStruct);
 //        
 //        return specCols;
 //    }
 //    
-//    public static DataColumnsSpec<StructureFactorySpec>   newStructCols(int cntCols, String strNmPref, int depth, int fanout, boolean bolUniqNms) {
+//    public static DataColumnsSpecDeprecated<StructureFactorySpec>   newStructCols(int cntCols, String strNmPref, int depth, int fanout, boolean bolUniqNms) {
 //        StructureFactorySpec                  recStrSpec = StructureFactorySpec.from(depth, fanout, bolUniqNms);
-//        DataColumnsSpec<StructureFactorySpec> recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.STRUCTURE, recStrSpec);
+//        DataColumnsSpecDeprecated<StructureFactorySpec> recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.STRUCTURE, recStrSpec);
 //        
 //        return recColSpec;
 //    }
 //    
-//    public static DataColumnsSpec<StructureFactorySpec>   newStructCols(int cntCols, String strNmPref, int intDepth, int intFanout, ScalarFactorySpec recScalarSpec) {
+//    public static DataColumnsSpecDeprecated<StructureFactorySpec>   newStructCols(int cntCols, String strNmPref, int intDepth, int intFanout, ScalarFactorySpec recScalarSpec) {
 //        StructureFactorySpec                  recStrSpec = StructureFactorySpec.from(intDepth, intFanout, recScalarSpec);
-//        DataColumnsSpec<StructureFactorySpec> recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.STRUCTURE, recStrSpec);
+//        DataColumnsSpecDeprecated<StructureFactorySpec> recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.STRUCTURE, recStrSpec);
 //        
 //        return recColSpec;
 //    }
 //    
-//    public static DataColumnsSpec<StructureFactorySpec>   newStructCols(int cntCols, String strNmPref, int intDepth, int intFanout, boolean bolUniqNms, ScalarFactorySpec recScalarSpec) {
+//    public static DataColumnsSpecDeprecated<StructureFactorySpec>   newStructCols(int cntCols, String strNmPref, int intDepth, int intFanout, boolean bolUniqNms, ScalarFactorySpec recScalarSpec) {
 //        StructureFactorySpec                  recStrSpec = StructureFactorySpec.from(intDepth, intFanout, bolUniqNms, recScalarSpec);
-//        DataColumnsSpec<StructureFactorySpec> recColSpec = new DataColumnsSpec<>(cntCols, strNmPref, JalComplexType.STRUCTURE, recStrSpec);
+//        DataColumnsSpecDeprecated<StructureFactorySpec> recColSpec = new DataColumnsSpecDeprecated<>(cntCols, strNmPref, JalComplexType.STRUCTURE, recStrSpec);
 //        
 //        return recColSpec;
 //    }
@@ -519,7 +522,7 @@ public record DataColumnsSpec<FactorySpec extends Record>(
      * Checks if the the <code>{@link #enmColType}</code> field is consistent with the <code>{@link #recFacSpec}</code> field.
      * </p>
      * 
-     * @return  <code>true</code> if this is a correctly populated <code>DataColumnsSpec</code> record,
+     * @return  <code>true</code> if this is a correctly populated <code>DataColumnsSpecDeprecated</code> record,
      *          <code>false</code> otherwise
      */
     public boolean  isValid() {
@@ -529,13 +532,13 @@ public record DataColumnsSpec<FactorySpec extends Record>(
         case TIMESTAMP -> (this.recFacSpec instanceof TimestampFactorySpec);
         case BYTES -> (this.recFacSpec instanceof ByteArrayFactorySpec);
         case IMAGE -> (this.recFacSpec instanceof ImageFactorySpec);
-        case ARRAY -> (this.recFacSpec instanceof TensorFactorySpec);
+        case TENSOR -> (this.recFacSpec instanceof TensorFactorySpec);
         case STRUCTURE -> (this.recFacSpec instanceof StructureFactorySpec);
         default -> false;
         };
     }
     
-    public IDataColumnsFactory<Object>  newFactory() throws ConfigurationException, UnsupportedOperationException {
+    public IFrameColumnsFactory<Object>  newFactory() throws ConfigurationException, UnsupportedOperationException {
         
         // Check record configuration
         boolean bolValid = this.isValid();
@@ -553,49 +556,49 @@ public record DataColumnsSpec<FactorySpec extends Record>(
                                 .collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
 
         // Create the data column factory
-        DataColumnsFactory  facCols;
+        FrameColumnsFactory  facCols;
         
         switch (this.enmColType) {
         case SCALAR:
             ScalarFactorySpec   valSpec = (ScalarFactorySpec) this.recFacSpec;
             ScalarFactory       facVals = valSpec.newFactory();
             
-            facCols = DataColumnsFactory.from(setColNms, facVals);
+            facCols = FrameColumnsFactory.from(setColNms, facVals);
             break;
             
         case TIMESTAMP:
             TimestampFactorySpec tmsSpec = (TimestampFactorySpec) this.recFacSpec;
             TimestampFactory     facTms = tmsSpec.newFactory();
             
-            facCols = DataColumnsFactory.from(setColNms, facTms);
+            facCols = FrameColumnsFactory.from(setColNms, facTms);
             break;
             
         case BYTES:
             ByteArrayFactorySpec arrSpec = (ByteArrayFactorySpec) this.recFacSpec;
             ByteArrayFactory    facBytes = arrSpec.newFactory();
 
-            facCols = DataColumnsFactory.from(setColNms, facBytes);
+            facCols = FrameColumnsFactory.from(setColNms, facBytes);
             break;
             
         case IMAGE:
             ImageFactorySpec    imgSpec = (ImageFactorySpec) this.recFacSpec;
             ImageFactory        facImgs = imgSpec.newFactory();
             
-            facCols = DataColumnsFactory.from(setColNms, facImgs);
+            facCols = FrameColumnsFactory.from(setColNms, facImgs);
             break;
             
-        case ARRAY:
+        case TENSOR:
             TensorFactorySpec   tenSpec = (TensorFactorySpec) this.recFacSpec;
             TensorFactory       facTens = tenSpec.newFactory();
             
-            facCols = DataColumnsFactory.from(setColNms, facTens);
+            facCols = FrameColumnsFactory.from(setColNms, facTens);
             break;
             
         case STRUCTURE:
             StructureFactorySpec    stcSpec = (StructureFactorySpec) this.recFacSpec;
             StructureFactory        facStruc = stcSpec.newFactory();
             
-            facCols = DataColumnsFactory.from(setColNms, facStruc);
+            facCols = FrameColumnsFactory.from(setColNms, facStruc);
             break;
             
         default:
@@ -617,7 +620,7 @@ public record DataColumnsSpec<FactorySpec extends Record>(
      * Provides an equivalence evaluation of the argument with this record.
      * </p>
      * <p>
-     * The argument is first check to be of type <code>DataColumnsSpec</code>.
+     * The argument is first check to be of type <code>DataColumnsSpecDeprecated</code>.
      * If so, the field <b>values</b> of the argument then checked for <em>equivalence</em>,
      * that is, they have the same value but not necessary are the same object.
      * </p>
@@ -627,7 +630,7 @@ public record DataColumnsSpec<FactorySpec extends Record>(
     @Override
     public boolean equals(Object obj) {
         
-        if (obj instanceof DataColumnsSpec spec) {
+        if (obj instanceof DataColumnsSpecDeprecated spec) {
             boolean bolResult = (this.cntCols == spec.cntCols)
                     && (this.strNmPref.equals(spec.strNmPref))
                     && (this.enmColType == spec.enmColType)
@@ -690,6 +693,7 @@ public record DataColumnsSpec<FactorySpec extends Record>(
      * <p>
      * Creates the default datum factory specification as defined in the JAL Tools default configuration.
      * </p>
+     * <p>
      * The default datum factory is created by parsing the <code>{@link #ARR_FAC_SPEC_DEF}</code> configuration 
      * against the supported cases of <code>{@link #ENM_COL_TYPE_DEF}</code>.
      * </p>
@@ -702,11 +706,11 @@ public record DataColumnsSpec<FactorySpec extends Record>(
      * @throws UnsupportedOperationException unable to create 'numIncr' parameter in scalar factory
      * @throws NoSuchElementException   the value of <code>{@link #ENM_COL_TYPE_DEF}</code> was unrecognized
      */
-    private static Record   parseDefaultFactorySpec() throws TypeNotPresentException, NumberFormatException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
+    private static Record   extractDefaultFactorySpec() throws TypeNotPresentException, NumberFormatException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
 
         Record recFactory = switch (ENM_COL_TYPE_DEF) {
-        case SCALAR -> ScalarFactorySpec.parseArgs(ARR_FAC_SPEC_DEF);
-        case ARRAY -> TensorFactorySpec.parse(ARR_FAC_SPEC_DEF);
+        case SCALAR -> ScalarFactorySpec.parse(ARR_FAC_SPEC_DEF);
+        case TENSOR -> TensorFactorySpec.parse(ARR_FAC_SPEC_DEF);
         case BYTES -> ByteArrayFactorySpec.parse(ARR_FAC_SPEC_DEF);
         case IMAGE -> ImageFactorySpec.parse(ARR_FAC_SPEC_DEF);
         case STRUCTURE -> StructureFactorySpec.parse(ARR_FAC_SPEC_DEF);

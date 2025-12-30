@@ -198,13 +198,13 @@ public class ScalarFactorySpecTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseArgs(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parse(java.lang.String[])}.
      */
     @Test
     public final void testParseArgs1() {
         
         try {
-            ScalarFactorySpec recCfg = ScalarFactorySpec.parseArgs(STR_CMD_ARGS_1);
+            ScalarFactorySpec recCfg = ScalarFactorySpec.parse(STR_CMD_ARGS_1);
         
             Assert.assertEquals(REC_ARGS_1, recCfg);
             
@@ -214,13 +214,13 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseArgs(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parse(java.lang.String[])}.
      */
     @Test
     public final void testParseArgs2() {
         
         try {
-            ScalarFactorySpec recCfg = ScalarFactorySpec.parseArgs(STR_CMD_ARGS_2);
+            ScalarFactorySpec recCfg = ScalarFactorySpec.parse(STR_CMD_ARGS_2);
         
             Assert.assertEquals(REC_ARGS_2, recCfg);
             
@@ -230,13 +230,13 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseArgs(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parse(java.lang.String[])}.
      */
     @Test
     public final void testParseArgs3() {
         
         try {
-            ScalarFactorySpec recCfg = ScalarFactorySpec.parseArgs(STR_CMD_ARGS_3);
+            ScalarFactorySpec recCfg = ScalarFactorySpec.parse(STR_CMD_ARGS_3);
         
             Assert.assertEquals(REC_ARGS_3, recCfg);
             
@@ -246,13 +246,13 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseArgs(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parse(java.lang.String[])}.
      */
     @Test
     public final void testParseArgs4() {
         
         try {
-            ScalarFactorySpec recCfg = ScalarFactorySpec.parseArgs(STR_CMD_ARGS_4);
+            ScalarFactorySpec recCfg = ScalarFactorySpec.parse(STR_CMD_ARGS_4);
         
             Assert.assertEquals(REC_ARGS_4, recCfg);
             
@@ -262,13 +262,13 @@ public class ScalarFactorySpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parseArgs(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec#parse(java.lang.String[])}.
      */
     @Test
     public final void testParseArgs5() {
         
         try {
-            ScalarFactorySpec recCfg = ScalarFactorySpec.parseArgs(STR_CMD_ARGS_5);
+            ScalarFactorySpec recCfg = ScalarFactorySpec.parse(STR_CMD_ARGS_5);
         
             Assert.assertEquals(REC_ARGS_5, recCfg);
             

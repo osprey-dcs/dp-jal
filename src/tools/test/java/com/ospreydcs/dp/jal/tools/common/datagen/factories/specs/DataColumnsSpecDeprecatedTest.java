@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	DataColumnsSpecTest.java
+ * File:	DataColumnsSpecDeprecatedTest.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.factories.specs
- * Type: 	DataColumnsSpecTest
+ * Type: 	DataColumnsSpecDeprecatedTest
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -25,9 +25,6 @@
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 
-import static org.junit.Assert.*;
-
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -43,7 +40,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -52,14 +49,16 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
- * JUnit test cases for record <code>DataColumnsSpec</code>.
+ * JUnit test cases for record <code>DataColumnsSpecDeprecated</code>.
  * </p>
  *
  * @author Christopher K. Allen
  * @since Dec 18, 2025
- *
+ * 
+ * @deprecated DataColumnsSpec was replaced by a newer version
  */
-public class DataColumnsSpecTest {
+@Deprecated(since="Dec 29, 2025", forRemoval=true)
+public class DataColumnsSpecDeprecatedTest {
 
     
     //
@@ -106,11 +105,11 @@ public class DataColumnsSpecTest {
     
     /** The data columns specification for parsing string 0 */
     @SuppressWarnings("unchecked")
-    public static final DataColumnsSpec<StructureFactorySpec>  SPEC_COLS_PARSE_0 = DataColumnsSpec.from(10, "Parse0_PV:", SPEC_DATUM_FAC_PARSE_0);
+    public static final DataColumnsSpecDeprecated<StructureFactorySpec>  SPEC_COLS_PARSE_0 = DataColumnsSpecDeprecated.from(10, "Parse0_PV:", SPEC_DATUM_FAC_PARSE_0);
     
     /** The data columns specification for parsing string 1 */
     @SuppressWarnings("unchecked")
-    public static final DataColumnsSpec<ScalarFactorySpec>  SPEC_COLS_PARSE_1 = DataColumnsSpec.from(100, "Parse1_PV:", SPEC_DATUM_FAC_PARSE_1);
+    public static final DataColumnsSpecDeprecated<ScalarFactorySpec>  SPEC_COLS_PARSE_1 = DataColumnsSpecDeprecated.from(100, "Parse1_PV:", SPEC_DATUM_FAC_PARSE_1);
     
     
     //
@@ -151,17 +150,17 @@ public class DataColumnsSpecTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpec#parse(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpecDeprecated#parse(java.lang.String[])}.
      */
     @Test
     public final void testParse0() {
         
         // Test Parameters
         String[]        arrArgs = ARR_ARGS_PARSE_0;
-        DataColumnsSpec specExpect = SPEC_COLS_PARSE_0;
+        DataColumnsSpecDeprecated specExpect = SPEC_COLS_PARSE_0;
         
         try {
-            DataColumnsSpec specCols = DataColumnsSpec.parse(arrArgs);
+            DataColumnsSpecDeprecated specCols = DataColumnsSpecDeprecated.parse(arrArgs);
             
             Assert.assertEquals(specExpect, specCols);
             
@@ -175,17 +174,17 @@ public class DataColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpec#parse(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpecDeprecated#parse(java.lang.String[])}.
      */
     @Test
     public final void testParse1() {
         
         // Test Parameters
         String[]        arrArgs = ARR_ARGS_PARSE_1;
-        DataColumnsSpec specExpect = SPEC_COLS_PARSE_1;
+        DataColumnsSpecDeprecated specExpect = SPEC_COLS_PARSE_1;
         
         try {
-            DataColumnsSpec specCols = DataColumnsSpec.parse(arrArgs);
+            DataColumnsSpecDeprecated specCols = DataColumnsSpecDeprecated.parse(arrArgs);
             
             Assert.assertEquals(specExpect, specCols);
             
@@ -199,19 +198,19 @@ public class DataColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpec#defaultFrameColumns()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpecDeprecated#defaultFrameColumns()}.
      */
     @Test
     public final void testDefaultFrameColumns() {
         
         try {
             @SuppressWarnings("rawtypes")
-            List<DataColumnsSpec>    lstColSpecs = DataColumnsSpec.defaultFrameColumns();
+            List<DataColumnsSpecDeprecated>    lstColSpecs = DataColumnsSpecDeprecated.defaultFrameColumns();
         
             // Print out ingestion frame default columns specifications 
             System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
             System.out.println("Default Ingestion Frame Data Columns Specifications");
-            for (@SuppressWarnings("rawtypes") DataColumnsSpec spec : lstColSpecs) {
+            for (@SuppressWarnings("rawtypes") DataColumnsSpecDeprecated spec : lstColSpecs) {
                 System.out.println(spec);
             }
         
@@ -224,7 +223,7 @@ public class DataColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpec#from()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpecDeprecated#from()}.
      * @throws NoSuchElementException 
      * @throws UnsupportedOperationException 
      * @throws ConfigurationException 
@@ -235,32 +234,32 @@ public class DataColumnsSpecTest {
     public final void testFrom() throws NumberFormatException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
         
         // Test Parameters
-        final   Record      specFac = DataColumnsSpecTest.parseDefaultFactorySpec();
+        final   Record      specFac = DataColumnsSpecDeprecatedTest.parseDefaultFactorySpec();
         final   int         cntCols = INT_COLS_CNT_DEF;
         final   String      strNmPref = STR_COLS_NAME_DEF;
         
         try {
             // Create new column factory specification and check field values
             @SuppressWarnings("rawtypes")
-            DataColumnsSpec specCols = DataColumnsSpec.from();
+            DataColumnsSpecDeprecated specCols = DataColumnsSpecDeprecated.from();
 
             Assert.assertTrue(specCols.isValid());
             Assert.assertEquals(cntCols, specCols.cntCols());
             Assert.assertEquals(strNmPref, specCols.strNmPref());
             Assert.assertEquals(specFac, specCols.recFacSpec());
             
-            // Print out default configuration (tests DataColumnsSpec.toString() )
+            // Print out default configuration (tests DataColumnsSpecDeprecated.toString() )
             System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
-            System.out.println("DataColumnsSpec Default Configuration");
+            System.out.println("DataColumnsSpecDeprecated Default Configuration");
             System.out.println(specCols);
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsSpec creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("DataColumnsSpecDeprecated creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpec#from(int)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpecDeprecated#from(int)}.
      * @throws NoSuchElementException 
      * @throws UnsupportedOperationException 
      * @throws ConfigurationException 
@@ -271,14 +270,14 @@ public class DataColumnsSpecTest {
     public final void testFromInt() throws NumberFormatException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
         
         // Test Parameters
-        final   Record      specFac = DataColumnsSpecTest.parseDefaultFactorySpec();
+        final   Record      specFac = DataColumnsSpecDeprecatedTest.parseDefaultFactorySpec();
         final   int         cntCols = 23;
         final   String      strNmPref = STR_COLS_NAME_DEF;
         
         try {
             // Create new column factory specification and check field values
             @SuppressWarnings("rawtypes")
-            DataColumnsSpec specCols = DataColumnsSpec.from(cntCols);
+            DataColumnsSpecDeprecated specCols = DataColumnsSpecDeprecated.from(cntCols);
 
             Assert.assertTrue(specCols.isValid());
             Assert.assertEquals(cntCols, specCols.cntCols());
@@ -286,12 +285,12 @@ public class DataColumnsSpecTest {
             Assert.assertEquals(specFac, specCols.recFacSpec());
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsSpec creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("DataColumnsSpecDeprecated creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpec#from(java.lang.Record)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpecDeprecated#from(java.lang.Record)}.
      */
     @Test
     public final void testFromRecord() {
@@ -304,7 +303,7 @@ public class DataColumnsSpecTest {
         try {
             // Create new column factory specification and check field values
             @SuppressWarnings("rawtypes")
-            DataColumnsSpec specCols = DataColumnsSpec.from(specFac);
+            DataColumnsSpecDeprecated specCols = DataColumnsSpecDeprecated.from(specFac);
 
             Assert.assertTrue(specCols.isValid());
             Assert.assertEquals(cntCols, specCols.cntCols());
@@ -312,12 +311,12 @@ public class DataColumnsSpecTest {
             Assert.assertEquals(specFac, specCols.recFacSpec());
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsSpec creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("DataColumnsSpecDeprecated creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpec#from(int, java.lang.Record)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpecDeprecated#from(int, java.lang.Record)}.
      */
     @Test
     public final void testFromIntRecord() {
@@ -330,7 +329,7 @@ public class DataColumnsSpecTest {
         try {
             // Create new column factory specification and check field values
             @SuppressWarnings("rawtypes")
-            DataColumnsSpec specCols = DataColumnsSpec.from(cntCols, specFac);
+            DataColumnsSpecDeprecated specCols = DataColumnsSpecDeprecated.from(cntCols, specFac);
 
             Assert.assertTrue(specCols.isValid());
             Assert.assertEquals(cntCols, specCols.cntCols());
@@ -338,12 +337,12 @@ public class DataColumnsSpecTest {
             Assert.assertEquals(specFac, specCols.recFacSpec());
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsSpec creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("DataColumnsSpecDeprecated creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpec#from(int, java.lang.String, java.lang.Record)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpecDeprecated#from(int, java.lang.String, java.lang.Record)}.
      */
     @Test
     public final void testFromIntStringRecord() {
@@ -356,7 +355,7 @@ public class DataColumnsSpecTest {
         try {
             // Create new column factory specification and check field values
             @SuppressWarnings("rawtypes")
-            DataColumnsSpec specCols = DataColumnsSpec.from(cntCols, strNmPref, specFac);
+            DataColumnsSpecDeprecated specCols = DataColumnsSpecDeprecated.from(cntCols, strNmPref, specFac);
 
             Assert.assertTrue(specCols.isValid());
             Assert.assertEquals(cntCols, specCols.cntCols());
@@ -364,12 +363,12 @@ public class DataColumnsSpecTest {
             Assert.assertEquals(specFac, specCols.recFacSpec());
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsSpec creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("DataColumnsSpecDeprecated creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpec#newFactory()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.DataColumnsSpecDeprecated#newFactory()}.
      */
     @Test
     public final void testNewFactory() {
@@ -381,9 +380,9 @@ public class DataColumnsSpecTest {
         
         // Create new column factory specification and check field values
         @SuppressWarnings("rawtypes")
-        DataColumnsSpec specCols; 
+        DataColumnsSpecDeprecated specCols; 
         try {
-            specCols = DataColumnsSpec.from(cntCols, strNmPref, specFac);
+            specCols = DataColumnsSpecDeprecated.from(cntCols, strNmPref, specFac);
 
             Assert.assertTrue(specCols.isValid());
             Assert.assertEquals(cntCols, specCols.cntCols());
@@ -391,20 +390,20 @@ public class DataColumnsSpecTest {
             Assert.assertEquals(specFac, specCols.recFacSpec());
             
         } catch (Exception e) {
-            Assert.fail("DataColumnsSpec creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("DataColumnsSpecDeprecated creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
             return;
         }
         
         // Create data columns factory and check configuration
         Set<String>     setColNms = IntStream.range(0, cntCols).<String>mapToObj(i -> strNmPref + Integer.toString(i)).collect(TreeSet::new, Set::add, Set::addAll);
         try {
-            IDataColumnsFactory facCols = specCols.newFactory();
+            IFrameColumnsFactory facCols = specCols.newFactory();
             
             Assert.assertEquals(cntCols, facCols.getColumnCount());
             Assert.assertEquals(setColNms, facCols.getColumnNames());
             
         } catch (ConfigurationException | UnsupportedOperationException e) {
-            Assert.fail("IDataColumnsFactory creation from DataColumnsSpec failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+            Assert.fail("IFrameColumnsFactory creation from DataColumnsSpecDeprecated failed with exception " + e.getClass().getName() + ": " + e.getMessage());
             return;
         }
     }
@@ -433,8 +432,8 @@ public class DataColumnsSpecTest {
     private static Record   parseDefaultFactorySpec() throws TypeNotPresentException, NumberFormatException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
 
         Record recFactory = switch (ENM_COL_TYPE_DEF) {
-        case SCALAR -> ScalarFactorySpec.parseArgs(ARR_COL_FAC_DEF);
-        case ARRAY -> TensorFactorySpec.parse(ARR_COL_FAC_DEF);
+        case SCALAR -> ScalarFactorySpec.parse(ARR_COL_FAC_DEF);
+        case TENSOR -> TensorFactorySpec.parse(ARR_COL_FAC_DEF);
         case BYTES -> ByteArrayFactorySpec.parse(ARR_COL_FAC_DEF);
         case IMAGE -> ImageFactorySpec.parse(ARR_COL_FAC_DEF);
         case STRUCTURE -> StructureFactorySpec.parse(ARR_COL_FAC_DEF);

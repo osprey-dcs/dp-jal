@@ -63,13 +63,6 @@ public enum JalComplexType {
     SCALAR(DpSupportedType.UNSUPPORTED_TYPE),
     
     /** 
-     * Timestamp data type
-     * <p>
-     * Format is <code>Instant</code> = (seconds, nanosecond offset).
-     */
-    TIMESTAMP(DpSupportedType.TIMESTAMP),
-    
-    /** 
      * Byte array type
      * <p>
      * Format is a bytes array <code>byte[]</code>
@@ -77,11 +70,25 @@ public enum JalComplexType {
     BYTES(DpSupportedType.BYTE_ARRAY),
     
     /** 
+     * Timestamp data type
+     * <p>
+     * Format is <code>Instant</code> = (seconds, nanosecond offset).
+     */
+    TIMESTAMP(DpSupportedType.TIMESTAMP),
+    
+    /** 
+     * Image data type
+     * <p>
+     * Format is <code>BufferedImage</code> 
+     */
+    IMAGE(DpSupportedType.IMAGE),
+    
+    /** 
      * Multi-dimensional array (tensor) type
      * <p>
      * Format is <code>ArrayList&lt;ArrayList&lt; ...ArrayList&lt;Scalar&gt; ...&gt;&gt; 
      */
-    ARRAY(DpSupportedType.ARRAY),
+    TENSOR(DpSupportedType.ARRAY),
     
     /** 
      * Complex data structure type
@@ -92,12 +99,7 @@ public enum JalComplexType {
      */
     STRUCTURE(DpSupportedType.STRUCTURE),
     
-    /** 
-     * Image data type
-     * <p>
-     * Format is <code>BufferedImage</code> 
-     */
-    IMAGE(DpSupportedType.IMAGE);
+    ;
 
     
     //

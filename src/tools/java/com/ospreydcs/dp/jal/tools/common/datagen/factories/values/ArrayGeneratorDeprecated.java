@@ -259,7 +259,7 @@ public class ArrayGeneratorDeprecated implements IDatumFactory {
      */
     @Override
     public JalComplexType getComplexType() {
-        return JalComplexType.ARRAY;
+        return JalComplexType.TENSOR;
     }
     /**
      *

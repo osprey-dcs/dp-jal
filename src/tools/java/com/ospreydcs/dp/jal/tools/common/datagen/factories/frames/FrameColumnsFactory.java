@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	DataColumnsFactory.java
+ * File:	FrameColumnsFactory.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.factories.frames
- * Type: 	DataColumnsFactory
+ * Type: 	FrameColumnsFactory
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -31,7 +31,7 @@ import java.util.Set;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.model.table.StaticDataColumn;
-import com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
@@ -53,7 +53,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * <p>
  * <h2>Column Generation</h2>
  * The <code>{@link #build()}</code> method is used to create vectors (i.e., <code>{@link ArrayList}</code>) of
- * <code>IDataColumn</code> objects according to the <code>DataColumnsFactory</code> configuration determined
+ * <code>IDataColumn</code> objects according to the <code>FrameColumnsFactory</code> configuration determined
  * at creation/construction.  The number of columns returned in the vector is given by the size of the
  * <code>{@link Set}</code> argument containing column names, while the type of each column data value is
  * given by <code>{@link IDatumFactory#getDatumType()}</code> of the data factory provided at creation/construction.  
@@ -76,7 +76,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * @since Nov 18, 2025
  *
  */
-public class DataColumnsFactory implements IDataColumnsFactory<Object> {
+public class FrameColumnsFactory implements IFrameColumnsFactory<Object> {
 
     
     //
@@ -85,28 +85,28 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
     
     /**
      * <p>
-     * Creates and returns a new <code>DataColumnsFactory</code> instance configured according to the given arguments.
+     * Creates and returns a new <code>FrameColumnsFactory</code> instance configured according to the given arguments.
      * </p>
      * <p>
      * The <code>{@link #build()}</code> method is available for data column creation.  It returns a vector
      * (i.e., <code>{@link ArrayList}</code> of data columns, one for each column name given, containing simulated
      * data produced by the given data value factory.  The size of each column (i.e., the number of rows) is given 
      * by the size argument.
-     * See the class documentation on <code>{@link DataColumnsFactory}</code> for more information.
+     * See the class documentation on <code>{@link FrameColumnsFactory}</code> for more information.
      * </p>
      * 
      * @param setColNms set of unique column names
      * @param szCols    the size of each data column (i.e., number of rows)
      * @param facValues the data value factory producing simulated column values
      * 
-     * @return  a new <code>DataColumnsFactory</code> instance ready for data column generation
+     * @return  a new <code>FrameColumnsFactory</code> instance ready for data column generation
      * 
      * @throws IllegalArgumentException either empty name collection, column size < 1, or value factory is <code>null</code>
      * 
-     * @see DataColumnsFactory
+     * @see FrameColumnsFactory
      */
-    public static final DataColumnsFactory from(Set<String> setColNms, IDatumFactory facValues) throws IllegalArgumentException {
-        return new DataColumnsFactory(setColNms, facValues);
+    public static final FrameColumnsFactory from(Set<String> setColNms, IDatumFactory facValues) throws IllegalArgumentException {
+        return new FrameColumnsFactory(setColNms, facValues);
     }
 
     
@@ -141,7 +141,7 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
     
     /**
      * <p>
-     * Constructs a new <code>DataColumnsFactory</code> instance.
+     * Constructs a new <code>FrameColumnsFactory</code> instance.
      * </p>
      *
      * @param setColNms set of unique column names
@@ -150,7 +150,7 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
      * 
      * @throws IllegalArgumentException either empty name collection, column size < 1, or value factory is <code>null</code>
      */
-    public DataColumnsFactory(Set<String> setColNms, IDatumFactory facValues) throws IllegalArgumentException {
+    public FrameColumnsFactory(Set<String> setColNms, IDatumFactory facValues) throws IllegalArgumentException {
         
         // Check arguments
         if (setColNms.size() < 1)
@@ -170,11 +170,11 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
 
     
     //
-    // IDataColumnsFactory Interface
+    // IFrameColumnsFactory Interface
     //
     
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory#getColumnCount()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory#getColumnCount()
      */
     @Override
     public final int getColumnCount() {
@@ -182,7 +182,7 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
     }
     
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory#getColumnNames()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory#getColumnNames()
      */
     @Override
     public final Set<String> getColumnNames() {
@@ -190,7 +190,7 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
     }
     
 //    /**
-//     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory#getColumnSize()
+//     * @see com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory#getColumnSize()
 //     */
 //    @Override
 //    public final int getColumnSize() {
@@ -198,7 +198,7 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
 //    }
     
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory#getColumnType()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory#getColumnType()
      */
     @Override
     public final DpSupportedType getColumnType() {
@@ -221,7 +221,7 @@ public class DataColumnsFactory implements IDataColumnsFactory<Object> {
      * 
      * @return  vector of data columns containing simulated data
      * 
-     * @see com.ospreydcs.dp.jal.tools.common.datagen.IDataColumnsFactory#build()
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory#build()
      */
     @Override
     public ArrayList<IDataColumn<Object>> build(int szCols) {
