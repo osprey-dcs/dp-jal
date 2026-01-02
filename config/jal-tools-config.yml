@@ -60,7 +60,7 @@ datagen:       # JAL Tools simulated data generation default configuration param
          type: SAMPLING_CLOCK  # 'DpTimestampCase' enumeration         : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_TYPE
          start: 2023-10-31T15:51:02.000+00:00 # first timestamp (ISO)  : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_START
          period: PT0.001S      # sampling period (ISO-8605 format)     : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_PERIOD
-         delay: P0.0S          # sampling delay from start instant     : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_DELAY
+         delay: PT0.0S         # sampling delay from start instant     : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_DELAY
          count: 1000           # samples per frame (row count)         : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMP_COUNT
       columns:                 # Default columns for ingestion frames
          - name: JalDbl_       # column bank name (also prefix for cols)
