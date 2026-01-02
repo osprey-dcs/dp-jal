@@ -23,18 +23,16 @@
  * @since Dec 4, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.common.datagen.factories.frames;
+package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 
-import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-
-import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 
 import com.ospreydcs.dp.jal.common.DpTimestampCase;
-import com.ospreydcs.dp.jal.common.UniformSamplingClock;
+import com.ospreydcs.dp.jal.ingest.IngestionFrame;
+import com.ospreydcs.dp.jal.tools.common.datagen.IFrameTimestampsFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameTimestampsFactory;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesTmsConfig;
 
@@ -54,16 +52,16 @@ import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesTmsConfig;
  * @since Dec 4, 2025
  *
  * @param cntSamples    number of samples in each data column of the ingestion frame
- * @param enmType       the timestamp type, either a uniform sampling clock or an explicit timestamp list
  * @param durPeriod     the sampling period for the timestamp collection
  * @param insStart      the starting time instant for the timestamps (i.e., the 1st timestamp value)
+ * @param enmType       the timestamp type, either a uniform sampling clock or an explicit timestamp list
  * @param durDelay      sampling delay from starting time instant (i.e., the 1st timestamp will be offset by this value)
  */
 public record FrameTimestampsSpec(
         int                 cntSamples,
-        DpTimestampCase     enmType,
         Duration            durPeriod,
         Instant             insStart,
+        DpTimestampCase     enmType,
         Duration            durDelay
         ) 
 {
@@ -80,11 +78,11 @@ public record FrameTimestampsSpec(
      * This creator uses all default values for the <code>TimestampFactorySpec</code> field values. 
      * The default values are taken from the JAL Tools configuration and available in the record constants:
      * <ul>
-     * <li><code>{@link #cntSamples()}</code> = <code>{@link #CNT_SAMPLES_DEF}</code>.
-     * <li><code>{@link #enmType()}</code> = <code>{@link #ENM_TMS_TYPE_DEF}</code>.
-     * <li><code>{@link #durPeriod()}</code> = <code>{@link #DUR_PERIOD_DEF}</code>.
-     * <li><code>{@link #insStart()}</code> = <code>{@link #INS_START_DEF}</code>.
-     * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.
+     * <li><code>{@link #cntSamples()}</code> = <code>{@link #CNT_SAMPLES_DEF}</code>.</li>
+     * <li><code>{@link #insStart()}</code> = <code>{@link #INS_START_DEF}</code>.</li>
+     * <li><code>{@link #enmType()}</code> = <code>{@link #ENM_TMS_TYPE_DEF}</code>.</li>
+     * <li><code>{@link #durPeriod()}</code> = <code>{@link #DUR_PERIOD_DEF}</code>.</li>
+     * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.</li>
      * </ul>
      * </p>
      * 
@@ -103,10 +101,10 @@ public record FrameTimestampsSpec(
      * included in the argument collection.  The default values are taken from the JAL Tools configuration and
      * available in the record constants:
      * <ul>
-     * <li><code>{@link #enmType()}</code> = <code>{@link #ENM_TMS_TYPE_DEF}</code>.
-     * <li><code>{@link #durPeriod()}</code> = <code>{@link #DUR_PERIOD_DEF}</code>.
-     * <li><code>{@link #insStart()}</code> = <code>{@link #INS_START_DEF}</code>.
-     * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.
+     * <li><code>{@link #durPeriod()}</code> = <code>{@link #DUR_PERIOD_DEF}</code>.</li>
+     * <li><code>{@link #insStart()}</code> = <code>{@link #INS_START_DEF}</code>.</li>
+     * <li><code>{@link #enmType()}</code> = <code>{@link #ENM_TMS_TYPE_DEF}</code>.</li>
+     * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.</li>
      * </ul>
      * All other record fields are given by the supplied arguments.
      * </p>
@@ -116,7 +114,7 @@ public record FrameTimestampsSpec(
      * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
     public static FrameTimestampsSpec   from(int cntSamples) {
-        return FrameTimestampsSpec.from(cntSamples, ENM_TMS_TYPE_DEF);
+        return FrameTimestampsSpec.from(cntSamples, DUR_PERIOD_DEF);
     }
     
     /**
@@ -128,46 +126,22 @@ public record FrameTimestampsSpec(
      * included in the argument collection.  The default values are taken from the JAL Tools configuration and
      * available in the record constants:
      * <ul>
-     * <li><code>{@link #durPeriod()}</code> = <code>{@link #DUR_PERIOD_DEF}</code>.
-     * <li><code>{@link #insStart()}</code> = <code>{@link #INS_START_DEF}</code>.
-     * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.
+     * <li><code>{@link #insStart()}</code> = <code>{@link #INS_START_DEF}</code>.</li>
+     * <li><code>{@link #enmType()}</code> = <code>{@link #ENM_TMS_TYPE_DEF}</code>.</li>
+     * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.</li>
      * </ul>
      * All other record fields are given by the supplied arguments.
      * </p>
      * 
      * @param cntSamples    number of samples in each data column of the ingestion frame
-     * @param enmType       the timestamp type, either a uniform sampling clock or an explicit timestamp list
-     * 
-     * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
-     */
-    public static FrameTimestampsSpec   from(int cntSamples, DpTimestampCase enmType ) {
-        return FrameTimestampsSpec.from(cntSamples, enmType, DUR_PERIOD_DEF);
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>TimestampFactorySpec</code> instance configured according to the available arguments.
-     * </p>
-     * <p>
-     * This creator uses default values for the missing <code>TimestampFactorySpec</code> field value (i.e., those not
-     * included in the argument collection.  The default values are taken from the JAL Tools configuration and
-     * available in the record constants:
-     * <ul>
-     * <li><code>{@link #insStart()}</code> = <code>{@link #INS_START_DEF}</code>.
-     * <li><code>{@link #durDelay()</code> = <code>{@link #DUR_DELAY_DEF}</code>.
-     * </ul>
-     * All other record fields are given by the supplied arguments.
-     * </p>
-     * 
-     * @param cntSamples    number of samples in each data column of the ingestion frame
-     * @param enmType       the timestamp type, either a uniform sampling clock or an explicit timestamp list
      * @param durPeriod     the sampling period for the timestamp collection
      * 
      * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
-    public static FrameTimestampsSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod) {
-        return FrameTimestampsSpec.from(cntSamples, enmType, durPeriod, INS_START_DEF);
+    public static FrameTimestampsSpec   from(int cntSamples, Duration durPeriod) {
+        return FrameTimestampsSpec.from(cntSamples, durPeriod, INS_START_DEF);
     }
+    
     
     /**
      * <p>
@@ -178,20 +152,45 @@ public record FrameTimestampsSpec(
      * included in the argument collection.  The default values are taken from the JAL Tools configuration and
      * available in the record constants:
      * <ul>
-     * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.
+     * <li><code>{@link #enmType()}</code> = <code>{@link #ENM_TMS_TYPE_DEF}</code>.</li>
+     * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.</li>
      * </ul>
      * All other record fields are given by the supplied arguments.
      * </p>
      * 
      * @param cntSamples    number of samples in each data column of the ingestion frame
-     * @param enmType       the timestamp type, either a uniform sampling clock or an explicit timestamp list
      * @param durPeriod     the sampling period for the timestamp collection
      * @param insStart      the starting time instant for the timestamps (i.e., the 1st timestamp value)
      * 
      * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
-    public static FrameTimestampsSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod, Instant insStart) {
-        return FrameTimestampsSpec.from(cntSamples, enmType, durPeriod, insStart, DUR_DELAY_DEF);
+    public static FrameTimestampsSpec   from(int cntSamples, Duration durPeriod, Instant insStart) {
+        return FrameTimestampsSpec.from(cntSamples, durPeriod, insStart, ENM_TMS_TYPE_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>TimestampFactorySpec</code> instance configured according to the available arguments.
+     * </p>
+     * <p>
+     * This creator uses default values for the missing <code>TimestampFactorySpec</code> field value (i.e., those not
+     * included in the argument collection.  The default values are taken from the JAL Tools configuration and
+     * available in the record constants:
+     * <ul>
+     * <li><code>{@link #durDelay()}</code> = <code>{@link #DUR_DELAY_DEF}</code>.</li>
+     * </ul>
+     * All other record fields are given by the supplied arguments.
+     * </p>
+     * 
+     * @param cntSamples    number of samples in each data column of the ingestion frame
+     * @param durPeriod     the sampling period for the timestamp collection
+     * @param insStart      the starting time instant for the timestamps (i.e., the 1st timestamp value)
+     * @param enmType       the timestamp type, either a uniform sampling clock or an explicit timestamp list
+     * 
+     * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
+     */
+    public static FrameTimestampsSpec   from(int cntSamples, Duration durPeriod, Instant insStart, DpTimestampCase enmType) {
+        return FrameTimestampsSpec.from(cntSamples, durPeriod, insStart, enmType, DUR_DELAY_DEF);
     }
     
     /**
@@ -200,7 +199,7 @@ public record FrameTimestampsSpec(
      * </p>
      * <p>
      * This creation is equivalent to the canonical constructor 
-     * <code>{@link #TimestampFactorySpec(int, DpTimestampCase, Duration, Instant, Duration)}</code>.
+     * <code>{@link #TimestampFactorySpec(int, Duration, Instant, DpTimestampCase, Duration)}</code>.
      * There are no default field values, all field values are provided in the arguments collection.
      * </p>
      * 
@@ -212,8 +211,8 @@ public record FrameTimestampsSpec(
      * 
      * @return  a new <code>TimestampFactorySpec</code> record populated with the given arguments
      */
-    public static FrameTimestampsSpec   from(int cntSamples, DpTimestampCase enmType, Duration durPeriod, Instant insStart, Duration durDelay) {
-        return new FrameTimestampsSpec(cntSamples, enmType, durPeriod, insStart, durDelay);
+    public static FrameTimestampsSpec   from(int cntSamples, Duration durPeriod, Instant insStart, DpTimestampCase enmType, Duration durDelay) {
+        return new FrameTimestampsSpec(cntSamples, durPeriod, insStart, enmType, durDelay);
     }
     
     /**
@@ -227,7 +226,7 @@ public record FrameTimestampsSpec(
      * Assuming as such, the format of the argument array elements is as follows:
      * <code>
      * <pre>
-     * > java application --tms [samples [type [period [start [delay]]]]] ... 
+     * > java application --tms [samples [period [start [type [delay]]]]] ... 
      * </pre>
      * </code>
      * where '<code>application</code> is the example application name and the brackets indicate optional
@@ -235,9 +234,9 @@ public record FrameTimestampsSpec(
      * The strings following the variable <code>--tms</code> are the field values parsed here, in order.
      * <ol>
      * <li>'samples' &rarr; <code>{@link #cntSamples()}</code> [default <code>{@link #CNT_SAMPLES_DEF}</code>],
-     * <li>'type' &rarr; <code>{@link #enmType()}</code> [default <code>{@link #ENM_TMS_TYPE_DEF}</code>],
      * <li>'period' &rarr; <code>{@link #durPeriod()}</code> [default <code>{@link #DUR_PERIOD_DEF}</code>],
      * <li>'start' &rarr; <code>{@link #insStart()}</code> [default <code>{@link #INS_START_DEF}</code>],
+     * <li>'type' &rarr; <code>{@link #enmType()}</code> [default <code>{@link #ENM_TMS_TYPE_DEF}</code>],
      * <li>'delay' &rarr; <code>{@link #durDelay()}</code> [default <code>{@link #DUR_DELAY_DEF}</code>],
      * </ol>
      * </p>
@@ -269,35 +268,37 @@ public record FrameTimestampsSpec(
         // If the argument collection is empty return the default configuration
         if (args.length < 1)
             return FrameTimestampsSpec.from();
+        
+        int     indArg = 0;
 
         // Get the number of samples
-        String  strCntSamples   = args[0];
+        String  strCntSamples   = args[indArg++];
         int     cntSamples = Integer.valueOf(strCntSamples);    // throws NumberFormatException
-        if (args.length < 2)
+        if (args.length < (indArg+1))
             return FrameTimestampsSpec.from(cntSamples);
         
-        // Get the timestamp type within the arguments list
-        String  strTmsType = args[1];
-        DpTimestampCase enmType = DpTimestampCase.valueFrom(strTmsType);  // throws TypeNotPresentException
-        if (args.length < 3)
-            return FrameTimestampsSpec.from(cntSamples, enmType);
-        
         // Get the period within the argument list
-        String      strPeriod = args[2];
+        String      strPeriod = args[indArg++];
         Duration    durPeriod = Duration.parse(strPeriod);  // DateTimeParseException
-        if (args.length < 4)
-            return FrameTimestampsSpec.from(cntSamples, enmType, durPeriod);
+        if (args.length < (indArg+1))
+            return FrameTimestampsSpec.from(cntSamples, durPeriod);
         
         // Get the start instant from the argument list
-        String      strStart = args[3];
+        String      strStart = args[indArg++];
         Instant     insStart = Instant.parse(strStart);     // throws DateTimeParseException
-        if (args.length < 5)
-            return FrameTimestampsSpec.from(cntSamples, enmType, durPeriod, insStart);
+        if (args.length < (indArg+1))
+            return FrameTimestampsSpec.from(cntSamples, durPeriod, insStart);
+        
+        // Get the timestamp type within the arguments list
+        String  strTmsType = args[indArg++];
+        DpTimestampCase enmType = DpTimestampCase.valueFrom(strTmsType);  // throws TypeNotPresentException
+        if (args.length < (indArg+1))
+            return FrameTimestampsSpec.from(cntSamples, durPeriod, insStart, enmType);
         
         // Get the start delay from the argument collection
-        String      strDelay = args[4];
+        String      strDelay = args[indArg++];
         Duration    durDelay = Duration.parse(strDelay);    // throws DateTimeParseException
-        return FrameTimestampsSpec.from(cntSamples, enmType, durPeriod, insStart, durDelay);
+        return FrameTimestampsSpec.from(cntSamples, durPeriod, insStart, enmType, durDelay);
     }    
     
     /**
@@ -325,143 +326,138 @@ public record FrameTimestampsSpec(
      * @return  a new <code>FrameTimestampsSpec</code> record as specified in the JAL Tools default configuration
      */
     public static FrameTimestampsSpec    defaultFrame() {
-        return FrameTimestampsSpec.from(CNT_SAMPLES_DEF, ENM_TMS_TYPE_DEF, DUR_PERIOD_DEF, INS_START_DEF, DUR_DELAY_DEF);
+        return FrameTimestampsSpec.from(CNT_SAMPLES_DEF, DUR_PERIOD_DEF, INS_START_DEF, ENM_TMS_TYPE_DEF, DUR_DELAY_DEF);
     }
 
     
-    //
-    // JAL Library Resources
-    //
-    
-    /** Default configuration parameters for the JAL Tools */
-    private static final JalToolsFramesTmsConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frames.timestamps;
-    
-    
-    //
-    // Class Constants
-    //
-    
-    /** Default timestamp type for ingestion frames */
-    public static final DpTimestampCase     ENM_TMS_TYPE_DEF = CFG_DEF.type;
-    
-    /** Default starting time instant for ingestion frame timestamps */
-    public static final Instant             INS_START_DEF = CFG_DEF.startInstant();
-    
-    /** Default sampling period for ingestion frame timestamps */
-    public static final Duration            DUR_PERIOD_DEF = CFG_DEF.periodDuration();
-    
-    /** Default sampling delay from start instant */
-    public static final Duration            DUR_DELAY_DEF = CFG_DEF.delayDuration();
-    
-    /** Default sample count per ingestion frame */
-    public static final int                 CNT_SAMPLES_DEF = CFG_DEF.count;
-    
-
     //
     // Operations
     //
     
     /**
      * <p>
-     * Computes and returns the first start instant for the timestamps according to the field values.
+     * Creates and returns a new ingestion frame timestamp factory instance configured according to the current specifications.
      * </p>
      * <p>
-     * Although computed at each invocation, the returned value is always the same; it is given by
-     * the formula
-     * <pre>
-     *      {@link #insStart} + {@link #durDelay}
-     * </pre>
-     * or, programmatically, 
-     * <code>{@link #insStart}.plus({@link #durDelay})</code>.
+     * The returned frame timestamps factory is fully configured and ready for simulated timestamp generation.  Note 
+     * that all timestamps, whether by uniform sampling clock or explicit timestamp list, are generated uniformly.
+     * The time interval between timestamps is given by field <code>{@link #durPeriod()}</code> and the number of
+     * timestamps produced for each ingestion frame is given by field <code>{@link #cntSamples()}</code>.
      * </p>
-     *  
-     * @return  a new <code>Instant</code> containing the first timestamp
+     * <p>
+     * @apiNote
+     * The current implementat for the returned interface <code>{@link IFrameTimestampsFactory}</code> is class
+     * <code>{@link FrameTimestampsFactory}</code>.  See class documentation for more details.
      * 
-     * @throws DateTimeException    overflow occurred in <code>Instant</code> addition 
-     * @throws ArithmeticException  <code>Instant</code> addition failed or overflow in <code>Duration</code> multiplication  
+     * @return  a new frame timestamps factory instance ready for simulated ingestion frame timestamp creation
      */
-    public Instant  firstStartInstant() throws DateTimeException, ArithmeticException {
-        Instant insFirst = this.insStart.plus(this.durDelay);   // throws DateTimeException, ArithmeticException
+    public IFrameTimestampsFactory  newFactory() {
+        FrameTimestampsFactory  facTms = FrameTimestampsFactory.from(this.cntSamples, this.durPeriod, this.insStart, this.enmType, this.durDelay);
         
-        return insFirst;
+        return facTms;
     }
     
-    /**
-     * <p>
-     * Computes and returns the next start time for from the given instant.
-     * </p>
-     * <p>
-     * This method is used to advance the timestamp start time for ingestion frames.
-     * The argument is assumed to be the start time of a current ingestion frame and the
-     * returned value is then the start time instant for the next ingestion frame timestamps.
-     * </p>
-     *  
-     * @param insStart  the current start time for current ingestion frame timestamps
-     * 
-     * @return  the start time for the next ingestion frame timestamps
-     * 
-     * @throws DateTimeException    overflow occurred in <code>Instant</code> addition 
-     * @throws ArithmeticException  <code>Instant</code> addition failed or overflow in <code>Duration</code> multiplication  
-     */
-    public Instant nextStartInstant(Instant insStart) throws DateTimeException, ArithmeticException {
-        
-        Duration    durRange = this.durPeriod.multipliedBy(this.cntSamples);    // throws ArithmeticException
-        Instant     insNext = insStart.plus(durRange);      // throws DateTimeException, ArithmeticException
-        
-        return insNext;
-    }
-    
-    /**
-     * <p>
-     * Creates a new <code>UniformSamplingClock</code> instance for the given start time.
-     * </p>
-     * <p>
-     * The remain parameters of the sampling clock (i.e., period and sample count) are taken from the
-     * record fields given at construction.
-     * </p>
-     * 
-     * @param insStart  the start time for the new sampling clock
-     * 
-     * @return  a new <code>UniformSamplingClock</code> instance for the given start time
-     * 
-     * @throws IllegalArgumentException the sample count was negative and/or the period was non-positive
-     */
-    public UniformSamplingClock    nextUniformClock(Instant insStart) throws IllegalArgumentException {
-        
-        UniformSamplingClock clk = UniformSamplingClock.from(insStart, this.cntSamples, this.durPeriod);
-        
-        return clk;
-    }
-    
-    /**
-     * <p>
-     * Creates a new ordered list (vector) of timestamp instants with the given start time.
-     * </p>
-     * <p>
-     * The number of timestamps and the interval between timestamps (i.e., the period) is taken from the
-     * record fields given at construction.
-     * </p>
-     * 
-     * @param insStart  the first timestamp instant with the returned vector
-     * 
-     * @return  an ordered vector of <code>Instant</code> objects representing timestamps from a uniform clock
-     * 
-     * @throws DateTimeException    internal <code>Instant</code> addition failed
-     * @throws ArithmeticException  numeric overflow occurred in <code>Instant</code> addition 
-     */
-    public ArrayList<Instant>   nextTimestampVector(Instant insStart) throws DateTimeException, ArithmeticException {
-        
-        ArrayList<Instant>   vecTms = new ArrayList<>(this.cntSamples);
-        
-        Instant insCurr = insStart;
-        for (int iTms=0; iTms<this.cntSamples; iTms++) {
-            vecTms.add(insCurr);
-            
-            insCurr = insCurr.plus(this.durPeriod);     // throws DateTimeException, ArithmeticException
-        }
-        
-        return vecTms;
-    }
+//    /**
+//     * <p>
+//     * Computes and returns the first start instant for the timestamps according to the field values.
+//     * </p>
+//     * <p>
+//     * Although computed at each invocation, the returned value is always the same; it is given by
+//     * the formula
+//     * <pre>
+//     *      {@link #insStart} + {@link #durDelay}
+//     * </pre>
+//     * or, programmatically, 
+//     * <code>{@link #insStart}.plus({@link #durDelay})</code>.
+//     * </p>
+//     *  
+//     * @return  a new <code>Instant</code> containing the first timestamp
+//     * 
+//     * @throws DateTimeException    overflow occurred in <code>Instant</code> addition 
+//     * @throws ArithmeticException  <code>Instant</code> addition failed or overflow in <code>Duration</code> multiplication  
+//     */
+//    public Instant  firstStartInstant() throws DateTimeException, ArithmeticException {
+//        Instant insFirst = this.insStart.plus(this.durDelay);   // throws DateTimeException, ArithmeticException
+//        
+//        return insFirst;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Computes and returns the next start time for from the given instant.
+//     * </p>
+//     * <p>
+//     * This method is used to advance the timestamp start time for ingestion frames.
+//     * The argument is assumed to be the start time of a current ingestion frame and the
+//     * returned value is then the start time instant for the next ingestion frame timestamps.
+//     * </p>
+//     *  
+//     * @param insStart  the current start time for current ingestion frame timestamps
+//     * 
+//     * @return  the start time for the next ingestion frame timestamps
+//     * 
+//     * @throws DateTimeException    overflow occurred in <code>Instant</code> addition 
+//     * @throws ArithmeticException  <code>Instant</code> addition failed or overflow in <code>Duration</code> multiplication  
+//     */
+//    public Instant nextStartInstant(Instant insStart) throws DateTimeException, ArithmeticException {
+//        
+//        Duration    durRange = this.durPeriod.multipliedBy(this.cntSamples);    // throws ArithmeticException
+//        Instant     insNext = insStart.plus(durRange);      // throws DateTimeException, ArithmeticException
+//        
+//        return insNext;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Creates a new <code>UniformSamplingClock</code> instance for the given start time.
+//     * </p>
+//     * <p>
+//     * The remain parameters of the sampling clock (i.e., period and sample count) are taken from the
+//     * record fields given at construction.
+//     * </p>
+//     * 
+//     * @param insStart  the start time for the new sampling clock
+//     * 
+//     * @return  a new <code>UniformSamplingClock</code> instance for the given start time
+//     * 
+//     * @throws IllegalArgumentException the sample count was negative and/or the period was non-positive
+//     */
+//    public UniformSamplingClock    nextUniformClock(Instant insStart) throws IllegalArgumentException {
+//        
+//        UniformSamplingClock clk = UniformSamplingClock.from(insStart, this.cntSamples, this.durPeriod);
+//        
+//        return clk;
+//    }
+//    
+//    /**
+//     * <p>
+//     * Creates a new ordered list (vector) of timestamp instants with the given start time.
+//     * </p>
+//     * <p>
+//     * The number of timestamps and the interval between timestamps (i.e., the period) is taken from the
+//     * record fields given at construction.
+//     * </p>
+//     * 
+//     * @param insStart  the first timestamp instant with the returned vector
+//     * 
+//     * @return  an ordered vector of <code>Instant</code> objects representing timestamps from a uniform clock
+//     * 
+//     * @throws DateTimeException    internal <code>Instant</code> addition failed
+//     * @throws ArithmeticException  numeric overflow occurred in <code>Instant</code> addition 
+//     */
+//    public ArrayList<Instant>   nextTimestampVector(Instant insStart) throws DateTimeException, ArithmeticException {
+//        
+//        ArrayList<Instant>   vecTms = new ArrayList<>(this.cntSamples);
+//        
+//        Instant insCurr = insStart;
+//        for (int iTms=0; iTms<this.cntSamples; iTms++) {
+//            vecTms.add(insCurr);
+//            
+//            insCurr = insCurr.plus(this.durPeriod);     // throws DateTimeException, ArithmeticException
+//        }
+//        
+//        return vecTms;
+//    }
 
     
     // 
@@ -500,5 +496,32 @@ public record FrameTimestampsSpec(
         
         return str;
     }
+    
+    //
+    // JAL Library Resources
+    //
+    
+    /** Default configuration parameters for the JAL Tools */
+    private static final JalToolsFramesTmsConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frames.timestamps;
+    
+    
+    //
+    // Class Constants
+    //
+    
+    /** Default timestamp type for ingestion frames */
+    public static final DpTimestampCase     ENM_TMS_TYPE_DEF = CFG_DEF.type;
+    
+    /** Default starting time instant for ingestion frame timestamps */
+    public static final Instant             INS_START_DEF = CFG_DEF.startInstant();
+    
+    /** Default sampling period for ingestion frame timestamps */
+    public static final Duration            DUR_PERIOD_DEF = CFG_DEF.periodDuration();
+    
+    /** Default sampling delay from start instant */
+    public static final Duration            DUR_DELAY_DEF = CFG_DEF.delayDuration();
+    
+    /** Default sample count per ingestion frame */
+    public static final int                 CNT_SAMPLES_DEF = CFG_DEF.count;
     
 }

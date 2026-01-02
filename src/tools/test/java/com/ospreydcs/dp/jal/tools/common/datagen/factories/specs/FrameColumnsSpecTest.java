@@ -23,7 +23,7 @@
  * @since Dec 29, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.common.datagen.factories.frames;
+package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +46,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ByteArrayFactorySpec;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ImageFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.StructureFactorySpec;
@@ -173,7 +174,7 @@ public class FrameColumnsSpecTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#from()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#from()}.
      * @throws NoSuchElementException 
      * @throws UnsupportedOperationException 
      * @throws ConfigurationException 
@@ -213,7 +214,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#from(int)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#from(int)}.
      * @throws NoSuchElementException 
      * @throws UnsupportedOperationException 
      * @throws ConfigurationException 
@@ -248,7 +249,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#from(int, java.lang.String)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#from(int, java.lang.String)}.
      * @throws NoSuchElementException 
      * @throws UnsupportedOperationException 
      * @throws ConfigurationException 
@@ -283,7 +284,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#from(java.lang.Record)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#from(java.lang.Record)}.
      */
     @Test
     public final void testFromFactorySpec() {
@@ -313,7 +314,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#from(int, java.lang.Record)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#from(int, java.lang.Record)}.
      */
     @Test
     public final void testFromIntFactorySpec() {
@@ -343,7 +344,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#from(int, java.lang.String, java.lang.Record)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#from(int, java.lang.String, java.lang.Record)}.
      */
     @Test
     public final void testFromIntStringFactorySpec() {
@@ -373,7 +374,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#from(com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType)}.
      */
     @Test
     public final void testFromJalComplexType() {
@@ -404,7 +405,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#from(int, com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#from(int, com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType)}.
      */
     @Test
     public final void testFromIntJalComplexType() {
@@ -435,7 +436,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#from(int, java.lang.String, com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#from(int, java.lang.String, com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType)}.
      */
     @Test
     public final void testFromIntStringJalComplexType() {
@@ -466,7 +467,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#parse(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#parse(java.lang.String[])}.
      */
     @Test
     public final void testParse0() {
@@ -489,7 +490,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#parse(java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#parse(java.lang.String[])}.
      */
     @Test
     public final void testParse1() {
@@ -512,7 +513,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#defaultFrame()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#defaultFrame()}.
      * @throws UnsupportedOperationException 
      * @throws TypeNotPresentException 
      * @throws ConfigurationException 
@@ -531,7 +532,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#newFactory()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#newFactory()}.
      */
     @Test
     public final void testNewFactory() {
@@ -588,7 +589,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#inferColumnType(java.lang.Record)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#inferColumnType(java.lang.Record)}.
      */
     @Test
     public final void testInferColumnType() {
@@ -601,7 +602,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#parseFactorySpec(com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType, java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#parseFactorySpec(com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType, java.lang.String[])}.
      */
     @Test
     public final void testParseFactorySpec0() {
@@ -626,7 +627,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#parseFactorySpec(com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType, java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#parseFactorySpec(com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType, java.lang.String[])}.
      */
     @Test
     public final void testParseFactorySpec1() {
@@ -651,7 +652,7 @@ public class FrameColumnsSpecTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsSpec#equals(java.lang.Object)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#equals(java.lang.Object)}.
      * @throws NoSuchElementException 
      * @throws UnsupportedOperationException 
      * @throws ConfigurationException 

@@ -108,6 +108,46 @@ public class ByteArrayFactory implements IDatumFactory {
         return new ByteArrayFactory(szArrays);
     }
     
+    /**
+     * <p>
+     * Parses the argument collection for the field values of the returned <code>ByteArrayFactory</code> instance.
+     * </p>
+     * <p>
+     * The argument collection is assumed to originate from an application command-line argument collection.
+     * The <code>{@link ByteArrayFactory}</code> class is quite simple requiring only a single configuration
+     * parameter, the size of the arrays produced. 
+     * <p>
+     * <h2>Format</h2>
+     * The format of the argument collection is assumed to be
+     * <pre>
+     * > [size]
+     * </pre>
+     * where
+     * <ul>
+     * <li>'size' = number of bytes in each byte array.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>Optional Arguments</h2>
+     * The brackets indicate optional arguments.  If not present the argument is populated with the default
+     * values within the JAL Tools default configuration <code>{@link #INT_SIZE_DEF}</code>.
+     * </p>
+     * 
+     * @param args  argument collection to be parsed, format as described above
+     * 
+     * @return  a new <code>ByteArrayFactory</code> record populated with the parsed argument values
+     * 
+     * @throws NumberFormatException    the 'count' value could not be parsed
+     */
+    public static ByteArrayFactory parse(String...args) throws NumberFormatException {
+    
+        if (args.length < 1)
+            return ByteArrayFactory.from();
+        
+        int cntBytes = Integer.valueOf(args[0]);    // throws NumberFormatException
+        return ByteArrayFactory.from(cntBytes);
+    }
+    
     
     //
     // Library Resources

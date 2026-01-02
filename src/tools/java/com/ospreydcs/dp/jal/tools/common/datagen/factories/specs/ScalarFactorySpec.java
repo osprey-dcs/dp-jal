@@ -114,7 +114,193 @@ public record ScalarFactorySpec(
     
     /**
      * <p>
-     * Parses argument string array to identify and create a <code>ScalarFactorySpec</code> configuration record.
+     * Creates and returns a new <code>ScalarFactory</code> record with all default field values.
+     * </p>
+     * <p>
+     * All field values of the returned instance are taken from the JAL Tools default configuration.
+     * Use with discretion.
+     * </p>
+     * 
+     * @return  a new <code>ScalarFactorySpec</code> record populated with all default field values
+     * 
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
+     */
+    public static ScalarFactorySpec   from() throws UnsupportedOperationException {
+        return ScalarFactorySpec.from(ENM_TYPE_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
+     * </p>
+     * <p>
+     * Record fields not supplied are taken from the JAL Tools default configuration.
+     * <ul>
+     * <li>Field <code>{@link #bolRandEnbl()}</code> is taken directly from the JAL default configuration.</li>
+     * <li>Field <code>{@link #lngSeed()}</code> is interpreted by the random enable/disable flag.</li>
+     * <li>Field <code>{@link #numIncr()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param   enmType    the data type of the scalar values to generate
+     * 
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
+     * 
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
+     */
+    public static ScalarFactorySpec   from(JalScalarType enmValueType) throws UnsupportedOperationException {
+        
+        boolean bolRandEnable = BOL_RAND_ENBL_DEF;
+        
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
+     * </p>
+     * <p>
+     * Record fields not supplied are taken from the JAL Tools default configuration.
+     * <ul>
+     * <li>Field <code>{@link #bolRandEnbl()}</code> is taken directly from the JAL default configuration.</li>
+     * <li>Field <code>{@link #numIncr()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>WARNING:</h2>
+     * Use this creator with caution as the 'lngSeed' value is interpreted according to the default value of
+     * the 'bolRandEnbl' parameter (i.e., <code>{@link #BOL_RAND_ENBL_DEF}</code>).
+     * </p>
+     * 
+     * @param   enmType    the data type of the scalar values to generate
+     * @param   lngSeed    lngSeed value for random number generation or start value for incremental value generation   
+     * 
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
+     * 
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
+     */
+    public static ScalarFactorySpec   from(JalScalarType enmValueType, long lngSeed) throws UnsupportedOperationException {
+        
+        boolean bolRandEnable = BOL_RAND_ENBL_DEF;
+        
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable, lngSeed);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
+     * </p>
+     * <p>
+     * Record fields not supplied are taken from the JAL Tools default configuration.
+     * <ul>
+     * <li>Field <code>{@link #lngSeed()}</code> is interpreted by the random enable/disable flag.</li>
+     * <li>Field <code>{@link #numIncr()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param   enmType    the data type of the scalar values to generate
+     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
+     * 
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
+     * 
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
+     */
+    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable) throws UnsupportedOperationException {
+        
+        long    seed;
+        if (bolRandEnable)
+            seed = LNG_RAND_SEED_DEF;
+        else
+            seed = LNG_INCR_SEED_DEF;
+            
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable, seed);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
+     * </p>
+     * <p>
+     * Record fields not supplied are taken from the JAL Tools default configuration.
+     * <ul>
+     * <li>Field <code>{@link #numIncr()()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
+     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param   enmType       the data type of the scalar values to generate
+     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
+     * @param   lngSeed       lngSeed value for random number generation or start value for incremental value generation   
+     * 
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
+     * 
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
+     */
+    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable, long lngSeed) throws UnsupportedOperationException {
+        
+        // Extract the incremental value from the JAL default parameters
+        Number numIncr = switch (enmValueType) {
+        case BOOLEAN -> Integer.valueOf(0);
+        case INTEGER -> INT_INCR_DEF;
+        case LONG -> LNG_INCR_DEF;
+        case FLOAT -> FLT_INCR_DEF;
+        case DOUBLE -> DBL_INCR_DEF;
+        case STRING -> INT_STR_INCR_DEF;
+        default -> throw new UnsupportedOperationException("Increment value not available for type: " + enmValueType);
+        };
+        
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable, lngSeed, numIncr);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
+     * </p>
+     * <p>
+     * Record fields not supplied are taken from the JAL Tools default configuration.
+     * <ul>
+     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param   enmType       the data type of the scalar values to generate
+     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
+     * @param   lngSeed       lngSeed value for random number generation or start value for incremental value generation   
+     * @param   numIncr       numeric incremental value used when random generation is disabled (type depends upon data type)
+     * 
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
+     */
+    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable, long seed, Number numIncr) {
+        
+        return ScalarFactorySpec.from(enmValueType, bolRandEnable, seed, numIncr, STR_PREFIX_DEF); 
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
+     * </p>
+     * <p>
+     * This creator is equivalent to the canonical constructors.
+     * </p>
+     * 
+     * @param   enmType       the data type of the scalar values to generate
+     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
+     * @param   lngSeed       seed value for random number generation or start value for incremental value generation   
+     * @param   numIncr       numeric incremental value used when random generation is disabled (type depends upon data type)
+     * @param   strPrefix     prefix used for all string value generation (suffix given by integer value)
+     * 
+     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
+     */
+    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable, long lngSeed, Number numIncr, String strPrefix) {
+        return new ScalarFactorySpec(enmValueType, bolRandEnable, lngSeed, numIncr, strPrefix);
+    }
+    
+    /**
+     * <p>
+     * Parses argument string array to identify and create a <code>ScalarFactorySpec</code> specification record.
      * </p>
      * <p>
      * The argument is typically part of an application command-line argument set obtained by parsing a delimited 
@@ -457,192 +643,6 @@ public record ScalarFactorySpec(
             return ScalarFactorySpec.from(enmValueType, randBolEnbl, incrLngStart, incrNumValue, stringPref);
     }
     
-    /**
-     * <p>
-     * Creates and returns a new <code>ScalarFactory</code> record with all default field values.
-     * </p>
-     * <p>
-     * All field values of the returned instance are taken from the JAL Tools default configuration.
-     * Use with discretion.
-     * </p>
-     * 
-     * @return  a new <code>ScalarFactorySpec</code> record populated with all default field values
-     * 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
-     */
-    public static ScalarFactorySpec   from() throws UnsupportedOperationException {
-        return ScalarFactorySpec.from(ENM_TYPE_DEF);
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
-     * </p>
-     * <p>
-     * Record fields not supplied are taken from the JAL Tools default configuration.
-     * <ul>
-     * <li>Field <code>{@link #bolRandEnbl()}</code> is taken directly from the JAL default configuration.</li>
-     * <li>Field <code>{@link #lngSeed()}</code> is interpreted by the random enable/disable flag.</li>
-     * <li>Field <code>{@link #numIncr()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
-     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
-     * </ul>
-     * </p>
-     * 
-     * @param   enmType    the data type of the scalar values to generate
-     * 
-     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
-     * 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
-     */
-    public static ScalarFactorySpec   from(JalScalarType enmValueType) throws UnsupportedOperationException {
-        
-        boolean bolRandEnable = BOL_RAND_ENBL_DEF;
-        
-        return ScalarFactorySpec.from(enmValueType, bolRandEnable);
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
-     * </p>
-     * <p>
-     * Record fields not supplied are taken from the JAL Tools default configuration.
-     * <ul>
-     * <li>Field <code>{@link #bolRandEnbl()}</code> is taken directly from the JAL default configuration.</li>
-     * <li>Field <code>{@link #numIncr()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
-     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
-     * </ul>
-     * </p>
-     * <p>
-     * <h2>WARNING:</h2>
-     * Use this creator with caution as the 'lngSeed' value is interpreted according to the default value of
-     * the 'bolRandEnbl' parameter (i.e., <code>{@link #BOL_RAND_ENBL_DEF}</code>).
-     * </p>
-     * 
-     * @param   enmType    the data type of the scalar values to generate
-     * @param   lngSeed    lngSeed value for random number generation or start value for incremental value generation   
-     * 
-     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
-     * 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
-     */
-    public static ScalarFactorySpec   from(JalScalarType enmValueType, long lngSeed) throws UnsupportedOperationException {
-        
-        boolean bolRandEnable = BOL_RAND_ENBL_DEF;
-        
-        return ScalarFactorySpec.from(enmValueType, bolRandEnable, lngSeed);
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
-     * </p>
-     * <p>
-     * Record fields not supplied are taken from the JAL Tools default configuration.
-     * <ul>
-     * <li>Field <code>{@link #lngSeed()}</code> is interpreted by the random enable/disable flag.</li>
-     * <li>Field <code>{@link #numIncr()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
-     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
-     * </ul>
-     * </p>
-     * 
-     * @param   enmType    the data type of the scalar values to generate
-     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
-     * 
-     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
-     * 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
-     */
-    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable) throws UnsupportedOperationException {
-        
-        long    seed;
-        if (bolRandEnable)
-            seed = LNG_RAND_SEED_DEF;
-        else
-            seed = LNG_INCR_SEED_DEF;
-            
-        return ScalarFactorySpec.from(enmValueType, bolRandEnable, seed);
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
-     * </p>
-     * <p>
-     * Record fields not supplied are taken from the JAL Tools default configuration.
-     * <ul>
-     * <li>Field <code>{@link #numIncr()()}</code> is interpreted by the <code>JalScalarType</code> argument.</li>
-     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
-     * </ul>
-     * </p>
-     * 
-     * @param   enmType       the data type of the scalar values to generate
-     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
-     * @param   lngSeed       lngSeed value for random number generation or start value for incremental value generation   
-     * 
-     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
-     * 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr()}</code> field for value type  
-     */
-    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable, long lngSeed) throws UnsupportedOperationException {
-        
-        // Extract the incremental value from the JAL default parameters
-        Number numIncr = switch (enmValueType) {
-        case BOOLEAN -> Integer.valueOf(0);
-        case INTEGER -> INT_INCR_DEF;
-        case LONG -> LNG_INCR_DEF;
-        case FLOAT -> FLT_INCR_DEF;
-        case DOUBLE -> DBL_INCR_DEF;
-        case STRING -> INT_STR_INCR_DEF;
-        default -> throw new UnsupportedOperationException("Increment value not available for type: " + enmValueType);
-        };
-        
-        return ScalarFactorySpec.from(enmValueType, bolRandEnable, lngSeed, numIncr);
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
-     * </p>
-     * <p>
-     * Record fields not supplied are taken from the JAL Tools default configuration.
-     * <ul>
-     * <li>Field <code>{@link #strPrefix()}</code> is taken from the configuration <code>{@link #STR_PREFIX}</code>.</li>
-     * </ul>
-     * </p>
-     * 
-     * @param   enmType       the data type of the scalar values to generate
-     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
-     * @param   lngSeed       lngSeed value for random number generation or start value for incremental value generation   
-     * @param   numIncr       numeric incremental value used when random generation is disabled (type depends upon data type)
-     * 
-     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
-     */
-    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable, long seed, Number numIncr) {
-        
-        return ScalarFactorySpec.from(enmValueType, bolRandEnable, seed, numIncr, STR_PREFIX_DEF); 
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>ScalarFactorySpec</code> record from the given arguments.
-     * </p>
-     * <p>
-     * This creator is equivalent to the canonical constructors.
-     * </p>
-     * 
-     * @param   enmType       the data type of the scalar values to generate
-     * @param   bolRandEnbl   enable/disable the use of random number generation for scalar values
-     * @param   lngSeed       seed value for random number generation or start value for incremental value generation   
-     * @param   numIncr       numeric incremental value used when random generation is disabled (type depends upon data type)
-     * @param   strPrefix     prefix used for all string value generation (suffix given by integer value)
-     * 
-     * @return  a new <code>ScalarFactorySpec</code> record populated with the given argument values
-     */
-    public static ScalarFactorySpec   from(JalScalarType enmValueType, boolean bolRandEnable, long lngSeed, Number numIncr, String strPrefix) {
-        return new ScalarFactorySpec(enmValueType, bolRandEnable, lngSeed, numIncr, strPrefix);
-    }
-    
     
     //
     // Operations
@@ -730,7 +730,6 @@ public record ScalarFactorySpec(
     //
     // Internal Types
     //
-    
     
     /**
      * <p>

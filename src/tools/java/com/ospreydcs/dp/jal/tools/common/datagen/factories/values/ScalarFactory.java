@@ -343,6 +343,118 @@ public class ScalarFactory implements IScalarFactory {
         return new ScalarFactory(enmType, bolRandEnbl, lngSeed, numIncr, strPrefix);
     }
 
+    /**
+     * <p>
+     * Parses argument string array to identify and create a <code>ScalarFactory</code> instance.
+     * </p>
+     * <p>
+     * The argument is typically part of an application command-line argument set obtained by parsing a delimited 
+     * variable such as "--stype INTEGER FALSE 0 1".  The method parses the variable parameters returning the
+     * corresponding configuration record.  An exception is thrown if the argument collection is not properly
+     * formatted as described below.
+     * </p> 
+     * <p>
+     * <h2>Caveat</h2>
+     * Clearly it is not necessary for the arguments to be obtained from an application command line as described.  
+     * So long as the stated conditions and formats are followed the method will create and return an appropriate 
+     * <code>ScalarFactorySpec</code> configuration record.
+     * </p> 
+     * <p>
+     * <h2>Usage</h2>
+     * The argument is assumed to be part of an application command line.  For example, the command-line could
+     * contain the delimited variable "--stype" which appears as
+     * <code>
+     * <pre>
+     * > java application --stype STYPE bolRandEnbl lngSeed numIncr strPrefix
+     * </pre>
+     * </code>
+     * where 
+     * <ul>
+     * <li>'STYPE' is a <code>JalScalarType</code> enumeration constant,</li>
+     * <li>'bolRandEnbl' is the <code>{@link #bolRandEnbl</code> attribute,</li>
+     * <li>'lngSeed' is the <code>{@link #lngSeed}</code> attribute,</li>
+     * <li>'numIncr' is the <code>{@link #numIncr}</code> attribute,</li>
+     * <li>'strPrefix' is the <code>{@link #strPrefix}</code> attribute.</li>
+     * </ul>
+     * The argument to this method is then the set of command-line strings
+     * <code>
+     * <pre>
+     * [STYPE [bolRandEnbl [lngSeed [numIncr [strPrefix]]]]]
+     * </pre>
+     * </code>
+     * The brackets '[...]' indicate optional inclusion.
+     * Note that the options are nested. For example, if the 'lngSeed' field is included then the 'bolRandEnbl'
+     * field must also be included.  If the 'strPrefix' field is included then all fields must be included.
+     * </p>
+     * <p>
+     * <s>  
+     * Thus, the field 'STYPE' must always be included
+     * in the arguments (i.e., the argument length must be greater than or equal to 1), or an exception is thrown.
+     * </s>
+     * </p>
+     * <p>
+     * <h2>Optional Fields</h2>
+     * All optional field values not included in the argument collection are taken from the JAL Tools default
+     * configuration.  Note that the nesting of optional field values is necessary because all argument values
+     * are strings, thus, type cannot be determined at runtime but must be inferred.
+     * </p> 
+     * 
+     * @apiNote
+     * The implementation has been modified so that an empty argument collection returns the default 
+     * <code>ScalarFactory</code> given by <code>{@link #from()}</code>.  This configuration is completely
+     * determined by the JAL Tools default configuration for scalar value factories. 
+     *  
+     * @param args  argument string defining the scalar factory
+     * 
+     * @return  a new configuration record populated by the parsed argument elements
+     * 
+     * @throws TypeNotPresentException          the 1st element was not a <code>JalScalarType</code> enumeration constant
+     * @throws NumberFormatException            invalid numeric format (e.g., 'lngSeed', 'numIncr')
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIcr}</code> field for numeric value type  
+     */
+    public static ScalarFactory parse(String...args) throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException {
+
+        // Check argument length
+        if (args.length < 1)
+            return ScalarFactory.from();
+
+        // Get the value type of the scalars to generate
+        String          strValueType = args[0];
+        JalScalarType   enmValueType = JalScalarType.valueFrom(strValueType);     // throws TypeNotPresentException
+        
+        // --- Parse the random number generation enable/disable flag ---
+        if (args.length < 2)
+            return ScalarFactory.from(enmValueType);
+        Boolean bolRandEnable = Boolean.valueOf(args[1]);
+        
+        // --- Parse the lngSeed field value ---
+        if (args.length < 3)
+            return ScalarFactory.from(enmValueType, bolRandEnable);
+        Long    lngSeed = Long.valueOf(args[2]);    // throws NumberFormatException
+        
+        // --- Parse the increment field value ---
+        if (args.length < 4)
+            return ScalarFactory.from(enmValueType, bolRandEnable, lngSeed);
+        String  strIncr = args[3];
+        
+        Number  numIncr = switch (enmValueType) {
+        case BOOLEAN -> Integer.valueOf(strIncr);   // throws NumberFormatException
+        case INTEGER -> Integer.valueOf(strIncr);   // throws NumberFormatException
+        case LONG -> Long.valueOf(strIncr);         // throws NumberFormatException
+        case DOUBLE -> Double.valueOf(strIncr);     // throws NumberFormatException
+        case FLOAT -> Float.valueOf(strIncr);       // throws NumberFormatException
+        case STRING -> Integer.valueOf(strIncr);    // throws NumberFormatException
+        default -> throw new UnsupportedOperationException("Increment value not available for type: " + enmValueType);
+        };
+        
+        // --- Parse the string prefix field value ---
+        if (args.length < 5)
+            return ScalarFactory.from(enmValueType, bolRandEnable, lngSeed, numIncr);
+        
+        String  strPrefix = args[4];
+        return ScalarFactory.from(enmValueType, bolRandEnable, lngSeed, numIncr, strPrefix);
+    }
+    
     
     //
     // Library Resources

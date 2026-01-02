@@ -295,6 +295,7 @@ public record TimestampFactorySpec(boolean bolRand, long lngSeed, Duration durPe
             return TimestampFactorySpec.from(durPeriod, insStart);
         }
     }
+
     
     //
     // Operations

@@ -340,6 +340,7 @@ public record TensorFactorySpec(int[] arrShape, ScalarFactorySpec recScalarSpec)
         
         return TensorFactorySpec.from(shape, recScalarSpec);
     }
+
     
     //
     // Operations

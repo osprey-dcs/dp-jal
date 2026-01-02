@@ -23,7 +23,7 @@
  * @since Dec 20, 2025
  *
  */
-package com.ospreydcs.dp.jal.tools.common.datagen.factories.frames;
+package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 
 import java.lang.reflect.MalformedParametersException;
 import java.time.format.DateTimeParseException;
@@ -42,12 +42,7 @@ import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ByteArrayFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ImageFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.StructureFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.TensorFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.TimestampFactorySpec;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.cols.JalToolsColumnsConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;

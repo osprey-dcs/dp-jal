@@ -26,7 +26,11 @@
 package com.ospreydcs.dp.jal.tools.common.datagen.factories.values;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+
+import javax.naming.ConfigurationException;
 
 import org.epics.pvdata.pv.ScalarType;
 
@@ -369,6 +373,102 @@ public class TensorFactory implements IDatumFactory {
      */
     public static TensorFactory  from(int[] arrShape, ScalarFactory facValues) throws IllegalArgumentException {
         return new TensorFactory(arrShape, facValues);
+    }
+    
+    /**
+     * <p>
+     * Parses the argument collection for the field values of the returned <code>TensorFactory</code> instance.
+     * </p>
+     * <p>
+     * The argument collection is assumed to originate from an application command-line argument collection.
+     * The <code>{@link TensorFactory}</code> class requires a 'shape' parameter and a 
+     * <code>{@link ScalarFactory}</code> to create its element values.
+     * </p>
+     * <h2>Scalar Factory</h2>
+     * The <code>{@link TensorFactory}</code> class requires a <code>{@link ScalarFactory}</code> instance.
+     * The scalar factory is used to generate the field values
+     * of all tree structure fields produced by the structure factory described by this configuration.
+     * Note the configuration for the <code>{@link ScalarFactory}</code> object
+     * is potentially included in the argument collection; it not a default scalar factory is supplied.
+     * </p>  
+     * <p>
+     * <h2>Format</h2>
+     * The format of the argument collection is assumed to be
+     * <pre>
+     * > n1 [n2 [n3 ...]]...] [facScalarSpec]
+     * </pre>
+     * where
+     * <ul>
+     * <li>'n1' = size of the 1st axis.</li>
+     * <li>'n2' = size of the 1st axis.</li>
+     * <li>'n3' = size of the 1st axis.</li>
+     * <li>'...' = sizes of the remaining axes.</li>
+     * <li>'facScalarSpec' = configuration parameters for the scalar factory producing tensor element values.</li>
+     * </ul>
+     * Note that the tensor shape is determined by the values
+     * 'n1, 'n2', 'n3', ..., etc.  These values are then used to pack the shape array 
+     * <code>{@link #arrShape}</code> = { n1, n2, n3, ... }.
+     * Thus, at least one argument element is required to specify a tensor shape, otherwise an exception is thrown.
+     * </p>
+     * <h2>Optional Arguments</h2>
+     * The brackets indicate optional arguments.  The arguments are interpreted as follows:  
+     * <ul>
+     * <li>If the 'facScalarSpec' value is not present the argument is populated with the default scalar factory
+     *     <code>{@link ScalarFactory#from()}</code>.
+     * </li>
+     * <li>The shape of the tensor is determined by the number an values within the set {n1, n2, n3, ...}.  A tensor
+     *     must have at least one axis, thus, the value 'n1' is required and are optional, 
+     *     indicating higher-dimensional tensors.
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param args  argument collection to be parsed, format as described above
+     * 
+     * @return  a new <code>TensorFactory</code> record populated with the parsed argument values
+     * 
+     * @throws ConfigurationException           the tensor shape was invalid (e.g., an axis size could not be parsed, non-positive axis size, etc.)
+     * @throws TypeNotPresentException          unknown <code>JalScalarType</code> enumeration constant
+     * @throws NumberFormatException            invalid numeric format (bad 'numIncr' or 'lngSeed') 
+     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr}</code> field for numeric value type  
+     */
+    public static TensorFactory parse(String...args) throws ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException {
+        
+        // Check arguments
+        if (args.length < 1)
+            return TensorFactory.from();
+        
+        // Parse through the argument values extracting the shape
+        //  Parsing continues until a non-integer value is found (the beginning of the scalar factory configuration)
+        List<Integer>   lstAxes = new LinkedList<>();
+        int             indAxes = 0;
+        for (String strArg : args) {
+            
+            try {
+                Integer intAxis = Integer.valueOf(strArg);
+                lstAxes.add(intAxis);
+                indAxes++;
+                
+            } catch (NumberFormatException e) {
+                break;
+            }
+        }
+        
+        // Check that at least one axis size was correctly parsed and all axis size are positive
+        if (indAxes == 0)
+            throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() + " - Arguments did not contain shape description: " + Arrays.asList(args));
+        if (!lstAxes.stream().allMatch(i -> (i > 0)))
+            throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() + " - Shape specification contained non-positive axis size: " + lstAxes);
+        
+        // Converted the list of axes sizes to an int array
+        int[]       shape = lstAxes.stream().mapToInt(i -> i).toArray();
+
+        // Extract the remaining arguments from the original argument set
+        //  These are the configuration parameters for the scalar factory
+        String[]        arrScalCfg = Arrays.copyOfRange(args, indAxes, args.length);
+        ScalarFactory   facScalar  = ScalarFactory.parse(arrScalCfg); // throws TypeNotPresentException, NumericFormatException, UnsupportedOperationException
+        
+        return TensorFactory.from(shape, facScalar);
     }
     
 

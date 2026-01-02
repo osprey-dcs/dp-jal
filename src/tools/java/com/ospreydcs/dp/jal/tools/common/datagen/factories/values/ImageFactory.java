@@ -230,9 +230,73 @@ public class ImageFactory implements IDatumFactory {
         return new ImageFactory(szAlloc, enmFormat, strNmPref);
     }
     
+    /**
+     * <p>
+     * Parses the argument collection for the field values of the returned <code>ImageFactory</code> instance.
+     * </p>
+     * <p>
+     * The argument collection is assumed to originate from an application command-line argument collection.
+     * The <code>{@link ImageFactory}</code> class has three parameters: 1) image 'size', 2) image 'format', and
+     * 3) image name 'prefix'.
+     * </p>
+     * <p>
+     * <h2>Format</h2>
+     * The format of the arguments is the following :
+     * <ul>
+     * <pre>
+     * <li>  > [size [format [prefix]]]</li>
+     * </pre>
+     * </ul>
+     * where
+     * <ul>
+     * <li>'size' = size of images produced (in bytes) (int value),</li>
+     * <li>'format' = image format (<code>{@link BufferedImage#Format})</code>,</li>
+     * <li>'prefix' = name prefix given to all images produced (full name appended by index).</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>Optional Arguments</h2>
+     * The brackets indicate optional values in the argument collection.  If not present they are populated with
+     * the default values of the JAL Tools default configuration.
+     * <ul>
+     * <li>'size' = <code>{@link #INT_SIZE_DEF}</code>.</li>
+     * <li>'format' = <code>{@link #ENM_FMT_DEF}</code>.</li>
+     * <li>'prefix' = <code>{@link #STR_NM_PREF_DEF}</code>.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * Note that optional parameters are ordered and nested.  Due to the nature of string parsing the 
+     * ordering must be respected.  For example, to include the 'prefix' parameter all other parameters
+     * must be supplied.
+     * </p>  
+     * 
+     * @param args  argument collection to be parsed, format as described above
+     * 
+     * @return  a new <code>TimestampFactorySpec</code> record populated with the parsed argument values
+     * 
+     * @throws NumberFormatException    invalid numeric format for the 'size' parameter 
+     * @throws TypeNotPresentException  the 'format' was unrecognized (i.e., not a {@link BufferedImage#Format} constant) 
+     */
+    public static ImageFactory parse(String...args) throws NumberFormatException, TypeNotPresentException {
+        
+        if (args.length < 1)
+            return ImageFactory.from();
+        
+        int     intSize = Integer.valueOf(args[0]);     // throws NumberFormatException
+        if (args.length < 2)
+            return ImageFactory.from(intSize);
+        
+        BufferedImage.Format    enmFmt = BufferedImage.Format.getConstant(args[1]); // throws TypeNotPresentException
+        if (args.length < 3) 
+            return ImageFactory.from(intSize, enmFmt);
+        
+        String  strPref = args[2];
+        return ImageFactory.from(intSize, enmFmt, strPref);
+    }
+    
     
     // 
-    // JAL Tools Resources
+    // LIbrary Resources
     //
     
     /** Default image generation parameters */

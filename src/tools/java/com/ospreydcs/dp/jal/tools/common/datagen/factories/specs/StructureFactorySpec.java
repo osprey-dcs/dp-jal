@@ -515,6 +515,7 @@ public record StructureFactorySpec(int intDepth, int intFanout, boolean bolUniqN
 
         return StructureFactorySpec.from(depth, fanout, bolUniqNms, recScalarSpec);
     }
+
     
     //
     // Operations

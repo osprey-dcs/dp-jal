@@ -73,8 +73,8 @@ public record ByteArrayFactorySpec(int szArrays) {
      * </p>
      * <p>
      * The argument collection is assumed to originate from an application command-line argument collection.
-     * The <code>{@link ByteArrayFactory}</code> class is quite simple requiring only a single configuration
-     * parameter, the size of the arrays produced. 
+     * The <code>{@link ByteArrayFactorySpec}</code> specification is quite simple requiring only a single 
+     * configuration parameter, the size of the arrays produced. 
      * <p>
      * <h2>Format</h2>
      * The format of the argument collection is assumed to be

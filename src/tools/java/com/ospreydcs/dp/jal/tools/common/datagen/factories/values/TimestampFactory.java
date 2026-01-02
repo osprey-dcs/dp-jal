@@ -27,7 +27,9 @@ package com.ospreydcs.dp.jal.tools.common.datagen.factories.values;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Random;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
@@ -36,6 +38,7 @@ import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.values.JalToolsTmsFactoryConfig;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
@@ -316,9 +319,88 @@ public class TimestampFactory implements IDatumFactory {
         return new TimestampFactory(durPeriod, insStart);
     }
     
+    /**
+     * <p>
+     * Parses the argument collection for the field values of the returned <code>TimestampFactory</code> instance.
+     * </p>
+     * <p>
+     * The argument collection is assumed to originate from an application command-line argument collection.
+     * There are 2 possibilities for a <code>{@link TimestampFactory}</code>: 1) a random timestamp factory and,
+     * 2) and incremental timestamp factory.  In the first case there is 1 parameter, the random number 'seed'
+     * value.  In the second case there are two parameters, the 'period' and the 'start' time instant.
+     * </p>
+     * <h2>Format</h2>
+     * The format of the arguments is either of the following 2 possibilities:
+     * <ol>
+     * <pre>
+     * <li>  > false [seed]</li>
+     *    or
+     * <li>  > true [period [start]]</li>
+     * </pre>
+     * </ol>
+     * where
+     * <ul>
+     * <li>'seed' = seed value for the random number generation, where 0 indicates random seed (long value),</li>
+     * <li>'period' = sampling period of an incremental timestamp factory (ISO-8605 duration format),</li>
+     * <li>'start' = start time for an incremental timestamp factory (ISO-8605 date/time format).</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>Optional Arguments</h2>
+     * The brackets indicate optional values in the argument collection.  If not present they are populated with
+     * the default values of the JAL Tools default configuration.
+     * <ul>
+     * <li>'seed' = <code>{@link #LNG_RND_SEED_DEF}</code>.</li>
+     * <li>'period' = <code>{@link #DUR_INCR_PERIOD_DEF}</code>.</li>
+     * <li>'start' = <code>{@link #INS_INCR_START_DEF}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param args  argument collection to be parsed, format as described above
+     * 
+     * @return  a new <code>TimestampFactory</code> instance configured with the parsed argument values
+     * 
+     * @throws IllegalArgumentException the argument collection was empty (must have at least 1 element - bolRand)
+     * @throws NumberFormatException    the 'seed' value could not be parsed
+     * @throws DateTimeParseException   the 'period' or 'instant' value could not be parsed
+     */
+    public static TimestampFactory  parse(String...args) throws IllegalArgumentException, NumberFormatException, DateTimeParseException {
+        
+        if (args.length < 1)
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() 
+                    + " - Argument must contain at least one argument: " 
+                    + Arrays.asList(args) );
+
+        // Get the random generation enable/disable flag
+        boolean bolRand = Boolean.valueOf(args[0]);
+        
+        // Populate record according to random enable/disable flag
+        if (bolRand) {  
+            // Random timestamp factory
+            if (args.length < 2)
+                return TimestampFactory.from(bolRand);
+            
+            long    lngSeed = Long.valueOf(args[1]);    // throws NumberFormatException
+            return TimestampFactory.from(bolRand, lngSeed);
+            
+            
+        } else {        
+            // Incremental timestamp factory
+            if (args.length < 2)
+                return TimestampFactory.from();
+
+            Duration    durPeriod = Duration.parse(args[1]);    // throws DateTimeParseException
+            if (args.length < 3) 
+                return TimestampFactory.from(durPeriod);
+            
+            Instant     insStart = Instant.parse(args[2]);      // throws DateTimeParseException
+            return TimestampFactory.from(durPeriod, insStart);
+        }
+    }
+    
     
     //
-    // JAL Tools Resources
+    // Library Resources
     //
     
     /** The default configuration parameters for simulated timestamp value generation */

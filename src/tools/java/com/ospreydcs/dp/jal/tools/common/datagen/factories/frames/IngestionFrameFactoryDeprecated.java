@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	IngestionFrameFactoryDep.java
+ * File:	IngestionFrameFactoryDeprecated.java
  * Package: com.ospreydcs.dp.jal.tools.common.datagen.factories.frames
- * Type: 	IngestionFrameFactoryDep
+ * Type: 	IngestionFrameFactoryDeprecated
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -52,15 +52,15 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * Class for generating <code>IngestionFrame</code> instances containing simulated data.
  * </p>
  * <p>
- * A single class instance of <code>IngestionFrameFactoryDep</code> can create multiple <code>IngestionFrame</code>
+ * A single class instance of <code>IngestionFrameFactoryDeprecated</code> can create multiple <code>IngestionFrame</code>
  * objects, which will contain different data and sequential time stamps.  Use the <code>{@link #nextFrame()}</code>
  * for <code>IngestionFrame</code> generation after class instantiation.
  * </p>
  * <p>
  * <h2>Configuration</h2>
- * Instances of <code>IngestionFrameFactoryDep</code> are configured upon creation/construction.  A record object of
+ * Instances of <code>IngestionFrameFactoryDeprecated</code> are configured upon creation/construction.  A record object of
  * type <code>{@link SampleBlockConfigDep}</code> is required for instantiation.  The record contains all fields necessary
- * for full configuration and all <code>IngestionFrameFactoryDep</code> objects are ready for ingestion frame creation
+ * for full configuration and all <code>IngestionFrameFactoryDeprecated</code> objects are ready for ingestion frame creation
  * (i.e., invoking the <code>{@link #nextFrame()}</code> method) after instantiation.
  * <p> 
  * </p>
@@ -136,7 +136,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * @deprecated  Replaced by IngestionFrameFactory
  */
 @Deprecated(since="Dec 5, 2025", forRemoval=true)
-public class IngestionFrameFactoryDep {
+public class IngestionFrameFactoryDeprecated {
 
     
     //
@@ -152,7 +152,7 @@ public class IngestionFrameFactoryDep {
     //
     
     /** Name of the frame generator */
-    public static final String  STR_SRC_NAME = IngestionFrameFactoryDep.class.getSimpleName();
+    public static final String  STR_SRC_NAME = IngestionFrameFactoryDeprecated.class.getSimpleName();
     
     /** Environment variable for current user */
     public static final String  STR_USERNAME = "USERNAME";
@@ -237,11 +237,11 @@ public class IngestionFrameFactoryDep {
     
     /**
      * <p>
-     * Constructs a new <code>IngestionFrameFactoryDep</code> instance.
+     * Constructs a new <code>IngestionFrameFactoryDeprecated</code> instance.
      * </p>
      *
      */
-    public IngestionFrameFactoryDep(Instant insStart, int cntSamples, Duration durPeriod, DpTimestampCase enmTmsCase, Collection<IDataColumnFactory<Object>> setColFacs) {
+    public IngestionFrameFactoryDeprecated(Instant insStart, int cntSamples, Duration durPeriod, DpTimestampCase enmTmsCase, Collection<IDataColumnFactory<Object>> setColFacs) {
         this.insStart = insStart;
         this.cntSamples = cntSamples;
         this.durPeriod = durPeriod;

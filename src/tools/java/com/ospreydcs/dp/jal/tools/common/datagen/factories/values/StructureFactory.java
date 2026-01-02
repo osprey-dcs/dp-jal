@@ -25,6 +25,7 @@
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.factories.values;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -953,6 +954,100 @@ public class StructureFactory implements IDatumFactory {
      */
     public static StructureFactory  from(int depth, int fanout, boolean bolUniqFldNms, ScalarFactory facValues) throws IllegalArgumentException {
         return new StructureFactory(depth, fanout, bolUniqFldNms, facValues);      // throws IllegalArgumentException
+    }
+    
+    /**
+     * <p>
+     * Parses the argument collection for the field values of the returned <code>StructureFactory</code> instance.
+     * </p>
+     * <p>
+     * The argument collection is assumed to originate from an application command-line argument collection.
+     * The <code>{@link TensorFactory}</code> class requires a 'shape' parameter and a 
+     * <code>{@link ScalarFactory}</code> to create its element values.
+     * </p>
+     * <p>
+     * <h2>Scalar Factory</h2>
+     * The <code>{@link TensorFactory}</code> class requires a <code>{@link ScalarFactory}</code> instance.
+     * The scalar factory is used to generate the elements
+     * values of all tensors produced by the tensor factory described by this configuration.
+     * Note the configuration for the <code>{@link ScalarFactory}</code> object
+     * is potentially included in the argument collection; if not provided a default scalar factory is supplied.
+     * </p>  
+     * <p>
+     * <h2>Format</h2>
+     * The format of the argument collection is assumed to be
+     * <pre>
+     * > depth fanout [bolUniqNms] [specScalarFac]
+     * </pre>
+     * where
+     * <ul>
+     * <li>'depth' = tree structure node depth.</li>
+     * <li>'fanout' = tree structure node fanout at each non-terminal node.</li>
+     * <li>'bolUniqNms' = size of the 1st axis.</li>
+     * <li>'specScalarFac' = specification for the scalar factory producing tensor element values.</li>
+     * </ul>
+     * Note that 'depth' and 'fanout' are required parameters, thus, there must be at least 2 argument elements
+     * or an exception is thrown.
+     * </p>
+     * <h2>Optional Arguments</h2>
+     * The brackets indicate optional arguments.  The arguments are interpreted as follows:  
+     * <ul>
+     * <li>If the 'recScalarSpec' value is not present the argument is populated with the default scalar factory
+     *     <code>{@link ScalarFactory#from()}</code>.
+     * </li>
+     * <li>If the 'bolUniqNms' value is not present the value is taken from the JAL Tools default configuration
+     *     with value <code>{@link #BOL_FLD_NMS_UNIQ_ENBL_DEF}</code>
+     * </li>
+     * </ul>
+     * </p>
+     * 
+     * @param args  argument collection to be parsed, format as described above
+     * 
+     * @return  a new <code>StructureFactory</code> instance configured with the parsed argument values
+     * 
+     * @throws <s>ConfigurationException       argument must have at least 2 elements; 'depth' and 'fanout' parameters</s>
+     * @throws NumberFormatException        invalid numeric format (e.g., non-parseable 'depth', 'fanout', or scalar factory configuration)
+     * @throws TypeNotPresentException      scalar factory configuration had unrecognized <code>JalScalarType</code> constant
+     * @throws UnsupportedOperationException scalar factory configuration count not create 'increment' field
+     * 
+     * @see ScalarFactory
+     */
+    public static StructureFactory  parse(String...args) throws NumberFormatException, TypeNotPresentException, UnsupportedOperationException {
+        
+        // Check argument size
+        if (args.length < 2)
+            return StructureFactory.from();
+        
+        // Parse the depth and fan-out parameters
+        int     depth = Integer.valueOf(args[0]);   // throws NumberFormatException
+        int     fanout = Integer.valueOf(args[1]);  // throws NumberFormatException
+        if (args.length < 3)
+            return StructureFactory.from(depth, fanout);
+        
+        // Check if 3rd argument is a JalScalarType constant, ie., start of scalar factory configuration
+        int     indScalCfg = 0; // the starting argument index for the scalar factory configuration (if it exists)
+        boolean bolUniqNms;     // the enable/disable unique field names flag
+        try {
+            @SuppressWarnings("unused")
+            JalScalarType   enmType = JalScalarType.valueFrom(args[2]);   // throws TypeNotPresentException
+
+            // The scalar factory configuration exists and starts here (at index 2)
+            //  No enable/disable unique field name provided - use default
+            indScalCfg = 2;
+            bolUniqNms = BOL_FLD_NMS_UNIQ_ENBL_DEF;
+            
+        } catch (TypeNotPresentException e) {
+
+            // The 3rd argument was not a JalScalarType
+            //  Assume enable/disable unique field name flag and parse it
+            indScalCfg = 3;
+            bolUniqNms = Boolean.valueOf(args[2]);
+        }
+        
+        String[]            arrScalCfg = Arrays.copyOfRange(args, indScalCfg, args.length);
+        ScalarFactory       facScalar = ScalarFactory.parse(arrScalCfg); // throws TypeNotPresentException, NumericFormatException, UnsupportedOperationException
+
+        return StructureFactory.from(depth, fanout, bolUniqNms, facScalar);
     }
     
 
