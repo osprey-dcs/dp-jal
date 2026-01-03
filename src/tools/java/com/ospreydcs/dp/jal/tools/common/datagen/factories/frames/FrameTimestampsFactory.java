@@ -422,18 +422,14 @@ public class FrameTimestampsFactory implements IFrameTimestampsFactory {
 //        // TODO Auto-generated method stub
 //        return null;
 //    }
-//
-//    /**
-//     * @see com.ospreydcs.dp.jal.tools.common.datagen.IFrameTimestampsFactory#nextFrameStart(java.time.Instant)
-//     */
-//    @Override
-//    public Instant nextFrameStart(Instant insStart) throws DateTimeException, ArithmeticException {
-//        
-//        Duration    durRange = this.durPeriod.multipliedBy(this.cntSmpls);    // throws ArithmeticException
-//        Instant     insNext = insStart.plus(durRange);      // throws DateTimeException, ArithmeticException
-//        
-//        return insNext;
-//    }
+
+    /**
+     * @see com.ospreydcs.dp.jal.tools.common.datagen.IFrameTimestampsFactory#nextFrameStart(java.time.Instant)
+     */
+    @Override
+    public Instant nextFrameStart() throws DateTimeException, ArithmeticException {
+        return this.insStart;
+    }
 
     /**
      * @see com.ospreydcs.dp.jal.tools.common.datagen.IFrameTimestampsFactory#nextUniformClock(java.time.Instant)

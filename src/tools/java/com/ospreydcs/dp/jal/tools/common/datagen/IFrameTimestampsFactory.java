@@ -117,24 +117,27 @@ public interface IFrameTimestampsFactory {
     // Operations
     //
     
-//    /**
-//     * <p>
-//     * Computes and returns the start time for the next frame timestamp block from the given instant.
-//     * </p>
-//     * <p>
-//     * This method is used to advance the timestamp start time for ingestion frames.
-//     * The argument is assumed to be the start time of a current ingestion frame and the
-//     * returned value is then the start time instant for the next ingestion frame timestamps.
-//     * </p>
-//     *  
-//     * @param insStart  the current start time for current ingestion frame timestamps
-//     * 
-//     * @return  the start time for the next ingestion frame timestamps
-//     * 
-//     * @throws DateTimeException    overflow occurred in <code>Instant</code> addition 
-//     * @throws ArithmeticException  <code>Instant</code> addition failed or overflow in <code>Duration</code> multiplication  
-//     */
-//    public Instant nextFrameStart(Instant insStart) throws DateTimeException, ArithmeticException;
+    /**
+     * <p>
+     * Computes and returns the start time for the next frame timestamp block from the given instant.
+     * </p>
+     * <p>
+     * This method returns the start time for the next set of ingestion frame timestamps.
+     * It is essentially a convenience method that returns the staged first timestamp without having
+     * to create the timestamp set and then inspect.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The returned value is advanced after every invocation of <code>{@link #nextUniformClock()}</code>
+     * and/or <code>{@link #nextTimestampVector()}</code>.
+     * </p>
+     *  
+     * @return  the start time for the next ingestion frame timestamps
+     * 
+     * @throws DateTimeException    overflow occurred in <code>Instant</code> addition 
+     * @throws ArithmeticException  <code>Instant</code> addition failed or overflow in <code>Duration</code> multiplication  
+     */
+    public Instant nextFrameStart() throws DateTimeException, ArithmeticException;
     
     /**
      * <p>

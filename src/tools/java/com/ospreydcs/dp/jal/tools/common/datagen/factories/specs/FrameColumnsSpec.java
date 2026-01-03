@@ -751,8 +751,10 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * used by ingestion frame factories to create <code>{@link IngestionFrame}</code> instances when no explicit
      * configuration is given.
      * </p>
+     * </p>
      * The returned (ordered) list of <code>FrameColumnsSpec</code> records specifies all the data columns in the
-     * default ingestion frame.  The timestamps for an ingestion frame 
+     * default ingestion frame.  The timestamps for an ingestion frame are specified separately in 
+     * <code>{@link FrameTimestampsSpec}</code> specification. 
      * </p>
      * <p>
      * The method retrieves the default data column specifications contained in the <code>{@link JalToolsColumnsConfig}</code>

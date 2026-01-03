@@ -554,7 +554,6 @@ public class IngestionFrameFactoryDeprecated {
         
         return insNext;
     }
-
     
     /**
      * <p>
