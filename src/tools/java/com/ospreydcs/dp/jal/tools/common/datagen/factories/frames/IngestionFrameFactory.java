@@ -31,16 +31,17 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.naming.ConfigurationException;
 
+import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.DpTimestampCase;
 import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.ingest.IngestionFrame;
@@ -208,30 +209,30 @@ public class IngestionFrameFactory implements IFrameFactory {
     
     /** Default ingestion frame tag values */
     @SuppressWarnings("unused")
-    private static final List<String>        LST_FRM_TAGS_DEF = new ArrayList<>( CFG_DEF.tags );
+    private static final Set<String>            SET_FRM_TAGS_DEF = new TreeSet<>( CFG_DEF.tags.values );
     
     /** Default ingestion frame attribute pairs */
     @SuppressWarnings("unused")
-    private static final Map<String, String> MAP_FRM_ATTRS_DEF = new HashMap<>( CFG_DEF.attributes );
+    private static final Map<String, String>    MAP_FRM_ATTRS_DEF = new HashMap<>( CFG_DEF.attributes.pairs );
     
     
-    /** Common ingestion frame tag values */
-    private static final List<String>       LST_FRM_TAGS_CMN = new LinkedList<>();
+    /** Class ingestion frame tag values */
+    private static final Set<String>            SET_FRM_TAGS_CLS = new TreeSet<>();
     
-    /** Common ingestion frame attribute pairs */
-    private static final Map<String, String> MAP_FRM_ATTRS_CMN = new HashMap<>();
+    /** Class ingestion frame attribute pairs */
+    private static final Map<String, String>    MAP_FRM_ATTRS_CLS = new HashMap<>();
     
     
-    /** Common tags and attributes for ingestion frames */
+    /** Initialization for class tags and attributes for ingestion frames */
     static {
-        LST_FRM_TAGS_CMN.add(STR_SRC_NAME);
+        SET_FRM_TAGS_CLS.add(STR_SRC_NAME);
         
         String  strUser = System.getenv(STR_USERNAME);
         Instant insNow = Instant.now();
         
-        MAP_FRM_ATTRS_CMN.put("Source", STR_SRC_NAME);
-        MAP_FRM_ATTRS_CMN.put("Initiatiated", insNow.toString());
-        MAP_FRM_ATTRS_CMN.put("User", strUser);
+        MAP_FRM_ATTRS_CLS.put("Source", STR_SRC_NAME);
+        MAP_FRM_ATTRS_CLS.put("Initiatiated", insNow.toString());
+        MAP_FRM_ATTRS_CLS.put("User", strUser);
     }
     
     
@@ -255,6 +256,17 @@ public class IngestionFrameFactory implements IFrameFactory {
     
     /** The timestamp type of each generated ingestion frame */
     private final DpTimestampCase   enmTmsCase;
+    
+    
+    //
+    // Optional Attributes
+    //
+    
+    /** Optional tag values attached to each ingestion frame */
+    private final Set<String>           setTags = new TreeSet<>();
+    
+    /** Optional attribute (name, value) pairs attached to each ingestion frame */
+    private final Map<String, String>   mapAttrs = new HashMap<>();
     
     
     //
@@ -284,7 +296,354 @@ public class IngestionFrameFactory implements IFrameFactory {
         this.cntSamples = facTms.getSampleCount();
         this.enmTmsCase = facTms.getTimestampCase();
     }
+    
+    
+    //
+    // Configuration
+    //
+    
+    /**
+     * <p>
+     * Attaches the default ingestion frame tag values to all generated ingestion frames henceforth.
+     * </p>
+     * <p>
+     * The tag values of the default ingestion frame specified in the JAL Tools default configuration are
+     * added to the current tag value set for all ingestion frames.  These values are extracted from the default 
+     * configuration and contained in the class constant <code>{@link #SET_FRM_TAGS_DEF}</code>.
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method can be called at any time.</li>
+     * <li>Repeated invocation has no effect as tag values are unique.</li>
+     * </ul>
+     * </p>
+     */
+    public void attachDefaultTags() {
+        this.setTags.addAll(SET_FRM_TAGS_DEF);
+    }
+    
+    /**
+     * <p>
+     * Attaches the class ingestion frame tag values to all generated ingestion frames henceforth.
+     * </p>
+     * <p>
+     * The class tag values for <code>IngestionFrameFactory</code> are added to the current tag value set for all 
+     * ingestion frames.
+     * These values are created by the <code>IngestionFrameFactory</code> class and contained in the class constant 
+     * <code>{@link #SET_FRM_TAGS_CLS}</code>.
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method can be called at any time.</li>
+     * <li>Repeated invocation has no effect as tag values are unique.</li>
+     * </ul>
+     * </p>
+     */
+    public void attachClassTags() {
+        this.setTags.addAll(SET_FRM_TAGS_CLS);
+    }
+    
+    /**
+     * <p>
+     * Attaches the given tag value to all generated ingestion frames henceforth.
+     * </p>
+     * <p>
+     * The given tag value is added to the current set of tag values for all ingestion frames.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method can be called at any time.</li>
+     * <li>Repeated tag values are ignored as tag values are unique.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param strTag    tag value to be added to current tag value set
+     */
+    public void attachTag(String strTag) {
+        this.setTags.add(strTag);
+    }
+    
+    /**
+     * <p>
+     * Attaches the given collection of tag values to all generated ingestion frames henceforth.
+     * <p>
+     * <p>
+     * The given collection of tag values are added to the current tag value set for all ingestion frames.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method can be called at any time.</li>
+     * <li>Repeated tag values are ignored as tag values are unique.</li>
+     * </ul>
+     * </p>
+     *  
+     * @param conTags   collection of tag values to be added to current tag value set
+     */
+    public void attachTags(Collection<String> conTags) {
+        this.setTags.addAll(conTags);
+    }
+    
+    /**
+     * <p>
+     * Attaches the default ingestion frame attribute pairs to all generated ingestion frames henceforth.
+     * </p>
+     * <p>
+     * The attribute (name, value) pairs of the default ingestion frame specified in the JAL Tools default configuration 
+     * are added to the current attribute collection for all ingestion frames.  These pairs are extracted from the default 
+     * configuration and contained in the class constant <code>{@link #MAP_FRM_ATTRS_DEF}</code>.
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method can be called at any time.</li>
+     * <li>Repeated invocation has no effect as attribute names are unique.</li>
+     * </ul>
+     * </p>
+     */
+    public void attachDefaultAttributes() {
+        this.mapAttrs.putAll(MAP_FRM_ATTRS_DEF);
+    }
+    
+    /**
+     * <p>
+     * Attaches the class ingestion frame attribute pairs to all generated ingestion frames henceforth.
+     * </p>
+     * <p>
+     * The class (name, value) attribute pairs for <code>IngestionFrameFactory</code> are added to the current 
+     * attribute pair collection for all ingestion frames.
+     * These pairs are created by the <code>IngestionFrameFactory</code> class and contained in the class constant 
+     * <code>{@link #MAP_FRM_ATTRS_CLS}</code>.
+     * </p> 
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method can be called at any time.</li>
+     * <li>Repeated invocation has no effect as attribute names are unique.</li>
+     * </ul>
+     * </p>
+     */
+    public void attachClassAttributes() {
+        this.mapAttrs.putAll(MAP_FRM_ATTRS_CLS);
+    }
+    
+    /**
+     * <p>
+     * Adds the given (name, value) attribute pair to all generated ingestion frames henceforth.
+     * </p>
+     * <p>
+     * The given (name, value) attribute pair is added to the current collection of attribute pairs for all 
+     * ingestion frames.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method can be called at any time.</li>
+     * <li>Attributes with same names are overwritten as they must be unique.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param strName   attribute name
+     * @param strValue  attribute value
+     */
+    public void attachAttribute(String strName, String strValue) {
+        this.mapAttrs.put(strName, strValue);
+    }
+    
+    /**
+     * <p>
+     * Attaches the given collection of (name, value) attribute pairs to all generated ingestion frames henceforth.
+     * </p>
+     * <p>
+     * The given collection of (name, value) attribute pairs are added to the current collection of attribute pairs
+     * for all ingestion frames.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method can be called at any time.</li>
+     * <li>Attributes with same names are overwritten as they must be unique.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param mapAttrs
+     */
+    public void attachAttributes(Map<String, String> mapAttrs) {
+        this.mapAttrs.putAll(mapAttrs);
+    }
+    
+    /**
+     * <p>
+     * Adds the given frame columns factory to the current collection of ingestion frame columns factories.
+     * </p>
+     * <p>
+     * The given frame columns factory will be used henceforth in the creation of all ingestion frames henceforth.
+     * That is, after invocation, all ingestion frames produced by <code>{@link #nextFrame()}</code> will contain
+     * data columns generated by the given frame columns factory.
+     * </p>
+     * 
+     * @param facCols   frame columns factory to be added to current columns factories
+     */
+    public void addFrameColumns(IFrameColumnsFactory<Object> facCols) {
+        this.setFacCols.add(facCols);
+    }
+    
+    /**
+     * <p>
+     * Adds the given collection of frame columns factory to the current collection of ingestion frame columns factories.
+     * </p>
+     * <p>
+     * The given frame columns factories will be used henceforth in the creation of all ingestion frames henceforth.
+     * That is, after invocation, all ingestion frames produced by <code>{@link #nextFrame()}</code> will contain
+     * data columns generated by the given frame columns factories.
+     * </p>
+     * 
+     * @param conFacCols    collection of frame columns factory to be added to current columns factories
+     */
+    public void addFrameColumns(Collection<IFrameColumnsFactory<Object>> conFacCols) {
+        this.setFacCols.addAll(conFacCols);
+    }
 
+    
+    // 
+    // State Inquiry
+    //
+    
+    /**
+     * <p>
+     * Retrieves and returns the total column count for each ingestion frame produced.
+     * </p>
+     * <p>
+     * Iterates through the current collection of frame column factories and retrieves the column 
+     * count from each frame column factory.
+     * The counts for each factory are then summed and returned.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This is not a strict getter operation and, thus, requires some computational resources to perform.
+     * </p>  
+     * 
+     * @return  the total number of columns for each ingestion frame produced
+     */
+    public int  retrieveCountCount() {
+        int     cntCols = this.setFacCols.stream().mapToInt(fac -> fac.getColumnCount()).sum();
+        
+        return cntCols;
+    }
+    
+    /**
+     * <p>
+     * Retrieves and returns all the ingestion frame column names from the frame column factories.
+     * </p>
+     * <p>
+     * Iterates through the current collection of frame column factories and retrieves the collection
+     * of frame column names from each factory.  The entire set of column names is then aggregated and
+     * returned.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This is not a strict getter operation and, thus, requires some computational resources to perform.
+     * </p>  
+     * 
+     * @return  immutable set of all column names for each ingestion frame produced
+     */
+    public Set<String>  retrieveColumnNames() {
+        Set<String> setColNms = this.setFacCols
+                .stream()
+                .<Set<String>>map(fac -> fac.getColumnNames())
+                .<String>flatMap(set -> set.stream())
+                .collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
+        
+        return setColNms;
+    }
+    
+    /**
+     * <p>
+     * Retrieves and returns the various frame column data types for each ingestion frame produced.
+     * </p>
+     * <p>
+     * Iterates through the current collection of frame column factories and retrieves the
+     * data type it produces.  The data types are then aggregated and returned.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This is not a strict getter operation and, thus, requires some computational resources to perform.
+     * </p>  
+     *  
+     * @return  immutable set of data types contained in each ingestion frame produced
+     */
+    public Set<DpSupportedType>    retrieveColumnTypes() {
+        Set<DpSupportedType>   setColTypes = this.setFacCols
+                .stream()
+                .map(fac -> fac.getColumnType())
+                .collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
+        
+        return setColTypes;
+    }
+    
+    /**
+     * <p>
+     * Retrieves and returns the number of frame data columns of each column type in the produced ingestion frames.
+     * </p>
+     * <p>
+     * Iterates through the current collection of frame column factories and extracts the data type and number of
+     * columns for each factory.  The number of columns for each data type (regardless of column factory) are summed
+     * and put as the mapped column count for that data type.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This is not a strict getter operation and, thus, requires some computational resources to perform.
+     * </p>  
+     * 
+     * @return  immutable map of data type to column counts of that type
+     */
+    public Map<DpSupportedType, Integer>    retrieveColumnTypeCount() {
+        Map<DpSupportedType, Integer>   mapTypeToCnt = this.setFacCols
+                .stream()
+                .collect(
+                        Collectors.toMap(fac -> fac.getColumnType(),    // key map 
+                                         fac -> fac.getColumnCount(),   // value map
+                                         (i1, i2) -> i1 + i2)           // value merge function
+                        );
+        
+        return mapTypeToCnt;
+    }
+    
+    /**
+     * <p>
+     * Retrieves and returns the set of frame data column names for each column type in the produced ingestion frames.
+     * </p>
+     * <p>
+     * Iterates through the current collection of frame column factories and extracts the data type and set of column names
+     * for each factory.  The set of column names for each data type is aggregated (regardless of column factory) 
+     * then put as the mapped name set for that data type.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This is not a strict getter operation and, thus, requires some computational resources to perform.
+     * </p>  
+     * @return
+     */
+    public Map<DpSupportedType, Set<String>>   retrieveColumnTypeNames() {
+        Map<DpSupportedType, Set<String>>  mapTypeToNms = this.setFacCols
+                .stream()
+                .collect(
+                        Collectors.toMap(fac -> fac.getColumnType(), 
+                                         fac -> fac.getColumnNames(), 
+                                         (set1, set2) -> { 
+                                             TreeSet<String> set3 = new TreeSet<>(set1);
+                                             set3.addAll(set2);
+                                             return set3;
+                                             }
+                                         )
+                        );
+        
+        return mapTypeToNms;
+    }
+    
     
     //
     // IFrameFactory Interface
@@ -325,6 +684,7 @@ public class IngestionFrameFactory implements IFrameFactory {
         if (this.setFacCols.isEmpty())
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - There are no frame column factories for column creation.");
         
+        String                          strLabel = this.nextFrameLabel();
         Instant                         insFrmStart = this.facTms.nextFrameStart();
         ArrayList<IDataColumn<Object>>  vecCols = this.nextColumns();
         
@@ -345,10 +705,10 @@ public class IngestionFrameFactory implements IFrameFactory {
             }
         };
         
-        frmNext.setFrameLabel(this.nextFrameLabel());
+        frmNext.setFrameLabel(strLabel);
         frmNext.setFrameTimestamp(insFrmStart);
-        frmNext.addTags(LST_FRM_TAGS_CMN);
-        frmNext.addAttributes(MAP_FRM_ATTRS_CMN);
+        frmNext.addTags(this.setTags);
+        frmNext.addAttributes(this.mapAttrs);
         
         return frmNext;
     }

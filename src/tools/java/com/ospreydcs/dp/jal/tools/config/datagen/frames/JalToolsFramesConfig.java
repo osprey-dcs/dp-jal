@@ -26,7 +26,6 @@
 package com.ospreydcs.dp.jal.tools.config.datagen.frames;
 
 import java.util.List;
-import java.util.Map;
 
 import com.ospreydcs.dp.jal.config.model.ACfgOverride;
 import com.ospreydcs.dp.jal.config.model.CfgStructure;
@@ -52,12 +51,12 @@ public class JalToolsFramesConfig extends CfgStructure<JalToolsFramesConfig> {
     //
     
     /** Default tag values for ingestion frames */
-    @ACfgOverride.Field(name="TAGS")
-    public List<String>                 tags;
+    @ACfgOverride.Struct(pathelem="TAGS")
+    public JalToolsFramesTagsConfig     tags;
     
     /** Default attribute pairs for ingestion frames */
-    @ACfgOverride.Field(name="ATTRIBUTES")
-    public Map<String, String>          attributes;
+    @ACfgOverride.Struct(pathelem="ATTRIBUTES")
+    public JalToolsFramesAttrsConfig    attributes;
     
     /** Default timestamp generation parameters for simulated ingestion frames */
     @ACfgOverride.Struct(pathelem="TIMESTAMPS")

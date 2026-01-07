@@ -222,16 +222,29 @@ public record FrameTimestampsSpec(
      * <p>
      * The element strings of the argument array are parsed as formatted, string values of the record
      * field.  Typically, the argument is part of a application command-line argument collection.
-     * There, the argument array elements follow a command-line (delimiting) variable, say '<code>--tms</code>'.
-     * Assuming as such, the format of the argument array elements is as follows:
+     * There, the argument array elements typically follow a command-line (delimited) variable, for example 
+     * '<code>--tms</code>'.
+     * </p>
+     * <p>
+     * <h2>Format</h2>
+     * Assume that the <code>FrameTimestampsSpec</code> parameters are identified with the <code>--tms</code> delimited
+     * variable name.  Let the java command-line argument for an example application <code>MyApp</code> then appear as  
      * <code>
      * <pre>
-     * > java application --tms [samples [period [start [type [delay]]]]] ... 
+     * > java MyApp ... --tms [samples [period [start [type [delay]]]]] ... 
      * </pre>
      * </code>
-     * where '<code>application</code> is the example application name and the brackets indicate optional
-     * inclusion.
-     * The strings following the variable <code>--tms</code> are the field values parsed here, in order.
+     * where again <code>MyApp</code> is the example application name, <code>...</code> indicates additional application
+     * command-line parameters not relevant here, and the brackets indicate optional inclusion of the 
+     * <code>FrameTimestampSpec</code> parameters.  The arguments passed to this method is then the following collection:
+     * <code>
+     * <pre>
+     *  [samples [period [start [type [delay]]]]]
+     * </pre>
+     * </code>
+     * The field values of <code>FrameTimestampSpec</code> are taken from the above collection of strings. 
+     * The strings are parsed here, in order.  The list is given below along with the default value when
+     * the parameter is missing.
      * <ol>
      * <li>'samples' &rarr; <code>{@link #cntSamples()}</code> [default <code>{@link #CNT_SAMPLES_DEF}</code>],
      * <li>'period' &rarr; <code>{@link #durPeriod()}</code> [default <code>{@link #DUR_PERIOD_DEF}</code>],
@@ -245,12 +258,16 @@ public record FrameTimestampsSpec(
      * <ul>
      * <li>
      * If values do not appear in the argument array the fields values are populated with JAL Tools 
-     * default configuration values, which are captured as the record constant indicated above.
+     * default configuration values, which are captured as the record constants indicated above.
      * </li>
      * <li>
      * The ordering of the above string values is strict.  One cannot skip field values as default then supply
      * a later value.  For example, in order to specify the delay parameter 'delay' 
-     * (i.e., <code>{@link #durDelay()}</code> all other parameters must be supplied.
+     * (i.e., <code>{@link #durDelay()}</code>) all other parameters must be supplied.
+     * </li>
+     * <li>
+     * If the argument is <code>null</code> or empty, the timstamps for the default ingestion frame are
+     * returned (i.e., via method <code>{@link #from()}</code>).
      * </li>
      * </ul>  
      * </p>
@@ -266,7 +283,7 @@ public record FrameTimestampsSpec(
     public static FrameTimestampsSpec   parse(String...args) throws NumberFormatException, TypeNotPresentException, DateTimeParseException {
 
         // If the argument collection is empty return the default configuration
-        if (args.length < 1)
+        if (args==null || args.length < 1)
             return FrameTimestampsSpec.from();
         
         int     indArg = 0;

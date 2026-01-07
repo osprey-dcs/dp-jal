@@ -172,10 +172,10 @@ public class IngestionFrameFactoryDeprecated {
     
     
     /** Default ingestion frame tag values */
-    private static final List<String>        LST_FRM_TAGS_DEF = new ArrayList<>( CFG_DEF.tags );
+    private static final List<String>        LST_FRM_TAGS_DEF = new ArrayList<>( CFG_DEF.tags.values );
     
     /** Default ingestion frame attribute pairs */
-    private static final Map<String, String> MAP_FRM_ATTRS_DEF = new HashMap<>( CFG_DEF.attributes );
+    private static final Map<String, String> MAP_FRM_ATTRS_DEF = new HashMap<>( CFG_DEF.attributes.pairs );
     
     
     /** Common ingestion frame tag values */

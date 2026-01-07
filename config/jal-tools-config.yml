@@ -49,13 +49,19 @@ testArchive:   # Data Platform test archive properties (generated with utility '
 datagen:       # JAL Tools simulated data generation default configuration parameters
    frames:                  # Ingestion frame factory default configurate
       tags:                    # common tag values given to frames   : JAL_TOOLS_DATAGEN_FRAMES_TAGS
-         - "Simulated"
-         - "JAL Tools"
-         - "Default"
+         useClass: true        # enable/disable factory class tags   : JAL_TOOLS_DATAGEN_FRAMES_TAGS_USE_CLASS
+         useDefault: true      # enable/disable use of default tags  : JAL_TOOLS_DATAGEN_FRAMES_TAGS_USE_DEFAULT
+         values:               # list of default tag values          : JAL_TOOLS_DATAGEN_FRAMES_TAGS_VALUES
+            - "Simulated"
+            - "JAL Tools"
+            - "Default"
       attributes:              # common attribute pairs given to frames: JAL_TOOLS_DATAGEN_FRAMES_ATTRIBUTES
-         Location: "Testbed"
-         Source: "Simulator"
-         Configuration: "jal-tools-config.yml"
+         useClass: true        # enable/disable factory class attributes : JAL_TOOLS_DATAGEN_FRAMES_ATTRIBUTES_USE_CLASS
+         useDefault: true      # enable/disable use of default attributes: JAL_TOOLS_DATAGEN_FRAMES_ATTRIBUTES_USE_DEFAULT
+         pairs:                # map of default attribute pairs          : JAL_TOOLS_DATAGEN_FRAMES_ATTRIBUTES_PAIRS
+            Location: "Testbed"
+            Source: "Simulator"
+            Configuration: "jal-tools-config.yml"
       timestamps:              # Default timestamps for ingestion frames        
          type: SAMPLING_CLOCK  # 'DpTimestampCase' enumeration         : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_TYPE
          start: 2023-10-31T15:51:02.000+00:00 # first timestamp (ISO)  : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_START

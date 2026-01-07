@@ -947,8 +947,9 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * Parses the application argument collection for property assignment pairs with the given delimiter.
      * </p>
      * <p>
+     * <h2>Properties</h2>
      * Property assignments within the application command line appear a (name, value) pairs separated by the
-     * assignment operation {@value #STR_ARG_ASSGN}.  Their property type is identified with a zero white space
+     * assignment operation {@value #STR_PROP_ASSGN_SEP}.  Their property type is identified with a zero white space
      * delimiter given by the argument.  For example, the Java command line allows system properties to be assigned
      * at Virtual Machine (VM) startup with the <code>-D</code> option.  Thus, to include the system properties
      * <code>prop1, ..., propN</code> into the Java VM with property values <code>val1, ..., valN</code>, respectively,
@@ -959,8 +960,10 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * </code>
      * </pre>
      * where <code>MyApp</code> is the name of the Java application being launched.
+     * This method <b>does not</b> return system properties.
      * </p>
      * <p>
+     * <h2>Correct Usage</h2>
      * To launch application <code>MyApp</code> supplying it with a property with delimiter '-P' and supplying the
      * Java VM with the system properties as before one would invoke the following:
      * <pre>
@@ -969,7 +972,8 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * </code>
      * </pre>
      * where <code>'myProp'</code> is the property name and <code>'myVal'</code> is the property value.  Of course
-     * any delimiter may be chosen, which has context within the application.
+     * any delimiter may be chosen, which has context within the application.  This method parses the applications
+     * arguments after the <code>MyApp</code> token.  That is, system properties are <b>not</b> returned.
      * </p>
      * <p>
      * The method returns the (name, value) pairs as (key, value) entries within the returned map.  If no properties
