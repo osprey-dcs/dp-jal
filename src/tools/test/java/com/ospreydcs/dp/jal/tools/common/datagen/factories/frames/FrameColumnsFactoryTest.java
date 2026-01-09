@@ -46,6 +46,8 @@ import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TensorFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.TensorIndexGenerator;
 import com.ospreydcs.dp.jal.tools.common.datagen.utility.TensorUtility;
+import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.cols.JalToolsColumnsConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -59,6 +61,17 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  */
 public class FrameColumnsFactoryTest {
 
+    
+    //
+    // JAL Tools Library Resources
+    //
+    
+    /** The default data column configuration */
+    public static final JalToolsColumnsConfig       CFG_COL_DEF = JalToolsConfig.getInstance().datagen.columns;
+
+    /** The default ingestion frame data columns configuration */
+    public static final List<JalToolsColumnsConfig> LIST_CFG_COLS_DEF = JalToolsConfig.getInstance().datagen.frames.columns;
+    
     
     //
     // Test Resources
@@ -143,10 +156,10 @@ public class FrameColumnsFactoryTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#from(java.util.Set, int, com.ospreydcs.dp.jal.tools.common.datagen.IScalarFactory)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.FrameColumnsFactory#from(java.util.Set, com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory)}.
      */
     @Test
-    public final void testFrom() {
+    public final void testFromSetIDatumFactory() {
         
         // Test Parameters
         final Set<String>           setColNms = SET_COL_NMS_1;

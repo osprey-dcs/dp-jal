@@ -329,7 +329,7 @@ public record FrameTimestampsSpec(
      * </p>
      * The returned <code>FrameTimestampsSpec</code> record specifies the timestamps in the 
      * default ingestion frame.  The data column specifications for the default ingestion frame can be
-     * obtained from the <code>{@link DataColumns2}</code> record.  
+     * obtained from the <code>{@link FrameColumnsSpec#defaultFrame()}</code> method.  
      * </p>
      * <p>
      * The method retrieves the default timestamps specifications contained in the <code>{@link JalToolsFramesTmsConfig}</code>

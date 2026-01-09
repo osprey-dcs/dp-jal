@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.MissingResourceException;
 import java.util.Random;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
@@ -360,16 +361,17 @@ public class TimestampFactory implements IDatumFactory {
      * 
      * @return  a new <code>TimestampFactory</code> instance configured with the parsed argument values
      * 
-     * @throws IllegalArgumentException the argument collection was empty (must have at least 1 element - bolRand)
+     * @throws MissingResourceException the argument collection was empty (must have at least 1 element - bolRand)
      * @throws NumberFormatException    the 'seed' value could not be parsed
      * @throws DateTimeParseException   the 'period' or 'instant' value could not be parsed
      */
-    public static TimestampFactory  parse(String...args) throws IllegalArgumentException, NumberFormatException, DateTimeParseException {
+    public static TimestampFactory  parse(String...args) throws MissingResourceException, NumberFormatException, DateTimeParseException {
         
         if (args.length < 1)
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() 
+            throw new MissingResourceException(JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - Argument must contain at least one argument: " 
-                    + Arrays.asList(args) );
+                    + Arrays.asList(args), 
+                    TimestampFactory.class.getName(),  "parse()");
 
         // Get the random generation enable/disable flag
         boolean bolRand = Boolean.valueOf(args[0]);

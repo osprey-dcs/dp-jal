@@ -33,6 +33,7 @@ import java.util.ArrayList;
 
 import com.ospreydcs.dp.jal.common.DpTimestampCase;
 import com.ospreydcs.dp.jal.common.UniformSamplingClock;
+import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.tools.common.datagen.IFrameTimestampsFactory;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesTmsConfig;
@@ -308,6 +309,34 @@ public class FrameTimestampsFactory implements IFrameTimestampsFactory {
         return FrameTimestampsFactory.from(cntSamples, durPeriod, insStart, enmType, durDelay);
     }    
     
+    /**
+     * <p>
+     * Retrieves and returns the default ingestion frame timestamp configuration for the default 
+     * ingestion frame factory configuration.
+     * </p>
+     * <p>
+     * The JAL Tools default configuration contains a default ingestion frame configuration.  This configuration is
+     * used by ingestion frame factories to create <code>{@link IngestionFrame}</code> instances when no explicit
+     * configuration is given.
+     * </p>
+     * The returned <code>FrameTimestampsFactory</code> instance specifies the timestamps in the 
+     * default ingestion frame.  The data column specifications for the default ingestion frame can be
+     * obtained from the <code>{@link FrameColumnsFactory#defaultFrame()}</code> method.  
+     * </p>
+     * <p>
+     * The method retrieves the default timestamps specifications contained in the <code>{@link JalToolsFramesTmsConfig}</code>
+     * structure class list within the <code>{@link JalToolsConfig}</code> default configuration.  The parameters
+     * for the timestamp specification are extracted and a new <code>FrameTimestampsFactory</code> instance is created.
+     * </p>
+     * @apiNote
+     * This method is essentially equivalent to the creator <code>{@link #from()}</code> which uses all default 
+     * parameters for timestamp factory configuration.
+     * 
+     * @return  a new <code>FrameTimestampsFactory</code> instance as specified in the JAL Tools default configuration
+     */
+    public static FrameTimestampsFactory    defaultFrame() {
+        return FrameTimestampsFactory.from();
+    }
     
     //
     // JAL Tools Resources

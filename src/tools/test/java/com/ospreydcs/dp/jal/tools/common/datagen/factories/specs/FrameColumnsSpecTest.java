@@ -25,8 +25,10 @@
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -45,13 +47,6 @@ import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ByteArrayFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ImageFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.StructureFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.TensorFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.TimestampFactorySpec;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.cols.JalToolsColumnsConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;
@@ -618,7 +613,7 @@ public class FrameColumnsSpecTest {
             
             Assert.assertEquals(specExpect, specTest);
             
-        } catch (IllegalArgumentException | ConfigurationException | TypeNotPresentException | UnsupportedOperationException e) {
+        } catch (Exception e) {
             Assert.fail(JavaRuntime.getQualifiedMethodNameSimple()
                     + " - Datum factory parsing creation failed with exception "
                     + e.getClass().getName()
@@ -643,7 +638,7 @@ public class FrameColumnsSpecTest {
             
             Assert.assertEquals(specExpect, specTest);
             
-        } catch (IllegalArgumentException | ConfigurationException | TypeNotPresentException | UnsupportedOperationException e) {
+        } catch (Exception e) {
             Assert.fail(JavaRuntime.getQualifiedMethodNameSimple()
                     + " - Datum factory parsing creation failed with exception "
                     + e.getClass().getName()
@@ -653,11 +648,13 @@ public class FrameColumnsSpecTest {
 
     /**
      * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#equals(java.lang.Object)}.
-     * @throws NoSuchElementException 
-     * @throws UnsupportedOperationException 
-     * @throws ConfigurationException 
-     * @throws TypeNotPresentException 
-     * @throws NumberFormatException 
+     * @throws TypeNotPresentException      an enumeration constant was not recognized
+     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
+     * @throws UnsupportedOperationException unable to create 'numIncr' field in scalar factory specification
+     * @throws MissingResourceException     timestamp factory had empty arguments
+     * @throws DateTimeParseException       invalid format for ISO-8601 time and/or duration specification 
+     * @throws ConfigurationException       tensor shape was invalid
+     * @throws NoSuchElementException       the 'enmType' constant was not supported
      */
     @Test
     public final void testEquals() throws NumberFormatException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
@@ -723,13 +720,15 @@ public class FrameColumnsSpecTest {
      * 
      * @return  list of default ingestion frame columns specifications
      * 
-     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
-     * @throws ConfigurationException       tensor shape was invalid
      * @throws TypeNotPresentException      an enumeration constant was not recognized
+     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
      * @throws UnsupportedOperationException unable to create 'numIncr' field in scalar factory specification
-     * @throws IllegalArgumentException     the 'enmType' constant was not supported
+     * @throws MissingResourceException     timestamp factory had empty arguments
+     * @throws DateTimeParseException       invalid format for ISO-8601 time and/or duration specification 
+     * @throws ConfigurationException       tensor shape was invalid
+     * @throws NoSuchElementException       the 'enmType' constant was not supported
      */
-    private static List<FrameColumnsSpec<Record>>   extractDefaultFrameColumns() throws NumberFormatException, IllegalArgumentException, ConfigurationException, TypeNotPresentException, UnsupportedOperationException {
+    private static List<FrameColumnsSpec<Record>>   extractDefaultFrameColumns() throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
         
         List<JalToolsColumnsConfig>     lstCfgCols = CFG_FRM_DEF.columns;
         List<FrameColumnsSpec<Record>>  lstSpecCols = new ArrayList<>(lstCfgCols.size());
@@ -740,7 +739,7 @@ public class FrameColumnsSpecTest {
             JalComplexType  enmType = cfg.type;
             
             String[]        arrFacArgs = cfg.factory;
-            Record          specFac = FrameColumnsSpec.parseFactorySpec(enmType, arrFacArgs); 
+            Record          specFac = FrameColumnsSpec.parseFactorySpec(enmType, arrFacArgs); // throws all exceptions
             
             FrameColumnsSpec<Record>    specCols = FrameColumnsSpec.from(intCols, strNmPref, specFac);
             

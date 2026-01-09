@@ -28,22 +28,22 @@ package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 import java.lang.reflect.MalformedParametersException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeSet;
 
 import javax.naming.ConfigurationException;
 
+import com.ospreydcs.dp.jal.ingest.IngestionFrame;
+import com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IFrameFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IFrameTimestampsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.IngestionFrameFactory;
 import com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
-import com.ospreydcs.dp.jal.tools.config.datagen.cols.JalToolsColumnsConfig;
 import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;
 
 /**
@@ -69,7 +69,7 @@ import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;
  * @param setTags       optional set of tag value for generated ingestion frames
  * @param mapAttrs      optional set of (name, value) attribute pairs for generated ingestion frames
  * @param specTms       frame timestamps factory specification
- * @param setColSpecs   collection of frame columns factories specifications
+ * @param setColsSpecs  collection of frame columns factories specifications
  * @param bolTagsCls    <s>enable/disable ingestion frame factory class tag values for ingestion frames</s>
  * @param bolAttrsCls   <s>enable/diable ingestion frame factory class attribute pairs for ingestion frames</s>
  * @param bolTagsDef    <s>enable/disable default tag values (from JAL default configuration) for ingesiton frames</s>
@@ -79,7 +79,7 @@ public record FrameFactorySpec(
         Set<String>                     setTags,
         Map<String, String>             mapAttrs,
         FrameTimestampsSpec             specTms,
-        Set<FrameColumnsSpec<Record>>   setColSpecs
+        Set<FrameColumnsSpec<Record>>   setColsSpecs
 //        boolean                         bolTagsCls,
 //        boolean                         bolAttrsCls,
 //        boolean                         bolTagsDef,
@@ -92,6 +92,160 @@ public record FrameFactorySpec(
     // Creators
     //
     
+    /**
+     * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> record with the default ingestion frame specification.
+     * </p>
+     * <p>
+     * This method is equivalent to creator <code>{@link #defaultFrame()}</code> returning the default ingestion frame
+     * specification as defined in the JAL Tools default configuration.
+     * See method documentation on <code>{@link #defaultFrame()}</code> for additional information.
+     * </p>
+     *  
+     * @return  a new <code>FrameFactorySpec</code> record with the default ingestion frame specification
+     * 
+     * @throws IllegalArgumentException general error (typically bad argument count or enumeration constant not recognized)
+     * @throws NumberFormatException    a bad numeric format was encountered (typically integer valued parameter)
+     * @throws DateTimeParseException   timestamp factory was specified with bad ISO-8605 date/time/duration format
+     * @throws TypeNotPresentException  unrecognized enumeration constant (scalar factory JalScalarType or image factory BufferedImage.Format)   
+     * @throws ConfigurationException   tensor factory had bad shape or structure factory missing depth and/or fan-out
+     * @throws UnsupportedOperationException    scalar factory had bad 'numIncr' parameter
+     * @throws NoSuchElementException   the column type is unrecognized (unsupported) 
+     */
+    public static FrameFactorySpec  from() throws NumberFormatException, IllegalArgumentException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
+        return FrameFactorySpec.defaultFrame();
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> record with the default ingestion frame columns collection 
+     * and no metadata.
+     * </p>
+     * <p>
+     * The default ingestion frame data columns specifications are extracted from the JAL Tools default configuration and
+     * used for record field <code>{@link #setColsSpecs()}</code> (see <code>FrameColumnsSpec{@link #defaultFrame()}</code>).
+     * No metadata (i.e., tag values or attribute pairs) is contained in the returned frame factory specification record.
+     * </p>
+     * 
+     * @param specTms       frame timestamps factory specification
+     * 
+     * @return  a new <code>FrameFactorySpec</code> record with the given timestamps specification and default columns specifications
+     * 
+     * @throws IllegalArgumentException general error (typically bad argument count or enumeration constant not recognized)
+     * @throws NumberFormatException    a bad numeric format was encountered (typically integer valued parameter)
+     * @throws DateTimeParseException   timestamp factory was specified with bad ISO-8605 date/time/duration format
+     * @throws TypeNotPresentException  unrecognized enumeration constant (scalar factory JalScalarType or image factory BufferedImage.Format)   
+     * @throws ConfigurationException   tensor factory had bad shape or structure factory missing depth and/or fan-out
+     * @throws UnsupportedOperationException    scalar factory had bad 'numIncr' parameter
+     * @throws NoSuchElementException   the column type is unrecognized (unsupported) 
+     */
+    public static FrameFactorySpec  from(FrameTimestampsSpec specTms) throws NumberFormatException, IllegalArgumentException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
+        
+        // Create the default ingestion frame columns specification collection
+        Set<FrameColumnsSpec<Record>>   setColsSpecs = new TreeSet<>( FrameColumnsSpec.defaultFrame() );    // throws all exceptions
+        
+        return FrameFactorySpec.from(specTms, setColsSpecs);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> record with the default ingestion frame timestamps and no metadata.
+     * </p>
+     * <p>
+     * The default ingestion frame timestamps are extracted from the JAL Tools default configuration and used
+     * for the field <code>{@link #specTms()}</code> (see <code>{@link FrameTimestampsSpec#defaultFrame()}</code>).
+     * No metadata (i.e., tag values or attribute pairs) is contained in the returned frame factory specification record.
+     * </p>
+     * 
+     * @param setColsSpecs   collection of frame columns factories specifications
+     * 
+     * @return  a new <code>FrameFactorySpec</code> record with the given columns specifications collection and default timestamps
+     */
+    public static FrameFactorySpec  from(Set<FrameColumnsSpec<Record>> setColsSpec) {
+        
+        // Create the default ingestion frame timestamps specification 
+        FrameTimestampsSpec     specTms = FrameTimestampsSpec.defaultFrame();
+        
+        return FrameFactorySpec.from(specTms, setColsSpec);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> record with no ingestion frame metadata specified.
+     * </p>
+     * <p>
+     * The returned record contains no tag values or attribute pairs.  Specifically, the record fields
+     * <code>{@link #setTags()}</code> and <code>{@link #mapAttrs()}</code> are empty containers.
+     * The frame factory specification record can be supplemented with metadata post-creation by 
+     * accessing these fields.  For example, using <code>{@link Set#add(Object)}</code> and
+     * <code>{@link Map#put(Object, Object)}</code>.
+     * </p>
+     * 
+     * @param specTms       frame timestamps factory specification
+     * @param setColsSpecs  collection of frame columns factories specifications
+     * 
+     * @return  a new <code>FrameFactorySpec</code> record with no metadata specifications
+     */
+    public static FrameFactorySpec  from(FrameTimestampsSpec specTms, Set<FrameColumnsSpec<Record>> setColsSpecs) {
+        
+        return FrameFactorySpec.from(Set.of(), Map.of(), specTms, setColsSpecs);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> record using default and record metadata options.
+     * </p>
+     * <p>
+     * Here metadata refers to tag values and attribute pairs attached to ingestion frames.
+     * This creator allows clients to create <code>FrameFactorySpec</code> record specifying ingestion frame metadata 
+     * obtained from the default ingestion frame metadata and/or the record class metadata.  
+     * The arguments allows gross access only to metadata source (i.e., default ingestion frame and record class).
+     * Both metadata types (tag values and attribute pairs) are implied in each <code>boolean</code> argument. 
+     * </p>
+     * <p> 
+     * Client specific metadata is not contained in the returned frame factory specification, 
+     * but can be supplemented later with direct access to field <code>{@link #setTags()}</code>
+     * and <code>{@link #mapAttrs()}</code>.
+     * </p>
+     * 
+     * @param bolMetaDef    include/exclude default frame metadata for ingestion frames (both tag values and attribute pairs)
+     * @param bolMetaCls    include/exclude record class metadata for ingestion frames (both tag values and attribute pairs
+     * @param specTms       frame timestamps factory specification
+     * @param setColsSpecs  collection of frame columns factories specifications
+     * 
+     * @return  a new <code>FrameFactorySpec</code> record populated according to the given argument configuration
+     */
+    public static FrameFactorySpec  from(boolean bolMetaDef, boolean bolMetaCls, FrameTimestampsSpec specTms, Set<FrameColumnsSpec<Record>> setColsSpecs) {
+        
+        return FrameFactorySpec.from(bolMetaDef, bolMetaCls, bolMetaDef, bolMetaCls, specTms, setColsSpecs);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> record using default and record metadata options.
+     * </p>
+     * <p>
+     * Here metadata refers to tag values and attribute pairs attached to ingestion frames.
+     * This creator allows clients to create <code>FrameFactorySpec</code> record specifying ingestion frame metadata 
+     * obtained from the default ingestion frame metadata and/or the record class metadata. 
+     * The arguments allows specific access to each metadata type (i.e., tag values and attribute pairs) and
+     * metadata source (i.e., default ingestion frame and record class).
+     * </p>
+     * <p> 
+     * Client specific metadata is not contained in the returned frame factory specification, 
+     * but can be supplemented later with direct access to field <code>{@link #setTags()}</code>
+     * and <code>{@link #mapAttrs()}</code>.
+     * </p>
+     * 
+     * @param bolTagsDef    include/exclude default frame tag values (from JAL default configuration) for ingesiton frames
+     * @param bolTagsCls    include/exclude ingestion frame factory specification record tag values for ingestion frames
+     * @param bolAttrsDef   include/exclude default frame attribute pairs (from JAL default configuration) for ingestion frames
+     * @param bolAttrsCls   include/exclude ingestion frame factory specification record attribute pairs for ingestion frames
+     * @param specTms       frame timestamps factory specification
+     * @param setColsSpecs  collection of frame columns factories specifications
+     * 
+     * @return  a new <code>FrameFactorySpec</code> record populated according to the given argument configuration
+     */
     public static FrameFactorySpec  from(boolean bolTagsDef, boolean bolTagsCls, boolean bolAttrsDef, boolean bolAttrsCls, FrameTimestampsSpec specTms, Set<FrameColumnsSpec<Record>> setColSpecs) {
         
         // Create the frame tag values set
@@ -124,7 +278,7 @@ public record FrameFactorySpec(
      * @param setTags       optional set of tag value for generated ingestion frames
      * @param mapAttrs      optional set of (name, value) attribute pairs for generated ingestion frames
      * @param specTms       frame timestamps factory specification
-     * @param setColSpecs   collection of frame columns factories specifications
+     * @param setColsSpecs  collection of frame columns factories specifications
      * 
      * @return  a new <code>FrameFactorySpec</code> record populated with the given argument values
      */
@@ -132,14 +286,14 @@ public record FrameFactorySpec(
             Set<String>                     setTags, 
             Map<String, String>             mapAttrs,
             FrameTimestampsSpec             specTms, 
-            Set<FrameColumnsSpec<Record>>   setColSpecs 
+            Set<FrameColumnsSpec<Record>>   setColsSpecs 
 //            boolean                         bolTagsCls,
 //            boolean                         bolAttrsCls,
 //            boolean                         bolTagsDef,
 //            boolean                         bolAttrsDef
             ) 
     {
-        return new FrameFactorySpec(setTags, mapAttrs, specTms, setColSpecs /*, bolTagsCls, bolAttrsCls, bolTagsDef, bolAttrsDef */);
+        return new FrameFactorySpec(setTags, mapAttrs, specTms, setColsSpecs /*, bolTagsCls, bolAttrsCls, bolTagsDef, bolAttrsDef */);
     }
     
     /**
@@ -196,11 +350,11 @@ public record FrameFactorySpec(
      * </ul>  
      * </p>
      * 
-     * @param args  collection of application command-line arguments
+     * @param args  collection of application command-line arguments formatted as above
      * 
      * @return  a new <code>FrameFactorySpec</code> instance populated from the given command-line arguments
      * 
-     * @throws MissingResourceException missing required parameters - frame timestamps and/or at least one data column  
+     * @throws IllegalArgumentException general error (typically bad argument count or enumeration constant not recognized)
      * @throws DateTimeParseException   invalid ISO-8605 date/time/duration format for 'period', 'start', or 'delay' 
      * @throws TypeNotPresentException  invalid enumeration constant (e.g., the 1st argument was not a <code>JalComplexType</code>)
      * @throws NumberFormatException    invalid numeric expression (typically for 'lngSeed' value)
@@ -210,7 +364,7 @@ public record FrameFactorySpec(
      * @throws NoSuchElementException   the column data type was unrecognized (i.e., 'DTYPE' was not supported)
      */
     public static FrameFactorySpec  parse(String...args) 
-            throws MissingResourceException, DateTimeParseException, TypeNotPresentException, 
+            throws IllegalArgumentException, DateTimeParseException, TypeNotPresentException, 
                    NumberFormatException, ConfigurationException, UnsupportedOperationException, 
                    MalformedParametersException 
     {
@@ -274,7 +428,30 @@ public record FrameFactorySpec(
     }
     
     /**
-     * @return
+     * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> specification for the default ingestion frame.
+     * </p>
+     * <p>
+     * The JAL Tools default configuration <code>{@link JalToolsConfig#STR_CFG_FILE_NAME}</code> contains a 
+     * specification for the default ingestion frame.  This create extracts the default ingestion frame properties
+     * and uses them to create the returns specification record.
+     * </p>
+     * <p>
+     * <h2>Default Ingestion Frame</h2>
+     * Some parameters for the default ingestion frame are extracted from the JAL Tools default configuration
+     * and contained in record constants.  Others are taken from the record <code>{@link FrameTimestampsSpec}</code>
+     * and <code>{@link FrameColumnsSpec}</code>.  There are also tag values and attribute pairs created in
+     * this record that can be added to the frame factory specification.
+     * <ul>
+     * <li>default tag values = <code>{@link #SET_TAGS_FRM_DEF}</code>, used when <code>{@link #BOL_TAGS_DEF_ENBL} = true</code>.</li>
+     * <li>record tag values = <code>{@link #SET_TAGS_FRM_CLS}</code>, used when <code>{@link #BOL_TAGS_CLS_ENBL} = true</code>.</li>
+     * <li>default attribute pairs = <code>{@link #MAP_ATTRS_FRM_DEF}</code>, used when <code>{@link #BOL_ATTRS_DEF_ENBL} = true</code>.</li>
+     * <li>record attribute pairs = <code>{@link #MAP_ATTRS_FRM_CLS}</code>, used when <code>{@link #BOL_ATTRS_CLS_ENBL} = true</code>.</li>
+     * <li>frame timestamps specification = <code>{@link FrameTimestampsSpec#defaultFrame()}</code>.</li>
+     * <li>frame data columns specifications = <code>{@link FrameColumnsSpec#defaultFrame()}</code>.</li>
+     * </ul>  
+     * 
+     * @return  a new <code>FrameFactorySpec</code> record containing the default ingestion frame specification
      * 
      * @throws TypeNotPresentException  invalid enumeration constant (e.g., the 1st argument was not a <code>JalComplexType</code>)
      * @throws NumberFormatException    invalid numeric expression (typically for 'lngSeed' value)
@@ -306,6 +483,31 @@ public record FrameFactorySpec(
         return FrameFactorySpec.from(setTags, mapAttrs, specTms, setColsSpec);
     }
     
+    /**
+     * <p>
+     * Creates and returns a new ingestion frame factory instance according to the specifications in this record.
+     * </p>
+     * <p>
+     * The returned ingestion frame factory is configured according to the field values of this record according
+     * to the following criteria:
+     * <ul>
+     * <li>factory tag values = <code>{@link #setTags()}</code>.</li>
+     * <li>factory attribute pairs = <code>{@link #mapAttrs()}</code>.</li>
+     * <li>factory timestamps &rarr; <code>{@link #specTms()}</code> = <code>{@link FrameTimestampsSpec#newFactory()}</code>.</li>
+     * <li>factory columns &rarr; <code>{@link #setColsSpecs()}</code> = <code>Collection({@link FrameColumnsSpec#newFactory()})</code>.</li>
+     * </p>
+     * 
+     * @return  a new <code>IFrameFactory</code> implementation configured according to record specifications
+     */
+    public IFrameFactory    newFactory() {
+        IFrameTimestampsFactory             facTms = this.specTms.newFactory();
+        List<IFrameColumnsFactory<Object>>  lstFacCols = this.setColsSpecs.stream().map(spec -> spec.newFactory()).toList();
+        
+        IngestionFrameFactory   facFrames = IngestionFrameFactory.from(this.setTags, this.mapAttrs, facTms, lstFacCols);
+                
+        return facFrames;
+    }
+    
     
     //
     // Record Overrides
@@ -316,7 +518,16 @@ public record FrameFactorySpec(
      */
     @Override
     public boolean equals(Object obj) {
-        // TODO Auto-generated method stub
+        
+        if (obj instanceof FrameFactorySpec spec) {
+            boolean bolResult = this.setTags.equals(spec.setTags)
+                              && this.mapAttrs.equals(spec.mapAttrs)
+                              && this.specTms.equals(spec.specTms)
+                              && this.setColsSpecs.equals(spec.setColsSpecs);
+            
+            return bolResult;
+        }
+        
         return false;
     }
 
@@ -325,8 +536,16 @@ public record FrameFactorySpec(
      */
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
-        return null;
+        StringBuilder   buf = new StringBuilder();
+        
+        buf.append("Frame tag values   : " + this.setTags + "\n");
+        buf.append("Frame attributes   : " + this.mapAttrs + "\n");
+        buf.append("Frame Timestamps Specification \n");
+        buf.append(this.specTms);
+        buf.append("Frame Columns Specification Collection \n");
+        this.setColsSpecs.forEach(spec -> buf.append(spec));
+        
+        return buf.toString();
     }
 
     
@@ -336,10 +555,7 @@ public record FrameFactorySpec(
 
     /** JAL Tools default configuration parameters for ingestion frame factories */
     private static final JalToolsFramesConfig           CFG_FRM_DEF = JalToolsConfig.getInstance().datagen.frames;
-    
-    /** JAL Tools default configuration parameters for column factories */
-    private static final JalToolsColumnsConfig          CFG_COL_DEF = JalToolsConfig.getInstance().datagen.columns;
-    
+        
     
     //
     // Record Constants 

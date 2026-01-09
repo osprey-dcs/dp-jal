@@ -30,6 +30,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -155,13 +156,14 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * <li><code>{@link JalComplexType#STRUCTURE} &rarr; {@link StructureFactorySpec}.</code></li>
  * </ul>
  * </p>
+ * <p>
  * <h2>Creators</h2>
  * All <code>FrameColumnsSpec</code> instances should be instantiated with the available creators, which 
  * generally have the name <code>from()</code>.  
  * There are multiple <code>from()</code> creators available, each with different method signatures. 
  * Missing record field values are supplied by default parameter values taken from the JAL Tools default configuration.
  * There is also a parsing creator <code>{@link #parse(String...)}</code> which
- * create <code>DataColumnSpec2</code> instances from application command-line arguments.  The format of
+ * create <code>FrameColumnsSpec</code> instances from application command-line arguments.  The format of
  * the command line is provided in the method documentation.
  * </p>
  * <p>
@@ -210,13 +212,13 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
     /**
      * <p>
      * Convenience Creator: 
-     * Creates a new <code>DataColumnSpec2</code> instance populated with all default argument values.
+     * Creates a new <code>FrameColumnsSpec</code> instance populated with all default argument values.
      * </p>
      * <p>
      * All record fields are populated with default parameter values taken from the JAL Tools default configuration.
      * </p>
      * <p>
-     * <h2>Default Parameter</h2>
+     * <h2>Default Parameters</h2>
      * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
      * The default parameters are used in the creation of the datum factory specification.  
      * Here the datum factory specification is defined completely by the default column factory parameters.
@@ -235,7 +237,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * Note that all exceptions result from the creation of the default datum factory specification.
      * </p>
      *  
-     * @return  a new <code>DataColumnSpec2</code> record ready for data column factory creation
+     * @return  a new <code>FrameColumnsSpec</code> specification as defined by the available argument values
      * 
      * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
      * @throws ConfigurationException       tensor shape was invalid
@@ -250,7 +252,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
     /**
      * <p>
      * Convenience Creator:  
-     * Creates a new <code>DataColumnSpec2</code> instance populated from the available argument values.
+     * Creates a new <code>FrameColumnsSpec</code> instance populated from the available argument values.
      * </p>
      * <p>
      * All record fields are populated, either directory or inferred, with the argument values.
@@ -264,7 +266,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * </ul>
      * </p>
      * <p>
-     * <h2>Default Parameter</h2>
+     * <h2>Default Parameters</h2>
      * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
      * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
      * Here the datum factory specification is defined by the default factory configuration 
@@ -286,7 +288,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      *  
      * @param intCols       number of data columns produced by factory
      * 
-     * @return  a new <code>DataColumnSpec2</code> record ready for data column factory creation
+     * @return  a new <code>FrameColumnsSpec</code> specification as defined by the available argument values
      * 
      * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
      * @throws ConfigurationException       tensor shape was invalid
@@ -301,7 +303,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
     /**
      * <p>
      * Convenience Creator: 
-     * Creates a new <code>DataColumnSpec2</code> instance populated from the available argument values.
+     * Creates a new <code>FrameColumnsSpec</code> instance populated from the available argument values.
      * </p>
      * <p>
      * All record fields are populated, either directory or inferred, with the argument values.
@@ -315,7 +317,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * </ul>
      * </p>
      * <p>
-     * <h2>Default Parameter</h2>
+     * <h2>Default Parameters</h2>
      * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
      * Here the datum factory specification is defined by the default factory configuration 
      * as specified by the JAL Tools default column factory parameters.
@@ -335,16 +337,18 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * @param intCols       number of data columns produced by factory
      * @param strNmPref     prefix for data column names produced by factory
      * 
-     * @return  a new <code>DataColumnSpec2</code> record ready for data column factory creation
+     * @return  a new <code>FrameColumnsSpec</code> specification as defined by the available argument values
      * 
-     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
-     * @throws ConfigurationException       tensor shape was invalid
      * @throws TypeNotPresentException      an enumeration constant was not recognized
+     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
      * @throws UnsupportedOperationException unable to create 'numIncr' field in scalar factory specification
-     * @throws IllegalArgumentException     the 'enmType' constant was not supported
+     * @throws MissingResourceException     timestamp factory had empty arguments
+     * @throws DateTimeParseException       invalid format for ISO-8601 time and/or duration specification 
+     * @throws ConfigurationException       tensor shape was invalid
+     * @throws NoSuchElementException       the 'enmType' constant was not supported
      */
-    public static FrameColumnsSpec<Record>  from(int intCols, String strNmPref) throws NumberFormatException, IllegalArgumentException, ConfigurationException, TypeNotPresentException, UnsupportedOperationException {
-        Record  specFactory = FrameColumnsSpec.parseFactorySpec(ENM_COL_TYPE_DEF, ARR_FAC_SPEC_DEF);
+    public static FrameColumnsSpec<Record>  from(int intCols, String strNmPref) throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
+        Record  specFactory = FrameColumnsSpec.parseFactorySpec(ENM_COL_TYPE_DEF, ARR_FAC_SPEC_DEF);    // throws all exceptions
         
         return FrameColumnsSpec.from(intCols, strNmPref, specFactory);
     }
@@ -352,7 +356,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
     /**
      * <p>
      * Convenience Creator: 
-     * Creates a new <code>DataColumnSpec2</code> instance populated from the available argument values.
+     * Creates a new <code>FrameColumnsSpec</code> instance populated from the available argument values.
      * </p>
      * <p>
      * All record fields are populated, either directory or inferred, with the argument values.
@@ -366,7 +370,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * </ul>
      * </p>
      * <p>
-     * <h2>Default Parameter</h2>
+     * <h2>Default Parameters</h2>
      * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
      * and infers the values of some record fields.  Record fields not provided are populated as follows:
      * <ul>
@@ -382,13 +386,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * @param strNmPref     prefix for data column names produced by factory
      * @param specFactory   the datum factory specification used for simulated data production
      * 
-     * @return  a new <code>DataColumnSpec2</code> record ready for data column factory creation
-     * 
-     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
-     * @throws ConfigurationException       tensor shape was invalid
-     * @throws TypeNotPresentException      an enumeration constant was not recognized
-     * @throws UnsupportedOperationException unable to create 'numIncr' field in scalar factory specification
-     * @throws IllegalArgumentException     the 'enmType' constant was not supported
+     * @return  a new <code>FrameColumnsSpec</code> specification as defined by the available argument values
      */
     public static <FactorySpec extends Record> FrameColumnsSpec<FactorySpec>  from(FactorySpec specFactory) {
         
@@ -398,7 +396,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
     /**
      * <p>
      * Convenience Creator: 
-     * Creates a new <code>DataColumnSpec2</code> instance populated from the available argument values.
+     * Creates a new <code>FrameColumnsSpec</code> instance populated from the available argument values.
      * </p>
      * <p>
      * All record fields are populated, either directory or inferred, with the argument values.
@@ -412,8 +410,8 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * </ul>
      * </p>
      * <p>
-     * <h2>Default Parameter</h2>
-     * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
+     * <h2>Default Parameters</h2>
+     * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration 
      * and infers the values of some record fields.  Record fields not provided are populated as follows:
      * <ul>
      * <li><code>{@link #strNmPref()} &rarr; {@link #STR_NM_PREF_DEF}</code>. </li>
@@ -425,16 +423,9 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * @param <FactorySpec> record type of the datum factory specification for column data
      * 
      * @param intCols       number of data columns produced by factory
-     * @param strNmPref     prefix for data column names produced by factory
      * @param specFactory   the datum factory specification used for simulated data production
      * 
-     * @return  a new <code>DataColumnSpec2</code> record ready for data column factory creation
-     * 
-     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
-     * @throws ConfigurationException       tensor shape was invalid
-     * @throws TypeNotPresentException      an enumeration constant was not recognized
-     * @throws UnsupportedOperationException unable to create 'numIncr' field in scalar factory specification
-     * @throws IllegalArgumentException     the 'enmType' constant was not supported
+     * @return  a new <code>FrameColumnsSpec</code> specification as defined by the available argument values
      */
     public static <FactorySpec extends Record> FrameColumnsSpec<FactorySpec>  from(int intCols, FactorySpec specFactory) {
         
@@ -444,7 +435,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
     /**
      * <p>
      * Standard Creator: 
-     * Creates a new <code>DataColumnSpec2</code> instance populated from the given argument values.
+     * Creates a new <code>FrameColumnSpec</code> instance populated from the given argument values.
      * </p>
      * <p>
      * All record fields are populated, either directory or inferred, with the argument values.  Specifically, we have
@@ -464,7 +455,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * @param strNmPref     prefix for data column names produced by factory
      * @param specFactory   the datum factory specification used for simulated data production
      * 
-     * @return  a new <code>DataColumnSpec2</code> record ready for data column factory creation
+     * @return  a new <code>FrameColumnsSpec</code> specification as defined by the available argument values
      */
     public static <FactorySpec extends Record>  FrameColumnsSpec<FactorySpec>    from(int intCols, String strNmPref, FactorySpec specFactory) {
         JalComplexType  enmType = FrameColumnsSpec.inferColumnType(specFactory);
@@ -492,7 +483,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * </ul>
      * </p>
      * <p>
-     * <h2>Default Parameter</h2>
+     * <h2>Default Parameters</h2>
      * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
      * The default parameters are used in the creation of the datum factory specification.  
      * Here the datum factory specification is completely configured to the JAL Tools default state 
@@ -506,7 +497,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * 
      * @param enmType       data type of data columns produced by column factory
      * 
-     * @return  a new <code>DataColumnSpec2</code> record ready for data column factory creation
+     * @return  a new <code>FrameColumnsSpec</code> specification as defined by the available argument values
      * 
      * @throws UnsupportedOperationException    the <code>JalComplexType</code> constant is unsupported
      *
@@ -543,7 +534,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * </ul>
      * </p>
      * <p>
-     * <h2>Default Parameter</h2>
+     * <h2>Default Parameters</h2>
      * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
      * The default parameters are used in the creation of the datum factory specification.  
      * Here the datum factory specification is completely configured to the JAL Tools default state 
@@ -557,7 +548,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * @param intCols       number of data columns produced by factory
      * @param enmType       data type of data columns produced by column factory
      * 
-     * @return  a new <code>DataColumnSpec2</code> record ready for data column factory creation
+     * @return  a new <code>FrameColumnsSpec</code> specification as defined by the available argument values
      * 
      * @throws UnsupportedOperationException    the <code>JalComplexType</code> constant is unsupported
      *
@@ -594,7 +585,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * </ul>
      * </p>
      * <p>
-     * <h2>Default Parameter</h2>
+     * <h2>Default Parameters</h2>
      * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
      * The default parameters are used in the creation of the datum factory specification.  
      * Here the datum factory specification is completely configured to the JAL Tools default state 
@@ -605,9 +596,10 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * @param strNmPref     prefix for data column names produced by factory
      * @param enmType       data type of data columns produced by column factory
      * 
-     * @return  a new <code>DataColumnSpec2</code> record ready for data column factory creation
+     * @return  a new <code>FrameColumnsSpec</code> specification as defined by the available argument values
      * 
-     * @throws UnsupportedOperationException    the <code>JalComplexType</code> constant is unsupported
+     * @throws UnsupportedOperationException scalar factory unable to create 'numIncr' parameter   
+     * @throws NoSuchElementException        the <code>JalComplexType</code> constant is unsupported
      *
      * @see JalComplexType
      * @see ScalarFactorySpec#from()
@@ -617,16 +609,16 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * @see TensorFactorySpec#from()
      * @see StructureFactorySpec#from()
      */
-    public static FrameColumnsSpec<Record>    from(int intCols, String strNmPref, JalComplexType enmType) throws UnsupportedOperationException {
+    public static FrameColumnsSpec<Record>    from(int intCols, String strNmPref, JalComplexType enmType) throws UnsupportedOperationException, NoSuchElementException {
         
         return switch (enmType) {
-        case SCALAR -> FrameColumnsSpec.from(intCols, strNmPref, ScalarFactorySpec.from());
+        case SCALAR -> FrameColumnsSpec.from(intCols, strNmPref, ScalarFactorySpec.from()); // throws UnsupportedOperationException
         case TIMESTAMP -> FrameColumnsSpec.from(intCols, strNmPref, TimestampFactorySpec.from());
         case BYTES -> FrameColumnsSpec.from(intCols, strNmPref, ByteArrayFactorySpec.from());
         case IMAGE -> FrameColumnsSpec.from(intCols, strNmPref, ImageFactorySpec.from());
         case TENSOR -> FrameColumnsSpec.from(intCols, strNmPref, TensorFactorySpec.from());
         case STRUCTURE -> FrameColumnsSpec.from(intCols, strNmPref, StructureFactorySpec.from());
-        default -> throw new UnsupportedOperationException("Unexpected value: " + enmType);
+        default -> throw new NoSuchElementException("Unexpected value: " + enmType);
         };
     }
     
@@ -694,11 +686,10 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * For example, when '<code>DTYPE</code>' == <code>{@link JalComplexType#SCALAR}</code> see
      * <code>{@link ScalarFactorySpec#parse(String...)}</code>.
      * </p>
-     *   
      *  
      * @param args  argument string defining the configuration for returned record
      * 
-     * @return  the column factory specification record defined and populated by the arguments
+     * @return  a new <code>FrameColumnsSpec</code> specification record as defined by the parsed argument values
      * 
      * @throws TypeNotPresentException  invalid enumeration constant (e.g., the 1st argument was not a <code>JalComplexType</code>)
      * @throws NumberFormatException    invalid numeric expression (typically for 'lngSeed' value)
@@ -744,7 +735,8 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
  
     /**
      * <p>
-     * Retrieves the default ingestion frame data columns specifications for the default ingestion frame factory configuration.
+     * Retrieves and returns the default ingestion frame data columns specifications for the default 
+     * ingestion frame factory configuration.
      * </p>
      * <p>
      * The JAL Tools default configuration contains a default ingestion frame configuration.  This configuration is
@@ -765,7 +757,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * 
      * @return  a list of new <code>FrameColumnsSpec</code> records as specified in the JAL Tools default configuration
      * 
-     * @throws IllegalArgumentException general error (typically bad argument count)
+     * @throws IllegalArgumentException general error (typically bad argument count or enumeration constant not recognized)
      * @throws NumberFormatException    a bad numeric format was encountered (typically integer valued parameter)
      * @throws DateTimeParseException   timestamp factory was specified with bad ISO-8605 date/time/duration format
      * @throws TypeNotPresentException  unrecognized enumeration constant (scalar factory JalScalarType or image factory BufferedImage.Format)   
@@ -944,22 +936,24 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * 
      * @return  a new datum factory specification record determined by the arguments
      * 
-     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
-     * @throws ConfigurationException       tensor shape was invalid
      * @throws TypeNotPresentException      an enumeration constant was not recognized
+     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
      * @throws UnsupportedOperationException unable to create 'numIncr' field in scalar factory specification
-     * @throws IllegalArgumentException     the 'enmType' constant was not supported
+     * @throws MissingResourceException     timestamp factory had empty arguments
+     * @throws DateTimeParseException       invalid format for ISO-8601 time and/or duration specification 
+     * @throws ConfigurationException       tensor shape was invalid
+     * @throws NoSuchElementException       the 'enmType' constant was not supported
      */
-    public static Record parseFactorySpec(JalComplexType enmType, String...args) throws NumberFormatException, IllegalArgumentException, ConfigurationException, TypeNotPresentException, UnsupportedOperationException {
+    public static Record parseFactorySpec(JalComplexType enmType, String...args) throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
         
         Record specFactory = switch (enmType) {
-        case SCALAR -> ScalarFactorySpec.parse(args);
-        case TIMESTAMP -> TimestampFactorySpec.parse(args);
-        case BYTES -> ByteArrayFactorySpec.parse(args);
-        case IMAGE -> ImageFactorySpec.parse(args);
-        case TENSOR -> TensorFactorySpec.parse(args);
-        case STRUCTURE -> StructureFactorySpec.parse(args);
-        default -> throw new IllegalArgumentException("Unexpected value: " + enmType);
+        case SCALAR -> ScalarFactorySpec.parse(args);       // throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException
+        case BYTES -> ByteArrayFactorySpec.parse(args);     // throws NumberFormatException
+        case TIMESTAMP -> TimestampFactorySpec.parse(args); // throws MissingResourceException, NumberFormatException, DateTimeParseException
+        case IMAGE -> ImageFactorySpec.parse(args);         // throws NumberFormatException, TypeNotPresentException
+        case TENSOR -> TensorFactorySpec.parse(args);       // throws ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException
+        case STRUCTURE -> StructureFactorySpec.parse(args); // throws NumberFormatException, TypeNotPresentException, UnsupportedOperationException
+        default -> throw new NoSuchElementException("Unexpected value: " + enmType);
         };
         
         return specFactory;
@@ -1040,7 +1034,6 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
     public static final String[]        ARR_FAC_SPEC_DEF = CFG_COL_DEF.factory;
     
     
-    
     //
     // Support Methods
     //
@@ -1059,18 +1052,20 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * 
      * @return  new <code>FrameColumnsSpec</code> record populated from the argument attributes
      * 
-     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
-     * @throws ConfigurationException       tensor shape was invalid
      * @throws TypeNotPresentException      an enumeration constant was not recognized
+     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
      * @throws UnsupportedOperationException unable to create 'numIncr' field in scalar factory specification
-     * @throws IllegalArgumentException     the 'enmType' constant was not supported
+     * @throws MissingResourceException     timestamp factory had empty arguments
+     * @throws DateTimeParseException       invalid format for ISO-8601 time and/or duration specification 
+     * @throws ConfigurationException       tensor shape was invalid
+     * @throws NoSuchElementException       the 'enmType' constant was not supported
      */
-    private static FrameColumnsSpec<Record> from(JalToolsColumnsConfig cfgCols) throws NumberFormatException, IllegalArgumentException, ConfigurationException, TypeNotPresentException, UnsupportedOperationException {
+    private static FrameColumnsSpec<Record> from(JalToolsColumnsConfig cfgCols) throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
         int             intCols = cfgCols.count;
         String          strNmPref = cfgCols.name;
         JalComplexType  enmType = cfgCols.type;
         String[]        arrFacArgs = cfgCols.factory;
-        Record          recFactory = FrameColumnsSpec.parseFactorySpec(enmType, arrFacArgs);
+        Record          recFactory = FrameColumnsSpec.parseFactorySpec(enmType, arrFacArgs);    // throws all exceptions
         
         return FrameColumnsSpec.from(intCols, strNmPref, recFactory);
     }

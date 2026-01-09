@@ -25,14 +25,33 @@
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.factories.frames;
 
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.IntStream;
+
+import javax.naming.ConfigurationException;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.IDataColumn;
+import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.model.table.StaticDataColumn;
-import com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.IDatumFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ByteArrayFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ImageFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.StructureFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TensorFactory;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.TimestampFactory;
+import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.cols.JalToolsColumnsConfig;
+import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -70,6 +89,28 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * The number of columns created in each invocation to <code>{@link #build()}</code> is the size of the set
  * of column names provided at creation/construction.
  * </p>
+ * <p>
+ * <h2>Datum Factories</h2>
+ * Datum factories are classes exposing the <code>{@link IDatumFactory}</code> interface.  
+ * The template parameter <code>{@link FactorySpec}</code> identifies the type and configuration for the
+ * datum factory producing the simulated column data.  Again, the type parameters must be consistent with the
+ * <code>{@link #enmType()}</code> field.  The inclusion of both the type parameter and the datum type field
+ * is necessary for the parsing operation <code>{@link #parse(String...)}</code> available for parsing application
+ * command-line arguments.
+ * </p>  
+ * <p>
+ * When parsing command-line arguments the datum factory specification is identified by 
+ * <code>{@link JalComplexType}</code> enumeration constant.
+ * The supported datum factories associations are given by the following: 
+ * <ul>
+ * <li><code>{@link JalComplexType#SCALAR} &rarr; {@link ScalarFactory}</code>.</li>
+ * <li><code>{@link JalComplexType#BYTES} &rarr; {@link ByteArrayFactory}</code>.</li>
+ * <li><code>{@link JalComplexType#TIMESTAMP} &rarr; {@link TimestampFactory}</code>.</li>
+ * <li><code>{@link JalComplexType#IMAGE} &rarr; {@link ImageFactory}</code>.</li>
+ * <li><code>{@link JalComplexType#TENSOR} &rarr; {@link TensorFactory}</code>.</li>
+ * <li><code>{@link JalComplexType#STRUCTURE} &rarr; {@link StructureFactory}.</code></li>
+ * </ul>
+ * </p>
  * 
  *
  * @author Christopher K. Allen
@@ -82,6 +123,226 @@ public class FrameColumnsFactory implements IFrameColumnsFactory<Object> {
     //
     // Creators
     //
+    
+    /**
+     * <p>
+     * Convenience Creator: 
+     * Creates a new <code>FrameColumnsFactory</code> instance populated from all default configuration parameters.
+     * </p>
+     * <p>
+     * The returned frame columns factory is configured completely with the default configuration parameters
+     * taken from the JAL Tools default configuration.
+     * </p>
+     * <p>
+     * <h2>Default Parameters</h2>
+     * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration  
+     * and infers the values of some configuration parameters.  Configuration parameters not provided 
+     * are populated as follows:
+     * <ul>
+     * <li>column count &rarr; <code>{@link #INT_COL_CNT_DEF}</code>.</li>
+     * <li>data column name prefix &rarr; <code>{@link #STR_NM_PREF_DEF}</code>. </li>
+     * <li><code>{@link IDatumFactory} &rarr; {@link #parseDatumFactory(JalComplexType, String...)}</code> with:
+     *     <ul>
+     *     <li><code>{@link JalComplexType} = {@link #ENM_COL_TYPE_DEF}</code>,</li>
+     *     <li><code>{@link String[]} = {@link #ARR_FAC_SPEC_DEF}</code>.</li>
+     *     </ul>
+     * </li>
+     * </ul>
+     * </p>
+     * @apiNote
+     * This creator produces frame column factories with the default column configuration as specified
+     * in the JAL Tools default configuration.  Note that the default ingestion frame column is different
+     * from the default ingestion frame <em>columns</em>.  Thus, this creator is <b>not</b> equivalent
+     * to creator <code>{@link #defaultFrame()}</code>, which returns all column specifications for the
+     * default ingestion frame.
+     *  
+     * @return  a new <code>FrameColumnsFactory</code> instance ready for data column generation
+     * 
+     * @throws IllegalArgumentException     either non-positive column count or value factory is <code>null</code>
+     * @throws TypeNotPresentException      unknown <code>JalScalarType</code> enumeration constant (scalar factory)
+     * @throws NumberFormatException        invalid numeric format (e.g., scalar factory bad 'numIncr' or 'lngSeed') 
+     * @throws UnsupportedOperationException unable to create 'numIncr' field for numeric value type (scalar factory)
+     * @throws MissingResourceException      timestamp factory had empty arguments
+     * @throws DateTimeParseException        bad ISO-8601 time and/or duration format (e.g., timestamp factory period, start, etc.) 
+     * @throws ConfigurationException        the tensor shape was invalid (e.g., an axis size could not be parsed, non-positive axis size, etc.)
+     * @throws NoSuchElementException        unrecognized <code>{@link JalComplexType}</code> constant in argument  
+     */
+    public static FrameColumnsFactory   from() throws IllegalArgumentException, TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
+        
+        return FrameColumnsFactory.from(INT_COL_CNT_DEF);
+    }
+        
+    /**
+     * <p>
+     * Convenience Creator: 
+     * Creates a new <code>FrameColumnsFactory</code> instance populated from the available argument values.
+     * </p>
+     * <p>
+     * The returned frame columns factory is configured either directory or inferred, with the argument values.
+     * </p>
+     * <p>
+     * <h2>Default Parameters</h2>
+     * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration  
+     * and infers the values of some configuration parameters.  Configuration parameters not provided 
+     * are populated as follows:
+     * <ul>
+     * <li>data column name prefix &rarr; <code>{@link #STR_NM_PREF_DEF}</code>. </li>
+     * <li><code>{@link IDatumFactory} &rarr; {@link #parseDatumFactory(JalComplexType, String...)}</code> with:
+     *     <ul>
+     *     <li><code>{@link JalComplexType} = {@link #ENM_COL_TYPE_DEF}</code>,</li>
+     *     <li><code>{@link String[]} = {@link #ARR_FAC_SPEC_DEF}</code>.</li>
+     *     </ul>
+     * </li>
+     * </ul>
+     * </p>
+     *  
+     * @param intCols       number of data columns produced by factory
+     * 
+     * @return  a new <code>FrameColumnsFactory</code> instance ready for data column generation
+     * 
+     * @throws IllegalArgumentException     either non-positive column count or value factory is <code>null</code>
+     * @throws TypeNotPresentException      unknown <code>JalScalarType</code> enumeration constant (scalar factory)
+     * @throws NumberFormatException        invalid numeric format (e.g., scalar factory bad 'numIncr' or 'lngSeed') 
+     * @throws UnsupportedOperationException unable to create 'numIncr' field for numeric value type (scalar factory)
+     * @throws MissingResourceException      timestamp factory had empty arguments
+     * @throws DateTimeParseException        bad ISO-8601 time and/or duration format (e.g., timestamp factory period, start, etc.) 
+     * @throws ConfigurationException        the tensor shape was invalid (e.g., an axis size could not be parsed, non-positive axis size, etc.)
+     * @throws NoSuchElementException        unrecognized <code>{@link JalComplexType}</code> constant in argument  
+     */
+    public static FrameColumnsFactory   from(int intCols) throws IllegalArgumentException, TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
+        
+        return FrameColumnsFactory.from(intCols, STR_NM_PREF_DEF);
+    }
+        
+    /**
+     * <p>
+     * Convenience Creator: 
+     * Creates a new <code>FrameColumnsFactory</code> instance populated from the available argument values.
+     * </p>
+     * <p>
+     * The returned frame columns factory is configured either directory or inferred, with the argument values.
+     * </p>
+     * <p>
+     * <h2>Default Parameters</h2>
+     * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration  
+     * and infers the values of some configuration parameters.  Configuration parameters not provided 
+     * are populated as follows:
+     * <ul>
+     * <li><code>{@link IDatumFactory} &rarr; {@link #parseDatumFactory(JalComplexType, String...)}</code> with:
+     *     <ul>
+     *     <li><code>{@link JalComplexType} = {@link #ENM_COL_TYPE_DEF}</code>,</li>
+     *     <li><code>{@link String[]} = {@link #ARR_FAC_SPEC_DEF}</code>.</li>
+     *     </ul>
+     * </li>
+     * </ul>
+     * </p>
+     *  
+     * @param intCols       number of data columns produced by factory
+     * @param strNmPref     prefix for data column names produced by factory
+     * 
+     * @return  a new <code>FrameColumnsFactory</code> instance ready for data column generation
+     * 
+     * @throws IllegalArgumentException     either non-positive column count or value factory is <code>null</code>
+     * @throws TypeNotPresentException      unknown <code>JalScalarType</code> enumeration constant (scalar factory)
+     * @throws NumberFormatException        invalid numeric format (e.g., scalar factory bad 'numIncr' or 'lngSeed') 
+     * @throws UnsupportedOperationException unable to create 'numIncr' field for numeric value type (scalar factory)
+     * @throws MissingResourceException      timestamp factory had empty arguments
+     * @throws DateTimeParseException        bad ISO-8601 time and/or duration format (e.g., timestamp factory period, start, etc.) 
+     * @throws ConfigurationException        the tensor shape was invalid (e.g., an axis size could not be parsed, non-positive axis size, etc.)
+     * @throws NoSuchElementException        unrecognized <code>{@link JalComplexType}</code> constant in argument  
+     */
+    public static FrameColumnsFactory   from(int intCols, String strNmPref) throws IllegalArgumentException, TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
+        
+        // Create the default ingestion frame datum factory
+        IDatumFactory   facValues = FrameColumnsFactory.parseDatumFactory(ENM_COL_TYPE_DEF, ARR_FAC_SPEC_DEF);  // throws all exceptions except IllegalArgumentException
+        
+        return FrameColumnsFactory.from(intCols, strNmPref, facValues);     // throws IllegalArgumentException
+    }
+    
+    /**
+     * <p>
+     * Convenience Creator: 
+     * Creates a new <code>FrameColumnsFactory</code> instance populated from the available argument values.
+     * </p>
+     * <p>
+     * The returned frame columns factory is configured either directory or inferred, with the argument values.
+     * </p>
+     * <p>
+     * <h2>Default Parameters</h2>
+     * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration  
+     * and infers the values of some configuration parameters.  Configuration parameters not provided 
+     * are populated as follows:
+     * <ul>
+     * <li>column count &rarr; <code>{@link #INT_COL_CNT_DEF}</code>.</li>
+     * <li>data column name prefix &rarr; <code>{@link #STR_NM_PREF_DEF}</code>. </li>
+     * </ul>
+     * </p>
+     *  
+     * @param facValues   the datum factory used for simulated data production
+     * 
+     * @return  a new <code>FrameColumnsFactory</code> instance ready for data column generation
+     * 
+     * @throws IllegalArgumentException either non-positive column count or value factory is <code>null</code>
+     */
+    public static FrameColumnsFactory   from(IDatumFactory facValues) throws IllegalArgumentException {
+        
+        return FrameColumnsFactory.from(INT_COL_CNT_DEF, facValues);
+    }
+    
+    /**
+     * <p>
+     * Convenience Creator: 
+     * Creates a new <code>FrameColumnsFactory</code> instance populated from the available argument values.
+     * </p>
+     * <p>
+     * The returned frame columns factory is configured either directory or inferred, with the argument values.
+     * </p>
+     * <p>
+     * <h2>Default Parameters</h2>
+     * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration  
+     * and infers the values of some configuration parameters.  Configuration parameters not provided 
+     * are populated as follows:
+     * <ul>
+     * <li>data column name prefix &rarr; <code>{@link #STR_NM_PREF_DEF}</code>. </li>
+     * </ul>
+     * </p>
+     *  
+     * @param intCols     number of data columns produced by factory
+     * @param facValues   the datum factory used for simulated data production
+     * 
+     * @return  a new <code>FrameColumnsFactory</code> instance ready for data column generation
+     * 
+     * @throws IllegalArgumentException either non-positive column count or value factory is <code>null</code>
+     */
+    public static FrameColumnsFactory   from(int intCols, IDatumFactory facValues) throws IllegalArgumentException {
+        
+        return FrameColumnsFactory.from(intCols, STR_NM_PREF_DEF, facValues);
+    }
+    
+    /**
+     * <p>
+     * Standard Creator: 
+     * Creates a new <code>FrameColumnsFactory</code> instance populated from the given argument values.
+     * </p>
+     * <p>
+     * All configuration parameters are populated, either directory or inferred, with the argument values.
+     * The column names set for the frame columns factory is created by appending the column index to
+     * the argument <code>strNmPref</code>.  
+     * </p>
+     *  
+     * @param intCols       number of data columns produced by factory
+     * @param strNmPref     prefix for data column names produced by factory
+     * @param facValues     the datum factory instance used for simulated data production
+     * 
+     * @return  a new <code>FrameColumnsFactory</code> instance ready for data column generation
+     * 
+     * @throws IllegalArgumentException either non-positive column count or value factory is <code>null</code>
+     */
+    public static FrameColumnsFactory    from(int intCols, String strNmPref, IDatumFactory facValues) throws IllegalArgumentException {
+        Set<String>     setColNms = IntStream.range(0, intCols).mapToObj(i -> strNmPref + Integer.toString(i)).collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
+        
+        return FrameColumnsFactory.from(setColNms, facValues);  // throws IllegalArgumentException
+    }
     
     /**
      * <p>
@@ -101,13 +362,346 @@ public class FrameColumnsFactory implements IFrameColumnsFactory<Object> {
      * 
      * @return  a new <code>FrameColumnsFactory</code> instance ready for data column generation
      * 
-     * @throws IllegalArgumentException either empty name collection, column size < 1, or value factory is <code>null</code>
+     * @throws IllegalArgumentException either empty name collection or value factory is <code>null</code>
      * 
      * @see FrameColumnsFactory
      */
     public static final FrameColumnsFactory from(Set<String> setColNms, IDatumFactory facValues) throws IllegalArgumentException {
         return new FrameColumnsFactory(setColNms, facValues);
     }
+
+    /**
+     * <p>
+     * Convenience Creator: 
+     * Creates a new <code>FrameColumnsFactory</code> instance using the argument values and the
+     * default creator for the datum factory inferred by the given datum factory type.
+     * </p>
+     * <p>
+     * This is a convenience creator which defers to the default creator for the given 
+     * <code>{@link JalComplexType}</code> constant provided.  Specifically, the parameter <code>{@link IDatumeFactory}</code>
+     * is populated according to the following assignments:
+     * <ul>
+     * <li><code>{@link JalComplexType#SCALAR} &rarr; {@link ScalarFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#BYTES} &rarr; {@link ByteArrayFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#TIMESTAMP} &rarr; {@link TimestampFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#IMAGE} &rarr; {@link ImageFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#TENSOR} &rarr; {@link TensorFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#STRUCTURE} &rarr; {@link StructureFactory#from()}.</code></li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>Default Parameters</h2>
+     * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
+     * The default parameters are used in the creation of the datum factory specification.  
+     * Here the datum factory specification is completely configured to the JAL Tools default state 
+     * as specified above.
+     * The remaining record fields are populated as follows:
+     * <ul>
+     * <li>column count &rarr; <code>{@link #INT_COL_CNT_DEF}</code>.</li>
+     * <li>column name prefix &rarr; <code>{@link #STR_NM_PREF_DEF}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param enmType       data type of data columns produced by column factory
+     * 
+     * @return  a new <code>FrameColumnsFactory</code> specification as defined by the available argument values
+     * 
+     * @throws IllegalArgumentException bad default configuration for datum factory in JAL Tools default configuration   
+     * @throws NoSuchElementException   the <code>JalComplexType</code> constant is unsupported
+     *
+     * @see JalComplexType
+     * @see ScalarFactory#from()
+     * @see TimestampFactory#from()
+     * @see ByteArrayFactory#from()
+     * @see ImageFactory#from()
+     * @see TensorFactory#from()
+     * @see StructureFactory#from()
+     */
+    public static FrameColumnsFactory   from(JalComplexType enmType) throws IllegalArgumentException, NoSuchElementException {
+
+        return FrameColumnsFactory.from(INT_COL_CNT_DEF, enmType);
+    }
+    
+    /**
+     * <p>
+     * Convenience Creator: 
+     * Creates a new <code>FrameColumnsFactory</code> instance using the argument values and the
+     * default creator for the datum factory inferred by the given datum factory type.
+     * </p>
+     * <p>
+     * This is a convenience creator which defers to the default creator for the given 
+     * <code>{@link JalComplexType}</code> constant provided.  Specifically, the parameter <code>{@link IDatumeFactory}</code>
+     * is populated according to the following assignments:
+     * <ul>
+     * <li><code>{@link JalComplexType#SCALAR} &rarr; {@link ScalarFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#BYTES} &rarr; {@link ByteArrayFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#TIMESTAMP} &rarr; {@link TimestampFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#IMAGE} &rarr; {@link ImageFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#TENSOR} &rarr; {@link TensorFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#STRUCTURE} &rarr; {@link StructureFactory#from()}.</code></li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>Default Parameters</h2>
+     * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
+     * The default parameters are used in the creation of the datum factory specification.  
+     * Here the datum factory specification is completely configured to the JAL Tools default state 
+     * as specified above.
+     * The remaining record fields are populated as follows:
+     * <ul>
+     * <li>column name prefix &rarr; <code>{@link #STR_NM_PREF_DEF}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param intCols       number of data columns produced by factory
+     * @param enmType       data type of data columns produced by column factory
+     * 
+     * @return  a new <code>FrameColumnsFactory</code> specification as defined by the available argument values
+     * 
+     * @throws IllegalArgumentException bad default configuration for datum factory in JAL Tools default configuration   
+     * @throws NoSuchElementException   the <code>JalComplexType</code> constant is unsupported
+     *
+     * @see JalComplexType
+     * @see ScalarFactory#from()
+     * @see TimestampFactory#from()
+     * @see ByteArrayFactory#from()
+     * @see ImageFactory#from()
+     * @see TensorFactory#from()
+     * @see StructureFactory#from()
+     */
+    public static FrameColumnsFactory   from(int intCols, JalComplexType enmType) throws IllegalArgumentException, NoSuchElementException {
+
+        return FrameColumnsFactory.from(intCols, STR_NM_PREF_DEF, enmType);
+    }
+    
+    /**
+     * <p>
+     * Convenience Creator: 
+     * Creates a new <code>FrameColumnsFactory</code> instance using the argument values and the
+     * default creator for the datum factory inferred by the given datum factory type.
+     * </p>
+     * <p>
+     * This is a convenience creator which defers to the default creator for the given 
+     * <code>{@link JalComplexType}</code> constant provided.  Specifically, the parameter <code>{@link IDatumeFactory}</code>
+     * is populated according to the following assignments:
+     * <ul>
+     * <li><code>{@link JalComplexType#SCALAR} &rarr; {@link ScalarFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#BYTES} &rarr; {@link ByteArrayFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#TIMESTAMP} &rarr; {@link TimestampFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#IMAGE} &rarr; {@link ImageFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#TENSOR} &rarr; {@link TensorFactory#from()}</code>.</li>
+     * <li><code>{@link JalComplexType#STRUCTURE} &rarr; {@link StructureFactory#from()}.</code></li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>Default Parameters</h2>
+     * <b>WARNING:</b>. This method uses default parameters from the JAL Tools default configuration.  
+     * The default parameters are used in the creation of the datum factory specification.  
+     * Here the datum factory specification is completely configured to the JAL Tools default state 
+     * as specified above.
+     * </p>
+     * 
+     * @param intCols       number of data columns produced by factory
+     * @param strNmPref     prefix for data column names produced by factory
+     * @param enmType       data type of data columns produced by column factory
+     * 
+     * @return  a new <code>FrameColumnsFactory</code> specification as defined by the available argument values
+     * 
+     * @throws IllegalArgumentException bad default configuration for datum factory in JAL Tools default configuration   
+     * @throws NoSuchElementException   the <code>JalComplexType</code> constant is unsupported
+     *
+     * @see JalComplexType
+     * @see ScalarFactory#from()
+     * @see TimestampFactory#from()
+     * @see ByteArrayFactory#from()
+     * @see ImageFactory#from()
+     * @see TensorFactory#from()
+     * @see StructureFactory#from()
+     */
+    public static FrameColumnsFactory   from(int intCols, String strNmPref, JalComplexType enmType) throws IllegalArgumentException, NoSuchElementException {
+        
+        return switch (enmType) {
+        case SCALAR -> FrameColumnsFactory.from(intCols, strNmPref, ScalarFactory.from()); 
+        case TIMESTAMP -> FrameColumnsFactory.from(intCols, strNmPref, TimestampFactory.from());
+        case BYTES -> FrameColumnsFactory.from(intCols, strNmPref, ByteArrayFactory.from());        // throws IllegalArgumentException x 2
+        case IMAGE -> FrameColumnsFactory.from(intCols, strNmPref, ImageFactory.from());
+        case TENSOR -> FrameColumnsFactory.from(intCols, strNmPref, TensorFactory.from());          // throws IllegalArgumentException x 2
+        case STRUCTURE -> FrameColumnsFactory.from(intCols, strNmPref, StructureFactory.from());    // throws IllegalArgumentException x 2
+        default -> throw new NoSuchElementException("Unexpected value: " + enmType);
+        };
+    }
+    
+    /**
+     * <p>
+     * Retrieves and returns the default ingestion frame data columns specifications for the default 
+     * ingestion frame factory configuration.
+     * </p>
+     * <p>
+     * The JAL Tools default configuration contains a default ingestion frame configuration.  This configuration is
+     * used by ingestion frame factories to create <code>{@link IngestionFrame}</code> instances when no explicit
+     * configuration is given.
+     * </p>
+     * </p>
+     * The returned (ordered) list of <code>IFrameColumnsFactory</code> implementations specifies all the data columns 
+     * in the default ingestion frame.  The timestamps for an ingestion frame are specified separately in 
+     * <code>{@link FrameTimestampsFactory#defaultFrame()}</code> method. 
+     * </p>
+     * <p>
+     * The method retrieves the default data column specifications contained in the <code>{@link JalToolsColumnsConfig}</code>
+     * structure class list within the <code>{@link JalToolsConfig}</code> default configuration.  The parameters
+     * for each column are parsed and a new <code>IFrameColumnsFactory</code> implementation is created for each column.
+     * The column configurations are returned in the order in which they appear in the JAL Tools default configuration.
+     * </p>
+     * 
+     * @return  a list of new <code>IFrameColumnsFactory</code> implementations as specified in the JAL Tools default configuration
+     * 
+     * @throws NumberFormatException    a bad numeric format was encountered (typically integer valued parameter)
+     * @throws DateTimeParseException   timestamp factory was specified with bad ISO-8601 date/time/duration format
+     * @throws TypeNotPresentException  unrecognized enumeration constant (scalar factory JalScalarType or image factory BufferedImage.Format)   
+     * @throws ConfigurationException   tensor factory had bad shape 
+     * @throws UnsupportedOperationException    scalar factory had bad 'numIncr' parameter
+     * @throws NoSuchElementException   the column type is unrecognized (unsupported) 
+     * @throws IllegalArgumentException either empty name collection or value factory is <code>null</code>
+     */
+    public static List<IFrameColumnsFactory<Object>> defaultFrame() throws NumberFormatException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, NoSuchElementException, IllegalArgumentException {
+        List<JalToolsColumnsConfig>         lstColDefCfgs =  CFG_FRM_DEF.columns;
+        List<IFrameColumnsFactory<Object>>  lstFacCols = new ArrayList<>(lstColDefCfgs.size());
+        
+        for (JalToolsColumnsConfig cfg : lstColDefCfgs) {
+            IFrameColumnsFactory<Object> facCol = FrameColumnsFactory.from(cfg);    // throws all exceptions
+            
+            lstFacCols.add(facCol);
+        }
+        
+        return lstFacCols;
+    }
+    
+    
+    
+    //
+    // Class Support Methods
+    //
+    
+    /**
+     * <p>
+     * Determines the data column factory column type from the datum factory instance type.
+     * </p>
+     * <p>
+     * Switches through the supported datum factory instance types to determine the appropriate 
+     * <code>{@link JalComlexType}</code> enumeration constant.  Specifically,
+     * the returned value is given by the following:
+     * <ul>
+     * <li><code>argument == {@link ScalarFactory} &rarr; {@link JalComplexType#SCALAR}</code>.</li>
+     * <li><code>argument == {@link TimestampFactory} &rarr; {@link JalComplexType#TIMESTAMP}</code>.</li>
+     * <li><code>argument == {@link ByteArrayFactory} &rarr; {@link JalComplexType#BYTES}</code>.</li>
+     * <li><code>argument == {@link ImageFactory} &rarr; {@link JalComplexType#IMAGE}</code>.</li>
+     * <li><code>argument == {@link TensorFactory} &rarr; {@link JalComplexType#TENSOR}</code>.</li>
+     * <li><code>argument == {@link StructureFactory} &rarr; {@link JalComplexType#STRUCTURE}</code>.</li>
+     * </ul>
+     * If the argument is neither of the above values an exception is thrown.
+     * </p>
+     * 
+     * @param facValues   the datum factory instance used for simulated data production
+     * 
+     * @return  the <code>JalComplexType</code> constant associated with the given datum factory instance
+     * 
+     * @throws UnsupportedOperationException    the datum factory was unrecognized or unsupported
+     */
+    public static JalComplexType  inferColumnType(IDatumFactory facValues) throws UnsupportedOperationException {
+        
+        // Switch through supported specification cases:
+        if (facValues instanceof ScalarFactory)
+            return JalComplexType.SCALAR;
+        else if (facValues instanceof TimestampFactory)
+            return JalComplexType.TIMESTAMP;
+        else if (facValues instanceof ByteArrayFactory)
+            return JalComplexType.BYTES;
+        else if (facValues instanceof ImageFactory)
+            return JalComplexType.IMAGE;
+        else if (facValues instanceof TensorFactory)
+            return JalComplexType.TENSOR;
+        else if (facValues instanceof StructureFactory)
+            return JalComplexType.STRUCTURE;
+        else
+            throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple()
+                    + " - Unrecognized datum factory instance: " + facValues.getClass().getName());
+    }
+    
+    /**
+     * <p>
+     * Convenience method for calling the parsing creator of the datum factory associated with the 
+     * given complex type.
+     * </p>
+     * <p>
+     * This is a convenience method for instantiating data factory according to their
+     * type specification and parsing creator (i.e., <code>parse(String...)</code>).  
+     * If the type of a datum factory specification is known a priori it is best to use its creators
+     * directly.    
+     * This method is used internally for creating the <code>{@link IDatumFactory}</code> implementation according 
+     * to type.  Normally it would be left private but since there is no state, only associations, it is
+     * left public.
+     * </p>
+     * <p> 
+     * The method first identifies the supported datum factory specification through the 
+     * associated <code>{@link JalComplexType}</code> constant.  (See the documentation for 
+     * <code>{@link FrameColumnsFactory}</code> for the supported datum factories and their associated
+     * <code>{@link JalComplexType}</code> enumeration constants.)  The <code>parse(String...)</code>
+     * creator of the datum factory is then called with the given arguments.
+     * </p>
+     * 
+     * @param enmType   data type of the datum factory (i.e., data column type) 
+     * @param args      arguments to the parsing creator of the datum factory specification 
+     * 
+     * @return  a new datum factory implementation determined by the arguments
+     * 
+     * @throws TypeNotPresentException          unknown <code>JalScalarType</code> enumeration constant (scalar factory)
+     * @throws NumberFormatException            invalid numeric format (e.g., scalar factory bad 'numIncr' or 'lngSeed') 
+     * @throws UnsupportedOperationException    unable to create 'numIncr' field for numeric value type (scalar factory)
+     * @throws MissingResourceException         timestamp factory had empty arguments
+     * @throws DateTimeParseException           bad ISO-8601 time and/or duration format (e.g., timestamp factory period, start, etc.) 
+     * @throws ConfigurationException           the tensor shape was invalid (e.g., an axis size could not be parsed, non-positive axis size, etc.)
+     * @throws NoSuchElementException           unrecognized <code>{@link JalComplexType}</code> constant in argument  
+     */
+    public static IDatumFactory parseDatumFactory(JalComplexType enmType, String... args) throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
+    
+        return switch (enmType) {
+        case SCALAR -> ScalarFactory.parse(args);       // throws TypeNotPresentException, NumberForamtException, UnsupportedOperationException
+        case BYTES -> ByteArrayFactory.parse(args);     // throws NumberFormatException
+        case TIMESTAMP -> TimestampFactory.parse(args); // throws MissingResourceException, NumberFormatException, DateTimeParseException
+        case IMAGE -> ImageFactory.parse(args);         // throws NumberFormatException, TypeNotPresentException
+        case TENSOR -> TensorFactory.parse(args);       // throws ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException
+        case STRUCTURE -> StructureFactory.parse(args); // throws NumberForamtException, TypeNotPresentException, UnsupportedOperationException
+        default -> throw new NoSuchElementException("Unexpected value: " + enmType);
+        };
+    }
+    
+    
+    //
+    // JAL Library Resources
+    //
+
+    /** JAL Tools default configuration parameters for ingestion frame factories */
+    private static final JalToolsFramesConfig           CFG_FRM_DEF = JalToolsConfig.getInstance().datagen.frames;
+    
+    /** JAL Tools default configuration parameters for column factories */
+    private static final JalToolsColumnsConfig          CFG_COL_DEF = JalToolsConfig.getInstance().datagen.columns;
+    
+    
+    // 
+    // Record Constants - Default Values
+    //
+    
+    /** The default column name prefix */
+    public static final String          STR_NM_PREF_DEF = CFG_COL_DEF.name;
+    
+    /** The default column count */
+    public static final int             INT_COL_CNT_DEF = CFG_COL_DEF.count;
+    
+    /** The default column type */
+    public static final JalComplexType  ENM_COL_TYPE_DEF = CFG_COL_DEF.type;
+    
+    /** The default column value factory specification parameters (parse string) */
+    public static final String[]        ARR_FAC_SPEC_DEF = CFG_COL_DEF.factory;
 
     
     //
@@ -148,7 +742,7 @@ public class FrameColumnsFactory implements IFrameColumnsFactory<Object> {
      * @param szCols    the size of each data column (i.e., number of rows)
      * @param facValues the data value factory producing simulated column values
      * 
-     * @throws IllegalArgumentException either empty name collection, column size < 1, or value factory is <code>null</code>
+     * @throws IllegalArgumentException either empty name collection or value factory is <code>null</code>
      */
     public FrameColumnsFactory(Set<String> setColNms, IDatumFactory facValues) throws IllegalArgumentException {
         
@@ -241,6 +835,47 @@ public class FrameColumnsFactory implements IFrameColumnsFactory<Object> {
     
     
     //
+    // Object Overrides
+    //
+    
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        
+        if (obj instanceof FrameColumnsFactory fac) {
+            boolean bolResult = this.setColNms.equals(fac.setColNms)
+                              && this.facValues.equals(fac.facValues)
+                              && this.cntCols == fac.cntCols
+                              && this.enmColType == fac.enmColType;
+            
+            return bolResult;
+        }
+        
+        return false;
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        final int           cntHead = 10;
+        final List<String>  lstHead = this.setColNms.stream().toList().subList(0, cntHead);
+        StringBuilder       buf = new StringBuilder();
+        
+        buf.append("Column count            : " + this.cntCols + "\n");
+        buf.append("Column type             : " + this.enmColType + "\n");
+        buf.append("Column names (first " + cntHead + "): " + lstHead + "\n");
+        buf.append("Datum Factory \n");
+        buf.append(this.facValues);
+        
+        return buf.toString();
+    }
+
+    
+    //
     // Support Methods
     //
     
@@ -277,6 +912,46 @@ public class FrameColumnsFactory implements IFrameColumnsFactory<Object> {
         StaticDataColumn<Object>    col = StaticDataColumn.from(strName, this.enmColType, vecVals);
         
         return col;
+    }
+    
+    /**
+     * <p>
+     * Creates a new <code>IFrameColumnsFactory</code> implementation from the given data column default parameters structure class.
+     * </p>
+     * <p>
+     * The given structure class is assumed to originate from the JAL Tools default configuration
+     * <code>{@link JalToolsConfig}</code>.  This method extracts the attributes of the structure class and uses
+     * them to configure the returned data column factory.
+     * </p>
+     * 
+     * @param cfgCols   data column default parameters structure class
+     * 
+     * @return  new <code>IFrameColumnsFactory</code> implementation configured from the argument attributes
+     * 
+     * @throws TypeNotPresentException      an enumeration constant was not recognized
+     * @throws NumberFormatException        invalid number format (e.g., seed value for scalar factory specification)
+     * @throws UnsupportedOperationException unable to create 'numIncr' field in scalar factory specification
+     * @throws MissingResourceException     timestamp factory had empty arguments
+     * @throws DateTimeParseException       invalid format for ISO-8601 time and/or duration specification 
+     * @throws ConfigurationException       tensor shape was invalid
+     * @throws NoSuchElementException       the 'enmType' constant was not supported
+     * @throws IllegalArgumentException     either empty name collection or value factory is <code>null</code>
+     */
+    private static IFrameColumnsFactory<Object> from(JalToolsColumnsConfig cfgCols) throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException, IllegalArgumentException {
+        
+        // Create column names
+        int             intCols = cfgCols.count;
+        String          strNmPref = cfgCols.name;
+        
+        Set<String>     setColNms = IntStream.range(0, intCols).<String>mapToObj(i -> strNmPref + Integer.toString(i)).collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
+        
+        // Create datum factory
+        JalComplexType  enmType = cfgCols.type;
+        String[]        arrFacArgs = cfgCols.factory;
+        
+        IDatumFactory   facCols = FrameColumnsFactory.parseDatumFactory(enmType, arrFacArgs);    // throws all exceptions
+        
+        return FrameColumnsFactory.from(setColNms, facCols);    // throws IllegalArgumentException
     }
     
 }

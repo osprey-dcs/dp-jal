@@ -28,11 +28,13 @@ package com.ospreydcs.dp.jal.tools.common.datagen.factories.frames;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -97,14 +99,37 @@ public class IngestionFrameFactory implements IFrameFactory {
      * 
      * @return  a new <code>IngestionFrameFactory</code> ready for simulated ingestion frame creation
      * 
+     * @throws TypeNotPresentException          unknown <code>JalScalarType</code> enumeration constant (scalar factory)
+     * @throws NumberFormatException            invalid numeric format (e.g., scalar factory bad 'numIncr' or 'lngSeed') 
+     * @throws UnsupportedOperationException    unable to create 'numIncr' field for numeric value type (scalar factory)
+     * @throws MissingResourceException         timestamp factory had empty arguments
+     * @throws DateTimeParseException           bad ISO-8601 time and/or duration format (e.g., timestamp factory period, start, etc.) 
      * @throws ConfigurationException           the tensor shape was invalid (e.g., an axis size could not be parsed, non-positive axis size, etc.)
-     * @throws TypeNotPresentException          unknown <code>JalScalarType</code> enumeration constant
-     * @throws NumberFormatException            invalid numeric format (bad 'numIncr' or 'lngSeed') 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr}</code> field for numeric value type
      * @throws NoSuchElementException           unrecognized <code>{@link JalComplexType}</code> constant in argument  
      */
-    public static IngestionFrameFactory from() throws NumberFormatException, ConfigurationException, TypeNotPresentException, UnsupportedOperationException, NoSuchElementException {
+    public static IngestionFrameFactory from() throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
         return IngestionFrameFactory.defaultFrame();    // throws all exceptions
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>IngestionFrameFactory</code> instance configured from the given arguments.
+     * </p>
+     * <p>
+     * This creator uses default arguments from the JAL Tools default configuration.  Default arguments are taken
+     * from the default ingestion frame configuration parameters.  We have the following:
+     * <ul>
+     * <li><code>facTms = {@link #CFG_DEF}.timestamps</code>.</li>
+     * </ul>
+     * 
+     * @param conFacCols    the frame columns factories used to generate ingestion frames data columns
+     * 
+     * @return  a new <code>IngestionFrameFactory</code> ready for simulated ingestion frame creation
+     */
+    public static IngestionFrameFactory from(Collection<IFrameColumnsFactory<Object>> conFacCols) {
+        IFrameTimestampsFactory                     facTms = IngestionFrameFactory.extractDefaultTimestamps();
+
+        return IngestionFrameFactory.from(facTms, conFacCols);
     }
     
     /**
@@ -154,6 +179,85 @@ public class IngestionFrameFactory implements IFrameFactory {
     
     /**
      * <p>
+     * Creates and returns a new <code>IngestionFrameFactory</code> instance configured from the given arguments.
+     * </p>
+     * <p>
+     * The returned <code>IngestionFrameFactory</code> instance is configured to produced ingestion frames with
+     * the given timestamps and the given collection of data columns.
+     * Additionally, the given collections of tag values is attached to each
+     * ingestion frame produced by the returned factory.
+     * </p>
+     * 
+     * @param setTags       collection of tag values for each produced ingestion frame
+     * @param mapAttrs      collection of (name, value) attribute pairs for each produced ingestion frame
+     * @param facTims       the frame timestamps factory used to generate ingestion frame timestamps
+     * @param conFacCols    the frame columns factories used to generate ingestion frames data columns
+     * 
+     * @return  a new <code>IngestionFrameFactory</code> ready for simulated ingestion frame creation
+     */
+    public static IngestionFrameFactory from(Set<String> setTags, IFrameTimestampsFactory facTms, Collection<IFrameColumnsFactory<Object>> conFacCols) {
+        IngestionFrameFactory   facFrames = IngestionFrameFactory.from(facTms, conFacCols);
+        
+        facFrames.attachTags(setTags);
+        
+        return facFrames;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>IngestionFrameFactory</code> instance configured from the given arguments.
+     * </p>
+     * <p>
+     * The returned <code>IngestionFrameFactory</code> instance is configured to produced ingestion frames with
+     * the given timestamps and the given collection of data columns.
+     * Additionally, the given collections of (name, value) attribute pairs is attached to each
+     * ingestion frame produced by the returned factory.
+     * </p>
+     * 
+     * @param setTags       collection of tag values for each produced ingestion frame
+     * @param mapAttrs      collection of (name, value) attribute pairs for each produced ingestion frame
+     * @param facTims       the frame timestamps factory used to generate ingestion frame timestamps
+     * @param conFacCols    the frame columns factories used to generate ingestion frames data columns
+     * 
+     * @return  a new <code>IngestionFrameFactory</code> ready for simulated ingestion frame creation
+     */
+    public static IngestionFrameFactory from(Map<String, String> mapAttrs, IFrameTimestampsFactory facTms, Collection<IFrameColumnsFactory<Object>> conFacCols) {
+        IngestionFrameFactory   facFrames = IngestionFrameFactory.from(facTms, conFacCols);
+        
+        facFrames.attachAttributes(mapAttrs);
+        
+        return facFrames;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>IngestionFrameFactory</code> instance configured from the given arguments.
+     * </p>
+     * <p>
+     * The returned <code>IngestionFrameFactory</code> instance is configured to produced ingestion frames with
+     * the given timestamps and the given collection of data columns.
+     * Additionally, the given collections of tag values and (name, value) attribute pairs is attached to each
+     * ingestion frame produced by the returned factory.
+     * </p>
+     * 
+     * @param setTags       collection of tag values for each produced ingestion frame
+     * @param mapAttrs      collection of (name, value) attribute pairs for each produced ingestion frame
+     * @param facTims       the frame timestamps factory used to generate ingestion frame timestamps
+     * @param conFacCols    the frame columns factories used to generate ingestion frames data columns
+     * 
+     * @return  a new <code>IngestionFrameFactory</code> ready for simulated ingestion frame creation
+     */
+    public static IngestionFrameFactory from(Set<String> setTags, Map<String, String> mapAttrs, IFrameTimestampsFactory facTms, Collection<IFrameColumnsFactory<Object>> conFacCols) {
+        IngestionFrameFactory   facFrames = IngestionFrameFactory.from(facTms, conFacCols);
+        
+        facFrames.attachTags(setTags);
+        facFrames.attachAttributes(mapAttrs);
+        
+        return facFrames;
+    }
+    
+    /**
+     * <p>
      * Creates and returns a new <code>IngestionFrameFactory</code> instance producing the default ingestion frame.
      * </p>
      * <p>
@@ -174,13 +278,15 @@ public class IngestionFrameFactory implements IFrameFactory {
      * 
      * @return  a new <code>IngestionFrameFactory</code> configured as in the JAL Tools default configuration
      * 
+     * @throws TypeNotPresentException          unknown <code>JalScalarType</code> enumeration constant (scalar factory)
+     * @throws NumberFormatException            invalid numeric format (e.g., scalar factory bad 'numIncr' or 'lngSeed') 
+     * @throws UnsupportedOperationException    unable to create 'numIncr' field for numeric value type (scalar factory)
+     * @throws MissingResourceException         timestamp factory had empty arguments
+     * @throws DateTimeParseException           bad ISO-8601 time and/or duration format (e.g., timestamp factory period, start, etc.) 
      * @throws ConfigurationException           the tensor shape was invalid (e.g., an axis size could not be parsed, non-positive axis size, etc.)
-     * @throws TypeNotPresentException          unknown <code>JalScalarType</code> enumeration constant
-     * @throws NumberFormatException            invalid numeric format (bad 'numIncr' or 'lngSeed') 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr}</code> field for numeric value type
      * @throws NoSuchElementException           unrecognized <code>{@link JalComplexType}</code> constant in argument  
      */
-    public static IngestionFrameFactory defaultFrame() throws NumberFormatException, ConfigurationException, TypeNotPresentException, UnsupportedOperationException, NoSuchElementException {
+    public static IngestionFrameFactory defaultFrame() throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
         IFrameTimestampsFactory                     facTms = IngestionFrameFactory.extractDefaultTimestamps();
         Collection<IFrameColumnsFactory<Object>>    conFacCols = IngestionFrameFactory.extractDefaultColumns(); // throws all exceptions
         
@@ -803,14 +909,16 @@ public class IngestionFrameFactory implements IFrameFactory {
      * 
      * @return  a new collection of <code>IFrameColumnsFactory</code> implementations configured from the default ingestion frame
      * 
+     * @throws TypeNotPresentException          unknown <code>JalScalarType</code> enumeration constant (scalar factory)
+     * @throws NumberFormatException            invalid numeric format (e.g., scalar factory bad 'numIncr' or 'lngSeed') 
+     * @throws UnsupportedOperationException    unable to create 'numIncr' field for numeric value type (scalar factory)
+     * @throws MissingResourceException         timestamp factory had empty arguments
+     * @throws DateTimeParseException           bad ISO-8601 time and/or duration format (e.g., timestamp factory period, start, etc.) 
      * @throws ConfigurationException           the tensor shape was invalid (e.g., an axis size could not be parsed, non-positive axis size, etc.)
-     * @throws TypeNotPresentException          unknown <code>JalScalarType</code> enumeration constant
-     * @throws NumberFormatException            invalid numeric format (bad 'numIncr' or 'lngSeed') 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr}</code> field for numeric value type
      * @throws NoSuchElementException           unrecognized <code>{@link JalComplexType}</code> constant in argument  
      */
     private static Collection<IFrameColumnsFactory<Object>>  extractDefaultColumns() 
-            throws NumberFormatException, ConfigurationException, TypeNotPresentException, UnsupportedOperationException, NoSuchElementException 
+            throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException 
     {
         List<JalToolsColumnsConfig> lstCfgCols = CFG_DEF.columns;
         List<IFrameColumnsFactory<Object>> lstFacCols = new ArrayList<>(lstCfgCols.size());
@@ -848,22 +956,24 @@ public class IngestionFrameFactory implements IFrameFactory {
      * 
      * @return  a new <code>IDatumFactory</code> implementation configured from the given arguments
      * 
+     * @throws TypeNotPresentException          unknown <code>JalScalarType</code> enumeration constant (scalar factory)
+     * @throws NumberFormatException            invalid numeric format (e.g., scalar factory bad 'numIncr' or 'lngSeed') 
+     * @throws UnsupportedOperationException    unable to create 'numIncr' field for numeric value type (scalar factory)
+     * @throws MissingResourceException         timestamp factory had empty arguments
+     * @throws DateTimeParseException           bad ISO-8601 time and/or duration format (e.g., timestamp factory period, start, etc.) 
      * @throws ConfigurationException           the tensor shape was invalid (e.g., an axis size could not be parsed, non-positive axis size, etc.)
-     * @throws TypeNotPresentException          unknown <code>JalScalarType</code> enumeration constant
-     * @throws NumberFormatException            invalid numeric format (bad 'numIncr' or 'lngSeed') 
-     * @throws UnsupportedOperationException    unable to create <code>{@link #numIncr}</code> field for numeric value type
      * @throws NoSuchElementException           unrecognized <code>{@link JalComplexType}</code> constant in argument  
      */
     private static IDatumFactory    createDatumFactory(JalComplexType enmType, String[] arrArgs) 
-            throws NumberFormatException, ConfigurationException, TypeNotPresentException, UnsupportedOperationException, NoSuchElementException 
+            throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException 
     {
         return switch (enmType) {
-        case SCALAR -> ScalarFactory.parse(arrArgs);
-        case TIMESTAMP -> TimestampFactory.parse(arrArgs);
-        case BYTES -> ByteArrayFactory.parse(arrArgs);
-        case IMAGE -> ImageFactory.parse(arrArgs);
-        case TENSOR -> TensorFactory.parse(arrArgs);
-        case STRUCTURE -> StructureFactory.parse(arrArgs);
+        case SCALAR -> ScalarFactory.parse(arrArgs);        // throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException
+        case BYTES -> ByteArrayFactory.parse(arrArgs);      // throws NumberFormatException
+        case TIMESTAMP -> TimestampFactory.parse(arrArgs);  // throws MissingResourceException, NumberForamtException, DateTimeParseException
+        case IMAGE -> ImageFactory.parse(arrArgs);          // throws NumberFormatException, TypeNotPresentException
+        case TENSOR -> TensorFactory.parse(arrArgs);        // throws ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException
+        case STRUCTURE -> StructureFactory.parse(arrArgs);  // throws NumberFormatException, TypeNotPresentException, UnsupportedOperationException
         default -> throw new NoSuchElementException("Unexpected value: " + enmType);
         };
     }
