@@ -94,15 +94,24 @@ public record FrameFactorySpec(
     
     /**
      * <p>
-     * Creates and returns a new <code>FrameFactorySpec</code> record with the default ingestion frame specification.
+     * Creates and returns a new <code>FrameFactorySpec</code> record with the default ingestion frame 
+     * timetamps and columns specification and no metadata.
      * </p>
      * <p>
-     * This method is equivalent to creator <code>{@link #defaultFrame()}</code> returning the default ingestion frame
-     * specification as defined in the JAL Tools default configuration.
+     * This method acquires the default ingestion frame timestamps specification from <code>{@link FrameTimestampsSpec#defaultFrame()}</code>
+     * and the default ingestion frame columns specification from <code>{@link FrameColumnsSpec#defaultFrame()}</code> and
+     * uses them to populate fields <code>{@link #specTms()}</code> and <code>{@link #setColsSpecs()}</code>, respectively.
+     * The metadata fields <code>{@link #setTags()}</code> and <code>{@link #mapAttrs()}</code> are left empty
+     * (they can be populated post-creation). 
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method is <b>not</b> equivalent to creator <code>{@link #defaultFrame()}</code>, 
+     * which returns the default ingestion frame specification as defined in the JAL Tools default configuration.
+     * There the metadata fields are populated with that specified in the JAL Tools default configuration.
      * See method documentation on <code>{@link #defaultFrame()}</code> for additional information.
      * </p>
      *  
-     * @return  a new <code>FrameFactorySpec</code> record with the default ingestion frame specification
+     * @return  a new <code>FrameFactorySpec</code> record with the default ingestion frame specification sans tags and attributes
      * 
      * @throws IllegalArgumentException general error (typically bad argument count or enumeration constant not recognized)
      * @throws NumberFormatException    a bad numeric format was encountered (typically integer valued parameter)
@@ -113,7 +122,9 @@ public record FrameFactorySpec(
      * @throws NoSuchElementException   the column type is unrecognized (unsupported) 
      */
     public static FrameFactorySpec  from() throws NumberFormatException, IllegalArgumentException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, NoSuchElementException {
-        return FrameFactorySpec.defaultFrame();
+        FrameTimestampsSpec     specTms = FrameTimestampsSpec.defaultFrame();
+        
+        return FrameFactorySpec.from(specTms);
     }
     
     /**
@@ -188,7 +199,7 @@ public record FrameFactorySpec(
      */
     public static FrameFactorySpec  from(FrameTimestampsSpec specTms, Set<FrameColumnsSpec<Record>> setColsSpecs) {
         
-        return FrameFactorySpec.from(Set.of(), Map.of(), specTms, setColsSpecs);
+        return FrameFactorySpec.from(new TreeSet<>(), new HashMap<>(), specTms, setColsSpecs);
     }
     
     /**
@@ -590,7 +601,7 @@ public record FrameFactorySpec(
     public static final String  STR_SRC_NAME = FrameFactorySpec.class.getSimpleName();
     
     /** Environment variable for current user - used for class attributes */
-    public static final String  STR_USERNAME = "USERNAME";
+    public static final String  STR_USERNAME = "USER";
     
     
     //
@@ -620,7 +631,7 @@ public record FrameFactorySpec(
         Instant insNow = Instant.now();
         
         MAP_ATTRS_FRM_CLS.put("Source", STR_SRC_NAME);
-        MAP_ATTRS_FRM_CLS.put("Initiatiated", insNow.toString());
+        MAP_ATTRS_FRM_CLS.put("Initiated", insNow.toString());
         MAP_ATTRS_FRM_CLS.put("User", strUser);
     }
     

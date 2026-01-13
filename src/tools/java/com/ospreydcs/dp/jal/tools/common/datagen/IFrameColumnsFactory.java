@@ -55,13 +55,23 @@ import com.ospreydcs.dp.jal.common.IDataColumn;
  * factories produce ingestion frame instances <code>{@link IngestionFrame}</code> containing simulated data
  * for evaluation of the Data Platform Ingestion Service operations.
  * </p>  
+ * <p>
+ * <h2><code>Comparable</code> Interface</h2>
+ * The <code>IFrameColumnsFactory</code> interface extends the <code>{@link Comparable}</code> interface to 
+ * ensure that frame columns factories are not duplicated within an ingestion frame factory.  This condition
+ * would create ingestion frames with identical data columns potentially producing unexpected or erroneous
+ * results.  The <code>Comparable</code> interface also provides an ordering of the data columns with ingestion
+ * frames.
+ * The preferred ordering is by column count.  There, the frame columns factory producing the smallest number
+ * of data columns would appear first.
+ * </p>
  *  
  *
  * @author Christopher K. Allen
  * @since Nov 28, 2025
  *
  */
-public interface IFrameColumnsFactory<T extends Object> {
+public interface IFrameColumnsFactory<T extends Object> extends Comparable<IFrameColumnsFactory<T>> {
 
     
     //

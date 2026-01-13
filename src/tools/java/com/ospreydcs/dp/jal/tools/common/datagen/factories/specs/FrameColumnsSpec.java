@@ -202,7 +202,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
         FactorySpec         specFactory,
         JalComplexType      enmType,
         Class<?>            clsFactory
-        ) 
+        ) implements Comparable<FrameColumnsSpec<FactorySpec>> 
 {
     
     //
@@ -959,6 +959,71 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
         return specFactory;
     }
     
+    
+    //
+    // Comparable<FrameColumnsSpec> Interface
+    //
+    
+    /**
+     * <p>
+     * Provides the ordering of <code>FrameColumnsSpec</code> instances within Java collections.
+     * </p>
+     * <p>
+     * This method provides an order based upon the number of columns <code>{@link #intCols()}</code>.
+     * The method first checks for equivalence (i.e., <code>{@link #equals(Object)}</code> returning 0
+     * if so.
+     * Then, if the number of columns is less than or equal to the that of the argument a -1 value is returned,
+     * otherwise a +1 is returned.
+     * </p
+     * <p>
+     * <h2>Formula</h2>
+     * The explicit formula for the the returned value for 2 <code>FrameColumnsSpec</code> instances is given below.
+     * Let <code>A</code> and <code>B</code> be the records under comparison where <code>A = this</code> 
+     * and <code>B</code> is the argument.
+     * Then  
+     * <ul>
+     * <li> 0 &lArr; <code>A.equals(B) == true</code>.</li>
+     * <li>-1 &lArr; <code>A.intCols() <= B.intCols()</code>.</li>
+     * <li>+1 &lArr; <code>A.intCols() > B.intCols()</code>.</li>
+     * </ul>
+     * Note that the above formula prevents clobbering of non-equivalent <code>FrameColumnsSpec</code> instances
+     * with equal column counts.
+     * </p>
+     * <p>
+     * <h2>Reflexativity</h2>
+     * Thus it is not a reflective operation as the operation does not commute.  
+     * Specifically,  
+     * <pre>
+     * <code>
+     *  A.compareTo(B) &ne; B.compareTo(A) iff A.intCols() == B.intCols()
+     * </code>
+     * </pre> 
+     * Thus, the operation is not strictly as defined in <code>{@link Comparable#compareTo(Object)}</code>.
+     * However, the operation is transitive.  Specifically, for specifications <code>A, B, C</code>
+     * <pre>
+     * <code>
+     *   A.compareTo(B) > 0 && B.compareTo(C) > 0 &rArr; A.compareTo(C) > 0
+     * </code>
+     * </pre> 
+     * 
+     * @param specCols  the <code>FrameColumnsSpec</code> instance to compare with this instance
+     *  
+     * @return  0 if this.{@link #equals(Object)}, -1 if this.{@link #intCols()} <= specCols.intCols(), else +1
+     * 
+     * @see Comparable#compareTo(Object)
+     */
+    @Override
+    public int compareTo(FrameColumnsSpec<FactorySpec> specCols) {
+        
+        if (this.equals(specCols))
+            return 0;
+        
+        if (this.intCols <= specCols.intCols)
+            return -1;
+        else
+            return +1;
+    }
+
     
     //
     // Record Overrides
