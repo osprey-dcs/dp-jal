@@ -39,7 +39,6 @@ import org.junit.Test;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.IDataColumn;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.DataColumnFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.lib.ScalarFactoryLib;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.lib.TensorFactoryLib;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;

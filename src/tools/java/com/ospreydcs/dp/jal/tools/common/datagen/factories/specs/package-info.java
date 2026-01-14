@@ -25,13 +25,22 @@
  */
 /**
  * <p>
- * Sub-package containing specification records for the various datum and column factories.
+ * Sub-package containing specification records for the various datum, column, and ingestion frame factories.
  * </p>
  * <p>
- * Factory specification records are tools for configuration, management, and creation of datum and data column factories.
+ * Factory specification records are tools for configuration, management, and creation of datum, data column, 
+ * and ingestion frame factories.
  * These immutable records maintain the configuration parameters for the various factories, offering optional
  * default values taken from the JAL Tools default configuration.
  * </p>
+ * <p>
+ * <h2>Best Practices</h2>
+ * Specification records enable creation of implementation classes for the <code>IFrameTimestampsFactory</code>,
+ * <code>IFrameColumnsFactory</code>,  and <code>IFrameFactory</code> interfaces while hiding the underlying
+ * implementation specifics.  Although it is possible to interact with implementation classes for these interfaces
+ * directly, and they offer many of the same creators with default options, it is recommended that use of specification 
+ * records be preferred whenever possible.
+ * </p> 
  * <p>
  * <h2>Factory Creation</h2>
  * Most factory specification records, say for example <code>FactorySpec</code>, provide a creation method for the
@@ -66,6 +75,14 @@
  * of the <code>args</code> argument.  Typically, the method provides various formatting options allowing for
  * default parameter values.
  * </p>  
+ * <p>
+ * <h2>Frame Factory Specification Records</h2>
+ * Although the implementation class <code>IngestionFrameFactory</code> can be accessed and used directly, it is
+ * recommended that client employ the use of <code>FrameFactorySpec</code> specification records whenever possible.
+ * They are capable of generating <code>IFrameFactory</code> implementations with the 
+ * <code>FrameFactorySpec.newFactory()</code> method.  There the implementation class type remains hidden; this
+ * allows for future upgrades.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Dec 11, 2025

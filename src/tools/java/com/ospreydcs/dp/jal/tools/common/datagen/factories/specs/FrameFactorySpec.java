@@ -407,7 +407,7 @@ public record FrameFactorySpec(
             setColsSpecs.addAll(FrameColumnsSpec.defaultFrame()); // throws IllegalArgumentException, NumberForamtException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, TypeNotPresentException
         
         else {
-            setColsSpecs = new TreeSet<>();
+//            setColsSpecs = new TreeSet<>();
             
             for (int iCols=0; iCols<cntColsSpecs; iCols++) {
                 List<String>    lstColsArgs = parser.parseVariable(STR_PARSE_COLS_DVAR, iCols, args);
@@ -604,19 +604,33 @@ public record FrameFactorySpec(
     public static final String  STR_USERNAME = "USER";
     
     
-    //
-    // Record Constants and Resources
-    //
+    /** Enable/disable default tag values flag default configuration */
+    public static final boolean                 BOL_TAGS_DEF_ENBL = CFG_FRM_DEF.tags.useDefault;
+    
+    /** Enable/disable default attribute pairs default configuration */
+    public static final boolean                 BOL_ATTRS_DEF_ENBL = CFG_FRM_DEF.attributes.useDefault;
     
     /** Enable/disable class tag values flag default configuration */
     public static final boolean                 BOL_TAGS_CLS_ENBL = CFG_FRM_DEF.tags.useClass;
     
-    /** Class tag values for ingestion frames */
-    private static final Set<String>            SET_TAGS_FRM_CLS = new TreeSet<>();
-
-    
     /** Enable/disable class attribute pairs flag default configuration */
     public static final boolean                 BOL_ATTRS_CLS_ENBL = CFG_FRM_DEF.attributes.useClass;
+    
+
+    //
+    // Record Resources
+    //
+    
+    
+    /** Default ingestion frame tag values */
+    private static final Set<String>            SET_TAGS_FRM_DEF = new TreeSet<>( CFG_FRM_DEF.tags.values );
+    
+    /** Default ingestion frame attribute pairs */
+    private static final Map<String, String>    MAP_ATTRS_FRM_DEF = new HashMap<>( CFG_FRM_DEF.attributes.pairs );
+
+    
+    /** Class tag values for ingestion frames */
+    private static final Set<String>            SET_TAGS_FRM_CLS = new TreeSet<>();
     
     /** Class attribute pairs for ingestion frame */
     private static final Map<String, String>    MAP_ATTRS_FRM_CLS = new HashMap<>();
@@ -634,19 +648,5 @@ public record FrameFactorySpec(
         MAP_ATTRS_FRM_CLS.put("Initiated", insNow.toString());
         MAP_ATTRS_FRM_CLS.put("User", strUser);
     }
-    
-    
-    /** Enable/disable default tag values flag default configuration */
-    public static final boolean                 BOL_TAGS_DEF_ENBL = CFG_FRM_DEF.tags.useDefault;
-    
-    /** Default ingestion frame tag values */
-    private static final Set<String>            SET_TAGS_FRM_DEF = new TreeSet<>( CFG_FRM_DEF.tags.values );
-    
-    
-    /** Enable/disable default attribute pairs default configuration */
-    public static final boolean                 BOL_ATTRS_DEF_ENBL = CFG_FRM_DEF.attributes.useDefault;
-    
-    /** Default ingestion frame attribute pairs */
-    private static final Map<String, String>    MAP_ATTRS_FRM_DEF = new HashMap<>( CFG_FRM_DEF.attributes.pairs );
     
 }

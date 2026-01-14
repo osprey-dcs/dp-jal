@@ -27,6 +27,14 @@
  * <p>
  * Package containing resources for creating ingestion frames of simulated data.
  * </p>
+ * <p>
+ * <h2>Frame Factory Specification Records</h2>
+ * Although the implementation class <code>IngestionFrameFactory</code> can be accessed and used directly, it is
+ * recommended that client employ the use of <code>FrameFactorySpec</code> specification records whenever possible.
+ * They are capable of generating <code>IFrameFactory</code> implementations with the 
+ * <code>FrameFactorySpec.newFactory()</code> method.  There the implementation class type remains hidden; this
+ * allows for future upgrades.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Jun 11, 2025

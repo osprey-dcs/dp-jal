@@ -25,8 +25,10 @@
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.factories.frames;
 
+import java.lang.reflect.MalformedParametersException;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
@@ -531,6 +533,124 @@ public class FrameColumnsFactory implements IFrameColumnsFactory<Object> {
         };
     }
     
+    /**
+     * <p>
+     * Parses and argument string to identify and create a new data columns factory (i.e., <code>FrameColumnsFactory</code> instance).
+     * </p>
+     * <p>
+     * The argument is assumed to be part of an application command line.  For example, the command-line could
+     * contain the variable "--cols" which delimits the arguments to this method.  
+     * For example, consider the following application command-line 
+     * <code>
+     * <pre>
+     * > java application --cols cnt prefix DTYPE [parameters] [...]
+     * </pre>
+     * </code>
+     * where 
+     * <ul>
+     * <li>'cnt' is the number of data columns ,</li>
+     * <li>'prefix' is the prefix given to each column name,</li> 
+     * <li>'DTYPE' is a <code>JalComplexType</code> enumeration constant specifying column type ,</li>
+     * <li>'parameters' are the set of configuration parameters for the datum factory <code>parse(String...)</code> operation,</li>
+     * <li>... are any additional application command-line parameters.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>Caveat</h2>
+     * Clearly it is not necessary for the arguments to be obtained from an application command line as described.  
+     * So long as the stated conditions and formats are followed the method will create and return an appropriate 
+     * Data Type configuration record.
+     * </p> 
+     * <p>
+     * <h2>Argument Format</h2>
+     * With reference to the above example, the format of the argument collection is given by the following:
+     * <code>
+     * <pre>
+     *      cnt prefix DTYPE [datum factory parameters]
+     * </pre>
+     * </code>
+     * where again
+     * <ul>
+     * <li>'cnt' is the number of data columns, </li>
+     * <li>'prefix' is the prefix given to each column name,</li> 
+     * <li>'DTYPE' is a <code>JalComplexType</code> enumeration constant specifying column type,</li>
+     * <li>'datum factory parameters' are the configuration parameters for the datum factory <code>parse(String...)</code> operation.</li>
+     * </ul>
+     * Note that the column names for the returned frame column factory are built by appending an index value,
+     * from 0 to <code>'cnt' - 1</code>, to the <code>'prefix'</code> string parameter, as in convenience creator 
+     * <code>{@link #from(int, String, IDatumFactory)}</code>.
+     * </p>
+     * <p>
+     * <h2>Datum Factories</h2>
+     * The datum factory type used by the returned <code>FrameColumnsFactory</code> instanced is given by the 
+     * <code>DTYPE</code> value according to the following:
+     * <ul>
+     * <li><code>{@link JalComplexType#SCALAR}</code> - <code>{@link ScalarFacgtory}</code>.</li>
+     * <li><code>{@link JalComplexType#BYTES}</code> - <code>{@link ByteArrayFactory}</code>.</li>
+     * <li><code>{@link JalComplexType#TIMESTAMP}</code> - <code>{@link TimestampFactory}</code>.</li>
+     * <li><code>{@link JalComplexType#IMAGE}</code> - <code>{@link ImageFactory}</code>.</li>
+     * <li><code>{@link JalComplexType#TENSOR}</code> - <code>{@link TensorFactory}</code>.</li>
+     * <li><code>{@link JalComplexType#STRUCTURE}</code> - <code>{@link StructureFactory}</code>.</li>
+     * </ul>
+     * Thus, the number of elements within the arguments <code>'datum factory parameters'</code> is dependent upon the 
+     * <code>JalComplexType</code> identified by '<code>DTYPE</code>'.  
+     * The argument set contains the parameters necessary to configure the appropriate value generator for
+     * column data.
+     * If the number of arguments is not appropriate for desired datum factory type an exception is thrown.
+     * </p>
+     * <p>
+     * See the documentation for the parsing method <code>parse(String...)</code> for the associated datum factory
+     * for details on the format of its <code>'datum factory parameters'</code> argument (of type <code>String[]</code>).
+     * For example, when '<code>DTYPE</code>' == <code>{@link JalComplexType#SCALAR}</code> see
+     * <code>{@link ScalarFactory#parse(String...)}</code>.
+     * </p>
+     *  
+     * @param args  argument string defining the configuration for returned frame columns factory
+     * 
+     * @return  a new <code>FrameColumnsFactory</code> instance as defined by the parsed argument values
+     * 
+     * @throws TypeNotPresentException  invalid enumeration constant (e.g., the 1st argument was not a <code>JalComplexType</code>)
+     * @throws NumberFormatException    invalid numeric expression (typically for 'lngSeed' value)
+     * @throws ConfigurationException   the argument contained the wrong number of arguments for the <code>JalComplexType</code>
+     * @throws UnsupportedOperationException invalid field value format (typically 'numIncr' was invalid)
+     * @throws MalformedParametersException  an enumeration constant within the argument set was not recognized (IMAGE)
+     * @throws NoSuchElementException   the column data type was unrecognized (i.e., 'DTYPE' was not supported)
+     */
+    public static FrameColumnsFactory   parse(String...args) throws TypeNotPresentException, NumberFormatException, ConfigurationException, UnsupportedOperationException, MalformedParametersException {
+        if (args.length < 1) 
+            return FrameColumnsFactory.from();
+        
+        // Get the column count 
+        int     cntCols = Integer.valueOf(args[0]);
+        if (args.length < 2)
+            return FrameColumnsFactory.from(cntCols);
+        
+        // Get the column name prefix
+        String  strNmPref = args[1];
+        if (args.length < 3)
+            return FrameColumnsFactory.from(cntCols, strNmPref); // throws UnsupportedOperationException
+
+        
+        // Get the Datum Type of the column values
+        JalComplexType  enmType = JalComplexType.valueFrom(args[2]); // throws TypeNotPresentException
+        
+        // Parse the data factory parameters if provided
+        String[]    arrFacCfg = (args.length < 4) ? new String[0] : Arrays.copyOfRange(args, 3, args.length);
+        
+        IDatumFactory      facValues = switch (enmType) {
+        case SCALAR -> ScalarFactory.parse(arrFacCfg);    // throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException
+        case BYTES -> ByteArrayFactory.parse(arrFacCfg);   // throws NumberFormatException
+        case IMAGE -> ImageFactory.parse(arrFacCfg);       // throws NumberFormatException, TypeNotPresentException
+        case TENSOR -> TensorFactory.parse(arrFacCfg);      // throws IllegalArgumentException, ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException 
+        case STRUCTURE -> StructureFactory.parse(arrFacCfg);  // throws ConfigurationException, NumberFormatException, TypeNotPresentException, UnsupportedOperationException
+        default ->
+            throw new NoSuchElementException(JavaRuntime.getQualifiedMethodNameSimple() + " - Data type not supported: " + enmType);
+        };
+        
+        // Create and return the data columns configuration
+        return FrameColumnsFactory.from(cntCols, strNmPref, facValues);
+    }
+ 
     /**
      * <p>
      * Retrieves and returns the default ingestion frame data columns specifications for the default 

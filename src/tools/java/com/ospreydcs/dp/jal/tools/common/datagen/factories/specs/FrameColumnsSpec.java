@@ -627,9 +627,33 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * Parses and argument string to identify and create a data columns specification (i.e., <code>FrameColumnsSpec</code> record).
      * </p>
      * <p>
+     * The argument is assumed to be part of an application command line.  For example, the command-line could
+     * contain the variable "--cols" which delimits the arguments to this method.  
+     * For example, consider the following application command-line 
+     * <code>
+     * <pre>
+     * > java application --cols cnt prefix DTYPE [parameters] [...]
+     * </pre>
+     * </code>
+     * where 
+     * <ul>
+     * <li>'cnt' is the number of data columns ,</li>
+     * <li>'prefix' is the prefix given to each column name,</li> 
+     * <li>'DTYPE' is a <code>JalComplexType</code> enumeration constant specifying column type ,</li>
+     * <li>'parameters' are the set of configuration parameters for the datum factory <code>parse(String...)</code> operation,</li>
+     * <li>... are any additional application command-line parameters.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>Caveat</h2>
+     * Clearly it is not necessary for the arguments to be obtained from an application command line as described.  
+     * So long as the stated conditions and formats are followed the method will create and return an appropriate 
+     * Data Type configuration record.
+     * </p> 
+     * <p>
      * <h2>Datum Factory Specification Records</h2>
-     * Datum factory specification records types are used for the <code>FactorySpec</code> generic type.  There is
-     * one type for each data type supported for column data value creation. 
+     * Datum factory specification records types are used for the <code>FactorySpec</code> generic template type.  
+     * There is one type for each data type supported for frame column data value creation. 
      * Currently there are the following:
      * <ol>
      * <li>Scalar - <code>{@link ScalarFactorySpec}</code>,</li>
@@ -639,37 +663,28 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * <li>Array - <code>{@link TensorFactorySpec}</code>,</li>
      * <li>Structure - <code>{@link StructureFactorySpec}</code>,</li>
      * </ol> 
-     * The above record fields contain the parameters necessary to configure the appropriate value generator for
-     * column data.
+     * The given arguments within <code>'parameters'</code> contain the parameters necessary to configure the appropriate 
+     * value generator (<code>IDataumFactory</code> implementation) for column data.
      * </p> 
      * <p>
-     * <h2>Caveat</h2>
-     * Clearly it is not necessary for the arguments to be obtained from an application command line as described.  
-     * So long as the stated conditions and formats are followed the method will create and return an appropriate 
-     * Data Type configuration record.
-     * </p> 
-     * <p>
-     * <h2>Usage</h2>
-     * The argument is assumed to be part of an application command line.  For example, the command-line could
-     * contain the variable "--cols" which delimits the arguments to this method.  For example, the application
-     * command-line would then appear as
+     * <h2>Argument Format</h2>
+     * With reference to the above example, the format of the argument collection is given by the following:
      * <code>
      * <pre>
-     * > java application --cols cnt prefix DTYPE [parameters] [...]
+     *      cnt prefix DTYPE [datum factory parameters]
      * </pre>
      * </code>
-     * where 
+     * where again
      * <ul>
-     * <li>'cnt' is the number of data columns (field <code>{@link #intCols()}</code>),</li>
-     * <li>'prefix' is the prefix given to each column name (field <code>{@link #strNmPref()}</code>,</li> 
-     * <li>DTYPE is a <code>JalComplexType</code> enumeration constant specify column type (field <code>{@link #enmType()}</code>),</li>
-     * <li>'parameters' are the set of configuration parameters for the datum factory <code>parse(String...)</code> operation,</li>
-     * <li>... are any additional application command-line parameters.</li>
+     * <li>'cnt' is the number of data columns, </li>
+     * <li>'prefix' is the prefix given to each column name,</li> 
+     * <li>'DTYPE' is a <code>JalComplexType</code> enumeration constant specifying column type,</li>
+     * <li>'datum factory parameters' are the configuration parameters for the datum factory <code>parse(String...)</code> operation.</li>
      * </ul>
      * The template parameter type of the <code>FrameColumnsSpec</code> record returned is given by the 
      * <code>DTYPE</code> value according to the following:
      * <ul>
-     * <li><code>{@link JalComplexType#SCALAR}</code> - <code>{@link ScalarFacgtorySpec}</code>.</li>
+     * <li><code>{@link JalComplexType#SCALAR}</code> - <code>{@link ScalarFactorySpec}</code>.</li>
      * <li><code>{@link JalComplexType#BYTES}</code> - <code>{@link ByteArrayFactorySpec}</code>.</li>
      * <li><code>{@link JalComplexType#TIMESTAMP}</code> - <code>{@link TimestampFactorySpec}</code>.</li>
      * <li><code>{@link JalComplexType#IMAGE}</code> - <code>{@link ImageFactorySpec}</code>.</li>
@@ -677,7 +692,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * <li><code>{@link JalComplexType#STRUCTURE}</code> - <code>{@link StructureFactorySpec}</code>.</li>
      * </ul>
      * Thus, the number of elements within the argument string array '<code>parameters</code>' is dependent upon the 
-     * <code>JalComplexType</code> identified by '<code>DTYPE</code>'.  If the number of arguments is not appropriate 
+     * <code>JalComplexType</code> identified by <code>'DTYPE'</code>.  If the number of arguments is not appropriate 
      * for the given type an exception is thrown.
      * </p>
      * <p>
