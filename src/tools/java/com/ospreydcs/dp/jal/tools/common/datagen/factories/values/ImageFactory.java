@@ -489,5 +489,43 @@ public class ImageFactory implements IDatumFactory {
         
         return image;
     }
+    
+    
+    //
+    // Object Overrides
+    //
+
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ImageFactory fac) {
+            boolean bolResult = (this.szAlloc == fac.szAlloc)
+                             && (this.enmFormat == fac.enmFormat)
+                             && (this.strNmPref.equals(fac.strNmPref));
+            
+            return bolResult;
+        }
+        
+        return false;
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuilder   buf = new StringBuilder();
+        
+        buf.append("IDataumFactory Implementation : " + this.getClass().getName() + "\n");
+        buf.append("Image size (bytes) : " + this.szAlloc + "\n");
+        buf.append("Image format       : " + this.enmFormat + "\n");
+        buf.append("Image name prefix  : " + this.strNmPref + "\n");
+        
+        return buf.toString();
+    }
+    
+    
 
 }

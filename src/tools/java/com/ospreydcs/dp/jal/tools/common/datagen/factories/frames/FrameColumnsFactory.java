@@ -1048,10 +1048,13 @@ public class FrameColumnsFactory implements IFrameColumnsFactory<Object> {
      */
     @Override
     public String toString() {
-        final int           cntHead = 10;
+        final int           cntHeadMax = 10;
+        final int           cntHead = (this.cntCols > cntHeadMax) ? cntHeadMax : this.cntCols;
         final List<String>  lstHead = this.setColNms.stream().toList().subList(0, cntHead);
         StringBuilder       buf = new StringBuilder();
         
+        buf.append("----\n");
+        buf.append("IFrameColumnsFactory Implementation : " + this.getClass().getName() + "\n");
         buf.append("Column count            : " + this.cntCols + "\n");
         buf.append("Column type             : " + this.enmColType + "\n");
         buf.append("Column names (first " + cntHead + "): " + lstHead + "\n");

@@ -260,5 +260,37 @@ public class ByteArrayFactory implements IDatumFactory {
         
         return arrValue;
     }
+    
+    
+    //
+    // Object Overrides
 
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ByteArrayFactory fac) {
+            boolean bolResult = (this.szArrays == fac.szArrays);
+            
+            return bolResult;
+        }
+        
+        return false;
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuilder   buf = new StringBuilder();
+        
+        buf.append("IDatumFactory Implementation : " + this.getClass().getName() + "\n");
+        buf.append("Byte array size : " + this.szArrays);
+        
+        return buf.toString();
+    }
+
+    
 }

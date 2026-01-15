@@ -689,6 +689,44 @@ public class TimestampFactory implements IDatumFactory {
 
     
     //
+    // Object Overrides
+    //
+    
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TimestampFactory fac) {
+            boolean bolResult = (this.bolRandom == fac.bolRandom)
+                             && (this.lngRndSeed == fac.lngRndSeed)
+                             && this.insStart.equals(fac.insStart)
+                             && this.durPeriod.equals(fac.durPeriod);
+            
+            return bolResult;
+        }
+        
+        return false;
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuilder   buf = new StringBuilder();
+        
+        buf.append("IDatumFactory Implementation : " + this.getClass().getName() + "\n");
+        buf.append("Random timestamps enabled   : " + this.bolRandom + "\n");
+        buf.append("Random seed value           : " + this.lngRndSeed + "\n");
+        buf.append("Timestamp generation period : " + this.durPeriod + "\n");
+        buf.append("Start time (1st timestamp)  : " + this.insStart + "\n");
+        
+        return buf.toString();
+    }
+
+    
+    //
     // Support Methods
     //
     

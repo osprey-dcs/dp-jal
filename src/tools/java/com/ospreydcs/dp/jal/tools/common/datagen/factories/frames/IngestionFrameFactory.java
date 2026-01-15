@@ -326,7 +326,7 @@ public class IngestionFrameFactory implements IFrameFactory {
      * @return  a new <code>IngestionFrameFactory</code> ready for simulated ingestion frame creation
      */
     public static IngestionFrameFactory from(Set<String> setTags, Map<String, String> mapAttrs, IFrameTimestampsFactory facTms, Collection<IFrameColumnsFactory<Object>> conFacCols) {
-        IngestionFrameFactory   facFrames = IngestionFrameFactory.from(setTags, mapAttrs, facTms, conFacCols);
+        IngestionFrameFactory   facFrames = new IngestionFrameFactory(setTags, mapAttrs, facTms, conFacCols);
         
         return facFrames;
     }
@@ -874,6 +874,28 @@ public class IngestionFrameFactory implements IFrameFactory {
     
     /**
      * <p>
+     * Returns the current set of tag values attached to each generated ingestion frame.
+     * </p>
+     * 
+     * @return  the current set of tag values used for generated ingestion frame metadata 
+     */
+    public Set<String>  getTags() {
+        return this.setTags;
+    }
+    
+    /**
+     * <p>
+     * Returns the current collection of (name, value) attribute pairs attached to each generated ingestion frame.
+     * </p>
+     * 
+     * @return  the current collection of (name, value) attribute pairs used for generated ingestion frame metadata
+     */
+    public Map<String, String>  getAttributes() {
+        return this.mapAttrs;
+    }
+    
+    /**
+     * <p>
      * Retrieves and returns the total column count for each ingestion frame produced.
      * </p>
      * <p>
@@ -1104,13 +1126,14 @@ public class IngestionFrameFactory implements IFrameFactory {
     public String toString() {
         StringBuilder   buf = new StringBuilder();
         
+        buf.append("IFrameFactory Implementation : " + this.getClass().getName() + "\n");
         buf.append("Frame tag values     : " + this.setTags + "\n");
         buf.append("Frame attributes     : " + this.mapAttrs + "\n");
         buf.append("Frame timestamp case : " + this.enmTmsCase + "\n");
         buf.append("Current frame index  : " + this.indFrame + "\n");
-        buf.append("Frame Timestamps Factory \n");
+        buf.append("-- Frame Timestamps Factory --\n");
         buf.append(this.facTms);
-        buf.append("Frame Data Columns Factories \n");
+        buf.append("-- Frame Data Columns Factories --\n");
         for (IFrameColumnsFactory<Object> facCols : this.setFacCols) {
             buf.append(facCols + "\n");
         }

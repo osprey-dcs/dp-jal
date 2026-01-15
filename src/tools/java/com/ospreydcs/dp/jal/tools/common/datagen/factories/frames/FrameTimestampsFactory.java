@@ -521,6 +521,7 @@ public class FrameTimestampsFactory implements IFrameTimestampsFactory {
     public String toString() {
         StringBuilder   buf = new StringBuilder();
         
+        buf.append("IFrameTimestampFactory Implementation : " + this.getClass().getName() + "\n");
         buf.append("Sample count           : " + this.cntSmpls + "\n");
         buf.append("Sampling period        : " + this.durPeriod + "\n");
         buf.append("Sampling start instant : " + this.insStart + "\n");

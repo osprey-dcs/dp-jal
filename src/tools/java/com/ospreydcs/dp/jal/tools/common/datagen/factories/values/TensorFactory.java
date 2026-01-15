@@ -695,6 +695,48 @@ public class TensorFactory implements IDatumFactory {
 
     
     //
+    // Object Overrides
+    //
+    
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TensorFactory fac) {
+            boolean bolResult = Arrays.equals(this.arrShape, fac.arrShape)
+                            && (this.intRank == fac.intRank)
+                            && (this.szArray == fac.szArray)
+                            && this.facValues.equals(fac.facValues);
+            
+            return bolResult;
+        }
+        return false;
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuilder   buf = new StringBuilder();
+        
+        buf.append("IDatumFactory Implementation : " + this.getClass().getName() + "\n");
+        buf.append("Tensor rank  : " + this.intRank + "\n");
+        buf.append("Tensor shape : " + Arrays.asList(this.arrShape) + "\n");
+        buf.append("Tensor size  : " + this.szArray + "\n");
+        buf.append("Scalar factory class type  : " + this.facValues.getClass().getName() + "\n");
+        buf.append("Scalar factory value type  : " + this.facValues.getScalarType() + "\n");
+        buf.append("Scalar factory random      : " + this.facValues.isRandom() + "\n");
+        buf.append("Scalar factory seed        : " + this.facValues.getSeed() + "\n");
+        buf.append("Scalar factory increment   : " + this.facValues.getIncrement() + "\n");
+        buf.append("Scalar factory str prefix  : " + this.facValues.getStringPrefix() + "\n");
+        
+        return buf.toString();
+    }
+
+
+    //
     // Support Methods
     //
     

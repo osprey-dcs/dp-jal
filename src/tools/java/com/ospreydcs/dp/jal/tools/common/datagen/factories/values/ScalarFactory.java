@@ -733,6 +733,54 @@ public class ScalarFactory implements IScalarFactory {
     
     
     //
+    // Object Overrides
+    //
+    
+    /**
+     * <p>
+     * Provides an equivalence comparison of this scalar factory against the given scalar factory.
+     * </p>
+     * <p>
+     * The argument is first check for correct type <code>ScalarFactory</code> after which the 
+     * configuration is compared against this configuration.  The state variable of the two 
+     * factories are ignored.  
+     * </p>
+     *  
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ScalarFactory fac) {
+            boolean bolResult = this.strPrefix.equals(fac.strPrefix)
+                            && (this.enmType == fac.enmType)
+                            && (this.bolRandEnbl == fac.bolRandEnbl)
+                            && (this.lngSeed == fac.lngSeed)
+                            && (this.numIncr.equals(fac.numIncr));
+            
+            return bolResult;
+        }
+        return false;
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuilder   buf = new StringBuilder();
+        
+        buf.append("IDatumFactory implementation       : " + this.getClass().getName() + "\n");
+        buf.append("Scalar value type                  : " + this.enmType + "\n");
+        buf.append("Random value generation enabled    : " + this.bolRandEnbl + "\n");
+        buf.append("Seed value (incremental or random) : " + this.lngSeed + "\n");
+        buf.append("Increment value                    : " + this.numIncr + "\n");
+        buf.append("String value prefix (if used)      : " + this.strPrefix + "\n");
+        
+        return buf.toString();
+    }
+
+    
+    //
     // Support Methods
     //
     

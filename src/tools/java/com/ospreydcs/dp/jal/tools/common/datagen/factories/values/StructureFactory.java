@@ -1295,6 +1295,49 @@ public class StructureFactory implements IDatumFactory {
 
     
     //
+    // Object Overrides
+    //
+    
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof StructureFactory fac) {
+            boolean bolResult = (this.intDepth == fac.intDepth)
+                             && (this.intFanOut == fac.intFanOut)
+                             && (this.bolUniqFldNms == fac.bolUniqFldNms)
+                             && (this.facValues.equals(fac.facValues));
+            
+            return bolResult;
+        }
+        
+        return false;
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuilder   buf = new StringBuilder();
+        
+        buf.append("IDatumFactory Implementation : " + this.getClass().getName() + "\n");
+        buf.append("Tree structure depth       : " + this.intDepth + "\n");
+        buf.append("Tree structure fan out     : " + this.intFanOut + "\n");
+        buf.append("Unique field names enabled : " + this.bolUniqFldNms + "\n");
+        buf.append("Scalar factory class type  : " + this.facValues.getClass().getName() + "\n");
+        buf.append("Scalar factory value type  : " + this.facValues.getScalarType() + "\n");
+        buf.append("Scalar factory random      : " + this.facValues.isRandom() + "\n");
+        buf.append("Scalar factory seed        : " + this.facValues.getSeed() + "\n");
+        buf.append("Scalar factory increment   : " + this.facValues.getIncrement() + "\n");
+        buf.append("Scalar factory str prefix  : " + this.facValues.getStringPrefix() + "\n");
+        
+        return buf.toString();
+    }
+
+
+    //
     // Support Methods
     //
     
