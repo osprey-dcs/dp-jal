@@ -58,11 +58,11 @@ public class JalToolsDataGenConfig extends CfgStructure<JalToolsDataGenConfig> {
     
     /** Default configuration parameters for ingestion frame factory */
     @ACfgOverride.Struct(pathelem="FRAMES")
-    public JalToolsFramesConfig     frames;
+    public JalToolsFramesConfig     frame;
     
     /** Default configuration parameters for data column factories */
-    @ACfgOverride.Struct(pathelem="COLUMNS")
-    public JalToolsColumnsConfig    columns;
+    @ACfgOverride.Struct(pathelem="COLUMN")
+    public JalToolsColumnsConfig    column;
     
     /** Default configuration parameters for datum factories */
     @ACfgOverride.Struct(pathelem="VALUES")

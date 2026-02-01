@@ -39,7 +39,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future.State;
 import java.util.concurrent.ScheduledExecutorService;
@@ -721,7 +720,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * @throws UnsupportedOperationException    an application argument contained an invalid option flag
      */
     public static void parseAppArgsErrors(String[] args, int cntMinArgs, List<String> lstDelOpts) 
-            throws NoSuchElementException, IllegalCallerException, UnsupportedOperationException {
+            throws IllegalArgumentException, IllegalCallerException, UnsupportedOperationException {
 
         // Check the argument count
         if (args==null || args.length < cntMinArgs)

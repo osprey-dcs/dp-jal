@@ -92,7 +92,7 @@ public class JalToolsTestArchiveConfig extends CfgStructure<JalToolsTestArchiveC
          * Parses the <code>{@link #start}</code> attribute and returns the value as a Java <code>{@link Instant}</code> object.
          * </p>
          * <p>
-         * The <code>{@link #start}</code> attribute must be an ISO-8605 date/time format string or an exception is thrown.
+         * The <code>{@link #start}</code> attribute must be an ISO-8601 date/time format string or an exception is thrown.
          * The general format is 'YEAR-MONTH-DAY<em>T</em>HOUR:MINUTE:SECOND.FRACTION' with resolution up to 1 nanosecond.
          * See <code>{@link Instant#parse(CharSequence)}</code> for more information on parsing ISO-8605 format strings.
          * </p>
@@ -112,7 +112,7 @@ public class JalToolsTestArchiveConfig extends CfgStructure<JalToolsTestArchiveC
          * Parses the <code>{@link #end}</code> attribute and returns the value as a Java <code>{@link Instant}</code> object.
          * </p>
          * <p>
-         * The <code>{@link #end}</code> attribute must be an ISO-8605 date/time format string or an exception is thrown.
+         * The <code>{@link #end}</code> attribute must be an ISO-8601 date/time format string or an exception is thrown.
          * The general format is 'YEAR-MONTH-DAY<em>T</em>HOUR:MINUTE:SECOND.FRACTION' with resolution up to 1 nanosecond.
          * See <code>{@link Instant#parse(CharSequence)}</code> for more information on parsing ISO-8605 format strings.
          * </p>

@@ -61,7 +61,7 @@ public class FrameTimestampsSpecTest {
     //
     
     /** The default ingestion frame timestamps properties */
-    public static final JalToolsFramesTmsConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frames.timestamps;
+    public static final JalToolsFramesTmsConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frame.timestamps;
     
     
     //

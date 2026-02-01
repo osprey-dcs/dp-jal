@@ -69,10 +69,10 @@ public class FrameColumnsSpecTest {
     //
     
     /** The column factory default configuration */
-    private static final JalToolsColumnsConfig  CFG_COLS_DEF = JalToolsConfig.getInstance().datagen.columns;
+    private static final JalToolsColumnsConfig  CFG_COLS_DEF = JalToolsConfig.getInstance().datagen.column;
     
     /** The ingestion frame default configuration (includes default data columns) */
-    private static final JalToolsFramesConfig   CFG_FRM_DEF = JalToolsConfig.getInstance().datagen.frames;
+    private static final JalToolsFramesConfig   CFG_FRM_DEF = JalToolsConfig.getInstance().datagen.frame;
     
     
     //
@@ -113,6 +113,9 @@ public class FrameColumnsSpecTest {
     /** FrameColumnsSpec parsing test string array */
     public static final String[]        ARR_ARGS_PARSE_1 = { "100", "Parse1_PV:", "SCALAR", "DOUBLE", "false", "0", "10.1", "SillyString" };
     
+    /** FrameColumnsSpec parsing test string array */
+    public static final String[]        ARR_ARGS_PARSE_2 = { "PV1", "PV2", "PV3", "SCALAR", "DOUBLE", "false", "0", "10.1", "SillyString" };
+    
     
     //
     // Test Resources
@@ -129,6 +132,9 @@ public class FrameColumnsSpecTest {
     
     /** The frame columns specification for parsing string 1 */
     public static final FrameColumnsSpec<ScalarFactorySpec>  SPEC_COLS_PARSE_1 = FrameColumnsSpec.from(100, "Parse1_PV:", SPEC_DATUM_FAC_PARSE_1);
+    
+    /** The frame columns specification for parsing string 2 */
+    public static final FrameColumnsSpec<ScalarFactorySpec>  SPEC_COLS_PARSE_2 = FrameColumnsSpec.from(Set.of("PV1", "PV2", "PV3"), SPEC_DATUM_FAC_PARSE_1);
     
     
     //
@@ -191,9 +197,11 @@ public class FrameColumnsSpecTest {
             // Create new column factory specification and check field values
             FrameColumnsSpec<Record>    specTest = FrameColumnsSpec.from();
 
+//            Assert.assertEquals(intCols, specTest.setColNms().size());
+//            Assert.assertEquals(strNmPref, specTest.strNmPref());
             Assert.assertTrue(specTest.isValid());
-            Assert.assertEquals(intCols, specTest.intCols());
-            Assert.assertEquals(strNmPref, specTest.strNmPref());
+            Assert.assertTrue( specTest.setColNms().stream().allMatch(nm -> nm.startsWith(strNmPref)) );
+            Assert.assertEquals(intCols, specTest.setColNms().size());
             Assert.assertEquals(specFac, specTest.specFactory());
             Assert.assertEquals(enmType, specTest.enmType());
             Assert.assertEquals(clsSpec, specTest.clsFactory());
@@ -231,9 +239,12 @@ public class FrameColumnsSpecTest {
             // Create new column factory specification and check field values
             FrameColumnsSpec<Record>    specTest = FrameColumnsSpec.from(intCols);
 
+//            Assert.assertTrue(specTest.isValid());
+//            Assert.assertEquals(intCols, specTest.intCols());
+//            Assert.assertEquals(strNmPref, specTest.strNmPref());
             Assert.assertTrue(specTest.isValid());
-            Assert.assertEquals(intCols, specTest.intCols());
-            Assert.assertEquals(strNmPref, specTest.strNmPref());
+            Assert.assertTrue( specTest.setColNms().stream().allMatch(nm -> nm.startsWith(strNmPref)) );
+            Assert.assertEquals(intCols, specTest.setColNms().size());
             Assert.assertEquals(specFac, specTest.specFactory());
             Assert.assertEquals(enmType, specTest.enmType());
             Assert.assertEquals(clsSpec, specTest.clsFactory());
@@ -266,9 +277,12 @@ public class FrameColumnsSpecTest {
             // Create new column factory specification and check field values
             FrameColumnsSpec<Record>    specTest = FrameColumnsSpec.from(intCols, strNmPref);
 
+//            Assert.assertTrue(specTest.isValid());
+//            Assert.assertEquals(intCols, specTest.intCols());
+//            Assert.assertEquals(strNmPref, specTest.strNmPref());
             Assert.assertTrue(specTest.isValid());
-            Assert.assertEquals(intCols, specTest.intCols());
-            Assert.assertEquals(strNmPref, specTest.strNmPref());
+            Assert.assertTrue( specTest.setColNms().stream().allMatch(nm -> nm.startsWith(strNmPref)) );
+            Assert.assertEquals(intCols, specTest.setColNms().size());
             Assert.assertEquals(specFac, specTest.specFactory());
             Assert.assertEquals(enmType, specTest.enmType());
             Assert.assertEquals(clsSpec, specTest.clsFactory());
@@ -296,9 +310,12 @@ public class FrameColumnsSpecTest {
             // Create new column factory specification and check field values
             FrameColumnsSpec<ScalarFactorySpec>    specTest = FrameColumnsSpec.from(intCols, specFac);
 
+//            Assert.assertTrue(specTest.isValid());
+//            Assert.assertEquals(intCols, specTest.intCols());
+//            Assert.assertEquals(strNmPref, specTest.strNmPref());
             Assert.assertTrue(specTest.isValid());
-            Assert.assertEquals(intCols, specTest.intCols());
-            Assert.assertEquals(strNmPref, specTest.strNmPref());
+            Assert.assertTrue( specTest.setColNms().stream().allMatch(nm -> nm.startsWith(strNmPref)) );
+            Assert.assertEquals(intCols, specTest.setColNms().size());
             Assert.assertEquals(specFac, specTest.specFactory());
             Assert.assertEquals(enmType, specTest.enmType());
             Assert.assertEquals(clsSpec, specTest.clsFactory());
@@ -326,9 +343,12 @@ public class FrameColumnsSpecTest {
             // Create new column factory specification and check field values
             FrameColumnsSpec<ScalarFactorySpec>    specTest = FrameColumnsSpec.from(intCols, specFac);
 
+//            Assert.assertTrue(specTest.isValid());
+//            Assert.assertEquals(intCols, specTest.intCols());
+//            Assert.assertEquals(strNmPref, specTest.strNmPref());
             Assert.assertTrue(specTest.isValid());
-            Assert.assertEquals(intCols, specTest.intCols());
-            Assert.assertEquals(strNmPref, specTest.strNmPref());
+            Assert.assertTrue( specTest.setColNms().stream().allMatch(nm -> nm.startsWith(strNmPref)) );
+            Assert.assertEquals(intCols, specTest.setColNms().size());
             Assert.assertEquals(specFac, specTest.specFactory());
             Assert.assertEquals(enmType, specTest.enmType());
             Assert.assertEquals(clsSpec, specTest.clsFactory());
@@ -356,9 +376,12 @@ public class FrameColumnsSpecTest {
             // Create new column factory specification and check field values
             FrameColumnsSpec<ScalarFactorySpec>    specTest = FrameColumnsSpec.from(intCols, strNmPref, specFac);
 
+//            Assert.assertTrue(specTest.isValid());
+//            Assert.assertEquals(intCols, specTest.intCols());
+//            Assert.assertEquals(strNmPref, specTest.strNmPref());
             Assert.assertTrue(specTest.isValid());
-            Assert.assertEquals(intCols, specTest.intCols());
-            Assert.assertEquals(strNmPref, specTest.strNmPref());
+            Assert.assertTrue( specTest.setColNms().stream().allMatch(nm -> nm.startsWith(strNmPref)) );
+            Assert.assertEquals(intCols, specTest.setColNms().size());
             Assert.assertEquals(specFac, specTest.specFactory());
             Assert.assertEquals(enmType, specTest.enmType());
             Assert.assertEquals(clsSpec, specTest.clsFactory());
@@ -387,9 +410,12 @@ public class FrameColumnsSpecTest {
             // Create new column factory specification and check field values
             FrameColumnsSpec<Record>    specTest = FrameColumnsSpec.from(enmType);
 
+//            Assert.assertTrue(specTest.isValid());
+//            Assert.assertEquals(intCols, specTest.intCols());
+//            Assert.assertEquals(strNmPref, specTest.strNmPref());
             Assert.assertTrue(specTest.isValid());
-            Assert.assertEquals(intCols, specTest.intCols());
-            Assert.assertEquals(strNmPref, specTest.strNmPref());
+            Assert.assertTrue( specTest.setColNms().stream().allMatch(nm -> nm.startsWith(strNmPref)) );
+            Assert.assertEquals(intCols, specTest.setColNms().size());
             Assert.assertEquals(specFac, specTest.specFactory());
             Assert.assertEquals(enmType, specTest.enmType());
             Assert.assertEquals(clsSpec, specTest.clsFactory());
@@ -418,9 +444,12 @@ public class FrameColumnsSpecTest {
             // Create new column factory specification and check field values
             FrameColumnsSpec<Record>    specTest = FrameColumnsSpec.from(intCols, enmType);
 
+//            Assert.assertTrue(specTest.isValid());
+//            Assert.assertEquals(intCols, specTest.intCols());
+//            Assert.assertEquals(strNmPref, specTest.strNmPref());
             Assert.assertTrue(specTest.isValid());
-            Assert.assertEquals(intCols, specTest.intCols());
-            Assert.assertEquals(strNmPref, specTest.strNmPref());
+            Assert.assertTrue( specTest.setColNms().stream().allMatch(nm -> nm.startsWith(strNmPref)) );
+            Assert.assertEquals(intCols, specTest.setColNms().size());
             Assert.assertEquals(specFac, specTest.specFactory());
             Assert.assertEquals(enmType, specTest.enmType());
             Assert.assertEquals(clsSpec, specTest.clsFactory());
@@ -449,9 +478,12 @@ public class FrameColumnsSpecTest {
             // Create new column factory specification and check field values
             FrameColumnsSpec<Record>    specTest = FrameColumnsSpec.from(intCols, strNmPref, enmType);
 
+//            Assert.assertTrue(specTest.isValid());
+//            Assert.assertEquals(intCols, specTest.intCols());
+//            Assert.assertEquals(strNmPref, specTest.strNmPref());
             Assert.assertTrue(specTest.isValid());
-            Assert.assertEquals(intCols, specTest.intCols());
-            Assert.assertEquals(strNmPref, specTest.strNmPref());
+            Assert.assertTrue( specTest.setColNms().stream().allMatch(nm -> nm.startsWith(strNmPref)) );
+            Assert.assertEquals(intCols, specTest.setColNms().size());
             Assert.assertEquals(specFac, specTest.specFactory());
             Assert.assertEquals(enmType, specTest.enmType());
             Assert.assertEquals(clsSpec, specTest.clsFactory());
@@ -508,6 +540,29 @@ public class FrameColumnsSpecTest {
     }
 
     /**
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#parse(java.lang.String[])}.
+     */
+    @Test
+    public final void testParse2() {
+        
+        // Test Parameters
+        String[]                                arrArgs = ARR_ARGS_PARSE_2;
+        FrameColumnsSpec<ScalarFactorySpec>     specExpect = SPEC_COLS_PARSE_2;
+        
+        try {
+            FrameColumnsSpec<Record> specTest = FrameColumnsSpec.parse(arrArgs);
+            
+            Assert.assertEquals(specExpect, specTest);
+            
+        } catch (Exception e) {
+            Assert.fail(JavaRuntime.getQualifiedMethodNameSimple()
+                    + " - Parsing creation failed with exception "
+                    + e.getClass().getName()
+                    + ": " + e.getMessage());
+        }
+    }
+
+    /**
      * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec#defaultFrame()}.
      * @throws UnsupportedOperationException 
      * @throws TypeNotPresentException 
@@ -549,9 +604,12 @@ public class FrameColumnsSpecTest {
             // Create new column factory specification and check field values
             FrameColumnsSpec<TensorFactorySpec>    specTest = FrameColumnsSpec.from(intCols, strNmPref, specFac);
 
+//            Assert.assertTrue(specTest.isValid());
+//            Assert.assertEquals(intCols, specTest.intCols());
+//            Assert.assertEquals(strNmPref, specTest.strNmPref());
             Assert.assertTrue(specTest.isValid());
-            Assert.assertEquals(intCols, specTest.intCols());
-            Assert.assertEquals(strNmPref, specTest.strNmPref());
+            Assert.assertTrue( specTest.setColNms().stream().allMatch(nm -> nm.startsWith(strNmPref)) );
+            Assert.assertEquals(intCols, specTest.setColNms().size());
             Assert.assertEquals(specFac, specTest.specFactory());
             Assert.assertEquals(enmType, specTest.enmType());
             Assert.assertEquals(clsSpec, specTest.clsFactory());

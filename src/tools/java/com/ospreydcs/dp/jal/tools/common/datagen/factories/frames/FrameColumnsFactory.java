@@ -801,10 +801,10 @@ public class FrameColumnsFactory implements IFrameColumnsFactory<Object> {
     //
 
     /** JAL Tools default configuration parameters for ingestion frame factories */
-    private static final JalToolsFramesConfig           CFG_FRM_DEF = JalToolsConfig.getInstance().datagen.frames;
+    private static final JalToolsFramesConfig           CFG_FRM_DEF = JalToolsConfig.getInstance().datagen.frame;
     
     /** JAL Tools default configuration parameters for column factories */
-    private static final JalToolsColumnsConfig          CFG_COL_DEF = JalToolsConfig.getInstance().datagen.columns;
+    private static final JalToolsColumnsConfig          CFG_COL_DEF = JalToolsConfig.getInstance().datagen.column;
     
     
     // 

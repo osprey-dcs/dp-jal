@@ -67,10 +67,10 @@ public class FrameColumnsFactoryTest {
     //
     
     /** The default data column configuration */
-    public static final JalToolsColumnsConfig       CFG_COL_DEF = JalToolsConfig.getInstance().datagen.columns;
+    public static final JalToolsColumnsConfig       CFG_COL_DEF = JalToolsConfig.getInstance().datagen.column;
 
     /** The default ingestion frame data columns configuration */
-    public static final List<JalToolsColumnsConfig> LIST_CFG_COLS_DEF = JalToolsConfig.getInstance().datagen.frames.columns;
+    public static final List<JalToolsColumnsConfig> LIST_CFG_COLS_DEF = JalToolsConfig.getInstance().datagen.frame.columns;
     
     
     //

@@ -125,6 +125,32 @@ public enum JalComplexType {
     /** Returns the Data Platform supported data type for this constant */
     public DpSupportedType  getDpType() { return this.enmDpType; };
     
+    
+    /**
+     * <p>
+     * Determines whether or not the given string is a proper enumeration constant name.
+     * </p>
+     * 
+     * @implNote
+     * This method simple defers to method <code>{@link #valueFrom(String)}</code>.  If no exception
+     * is thrown then method returns <code>true</code>, otherwise it returns <code>false</code>.
+     *  
+     * @param strName   the name to be checked
+     * 
+     * @return  <code>true</code> if the given name is an enumeration constant name, 
+     *          <code>false</code> otherwise
+     */
+    public static boolean   isValue(String strName) {
+        try {
+            JalComplexType.valueFrom(strName);
+            
+            return true;
+            
+        } catch (TypeNotPresentException e) {
+            return false;
+        }
+    }
+    
     /**
      * <p>
      * Returns the <code>JalComplexType</code> enumeration constant with the given name.

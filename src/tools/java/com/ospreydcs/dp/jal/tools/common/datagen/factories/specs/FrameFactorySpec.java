@@ -25,6 +25,7 @@
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 
+import java.io.PrintStream;
 import java.lang.reflect.MalformedParametersException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -312,7 +313,7 @@ public record FrameFactorySpec(
      * Creates a new <code>FrameFactorySpec</code> by parsing the argument as if it is a Java application command-line.
      * </p>
      * <p>
-     * <h2>Format</h2>
+     * <h2>Formats</h2>
      * The format of the arguments collection is assumed to be as follows:
      * <code>
      * <pre>
@@ -334,6 +335,20 @@ public record FrameFactorySpec(
      * <li><code>--tms [samples [period [start [type [delay]]]]]</code> = ingestion frame timestamps specification.</li>
      * <li><code>--cols [cnt [prefix [DTYPE [parameters]]]]</code> = ingestion frame column specification.</li>
      * </ul>
+     * See <code>{@link FrameTimestampsSpec#parse(String...)}</code> for a description of the <code>--tms</code> parameters
+     * and <code>{@link FrameColumnsSpec#parse(String...)}</code> for a description of the <code>--cols</code> parameters.
+     * </p>
+     * <p>
+     * The <code>{@link FrameColumnsSpec#parse(String...)}</code> also supports an additional format for ingestion frame
+     * data columns.  The alternate format for frame columns specification is given by the following:
+     * <code>
+     * <pre>
+     *      --cols [colNm1 colNm2 ... colNmN [DTYPE [parameter(s)]]]
+     * </pre>
+     * </code>
+     * where the collection <code>[colNm1 colNm2 ... colNmN]</code> are explicit names for the data columns.  See
+     * <code>{@link FrameColumnsSpec#parse(String...)}</code> for additional information on this format.
+     * </p>
      * <p>
      * <h2>Delimiters</h2>
      * The delimiters used above are set as record constants and may change in future releases.  Thus, we list below these
@@ -519,6 +534,37 @@ public record FrameFactorySpec(
         return facFrames;
     }
     
+    /**
+     * <p>
+     * Prints out a text description of the record fields to the given output stream.
+     * </p>
+     * <p>
+     * A line-by-line text description of each record field is written to the given output.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white-space padding for each line header (or <code>null</code>)
+     */
+    public void printOut(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        String strPadd = strPad + "  ";
+        
+        ps.println(strPad + "Frame tag values           : " + this.setTags);
+        ps.println(strPad + "Frame attributes           : " + this.mapAttrs);
+        ps.println(strPad + "Frame column factory count : " + this.setColsSpecs.size());
+        ps.println(strPad + "Frame Timestamps  ");
+        this.specTms.printOut(ps, strPadd);
+        int indColFac = 1;
+        for (FrameColumnsSpec<Record> specCols : this.setColsSpecs) {
+            ps.println("Column Factory #" + indColFac);
+            specCols.printOut(ps, strPadd);
+            indColFac++;
+        }
+    }
+    
     
     //
     // Record Overrides
@@ -565,7 +611,7 @@ public record FrameFactorySpec(
     //
 
     /** JAL Tools default configuration parameters for ingestion frame factories */
-    private static final JalToolsFramesConfig           CFG_FRM_DEF = JalToolsConfig.getInstance().datagen.frames;
+    private static final JalToolsFramesConfig           CFG_FRM_DEF = JalToolsConfig.getInstance().datagen.frame;
         
     
     //

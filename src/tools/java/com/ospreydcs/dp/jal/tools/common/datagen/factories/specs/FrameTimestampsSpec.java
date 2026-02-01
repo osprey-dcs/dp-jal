@@ -25,6 +25,7 @@
  */
 package com.ospreydcs.dp.jal.tools.common.datagen.factories.specs;
 
+import java.io.PrintStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -243,14 +244,23 @@ public record FrameTimestampsSpec(
      * </pre>
      * </code>
      * The field values of <code>FrameTimestampSpec</code> are taken from the above collection of strings. 
-     * The strings are parsed here, in order.  The list is given below along with the default value when
-     * the parameter is missing.
+     * The strings are parsed here, in order.  The list below contains the format specification for the
+     * string values in the argument collection:
+     * <ol>
+     * <li>'samples' &rarr; integer valued string,</li>
+     * <li>'period' &rarr; ISO-8601 time duration format string 'PnYnMnDTnHnMn.nS', </li>
+     * <li>'start' &rarr; ISO-8601 date format string 'Y-M-DTh:m:s.sZ', </li>
+     * <li>'type' &rarr; a <code>{@link DpTimestampCase}</code> enumeration constant name,</li>
+     * <li>'delay' &rarr; ISO-8601 time duration format string 'PnYnMnDTnHnMn.nS'. </li>
+     * </ol>
+     * The following list identifies the record fields along with the default value 
+     * when the parameter is missing:
      * <ol>
      * <li>'samples' &rarr; <code>{@link #cntSamples()}</code> [default <code>{@link #CNT_SAMPLES_DEF}</code>],
      * <li>'period' &rarr; <code>{@link #durPeriod()}</code> [default <code>{@link #DUR_PERIOD_DEF}</code>],
      * <li>'start' &rarr; <code>{@link #insStart()}</code> [default <code>{@link #INS_START_DEF}</code>],
      * <li>'type' &rarr; <code>{@link #enmType()}</code> [default <code>{@link #ENM_TMS_TYPE_DEF}</code>],
-     * <li>'delay' &rarr; <code>{@link #durDelay()}</code> [default <code>{@link #DUR_DELAY_DEF}</code>],
+     * <li>'delay' &rarr; <code>{@link #durDelay()}</code> [default <code>{@link #DUR_DELAY_DEF}</code>].
      * </ol>
      * </p>
      * <p>
@@ -372,6 +382,30 @@ public record FrameTimestampsSpec(
         FrameTimestampsFactory  facTms = FrameTimestampsFactory.from(this.cntSamples, this.durPeriod, this.insStart, this.enmType, this.durDelay);
         
         return facTms;
+    }
+    
+    /**
+     * <p>
+     * Prints out a text description of the record fields to the given output stream.
+     * </p>
+     * <p>
+     * A line-by-line text description of each record field is written to the given output.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white-space padding for each line header (or <code>null</code>)
+     */
+    public void printOut(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        
+        ps.println(strPad + "Sample count           : " + this.cntSamples);
+        ps.println(strPad + "Sampling period        : " + this.durPeriod);
+        ps.println(strPad + "Sampling start instant : " + this.insStart);
+        ps.println(strPad + "Sampling start delay   : " + this.durDelay);
+        ps.println(strPad + "Timestamp case         : " + this.enmType);
     }
     
 //    /**
@@ -519,7 +553,7 @@ public record FrameTimestampsSpec(
     //
     
     /** Default configuration parameters for the JAL Tools */
-    private static final JalToolsFramesTmsConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frames.timestamps;
+    private static final JalToolsFramesTmsConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frame.timestamps;
     
     
     //

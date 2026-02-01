@@ -172,8 +172,33 @@ public class AppArgumentsParser {
     public static final String          STR_PROP_ASSGN_SEP = "=";
     
     /** The set of delimiting tokens typically used in command-line parsing */ 
-    public static final Set<String>     SET_DELS_DEF = Set.of("-", "--");
+    public static final Set<String>     SET_DELS_DEF = Set.of("-", "--", "|");
     
+    
+    //
+    // Special Arguments and Values
+    //
+    
+    /** Special application argument switch for help - see {@link #parseHelpRequest(String[])} */
+    public static final String      STR_SWTCH_HELP = "-h";
+
+    /** Special application argument variable for help  - see {@link #parseHelpRequest(String[])} */
+    public static final String      STR_VAR_HELP = "--help";
+    
+    
+    /** Special application argument variable for version - see {@link #parseAppArgsVersion(String[])} */
+    public static final String      STR_SWTCH_VERSION = "-v";
+
+    /** Special application argument variable for version - see {@link #parseAppArgsVersion(String[])} */
+    public static final String      STR_VAR_VERSION = "--version";
+
+    
+    /** Argument variable identifying output location */
+    public static final String      STR_VAR_OUTPUT = "--output";
+
+    /** Special application argument variable value for console output - see {@link #openOutputStream(String)} */
+    public static final String      STR_ARG_VAL_STDOUT = "console";
+
     
     //
     // Resources
@@ -261,6 +286,130 @@ public class AppArgumentsParser {
     //
     // Operations
     //
+    
+    /**
+     * <p>
+     * Parses the application argument collection for a help request.
+     * </p>
+     * <p>
+     * A value <code>true</code> is returned if any element in the argument collection is equal to the value 
+     * {@value #STR_SWTCH_HELP} or {@value #STR_VAR_HELP}, where case is ignored.  
+     * Otherwise a value <code>false</code> is returned.
+     * </p>
+     * <p>
+     * This method is equivalent to <code>{@link #parseSwitch(String, String[])}</code> with the <code>String</code>
+     * argument value as {@value #STR_SWTCH_HELP} or {@value #STR_VAR_HELP}.
+     * </p>
+     * 
+     * @param args  the application argument collection
+     *  
+     * @return  <code>true</code> if the argument collection contained the elements {@link #STR_SWTCH_HELP} and/or {@value #STR_VAR_HELP} (case ignored),
+     *          <code>false</code> otherwise
+     */
+    public boolean parseHelpRequest(String[] args) {
+        
+        // Check argument
+        if (args==null)
+            return false;
+        
+        // Look for help request
+        boolean bolHelp = this.parseSwitch(STR_SWTCH_HELP, args) 
+                       || this.parseSwitch(STR_VAR_HELP, args);
+        
+        return bolHelp;
+    }
+    
+    /**
+     * <p>
+     * Parses the application argument collection for a version request.
+     * </p>
+     * <p>
+     * A value <code>true</code> is returned if any element in the argument collection is equal to the value 
+     * {@value #STR_SWTCH_VERSION} and/or {@value #STR_VAR_VERSION}, where case is ignored.  
+     * Otherwise a value <code>false</code> is returned.
+     * </p>
+     * <p>
+     * This method is equivalent to <code>{@link #parseSwitch(String, String[])}</code> with the <code>String</code>
+     * argument value as {@value #STR_SWTCH_VERSION} and/or  {@value #STR_VAR_VERSION}.
+     * </p>
+     * 
+     * @param args  the application argument collection
+     *  
+     * @return  <code>true</code> if the argument collection contained the element {@value #STR_SWTCH_VERSION} and/or {@value #STR_VAR_VERSION} (case ignored),
+     *          <code>false</code> otherwise
+     */
+    public boolean    parseVersionRequest(String[] args) {
+        
+        // Check argument
+        if (args==null)
+            return false;
+        
+        // Look for version request
+        boolean bolHelp = this.parseSwitch(STR_SWTCH_VERSION, args)  
+                       || this.parseSwitch(STR_VAR_VERSION, args);
+        
+        return bolHelp;
+    }
+    
+    /**
+     * <p>
+     * Parses the collection of application arguments for errors or a help request.
+     * </p>
+     * <p>
+     * The list of arguments to the application is parsed for common errors.  Exceptions are also thrown
+     * if a help or version request is encountered.
+     * The following conditions are checked in order:
+     * <ol>
+     * <li>Wrong number of arguments, must be >= the specified number <code>IllegalArgumentException</code>)</li>
+     * <li>A {@value #STR_VAR_HELP} appeared in the argument list (<code>IllegalCallerException</code>).</li>
+     * <li>A {@value #STR_VAR_VERSION} appeared in the argument list (<code>IllegalCallerException</code>).</li>
+     * <li>An argument did not start with a valid switch/variable identified in argument (<code>UnsupportedOperationException</code>).</li>
+     * </ol>
+     * </p>
+     * 
+     * @param cntMinArgs    the minimum number of required arguments to the application
+     * @param lstDelOpts    list of valid delimited options (switches, variables, and properties with their delimiters - e.g., '-o', '--copy', etc.) 
+     * @param args          the application argument list 
+     * 
+     * @throws IllegalArgumentException         wrong number of arguments (did not contain enough commands/options)
+     * @throws IllegalCallerException           the client request application help or version message
+     * @throws UnsupportedOperationException    an application argument contained an invalid option flag
+     */
+    public void parseOptionErrors(int cntMinArgs, List<String> lstDelOpts, String[] args) 
+            throws IllegalArgumentException, IllegalCallerException, UnsupportedOperationException {
+
+        // Check the argument count
+        if (args==null || args.length < cntMinArgs)
+            throw new IllegalArgumentException("The argument list " + args + " has lenth less than minimum " + cntMinArgs);
+        
+        // Check for help request
+        boolean bolHelp = this.parseHelpRequest(args);
+        if (bolHelp)
+            throw new IllegalCallerException("The client requested help message.");
+        
+        // Check for version request
+        boolean bolVersion = this.parseVersionRequest(args);
+        if (bolVersion)
+            throw new IllegalCallerException("The client requested version information.");
+        
+        // Check each argument for valid flag
+        for (String strToken : args) {
+            String strArg = strToken.strip();
+            
+            // Check if argument is delimited - if not move to the next one
+            boolean bolDelimited = this.setDels.stream().anyMatch(s -> strArg.contains(s));
+            if (!bolDelimited)
+                continue;
+            
+            // The argument contains a delimiter indicating an option - check against list of valid options
+            boolean bolValidArg = lstDelOpts.stream().anyMatch(strOpt -> strArg.startsWith(strOpt));
+            if (!bolValidArg)
+                throw new UnsupportedOperationException("Argument " + strArg + " is invalid; is not contained in valid option list " + lstDelOpts);
+        }
+        
+        // If we are here all arguments have a valid flag and there was no help request
+        return;
+    }
     
     /**
      * <p>

@@ -343,7 +343,7 @@ public class FrameTimestampsFactory implements IFrameTimestampsFactory {
     //
     
     /** The frame timestamps default configuration */
-    private static final    JalToolsFramesTmsConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frames.timestamps;
+    private static final    JalToolsFramesTmsConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frame.timestamps;
     
     
     //

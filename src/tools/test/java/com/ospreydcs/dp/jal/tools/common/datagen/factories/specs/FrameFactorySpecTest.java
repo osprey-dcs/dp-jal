@@ -73,7 +73,7 @@ public class FrameFactorySpecTest {
     //
     
     /** Configuration parameters for the default ingestion frame */
-    public static final JalToolsFramesConfig    CFG_FRM_DEF = JalToolsConfig.getInstance().datagen.frames;
+    public static final JalToolsFramesConfig    CFG_FRM_DEF = JalToolsConfig.getInstance().datagen.frame;
     
     
     /** Name of the specification record - used for class attributes */
@@ -157,6 +157,13 @@ public class FrameFactorySpecTest {
                                                              "--cols", "1", "Cols2:", "STRUCTURE", "4", "2", "true", "INTEGER", "false", "0", "2",
                                                              "--cols", "100", "Cols3:", "SCALAR", "DOUBLE",
                                                              "--tags", "tag3", "-Anm1=val1", "-Anm2=val2"
+                                                             };
+
+    /** Parsing creator argument collection */
+    public static final String[]        ARR_ARGS_PARSE_5 = { "--tags", "tag1", "tag2", "-Anm1=val1", "-Anm2=val2", 
+                                                             "--tms", "100", "PT0.001S", "2026-01-12T17:48:00Z", "TIMESTAMP_LIST", "PT0.003S",
+                                                             "--cols", "PV1", "PV2", "PV3", "IMAGE",
+                                                             "--tags", "tag3"
                                                              };
 
     
@@ -674,6 +681,36 @@ public class FrameFactorySpecTest {
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(1, "Cols2:", StructureFactorySpec.from(4, 2, true, ScalarFactorySpec.from(JalScalarType.INTEGER, false, 0, 2)));
         final FrameColumnsSpec<Record>          specCols3 = FrameColumnsSpec.from(100, "Cols3:", ScalarFactorySpec.from(JalScalarType.DOUBLE));
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2, specCols3); 
+
+        // Creator the frame factory specification with the parsing creator and check configuration
+        try {
+            FrameFactorySpec    specTest = FrameFactorySpec.parse(arrArgs);
+            
+            Assert.assertEquals(setTags, specTest.setTags());
+            Assert.assertTrue(FrameFactorySpecTest.assertEqualsAttrs(mapAttrs, specTest));
+            Assert.assertEquals(specTms, specTest.specTms());
+            Assert.assertEquals(setColsSpecs, specTest.setColsSpecs());
+
+        } catch (Exception e) {
+            Assert.fail("Frame specification parser creation failed with exception " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec#parse(java.lang.String[])}.
+     */
+    @Test
+    public final void testParse5() {
+        
+        // Test Parameters
+        final String[]              arrArgs = ARR_ARGS_PARSE_5;
+        final Set<String>           setColNms = Set.of("PV1", "PV2", "PV3");
+        final Set<String>           setTags = Set.of("tag1", "tag2", "tag3");
+        final Map<String, String>   mapAttrs = Map.of("nm1", "val1", "nm2", "val2");
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(100, Duration.ofMillis(1), Instant.parse("2026-01-12T17:48:00Z"), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        
+        final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(setColNms, ImageFactorySpec.from());
+        final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1); 
 
         // Creator the frame factory specification with the parsing creator and check configuration
         try {

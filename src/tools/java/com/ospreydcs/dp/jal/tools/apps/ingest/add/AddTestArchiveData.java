@@ -27,6 +27,7 @@ package com.ospreydcs.dp.jal.tools.apps.ingest.add;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -57,9 +58,13 @@ import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.ingest.JalIngestionApiFactory;
 import com.ospreydcs.dp.jal.ingest.JalIngestionException;
 import com.ospreydcs.dp.jal.tools.apps.query.correl.DataCorrelationEvaluator;
+import com.ospreydcs.dp.jal.tools.common.datagen.IFrameFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.IngestionFrameGeneratorDeprecated;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.SampleBlockConfigDep;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameTimestampsSpec;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.ScalarFactorySpec;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 import com.ospreydcs.dp.jal.util.Log4j;
@@ -78,7 +83,7 @@ import com.sun.jdi.request.InvalidRequestStateException;
  * </p>
  * <p>
  * The configuration of the <code>IngestionFrame</code> instances sent to the Ingestion Service is
- * given by a record <code>{@link SampleBlockConfigDep}</code>, whose fields are parsed from the command line.
+ * given by specification record <code>{@link FrameFactorySpec}</code>, whose fields are parsed from the command line.
  * Ingestion frames are sent to the Ingestion Service using an <code>{@link IIngestionService}</code>
  * interface obtain from the connection factory using a default connection.  All data transmission
  * with this interface is done using unary gRPC operations.  Thus, this application is not intended to
@@ -148,12 +153,13 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         }
         
         // Get the test suite configuration and output location from the application arguments
-        SampleBlockConfigDep   recFrmCfg;
+//        SampleBlockConfigDep   specFrmFac;
+        FrameFactorySpec    specFrmFac;
         int                 cntFrms;
         String              strOutputLoc;
         try {
             
-            recFrmCfg = AddTestArchiveData.parseFrameConfiguration(args);
+            specFrmFac = AddTestArchiveData.parseFrameSpecification(args);
             cntFrms = AddTestArchiveData.parseFrameCount(args);
             strOutputLoc = AddTestArchiveData.parseOutputLocation(args);
             
@@ -171,7 +177,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         
         // Create the data simulator and run it
         try {
-            AddTestArchiveData    appSimulator = new AddTestArchiveData(recFrmCfg, strOutputLoc, args);
+            AddTestArchiveData    appSimulator = new AddTestArchiveData(specFrmFac, strOutputLoc, args);
             
             appSimulator.run(cntFrms);
             appSimulator.writeReport();
@@ -202,20 +208,21 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     //
     
     /** Default configuration parameters for the Query Service tools */
-    private static final JalIngestionConfig  CFG_INGEST = JalConfig.getInstance().ingest;
+    private static final JalIngestionConfig     CFG_INGEST = JalConfig.getInstance().ingest;
     
     /** Default configuration parameters for the JAL Tools */
-    private static final JalToolsConfig     CFG_TOOLS = JalToolsConfig.getInstance();
+    private static final JalToolsConfig         CFG_TOOLS = JalToolsConfig.getInstance();
     
     
     
     /** Application name */
-    public static final String      STR_APP_NAME = AddTestArchiveData.class.getSimpleName();
+    public static final String                  STR_APP_NAME = AddTestArchiveData.class.getSimpleName();
     
     
     /** Map of data provider attributes for this application */
     private static final Map<String, String>    MAP_PRVDR_ATTRS = Map.of(
-                                                    "Identity", "Application",
+                                                    "Source", STR_APP_NAME,
+                                                    "Type", "Application",
                                                     "Location", "JAL Tools",
                                                     "Function", "Simulated data",
                                                     "Target", "Data Platform Test Archive"
@@ -225,6 +232,13 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     private static final ProviderRegistrar      REC_PRVDR_REG = ProviderRegistrar.from(STR_APP_NAME, MAP_PRVDR_ATTRS);
 
     
+//  /** The tags attached to each ingestion frame */
+//  public static final Set<String> SET_FRM_TAGS = Set.of()
+  
+  /** The (name, value) attribute pairs attached to each ingestion frame */
+  public static final Map<String, String>       MAP_FRM_ATTRS = Map.of("Source", STR_APP_NAME);
+  
+  
     //
     // Application Constants - Command-Line Argument Flags
     //
@@ -278,8 +292,12 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     public static final int         CNT_APP_MIN_ARGS = 8;
     
     
+    /** The default value for the starting time instant (DP Test Archive start time) */
+    public static final Instant     INS_START_DEF = CFG_TOOLS.testArchive.range.startInstant();
+    
     /** The default value for the sampling delay if none is given */
     public static final Duration    DUR_DELAY_DEF = Duration.ZERO;
+    
     
     /** The default value for the frame count if none is given */
     public static final int         CNT_FRAMES_DEF = 1;
@@ -342,7 +360,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     public static final String      STR_APP_VERSION = 
             STR_APP_NAME
           + " version 1.0: compatible with Java Application Library version 1.8.0 or greater.";
-    
+
     
     //
     // Class Resources
@@ -363,9 +381,10 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     //
     
     /** Record containing configuration parameters for the ingestion frames */
-    private final SampleBlockConfigDep     recFrmCfg;
+    private final FrameFactorySpec      specFrmFac;
     
     /** The requested execution report path location, or null if none */
+    @SuppressWarnings("unused")
     private final String                strOutputLoc;
             
     
@@ -374,10 +393,10 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     //
     
     /** The Ingestion Service API */
-    private final   IIngestionService           apiIngest;
+    private final   IIngestionService       apiIngest;
     
     /** The ingestion frame generator */
-    private final   IngestionFrameGeneratorDeprecated     genFrames;
+    private final   IFrameFactory           facFrames;
     
     
     //
@@ -414,21 +433,21 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * Constructs a new <code>AddTestArchiveData</code> instance.
      * </p>
      *
-     * @param recFrmCfg     the configuration record for ingestion frames
+     * @param specFrmFac    the ingestion frame factory specification record
      * @param strOutputLoc  the output file path for report generation, or <code>null</code> if no report is requested
      * @param args          application command-line arguments from main()
      * 
-     * @throws DpGrpcException 
-     * @throws JalIngestionException the data provider registration failed
+     * @throws DpGrpcException               general gRPC resource or connection exception (see message and cause)
+     * @throws JalIngestionException        the data provider registration failed
      * @throws UnsupportedOperationException the given output file path did not exist on the file system
      * @throws FileNotFoundException         unable to create the output file (see cause and message)
      * @throws SecurityException             unable to write to the output file
      */
-    public AddTestArchiveData(SampleBlockConfigDep recFrmCfg, String strOutputLoc, String...args) throws DpGrpcException, JalIngestionException, IllegalArgumentException, UnsupportedOperationException, FileNotFoundException, SecurityException {
+    public AddTestArchiveData(FrameFactorySpec specFrmFac, String strOutputLoc, String...args) throws DpGrpcException, JalIngestionException, IllegalArgumentException, UnsupportedOperationException, FileNotFoundException, SecurityException {
         super(AddTestArchiveData.class, args);
         
         // Record defining attributes
-        this.recFrmCfg = recFrmCfg;
+        this.specFrmFac = specFrmFac;
         this.strOutputLoc = strOutputLoc;
 
         // Open the output file if requested and add appender
@@ -449,7 +468,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
                     this.recPrvdrId.isNew());
 
         // Create the ingestion frame generator and ingestion result list
-        this.genFrames = IngestionFrameGeneratorDeprecated.from(recFrmCfg);
+        this.facFrames = specFrmFac.newFactory();
         
         this.lstIngRslts = new LinkedList<>(); 
         this.lstIngRqstIds = new LinkedList<>();
@@ -593,16 +612,20 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * 
      * @param cntFrames the number of ingestion frames to send to Ingestion Service
      * 
-     * @throws IllegalStateException            unregistered data provider
-     * @throws JalIngestionException             general ingestion exception (see message and cause)
+     * @throws IllegalArgumentException         the sample count was non-positive
+     * @throws IllegalStateException            unregistered data provider, or no data column factories
+     * @throws DateTimeException                internal <code>Instant</code> addition failed
+     * @throws ArithmeticException              numeric overflow in <code>Instant</code> addition
+     * @throws UnsupportedOperationException    an unsupported timestamp case was encountered
+     * @throws JalIngestionException            general ingestion exception (see message and cause)
      */
-    public void run(int cntFrames) throws InvalidRequestStateException, IllegalStateException, JalIngestionException {
+    public void run(int cntFrames) throws InvalidRequestStateException, IllegalStateException, DateTimeException, ArithmeticException, UnsupportedOperationException, JalIngestionException {
         
         // Generate ingestion frames and send them to the Ingestion Service
         Instant     insStart = Instant.now();
         for (int iFrame=0; iFrame<cntFrames; iFrame++) {
 
-            IngestionFrame  frm = this.genFrames.build();
+            IngestionFrame  frm = this.facFrames.nextFrame();   // throws IllegalArgumentException, IllegalStateException, DateTimeException, ArithmeticException, UnsupportedOperationException
             this.lstIngRqstIds.add(frm.getClientRequestUid());
             
             IngestionResult recResult = this.apiIngest.ingest(frm);
@@ -698,7 +721,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         
         // Print out Ingestion Frame configuration
         ps.println("Ingestion frames configuration:");
-        this.recFrmCfg.printOut(ps, strPad);
+        this.specFrmFac.printOut(ps, strPad);
         ps.println();
         
         // Print out list of ingestion request UIDs for frames sent to Ingestion Service
@@ -773,7 +796,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * @see #recoverSampleCount(String[])
      * @see #recoverTimestampCase(String[])
      */
-    private static SampleBlockConfigDep    parseFrameConfiguration(String[] args) 
+    private static FrameFactorySpec    parseFrameSpecification(String[] args) 
             throws MissingResourceException, IndexOutOfBoundsException, IllegalArgumentException, DateTimeParseException, NumberFormatException, ConfigurationException {
 
         // Recover the PV names 
@@ -785,6 +808,9 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         // Recover the sampling period 
         Duration    durPeriod = AddTestArchiveData.recoverSamplePeriod(args);// throws MissingResourceException, IndexOutOfBoundsException, DateTimeParseException
         
+        // Recover the sampling start instant (always the Data Platform Test Archive start instant)
+        Instant     insStart = AddTestArchiveData.INS_START_DEF;
+        
         // Recover the sampling delay
         Duration    durDelay = AddTestArchiveData.recoverSampleDelay(args);   // throws IndexOutOfBoundsException, DateTimeParseException
         
@@ -795,9 +821,15 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         DpTimestampCase enmTmsCase = AddTestArchiveData.recoverTimestampCase(args); // throws ConfigurationException
         
         // Create the ingestion frame configuration record and return it
-        SampleBlockConfigDep   recFrmCfg = SampleBlockConfigDep.from(setPvNms, enmType, enmTmsCase, cntSmpls, durPeriod, durDelay);
+//        SampleBlockConfigDep   specFrmFac = SampleBlockConfigDep.from(setPvNms, enmType, enmTmsCase, cntSmpls, durPeriod, durDelay);
         
-        return recFrmCfg;
+        FrameTimestampsSpec         specTms = FrameTimestampsSpec.from(cntSmpls, durPeriod, insStart, enmTmsCase, durDelay);
+        ScalarFactorySpec           specFac = ScalarFactorySpec.from(enmType);
+        FrameColumnsSpec<Record>    specCols = FrameColumnsSpec.from(setPvNms, specFac);
+        
+        FrameFactorySpec            specFrm = FrameFactorySpec.from(setPvNms, MAP_FRM_ATTRS, specTms, Set.of(specCols));
+                
+        return specFrm;
     }
     
     /**

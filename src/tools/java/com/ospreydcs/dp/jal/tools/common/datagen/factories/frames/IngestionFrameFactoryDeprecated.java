@@ -144,7 +144,7 @@ public class IngestionFrameFactoryDeprecated {
     //
     
     /** Default configuration parameters for the JAL Tools */
-    private static final JalToolsFramesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frames;
+    private static final JalToolsFramesConfig     CFG_DEF = JalToolsConfig.getInstance().datagen.frame;
     
     
     //

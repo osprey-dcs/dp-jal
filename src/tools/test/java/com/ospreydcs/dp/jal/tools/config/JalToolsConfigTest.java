@@ -175,8 +175,8 @@ public class JalToolsConfigTest {
         // Announce test method
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
 
-        System.out.println("  Frame tag values: " + cfgData.frames.tags);
-        System.out.println("  Frame attribute pairs: " + cfgData.frames.attributes);
+        System.out.println("  Frame tag values: " + cfgData.frame.tags);
+        System.out.println("  Frame attribute pairs: " + cfgData.frame.attributes);
     }
     
     /**
@@ -184,7 +184,7 @@ public class JalToolsConfigTest {
      */
     @Test
     public final void testJalToolsFramesTmsConfig() {
-        final JalToolsFramesTmsConfig     cfgTms = JalToolsConfig.getInstance().datagen.frames.timestamps;
+        final JalToolsFramesTmsConfig     cfgTms = JalToolsConfig.getInstance().datagen.frame.timestamps;
 
         // Announce test method
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());

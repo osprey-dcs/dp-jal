@@ -66,7 +66,7 @@ public class DataColumnsSpecDeprecatedTest {
     //
     
     /** The column factory default configuration */
-    private static final JalToolsColumnsConfig  CFG_COLS_DEF = JalToolsConfig.getInstance().datagen.columns;
+    private static final JalToolsColumnsConfig  CFG_COLS_DEF = JalToolsConfig.getInstance().datagen.column;
     
     
     //
