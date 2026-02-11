@@ -59,10 +59,13 @@ import com.ospreydcs.dp.jal.util.Log4j;
  * <code>IngestDataRequest</code> messages from processed ingestion frames.</h1>
  * </p>
  * <p>
- * This class performs several functions, including basic ingestion frame buffering, ingestion frame
- * decomposition, and conversion of ingestion frames to <code>IngestDataRequest</code> messages.
+ * Class instances are essentially independent software components within the JAL Ingestion API. 
+ * These components perform several functions, including basic ingestion frame buffering, ingestion frame
+ * decomposition, and conversion of ingestion frames to <code>IngestDataRequest</code> messages
+ * required by the Data Platform Ingestion Service API.
  * The ultimate use for class instances is as a supplier of <code>IngestDataRequest</code> messages.
- * Instance of this class are used by <code>JalIngestionStreamImpl</code>.
+ * Instance of this class are used by <code>JalIngestionStreamImpl</code> implementation class for the
+ * <code>IIngestionStream</code> interface.
  * </p>
  * <p>
  * <h2>Activation</h2>
@@ -178,7 +181,7 @@ import com.ospreydcs.dp.jal.util.Log4j;
  * <h2>WARNINGS:</h2>
  * <ul>
  * <li>
- * If automatic ingestion frame decomposition is turned of it is imperative that all
+ * If automatic ingestion frame decomposition is disabled it is imperative that all
  * offered ingestion frames have memory allocations less than the current gRPC message
  * size limit or gRPC will throw a runtime exception when attempting to transmit the 
  * generated <code>IngestDataRequest</code> message.

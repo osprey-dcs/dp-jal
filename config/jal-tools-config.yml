@@ -48,32 +48,34 @@ testArchive:   # Data Platform test archive properties (generated with utility '
        
 datagen:       # JAL Tools simulated data generation default configuration parameters
    frame:                   # Ingestion frame factory ingestion frame default configuration
-      tags:                    # common tag values given to frames   : JAL_TOOLS_DATAGEN_FRAMES_TAGS
-         useClass: true        # enable/disable factory class tags   : JAL_TOOLS_DATAGEN_FRAMES_TAGS_USE_CLASS
-         useDefault: true      # enable/disable use of default tags  : JAL_TOOLS_DATAGEN_FRAMES_TAGS_USE_DEFAULT
-         values:               # list of default tag values          : JAL_TOOLS_DATAGEN_FRAMES_TAGS_VALUES
+      label: "JalTools:"       # ingestion frame label prefix        : JAL_TOOLS_DATAGEN_FRAME_LABEL
+      count: 10                # ingestion frame payload size        : JAL_TOOLS_DATAGEN_FRAME_COUNT
+      tags:                    # common tag values given to frames   : JAL_TOOLS_DATAGEN_FRAME_TAGS
+         useClass: true        # enable/disable factory class tags   : JAL_TOOLS_DATAGEN_FRAME_TAGS_USE_CLASS
+         useDefault: true      # enable/disable use of default tags  : JAL_TOOLS_DATAGEN_FRAME_TAGS_USE_DEFAULT
+         values:               # list of default tag values          : JAL_TOOLS_DATAGEN_FRAME_TAGS_VALUES
             - "Simulated"
             - "JAL Tools"
             - "Default"
-      attributes:              # common attribute pairs given to frames: JAL_TOOLS_DATAGEN_FRAMES_ATTRIBUTES
-         useClass: true        # enable/disable factory class attributes : JAL_TOOLS_DATAGEN_FRAMES_ATTRIBUTES_USE_CLASS
-         useDefault: true      # enable/disable use of default attributes: JAL_TOOLS_DATAGEN_FRAMES_ATTRIBUTES_USE_DEFAULT
-         pairs:                # map of default attribute pairs          : JAL_TOOLS_DATAGEN_FRAMES_ATTRIBUTES_PAIRS
+      attributes:              # common attribute pairs given to frames: JAL_TOOLS_DATAGEN_FRAME_ATTRIBUTES
+         useClass: true        # enable/disable factory class attributes : JAL_TOOLS_DATAGEN_FRAME_ATTRIBUTES_USE_CLASS
+         useDefault: true      # enable/disable use of default attributes: JAL_TOOLS_DATAGEN_FRAME_ATTRIBUTES_USE_DEFAULT
+         pairs:                # map of default attribute pairs          : JAL_TOOLS_DATAGEN_FRAME_ATTRIBUTES_PAIRS
             Location: "Testbed"
             Source: "Simulator"
             Configuration: "jal-tools-config.yml"
       timestamps:              # Default timestamps for ingestion frames        
-         type: SAMPLING_CLOCK  # 'DpTimestampCase' enumeration         : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_TYPE
-         start: 2023-10-31T15:51:02.000+00:00 # first timestamp (ISO)  : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_START
-         period: PT0.001S      # sampling period (ISO-8605 format)     : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_PERIOD
-         delay: PT0.0S         # sampling delay from start instant     : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMPS_DELAY
-         count: 1000           # samples per frame (row count)         : JAL_TOOLS_DATAGEN_FRAMES_TIMESTAMP_COUNT
+         type: SAMPLING_CLOCK  # 'DpTimestampCase' enumeration         : JAL_TOOLS_DATAGEN_FRAME_TIMESTAMPS_TYPE
+         start: 2023-10-31T15:51:02.000+00:00 # first timestamp (ISO)  : JAL_TOOLS_DATAGEN_FRAME_TIMESTAMPS_START
+         period: PT0.001S      # sampling period (ISO-8605 format)     : JAL_TOOLS_DATAGEN_FRAME_TIMESTAMPS_PERIOD
+         delay: PT0.0S         # sampling delay from start instant     : JAL_TOOLS_DATAGEN_FRAME_TIMESTAMPS_DELAY
+         count: 1000           # samples per frame (row count)         : JAL_TOOLS_DATAGEN_FRAME_TIMESTAMP_COUNT
       columns:                 # Default columns for ingestion frames
-         - name: JalDbl_       # column bank name (also prefix for cols)
+         - name: "JalDbl:"     # column bank name (also prefix for cols)
            count: 100          # number of columns in column bank
            type: SCALAR        # 'JalComplexType' enumeration - datum type of all columns in column bank
            factory: [DOUBLE]   # 'String[]' parsable parameters for datum factory specification (see ScalarFactorySpec.parse())
-         - name: JalStruct_
+         - name: "JalStruct:"
            count: 1
            type: STRUCTURE
            factory: [2, 3, INTEGER, false] # 'depth' 'fanout' 'enmfldValType' 'bolRandEnbl' (see StructureFactorySpec.parse())

@@ -28,7 +28,6 @@ package com.ospreydcs.dp.jal.tools.apps.query.correl;
 import java.io.PrintStream;
 import java.util.Collection;
 
-import com.ospreydcs.dp.jal.query.DpDataRequest;
 import com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase;
 import com.ospreydcs.dp.jal.tools.common.score.ConfigScorerBase;
 
@@ -76,7 +75,7 @@ public class CorrelatorConfigScorer extends
      * 
      * @return  a new <code>CorrelatorConfigScorer</code> instance ready for use
      */
-    public static CorrelatorConfigScorer  create() {
+    public static CorrelatorConfigScorer  from() {
         return new CorrelatorConfigScorer();
     }
     
@@ -87,7 +86,7 @@ public class CorrelatorConfigScorer extends
      * <p>
      * This is a convenience creator which is a combination of the following operations:
      * <ol>
-     * <li><code>{@link #create()}</code>
+     * <li><code>{@link #from()}</code>
      * <li><code>{@link #score(Collection)}</code>
      * </ol>
      * Thus, the returned object contains all the scoring information for the given argument collection.
@@ -98,7 +97,7 @@ public class CorrelatorConfigScorer extends
      * @return  a new <code>CorrelatorConfigScorer</code> instance which scores the given argument collection
      */
     public static CorrelatorConfigScorer   from(Collection<CorrelatorTestResult> setResults) {
-        CorrelatorConfigScorer    scorer = CorrelatorConfigScorer.create();
+        CorrelatorConfigScorer    scorer = CorrelatorConfigScorer.from();
         
         scorer.score(setResults);
         
@@ -164,14 +163,22 @@ public class CorrelatorConfigScorer extends
             return recResult.recTestStatus().isSuccess();
         }
 
+//        /**
+//         * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRequest(java.lang.Record)
+//         */
+//        @Override
+//        protected DpDataRequest extractDataRequest(CorrelatorTestResult recResult) {
+//            return recResult.recTestCase().rqstOrg();
+//        }
+
         /**
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRequest(java.lang.Record)
          */
         @Override
-        protected DpDataRequest extractDataRequest(CorrelatorTestResult recResult) {
-            return recResult.recTestCase().rqstOrg();
+        protected String    extractDataRequest(CorrelatorTestResult recResult) {
+            return recResult.recTestCase().rqstOrg().getRequestId();
         }
-
+        
         /**
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRate(java.lang.Record)
          */
@@ -282,7 +289,7 @@ public class CorrelatorConfigScorer extends
          * @return the raw correlated data set size average (blocks) 
          */
         public final double getCorrelateSetSizeAvg() {
-            return cntCorrelSetAvg;
+            return this.cntCorrelSetAvg;
         }
         
         /**
@@ -302,7 +309,7 @@ public class CorrelatorConfigScorer extends
          * @return the processed data set allocation size average (MBytes) 
          */
         public final double getProcessedAllocationAvg() {
-            return szProcessedAvg/1.0e6;
+            return this.szProcessedAvg/1.0e6;
         }
         
         /**
@@ -373,7 +380,6 @@ public class CorrelatorConfigScorer extends
             
             return dblDataRate;
         }
-
 
         /**
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#printOut(java.io.PrintStream, java.lang.String)

@@ -67,6 +67,7 @@ import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;
  * @author Christopher K. Allen
  * @since Jan 4, 2026
  *
+ * @param strLabel      optional ingestion frame label prefix for all generated ingestion frames (full label suffixed by index)
  * @param setTags       optional set of tag value for generated ingestion frames
  * @param mapAttrs      optional set of (name, value) attribute pairs for generated ingestion frames
  * @param specTms       frame timestamps factory specification
@@ -77,6 +78,7 @@ import com.ospreydcs.dp.jal.tools.config.datagen.frames.JalToolsFramesConfig;
  * @param bolAttrsDef   <s>enable/disable default attribute pairs (from JAL default configuration) for ingestion frames</s>
  */
 public record FrameFactorySpec(
+        String                          strLabel,
         Set<String>                     setTags,
         Map<String, String>             mapAttrs,
         FrameTimestampsSpec             specTms,
@@ -205,6 +207,29 @@ public record FrameFactorySpec(
     
     /**
      * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> record with no ingestion frame metadata specified.
+     * </p>
+     * <p>
+     * The returned record contains no tag values or attribute pairs.  Specifically, the record fields
+     * <code>{@link #setTags()}</code> and <code>{@link #mapAttrs()}</code> are empty containers.
+     * The frame factory specification record can be supplemented with metadata post-creation by 
+     * accessing these fields.  For example, using <code>{@link Set#add(Object)}</code> and
+     * <code>{@link Map#put(Object, Object)}</code>.
+     * </p>
+     * 
+     * @param strLabel      optional ingestion frame label prefix for all generated ingestion frames (full label suffixed by index)
+     * @param specTms       frame timestamps factory specification
+     * @param setColsSpecs  collection of frame columns factories specifications
+     * 
+     * @return  a new <code>FrameFactorySpec</code> record with no metadata specifications
+     */
+    public static FrameFactorySpec  from(String strLabel, FrameTimestampsSpec specTms, Set<FrameColumnsSpec<Record>> setColsSpecs) {
+        
+        return FrameFactorySpec.from(strLabel, new TreeSet<>(), new HashMap<>(), specTms, setColsSpecs);
+    }
+    
+    /**
+     * <p>
      * Creates and returns a new <code>FrameFactorySpec</code> record using default and record metadata options.
      * </p>
      * <p>
@@ -230,6 +255,36 @@ public record FrameFactorySpec(
     public static FrameFactorySpec  from(boolean bolMetaDef, boolean bolMetaCls, FrameTimestampsSpec specTms, Set<FrameColumnsSpec<Record>> setColsSpecs) {
         
         return FrameFactorySpec.from(bolMetaDef, bolMetaCls, bolMetaDef, bolMetaCls, specTms, setColsSpecs);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> record using default and record metadata options.
+     * </p>
+     * <p>
+     * Here metadata refers to tag values and attribute pairs attached to ingestion frames.
+     * This creator allows clients to create <code>FrameFactorySpec</code> record specifying ingestion frame metadata 
+     * obtained from the default ingestion frame metadata and/or the record class metadata.  
+     * The arguments allows gross access only to metadata source (i.e., default ingestion frame and record class).
+     * Both metadata types (tag values and attribute pairs) are implied in each <code>boolean</code> argument. 
+     * </p>
+     * <p> 
+     * Client specific metadata is not contained in the returned frame factory specification, 
+     * but can be supplemented later with direct access to field <code>{@link #setTags()}</code>
+     * and <code>{@link #mapAttrs()}</code>.
+     * </p>
+     * 
+     * @param strLabel      optional ingestion frame label prefix for all generated ingestion frames (full label suffixed by index)
+     * @param bolMetaDef    include/exclude default frame metadata for ingestion frames (both tag values and attribute pairs)
+     * @param bolMetaCls    include/exclude record class metadata for ingestion frames (both tag values and attribute pairs
+     * @param specTms       frame timestamps factory specification
+     * @param setColsSpecs  collection of frame columns factories specifications
+     * 
+     * @return  a new <code>FrameFactorySpec</code> record populated according to the given argument configuration
+     */
+    public static FrameFactorySpec  from(String strLabel, boolean bolMetaDef, boolean bolMetaCls, FrameTimestampsSpec specTms, Set<FrameColumnsSpec<Record>> setColsSpecs) {
+        
+        return FrameFactorySpec.from(strLabel, bolMetaDef, bolMetaCls, bolMetaDef, bolMetaCls, specTms, setColsSpecs);
     }
     
     /**
@@ -279,12 +334,59 @@ public record FrameFactorySpec(
     
     /**
      * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> record using default and record metadata options.
+     * </p>
+     * <p>
+     * Here metadata refers to tag values and attribute pairs attached to ingestion frames.
+     * This creator allows clients to create <code>FrameFactorySpec</code> record specifying ingestion frame metadata 
+     * obtained from the default ingestion frame metadata and/or the record class metadata. 
+     * The arguments allows specific access to each metadata type (i.e., tag values and attribute pairs) and
+     * metadata source (i.e., default ingestion frame and record class).
+     * </p>
+     * <p> 
+     * Client specific metadata is not contained in the returned frame factory specification, 
+     * but can be supplemented later with direct access to field <code>{@link #setTags()}</code>
+     * and <code>{@link #mapAttrs()}</code>.
+     * </p>
+     * 
+     * @param strLabel      optional ingestion frame label prefix for all generated ingestion frames (full label suffixed by index)
+     * @param bolTagsDef    include/exclude default frame tag values (from JAL default configuration) for ingesiton frames
+     * @param bolTagsCls    include/exclude ingestion frame factory specification record tag values for ingestion frames
+     * @param bolAttrsDef   include/exclude default frame attribute pairs (from JAL default configuration) for ingestion frames
+     * @param bolAttrsCls   include/exclude ingestion frame factory specification record attribute pairs for ingestion frames
+     * @param specTms       frame timestamps factory specification
+     * @param setColsSpecs  collection of frame columns factories specifications
+     * 
+     * @return  a new <code>FrameFactorySpec</code> record populated according to the given argument configuration
+     */
+    public static FrameFactorySpec  from(String strLabel, boolean bolTagsDef, boolean bolTagsCls, boolean bolAttrsDef, boolean bolAttrsCls, FrameTimestampsSpec specTms, Set<FrameColumnsSpec<Record>> setColSpecs) {
+        
+        // Create the frame tag values set
+        Set<String> setTags = new TreeSet<>();
+        if (bolTagsDef)
+            setTags.addAll(SET_TAGS_FRM_DEF);
+        if (bolTagsCls)
+            setTags.addAll(SET_TAGS_FRM_CLS);
+        
+        // Create the frame attribute pairs map
+        Map<String, String> mapAttrs = new HashMap<>();
+        if (bolAttrsDef)
+            mapAttrs.putAll(MAP_ATTRS_FRM_DEF);
+        if (bolAttrsCls)
+            mapAttrs.putAll(MAP_ATTRS_FRM_CLS);
+
+        return FrameFactorySpec.from(strLabel, setTags, mapAttrs, specTms, setColSpecs);
+    }
+    
+    /**
+     * <p>
      * Creates and returns a new <code>FrameFactorySpec</code> record from the given argument values.
      * </p>
      * <p>
-     * This creator is equivalent to the canonical constructor
+     * This creator is defers to creator 
      * <code>{@link #FrameFactorySpec(FrameTimestampsSpec, Set, Set, Map, boolean, boolean, boolean, boolean)}</code>
-     * containing arguments for all record field values.
+     * where the <code>String</code> argument is taken from the JAL Tools default configuration and held in class
+     * constant <code>{@link #STR_LABEL_DEF}</code>.
      * </p>
      * 
      * @param setTags       optional set of tag value for generated ingestion frames
@@ -299,13 +401,42 @@ public record FrameFactorySpec(
             Map<String, String>             mapAttrs,
             FrameTimestampsSpec             specTms, 
             Set<FrameColumnsSpec<Record>>   setColsSpecs 
+            ) 
+    {
+        return new FrameFactorySpec(STR_LABEL_DEF, setTags, mapAttrs, specTms, setColsSpecs /*, bolTagsCls, bolAttrsCls, bolTagsDef, bolAttrsDef */);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>FrameFactorySpec</code> record from the given argument values.
+     * </p>
+     * <p>
+     * This creator is equivalent to the canonical constructor
+     * <code>{@link #FrameFactorySpec(FrameTimestampsSpec, Set, Set, Map, boolean, boolean, boolean, boolean)}</code>
+     * containing arguments for all record field values.
+     * </p>
+     * 
+     * @param strLabel      optional ingestion frame label prefix for all generated ingestion frames (full label suffixed by index)
+     * @param setTags       optional set of tag value for generated ingestion frames
+     * @param mapAttrs      optional set of (name, value) attribute pairs for generated ingestion frames
+     * @param specTms       frame timestamps factory specification
+     * @param setColsSpecs  collection of frame columns factories specifications
+     * 
+     * @return  a new <code>FrameFactorySpec</code> record populated with the given argument values
+     */
+    public static FrameFactorySpec  from(
+            String                          strLabel,
+            Set<String>                     setTags, 
+            Map<String, String>             mapAttrs,
+            FrameTimestampsSpec             specTms, 
+            Set<FrameColumnsSpec<Record>>   setColsSpecs 
 //            boolean                         bolTagsCls,
 //            boolean                         bolAttrsCls,
 //            boolean                         bolTagsDef,
 //            boolean                         bolAttrsDef
             ) 
     {
-        return new FrameFactorySpec(setTags, mapAttrs, specTms, setColsSpecs /*, bolTagsCls, bolAttrsCls, bolTagsDef, bolAttrsDef */);
+        return new FrameFactorySpec(strLabel, setTags, mapAttrs, specTms, setColsSpecs /*, bolTagsCls, bolAttrsCls, bolTagsDef, bolAttrsDef */);
     }
     
     /**
@@ -317,11 +448,15 @@ public record FrameFactorySpec(
      * The format of the arguments collection is assumed to be as follows:
      * <code>
      * <pre>
-     *   -tagsDef - tagsCls -attrsDef - attrsCls [--tags tag1 ... tagN] [-Aname1=val1 ... -AnameN=valN] 
-     *     --tms [samples [period [start [type [delay]]]]] 
-     *     --cols [cnt [prefix [DTYPE [parameters]]]] 
-     *       ... 
-     *     --cols [cnt [prefix [DTYPE [parameters]]]]  
+     *    [-tagsDef] [-tagsCls] [-attrsDef] [-attrsCls] 
+     *    [--label prefix] [--tags tag1 ... tagN] [-Aname1=val1 ... -AnameN=valN] 
+     *    [--tms [samples [period [start [CASE [delay]]]]] ] 
+     *     --cols [cnt [prefix [DTYPE [parameter(s)]]]] 
+     *    [   ...                                       ] 
+     *    [--cols [cnt [prefix [DTYPE [parameter(s)]]]] ]
+     *    [--cols [colNm1 colNm2 ... colNmN] [DTYPE [parameter(s)]] ]  
+     *    [   ...                                                   ] 
+     *    [--cols [colNm1 colNm2 ... colNmN] [DTYPE [parameter(s)]] ]  
      * </pre>
      * </code> 
      * where 
@@ -330,24 +465,30 @@ public record FrameFactorySpec(
      * <li><code>-tagsCls</code> = use ingestion frame factory class tag values switch (i.e., <code>true</code> if present).</li>
      * <li><code>-attrsDef</code> = use default ingestion frame attribute pairs switch (i.e., <code>true</code> if present).</li>
      * <li><code>-attrsCls</code> = use ingestion frame factory class attribute pairs switch (i.e., <code>true</code> if present).</li>
+     * <li><code>[--label prefix]</code> = optional ingestion frame label prefix (full label suffixed with frame index).</li>
      * <li><code>[--tags tag1 ... tagN]</code> = optional ingestion frame tag values (i.e., values <code>tag1 ... tagN</code>).</li>
      * <li><code>[-Aname1=val1 ... -AnameN=valN]</code> = optional ingestion frame attribute pairs (i.e., (name1, val1) ... (nameN, valN)).</li>
-     * <li><code>--tms [samples [period [start [type [delay]]]]]</code> = ingestion frame timestamps specification.</li>
-     * <li><code>--cols [cnt [prefix [DTYPE [parameters]]]]</code> = ingestion frame column specification.</li>
+     * <li><code>--tms [samples [period [start [CASE [delay]]]]]</code> = ingestion frame timestamps specification.</li>
+     * <li><code>--cols [cnt [prefix [DTYPE [parameter(s)]]]]</code> = ingestion frame column specification.</li>
+     * <li><code>--cols [colNm1 ... colNmN] [DTYPE [parameter(s)]]]</code> = ingestion frame column specification.</li>
      * </ul>
+     * Note that at least one columns specification is required, all other parameters are optional.
      * See <code>{@link FrameTimestampsSpec#parse(String...)}</code> for a description of the <code>--tms</code> parameters
      * and <code>{@link FrameColumnsSpec#parse(String...)}</code> for a description of the <code>--cols</code> parameters.
      * </p>
      * <p>
-     * The <code>{@link FrameColumnsSpec#parse(String...)}</code> also supports an additional format for ingestion frame
-     * data columns.  The alternate format for frame columns specification is given by the following:
+     * Note that the <code>{@link FrameColumnsSpec#parse(String...)}</code> supports 2 formats for ingestion frame
+     * data columns.  The column names are either specified 1) with column count and a column name prefix where the
+     * final column name is generated by appending the column index to the given prefix. 
+     * The alternate format for frame columns specification is given by the following:
      * <code>
      * <pre>
      *      --cols [colNm1 colNm2 ... colNmN [DTYPE [parameter(s)]]]
      * </pre>
      * </code>
-     * where the collection <code>[colNm1 colNm2 ... colNmN]</code> are explicit names for the data columns.  See
-     * <code>{@link FrameColumnsSpec#parse(String...)}</code> for additional information on this format.
+     * where the collection <code>[colNm1 colNm2 ... colNmN]</code> are explicit names for the data columns.
+     * The column count is given by the number of column names provided in the argument collection.  
+     * See <code>{@link FrameColumnsSpec#parse(String...)}</code> for additional information on this format.
      * </p>
      * <p>
      * <h2>Delimiters</h2>
@@ -422,7 +563,6 @@ public record FrameFactorySpec(
             setColsSpecs.addAll(FrameColumnsSpec.defaultFrame()); // throws IllegalArgumentException, NumberForamtException, TypeNotPresentException, ConfigurationException, UnsupportedOperationException, TypeNotPresentException
         
         else {
-//            setColsSpecs = new TreeSet<>();
             
             for (int iCols=0; iCols<cntColsSpecs; iCols++) {
                 List<String>    lstColsArgs = parser.parseVariable(STR_PARSE_COLS_DVAR, iCols, args);
@@ -438,19 +578,22 @@ public record FrameFactorySpec(
         Map<String, String> mapAttrs = parser.parseProperty(STR_PARSE_ATTRS_DPROP, args);   // throws ConfigurationException
         
         // Supplement optional frame tag value with default and class values if flagged
-        if (parser.parseSwitch(STR_PARSE_TAGS_DEF_SWITCH, args))
+        if (parser.hasSwitch(STR_PARSE_TAGS_DEF_SWITCH, args))
             setTags.addAll(SET_TAGS_FRM_DEF);
-        if (parser.parseSwitch(STR_PARSE_TAGS_CLS_SWITCH, args))
+        if (parser.hasSwitch(STR_PARSE_TAGS_CLS_SWITCH, args))
             setTags.addAll(SET_TAGS_FRM_CLS);
         
         // Supplement optional attribute pairs with default and class values if flagged
-        if (parser.parseSwitch(STR_PARSE_ATTRS_DEF_SWITCH, args))
+        if (parser.hasSwitch(STR_PARSE_ATTRS_DEF_SWITCH, args))
             mapAttrs.putAll(MAP_ATTRS_FRM_DEF);
-        if (parser.parseSwitch(STR_PARSE_ATTRS_CLS_SWITCH, args))
+        if (parser.hasSwitch(STR_PARSE_ATTRS_CLS_SWITCH, args))
             mapAttrs.putAll(MAP_ATTRS_FRM_CLS);
+        
+        // Extract the ingestion frame label prefix
+        String strLabel = parser.hasVariable(STR_PARSE_LABEL_DVAR, args) ? parser.parseVariable(STR_PARSE_LABEL_DVAR, args).getFirst() : STR_LABEL_DEF;
             
         
-        return FrameFactorySpec.from(setTags, mapAttrs, specTms, setColsSpecs);
+        return FrameFactorySpec.from(strLabel, setTags, mapAttrs, specTms, setColsSpecs);
     }
     
     /**
@@ -469,6 +612,7 @@ public record FrameFactorySpec(
      * and <code>{@link FrameColumnsSpec}</code>.  There are also tag values and attribute pairs created in
      * this record that can be added to the frame factory specification.
      * <ul>
+     * <li>default frame prefix = <code>{@link #STR_LABEL_DEF}</code>.</li>
      * <li>default tag values = <code>{@link #SET_TAGS_FRM_DEF}</code>, used when <code>{@link #BOL_TAGS_DEF_ENBL} = true</code>.</li>
      * <li>record tag values = <code>{@link #SET_TAGS_FRM_CLS}</code>, used when <code>{@link #BOL_TAGS_CLS_ENBL} = true</code>.</li>
      * <li>default attribute pairs = <code>{@link #MAP_ATTRS_FRM_DEF}</code>, used when <code>{@link #BOL_ATTRS_DEF_ENBL} = true</code>.</li>
@@ -503,10 +647,11 @@ public record FrameFactorySpec(
             mapAttrs.putAll(MAP_ATTRS_FRM_CLS);
 
         // Create the default ingestion frame timestamps specification and columns specification collection
+        String                          strLabel = STR_LABEL_DEF;
         FrameTimestampsSpec             specTms = FrameTimestampsSpec.defaultFrame();
         Set<FrameColumnsSpec<Record>>   setColsSpec = new TreeSet<>(FrameColumnsSpec.defaultFrame());  // throws all exceptions
         
-        return FrameFactorySpec.from(setTags, mapAttrs, specTms, setColsSpec);
+        return FrameFactorySpec.from(strLabel, setTags, mapAttrs, specTms, setColsSpec);
     }
     
     /**
@@ -521,6 +666,7 @@ public record FrameFactorySpec(
      * <li>factory attribute pairs = <code>{@link #mapAttrs()}</code>.</li>
      * <li>factory timestamps &rarr; <code>{@link #specTms()}</code> = <code>{@link FrameTimestampsSpec#newFactory()}</code>.</li>
      * <li>factory columns &rarr; <code>{@link #setColsSpecs()}</code> = <code>Collection({@link FrameColumnsSpec#newFactory()})</code>.</li>
+     * </ul>
      * </p>
      * 
      * @return  a new <code>IFrameFactory</code> implementation configured according to record specifications
@@ -529,7 +675,7 @@ public record FrameFactorySpec(
         IFrameTimestampsFactory             facTms = this.specTms.newFactory();
         List<IFrameColumnsFactory<Object>>  lstFacCols = this.setColsSpecs.stream().map(spec -> spec.newFactory()).toList();
         
-        IngestionFrameFactory   facFrames = IngestionFrameFactory.from(this.setTags, this.mapAttrs, facTms, lstFacCols);
+        IngestionFrameFactory   facFrames = IngestionFrameFactory.from(this.strLabel, this.setTags, this.mapAttrs, facTms, lstFacCols);
                 
         return facFrames;
     }
@@ -552,6 +698,7 @@ public record FrameFactorySpec(
             strPad = "";
         String strPadd = strPad + "  ";
         
+        ps.println(strPad + "Frame label prefix         : " + this.strLabel);
         ps.println(strPad + "Frame tag values           : " + this.setTags);
         ps.println(strPad + "Frame attributes           : " + this.mapAttrs);
         ps.println(strPad + "Frame column factory count : " + this.setColsSpecs.size());
@@ -577,10 +724,11 @@ public record FrameFactorySpec(
     public boolean equals(Object obj) {
         
         if (obj instanceof FrameFactorySpec spec) {
-            boolean bolResult = this.setTags.equals(spec.setTags)
-                              && this.mapAttrs.equals(spec.mapAttrs)
-                              && this.specTms.equals(spec.specTms)
-                              && this.setColsSpecs.equals(spec.setColsSpecs);
+            boolean bolResult = this.strLabel.equals(spec.strLabel)
+                             && this.setTags.equals(spec.setTags)
+                             && this.mapAttrs.equals(spec.mapAttrs)
+                             && this.specTms.equals(spec.specTms)
+                             && this.setColsSpecs.equals(spec.setColsSpecs);
             
             return bolResult;
         }
@@ -595,6 +743,7 @@ public record FrameFactorySpec(
     public String toString() {
         StringBuilder   buf = new StringBuilder();
         
+        buf.append("Frame label prefix : " + this.strLabel + "\n");
         buf.append("Frame tag values   : " + this.setTags + "\n");
         buf.append("Frame attributes   : " + this.mapAttrs + "\n");
         buf.append("Frame Timestamps Specification \n");
@@ -618,6 +767,9 @@ public record FrameFactorySpec(
     // Record Constants 
     //
     
+    /** The frame label prefix specification variable parsing delimiter */
+    public static final String  STR_PARSE_LABEL_DVAR = "--label";
+    
     /** The frame timestamps specification variable parsing delimiter */
     public static final String  STR_PARSE_TMS_DVAR = "--tms";
     
@@ -627,8 +779,10 @@ public record FrameFactorySpec(
     /** The frame optional tags variable parsing delimiter */
     public static final String  STR_PARSE_TAGS_DVAR = "--tags";
     
+    
     /** The frame optional attributes property delimiter */
     public static final String  STR_PARSE_ATTRS_DPROP = "-A";
+    
     
     /** The ingestion frame factory default tags option switch */
     public static final String  STR_PARSE_TAGS_DEF_SWITCH = "-tagsDef";
@@ -650,17 +804,20 @@ public record FrameFactorySpec(
     public static final String  STR_USERNAME = "USER";
     
     
+    /** The default ingestion frame label prefix */
+    public static final String  STR_LABEL_DEF = CFG_FRM_DEF.label;
+    
     /** Enable/disable default tag values flag default configuration */
-    public static final boolean                 BOL_TAGS_DEF_ENBL = CFG_FRM_DEF.tags.useDefault;
+    public static final boolean BOL_TAGS_DEF_ENBL = CFG_FRM_DEF.tags.useDefault;
     
     /** Enable/disable default attribute pairs default configuration */
-    public static final boolean                 BOL_ATTRS_DEF_ENBL = CFG_FRM_DEF.attributes.useDefault;
+    public static final boolean BOL_ATTRS_DEF_ENBL = CFG_FRM_DEF.attributes.useDefault;
     
     /** Enable/disable class tag values flag default configuration */
-    public static final boolean                 BOL_TAGS_CLS_ENBL = CFG_FRM_DEF.tags.useClass;
+    public static final boolean BOL_TAGS_CLS_ENBL = CFG_FRM_DEF.tags.useClass;
     
     /** Enable/disable class attribute pairs flag default configuration */
-    public static final boolean                 BOL_ATTRS_CLS_ENBL = CFG_FRM_DEF.attributes.useClass;
+    public static final boolean BOL_ATTRS_CLS_ENBL = CFG_FRM_DEF.attributes.useClass;
     
 
     //

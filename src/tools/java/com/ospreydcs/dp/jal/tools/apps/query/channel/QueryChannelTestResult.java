@@ -133,11 +133,12 @@ public record QueryChannelTestResult(
      * @throws IllegalArgumentException     the status argument indicates <code>{@link ResultStatus#SUCCESS}</code>
      */
     public static QueryChannelTestResult    from(String strRqstId, ResultStatus recTestStatus, QueryChannelTestCase recTestCase) throws IllegalArgumentException {
+        
         // Check status argument
         if (recTestStatus.isSuccess()) 
             throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - The status argument indicates sucess.");
         
-        // Create and return an empty record
+        // Create and return a record containing only the status and test case (status contains failure message and cause)
         return new QueryChannelTestResult(
                 strRqstId, recTestStatus,
                 0.0, 0, 0L, Duration.ZERO,
@@ -241,7 +242,7 @@ public record QueryChannelTestResult(
         this.recTestCase.printOut(ps, strPad + "  ");
     }
 
-
+    
     //
     // Comparable<QueryChannelTestResult> Interface
     //

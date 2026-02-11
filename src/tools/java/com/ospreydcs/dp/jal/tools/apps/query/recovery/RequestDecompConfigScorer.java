@@ -29,7 +29,6 @@ import java.io.PrintStream;
 import java.util.Collection;
 
 import com.ospreydcs.dp.jal.common.ResultStatus;
-import com.ospreydcs.dp.jal.query.DpDataRequest;
 import com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase;
 import com.ospreydcs.dp.jal.tools.common.score.ConfigScorerBase;
 
@@ -158,16 +157,26 @@ public final class RequestDecompConfigScorer extends ConfigScorerBase<
             return recTestStatus.isSuccess();
         }
 
+//        /**
+//         * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRequest(java.lang.Record)
+//         */
+//        @Override
+//        protected DpDataRequest extractDataRequest(QueryRecoveryTestResult recResult) {
+//            DpDataRequest   rqst = recResult.rqstOrg();
+//            
+//            return rqst;
+//        }
+
         /**
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRequest(java.lang.Record)
          */
         @Override
-        protected DpDataRequest extractDataRequest(QueryRecoveryTestResult recResult) {
-            DpDataRequest   rqst = recResult.rqstOrg();
+        protected String extractDataRequest(QueryRecoveryTestResult recResult) {
+            String  rqst = recResult.rqstOrg().getRequestId();
             
             return rqst;
         }
-
+        
         /**
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRate(java.lang.Record)
          */

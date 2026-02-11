@@ -808,6 +808,7 @@ public class IngestionFrameFactoryTest {
     public final void testIngestionFrameFactory() {
         
         // Test Parameters
+        final String                strLabel = "JUnitFrame:";
         final Set<String>           setTags = Set.of("tag1", "tag2", "tag3");
         final Map<String, String>   mapAttrs = Map.of("name1", "value1", "name2", "value2", "name3", "value3");
         
@@ -838,7 +839,7 @@ public class IngestionFrameFactoryTest {
         
         // Create ingestion frame factory and check configuration
         try {
-            IngestionFrameFactory   facTest = new IngestionFrameFactory(setTags, mapAttrs, facTms, conColsFacs);
+            IngestionFrameFactory   facTest = new IngestionFrameFactory(strLabel, setTags, mapAttrs, facTms, conColsFacs);
             
             Assert.assertEquals(cntSamples, facTest.getSampleCount());
             Assert.assertEquals(cntColsTot, facTest.getColumnCount());
@@ -1102,6 +1103,7 @@ public class IngestionFrameFactoryTest {
     public final void testNextFrame() {
         
         // Test Parameters
+        final String                    strLabel = "JUnitFrame:";
         final Set<String>               setTags = new TreeSet<>(IngestionFrameFactoryTest.extractDefaultFrameTags()); 
                                         setTags.add("tag3");
         final Map<String, String>       mapAttrs = new HashMap<>(MAP_FRM_ATTRS_DEF);
@@ -1142,8 +1144,9 @@ public class IngestionFrameFactoryTest {
         
         try {
             // Create test factory and check configuration
-            IngestionFrameFactory   facTest = IngestionFrameFactory.from(setTags, mapAttrs, facTms, conColsFacs);
-            
+            IngestionFrameFactory   facTest = IngestionFrameFactory.from(strLabel, setTags, mapAttrs, facTms, conColsFacs);
+
+            Assert.assertEquals(strLabel, facTest.getLabelPrefix());
             Assert.assertEquals(cntSamples, facTest.getSampleCount());
             Assert.assertEquals(cntColsTot, facTest.getColumnCount());
             Assert.assertEquals(enmTmsCase, facTest.getTimestampType());
@@ -1156,6 +1159,8 @@ public class IngestionFrameFactoryTest {
             
             // Create an ingestion frame and check configuration
             IngestionFrame  frmTest = facTest.nextFrame();
+            
+            Assert.assertTrue( frmTest.getFrameLabel().startsWith(strLabel));
             
             Assert.assertEquals(cntSamples, frmTest.getRowCount());
             Assert.assertEquals(cntColsTot, frmTest.getColumnCount());

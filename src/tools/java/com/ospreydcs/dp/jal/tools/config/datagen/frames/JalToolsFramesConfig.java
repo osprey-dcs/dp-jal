@@ -50,6 +50,14 @@ public class JalToolsFramesConfig extends CfgStructure<JalToolsFramesConfig> {
     // Attributes
     //
     
+    /** Default ingestion frame label prefix given to all generated ingestion frames */
+    @ACfgOverride.Field(name="LABEL")
+    public String                       label;
+    
+    /** Default ingestion frame payload size (i.e., number of frames) */
+    @ACfgOverride.Field(name="COUNT")
+    public Integer                      count;
+    
     /** Default tag values for ingestion frames */
     @ACfgOverride.Struct(pathelem="TAGS")
     public JalToolsFramesTagsConfig     tags;

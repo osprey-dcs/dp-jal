@@ -28,7 +28,6 @@ package com.ospreydcs.dp.jal.tools.apps.query.recovery;
 import java.io.PrintStream;
 import java.util.Collection;
 
-import com.ospreydcs.dp.jal.query.DpDataRequest;
 import com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase;
 import com.ospreydcs.dp.jal.tools.common.score.ConfigScorerBase;
 
@@ -158,12 +157,20 @@ public class CorrelationConfigScorer extends
             return recResult.recTestStatus().isSuccess();
         }
 
+//        /**
+//         * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRequest(java.lang.Record)
+//         */
+//        @Override
+//        protected DpDataRequest extractDataRequest(QueryRecoveryTestResult recResult) {
+//            return recResult.rqstOrg();
+//        }
+        
         /**
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRequest(java.lang.Record)
          */
         @Override
-        protected DpDataRequest extractDataRequest(QueryRecoveryTestResult recResult) {
-            return recResult.rqstOrg();
+        protected String    extractDataRequest(QueryRecoveryTestResult recResult) {
+            return recResult.rqstOrg().toString();
         }
 
         /**

@@ -48,6 +48,8 @@ testArchive:   # Data Platform test archive properties (generated with utility '
          
 datagen:       # JAL Tools simulated data generation default configuration parameters
    frame:                   # Ingestion frame factory ingestion frame default configurat
+      label: "JalTools:"       # ingestion frame label prefix        : JAL_TOOLS_DATAGEN_FRAME_LABEL
+      count: 10                # ingestion frame payload size        : JAL_TOOLS_DATAGEN_FRAME_COUNT
       tags:                    # common tag values given to frames   : JAL_TOOLS_DATAGEN_FRAME_TAGS
          useClass: true        # enable/disable factory class tags   : JAL_TOOLS_DATAGEN_FRAME_TAGS_USE_CLASS
          useDefault: true      # enable/disable use of default tags  : JAL_TOOLS_DATAGEN_FRAME_TAGS_USE_DEFAULT
@@ -69,11 +71,11 @@ datagen:       # JAL Tools simulated data generation default configuration param
          delay: PT0.0S         # sampling delay from start instant     : JAL_TOOLS_DATAGEN_FRAME_TIMESTAMPS_DELAY
          count: 1000           # samples per frame (row count)         : JAL_TOOLS_DATAGEN_FRAME_TIMESTAMP_COUNT
       columns:                 # Default columns for ingestion frames
-         - name: JalDbl_       # column bank name (also prefix for cols)
+         - name: "JalDbl:"     # column bank name (also prefix for cols)
            count: 100          # number of columns in column bank
            type: SCALAR        # 'JalComplexType' enumeration - datum type of all columns in column bank
            factory: [DOUBLE]   # 'String[]' parsable parameters for datum factory specification (see ScalarFactorySpec.parse())
-         - name: JalStruct_
+         - name: "JalStruct:"
            count: 1
            type: STRUCTURE
            factory: [2, 3, INTEGER, false] # 'depth' 'fanout' 'enmfldValType' 'bolRandEnbl' (see StructureFactorySpec.parse())

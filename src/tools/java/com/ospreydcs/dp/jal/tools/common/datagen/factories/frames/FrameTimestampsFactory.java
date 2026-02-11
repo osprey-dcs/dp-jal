@@ -244,7 +244,7 @@ public class FrameTimestampsFactory implements IFrameTimestampsFactory {
      * <li>'samples' &rarr; <code>{@link #cntSamples()}</code> [default <code>{@link #CNT_SMPLS_DEF}</code>],
      * <li>'period' &rarr; <code>{@link #durPeriod()}</code> [default <code>{@link #DUR_PERIOD_DEF}</code>],
      * <li>'start' &rarr; <code>{@link #insStart()}</code> [default <code>{@link #INS_START_DEF}</code>],
-     * <li>'type' &rarr; <code>{@link #enmType()}</code> [default <code>{@link #ENM_TMS_CASE_DEF}</code>],
+     * <li>'type' &rarr; <code>{@link #enmCase()}</code> [default <code>{@link #ENM_TMS_CASE_DEF}</code>],
      * <li>'delay' &rarr; <code>{@link #durDelay()}</code> [default <code>{@link #DUR_DELAY_DEF}</code>],
      * </ol>
      * </p>

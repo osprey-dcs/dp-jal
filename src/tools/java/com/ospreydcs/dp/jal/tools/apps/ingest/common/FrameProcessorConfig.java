@@ -35,28 +35,30 @@ import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
  * </p>
  * <p>
  * The record contains parameters for the configuration of a <code>IngestionFrameProcessor</code> instance. 
+ * Record instances can configure a <code>IngestionFrameProcessor</code> object with the
+ * <code>{@link #configure(IngestionFrameProcessor)}</code> method.
  * </p>
  *
  *
  * @author Christopher K. Allen
  * @since Sep 15, 2025
  *
- * @param   bolDcmpFrm      Processor Configuration - enable/disable ingestion frame decomposition
- * @param   szDcmpFrmMax    Processor Configuration - maximum allocation size (bytes) when frame decomposition enabled
+ * @param   bolColSerEnbl Processor Configuration - enable/disable <code>DataColumn</code> serialization for transport
  * 
- * @param   bolConcEnb      Processor Configuration - enable/disable (multi-threaded) concurrency)
- * @param   cntConcMaxThrds Processor Configuration - maximum number of processing threads when concurrency is enabled
+ * @param   bolDcmpEnbl Processor Configuration - enable/disable ingestion frame decomposition
+ * @param   szFrmMax    Processor Configuration - maximum allocation size (bytes) when frame decomposition enabled
  * 
- * @param   bolSerial       Processor Configuration - enable/disable <code>DataColumn</code> serialization for transport
+ * @param   bolConcEnbl Processor Configuration - enable/disable (multi-threaded) concurrency
+ * @param   cntMaxThrds Processor Configuration - maximum number of processing threads when concurrency is enabled
  */
 public record FrameProcessorConfig(
-        boolean bolDcmpFrm,
-        long    szDcmpFrmMax,
+        boolean bolColSerEnbl,
         
-        boolean bolConcEnb,
-        int     cntConcMaxThrds,
+        boolean bolDcmpEnbl,
+        long    szFrmMax,
         
-        boolean bolSerial
+        boolean bolConcEnbl,
+        int     cntMaxThrds
         ) 
 {
     
@@ -69,27 +71,27 @@ public record FrameProcessorConfig(
      * Creates and returns a new <code>FrameProcessorConfig</code> record with field values given by the arguments.
      * </p>
      * 
-     * @param   bolDcmpFrm      Processor Configuration - enable/disable ingestion frame decomposition
-     * @param   szDcmpFrmMax    Processor Configuration - maximum allocation size (bytes) when frame decomposition enabled
+     * @param   bolColSerEnbl       Processor Configuration - enable/disable <code>DataColumn</code> serialization for transport
      * 
-     * @param   bolConcEnb      Processor Configuration - enable/disable (multi-threaded) concurrency)
-     * @param   cntConcMaxThrds Processor Configuration - maximum number of processing threads when concurrency is enabled
+     * @param   bolDcmpEnbl      Processor Configuration - enable/disable ingestion frame decomposition
+     * @param   szFrmMax    Processor Configuration - maximum allocation size (bytes) when frame decomposition enabled
      * 
-     * @param   bolSerial       Processor Configuration - enable/disable <code>DataColumn</code> serialization for transport
+     * @param   bolConcEnbl      Processor Configuration - enable/disable (multi-threaded) concurrency)
+     * @param   cntMaxThrds Processor Configuration - maximum number of processing threads when concurrency is enabled
      * 
      * @return  a new <code>FrameProcessorConfig</code> record populated with the given arguments.
      */
     public static FrameProcessorConfig  from(
+            boolean bolSerial,
+            
             boolean bolDcmpFrm,
             long    szDcmpFrmMax,
             
             boolean bolConcEnb,
-            int     cntConcMaxThrds,
-            
-            boolean bolSerial
+            int     cntConcMaxThrds
             ) 
     {
-        return new FrameProcessorConfig(bolDcmpFrm, szDcmpFrmMax, bolConcEnb, cntConcMaxThrds, bolSerial);
+        return new FrameProcessorConfig(bolSerial, bolDcmpFrm, szDcmpFrmMax, bolConcEnb, cntConcMaxThrds);
     }
 
     
@@ -116,11 +118,11 @@ public record FrameProcessorConfig(
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof FrameProcessorConfig rec) {
-            boolean bolResult = this.bolDcmpFrm == rec.bolDcmpFrm
-                    && this.szDcmpFrmMax == rec.szDcmpFrmMax
-                    && this.bolConcEnb == rec.bolConcEnb
-                    && this.cntConcMaxThrds == rec.cntConcMaxThrds
-                    && this.bolSerial == rec.bolSerial;
+            boolean bolResult = this.bolDcmpEnbl == rec.bolDcmpEnbl
+                    && this.szFrmMax == rec.szFrmMax
+                    && this.bolConcEnbl == rec.bolConcEnbl
+                    && this.cntMaxThrds == rec.cntMaxThrds
+                    && this.bolColSerEnbl == rec.bolColSerEnbl;
                     
             return bolResult;
         }
@@ -149,34 +151,34 @@ public record FrameProcessorConfig(
         if (strPad == null)
             strPad = "";
         
-        ps.println(strPad + "Enable ingestion frame decomposition : " + this.bolDcmpFrm);
-        ps.println(strPad + "Maximum composite frame size (bytes) : " + this.szDcmpFrmMax);
-        ps.println(strPad + "Enable concurrent processing         : " + this.bolConcEnb);
-        ps.println(strPad + "Concurrency maximum thread count     : " + this.cntConcMaxThrds);
-        ps.println(strPad + "Enable data column serialization     : " + this.bolSerial);
+        ps.println(strPad + "Enable data column serialization     : " + this.bolColSerEnbl);
+        ps.println(strPad + "Enable ingestion frame decomposition : " + this.bolDcmpEnbl);
+        ps.println(strPad + "Maximum composite frame size (bytes) : " + this.szFrmMax);
+        ps.println(strPad + "Enable concurrent processing         : " + this.bolConcEnbl);
+        ps.println(strPad + "Concurrency maximum thread count     : " + this.cntMaxThrds);
     }
     
     /**
      * <p>
-     * Configures the given processor to the conditions of the this test case.
+     * Configures the given processor to the conditions of the this configuration record.
      * </p>
      *  
      * @param processor processor to be configured
      */
-    public void    configureProcessor(IngestionFrameProcessor processor) {
+    public void    configure(IngestionFrameProcessor processor) {
         
         // Configure the processor
-        if (this.bolDcmpFrm) 
-            processor.setFrameDecomposition(this.szDcmpFrmMax);
+        processor.enableSerialization(this.bolColSerEnbl);
+        
+        if (this.bolDcmpEnbl) 
+            processor.setFrameDecomposition(this.szFrmMax);
         else
             processor.disableFrameDecomposition();
         
-        if (this.bolConcEnb)
-            processor.setConcurrency(this.cntConcMaxThrds);
+        if (this.bolConcEnbl)
+            processor.setConcurrency(this.cntMaxThrds);
         else
             processor.disableConcurrency();
-
-        processor.enableSerialization(this.bolSerial);
     }
     
 

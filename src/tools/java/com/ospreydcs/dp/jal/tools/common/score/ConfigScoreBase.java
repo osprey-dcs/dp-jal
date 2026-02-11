@@ -103,7 +103,7 @@ public abstract class ConfigScoreBase<Config extends Record, Result extends Reco
      * 
      * @return  the time-series data request used for the test case
      */
-    protected abstract DpDataRequest    extractDataRequest(Result recResult);
+    protected abstract String    extractDataRequest(Result recResult);
 
     /**
      * <p>
@@ -200,8 +200,9 @@ public abstract class ConfigScoreBase<Config extends Record, Result extends Reco
     // Instance Resources
     //
 
-    /** Map of (request, hits) request hit counters seen while scoring */
-    private final Map<DpDataRequest, Integer>   mapRqstToHits = new HashMap<>();
+    /** Map of (request id, hits) request hit counters seen while scoring */
+//    private final Map<DpDataRequest, Integer>   mapRqstToHits = new HashMap<>();
+    private final Map<String, Integer>   mapRqstToHits = new HashMap<>();
 
 
     //
@@ -384,7 +385,8 @@ public abstract class ConfigScoreBase<Config extends Record, Result extends Reco
             this.dblRateMin = dblDataRate;
 
         // Get the data request and update the hit count for that request
-        DpDataRequest   rqst = this.extractDataRequest(recResult);
+//        DpDataRequest   rqst = this.extractDataRequest(recResult);
+        String          rqst = this.extractDataRequest(recResult);
 
         if (this.mapRqstToHits.containsKey(rqst)) {
             Integer     intCnt = this.mapRqstToHits.get(rqst);
@@ -433,8 +435,10 @@ public abstract class ConfigScoreBase<Config extends Record, Result extends Reco
         ps.println(strPadd + "Data rate stand. dev. (MBps)   : " + this.dataRateStd());
 
         ps.println(strPad + "Data Request Hit Counts");
-        for (Map.Entry<DpDataRequest, Integer> entry : this.mapRqstToHits.entrySet()) {
-            String  strRqstId = entry.getKey().getRequestId();
+//        for (Map.Entry<DpDataRequest, Integer> entry : this.mapRqstToHits.entrySet()) {
+        for (Map.Entry<String, Integer> entry : this.mapRqstToHits.entrySet()) {
+//            String  strRqstId = entry.getKey().getRequestId();
+            String  strRqstId = entry.getKey();
             Integer cntHits = entry.getValue();
 
             ps.println(strPadd + "Request " + strRqstId + " hit count : " + cntHits);

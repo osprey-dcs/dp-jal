@@ -343,7 +343,7 @@ public class AppArgumentsParserTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#parseSwitch(java.lang.String, java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#hasSwitch(java.lang.String, java.lang.String[])}.
      */
     @Test
     public final void testParseSwitch0() {
@@ -356,14 +356,14 @@ public class AppArgumentsParserTest {
         AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
         
         for (String strSwitch : conSwitches) {
-            boolean bolResult = parser.parseSwitch(strSwitch, arrArgs);
+            boolean bolResult = parser.hasSwitch(strSwitch, arrArgs);
             
             Assert.assertFalse(bolResult);
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#parseSwitch(java.lang.String, java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#hasSwitch(java.lang.String, java.lang.String[])}.
      */
     @Test
     public final void testParseSwitch1() {
@@ -376,14 +376,14 @@ public class AppArgumentsParserTest {
         AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
         
         for (String strSwitch : conSwitches) {
-            boolean bolResult = parser.parseSwitch(strSwitch, arrArgs);
+            boolean bolResult = parser.hasSwitch(strSwitch, arrArgs);
             
             Assert.assertTrue(bolResult);
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#parseSwitch(java.lang.String, java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#hasSwitch(java.lang.String, java.lang.String[])}.
      */
     @Test
     public final void testParseSwitch3() {
@@ -396,14 +396,14 @@ public class AppArgumentsParserTest {
         AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
         
         for (String strSwitch : conSwitches) {
-            boolean bolResult = parser.parseSwitch(strSwitch, arrArgs);
+            boolean bolResult = parser.hasSwitch(strSwitch, arrArgs);
             
             Assert.assertTrue(bolResult);
         }
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#parseSwitch(java.lang.String, java.lang.String[])}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#hasSwitch(java.lang.String, java.lang.String[])}.
      */
     @Test
     public final void testParseSwitch4() {
@@ -417,7 +417,7 @@ public class AppArgumentsParserTest {
         AppArgumentsParser  parser = AppArgumentsParser.from(setDels);
         
         for (String strSwitch : conSwitches) {
-            boolean bolResult = parser.parseSwitch(strSwitch, arrArgs);
+            boolean bolResult = parser.hasSwitch(strSwitch, arrArgs);
             
             Assert.assertTrue(bolResult);
         }

@@ -179,7 +179,7 @@ public class FrameTimestampsSpecTest {
         Assert.assertEquals(cntSamples, specTest.cntSamples());
         Assert.assertEquals(durPeriod, specTest.durPeriod());
         Assert.assertEquals(insStart, specTest.insStart());
-        Assert.assertEquals(enmType, specTest.enmType());
+        Assert.assertEquals(enmType, specTest.enmCase());
         Assert.assertEquals(durDelay, specTest.durDelay());
     }
 
@@ -202,7 +202,7 @@ public class FrameTimestampsSpecTest {
         Assert.assertEquals(cntSamples, specTest.cntSamples());
         Assert.assertEquals(durPeriod, specTest.durPeriod());
         Assert.assertEquals(insStart, specTest.insStart());
-        Assert.assertEquals(enmType, specTest.enmType());
+        Assert.assertEquals(enmType, specTest.enmCase());
         Assert.assertEquals(durDelay, specTest.durDelay());
     }
 
@@ -225,7 +225,7 @@ public class FrameTimestampsSpecTest {
         Assert.assertEquals(cntSamples, specTest.cntSamples());
         Assert.assertEquals(durPeriod, specTest.durPeriod());
         Assert.assertEquals(insStart, specTest.insStart());
-        Assert.assertEquals(enmType, specTest.enmType());
+        Assert.assertEquals(enmType, specTest.enmCase());
         Assert.assertEquals(durDelay, specTest.durDelay());
     }
 
@@ -248,7 +248,7 @@ public class FrameTimestampsSpecTest {
         Assert.assertEquals(cntSamples, specTest.cntSamples());
         Assert.assertEquals(durPeriod, specTest.durPeriod());
         Assert.assertEquals(insStart, specTest.insStart());
-        Assert.assertEquals(enmType, specTest.enmType());
+        Assert.assertEquals(enmType, specTest.enmCase());
         Assert.assertEquals(durDelay, specTest.durDelay());
     }
 
@@ -271,7 +271,7 @@ public class FrameTimestampsSpecTest {
         Assert.assertEquals(cntSamples, specTest.cntSamples());
         Assert.assertEquals(durPeriod, specTest.durPeriod());
         Assert.assertEquals(insStart, specTest.insStart());
-        Assert.assertEquals(enmType, specTest.enmType());
+        Assert.assertEquals(enmType, specTest.enmCase());
         Assert.assertEquals(durDelay, specTest.durDelay());
     }
 
@@ -294,7 +294,7 @@ public class FrameTimestampsSpecTest {
         Assert.assertEquals(cntSamples, specTest.cntSamples());
         Assert.assertEquals(durPeriod, specTest.durPeriod());
         Assert.assertEquals(insStart, specTest.insStart());
-        Assert.assertEquals(enmType, specTest.enmType());
+        Assert.assertEquals(enmType, specTest.enmCase());
         Assert.assertEquals(durDelay, specTest.durDelay());
     }
 
@@ -320,7 +320,7 @@ public class FrameTimestampsSpecTest {
             Assert.assertEquals(cntSamples, specTest.cntSamples());
             Assert.assertEquals(durPeriod, specTest.durPeriod());
             Assert.assertEquals(insStart, specTest.insStart());
-            Assert.assertEquals(enmType, specTest.enmType());
+            Assert.assertEquals(enmType, specTest.enmCase());
             Assert.assertEquals(durDelay, specTest.durDelay());
 
         } catch (Exception e) {
@@ -350,7 +350,7 @@ public class FrameTimestampsSpecTest {
             Assert.assertEquals(cntSamples, specTest.cntSamples());
             Assert.assertEquals(durPeriod, specTest.durPeriod());
             Assert.assertEquals(insStart, specTest.insStart());
-            Assert.assertEquals(enmType, specTest.enmType());
+            Assert.assertEquals(enmType, specTest.enmCase());
             Assert.assertEquals(durDelay, specTest.durDelay());
 
         } catch (Exception e) {
@@ -380,7 +380,7 @@ public class FrameTimestampsSpecTest {
             Assert.assertEquals(cntSamples, specTest.cntSamples());
             Assert.assertEquals(durPeriod, specTest.durPeriod());
             Assert.assertEquals(insStart, specTest.insStart());
-            Assert.assertEquals(enmType, specTest.enmType());
+            Assert.assertEquals(enmType, specTest.enmCase());
             Assert.assertEquals(durDelay, specTest.durDelay());
 
         } catch (Exception e) {
@@ -410,7 +410,7 @@ public class FrameTimestampsSpecTest {
             Assert.assertEquals(cntSamples, specTest.cntSamples());
             Assert.assertEquals(durPeriod, specTest.durPeriod());
             Assert.assertEquals(insStart, specTest.insStart());
-            Assert.assertEquals(enmType, specTest.enmType());
+            Assert.assertEquals(enmType, specTest.enmCase());
             Assert.assertEquals(durDelay, specTest.durDelay());
 
         } catch (Exception e) {
@@ -440,7 +440,7 @@ public class FrameTimestampsSpecTest {
             Assert.assertEquals(cntSamples, specTest.cntSamples());
             Assert.assertEquals(durPeriod, specTest.durPeriod());
             Assert.assertEquals(insStart, specTest.insStart());
-            Assert.assertEquals(enmType, specTest.enmType());
+            Assert.assertEquals(enmType, specTest.enmCase());
             Assert.assertEquals(durDelay, specTest.durDelay());
 
         } catch (Exception e) {
@@ -467,7 +467,7 @@ public class FrameTimestampsSpecTest {
         Assert.assertEquals(cntSamples, specTest.cntSamples());
         Assert.assertEquals(durPeriod, specTest.durPeriod());
         Assert.assertEquals(insStart, specTest.insStart());
-        Assert.assertEquals(enmType, specTest.enmType());
+        Assert.assertEquals(enmType, specTest.enmCase());
         Assert.assertEquals(durDelay, specTest.durDelay());
         
         // Print out default frame configuration (tests FrameTimestampsSpec#toString())
@@ -495,7 +495,7 @@ public class FrameTimestampsSpecTest {
         Assert.assertEquals(cntSamples, specTest.cntSamples());
         Assert.assertEquals(durPeriod, specTest.durPeriod());
         Assert.assertEquals(insStart, specTest.insStart());
-        Assert.assertEquals(enmType, specTest.enmType());
+        Assert.assertEquals(enmType, specTest.enmCase());
         Assert.assertEquals(durDelay, specTest.durDelay());
 
         // Create frame timestamp factory and check configuration

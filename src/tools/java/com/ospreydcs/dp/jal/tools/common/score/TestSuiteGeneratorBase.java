@@ -25,6 +25,7 @@
  */
 package com.ospreydcs.dp.jal.tools.common.score;
 
+import java.io.PrintStream;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -168,6 +169,14 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
         
         return setMissing;
     }
+
+    
+    //
+    // Class Constants
+    //
+    
+    /** Minimum padding between parameter name and values list when none can be determined */
+    public static final int STR_PAD_NM_PARAM = 10;
 
     
     //
@@ -548,6 +557,40 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
         return conTestCases;
     }
 
+    /**
+     * <p>
+     * Prints out text description of the current test suite configuration to the given output stream.
+     * </p>
+     * <p>
+     * The <code>strPad</code> is assumed to be optional white space characters providing left-hand
+     * side padding to the field headers.
+     * </p>
+     * 
+     * @param ps        output stream to receive text description
+     * @param strPad    optional left-hand side white space padding (or <code>null</code>)
+     */
+    public void printOut(PrintStream ps, String strPad) {
+        if (strPad == null)
+            strPad = "";
+        String  strPadd = strPad + "  ";
+        int     intPadNm = this.setParams.stream().map(enm -> enm.name()).mapToInt(nm -> nm.length()).max().orElse(STR_PAD_NM_PARAM);
+
+        // Print out test case parameters
+        ps.println(strPad + "Parameter set : " + this.setParams);
+        
+        // Print out test case parameter values
+        ps.println(strPad + "Parameter Values ");
+        for (Map.Entry<Param, List<Object>> entry : this.mapParamToVals.entrySet()) {
+            Param           enmParam = entry.getKey();
+            String          strName = enmParam.name();
+            List<Object>    lstVals = entry.getValue();
+            String          strLine = String.format("%s%-" + intPadNm + "s : %s", strPadd, strName, lstVals.toString());
+            
+            ps.println(strLine);
+        }
+    }
+
+    
     
     //
     // Object Overrides
@@ -591,7 +634,7 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
      */
     @Override
     public String toString() {
-        int intPad = this.setParams.stream().map(enm -> enm.name()).mapToInt(nm -> nm.length()).max().orElse(10);
+        int intPad = this.setParams.stream().map(enm -> enm.name()).mapToInt(nm -> nm.length()).max().orElse(STR_PAD_NM_PARAM);
 
         StringBuilder   buf = new StringBuilder();
         

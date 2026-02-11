@@ -173,8 +173,11 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     /** Double hyphen argument option delimiter */
     public static final String      STR_ARG_DELIMIT_2 = "--";
     
+    /** Pipe argument option delimiter */
+    public static final String      STR_ARG_DELIMIT_3 = "|";
+    
     /** List of all valid argument option delimiters */
-    public static final List<String> LST_ARG_DELIMITERS = List.of(STR_ARG_DELIMIT_1, STR_ARG_DELIMIT_2); 
+    public static final List<String> LST_ARG_DELIMITERS = List.of(STR_ARG_DELIMIT_1, STR_ARG_DELIMIT_2, STR_ARG_DELIMIT_3); 
     
     
     //

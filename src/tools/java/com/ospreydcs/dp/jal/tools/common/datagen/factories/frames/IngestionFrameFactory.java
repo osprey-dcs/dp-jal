@@ -53,6 +53,8 @@ import com.ospreydcs.dp.jal.tools.common.datagen.IFrameColumnsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.IFrameFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.IFrameTimestampsFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalComplexType;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameColumnsSpec;
+import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameTimestampsSpec;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ByteArrayFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ImageFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.values.ScalarFactory;
@@ -140,6 +142,7 @@ public class IngestionFrameFactory implements IFrameFactory {
      * However, it is <b>not</b> equivalent to the creator <code>{@link #defaultFrame()}</code> as the returned
      * factory is not configured with metadata (i.e., tag values and attribute pairs).
      * <ul>
+     * <li>The ingestion frame labels are generated from the default prefix <code>{@link #STR_LABEL_DEF}</code>.</li>
      * <li>The tag values of all ingestion frames produced by the returned factory is left empty.</li>
      * <li>The (name, value) attribute pairs of all ingestion frames produced by the returned factory is left empty.</li>
      * </ul>
@@ -176,6 +179,7 @@ public class IngestionFrameFactory implements IFrameFactory {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
+     * <li>The ingestion frame labels are generated from the default prefix <code>{@link #STR_LABEL_DEF}</code>.</li>
      * <li>The tag values of all ingestion frames produced by the returned factory is left empty.</li>
      * <li>The (name, value) attribute pairs of all ingestion frames produced by the returned factory is left empty.</li>
      * </ul>
@@ -205,6 +209,7 @@ public class IngestionFrameFactory implements IFrameFactory {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
+     * <li>The ingestion frame labels are generated from the default prefix <code>{@link #STR_LABEL_DEF}</code>.</li>
      * <li>The tag values of all ingestion frames produced by the returned factory is left empty.</li>
      * <li>The (name, value) attribute pairs of all ingestion frames produced by the returned factory is left empty.</li>
      * </ul>
@@ -237,6 +242,7 @@ public class IngestionFrameFactory implements IFrameFactory {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
+     * <li>The ingestion frame labels are generated from the default prefix <code>{@link #STR_LABEL_DEF}</code>.</li>
      * <li>The tag values of all ingestion frames produced by the returned factory is left empty.</li>
      * <li>The (name, value) attribute pairs of all ingestion frames produced by the returned factory is left empty.</li>
      * </ul>
@@ -262,6 +268,7 @@ public class IngestionFrameFactory implements IFrameFactory {
      * <p>
      * <h2>NOTES:</h2> 
      * <ul>
+     * <li>The ingestion frame labels are generated from the default prefix <code>{@link #STR_LABEL_DEF}</code>.</li>
      * <li>The given collection of tag values is attached to all ingestion frames produced by the returned factory.</li>
      * <li>The (name, value) attribute pairs of all ingestion frames produced by the returned factory is left empty.</li>
      * </ul>
@@ -288,8 +295,9 @@ public class IngestionFrameFactory implements IFrameFactory {
      * <p>
      * <h2>NOTES:</h2> 
      * <ul>
-     * <li>The given collections of (name, value) attribute pairs is attached to all ingestion frames produced by the returned factory.</li>
+     * <li>The ingestion frame labels are generated from the default prefix <code>{@link #STR_LABEL_DEF}</code>.</li>
      * <li>The tag values of all ingestion frames produced by the returned factory is left empty.</li>
+     * <li>The given collections of (name, value) attribute pairs is attached to all ingestion frames produced by the returned factory.</li>
      * </ul>
      * </p>
      * 
@@ -308,14 +316,16 @@ public class IngestionFrameFactory implements IFrameFactory {
      * Creates and returns a new <code>IngestionFrameFactory</code> instance configured from the given arguments.
      * </p>
      * <p>
-     * This creator is equivalent to the canonical constructor 
-     * <code>{@link #IngestionFrameFactory(Set, Map, IFrameTimestampsFactory, Collection)}</code>.
+     * The returned <code>IngestionFrameFactory</code> instance is configured to produced ingestion frames with
+     * the given timestamps and the given collection of data columns, along with the provided metadata.
      * </p>
      * <p>
-     * The returned <code>IngestionFrameFactory</code> instance is configured to produced ingestion frames with
-     * the given timestamps and the given collection of data columns.
-     * The given collections of tag values and (name, value) attribute pairs is attached to each
-     * ingestion frame produced by the returned factory.
+     * <h2>NOTES:</h2> 
+     * <ul>
+     * <li>The ingestion frame labels are generated from the default prefix <code>{@link #STR_LABEL_DEF}</code>.</li>
+     * <li>The given collection of tag values is attached to all generated ingestion frames.</li>
+     * <li>The given collections of (name, value) attribute pairs is attached to all generated ingestion frames.</li>
+     * </ul>
      * </p>
      * 
      * @param setTags       collection of tag values for each produced ingestion frame
@@ -326,7 +336,34 @@ public class IngestionFrameFactory implements IFrameFactory {
      * @return  a new <code>IngestionFrameFactory</code> ready for simulated ingestion frame creation
      */
     public static IngestionFrameFactory from(Set<String> setTags, Map<String, String> mapAttrs, IFrameTimestampsFactory facTms, Collection<IFrameColumnsFactory<Object>> conFacCols) {
-        IngestionFrameFactory   facFrames = new IngestionFrameFactory(setTags, mapAttrs, facTms, conFacCols);
+        return IngestionFrameFactory.from(STR_LABEL_DEF, setTags, mapAttrs, facTms, conFacCols);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>IngestionFrameFactory</code> instance configured from the given arguments.
+     * </p>
+     * <p>
+     * This creator is equivalent to the canonical constructor 
+     * <code>{@link #IngestionFrameFactory(Set, Map, IFrameTimestampsFactory, Collection)}</code>.
+     * </p>
+     * <p>
+     * The returned <code>IngestionFrameFactory</code> instance is configured to produced ingestion frames with
+     * the given timestamps and the given collection of data columns.
+     * The given collections of tag values and (name, value) attribute pairs is attached to each
+     * ingestion frame produced by the returned factory.
+     * </p>
+     * 
+     * @param strLabel      ingestion frame label prefix given to all generated ingestion frames (full label suffixed with index)
+     * @param setTags       collection of tag values for each produced ingestion frame
+     * @param mapAttrs      collection of (name, value) attribute pairs for each produced ingestion frame
+     * @param facTims       the frame timestamps factory used to generate ingestion frame timestamps
+     * @param conFacCols    the frame columns factories used to generate ingestion frames data columns
+     * 
+     * @return  a new <code>IngestionFrameFactory</code> ready for simulated ingestion frame creation
+     */
+    public static IngestionFrameFactory from(String strLabel, Set<String> setTags, Map<String, String> mapAttrs, IFrameTimestampsFactory facTms, Collection<IFrameColumnsFactory<Object>> conFacCols) {
+        IngestionFrameFactory   facFrames = new IngestionFrameFactory(strLabel, setTags, mapAttrs, facTms, conFacCols);
         
         return facFrames;
     }
@@ -351,6 +388,20 @@ public class IngestionFrameFactory implements IFrameFactory {
      * The column configurations are returned in the order in which they appear in the JAL Tools default configuration.
      * </p>
      * <p>
+     * <h2>Default Ingestion Frame</h2>
+     * Some parameters for the default ingestion frame are extracted from the JAL Tools default configuration
+     * and contained in record constants.  There are also tag values and attribute pairs created in
+     * this class that can be added to the frame factory specification.
+     * <ul>
+     * <li>default frame prefix = <code>{@link #STR_LABEL_DEF}</code>.</li>
+     * <li>default tag values = <code>{@link #SET_TAGS_FRM_DEF}</code>, used when <code>{@link #BOL_TAGS_DEF_ENBL} = true</code>.</li>
+     * <li>record tag values = <code>{@link #SET_TAGS_FRM_CLS}</code>, used when <code>{@link #BOL_TAGS_CLS_ENBL} = true</code>.</li>
+     * <li>default attribute pairs = <code>{@link #MAP_ATTRS_FRM_DEF}</code>, used when <code>{@link #BOL_ATTRS_DEF_ENBL} = true</code>.</li>
+     * <li>record attribute pairs = <code>{@link #MAP_ATTRS_FRM_CLS}</code>, used when <code>{@link #BOL_ATTRS_CLS_ENBL} = true</code>.</li>
+     * <li>frame timestamps specification = <code>{@link FrameTimestampsFactory#defaultFrame()}</code>.</li>
+     * <li>frame data columns specifications = <code>{@link FrameColumnsFactory#defaultFrame()}</code>.</li>
+     * </ul>  
+     * <p>
      * <h2>NOTES:</h2> 
      * <ul>
      * <li>The returned factory contains tag values as defined in the default ingestion frame.</li>
@@ -369,12 +420,13 @@ public class IngestionFrameFactory implements IFrameFactory {
      * @throws NoSuchElementException           unrecognized <code>{@link JalComplexType}</code> constant in argument  
      */
     public static IngestionFrameFactory defaultFrame() throws TypeNotPresentException, NumberFormatException, UnsupportedOperationException, MissingResourceException, DateTimeParseException, ConfigurationException, NoSuchElementException {
+        String                                      strLabel = IngestionFrameFactory.extractDefaultFrameLabel();
         Set<String>                                 setTags = IngestionFrameFactory.extractDefaultFrameTags();
         Map<String, String>                         mapAttrs = IngestionFrameFactory.extractDefaultFrameAttributes();
         IFrameTimestampsFactory                     facTms = IngestionFrameFactory.extractDefaultFrameTimestamps();
         Collection<IFrameColumnsFactory<Object>>    conFacCols = IngestionFrameFactory.extractDefaultFrameColumns(); // throws all exceptions
         
-        return IngestionFrameFactory.from(setTags, mapAttrs, facTms, conFacCols);
+        return IngestionFrameFactory.from(strLabel, setTags, mapAttrs, facTms, conFacCols);
     }
     
     /**
@@ -387,11 +439,15 @@ public class IngestionFrameFactory implements IFrameFactory {
      * The format of the arguments collection is assumed to be as follows:
      * <code>
      * <pre>
-     *   -tagsDef - tagsCls -attrsDef - attrsCls [--tags tag1 ... tagN] [-Aname1=val1 ... -AnameN=valN] 
-     *     --tms [samples [period [start [type [delay]]]]] 
+     *   [-tagsDef] [-tagsCls] [-attrsDef] [-attrsCls] 
+     *   [--label prefix] [--tags tag1 ... tagN] [-Aname1=val1 ... -AnameN=valN] 
+     *   [--tms [samples [period [start [type [delay]]]]] ] 
      *     --cols [cnt [prefix [DTYPE [parameters]]]] 
-     *       ... 
-     *     --cols [cnt [prefix [DTYPE [parameters]]]]  
+     *    [   ...                                     ] 
+     *    [--cols [cnt [prefix [DTYPE [parameters]]]] ]  
+     *    [--cols [colNm1 colNm2 ... colNmN] [DTYPE [parameter(s)]] ]  
+     *    [   ...                                                   ] 
+     *    [--cols [colNm1 colNm2 ... colNmN] [DTYPE [parameter(s)]] ]  
      * </pre>
      * </code> 
      * where 
@@ -400,11 +456,29 @@ public class IngestionFrameFactory implements IFrameFactory {
      * <li><code>-tagsCls</code> = use ingestion frame factory class tag values switch (i.e., <code>true</code> if present).</li>
      * <li><code>-attrsDef</code> = use default ingestion frame attribute pairs switch (i.e., <code>true</code> if present).</li>
      * <li><code>-attrsCls</code> = use ingestion frame factory class attribute pairs switch (i.e., <code>true</code> if present).</li>
+     * <li><code>[--label prefix]</code> = optional ingestion frame label prefix (full label suffixed with index).</li>
      * <li><code>[--tags tag1 ... tagN]</code> = optional ingestion frame tag values (i.e., values <code>tag1 ... tagN</code>).</li>
      * <li><code>[-Aname1=val1 ... -AnameN=valN]</code> = optional ingestion frame attribute pairs (i.e., (name1, val1) ... (nameN, valN)).</li>
      * <li><code>--tms [samples [period [start [type [delay]]]]]</code> = ingestion frame timestamps specification.</li>
      * <li><code>--cols [cnt [prefix [DTYPE [parameters]]]]</code> = ingestion frame column specification.</li>
      * </ul>
+     * See <code>{@link FrameTimestampsSpec#parse(String...)}</code> for a description of the <code>--tms</code> parameters
+     * and <code>{@link FrameColumnsSpec#parse(String...)}</code> for a description of the <code>--cols</code> parameters.
+     * </p>
+     * <p>
+     * Note that the <code>{@link FrameColumnsSpec#parse(String...)}</code> supports 2 formats for ingestion frame
+     * data columns.  The column names are either specified 1) with column count and a column name prefix where the
+     * final column name is generated by appending the column index to the given prefix. 
+     * The alternate format for frame columns specification is given by the following:
+     * <code>
+     * <pre>
+     *      --cols [colNm1 colNm2 ... colNmN [DTYPE [parameter(s)]]]
+     * </pre>
+     * </code>
+     * where the collection <code>[colNm1 colNm2 ... colNmN]</code> are explicit names for the data columns.
+     * The column count is given by the number of column names provided in the argument collection.  
+     * See <code>{@link FrameColumnsSpec#parse(String...)}</code> for additional information on this format.
+     * </p>
      * <p>
      * <h2>Delimiters</h2>
      * The delimiters used above are set as record constants and may change in future releases.  Thus, we list below these
@@ -414,6 +488,7 @@ public class IngestionFrameFactory implements IFrameFactory {
      * <li><code>-tagsCls = {@link #STR_PARSE_TAGS_CLS_SWITCH}</code> = {@value #STR_PARSE_TAGS_CLS_SWITCH}.</li>
      * <li><code>-attrsDef = {@link #STR_PARSE_ATTRS_DEF_SWITCH}</code> = {@value #STR_PARSE_ATTRS_DEF_SWITCH}.</li>
      * <li><code>-attrsCls = {@link #STR_PARSE_ATTRS_CLS_SWITCH}</code> = {@value #STR_PARSE_ATTRS_CLS_SWITCH}.</li>
+     * <li><code>--label = {@link #STR_PARSE_LABEL_DVAR}</code> = {@value #STR_PARSE_LABEL_DVAR}.</li>
      * <li><code>--tags = {@link #STR_PARSE_TAGS_DVAR}</code> = {@value #STR_PARSE_TAGS_DVAR}.</li>
      * <li><code>-A = {@link #STR_PARSE_ATTRS_DPROP}</code> = {@value #STR_PARSE_ATTRS_DPROP}.</li>
      * <li><code>--tms = {@link #STR_PARSE_TMS_DVAR}</code> = {@value #STR_PARSE_TMS_DVAR}.</li>
@@ -458,10 +533,9 @@ public class IngestionFrameFactory implements IFrameFactory {
         AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
 
         // Extract the frame timestamp parameters and create specification
-        final int           cntTmsFac = parser.parseVariableCount(STR_PARSE_TMS_DVAR, args);
         IFrameTimestampsFactory facTms;
 
-        if (cntTmsFac==0)
+        if (!parser.hasVariable(STR_PARSE_TMS_DVAR, args))
             facTms = FrameTimestampsFactory.defaultFrame();
         
         else {
@@ -486,25 +560,31 @@ public class IngestionFrameFactory implements IFrameFactory {
                 setColsFacs.add(factCols);
             }
         
-        
         // Extract optional frame tag values and attribute pairs
         Set<String>         setTags = new TreeSet<>(parser.parseVariable(STR_PARSE_TAGS_DVAR, args));
         Map<String, String> mapAttrs = parser.parseProperty(STR_PARSE_ATTRS_DPROP, args);   // throws ConfigurationException
         
         // Supplement optional frame tag value with default and class values if flagged
-        if (parser.parseSwitch(STR_PARSE_TAGS_DEF_SWITCH, args))
+        if (parser.hasSwitch(STR_PARSE_TAGS_DEF_SWITCH, args))
             setTags.addAll(SET_FRM_TAGS_DEF);
-        if (parser.parseSwitch(STR_PARSE_TAGS_CLS_SWITCH, args))
+        if (parser.hasSwitch(STR_PARSE_TAGS_CLS_SWITCH, args))
             setTags.addAll(SET_FRM_TAGS_CLS);
         
         // Supplement optional attribute pairs with default and class values if flagged
-        if (parser.parseSwitch(STR_PARSE_ATTRS_DEF_SWITCH, args))
+        if (parser.hasSwitch(STR_PARSE_ATTRS_DEF_SWITCH, args))
             mapAttrs.putAll(MAP_FRM_ATTRS_DEF);
-        if (parser.parseSwitch(STR_PARSE_ATTRS_CLS_SWITCH, args))
+        if (parser.hasSwitch(STR_PARSE_ATTRS_CLS_SWITCH, args))
             mapAttrs.putAll(MAP_FRM_ATTRS_CLS);
             
         
-        return IngestionFrameFactory.from(setTags, mapAttrs, facTms, setColsFacs);
+        // Extract the ingestion frame label prefix
+        String  strLabel; 
+        if (parser.hasVariable(STR_PARSE_LABEL_DVAR, args)) 
+            strLabel = parser.parseVariable(STR_PARSE_LABEL_DVAR, args).getFirst();
+        else
+            strLabel = STR_LABEL_DEF;
+        
+        return IngestionFrameFactory.from(strLabel, setTags, mapAttrs, facTms, setColsFacs);
     }
     
     
@@ -526,6 +606,9 @@ public class IngestionFrameFactory implements IFrameFactory {
     /** Environment variable for current user */
     public static final String  STR_USERNAME = "USER";
     
+    
+    /** The frame label prefix specification variable parsing delimiter */
+    public static final String STR_PARSE_LABEL_DVAR = "--label";
     
     /** The frame timestamps specification variable parsing delimiter */
     public static final String  STR_PARSE_TMS_DVAR = "--tms";
@@ -551,6 +634,9 @@ public class IngestionFrameFactory implements IFrameFactory {
     /** The ingestion frame factory class properties option switch */
     public static final String  STR_PARSE_ATTRS_CLS_SWITCH = "-attrsCls";
     
+    
+    /** Ingestion frame label prefix default value */
+    public static final String                  STR_LABEL_DEF = CFG_DEF.label;
     
     /** Enable/disable default tag values flag default configuration */
     public static final boolean                 BOL_TAGS_DEF_ENBL = CFG_DEF.tags.useDefault;
@@ -595,6 +681,9 @@ public class IngestionFrameFactory implements IFrameFactory {
     //
     // Defining Attributes
     //
+    
+    /** The frame label prefix given to all produced ingestion frames */
+    private final String                                strLabel;
     
     /** The ingestion frame timestamps factory */
     private final IFrameTimestampsFactory               facTms;
@@ -642,12 +731,14 @@ public class IngestionFrameFactory implements IFrameFactory {
      * Constructs a new <code>IngestionFrameFactory</code> instance.
      * </p>
      *
+     * @param strLabel      ingestion frame label prefix given to all generated ingestion frames
      * @param setTags       collection of tag values for each produced ingestion frame
      * @param mapAttrs      collection of (name, value) attribute pairs for each produced ingestion frame
      * @param facTims       the frame timestamps factory used to generate ingestion frame timestamps
      * @param conFacCols    the frame columns factories used to generate ingestion frames data columns
      */
-    public IngestionFrameFactory(Set<String> setTags, Map<String, String> mapAttrs, IFrameTimestampsFactory facTms, Collection<IFrameColumnsFactory<Object>> conFacCols) {
+    public IngestionFrameFactory(String strLabel, Set<String> setTags, Map<String, String> mapAttrs, IFrameTimestampsFactory facTms, Collection<IFrameColumnsFactory<Object>> conFacCols) {
+        this.strLabel = strLabel;
         this.setTags.addAll(setTags);
         this.mapAttrs.putAll(mapAttrs);
         this.facTms = facTms;
@@ -871,6 +962,20 @@ public class IngestionFrameFactory implements IFrameFactory {
     // 
     // State Inquiry
     //
+    
+    /**
+     * <p>
+     * Returns the ingestion frame label prefix assigned to all generated ingestion frames
+     * </p>
+     * <p>
+     * The returned value is set at creation/construction and is immutable.
+     * </p>
+     * 
+     * @return  returns the ingestion frame label prefix for the factory
+     */
+    public String   getLabelPrefix() {
+        return this.strLabel;
+    }
     
     /**
      * <p>
@@ -1188,9 +1293,27 @@ public class IngestionFrameFactory implements IFrameFactory {
      * @return  the next label for an ingestion frame
      */
     private String  nextFrameLabel() {
-        String  strLabel = STR_SRC_NAME + "-" + Integer.toString(this.indFrame);
+        String  strLabel = this.strLabel + Integer.toString(this.indFrame);
         
         this.indFrame++;
+        
+        return strLabel;
+    }
+    
+    /**
+     * <p>
+     * Extracts the frame label prefix from the default ingestion frame configuration.
+     * </p>
+     * <p>
+     * The ingestion frame label prefix is taken from the JAL Tools configuration
+     * for the default ingestion frame.
+     * Note that this values is also contained in class constant <code>{@link #STR_LABEL_DEF}</code>. 
+     * </p>
+     * 
+     * @return  the default ingestion frame label prefix as defined in the JAL Tools configuration
+     */
+    private static String   extractDefaultFrameLabel() {
+        String      strLabel = CFG_DEF.label;
         
         return strLabel;
     }

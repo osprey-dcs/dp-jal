@@ -204,7 +204,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     
     
     //
-    // Application Resources
+    // Library Resources
     //
     
     /** Default configuration parameters for the Query Service tools */
@@ -214,6 +214,9 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     private static final JalToolsConfig         CFG_TOOLS = JalToolsConfig.getInstance();
     
     
+    //
+    // Application Resources
+    //
     
     /** Application name */
     public static final String                  STR_APP_NAME = AddTestArchiveData.class.getSimpleName();

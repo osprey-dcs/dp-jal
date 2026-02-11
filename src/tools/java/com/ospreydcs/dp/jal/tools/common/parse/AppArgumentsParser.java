@@ -81,7 +81,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * application to conform to a given configuration or to perform a specific action.  They are generally
  * marked with delimiters '-' or '--'.
  * Multiple switches can be included in the command line, all separated by white space.
- * See method documentation for <code>{@link #parseSwitch(String, String...)}</code> for more information.  
+ * See method documentation for <code>{@link #hasSwitch(String, String...)}</code> for more information.  
  * </p>
  * <p>
  * <h2>Variables</h2>
@@ -117,14 +117,14 @@ public class AppArgumentsParser {
     
     /**
      * <p>
-     * Creates and returns a new, uninitialized <code>AppArgumentsParser</code> instance.
+     * Creates and returns a new, uninitialized <code>AppArgumentsParser</code> instance without any defined delimiters.
      * </p>
      * <p>
      * Use the methods <code>{@link #addDelimiter(String)}</code> and <code>{@link #addDelimiters(Collection)}</code>
      * to supply the returned parser with delimiter tokens before parsing operations.
      * </p>
      * 
-     * @return  a new, uninitialized <code>AppArgumentsParser</code> instance ready for parsing
+     * @return  a new, uninitialized <code>AppArgumentsParser</code> instance requiring configuration before parsing
      */
     public static final AppArgumentsParser  from() {
         return new AppArgumentsParser();
@@ -164,6 +164,43 @@ public class AppArgumentsParser {
     }
     
     
+    /**
+     * <p>
+     * Returns the application arguments options that flag the <code>{@link #hasHelpRequest(String[])}</code> method.
+     * </p>
+     * 
+     * @return  string containing the (optional) help request options
+     */
+    public static final String  getHelpRequestOptions() {
+        return " [" + AppArgumentsParser.STR_HELP_SWTCH + "] [" + AppArgumentsParser.STR_HELP_DVAR + "]"; 
+    }
+    
+    /**
+     * <p>
+     * Returns the application arguments options that flag the <code>{@link #hasVersionRequest(String[])}</code> method.
+     * </p>
+     * 
+     * @return  string containing the (optional) version request options
+     * 
+     * @see #hasVersionRequest(String[])
+     */
+    public static final String  getVersionRequestOptions() {
+        return " [" + AppArgumentsParser.STR_VERSION_SWTCH + "] [" + AppArgumentsParser.STR_VERSION_DVAR + "]";
+    }
+    
+    /**
+     * <p>
+     * Returns the application arguments option for setting the application output location.
+     * </p>
+     * 
+     * @return  string containing the (optional) output location (directory path and/or file path)
+     */
+    public static final String  getOutputLocationOption() {
+        return " [" + AppArgumentsParser.STR_OUTPUT_DVAR + " output]";
+    }
+    
+    
+    
     //
     // Class Constants
     //
@@ -179,22 +216,23 @@ public class AppArgumentsParser {
     // Special Arguments and Values
     //
     
-    /** Special application argument switch for help - see {@link #parseHelpRequest(String[])} */
-    public static final String      STR_SWTCH_HELP = "-h";
+    /** Special application argument switch for help - see {@link #hasHelpRequest(String[])} */
+    public static final String      STR_HELP_SWTCH = "-h";
 
-    /** Special application argument variable for help  - see {@link #parseHelpRequest(String[])} */
-    public static final String      STR_VAR_HELP = "--help";
+    /** Special application argument variable for help  - see {@link #hasHelpRequest(String[])} */
+    public static final String      STR_HELP_DVAR = "--help";
     
     
     /** Special application argument variable for version - see {@link #parseAppArgsVersion(String[])} */
-    public static final String      STR_SWTCH_VERSION = "-v";
+    public static final String      STR_VERSION_SWTCH = "-v";
 
     /** Special application argument variable for version - see {@link #parseAppArgsVersion(String[])} */
-    public static final String      STR_VAR_VERSION = "--version";
+    public static final String      STR_VERSION_DVAR = "--version";
 
     
     /** Argument variable identifying output location */
-    public static final String      STR_VAR_OUTPUT = "--output";
+    public static final String      STR_OUTPUT_DVAR = "--output";
+    
 
     /** Special application argument variable value for console output - see {@link #openOutputStream(String)} */
     public static final String      STR_ARG_VAL_STDOUT = "console";
@@ -289,71 +327,71 @@ public class AppArgumentsParser {
     
     /**
      * <p>
-     * Parses the application argument collection for a help request.
+     * Parses the application argument collection for occurrence of a help request.
      * </p>
      * <p>
      * A value <code>true</code> is returned if any element in the argument collection is equal to the value 
-     * {@value #STR_SWTCH_HELP} or {@value #STR_VAR_HELP}, where case is ignored.  
+     * {@value #STR_HELP_SWTCH} or {@value #STR_HELP_DVAR}, where case is ignored.  
      * Otherwise a value <code>false</code> is returned.
      * </p>
      * <p>
-     * This method is equivalent to <code>{@link #parseSwitch(String, String[])}</code> with the <code>String</code>
-     * argument value as {@value #STR_SWTCH_HELP} or {@value #STR_VAR_HELP}.
+     * This method is equivalent to <code>{@link #hasSwitch(String, String[])}</code> with the <code>String</code>
+     * argument value as {@value #STR_HELP_SWTCH} or {@value #STR_HELP_DVAR}.
      * </p>
      * 
      * @param args  the application argument collection
      *  
-     * @return  <code>true</code> if the argument collection contained the elements {@link #STR_SWTCH_HELP} and/or {@value #STR_VAR_HELP} (case ignored),
+     * @return  <code>true</code> if the argument collection contained the elements {@link #STR_HELP_SWTCH} and/or {@value #STR_HELP_DVAR} (case ignored),
      *          <code>false</code> otherwise
      */
-    public boolean parseHelpRequest(String[] args) {
+    public boolean hasHelpRequest(String...args) {
         
         // Check argument
         if (args==null)
             return false;
         
         // Look for help request
-        boolean bolHelp = this.parseSwitch(STR_SWTCH_HELP, args) 
-                       || this.parseSwitch(STR_VAR_HELP, args);
+        boolean bolHelp = this.hasSwitch(STR_HELP_SWTCH, args) 
+                       || this.hasVariable(STR_HELP_DVAR, args);
         
         return bolHelp;
     }
     
     /**
      * <p>
-     * Parses the application argument collection for a version request.
+     * Parses the application argument collection for occurrence of a version request.
      * </p>
      * <p>
      * A value <code>true</code> is returned if any element in the argument collection is equal to the value 
-     * {@value #STR_SWTCH_VERSION} and/or {@value #STR_VAR_VERSION}, where case is ignored.  
+     * {@value #STR_VERSION_SWTCH} and/or {@value #STR_VERSION_DVAR}, where case is ignored.  
      * Otherwise a value <code>false</code> is returned.
      * </p>
      * <p>
-     * This method is equivalent to <code>{@link #parseSwitch(String, String[])}</code> with the <code>String</code>
-     * argument value as {@value #STR_SWTCH_VERSION} and/or  {@value #STR_VAR_VERSION}.
+     * This method is equivalent to <code>{@link #hasSwitch(String, String[])}</code> with the <code>String</code>
+     * argument value as {@value #STR_VERSION_SWTCH} and/or  {@value #STR_VERSION_DVAR}.
      * </p>
      * 
      * @param args  the application argument collection
      *  
-     * @return  <code>true</code> if the argument collection contained the element {@value #STR_SWTCH_VERSION} and/or {@value #STR_VAR_VERSION} (case ignored),
+     * @return  <code>true</code> if the argument collection contained the element {@value #STR_VERSION_SWTCH} and/or {@value #STR_VERSION_DVAR} (case ignored),
      *          <code>false</code> otherwise
      */
-    public boolean    parseVersionRequest(String[] args) {
+    public boolean    hasVersionRequest(String...args) {
         
         // Check argument
         if (args==null)
             return false;
         
         // Look for version request
-        boolean bolHelp = this.parseSwitch(STR_SWTCH_VERSION, args)  
-                       || this.parseSwitch(STR_VAR_VERSION, args);
+        boolean bolHelp = this.hasSwitch(STR_VERSION_SWTCH, args)  
+                       || this.hasVariable(STR_VERSION_DVAR, args);
         
         return bolHelp;
     }
     
     /**
      * <p>
-     * Parses the collection of application arguments for errors or a help request.
+     * Parses the collection of application arguments for occurrence of errors, help request, or version request.
      * </p>
      * <p>
      * The list of arguments to the application is parsed for common errors.  Exceptions are also thrown
@@ -361,8 +399,8 @@ public class AppArgumentsParser {
      * The following conditions are checked in order:
      * <ol>
      * <li>Wrong number of arguments, must be >= the specified number <code>IllegalArgumentException</code>)</li>
-     * <li>A {@value #STR_VAR_HELP} appeared in the argument list (<code>IllegalCallerException</code>).</li>
-     * <li>A {@value #STR_VAR_VERSION} appeared in the argument list (<code>IllegalCallerException</code>).</li>
+     * <li>A {@value #STR_HELP_DVAR} appeared in the argument list (<code>IllegalCallerException</code>).</li>
+     * <li>A {@value #STR_VERSION_DVAR} appeared in the argument list (<code>IllegalCallerException</code>).</li>
      * <li>An argument did not start with a valid switch/variable identified in argument (<code>UnsupportedOperationException</code>).</li>
      * </ol>
      * </p>
@@ -375,7 +413,7 @@ public class AppArgumentsParser {
      * @throws IllegalCallerException           the client request application help or version message
      * @throws UnsupportedOperationException    an application argument contained an invalid option flag
      */
-    public void parseOptionErrors(int cntMinArgs, List<String> lstDelOpts, String[] args) 
+    public void hasOptionErrors(int cntMinArgs, List<String> lstDelOpts, String...args) 
             throws IllegalArgumentException, IllegalCallerException, UnsupportedOperationException {
 
         // Check the argument count
@@ -383,12 +421,12 @@ public class AppArgumentsParser {
             throw new IllegalArgumentException("The argument list " + args + " has lenth less than minimum " + cntMinArgs);
         
         // Check for help request
-        boolean bolHelp = this.parseHelpRequest(args);
+        boolean bolHelp = this.hasHelpRequest(args);
         if (bolHelp)
             throw new IllegalCallerException("The client requested help message.");
         
         // Check for version request
-        boolean bolVersion = this.parseVersionRequest(args);
+        boolean bolVersion = this.hasVersionRequest(args);
         if (bolVersion)
             throw new IllegalCallerException("The client requested version information.");
         
@@ -409,6 +447,136 @@ public class AppArgumentsParser {
         
         // If we are here all arguments have a valid flag and there was no help request
         return;
+    }
+    
+    /**
+     * <p>
+     * Parses the given argument collection for the appearance of the given command switch.
+     * </p>
+     * <p>
+     * <h2>Switches</h2>
+     * Command line "switches" are arguments that appear without parameters, typically instructing the
+     * application to conform to a given configuration or to perform a specific action.  They are generally
+     * marked with delimiters '-' or '--'.
+     * This method determines whether or not the given switch is present within the given application argument
+     * collection, returning <code>true</code> if found and <code>false</code> if not present.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Multiple switches can be included in the command line, all separated by white space.  (However, this
+     * method only selects for a single switch element.)  
+     * For example, in the Unix command
+     * <pre>
+     * <code>
+     *   %ls -l -a
+     * </code>
+     * </pre>
+     * the arguments '-l' and '-a' are switches to the Unix command 'ls' instructing it to include given outputs
+     * in a line-by-line format.
+     * </p>
+     * 
+     * @param strSwitch     the command line switch searched for
+     * @param args          the application argument collection
+     * 
+     * @return  <code>true</code> if the given switch was found in the argument collection, <code>false</code> otherwise
+     */
+    public boolean    hasSwitch(String strSwitch, String...args) {
+        
+        // Check argument
+        if (args==null)
+            return false;
+        
+        // Looks for the switch within argument collection
+        boolean bolSwitch = Arrays.asList(args)
+                .stream()
+                .<String>map(arg -> arg.strip())
+                .anyMatch(s -> s.contentEquals(strSwitch));
+        
+        return bolSwitch;
+    }
+    
+    /**
+     * <p>
+     * Checks for the occurrence of the given variable within the given collection of application arguments.
+     * </p>
+     * <p>
+     * The method only checks for any occurrence of the given variable within the arguments collection.  If at 
+     * least one occurrence is present a value of <code>true</code> is returned.  If the variable is not found, the
+     * argument collection is empty or <code>null</code>, then a <code>false</code> is returned.
+     * </p>
+     * <p>
+     * To determine the number of occurrences of a variable within the application arguments use method
+     * <code>{@link #parseVariableCount(String, String...)}</code>.
+     * </p>
+     *  
+     * @param strDelVar the command-line variable with delimiter
+     * @param args      application command-line argument collection
+     * 
+     * @return  <code>true</code> if at least one variable occurrence is present within the command-line arguments,
+     *          <code>false</code> otherwise
+     */
+    public boolean  hasVariable(String strDelVar, String...args) {
+        
+        // Check arguments
+        if (args==null || args.length<1)
+            return false;
+
+        // Check for variable occurrences
+        boolean bolResult = Arrays.asList(args)
+                .stream()
+                .<String>map(arg -> arg.strip())
+                .anyMatch(s -> s.startsWith(strDelVar));
+        
+        return bolResult;
+    }
+    
+    /**
+     * <p>
+     * Determines whether or not the given property has a correctly formatted assignment within the given argument collection.
+     * </p>
+     * <p>
+     * The method checks for any occurrence of a correct property assignment for the given delimited property value.
+     * If at least one occurrence is found, and it is correctly formatted, a value of <code>true</code> is returned.
+     * If no occurrences of the given property assignment are found a value <code>false</code> is returned.
+     * If the property delimiter is encountered but the assignment is not formatted correctly an exception is thrown.  
+     * </p>
+     * <p>
+     * See method <code>{@link #parseProperty(String, String...)}</code> for further information on correctly formatted
+     * property assignments.
+     * </p>
+     * 
+     * @param strDelProp    the command-line property delimiter (e.g., <code>"-P"</code>)
+     * @param args          application command-line argument collection
+     * 
+     * @return  <code>true</code> if at least one property assignment was found in the arguments collection,
+     *          <code>false</code> if no property assignments were found
+     * 
+     * @throws ConfigurationException   the property assignment was found but the format was bad 
+     */
+    public boolean hasProperty(String strDelProp, String...args) throws ConfigurationException {
+        
+        // Check arguments
+        if (args==null || args.length<1)
+            return false;
+        
+        // Parse the arguments for property assignment delimiter
+        for (String strArg : args) {
+            strArg = strArg.strip();
+            
+            // Found one - process
+            if (strArg.startsWith(strDelProp)) {
+                String      strElem = strArg.substring(strDelProp.length()); // skip the delimiter
+                String[]    arrTokens = strElem.split(STR_PROP_ASSGN_SEP);   // split at assignment
+                
+                // Check for correct format
+                if (arrTokens.length != 2)
+                    throw new ConfigurationException("Bad property assignment argument " + strArg + ", format is not valid.");
+
+                return true;
+            }
+        }
+
+        return false;
     }
     
     /**
@@ -462,52 +630,6 @@ public class AppArgumentsParser {
         return lstCmds;
     }
 
-    /**
-     * <p>
-     * Parses the given argument collection for the appearance of the given command switch.
-     * </p>
-     * <p>
-     * <h2>Switches</h2>
-     * Command line "switches" are arguments that appear without parameters, typically instructing the
-     * application to conform to a given configuration or to perform a specific action.  They are generally
-     * marked with delimiters '-' or '--'.
-     * This method determines whether or not the given switch is present within the given application argument
-     * collection, returning <code>true</code> if found and <code>false</code> if not present.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * Multiple switches can be included in the command line, all separated by white space.  (However, this
-     * method only selects for a single switch element.)  
-     * For example, in the Unix command
-     * <pre>
-     * <code>
-     *   %ls -l -a
-     * </code>
-     * </pre>
-     * the arguments '-l' and '-a' are switches to the Unix command 'ls' instructing it to include given outputs
-     * in a line-by-line format.
-     * </p>
-     * 
-     * @param strSwitch     the command line switch searched for
-     * @param args          the application argument collection
-     * 
-     * @return  <code>true</code> if the given switch was found in the argument collection, <code>false</code> otherwise
-     */
-    public boolean    parseSwitch(String strSwitch, String...args) {
-        
-        // Check argument
-        if (args==null)
-            return false;
-        
-        // Looks for the switch within argument collection
-        boolean bolSwitch = Arrays.asList(args)
-                .stream()
-                .<String>map(arg -> arg.strip())
-                .anyMatch(s -> s.contentEquals(strSwitch));
-        
-        return bolSwitch;
-    }
-    
     /**
      * <p>
      * Parses the application argument collection for the number of appearances of the given delimited variable name.
@@ -846,7 +968,7 @@ public class AppArgumentsParser {
             // Found one - process
             if (strArg.startsWith(strDelProp)) {
                 String      strElem = strArg.substring(strDelProp.length()); // skip the delimiter
-                String[]    arrTokens = strElem.split(STR_PROP_ASSGN_SEP);        // split at assignment
+                String[]    arrTokens = strElem.split(STR_PROP_ASSGN_SEP);   // split at assignment
                 
                 // Check for correct format
                 if (arrTokens.length != 2)
@@ -912,6 +1034,51 @@ public class AppArgumentsParser {
             return null;
         
         return strArgLast;
+    }
+    
+    /**
+     * <p>
+     * Parses the application command-line argument collection for the output location and return it.
+     * </p>
+     * <p>
+     * The output location, as specified by the application client, is the value of variable
+     * {@value #STR_OUTPUT_DVAR}.  There is only one value for this variable and any additional values
+     * are ignored.  Application arguments occurring after the {@value STR_VAR_OUTPUT} variable are
+     * typically application target value(s) obtained from <code>{@link #parseAppArgsTarget(String[])}</code>.
+     * </p>
+     * <p>
+     * If the variable {@value #STR_OUTPUT_DVAR} is not present in the command line arguments, this is an
+     * optional parameter, then the default value given by the second argument <code>strOutputDef</code> is returned.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Application arguments occurring after the {@value STR_OUTPUT_DVAR} variable are typically application target value(s),
+     * which can be obtained from <code>{@link #parseTarget(String[])}</code>.
+     * Thus, they are ignored rather than throwing an exception.
+     * </p>
+     * 
+     * @param strOutputDef  the default output location is none is given on the command line
+     * @param args          the application command-line argument collection
+     * 
+     * @return  the output location as specified in the command line, 
+     *          or value of <code>strOutputDef</code> if not present
+     *          
+     * @throws ConfigurationException the output variable contained multiple entries
+     */
+    public String   parseOutputLocation(String strOutputDef, String...args) {
+        
+        // Look for the output location on the command line
+        List<String>    lstStrOutput = this.parseVariable(STR_OUTPUT_DVAR, args);
+        
+        // If there is no user-provided output location use the default value given by the second argument
+        if (lstStrOutput.isEmpty()) {
+            return strOutputDef;
+        }
+    
+        // Else return the first element in the list
+        String strOutputLoc = lstStrOutput.get(0);
+        
+        return strOutputLoc;
     }
     
     

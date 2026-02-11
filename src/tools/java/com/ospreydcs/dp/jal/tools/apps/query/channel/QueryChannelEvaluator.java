@@ -47,7 +47,6 @@ import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
 import com.ospreydcs.dp.jal.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.jal.query.DpQueryException;
 import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
-import com.ospreydcs.dp.jal.tools.apps.query.correl.DataCorrelationEvaluator;
 import com.ospreydcs.dp.jal.tools.common.requests.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.common.score.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -171,7 +170,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
             JalApplicationBase.parseAppArgsErrors(args, CNT_APP_MIN_ARGS, LST_STR_DELIMS);
 
         } catch (Exception e) {
-            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
+            JalApplicationBase.terminateWithException(QueryChannelEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
 
         }
         
@@ -185,7 +184,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
             
         } catch (Exception e) {
             
-            JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
+            JalApplicationBase.terminateWithException(QueryChannelEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
             return;
         }
 
