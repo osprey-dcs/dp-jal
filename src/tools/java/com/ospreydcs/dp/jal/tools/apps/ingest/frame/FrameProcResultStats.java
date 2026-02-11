@@ -79,6 +79,33 @@ public class FrameProcResultStats extends TestResultStatsBase<FrameProcTestResul
     
     
     //
+    // Class Methods
+    //
+    
+    /**
+     * <p>
+     * Assigns the default targeted data rate.
+     * </p>
+     * 
+     * @param dblRate   target data rate for all test results (in MBps)
+     */
+    public static void  assignTargetDataRate(double dblRate) {
+        FrameProcResultStats.DBL_RATE_TGT = dblRate;
+    }
+    
+    /**
+     * <p>
+     * Assigned the default targeted processing duration.
+     * </p>
+     * 
+     * @param durProc   target processing duration for all test results
+     */
+    public static void  assignTargetProcessingDuration(Duration durProc) {
+        FrameProcResultStats.DUR_PROC_TGT = durProc;
+    }
+    
+    
+    //
     // Class Variables
     //
     

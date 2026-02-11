@@ -50,6 +50,7 @@ import com.ospreydcs.dp.jal.common.ProviderUID;
 import com.ospreydcs.dp.jal.config.JalConfig;
 import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
+import com.ospreydcs.dp.jal.tools.apps.query.channel.QueryChannelEvaluator;
 import com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser;
 import com.ospreydcs.dp.jal.tools.common.score.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -114,7 +115,7 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         
         // Check for general command-line errors
         try {
-            PARSER.hasOptionErrors(CNT_APP_MIN_ARGS, LST_STR_DELIMS, args);
+            PARSER.hasOptionErrors(CNT_APP_MIN_ARGS, LST_STR_DELOPTS, args);
 
         } catch (Exception e) {
             JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
@@ -125,14 +126,43 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         String      strOutputLoc = PARSER.parseOutputLocation(STR_OUT_PATH_DEF, args);
         
         // Create the test suite from the command-line arguments
-        FrameProcTestSuite  suite;
+        FrameProcTestSuite  suiteTests;
         try {
-            suite = FrameProcessorEvaluator.parseTestSuite(args);
+            suiteTests = FrameProcessorEvaluator.parseTestSuite(args);
             
         } catch (Exception e) {
             JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
             return;
             
+        }
+        
+        //
+        // ------- Application Execution -------
+        //
+        
+        // Create the evaluator, run it while catching and reporting any exceptions
+        try {
+            FrameProcessorEvaluator   evaluator = new FrameProcessorEvaluator(suiteTests, strOutputLoc, args);
+            
+            evaluator.run();
+            evaluator.writeReport();
+            evaluator.close();
+            
+            System.out.println(STR_APP_NAME + " Execution completed in " + evaluator.getRunDuration());
+            System.out.println("  Results stored at " + evaluator.getOutputFilePath().toAbsolutePath());
+            System.exit(ExitCode.SUCCESS.getCode());
+            
+        } catch (IllegalStateException | MissingResourceException | ClassCastException | UnsupportedOperationException | IndexOutOfBoundsException | FileNotFoundException e) {
+
+            // Creation exception
+            JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.INITIALIZATION_EXCEPTION);
+            return;
+            
+        } catch (SecurityException e) {
+
+            // Shutdown exception
+            JalApplicationBase.terminateWithException(QueryChannelEvaluator.class, e, ExitCode.SHUTDOWN_EXCEPTION);
+            return;
         }
     }
 
@@ -198,8 +228,8 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     /** Argument delimited variable containing output location */
     public static final String      STR_PARSE_OUTPUT_DVAR = "--output";
 
-    /** List of all the valid argument delimiters */
-    public static final List<String>    LST_STR_DELIMS = List.of(
+    /** List of all the valid delimited argument options */
+    public static final List<String>    LST_STR_DELOPTS = List.of(
             STR_PARSE_SERIAL_ENBL_DVAR,
             STR_PARSE_MTHRD_ENBL_DVAR,
             STR_PARSE_DCMP_ENBL_DVAR,
@@ -210,6 +240,17 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
             STR_PARSE_FRM_CNT_DVAR,
             STR_PARSE_OUTPUT_DVAR
             );
+    
+    
+    //
+    // Application Constants - Evaluation Parameters
+    //
+    
+    /** The targeted data rate (in MBps) - used in {@link #writeReport(PrintStream)} */
+    public static final double      DBL_RATE_TARGET = 500;
+    
+    /** The targeted processing duration - used in {@link #writeReport(PrintStream)} */
+    public static final Duration    DUR_PROC_TARGET = Duration.ofMillis(10);
     
     
     //
@@ -250,9 +291,9 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
           + " [" + STR_PARSE_DCMP_ENBL_DVAR + " FALSE ... TRUE]"
           + " [" + STR_PARSE_DCMP_SZ_DVAR + " M1 ... Mn]"
           + "\n"
-          + "   "
-          + STR_PARSE_FRM_SPEC_DVAR + " 'frame_1 parameters'"
-          + " [" + STR_PARSE_FRM_SPEC_DVAR + " 'frame_2 parameters'" 
+          + " "
+          + " [" + STR_PARSE_FRM_SPEC_DVAR + " 'frame_1 parameters'"
+          + " " + STR_PARSE_FRM_SPEC_DVAR + " 'frame_2 parameters'" 
           + " ... " + STR_PARSE_FRM_SPEC_DVAR + " 'frame_n parameters']"
           + "\n"
           + "  "
@@ -630,8 +671,9 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         ps.println();
         
         // Print out results summary
-//        QueryChannelTestsSummary.assignTargetDataRate(DBL_RATE_TARGET);
         ps.println("Test Results Statistics");
+        FrameProcResultStats.assignTargetDataRate(DBL_RATE_TARGET);
+        FrameProcResultStats.assignTargetProcessingDuration(DUR_PROC_TARGET);
         FrameProcResultStats  recSummary = FrameProcResultStats.from(this.conResults);
         recSummary.printOut(ps, strPad);
         ps.println();

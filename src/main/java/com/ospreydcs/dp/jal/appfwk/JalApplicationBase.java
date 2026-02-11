@@ -351,7 +351,11 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * </p>
      * <p>
      * This method should be called before the application is discarded, specifically, at the end of its
-     * lifetime.  The output stream is flushed and closed.
+     * lifetime.
+     * <ul>  
+     * <li>The output stream is flushed and closed.</li>
+     * <li>If the execution timer was activated it is shutdown hard.</li>
+     * </ul>
      * This is a blocking operation and does not return until all resources are released.
      * </p>
      * <p>
@@ -359,12 +363,13 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * That is, it is safe to call this method multiple times.
      * </p>
      * 
+     * @throws SecurityException    the timer was activated, has a security manager, and the application does not have permission
      */
     public void close() {
         
         // Check if counter executor is running
         if (this.execTimer!=null && !this.execTimer.isTerminated()) {
-            this.execTimer.shutdownNow();
+            this.execTimer.shutdownNow();   // throws SecurityException
         }
         
         // Check if output stream is open
