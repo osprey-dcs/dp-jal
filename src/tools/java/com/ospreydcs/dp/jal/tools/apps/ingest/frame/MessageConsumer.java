@@ -80,14 +80,15 @@ public class MessageConsumer extends Thread {
     
     
     //
-    // State Variables
+    // Instance Resources
     //
     
-    /** The number of <code>IngestDataRequest</code> messages consumed. */
-    private int     cntMsgs = 0;
+//    private final Collection<IngestDataRequest> conMsgs = new LinkedList<>();
     
-    /** The data size recovered (in bytes) */
-    private long    szAlloc = 0;
+    
+    //
+    // State Variables
+    //
     
     /** Thread start flag (i.e., entered consumer loop) */
     private boolean bolStart = false;
@@ -97,6 +98,14 @@ public class MessageConsumer extends Thread {
     
     /** Thread termination request */
     private boolean bolTerminate = false;
+    
+
+    /** The number of <code>IngestDataRequest</code> messages consumed. */
+    private int     cntMsgs = 0;
+    
+    /** The data size recovered (in bytes) */
+    private long    szAlloc = 0;
+    
     
     /** Result of thread execution */
     private ResultStatus    recStatus = null;
@@ -153,7 +162,10 @@ public class MessageConsumer extends Thread {
     /**
      * @return  the current recovered message allocation size 
      */
-    public long getAllocation() { return this.szAlloc; };
+    public long getAllocation() { 
+        return this.szAlloc;
+//        return this.conMsgs.stream().mapToLong(IngestDataRequest::getSerializedSize).sum();
+    };
     
     //
     // Thread Overrides
@@ -173,6 +185,7 @@ public class MessageConsumer extends Thread {
 //                IngestDataRequest   msgRqst = supplier.poll(LNG_POLL_TMOUT, TU_POLL_TMOUT);
                 
                 if (msgRqst != null) {
+//                    this.conMsgs.add(msgRqst);
                     this.szAlloc += msgRqst.getSerializedSize();
                     this.cntMsgs++;
                 }

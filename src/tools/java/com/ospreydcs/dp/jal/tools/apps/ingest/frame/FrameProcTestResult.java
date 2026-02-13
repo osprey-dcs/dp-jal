@@ -246,6 +246,67 @@ public record FrameProcTestResult(
     }
 
     
+    /**
+     * <p>
+     * Creates and returns a new <code>Comparator</code> provide a descending (reverse) ordering according to processed data rates.
+     * </p>
+     * <p>
+     * The returned comparator instance compares the <code>{@link #dblRateProc()}</code> fields of two 
+     * <code>FrameProcTestResult</code> records.  It provides a reverse ordering of records according
+     * to the data rate fields.  Specifically, the highest data rate will appear first in any ordered
+     * Java collection.
+     * </p>
+     * <p>
+     * Note that the comparator provided here is the complement of the natural order of 
+     * <code>FrameProcTestResult</code> records provided by the exposed <code>Comparable</code> interface.
+     * </p>  
+     * 
+     * @return  a new <code>Comparator</code> instance providing a reverse ordering by record raw data rates
+     */
+    public static Comparator<FrameProcTestResult>   descendingProcessedRateOrdering() {
+    
+        Comparator<FrameProcTestResult>   cmp = (r1, r2) -> {
+
+            if (r1.dblRateProc > r2.dblRateProc)
+                return -1;
+            else
+                return +1;
+        };
+        
+        return cmp;
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>Comparator</code> provide an ascending (natural) ordering according to processed data rates.
+     * </p>
+     * <p>
+     * The returned comparator instance compares the <code>{@link #dblRateProc()}</code> fields of two 
+     * <code>FrameProcTestResult</code> records.  It provides a natural ordering of records according
+     * to the data rate fields.  Specifically, the lowest data rate will appear first in any ordered
+     * Java collection.
+     * </p>
+     * <p>
+     * Note that the comparator provided here is the equivalent of the natural order of 
+     * <code>FrameProcTestResult</code> records provided by the exposed <code>Comparable</code> interface.
+     * </p>  
+     * 
+     * @return  a new <code>Comparator</code> instance providing a natural ordering by record raw data rates
+     */
+    public static Comparator<FrameProcTestResult>    ascendingProcessedRateOrdering() {
+
+        Comparator<FrameProcTestResult>  cmp = (r1, r2) -> {
+
+            if (r1.dblRateProc < r2.dblRateProc)
+                return -1;
+            else
+                return +1;
+        };
+        
+        return cmp;  
+    }
+
+    
     //
     // Operations
     //

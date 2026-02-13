@@ -61,37 +61,37 @@ public enum FrameProcTestParam {
     /**
      * Enable/disable the use of data column serialization for <code>IngestDataRequest</code> messages.
      */
-    COL_SER_ENBL(FrameProcessorEvaluator.STR_PARSE_SERIAL_ENBL_DVAR, Boolean.class, DefaultCfg.VALS.serialize.enabled),
+    COL_SER_ENBL("Enable data column serialization.", FrameProcessorEvaluator.STR_PARSE_SERIAL_ENBL_DVAR, Boolean.class, DefaultCfg.VALS.serialize.enabled),
     
     /**
      * Enable/disable concurrency (i.e., multi-threaded processing) in ingestion frame processing.
      */
-    MTHREAD_ENABLE(FrameProcessorEvaluator.STR_PARSE_MTHRD_ENBL_DVAR, Boolean.class, DefaultCfg.VALS.concurrency.enabled),
+    MTHREAD_ENABLE("Enable multi-threaded processing", FrameProcessorEvaluator.STR_PARSE_MTHRD_ENBL_DVAR, Boolean.class, DefaultCfg.VALS.concurrency.enabled),
     
     /**
      * Maximum number of allowable concurrent processing thread in concurrent ingestion frame processing.
      */
-    MTHREAD_COUNT(FrameProcessorEvaluator.STR_PARSE_THRD_CNT_DVAR, Integer.class, DefaultCfg.VALS.concurrency.maxThreads),
+    MTHREAD_COUNT("Maximum number of concurrent processing threads", FrameProcessorEvaluator.STR_PARSE_THRD_CNT_DVAR, Integer.class, DefaultCfg.VALS.concurrency.maxThreads),
     
     /**
      * Enable/disable ingestion frame decomposition (i.e., to conform to maximum gRPC message size limits). 
      */
-    DCMP_ENABLE(FrameProcessorEvaluator.STR_PARSE_DCMP_ENBL_DVAR, Boolean.class, DefaultCfg.VALS.decompose.enabled),
+    DCMP_ENABLE("Enable ingestion frame decomposition", FrameProcessorEvaluator.STR_PARSE_DCMP_ENBL_DVAR, Boolean.class, DefaultCfg.VALS.decompose.enabled),
     
     /**
      * Maximum allowable composite ingestion frame size (in bytes) when using ingestion frame decomposition. 
      */
-    DCMP_SIZE(FrameProcessorEvaluator.STR_PARSE_DCMP_SZ_DVAR, Integer.class, DefaultCfg.VALS.decompose.maxSize),
+    DCMP_SIZE("Maximum composite ingestion frame size (bytes)", FrameProcessorEvaluator.STR_PARSE_DCMP_SZ_DVAR, Integer.class, DefaultCfg.VALS.decompose.maxSize),
     
     /**
      * The test case ingestion frame specification (definition).  
      */
-    FRAME_DEF(FrameProcessorEvaluator.STR_PARSE_FRM_SPEC_DVAR, FrameFactorySpec.class, DefaultCfg.SPEC_FRM),
+    FRAME_DEF("Ingestion data frame configuration", FrameProcessorEvaluator.STR_PARSE_FRM_SPEC_DVAR, FrameFactorySpec.class, DefaultCfg.SPEC_FRM),
     
     /**
      * Number of ingestion frames forming the test case payload. 
      */
-    FRAME_CNT(FrameProcessorEvaluator.STR_PARSE_FRM_CNT_DVAR, Integer.class, DefaultCfg.CNT_FRMS),
+    FRAME_CNT("Number of ingestion data frames in payload", FrameProcessorEvaluator.STR_PARSE_FRM_CNT_DVAR, Integer.class, DefaultCfg.CNT_FRMS),
     
     ;
     
@@ -132,6 +132,9 @@ public enum FrameProcTestParam {
     //  Constant Attributes
     //
     
+    /** The parameter description */
+    private final String    strParamDesc;
+    
     /** The command-line delimited variable name containing the parameter value(s) */
     private final String    strDelVarNm;
     
@@ -140,6 +143,7 @@ public enum FrameProcTestParam {
     
     /** The parameter default value */
     private final Object    objValueDef;
+    
     
     //
     // Constant Constructor
@@ -150,11 +154,13 @@ public enum FrameProcTestParam {
      * Constructs a new <code>FrameProcTestParam</code> instance.
      * </p>
      *
+     * @param strParamDesc       the parameter string description
      * @param strDelVarNm   the delimited variable name used to identify parameter values on the command-line
      * @param clsParamType  the parameter class type
      * @param objValueDef   the parameter default value
      */
-    private FrameProcTestParam(String strDelVarNm, Class<?> clsParamType, Object objValueDef) {
+    private FrameProcTestParam(String strDesc, String strDelVarNm, Class<?> clsParamType, Object objValueDef) {
+        this.strParamDesc = strDesc;
         this.strDelVarNm = strDelVarNm;
         this.clsParamType = clsParamType;
         this.objValueDef = objValueDef;
@@ -195,13 +201,13 @@ public enum FrameProcTestParam {
     
     /**
      * <p>
-     * Returns the delimited variable name used to identify the parameter values on the command line.
+     * Returns the string description of the test parameter associated with this enumeration constant.
      * </p>
      * 
-     * @return  delimited variable name identifying parameter values on the application command line
+     * @return  a string description of this parameter
      */
-    public String   getDelimitedVariableName()  { 
-        return this.strDelVarNm;
+    public String   getParameterDescription() {
+        return this.strParamDesc;
     }
     
     /**
@@ -214,6 +220,17 @@ public enum FrameProcTestParam {
     public Class<?> getParameterType() { 
         return this.clsParamType; 
     };
+    
+    /**
+     * <p>
+     * Returns the delimited variable name used to identify the parameter values on the command line.
+     * </p>
+     * 
+     * @return  delimited variable name identifying parameter values on the application command line
+     */
+    public String   getDelimitedVariableName()  { 
+        return this.strDelVarNm;
+    }
     
     /**
      * <p>

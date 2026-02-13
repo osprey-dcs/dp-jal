@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
@@ -416,8 +417,8 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     /** The test suite configuration to run */
     private final FrameProcTestSuite        suiteCases;
     
-    /** The output location to write evaluation results */
-    private final String                    strOutputLoc;
+//    /** The output location to write evaluation results */
+//    private final String                    strOutputLoc;
     
     
     // 
@@ -497,14 +498,14 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         super(FrameProcessorEvaluator.class, args);
         
         this.suiteCases = suiteCases;
-        this.strOutputLoc = strOutputLoc;
+//        this.strOutputLoc = strOutputLoc;
         
         // Create the ingestion frame processor under evaluation
         this.processor = IngestionFrameProcessor.create(uidProvider);
         
         // Create the collection of test cases and container for results
         this.conCases = this.suiteCases.createTestSuit();   // throws IllegalStateException, MissingResourceException, ClassCastException, UnsupportedOperationException, IndexOutOfBoundsException
-        this.conResults = new TreeSet<>(FrameProcTestResult.descendingRawRateOrdering());
+        this.conResults = new TreeSet<>(FrameProcTestResult.descendingProcessedRateOrdering());
         this.conFailures = new TreeSet<>(FrameProcTestResult.caseIndexOrdering());
         
         // Create the output stream and attach Logger to it - records fatal errors to output file
@@ -647,13 +648,31 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         ps.println(strCmdLn);
         ps.println();
         
-        // Print out evaluation summary
-        ps.println("Test cases specified : " + this.conCases.size());
-        ps.println("Test cases run       : " + this.conResults.size());
-        ps.println("Test case failures   : " + this.conFailures.size());
-        ps.println("Evaluation duration  : " + this.durEval);
-        ps.println("Evaluation completed : " + this.bolCompleted);
+        // Print out definitions
+        ps.println(this.getClass().getSimpleName() +  " Definitions");
+        ps.println(strPad + "Processed Data Rate     - Total data message allocation divided by payload processing time.");
+        ps.println(strPad + "Raw Data Rate           - Total payload allocation divided by payload processing time.");
+        ps.println(strPad + "Payload allocation      - Total memory allocation size of all ingestion frames to be processed.");
+        ps.println(strPad + "Data message allocation - Total memory allocation size of all (processed) data messages.");
         ps.println();
+        
+        // Print out test parameter descriptions
+        EnumSet<FrameProcTestParam> setParams = EnumSet.allOf(FrameProcTestParam.class);
+        int     szNmMax = setParams.stream().<String>map(Enum::name).mapToInt(String::length).max().getAsInt();
+        String  strFmt = "%s%-" +  szNmMax + "s - %s.";
+        ps.println("Test Parameter Descriptions");
+        setParams.forEach(p -> ps.println(String.format(strFmt, strPad, p.name(), p.getParameterDescription())));
+        ps.println();
+        
+        // Print out evaluation summary
+        ps.println("Evaluation Summary");
+        ps.println(strPad + "Test cases specified : " + this.conCases.size());
+        ps.println(strPad + "Test cases run       : " + this.conResults.size());
+        ps.println(strPad + "Test case failures   : " + this.conFailures.size());
+        ps.println(strPad + "Evaluation duration  : " + this.durEval);
+        ps.println(strPad + "Evaluation completed : " + this.bolCompleted);
+        ps.println();
+        
         
         // Print out the test suite configuration
         ps.println("Test Suite Configuration");
@@ -661,14 +680,24 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         ps.println();
         
         // Print out test case data rates
-        ps.println("Test Case Data Rates");
-        DataRateLister<FrameProcTestResult>  lstrRates = DataRateLister.from(
+        ps.println("Test Case Processed Data Rates (MBps Descending)");
+        DataRateLister<FrameProcTestResult>  lstrProcRates = DataRateLister.from(
                 rec -> rec.recTestCase().indCase(), 
                 rec -> rec.recTestCase().specFrame().strLabel(), 
                 rec -> rec.szProcessed(), 
+                rec -> rec.dblRateProc()
+                );
+        lstrProcRates.printOut(ps, strPad, this.conResults);
+        ps.println();
+        
+        ps.println("Test Case Raw Data Rates (MBps Descending)");
+        DataRateLister<FrameProcTestResult>  lstrRawRates = DataRateLister.from(
+                rec -> rec.recTestCase().indCase(), 
+                rec -> rec.recTestCase().specFrame().strLabel(), 
+                rec -> rec.szPayload(), 
                 rec -> rec.dblRateRaw()
                 );
-        lstrRates.printOut(ps, strPad, this.conResults);
+        lstrRawRates.printOut(ps, strPad, this.conResults);
         ps.println();
         
         // Print out results summary
@@ -705,7 +734,7 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         }
         
         // Print out each test result
-        ps.println("Individual Case Results (Best Case First)");
+        ps.println("Individual Case Results (MBps Descending Procesed Rates)");
         for (FrameProcTestResult recResult : this.conResults) {
             recResult.printOut(ps, strPad);
             ps.println();
