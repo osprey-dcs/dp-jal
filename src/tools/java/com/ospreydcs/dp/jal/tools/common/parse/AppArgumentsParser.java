@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.naming.ConfigurationException;
 
@@ -40,11 +42,11 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
- * Parser for application command-line arguments string array.
+ * Parser for application command-line arguments string arrays.
  * </p>
  * <p>
- * This parser is specifically designed for parsing of command-line strings offered to Java applications by
- * the Java Virtual Machine (VM).  The entry point for any Java application is the static main method with
+ * This class is designed for parsing command-line arguments strings offered to Java applications by
+ * the Java Virtual Machine (JVM).  The entry point for any Java application is the static main method with
  * signature
  * <pre> 
  * <code>
@@ -57,15 +59,26 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * the extraction of commands, switches, variables, and properties from the argument collection <code>args</code>.
  * </p>
  * <p>
+ * This class is available for standard argument parsing where there are no "nested arguments."  For greater 
+ * restriction of the command-line parsing process the class <code>{@link AppOptionsParser}</code> is available,
+ * a sub-class of this class.  It restricts option variable values parsing to a predetermined set given 
+ * at creation.
+ * </p>
+ * <p>
  * <h2>Delimiters</h2>
  * Any <code>AppArgumentsParser</code> instance must be configured to recognize one or more delimiter characters or
  * tokens to properly parse command lines.  Delimiters are typically tokens such as <code>"-"</code> and <code>"--"</code>.
- * They are used to identify switches, variables, and properties within the command line.   
- * Delimiters can be specified either at creation/construction or with
+ * They are used to identify switches, variables, and properties within the command line.
+ * The delimiter set is determined at creation:
+ * <ul>
+ * <li><code>{@link #from()}</code> - creates an instance using default delimiters in <code>{@link #SET_DELS_DEF}</code>.</li>
+ * <li><code>{@link #from(Collection)}</code> - creates an instance using the custom delimiters in the argument.</li>
+ * </ul>    
+ * Delimiters can also be augmented with
  * methods <code>{@link #addDelimiter(String)}</code> and <code>{@link #addDelimiters(Collection)}</code>.
  * </p>
  * <p>
- * Once the <code>AppArgumentsParse</code> instance is configured with a collection of delimiters all switches, variables,
+ * Once the <code>AppArgumentsParse</code> instance is configured with a collection of delimiters, all switches, variables,
  * and properties must use one of these values to prefix their name identifier.  Typically switches are prefixed
  * with <code>"-"</code>, variables are prefixed with <code>"--"</code> and properties are prefixed with <code>"-"</code>.
  * <p>
@@ -117,85 +130,151 @@ public class AppArgumentsParser {
     
     /**
      * <p>
-     * Creates and returns a new, uninitialized <code>AppArgumentsParser</code> instance without any defined delimiters.
-     * </p>
-     * <p>
-     * Use the methods <code>{@link #addDelimiter(String)}</code> and <code>{@link #addDelimiters(Collection)}</code>
-     * to supply the returned parser with delimiter tokens before parsing operations.
-     * </p>
-     * 
-     * @return  a new, uninitialized <code>AppArgumentsParser</code> instance requiring configuration before parsing
-     */
-    public static final AppArgumentsParser  from() {
-        return new AppArgumentsParser();
-    }
-    
-    /**
-     * <p>
-     * Creates and returns a new <code>AppArgumentsParser</code> instance initialized with the given delimiters.
-     * </p>
-     * <p>
-     * The collection of delimiter tokens is used for all parsing operations.  
-     * Note that additional delimiter tokens can be added to the returned parser with methods
-     * <code>{@link #addDelimiter(String)}</code> and <code>{@link #addDelimiters(Collection)}</code>.
-     * </p>
-     * 
-     * @param conDelimiters special characters and tokens used to delimit all switches, variables, and properties
-     * 
-     * @return  a new <code>AppArgumentsParser</code> instance configured and ready to parse
-     */
-    public static final AppArgumentsParser  from(Collection<String> conDelimiters) {
-        return new AppArgumentsParser(conDelimiters);
-    }
-    
-    /**
-     * <p>
      * Creates and returns a new <code>AppArgumentsParser</code> instance configured with default delimiter tokens.
      * </p>
      * <p>
      * The returned <code>AppArgumentsParser</code> instance is initialized with the default delimiters
      * in class constant <code>{@link #SET_DELS_DEF}</code>.
+     * Note that additional delimiter tokens can be added to the returned parser with methods
+     * <code>{@link #addDelimiter(String)}</code> and <code>{@link #addDelimiters(Collection)}</code>.
      * </p>
      * 
      * @return  a new, initialized <code>AppArgumentsParser</code> instance ready for parsing
      */
-    public static final AppArgumentsParser  fromDefault() {
+    public static AppArgumentsParser  from() {
         return AppArgumentsParser.from(SET_DELS_DEF);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>AppArgumentsParser</code> instance initialized with the given custom delimiters.
+     * </p>
+     * <p>
+     * The given collection of delimiter tokens is used for all parsing operations.  
+     * Note that additional delimiter tokens can be added to the returned parser with methods
+     * <code>{@link #addDelimiter(String)}</code> and <code>{@link #addDelimiters(Collection)}</code>.
+     * </p>
+     * 
+     * @param conDelimiters custom characters and tokens used to delimit all switches, variables, and properties
+     * 
+     * @return  a new <code>AppArgumentsParser</code> instance configured and ready to parse
+     */
+    public static AppArgumentsParser  from(Collection<String> conDelimiters) {
+        return new AppArgumentsParser(conDelimiters);
+    }
+    
+    
+    //
+    // Class Methods
+    //
+    
+    /**
+     * <p>
+     * Returns the set of unique, default delimiters used in <code>{@link #from()}</code> creation.
+     * </p>
+     * <p>
+     * The default set of delimiters for command-line options is contained in class constant
+     * <code>{@link #SET_DELS_DEF}</code>, which is returned.  Do not modify the returned collection.
+     * </p> 
+     * 
+     * @return  the set of unique delimiters used in default creation
+     */
+    public static final Set<String> getDefaultDelimiters() {
+        return AppArgumentsParser.SET_DELS_DEF;
+    }
+    
+    /**
+     * <p>
+     * Returns the set of predefined, delimited switches for the <code>AppArgumentsParser</code> class.
+     * </p>
+     * <p>
+     * These are the delimited switches that <code>{@link AppArgumentsParser}</code> treats as special cases. 
+     * The set of predefined command-line options is contained in class constant
+     * <code>{@link #SET_SWITCH_PREDEF}</code>, which is returned. Do not modify the returned collection.
+     * </p>
+     * 
+     * @return  all predefined command-line switches for <code>AppArgumentsParser</code>
+     */
+    public static final Set<String> getPredefinedSwitches() {
+        return AppArgumentsParser.SET_SWITCH_PREDEF;
+    }
+    
+    /**
+     * <p>
+     * Returns the set of predefined, delimited variable names for the <code>AppArgumentsParser</code> class.
+     * </p>
+     * <p>
+     * These are the delimited switches that <code>{@link AppArgumentsParser}</code> treats as special cases. 
+     * The set of predefined command-line options is contained in class constant
+     * <code>{@link #SET_SWITCH_PREDEF}</code>, which is returned. Do not modify the returned collection.
+     * </p>
+     * 
+     * @return  all predefined command-line switches for <code>AppArgumentsParser</code>
+     */
+    public static final Set<String> getPredefinedVariables() {
+        return AppArgumentsParser.SET_DVARS_PREDEF;
     }
     
     
     /**
      * <p>
-     * Returns the application arguments options that flag the <code>{@link #hasHelpRequest(String[])}</code> method.
+     * Returns the set of all predefined options for the <code>AppArgumentsParser</code> class.
      * </p>
+     * <p>
+     * Predefined options include both switches and variable names such as
+     * {@value #STR_HELP_SWTCH}, {@value #STR_HELP_DVAR}, {@value #STR_VERSION_SWTCH}, etc.
+     * These are the options that <code>{@link AppArgumentsParser}</code> treats as special cases. 
+     * The set of predefined command-line options is contained in class constant
+     * <code>{@link #SET_OPTS_PREDEF}</code>, which is returned. Do not modify the returned collection.
+     * </p>
+     *  
+     * @return all predefined command-line options for <code>AppArgumentsParser</code>
+     */
+    public static final Set<String> getPredefinedOptions() {
+        return AppArgumentsParser.SET_OPTS_PREDEF;
+    }
+    
+    /**
+     * <p>
+     * Displays the application arguments options that flag the <code>{@link #hasHelpRequest(String[])}</code> method.
+     * </p>
+     * <p>
+     * This is a convenience method for displaying the command-line <em>help</em> options for application usage.
+     * </p> 
      * 
      * @return  string containing the (optional) help request options
      */
-    public static final String  getHelpRequestOptions() {
+    public static final String  displayCommandLineHelpOptions() {
         return " [" + AppArgumentsParser.STR_HELP_SWTCH + "] [" + AppArgumentsParser.STR_HELP_DVAR + "]"; 
     }
     
     /**
      * <p>
-     * Returns the application arguments options that flag the <code>{@link #hasVersionRequest(String[])}</code> method.
+     * Displays the application arguments options that flag the <code>{@link #hasVersionRequest(String[])}</code> method.
      * </p>
+     * <p>
+     * This is a convenience method for displaying the command-line <em>version</em> options for application usage.
+     * </p> 
      * 
      * @return  string containing the (optional) version request options
      * 
      * @see #hasVersionRequest(String[])
      */
-    public static final String  getVersionRequestOptions() {
+    public static final String  displayCommandLineVersionOptions() {
         return " [" + AppArgumentsParser.STR_VERSION_SWTCH + "] [" + AppArgumentsParser.STR_VERSION_DVAR + "]";
     }
     
     /**
      * <p>
-     * Returns the application arguments option for setting the application output location.
+     * Displays the application arguments option for setting the application output location.
      * </p>
+     * <p>
+     * This is a convenience method for displaying the command-line <em>output</em> options for application usage.
+     * </p> 
      * 
      * @return  string containing the (optional) output location (directory path and/or file path)
      */
-    public static final String  getOutputLocationOption() {
+    public static final String  displayComandLineOutputLocationOption() {
         return " [" + AppArgumentsParser.STR_OUTPUT_DVAR + " output]";
     }
     
@@ -239,11 +318,36 @@ public class AppArgumentsParser {
 
     
     //
-    // Resources
+    // Class Resources
+    //
+    
+    /** The collection of predefined command-line delimited switches */
+    public static final Set<String>     SET_SWITCH_PREDEF = Set.of(
+                                                            STR_HELP_SWTCH,
+                                                            STR_VERSION_SWTCH
+                                                            );
+    
+    /** The collection of predefined command-line delimited variable name */
+    public static final Set<String>     SET_DVARS_PREDEF = Set.of(
+                                                            STR_HELP_DVAR,
+                                                            STR_VERSION_DVAR,
+                                                            STR_OUTPUT_DVAR
+                                                            );
+    
+    /** The collection of ALL predefined command-line options */
+    public static final Set<String>     SET_OPTS_PREDEF = Stream
+                                                            .<String>concat(SET_SWITCH_PREDEF.stream(), 
+                                                                            SET_DVARS_PREDEF.stream()
+                                                                            )
+                                                            .collect(Collectors.toSet()); 
+            
+    
+    //
+    // Instance Resources
     //
     
     /** The set of delimiting characters and tokens used to identify switches, variables, and properties */
-    private final Set<String>       setDels = new TreeSet<>();
+    protected final Set<String>       setDels = new TreeSet<>();
     
     
     //
@@ -252,21 +356,12 @@ public class AppArgumentsParser {
     
     /**
      * <p>
-     * Constructs a new <code>AppArgumentsParser</code> instance with empty delimiter collection.
-     * </p>
-     *
-     */
-    public AppArgumentsParser() {
-    }
-    
-    /**
-     * <p>
      * Constructs a new <code>AppArgumentsParser</code> instance initialized with the given collection of delimiters.
      * </p>
      *
      * @param conDelimiters special characters and tokens used to delimit all switches, variables, and properties
      */
-    public AppArgumentsParser(Collection<String> conDelimiters) {
+    protected AppArgumentsParser(Collection<String> conDelimiters) {
         this.setDels.addAll(conDelimiters);
     }
     
@@ -404,6 +499,13 @@ public class AppArgumentsParser {
      * <li>An argument did not start with a valid switch/variable identified in argument (<code>UnsupportedOperationException</code>).</li>
      * </ol>
      * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>All the options provided to the method must have delimiters currently recognized by the parser.</li>
+     * <li>Variable values with "nested values" will thrown an exception if delimited options are present.</li>
+     * </ul>
+     * </p>
      * 
      * @param cntMinArgs    the minimum number of required arguments to the application
      * @param lstDelOpts    list of valid delimited options (switches, variables, and properties with their delimiters - e.g., '-o', '--copy', etc.) 
@@ -435,7 +537,7 @@ public class AppArgumentsParser {
             String strArg = strToken.strip();
             
             // Check if argument is delimited - if not move to the next one
-            boolean bolDelimited = this.setDels.stream().anyMatch(s -> strArg.contains(s));
+            boolean bolDelimited = this.setDels.stream().anyMatch(s -> strArg.startsWith(s));
             if (!bolDelimited)
                 continue;
             

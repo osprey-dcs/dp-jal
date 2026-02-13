@@ -1162,21 +1162,21 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
     public void printOut(PrintStream ps, String strPad) {
         if (strPad == null)
             strPad = "";
-        String strPadd = strPad + "  ";
+//        String strPadd = strPad + "  ";
         
         // Create the column name list head
         final int           szHead = (this.setColNms.size() < FrameColumnsSpec.INT_MAX_COLS_HEAD) ? this.setColNms.size() : FrameColumnsSpec.INT_MAX_COLS_HEAD;
         final List<String>  lstHead = this.setColNms.stream().toList().subList(0, szHead);
         
-        // Create the datum factory description with left-hand side padding
-        String  strDescrFac = FrameColumnsSpec.insertPadding(this.specFactory.toString(), strPadd);
+//        // Create the datum factory description with left-hand side padding
+//        String  strDescrFac = FrameColumnsSpec.insertPadding(this.specFactory.toString(), strPadd);
         
         ps.println(strPad + "Column count         : " + this.setColNms.size());
         ps.println(strPad + "Column names (head)  : " + lstHead);
         ps.println(strPad + "Column type          : " + this.enmType);
         ps.println(strPad + "Datum factory type   : " + this.clsFactory);
-        ps.println(strPad + "Datum factory configuration ");
-        ps.println(strDescrFac);
+        ps.println(strPad + "Datum factory cfg.   : " + this.specFactory.toString());
+//        ps.println(strDescrFac);
     }
     
     
@@ -1381,17 +1381,16 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      */
     @Override
     public String toString() {
-        final int   szMaxNms = 10;
+        final int   szMaxNms = 5;
         
         final int           szHead = (this.setColNms.size() < szMaxNms) ? this.setColNms.size() : szMaxNms;
         final List<String>  lstHead = this.setColNms.stream().toList().subList(0, szHead);
         
-        StringBuilder   buf = new StringBuilder();
-        buf.append("Column count         : " + this.setColNms.size() + "\n");
-        buf.append("Column names (head)  : " + lstHead + "\n");
-        buf.append("Column datum type    : " + this.enmType + "\n");
-        buf.append("Column datum factory \n");
-        buf.append(this.specFactory.toString());
+        StringBuilder   buf = new StringBuilder("(");
+        buf.append("Columns=" + this.setColNms.size() + ",");
+        buf.append("Names (head)=" + lstHead + ", ");
+        buf.append("Type=" + this.enmType + ", ");
+        buf.append("Datum factory=" + this.specFactory.toString() + ")");
         
         return buf.toString();
     }

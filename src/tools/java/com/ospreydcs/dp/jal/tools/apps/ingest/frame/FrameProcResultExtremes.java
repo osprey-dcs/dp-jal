@@ -102,7 +102,7 @@ public class FrameProcResultExtremes extends TestResultExtremesBase<FrameProcTes
                 ParamToNumField.from(FrameProcTestParam.MTHREAD_COUNT, "Proc Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().cntMaxThrds(), rec -> rec.dblRateProc()),
                 ParamToNumField.from(FrameProcTestParam.DCMP_ENABLE, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolConcEnbl(), rec -> rec.dblRateRaw()),
                 ParamToNumField.from(FrameProcTestParam.FRAME_DEF, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().specFrame().strLabel(), rec -> rec.dblRateRaw()),
-                ParamToNumField.from(FrameProcTestParam.FRAME_DEF, "Processed Message Count", NumberType.INTEGER, rec -> rec.cntFrames(), rec -> rec.cntMsgs())
+                ParamToNumField.from(FrameProcTestParam.FRAME_DEF, "Processed Message Count", NumberType.INTEGER, rec -> rec.recTestCase().specFrame().strLabel(), rec -> rec.cntMsgs())
                 );
         
         return lstAssocNum;

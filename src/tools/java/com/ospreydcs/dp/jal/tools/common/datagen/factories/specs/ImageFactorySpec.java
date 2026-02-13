@@ -215,10 +215,16 @@ public record ImageFactorySpec(int intSize, BufferedImage.Format enmFormat, Stri
      */
     @Override
     public String toString() {
-        String  str = "";
-        str += "Image size (bytes) : " + this.intSize + "\n";
-        str += "Image format       : " + this.enmFormat + "\n";
-        str += "Image name prefix  : " + this.strPrefix + "\n";
+        String  str = "(";
+        
+        str += "Class=" + this.getClass().getSimpleName() + ", ";
+        str += "Sizes (bytes)=" + this.intSize + ", ";
+        str += "Format=" + this.enmFormat + ", ";
+        str += "Prefix=" + this.strPrefix + ")";
+        
+//        str += "Image size (bytes) : " + this.intSize + "\n";
+//        str += "Image format       : " + this.enmFormat + "\n";
+//        str += "Image name prefix  : " + this.strPrefix + "\n";
         
         return str;
     }

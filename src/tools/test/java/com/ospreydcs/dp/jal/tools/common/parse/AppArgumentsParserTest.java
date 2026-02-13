@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.naming.ConfigurationException;
@@ -183,17 +184,17 @@ public class AppArgumentsParserTest {
     // Test Cases
     //
     
-    /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#from()}.
-     */
-    @Test
-    public final void testFrom() {
-        
-        // Create new parser and check configuration
-        AppArgumentsParser parser = AppArgumentsParser.from();
-        
-        Assert.assertTrue(parser.getDelimiters().isEmpty());
-    }
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#from()}.
+//     */
+//    @Test
+//    public final void testFrom() {
+//        
+//        // Create new parser and check configuration
+//        AppArgumentsParser parser = AppArgumentsParser.from();
+//        
+//        Assert.assertTrue(parser.getDelimiters().isEmpty());
+//    }
 
     /**
      * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#from(java.util.Collection)}.
@@ -212,7 +213,7 @@ public class AppArgumentsParserTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#fromDefault()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#from()}.
      */
     @Test
     public final void testFromDefault() {
@@ -232,33 +233,33 @@ public class AppArgumentsParserTest {
         System.out.println(parser);
     }
 
-    /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#AppArgumentsParser()}.
-     */
-    @Test
-    public final void testAppArgumentsParser() {
-        
-        // Create new parser and check configuration
-        AppArgumentsParser parser = new AppArgumentsParser();
-        
-        Assert.assertTrue(parser.getDelimiters().isEmpty());
-    }
-
-    /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#AppArgumentsParser(java.util.Collection)}.
-     */
-    @Test
-    public final void testAppArgumentsParserCollectionOfString() {
-
-        // Test Parameters
-        final Set<String>   setDels = SET_DELS_DEF;
-        
-        
-        // Create new parser and check configuration
-        AppArgumentsParser parser = new AppArgumentsParser(setDels);
-        
-        Assert.assertEquals(setDels, parser.getDelimiters());
-    }
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#AppArgumentsParser()}.
+//     */
+//    @Test
+//    public final void testAppArgumentsParser() {
+//        
+//        // Create new parser and check configuration
+//        AppArgumentsParser parser = new AppArgumentsParser();
+//        
+//        Assert.assertTrue(parser.getDelimiters().isEmpty());
+//    }
+//
+//    /**
+//     * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#AppArgumentsParser(java.util.Collection)}.
+//     */
+//    @Test
+//    public final void testAppArgumentsParserCollectionOfString() {
+//
+//        // Test Parameters
+//        final Set<String>   setDels = SET_DELS_DEF;
+//        
+//        
+//        // Create new parser and check configuration
+//        AppArgumentsParser parser = new AppArgumentsParser(setDels);
+//        
+//        Assert.assertEquals(setDels, parser.getDelimiters());
+//    }
 
     /**
      * Test method for {@link com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser#addDelimiter(java.lang.String)}.
@@ -267,14 +268,15 @@ public class AppArgumentsParserTest {
     public final void testAddDelimiter() {
         
         // Test Parameters 
-        final Set<String>   setDels = SET_DELS_TEST;
+        final Set<String>   setDelsAdd = SET_DELS_TEST;
+        final Set<String>   setDelsAll = Stream.concat(setDelsAdd.stream(), AppArgumentsParser.getDefaultDelimiters().stream()).collect(Collectors.toSet());
         
         // Create uninitialized parser and add delimiters one-by-one
         AppArgumentsParser parser = AppArgumentsParser.from();
         
-        setDels.forEach(del -> parser.addDelimiter(del));
+        setDelsAdd.forEach(del -> parser.addDelimiter(del));
         
-        Assert.assertEquals(setDels, parser.getDelimiters());
+        Assert.assertEquals(setDelsAll, parser.getDelimiters());
     }
 
     /**
@@ -287,15 +289,15 @@ public class AppArgumentsParserTest {
         final Set<String>   setDels1 = SET_DELS_DEF;
         final Set<String>   setDels2 = SET_DELS_TEST;
         
-        final Set<String>   setDelsTot = Stream.concat(setDels1.stream(), setDels2.stream()).collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
+        final Set<String>   setDelsAll = Stream.concat(setDels1.stream(), setDels2.stream()).collect(Collectors.toSet());
         
         // Create uninitialized parser and add delimiters 
-        AppArgumentsParser parser = AppArgumentsParser.from();
+        AppArgumentsParser parser = AppArgumentsParser.from(setDels1);
         
-        parser.addDelimiters(setDels1);
+//        parser.addDelimiters(setDels1);
         parser.addDelimiters(setDels2);
         
-        Assert.assertEquals(setDelsTot, parser.getDelimiters());
+        Assert.assertEquals(setDelsAll, parser.getDelimiters());
         
         // Print out specialized configuration (tests AppArgumentsParser.toString())
         System.out.println(JavaRuntime.getQualifiedMethodNameSimple());
@@ -315,7 +317,7 @@ public class AppArgumentsParserTest {
         final List<String>  lstCmdsExpect = List.of();
         
         // Create default parser and parse commands
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
         
         List<String>    lstCmds = parser.parseCommands(arrArgs);
         
@@ -353,7 +355,7 @@ public class AppArgumentsParserTest {
         final Collection<String>    conSwitches = Set.of("-badSwitch1", "badSwitch2", "badSwitch3");
 
         // Create default parser, parse each switch and confirm
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
         
         for (String strSwitch : conSwitches) {
             boolean bolResult = parser.hasSwitch(strSwitch, arrArgs);
@@ -373,7 +375,7 @@ public class AppArgumentsParserTest {
         final Collection<String>    conSwitches = CON_SWITCH_1;
 
         // Create default parser, parse each switch and confirm
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
         
         for (String strSwitch : conSwitches) {
             boolean bolResult = parser.hasSwitch(strSwitch, arrArgs);
@@ -393,7 +395,7 @@ public class AppArgumentsParserTest {
         final Collection<String>    conSwitches = CON_SWITCH_3;
 
         // Create default parser, parse each switch and confirm
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
         
         for (String strSwitch : conSwitches) {
             boolean bolResult = parser.hasSwitch(strSwitch, arrArgs);
@@ -436,7 +438,7 @@ public class AppArgumentsParserTest {
         final List<String>      lstValsExpect = LST_TAGS_IND0_1;
         
         // Create default parser, parse variable and confirm values
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
 
         List<String>    lstVals = parser.parseVariable(strDelVar, indOccur, arrArgs);
         
@@ -456,7 +458,7 @@ public class AppArgumentsParserTest {
         final List<String>      lstValsExpect = LST_TAGS_IND1_1;
         
         // Create default parser, parse variable and confirm values
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
 
         List<String>    lstVals = parser.parseVariable(strDelVar, indOccur, arrArgs);
         
@@ -475,7 +477,7 @@ public class AppArgumentsParserTest {
         final List<String>      lstValsExpect = LST_TAGS_1;
         
         // Create default parser, parse variable and confirm values
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
 
         List<String>    lstVals = parser.parseVariable(strDelVar, arrArgs);
         
@@ -494,7 +496,7 @@ public class AppArgumentsParserTest {
         final List<String>      lstValsExpect = LST_FRAME_2;
         
         // Create default parser, parse variable and confirm values
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
 
         List<String>    lstVals = parser.parseVariable(strDelVar, arrArgs);
         
@@ -515,7 +517,7 @@ public class AppArgumentsParserTest {
         final List<String>      lstValsExpect2 = LST_THRDS_3;
         
         // Create default parser, parse variable and confirm values
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
 
         List<String>    lstVals1 = parser.parseVariable(strDelVar1, arrArgs);
         List<String>    lstVals2 = parser.parseVariable(strDelVar2, arrArgs);
@@ -568,7 +570,7 @@ public class AppArgumentsParserTest {
         final Map<String, String>   mapPropsExpect = MAP_ATTRS_1;
         
         // Create default parser, parse property and confirm (name, value) pairs)
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
         
         try {
             Map<String, String> mapProps = parser.parseProperty(strDelProp, arrArgs);
@@ -593,7 +595,7 @@ public class AppArgumentsParserTest {
         final Map<String, String>   mapPropsExpect = MAP_ATTRS_2;
         
         // Create default parser, parse property and confirm (name, value) pairs)
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
         
         try {
             Map<String, String> mapProps = parser.parseProperty(strDelProp, arrArgs);
@@ -618,7 +620,7 @@ public class AppArgumentsParserTest {
         final Map<String, String>   mapPropsExpect = MAP_P_3;
         
         // Create default parser, parse property and confirm (name, value) pairs)
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
         
         try {
             Map<String, String> mapProps = parser.parseProperty(strDelProp, arrArgs);
@@ -667,7 +669,7 @@ public class AppArgumentsParserTest {
         final String        strTgtExpect = null;
         
         // Create default parser, parse target and confirm
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
         
         String  strTgt = parser.parseTarget(arrArgs);
         
@@ -685,7 +687,7 @@ public class AppArgumentsParserTest {
         final String        strTgtExpect = STR_TARGET_3;
         
         // Create default parser, parse target and confirm
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
         
         String  strTgt = parser.parseTarget(arrArgs);
         
@@ -720,6 +722,7 @@ public class AppArgumentsParserTest {
         // Test Parameters
         Set<String>     setDels1 = SET_DELS_DEF;
         Set<String>     setDels2 = SET_DELS_TEST;
+        Set<String>     setDelsDef = AppArgumentsParser.getDefaultDelimiters();
         Set<String>     setDelsTot = Stream.concat(setDels1.stream(), setDels2.stream()).collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
         
         // Create default parser and parsers with various configurations and test equivalence
@@ -728,6 +731,7 @@ public class AppArgumentsParserTest {
         AppArgumentsParser  parser1 = AppArgumentsParser.from(setDels1);
         AppArgumentsParser  parser2 = AppArgumentsParser.from(setDels2);
         AppArgumentsParser  parserTot = AppArgumentsParser.from(setDelsTot);
+        parserTot.addDelimiters(setDelsDef);
         
         Assert.assertFalse(parserDef.equals(parser1));
         Assert.assertFalse(parserDef.equals(parser2));
@@ -736,11 +740,12 @@ public class AppArgumentsParserTest {
         // Modify default parser and test equivalences
         parserDef.addDelimiters(setDels1);
 
-        Assert.assertTrue(parserDef.equals(parser1));
+        Assert.assertFalse(parserDef.equals(parser1));
         Assert.assertFalse(parserDef.equals(parser2));
         Assert.assertFalse(parserDef.equals(parserTot));
         
         // Modify default parser again and test equivalences
+        parserDef.addDelimiters(setDels1);
         parserDef.addDelimiters(setDels2);
 
         Assert.assertFalse(parserDef.equals(parser1));

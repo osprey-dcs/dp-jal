@@ -380,11 +380,18 @@ public record TimestampFactorySpec(boolean bolRand, long lngSeed, Duration durPe
      */
     @Override
     public String toString() {
-        String  str = "";
-        str += "Random generation enabled : " + this.bolRand + "\n";
-        str += "Random generator seed     : " + this.lngSeed + "\n";
-        str += "Sampling period           : " + this.durPeriod + "\n";
-        str += "Sampling start instant    : " + this.insStart + "\n";
+        String  str = "(";
+        
+        str += "Class=" + this.getClass().getSimpleName() + ", ";
+        str += "Random enabled=" + this.bolRand + ", ";
+        str += "Random seed=" + this.lngSeed + ", ";
+        str += "Period=" + this.durPeriod + ", ";
+        str += "Start=" + this.insStart + ")";
+        
+//        str += "Random generation enabled : " + this.bolRand + "\n";
+//        str += "Random generator seed     : " + this.lngSeed + "\n";
+//        str += "Sampling period           : " + this.durPeriod + "\n";
+//        str += "Sampling start instant    : " + this.insStart + "\n";
         
         return str;
     }

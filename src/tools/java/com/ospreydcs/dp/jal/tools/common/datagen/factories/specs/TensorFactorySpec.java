@@ -384,10 +384,15 @@ public record TensorFactorySpec(int[] arrShape, ScalarFactorySpec recScalarSpec)
      */
     @Override
     public String toString() {
-        String  str = "";
-        str += "Tensor shape : " + Arrays.toString(this.arrShape) + "\n";
-        str += "Scalar Factory Configuration \n";
-        str += this.recScalarSpec.toString();
+        String  str = "(";
+        
+        str += "Class=" + this.getClass().getSimpleName() + ", ";
+        str += "Shape=" + Arrays.toString(this.arrShape) + ", ";
+        str += "Scalar factory=" + this.recScalarSpec + ")";
+        
+//        str += "Tensor shape : " + Arrays.toString(this.arrShape) + "\n";
+//        str += "Scalar Factory Configuration \n";
+//        str += this.recScalarSpec.toString();
         
         return str;
     }

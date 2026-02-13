@@ -422,9 +422,9 @@ public abstract class TestResultStatsBase<TestResult extends Record> {
         for (NumberField<TestResult> recFld : this.lstNumFlds) {
             
             NumberStats<TestResult> recStats = switch (recFld.enmType) {
-            case INTEGER -> NumberStats.forInteger(recFld, lstGood);
-            case LONG -> NumberStats.forLong(recFld, lstGood);
-            case DOUBLE -> NumberStats.forDouble(recFld, lstGood);
+            case INTEGER -> NumberStats.forInteger(recFld, lstGood);    // throws NoSuchElementException
+            case LONG -> NumberStats.forLong(recFld, lstGood);          // throws NoSuchElementException
+            case DOUBLE -> NumberStats.forDouble(recFld, lstGood);      // throws NoSuchElementException
             };
             
             lstStats.add(recStats);
@@ -513,8 +513,10 @@ public abstract class TestResultStatsBase<TestResult extends Record> {
          * @param   conResults  the collection of test results to be analyzed
          * 
          * @return  a new <code>NumberStats</code> record containing the statistics of the given collection of test results
+         * 
+         * @throws NoSuchElementException   minimum, maximum, or average value of target field undetermined
          */
-        public static <TestResult extends Record> NumberStats<TestResult> forInteger(NumberField<TestResult> recFld, Collection<TestResult> conResults) 
+        public static <TestResult extends Record> NumberStats<TestResult> forInteger(NumberField<TestResult> recFld, Collection<TestResult> conResults) throws NoSuchElementException 
         {
             // Extract parameters from field descriptor
             String                          strDesc = recFld.strDesc();
@@ -524,9 +526,9 @@ public abstract class TestResultStatsBase<TestResult extends Record> {
             int     cntTotal = conResults.size();
 
             // Compute the field value statistics
-            double  dblAvg = conResults.stream().mapToInt(rec -> fncFld.apply(rec).intValue()).reduce(0, (n1, n2) -> n1 + n2)/cntTotal;
-            int     intMin = conResults.stream().mapToInt(rec -> fncFld.apply(rec).intValue()).reduce((int)dblAvg, (v1, v2) -> { if (v1<v2) return v1; else return v2; });
-            int     intMax = conResults.stream().mapToInt(rec -> fncFld.apply(rec).intValue()).reduce((int)dblAvg, (v1, v2) -> { if (v1>v2) return v1; else return v2; });
+            double  dblAvg = conResults.stream().mapToInt(rec -> fncFld.apply(rec).intValue()).average().getAsDouble(); // throws NoSuchElementException
+            int     intMin = conResults.stream().mapToInt(rec -> fncFld.apply(rec).intValue()).min().getAsInt();        // throws NoSuchElementException
+            int     intMax = conResults.stream().mapToInt(rec -> fncFld.apply(rec).intValue()).max().getAsInt();        // throws NoSuchElementException
             double  dblSqrd = conResults.stream().mapToDouble(rec -> fncFld.apply(rec).intValue()).map(v -> (v - dblAvg)*(v - dblAvg)).sum();
             double  dblStd = Math.sqrt(dblSqrd/cntTotal);
             
@@ -558,8 +560,10 @@ public abstract class TestResultStatsBase<TestResult extends Record> {
          * @param   conResults  the collection of test results to be analyzed
          * 
          * @return  a new <code>NumberStats</code> record containing the statistics of the given collection of test results
+         * 
+         * @throws NoSuchElementException   minimum, maximum, or average value of target field undetermined
          */
-        public static <TestResult extends Record> NumberStats<TestResult> forLong(NumberField<TestResult> recFld, Collection<TestResult> conResults) 
+        public static <TestResult extends Record> NumberStats<TestResult> forLong(NumberField<TestResult> recFld, Collection<TestResult> conResults) throws NoSuchElementException 
         {
             // Extract parameters from field descriptor
             String                          strDesc = recFld.strDesc();
@@ -569,9 +573,9 @@ public abstract class TestResultStatsBase<TestResult extends Record> {
             int     cntResults = conResults.size();
 
             // Compute the field value statistics
-            double  dblAvg = conResults.stream().mapToLong(rec -> fncFld.apply(rec).longValue()).reduce(0, (n1, n2) -> n1 + n2)/cntResults;
-            long    lngMin = conResults.stream().mapToLong(rec -> fncFld.apply(rec).longValue()).reduce((long)dblAvg, (v1, v2) -> { if (v1<v2) return v1; else return v2; });
-            long    lngMax = conResults.stream().mapToLong(rec -> fncFld.apply(rec).longValue()).reduce((long)dblAvg, (v1, v2) -> { if (v1>v2) return v1; else return v2; });
+            double  dblAvg = conResults.stream().mapToLong(rec -> fncFld.apply(rec).longValue()).average().getAsDouble();   // throws NoSuchElementException
+            long    lngMin = conResults.stream().mapToLong(rec -> fncFld.apply(rec).longValue()).min().getAsLong();         // throws NoSuchElementException
+            long    lngMax = conResults.stream().mapToLong(rec -> fncFld.apply(rec).longValue()).max().getAsLong();         // throws NoSuchElementException
             double  dblSqrd = conResults.stream().mapToDouble(rec -> fncFld.apply(rec).longValue()).map(v -> (v - dblAvg)*(v - dblAvg)).sum();
             double  dblStd = Math.sqrt(dblSqrd/cntResults);
             
@@ -602,8 +606,10 @@ public abstract class TestResultStatsBase<TestResult extends Record> {
          * @param   conResults  the collection of test results to be analyzed
          * 
          * @return  a new <code>NumberStats</code> record containing the statistics of the given collection of test results
+         * 
+         * @throws NoSuchElementException   minimum, maximum, or average value of target field undetermined
          */
-        public static <TestResult extends Record> NumberStats<TestResult> forDouble(NumberField<TestResult> recFld, Collection<TestResult> conResults) 
+        public static <TestResult extends Record> NumberStats<TestResult> forDouble(NumberField<TestResult> recFld, Collection<TestResult> conResults) throws NoSuchElementException 
         {
             // Extract parameters from field descriptor
             String                          strDesc = recFld.strDesc();
@@ -613,9 +619,9 @@ public abstract class TestResultStatsBase<TestResult extends Record> {
             int     cntResults = conResults.size();
 
             // Compute the field value statistics
-            double  dblAvg = conResults.stream().mapToDouble(rec -> fncFld.apply(rec).doubleValue()).reduce(0, (n1, n2) -> n1 + n2)/cntResults;
-            double  dblMin = conResults.stream().mapToDouble(rec -> fncFld.apply(rec).doubleValue()).reduce(dblAvg, (v1, v2) -> { if (v1<v2) return v1; else return v2; });
-            double  dblMax = conResults.stream().mapToDouble(rec -> fncFld.apply(rec).doubleValue()).reduce(dblAvg, (v1, v2) -> { if (v1>v2) return v1; else return v2; });
+            double  dblAvg = conResults.stream().mapToDouble(rec -> fncFld.apply(rec).doubleValue()).average().getAsDouble();   // throws NoSuchElementException
+            double  dblMin = conResults.stream().mapToDouble(rec -> fncFld.apply(rec).doubleValue()).min().getAsDouble();       // throws NoSuchElementException
+            double  dblMax = conResults.stream().mapToDouble(rec -> fncFld.apply(rec).doubleValue()).max().getAsDouble();       // throws NoSuchElementException
             double  dblSqrd = conResults.stream().mapToDouble(rec -> fncFld.apply(rec).doubleValue()).map(v -> (v - dblAvg)*(v - dblAvg)).sum();
             double  dblStd = Math.sqrt(dblSqrd/cntResults);
             
@@ -654,8 +660,13 @@ public abstract class TestResultStatsBase<TestResult extends Record> {
             // Print out results
             ps.println(strPad + this.strDesc);
             ps.println(strPadd + "field data type                 : " + this.enmType);
-            ps.println(strPadd + "target value                    : " + this.numTgt);
-            ps.println(strPadd + "cases w/ valuts >= target value : " + this.cntGtTgt);
+            if (this.numTgt == null) {
+                ps.println(strPadd + "cases w/ valuts >= target value : Undefined");
+                ps.println(strPadd + "cases w/ valuts >= target value : Undefined");
+            } else {
+                ps.println(strPadd + "target value                    : " + this.numTgt);
+                ps.println(strPadd + "cases w/ valuts >= target value : " + this.cntGtTgt);
+            }
             ps.println(strPadd + "cases w/ values >= avg value    : " + this.cntGtAvg);
             ps.println(strPadd + "minimum value                   : " + this.numMin);
             ps.println(strPadd + "maximum value                   : " + this.numMax);
@@ -771,8 +782,13 @@ public abstract class TestResultStatsBase<TestResult extends Record> {
             
             // Print out results
             ps.println(strPad + this.strDesc);
-            ps.println(strPadd + "target value                    : " + this.durTgt);
-            ps.println(strPadd + "cases w/ valuts <= target value : " + this.cntLtTgt);
+            if (this.durTgt == null) {
+                ps.println(strPadd + "target value                    : Undefined");
+                ps.println(strPadd + "cases w/ values <= target value : Undefined");
+            } else {
+                ps.println(strPadd + "target value                    : " + this.durTgt);
+                ps.println(strPadd + "cases w/ values <= target value : " + this.cntLtTgt);
+            }
             ps.println(strPadd + "cases w/ values <= avg value    : " + this.cntLtAvg);
             ps.println(strPadd + "minimum value                   : " + this.durMin);
             ps.println(strPadd + "maximum value                   : " + this.durMax);

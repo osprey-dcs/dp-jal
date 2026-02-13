@@ -538,13 +538,19 @@ public record FrameTimestampsSpec(
      */
     @Override
     public String toString() {
-        String  str = "";
-        str += "Sample count           : " + this.cntSamples + "\n";
-        str += "Timestamp case         : " + this.enmCase + "\n";
-        str += "Sampling period        : " + this.durPeriod + "\n";
-        str += "Sampling start instant : " + this.insStart + "\n";
-        str += "Sampling start delay   : " + this.durDelay + "\n";
-        
+        String  str = "(";
+        str += "Samples=" + this.cntSamples + ", ";
+        str += "Case=" + this.enmCase + ", ";
+        str += "Period=" + this.durPeriod + ", ";
+        str += "Start=" + this.insStart + ", ";
+        str += "Delay=" + this.durDelay + ")";
+                
+//        str += "Sample count           : " + this.cntSamples + "\n";
+//        str += "Timestamp case         : " + this.enmCase + "\n";
+//        str += "Sampling period        : " + this.durPeriod + "\n";
+//        str += "Sampling start instant : " + this.insStart + "\n";
+//        str += "Sampling start delay   : " + this.durDelay + "\n";
+//        
         return str;
     }
     

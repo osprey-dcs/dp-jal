@@ -560,11 +560,18 @@ public record StructureFactorySpec(int intDepth, int intFanout, boolean bolUniqN
     @Override
     public String toString() {
         String  str = "";
-        str += "Structure depth            : " + this.intDepth + "\n";
-        str += "Structure fan-out          : " + this.intFanout + "\n";
-        str += "Unique field names enabled : " + this.bolUniqNms + "\n";
-        str += "Scalar Factory Configuration \n";
-        str += this.recScalarSpec.toString();
+
+        str += "Class=" + this.getClass().getSimpleName() + ", ";
+        str += "Depth=" + this.intDepth + ", ";
+        str += "Fan-out=" + this.intFanout + ", ";
+        str += "Unique names=" + this.bolUniqNms + ", ";
+        str += "Scalar factory=" + this.recScalarSpec + ")";
+        
+//        str += "Structure depth            : " + this.intDepth + "\n";
+//        str += "Structure fan-out          : " + this.intFanout + "\n";
+//        str += "Unique field names enabled : " + this.bolUniqNms + "\n";
+//        str += "Scalar Factory Configuration \n";
+//        str += this.recScalarSpec.toString();
         
         return str;
     }

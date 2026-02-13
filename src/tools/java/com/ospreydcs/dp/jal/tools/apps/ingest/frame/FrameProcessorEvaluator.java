@@ -52,6 +52,7 @@ import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.jal.tools.apps.query.channel.QueryChannelEvaluator;
 import com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser;
+import com.ospreydcs.dp.jal.tools.common.parse.AppOptionsParser;
 import com.ospreydcs.dp.jal.tools.common.score.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
@@ -113,14 +114,14 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         // ------- Application Initialization -------
         //
         
-        // Check for general command-line errors
-        try {
-            PARSER.hasOptionErrors(CNT_APP_MIN_ARGS, LST_STR_DELOPTS, args);
-
-        } catch (Exception e) {
-            JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
-
-        }
+//        // Check for general command-line errors
+//        try {
+//            PARSER.hasOptionErrors(CNT_APP_MIN_ARGS, LST_STR_DELOPTS, args);
+//
+//        } catch (Exception e) {
+//            JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
+//
+//        }
 
         // Get the output location
         String      strOutputLoc = PARSER.parseOutputLocation(STR_OUT_PATH_DEF, args);
@@ -178,14 +179,6 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     private static final JalToolsConfig         CFG_TOOLS = JalToolsConfig.getInstance();
 
     
-    //
-    // Application Resources
-    //
-    
-    // Create an arguments PARSER
-    private static final AppArgumentsParser     PARSER = AppArgumentsParser.fromDefault();
-    
-    
     
     //
     // Application Constants - Command-Line Arguments and Messages
@@ -196,7 +189,7 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     
     
     /** Default output path location */
-    public static final String      STR_OUT_PATH_DEF = CFG_TOOLS.output + "/ingest/frame";
+    public static final String      STR_OUT_PATH_DEF = CFG_TOOLS.output.path + "/ingest/frame";
     
     /** Argument delimited variable for data columns serialization enable/disable flags */
     public static final String      STR_PARSE_SERIAL_ENBL_DVAR = "--serial";
@@ -276,8 +269,8 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
             STR_APP_NAME  + " Usage: \n"
           + "\n"
           + "% " + STR_APP_NAME
-          + AppArgumentsParser.getHelpRequestOptions()
-          + AppArgumentsParser.getVersionRequestOptions()
+          + AppArgumentsParser.displayCommandLineHelpOptions()
+          + AppArgumentsParser.displayCommandLineVersionOptions()
           + " [" + STR_PARSE_INPUT_DVAR + " input]"
           + "\n"
           + " "
@@ -299,11 +292,11 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
           + "  "
           + "[" + STR_PARSE_FRM_CNT_DVAR + " N1 ... Nn]" 
           + "\n"
-          + " " + AppArgumentsParser.getOutputLocationOption()
+          + " " + AppArgumentsParser.displayComandLineOutputLocationOption()
           + "\n\n" 
           + "  Where  \n"
-          + "   " + AppArgumentsParser.getHelpRequestOptions() + "    = print this message and return. \n"
-          + "   " + AppArgumentsParser.getVersionRequestOptions() + " = prints application version information and return. \n"
+          + "   " + AppArgumentsParser.displayCommandLineHelpOptions() + "    = print this message and return. \n"
+          + "   " + AppArgumentsParser.displayCommandLineVersionOptions() + " = prints application version information and return. \n"
           + "    input            = Optional input file location - if present all the following arguments are contained there. \n"
           + "    " + STR_PARSE_SERIAL_ENBL_DVAR + "         = Enable/disable data column serialization in processed messages. \n"
           + "    " + STR_PARSE_MTHRD_ENBL_DVAR + "          = Enable/disable multi-threaded processing of ingestion frames (with given maximum thread count(s). \n"
@@ -389,6 +382,14 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
           + "  - Typically, the default datum factory configuration is sufficient for most IngestionFrameProcessor evaluations. \n"
           ;
 
+    
+    //
+    // Application Resources
+    //
+    
+    // Create an arguments PARSER
+    private static final AppOptionsParser     PARSER = AppOptionsParser.from(LST_STR_DELOPTS);
+    
     
     /** The "version" message for client version requests */
     public static final String      STR_APP_VERSION = 
@@ -679,6 +680,7 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         ps.println();
         
         // Print out results extremes
+        ps.println("Test Results Extremes");
         FrameProcResultExtremes  recExtremes = FrameProcResultExtremes.from(this.conResults);
         recExtremes.printOut(ps, null);
         ps.println();
@@ -689,10 +691,23 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         scrChan.printOutByRates(ps, strPad);
         ps.println();
         
+        // Print out failed test results 
+        ps.println("Failed Cases (By Index)");
+        if (this.conFailures.isEmpty()) {
+            ps.println(strPad + "None");
+            ps.println();
+            
+        } else {
+            for (FrameProcTestResult recFail : this.conFailures) {
+                recFail.printOut(ps, strPad);
+                ps.println();
+            }
+        }
+        
         // Print out each test result
-        ps.println("Individual Case Results:");
-        for (FrameProcTestResult recCase : this.conResults) {
-            recCase.printOut(ps, strPad);
+        ps.println("Individual Case Results (Best Case First)");
+        for (FrameProcTestResult recResult : this.conResults) {
+            recResult.printOut(ps, strPad);
             ps.println();
         }
     }

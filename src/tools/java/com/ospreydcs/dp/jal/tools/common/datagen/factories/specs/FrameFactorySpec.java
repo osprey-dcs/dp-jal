@@ -540,7 +540,7 @@ public record FrameFactorySpec(
             return FrameFactorySpec.defaultFrame();
         
         // Create default application command-line parser used for extracting all specifications parameters
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
 
         // Extract the frame timestamp parameters and create specification
         final int           cntTmsSpec = parser.parseVariableCount(STR_PARSE_TMS_DVAR, args);
@@ -697,17 +697,20 @@ public record FrameFactorySpec(
         if (strPad == null)
             strPad = "";
         String strPadd = strPad + "  ";
+        String strPaddd = strPadd + "  ";
         
         ps.println(strPad + "Frame label prefix         : " + this.strLabel);
         ps.println(strPad + "Frame tag values           : " + this.setTags);
         ps.println(strPad + "Frame attributes           : " + this.mapAttrs);
         ps.println(strPad + "Frame column factory count : " + this.setColsSpecs.size());
-        ps.println(strPad + "Frame Timestamps  ");
+        ps.println(strPad + "Frame Timestamps");
         this.specTms.printOut(ps, strPadd);
+        
+        ps.println(strPad + "Frame Columns");
         int indColFac = 1;
         for (FrameColumnsSpec<Record> specCols : this.setColsSpecs) {
-            ps.println("Column Factory #" + indColFac);
-            specCols.printOut(ps, strPadd);
+            ps.println(strPadd + "Column Factory #" + indColFac);
+            specCols.printOut(ps, strPaddd);
             indColFac++;
         }
     }
@@ -741,15 +744,23 @@ public record FrameFactorySpec(
      */
     @Override
     public String toString() {
-        StringBuilder   buf = new StringBuilder();
+        StringBuilder   buf = new StringBuilder("(");
         
-        buf.append("Frame label prefix : " + this.strLabel + "\n");
-        buf.append("Frame tag values   : " + this.setTags + "\n");
-        buf.append("Frame attributes   : " + this.mapAttrs + "\n");
-        buf.append("Frame Timestamps Specification \n");
-        buf.append(this.specTms);
-        buf.append("Frame Columns Specification Collection \n");
-        this.setColsSpecs.forEach(spec -> buf.append(spec));
+        buf.append("Label=" + this.strLabel + ", ");
+        buf.append("Tags=" + this.setTags + ", ");
+        buf.append("Attributes=" + this.mapAttrs + ", ");
+        buf.append("Timestamps=" + this.specTms + ", ");
+        buf.append("Columns=");
+        this.setColsSpecs.forEach(c -> buf.append(c.toString() + ", "));
+        buf.append(")");
+        
+//        buf.append("Frame label prefix : " + this.strLabel + "\n");
+//        buf.append("Frame tag values   : " + this.setTags + "\n");
+//        buf.append("Frame attributes   : " + this.mapAttrs + "\n");
+//        buf.append("Frame Timestamps Specification \n");
+//        buf.append(this.specTms);
+//        buf.append("Frame Columns Specification Collection \n");
+//        this.setColsSpecs.forEach(spec -> buf.append(spec));
         
         return buf.toString();
     }

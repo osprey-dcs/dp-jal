@@ -266,6 +266,7 @@ public record FrameProcTestResult(
     public void printOut(PrintStream ps, String strPad) {
         if (strPad == null)
             strPad = "";
+        String  strPadd = strPad + "  ";
         
         // Check for test case failure
         if (this.recTestStatus.isFailure()) {
@@ -280,15 +281,15 @@ public record FrameProcTestResult(
         }
         
         ps.println(strPad + "Test Case #" + this.recTestCase.indCase());
-        ps.println(strPad + "  Data rate - raw (MBps)            : " + this.dblRateRaw);
-        ps.println(strPad + "  Data rate - processed (MBps)      : " + this.dblRateProc);
-        ps.println(strPad + "  Payload ingestion frame count     : " + this.cntFrames);
-        ps.println(strPad + "  Payload allocation size (bytes)   : " + this.szPayload);
-        ps.println(strPad + "  Processed message count           : " + this.cntMsgs);
-        ps.println(strPad + "  Processed allocation size (bytes) : " + this.szProcessed);
-        ps.println(strPad + "  Processing duration               : " + this.durProcessed);
-        ps.println(strPad + "  Test Case Parameters:");
-        this.recTestCase.printOut(ps, strPad + "  ");
+        ps.println(strPadd + "Data rate - raw (MBps)            : " + this.dblRateRaw);
+        ps.println(strPadd + "Data rate - processed (MBps)      : " + this.dblRateProc);
+        ps.println(strPadd + "Payload ingestion frame count     : " + this.cntFrames);
+        ps.println(strPadd + "Payload allocation size (bytes)   : " + this.szPayload);
+        ps.println(strPadd + "Processed message count           : " + this.cntMsgs);
+        ps.println(strPadd + "Processed allocation size (bytes) : " + this.szProcessed);
+        ps.println(strPadd + "Processing duration               : " + this.durProcessed);
+        ps.println(strPadd + "Test Case Parameters");
+        this.recTestCase.printOut(ps, strPadd);
     }
 
     

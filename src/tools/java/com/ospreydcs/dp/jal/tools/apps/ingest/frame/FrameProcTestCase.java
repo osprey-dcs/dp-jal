@@ -39,9 +39,6 @@ import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.jal.tools.apps.ingest.common.FrameProcessorConfig;
 import com.ospreydcs.dp.jal.tools.common.datagen.IFrameFactory;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.IngestionFrameGeneratorDeprecated;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.IngestionFrameQueue;
-import com.ospreydcs.dp.jal.tools.common.datagen.factories.frames.SampleBlockConfigDep;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
@@ -225,7 +222,8 @@ public record FrameProcTestCase(
         try {
             Instant     insStart = Instant.now();
             processor.submit(lstFrames);                // throws IllegalStateException
-            thrdMsgSnk.join();                           // throws InterruptedException
+            processor.shutdown();                       // throws InterruptedException
+            thrdMsgSnk.join();                          // throws InterruptedException
             Instant     insFinish = Instant.now();
             
             // Collect results and return them
@@ -270,11 +268,11 @@ public record FrameProcTestCase(
         String strPaddd = strPadd + "  ";
         
         ps.println(strPad + this.getClass().getSimpleName() + " " + this.indCase);
-        ps.println(strPadd + "Payload Configuraiton");
-        ps.println(strPaddd + "Ingestion frame count    : " + this.cntFrames);
-        this.specFrame.printOut(ps, strPaddd);
         ps.println(strPadd + "IngestionFrameProcessor Configuration");
         this.recPrcrCfg.printOut(ps, strPaddd);
+        ps.println(strPadd + "Payload Configuraiton");
+        ps.println(strPaddd + "Ingestion frame count      : " + this.cntFrames);
+        this.specFrame.printOut(ps, strPaddd);
     }
     
     

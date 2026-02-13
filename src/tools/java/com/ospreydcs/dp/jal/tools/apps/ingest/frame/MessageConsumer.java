@@ -1,5 +1,7 @@
 package com.ospreydcs.dp.jal.tools.apps.ingest.frame;
 
+import java.util.concurrent.TimeUnit;
+
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.jal.common.ResultStatus;
 import com.ospreydcs.dp.jal.model.IMessageSupplier;
@@ -54,6 +56,20 @@ public class MessageConsumer extends Thread {
     public static MessageConsumer   from(IMessageSupplier<IngestDataRequest> supplier) {
         return new MessageConsumer(supplier);
     }
+    
+    
+    //
+    // Class Constants
+    //
+    
+    /** The <code>{@link IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)}</code> timeout limit */ 
+    @SuppressWarnings("unused")
+    private final static long       LNG_POLL_TMOUT = 15;
+    
+    /** The <code>{@link IMessageSupplier#poll(long, java.util.concurrent.TimeUnit)}</code> timeout units */
+    @SuppressWarnings("unused")
+    private final static TimeUnit   TU_POLL_TMOUT = TimeUnit.MILLISECONDS;
+    
     
     //
     // Defining Attributes
@@ -154,6 +170,7 @@ public class MessageConsumer extends Thread {
             
             try {
                 IngestDataRequest   msgRqst = supplier.take();
+//                IngestDataRequest   msgRqst = supplier.poll(LNG_POLL_TMOUT, TU_POLL_TMOUT);
                 
                 if (msgRqst != null) {
                     this.szAlloc += msgRqst.getSerializedSize();

@@ -530,7 +530,7 @@ public class IngestionFrameFactory implements IFrameFactory {
             return IngestionFrameFactory.defaultFrame();
         
         // Create default application command-line parser used for extracting all specifications parameters
-        AppArgumentsParser  parser = AppArgumentsParser.fromDefault();
+        AppArgumentsParser  parser = AppArgumentsParser.from();
 
         // Extract the frame timestamp parameters and create specification
         IFrameTimestampsFactory facTms;

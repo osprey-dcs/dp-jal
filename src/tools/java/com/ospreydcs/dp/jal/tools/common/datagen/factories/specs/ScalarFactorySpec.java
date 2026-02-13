@@ -716,12 +716,20 @@ public record ScalarFactorySpec(
      */
     @Override
     public String   toString() {
-        String  str = "";
-        str += "Scalar value type: " + this.enmType + "\n";
-        str += "Random enabled   : " + this.bolRandEnbl + "\n";
-        str += "Seed value       : " + this.lngSeed + "\n";
-        str += "Increment value  : " + this.numIncr + "\n";
-        str += "String prefix    : " + this.strPrefix + "\n";
+        String  str = "(";
+        
+        str += "Class=" + this.getClass().getSimpleName() + ", ";
+        str += "Type=" + this.enmType + ", ";
+        str += "Random=" + this.bolRandEnbl + ", ";
+        str += "Seed=" + this.lngSeed + ", ";
+        str += "Increment=" + this.numIncr + ", ";
+        str += "Prefix=" + this.strPrefix + ")";
+        
+//        str += "Scalar value type: " + this.enmType + "\n";
+//        str += "Random enabled   : " + this.bolRandEnbl + "\n";
+//        str += "Seed value       : " + this.lngSeed + "\n";
+//        str += "Increment value  : " + this.numIncr + "\n";
+//        str += "String prefix    : " + this.strPrefix + "\n";
         
         return str;
     }

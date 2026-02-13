@@ -144,8 +144,12 @@ public record ByteArrayFactorySpec(int szArrays) {
      */
     @Override
     public String toString() {
-        String  str = "";
-        str += "Array size (bytes) : " + this.szArrays + "\n";
+        String  str = "(";
+        
+        str += "Class=" + this.getClass().getSimpleName() + ", ";
+        str += "Size (bytes)=" + this.szArrays + ")";
+        
+//        str += "Array size (bytes) : " + this.szArrays + "\n";
         
         return str;
     }
