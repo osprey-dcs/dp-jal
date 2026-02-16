@@ -1,0 +1,6 @@
+--serial FALSE TRUE 
+--dcmp FALSE TRUE  
+--threads 2 3 4 
+--frame '--label FrmDef1: --cols 10 PvStruct: STRUCTURE 2 3 FALSE DOUBLE' 
+        '--label FrmDef2: --cols 1000 PvDbl: SCALAR DOUBLE' 
+--nfrms 1 2

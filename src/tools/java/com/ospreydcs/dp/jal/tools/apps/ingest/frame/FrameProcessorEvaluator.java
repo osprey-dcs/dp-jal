@@ -26,24 +26,25 @@
 package com.ospreydcs.dp.jal.tools.apps.ingest.frame;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.MalformedParametersException;
+import java.nio.file.InvalidPathException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.regex.Matcher;
 
 import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
 import com.ospreydcs.dp.jal.appfwk.ExitCode;
 import com.ospreydcs.dp.jal.appfwk.JalApplicationBase;
@@ -53,6 +54,7 @@ import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.jal.tools.apps.query.channel.QueryChannelEvaluator;
 import com.ospreydcs.dp.jal.tools.common.parse.AppArgumentsParser;
+import com.ospreydcs.dp.jal.tools.common.parse.AppInputFileParser;
 import com.ospreydcs.dp.jal.tools.common.parse.AppOptionsParser;
 import com.ospreydcs.dp.jal.tools.common.score.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -111,19 +113,24 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
             System.exit(ExitCode.SUCCESS.getCode());
         }
 
+        // Check for input file declaration
+        if (PARSER.hasVariable(STR_PARSE_INPUT_DVAR, args)) {
+            String  strInputFile = PARSER.parseVariable(STR_PARSE_INPUT_DVAR, args).get(0);
+            
+            try {
+                args = FrameProcessorEvaluator.readInputFileArgs(strInputFile);
+                
+            } catch (IOException e) {
+                JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
+                return;
+                
+            }
+        }
+        
         //
         // ------- Application Initialization -------
         //
         
-//        // Check for general command-line errors
-//        try {
-//            PARSER.hasOptionErrors(CNT_APP_MIN_ARGS, LST_STR_DELOPTS, args);
-//
-//        } catch (Exception e) {
-//            JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
-//
-//        }
-
         // Get the output location
         String      strOutputLoc = PARSER.parseOutputLocation(STR_OUT_PATH_DEF, args);
         
@@ -511,8 +518,8 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
         
-        OutputStreamAppender    appAppErrs = Log4j.createOutputStreamAppender(STR_APP_NAME, super.psOutput);
-        Log4j.attachAppender(LOGGER, appAppErrs);
+//        OutputStreamAppender    appAppErrs = Log4j.createOutputStreamAppender(STR_APP_NAME, super.psOutput);
+//        Log4j.attachAppender(LOGGER, appAppErrs);
     }
     
     
@@ -657,11 +664,8 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         ps.println();
         
         // Print out test parameter descriptions
-        EnumSet<FrameProcTestParam> setParams = EnumSet.allOf(FrameProcTestParam.class);
-        int     szNmMax = setParams.stream().<String>map(Enum::name).mapToInt(String::length).max().getAsInt();
-        String  strFmt = "%s%-" +  szNmMax + "s - %s.";
         ps.println("Test Parameter Descriptions");
-        setParams.forEach(p -> ps.println(String.format(strFmt, strPad, p.name(), p.getParameterDescription())));
+        FrameProcTestParam.printOut(ps, strPad);
         ps.println();
         
         // Print out evaluation summary
@@ -745,6 +749,37 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     //
     // Support Methods
     //
+    
+    /**
+     * <p>
+     * Reads the given file and parses the contents to a string array compatible with that for the <code>main</code>
+     * method entry point.
+     * </p>
+     * <p>
+     * The argument is assumed to be the path for a file containing the command-line arguments of the
+     * <code>FrameProcessorEvaluator</code> application.  The file contents are parsed according to the
+     * standard Java Virtual Machine application arguments convention.  The returned string array is
+     * then that expected when the contents of the file are used as the command-line for the application
+     * (less any comment lines).
+     * </p>
+     *    
+     * @param strFile   path of the file containing <code>FrameProcessorEvaluator</code> command-line arguments
+     *  
+     * @return  the string array of command-line arguments 
+     * 
+     * @throws InvalidPathException the argument did not represent a valid file path
+     * @throws SecurityException    Unable to access the given file 
+     * @throws IOException          error opening, reading, or closing the given file
+     * @throws IllegalStateException        no match operation (i.e., {@link Matcher#find()}) attempted for the given matcher
+     * @throws IndexOutOfBoundsException    attempted to read a pattern with index > {@link #arrRegex} length.
+     */
+    private static String[] readInputFileArgs(String strFile) throws InvalidPathException, SecurityException, IOException, IllegalStateException, IndexOutOfBoundsException {
+        AppInputFileParser  parser = AppInputFileParser.from();
+        
+        String[]            arrArgs = parser.parseFile(strFile);    // throws all exceptions
+        
+        return arrArgs;
+    }
     
     /**
      * <p>

@@ -25,10 +25,12 @@
  */
 package com.ospreydcs.dp.jal.tools.apps.ingest.frame;
 
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.MalformedParametersException;
 import java.lang.reflect.Method;
 import java.time.format.DateTimeParseException;
+import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -167,7 +169,7 @@ public enum FrameProcTestParam {
     }
     
     //
-    // Operations
+    // Enumeration Operations
     //
     
     /**
@@ -198,6 +200,52 @@ public enum FrameProcTestParam {
             throw new TypeNotPresentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Unrecognized enumeration constant: " + strName, e);
         }
     }
+    
+    /**
+     * <p>
+     * Prints out a text description of all the enumeration constants (as test parameters) to the given output.
+     * </p>
+     * <p>
+     * A line-by-line text description of each enumeration constant is written to the given output.
+     * The <code>strPad</code> is used to supply an optional whitespace character padding to the
+     * left-hand side header for each line description.
+     * </p>
+     *   
+     * @param ps        output stream to receive text description of record fields
+     * @param strPad    white space padding for left-hand side line headings (or <code>null</code>.
+     * 
+     * @throws NoSuchElementException   a maximum value could not be found for the constant name, delimited variable name, or class type name
+     */
+    public static void  printOut(PrintStream ps, String strPad) throws NoSuchElementException {
+        EnumSet<FrameProcTestParam> setParams = EnumSet.allOf(FrameProcTestParam.class);
+        
+        // Compute maximum field sizes
+        int     szNmMax = setParams.stream().<String>map(Enum::name).mapToInt(String::length).max().getAsInt();
+        int     szOptMax = setParams.stream().<String>map(FrameProcTestParam::getDelimitedVariableName).mapToInt(String::length).max().getAsInt();
+        int     szTypeMax = setParams.stream().<Class<?>>map(FrameProcTestParam::getParameterType).<String>map(Class::getSimpleName).mapToInt(String::length).max().getAsInt();
+        
+        // Create the format string for each output line
+        String  strFmt = "%s%-" +  szNmMax + "s : "
+                        + "Command-line variable = %" + szOptMax + "s, " 
+                        + "Type = %" + szTypeMax + "s, " 
+                        + "Description = %s.";
+        
+        // Print out line-by-line text description of each constant
+        setParams.forEach(p -> ps.println(
+                String.format(strFmt, 
+                        strPad, 
+                        p.name(), 
+                        p.getDelimitedVariableName(), 
+                        p.getParameterType().getSimpleName(), 
+                        p.getParameterDescription()
+                        )
+                ));
+    }
+    
+    
+    //
+    // Constant Operations
+    //
     
     /**
      * <p>

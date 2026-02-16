@@ -1,0 +1,15 @@
+# Enable/disable data column serialization
+--serial FALSE TRUE 
+
+# Enable/disable ingestion frame decomposition and maximum composite ingestion frame size
+--dcmp FALSE TRUE 
+--szfrm 2000000 4000000 
+
+# Enable/disable concurrent multi-threaded processing and maximum number of processing threads
+--mthrd FALSE TRUE
+--threads 2 3 4 
+
+# Evaluation payload frame counts and definitions
+--nfrms 1 2
+--frame '--label Frm1: --tms 100 PT0.010S 2023-09-01T00:00:00.0Z TIMESTAMP_LIST --cols Struct1 Struct2 Struct3 Struc4 Struct5 STRUCTURE 2 3 FALSE INTEGER'
+        '--label Frm2: --tms 1000 PT0.001S 2023-09-01T00:00:00.0Z SAMPLING_CLOCK --cols 1000 PvDbl: SCALAR DOUBLE' 
