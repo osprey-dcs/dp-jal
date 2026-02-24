@@ -46,8 +46,17 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;;
  * </p>
  * <p>
  * The objective is to monitor the variation of test result field value (i.e., within <code>TestResult</code>) for the
- * variations of a test parameter values.
+ * variations of a test parameter values (test parameters are identified in enumeration <code>Param</code>).
+ * Test parameter to field value associations are defined in the child class using abstract methods
+ * <code>{@link #assignNumberAssociations()}</code> and <code>{@link #assignDurationAssociatios()}</code>.
+ * These implementation must be well-defined at construction as they are called within the constructor
+ * of this base class.
  * </p>
+ * <p>
+ * All computations are performed at construction and results are immediately available.  Use method
+ * <code>{@link #printOut(PrintStream, String)}</code> to print out computational results to the
+ * given output stream.
+ * </p> 
  *
  * @author Christopher K. Allen
  * @since Feb 10, 2026
@@ -252,7 +261,6 @@ public abstract class TestResultExtremesBase<Param extends Enum<Param>, TestResu
          * 
          * @param enmParam      the target test parameter whose extremes are to be identified
          * @param strFldDesc    description of the target field 
-         * @param enmFldType    the field type of the <code>TestResult</code> field associated with the parameter  
          * @param fncParmVal    lambda function extracting the parameter value from a <code>TestRsult</code> record
          * @param fncFldVal     lambda function extracting the field value from a <code>TestResult</code> record
          *  

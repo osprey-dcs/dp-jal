@@ -40,13 +40,13 @@ import javax.naming.ConfigurationException;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
-import com.ospreydcs.dp.jal.appfwk.ExitCode;
-import com.ospreydcs.dp.jal.appfwk.JalApplicationBase;
-import com.ospreydcs.dp.jal.appfwk.JalQueryAppBase;
 import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
 import com.ospreydcs.dp.jal.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.jal.query.DpQueryException;
 import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
+import com.ospreydcs.dp.jal.tools.appfwk.ExitCode;
+import com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase;
+import com.ospreydcs.dp.jal.tools.appfwk.JalQueryAppBase;
 import com.ospreydcs.dp.jal.tools.common.requests.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.common.score.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -72,12 +72,12 @@ import com.ospreydcs.dp.jal.util.Log4j;
  * <li>Data Request Decomposition Strategy(ies)- values identified by the variable delimiter {@value #STR_VAR_RQST_DCMP}. </li>
  * <li>gRPC Stream Type(s) - value(s) identified by the variable {@value #STR_VAR_STRM_TYPE}. </li>
  * <li>gRPC Stream Count(s) - value(s) identified by the variable {@value #STR_VAR_STRM_CNT}. </li>
- * <li>Output Location - an optional path or file identified by the variable {@value #STR_VAR_OUTPUT}. </li>
+ * <li>Output Location - an optional path or file identified by the variable {@value #STR_DVAR_OUTPUT}. </li>
  * </ol> 
  * Additionally, the following "commands" may be provided:
  * <ul>
- * <li>{@value JalApplicationBase#STR_VAR_HELP} - responses with a the <code>{@link #STR_APP_USAGE}</code> message.</li>
- * <li>{@value JalApplicationBase#STR_VAR_VERSION} - response with the <code>{@link #STR_APP_VERSION}</code> message.</li>
+ * <li>{@value JalApplicationBase#STR_DVAR_HELP} - responses with a the <code>{@link #STR_APP_USAGE}</code> message.</li>
+ * <li>{@value JalApplicationBase#STR_DVAR_VERSION} - response with the <code>{@link #STR_APP_VERSION}</code> message.</li>
  * </ul>
  * The above arguments may appear anywhere on the command line but take precedence over all other arguments.
  * </p>
@@ -88,7 +88,7 @@ import com.ospreydcs.dp.jal.util.Log4j;
  * More specifically, the command line arguments for the application are as follows:
  * <pre>
  * <code>>
- * >QueryChannelEvaluator R1 [... RN] [{@value #STR_VAR_RQST_DCMP} D1 ...Di] [{@value #STR_VAR_STRM_TYPE} S1 ...Sj] [{@value #STR_VAR_STRM_CNT} N1 ...Nk] [{@value #STR_VAR_OUTPUT} output]
+ * >QueryChannelEvaluator R1 [... RN] [{@value #STR_VAR_RQST_DCMP} D1 ...Di] [{@value #STR_VAR_STRM_TYPE} S1 ...Sj] [{@value #STR_VAR_STRM_CNT} N1 ...Nk] [{@value #STR_DVAR_OUTPUT} output]
  * </code>
  * </pre>
  * where 
@@ -294,8 +294,8 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
             STR_APP_NAME  + " Usage: \n"
           + "\n"
           + "% " + STR_APP_NAME
-          + " [" + STR_VAR_HELP + "]"
-          + " [" + STR_VAR_VERSION + "]"
+          + " [" + STR_DVAR_HELP + "]"
+          + " [" + STR_DVAR_VERSION + "]"
           + " R1 [ ... Rn]"
           + " [" + STR_VAR_SUPPL_PVS + " PV1 ... PVi]"
           + " [" + STR_VAR_RQST_DCMP + " D1 ... Dj]"
@@ -304,8 +304,8 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
           + " [" + STR_VAR_OUTPUT +" Output]"
           + "\n" 
           + "  Where  \n"
-          + "    " + STR_VAR_HELP + "        = print this message and return.\n"
-          + "    " + STR_VAR_VERSION + "     = prints application version information and return.\n"
+          + "    " + STR_DVAR_HELP + "        = print this message and return.\n"
+          + "    " + STR_DVAR_VERSION + "     = prints application version information and return.\n"
           + "    R1, ..., Rn   = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
           + "    PV1, ..., PVi = Supplemental PV names to be added to requests R1 through Rn. \n"
           + "    D1, ..., Dj   = Request decomposition type(s) - RequestDecompType enumeration name(s). \n"
@@ -425,7 +425,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
     //
     
     /**
-     * @see com.ospreydcs.dp.jal.appfwk.JalApplicationBase#getLogger()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase#getLogger()
      */
     @Override
     protected Logger getLogger() {
@@ -725,11 +725,11 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
 //     * </p>
 //     * <p>
 //     * The output location, as specified by the application client, is the value of variable
-//     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
+//     * {@value #STR_DVAR_OUTPUT}.  There is only one value for this variable and any additional values
 //     * are ignored.
 //     * </p>
 //     * <p>
-//     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
+//     * If the variable {@value #STR_DVAR_OUTPUT} is not present in the command line arguments, this is an
 //     * optional parameter, then the default value given by <code>{@link #STR_OUTPUT_DEF}</code> is returned.
 //     * This value is taken from the JAL default configuration.
 //     * </p>
@@ -742,7 +742,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
 //    private static String   parseOutputLocation(String[] args) {
 //        
 //        // Look for the output location on the command line
-//        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
+//        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_DVAR_OUTPUT);
 //    
 //        // If there is no user-provided output location use the default value in the JAL configuration
 //        if (lstStrOutput.isEmpty()) 

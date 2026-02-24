@@ -46,8 +46,6 @@ import com.ospreydcs.dp.jal.query.DpDataRequest;
 import com.ospreydcs.dp.jal.query.DpQueryApiFactoryNew;
 import com.ospreydcs.dp.jal.query.DpQueryStreamBuffer;
 import com.ospreydcs.dp.jal.query.IQueryService;
-import com.ospreydcs.dp.jal.query.model.correl.RawCorrelatedData;
-import com.ospreydcs.dp.jal.query.model.correl.RawDataCorrelator;
 import com.ospreydcs.dp.jal.query.test.TestDpDataRequestGenerator;
 import com.ospreydcs.dp.jal.query.test.TestQueryResponses;
 import com.ospreydcs.dp.jal.util.JavaRuntime;

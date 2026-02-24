@@ -42,14 +42,14 @@ import javax.naming.ConfigurationException;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
-import com.ospreydcs.dp.jal.appfwk.ExitCode;
-import com.ospreydcs.dp.jal.appfwk.JalApplicationBase;
-import com.ospreydcs.dp.jal.appfwk.JalQueryAppBase;
 import com.ospreydcs.dp.jal.config.JalConfig;
 import com.ospreydcs.dp.jal.config.query.JalQueryConfig;
 import com.ospreydcs.dp.jal.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.jal.query.DpQueryException;
 import com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer;
+import com.ospreydcs.dp.jal.tools.appfwk.ExitCode;
+import com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase;
+import com.ospreydcs.dp.jal.tools.appfwk.JalQueryAppBase;
 import com.ospreydcs.dp.jal.tools.apps.query.correl.DataCorrelationEvaluator;
 import com.ospreydcs.dp.jal.tools.common.requests.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.common.score.DataRateLister;
@@ -115,7 +115,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
 
         } catch (Exception e) {
             System.err.println(STR_APP_NAME + ": STARTUP FAILURE - bad command line arguments " + args + ".");
-            System.err.println("  see " + STR_APP_NAME + " " + STR_VAR_HELP);
+            System.err.println("  see " + STR_APP_NAME + " " + STR_DVAR_HELP);
             JalApplicationBase.terminateWithException(DataCorrelationEvaluator.class, e, ExitCode.INPUT_CFG_CORRUPT);
             
         }
@@ -232,7 +232,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
             STR_VAR_PVS, 
             STR_VAR_DUR, 
             STR_VAR_DELAY,
-            STR_VAR_OUTPUT      // from base class
+            STR_DVAR_OUTPUT      // from base class
             );
     
     
@@ -276,17 +276,17 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
             STR_APP_NAME  + " Usage: \n"
           + "\n"
           + "% " + STR_APP_NAME
-          + " [" + STR_VAR_HELP + "]"
-          + " [" + STR_VAR_VERSION + "]"
+          + " [" + STR_DVAR_HELP + "]"
+          + " [" + STR_DVAR_VERSION + "]"
           + " [R1 ... Rn]"
           + " " + STR_VAR_PVS + " [PV1 ... PVn]"
           + " [" + STR_VAR_DUR + " T]"
           + " [" + STR_VAR_DELAY + " D]"
-          + " [" + STR_VAR_OUTPUT +" Output]"
+          + " [" + STR_DVAR_OUTPUT +" Output]"
           + "\n\n" 
           + "  Where  \n"
-          + "    " + STR_VAR_HELP + "        = print this message and return.\n"
-          + "    " + STR_VAR_VERSION + "     = prints application version information and return.\n"
+          + "    " + STR_DVAR_HELP + "        = print this message and return.\n"
+          + "    " + STR_DVAR_VERSION + "     = prints application version information and return.\n"
           + "    R1, ..., Rn   = Test request(s) to perform - 'TestArchiveRequest' enumeration name(s).\n"
           + "    PV1, ..., PVn = Supplemental PV name(s) to add to data request(s).\n"
           + "    T             = Override of request duration - parseable duration of format 'P[nd]DT[nh]H[nm]M[ds]S',\n"
@@ -301,7 +301,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
           + "  NOTES: \n"
           + "  - All bracketed quantities [...] are optional. \n"
           + "  - If no R1,...,Rn are included, " + STR_VAR_PVS + " and " + STR_VAR_DUR + " must be present.\n"
-          + "  - Default " + STR_VAR_OUTPUT + " value is " + STR_OUTPUT_DEF + ".\n";
+          + "  - Default " + STR_DVAR_OUTPUT + " value is " + STR_OUTPUT_DEF + ".\n";
 
     
     /** The "version" message for client version requests */
@@ -417,7 +417,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
     //
     
     /**
-     * @see com.ospreydcs.dp.jal.appfwk.JalApplicationBase#getLogger()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase#getLogger()
      */
     @Override
     protected Logger getLogger() {
@@ -715,11 +715,11 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
 //     * </p>
 //     * <p>
 //     * The output location, as specified by the application client, is the value of variable
-//     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
+//     * {@value #STR_DVAR_OUTPUT}.  There is only one value for this variable and any additional values
 //     * are ignored.
 //     * </p>
 //     * <p>
-//     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
+//     * If the variable {@value #STR_DVAR_OUTPUT} is not present in the command line arguments, this is an
 //     * optional parameter, then the default value given by <code>{@link #STR_OUTPUT_DEF}</code> is returned.
 //     * This value is taken from the JAL default configuration.
 //     * </p>
@@ -732,7 +732,7 @@ public class SuperDomainEvaluator extends JalQueryAppBase<SuperDomainEvaluator> 
 //    private static String   parseOutputLocation(String[] args) {
 //        
 //        // Look for the output location on the command line
-//        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
+//        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_DVAR_OUTPUT);
 //    
 //        // If there is no user-provided output location use the default value in the JAL configuration
 //        if (lstStrOutput.isEmpty()) {

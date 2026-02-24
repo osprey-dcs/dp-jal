@@ -155,7 +155,7 @@ public abstract class ConfigScorerBase<Config extends Record, Result extends Rec
     
     
     //
-    // Constructor
+    // Constructors
     //
     
     /**

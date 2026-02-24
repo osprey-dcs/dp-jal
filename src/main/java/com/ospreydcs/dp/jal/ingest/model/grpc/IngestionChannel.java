@@ -1267,28 +1267,28 @@ public class IngestionChannel {
         return stream;
     }
     
-    /**
-     * <p>
-     * Processes the ingestion response message.
-     * </p>
-     * <p>
-     * For normal operation, the argument contains no exceptional result message. 
-     * If so confirmed the argument is then added to the response message container <code>{@link #setResponses}</code>
-     * and the method returns.
-     * If the message contains an exceptional result (i.e. <code>{@link IngestDataResponse#hasExceptionalResult()}</code>
-     * returns <code>true</code>), the message is added to both containers <code>{@link #setBadResponses}</code>
-     * and <code>{@link #setResponses}</code> before returning.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * This method is invoked within <code>{@link IngestionStream}</code> instances through a lambda function created
-     * within <code>{@link #createIngestionStream()}</code>.
-     * </p>
-     * 
-     * @param msgRsp    an Ingestion Service response message containing acknowledgment or status error
-     */
-    @Deprecated(since="Oct 13, 2024", forRemoval=true)
-    private void processResponse(IngestDataResponse msgRsp) {
+//    /**
+//     * <p>
+//     * Processes the ingestion response message.
+//     * </p>
+//     * <p>
+//     * For normal operation, the argument contains no exceptional result message. 
+//     * If so confirmed the argument is then added to the response message container <code>{@link #setResponses}</code>
+//     * and the method returns.
+//     * If the message contains an exceptional result (i.e. <code>{@link IngestDataResponse#hasExceptionalResult()}</code>
+//     * returns <code>true</code>), the message is added to both containers <code>{@link #setBadResponses}</code>
+//     * and <code>{@link #setResponses}</code> before returning.
+//     * </p>
+//     * <p>
+//     * <h2>NOTES:</h2>
+//     * This method is invoked within <code>{@link IngestionStream}</code> instances through a lambda function created
+//     * within <code>{@link #createIngestionStream()}</code>.
+//     * </p>
+//     * 
+//     * @param msgRsp    an Ingestion Service response message containing acknowledgment or status error
+//     */
+//    @Deprecated(since="Oct 13, 2024", forRemoval=true)
+//    private void processResponse(IngestDataResponse msgRsp) {
 //        IngestionResponse   recRsp = ProtoMsg.toIngestionResponse(msgRsp);
 //        
 //        this.setRspRecs.add(recRsp);
@@ -1298,7 +1298,7 @@ public class IngestionChannel {
 //
 //            this.setRspRecsBad.add(recRsp);
 //        }
-    }
+//    }
 
 
 }

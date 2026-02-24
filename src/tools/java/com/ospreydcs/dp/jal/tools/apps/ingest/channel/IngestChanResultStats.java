@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	FrameProcResultStats.java
- * Package: com.ospreydcs.dp.jal.tools.apps.ingest.frame
- * Type: 	FrameProcResultStats
+ * File:	IngestChanResultStats.java
+ * Package: com.ospreydcs.dp.jal.tools.apps.ingest.channel
+ * Type: 	IngestChanResultStats
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,10 +20,10 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Feb 9, 2026
+ * @since Feb 23, 2026
  *
  */
-package com.ospreydcs.dp.jal.tools.apps.ingest.frame;
+package com.ospreydcs.dp.jal.tools.apps.ingest.channel;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -39,24 +39,23 @@ import com.ospreydcs.dp.jal.tools.common.score.TestResultStatsBase;
  * Class containing a performance summary statistics for a collection of <code>FrameProcTestResult</code> records.
  * </p>
  * <p>
- * Instances should be created from <code>{@link #from(Collection)}</code> creator which computes the performance
+ * Records should be created from <code>{@link #from(Collection)}</code> creator which computes the performance
  * summary, populates the results summary, and returns it.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Feb 9, 2026
+ * @since Feb 23, 2026
  *
  */
-public class FrameProcResultStats extends TestResultStatsBase<FrameProcTestResult> {
+public class IngestChanResultStats extends TestResultStatsBase<IngestChanTestResult> {
 
-    
     //
     // Creators
     //
     
     /**
      * <p>
-     * Creates and returns a new <code>FrameProcResultStats</code> instance from the given results collection.
+     * Creates and returns a new <code>IngestChanResultStats</code> instance from the given results collection.
      * </p>
      * <p>
      * The returned test result summary is fully analyzed and ready for print out with method
@@ -65,16 +64,16 @@ public class FrameProcResultStats extends TestResultStatsBase<FrameProcTestResul
      * 
      * @param conResults    the collection of test results to be analyzed
      * 
-     * @return  a new <code>FrameProcResultStats</code> containing the statistical summaries of the given collection
+     * @return  a new <code>IngestChanResultStats</code> containing the statistical summaries of the given collection
      * 
      * @throws IllegalArgumentException the argument collection was empty
      * @throws MissingResourceException no <code>TestResult</code> fields were identified for analysis
      * @throws NoSuchElementException   no successful results were contained in the argument collection
      */
-    public static FrameProcResultStats from(Collection<FrameProcTestResult> conResults) 
+    public static IngestChanResultStats from(Collection<IngestChanTestResult> conResults) 
             throws IllegalArgumentException, MissingResourceException, NoSuchElementException
     {
-        return new FrameProcResultStats(conResults);
+        return new IngestChanResultStats(conResults);
     }
     
     
@@ -84,24 +83,24 @@ public class FrameProcResultStats extends TestResultStatsBase<FrameProcTestResul
     
     /**
      * <p>
-     * Assigns the default targeted data rate.
+     * Assigns the default targeted transmission rate.
      * </p>
      * 
-     * @param dblRate   target data rate for all test results (in MBps)
+     * @param dblRate   target data transmission for all test results (in MBps)
      */
-    public static void  assignTargetDataRate(double dblRate) {
-        FrameProcResultStats.DBL_RATE_TGT = dblRate;
+    public static void  assignTargetTransmissionRate(double dblRate) {
+        IngestChanResultStats.DBL_RATE_TGT = dblRate;
     }
     
     /**
      * <p>
-     * Assigned the default targeted processing duration.
+     * Assigned the default targeted transmission duration.
      * </p>
      * 
-     * @param durProc   target processing duration for all test results
+     * @param durProc   target transmission duration for all test results
      */
     public static void  assignTargetProcessingDuration(Duration durProc) {
-        FrameProcResultStats.DUR_PROC_TGT = durProc;
+        IngestChanResultStats.DUR_XMIT_TGT = durProc;
     }
     
     
@@ -113,19 +112,19 @@ public class FrameProcResultStats extends TestResultStatsBase<FrameProcTestResul
     public static double    DBL_RATE_TGT = 500.0;
     
     /** The target processing duration */
-    public static Duration  DUR_PROC_TGT = Duration.ofMillis(100);
+    public static Duration  DUR_XMIT_TGT = Duration.ofMillis(100);
     
     
     //
-    // TestResultsSummaryBase<FrameProcTestResult> Abstract Methods
+    // TestResultsSummaryBase<IngestChaneTestResult> Abstract Methods
     //
     
     /**
      * @see com.ospreydcs.dp.jal.tools.common.score.TestResultStatsBase#assignFailedResult()
      */
     @Override
-    protected Function<FrameProcTestResult, Boolean> assignFailedResult() {
-        Function<FrameProcTestResult, Boolean>  fnc = rec -> rec.recTestStatus().isFailure();
+    protected Function<IngestChanTestResult, Boolean> assignFailedResult() {
+        Function<IngestChanTestResult, Boolean>  fnc = rec -> rec.recTestStatus().isFailure();
         
         return fnc;
     }
@@ -134,14 +133,15 @@ public class FrameProcResultStats extends TestResultStatsBase<FrameProcTestResul
      * @see com.ospreydcs.dp.jal.tools.common.score.TestResultStatsBase#assignNumericFields()
      */
     @Override
-    protected List<NumberField<FrameProcTestResult>> assignNumericFields() {
-        List<NumberField<FrameProcTestResult>>  lstFlds = List.of(
-                NumberField.from("Raw Data Processing Rate (MBps)", NumberType.DOUBLE, DBL_RATE_TGT, rec -> rec.dblRateRaw()),
-                NumberField.from("Processed Data Rate (MBps)", NumberType.DOUBLE, DBL_RATE_TGT, rec -> rec.dblRateProc()),
-                NumberField.from("Number of Ingestion Frames", NumberType.INTEGER, null, rec -> rec.cntFrames()),
-                NumberField.from("Number of Data Messages", NumberType.INTEGER, null, rec -> rec.cntMsgs()),
-                NumberField.from("Payload Allocation (bytes)", NumberType.LONG, null, rec -> rec.szPayload()),
-                NumberField.from("Processed Message Allocation (bytes)", NumberType.LONG, null, rec -> rec.szProcessed())
+    protected List<NumberField<IngestChanTestResult>> assignNumericFields() {
+        List<NumberField<IngestChanTestResult>>     lstFlds = List.of(
+                NumberField.from("Raw data transmission rate (MBps)", NumberType.DOUBLE, DBL_RATE_TGT, rec -> rec.dblRateXmit()),
+                NumberField.from("Number of data messages transmitted", NumberType.INTEGER, null, rec -> rec.cntMsgsXmit()),
+                NumberField.from("Allocation size (bytes) transmitted", NumberType.LONG, null, rec -> rec.szAllocXmit()),
+                NumberField.from("Payload ingestion frame count", NumberType.INTEGER, null, rec -> rec.cntFrames()),
+                NumberField.from("Payload allocation size (bytes)", NumberType.LONG, null, rec -> rec.szPayload()),
+                NumberField.from("Number of UNI message responses", NumberType.INTEGER, null, rec -> rec.lstUniRsps().size()),
+                NumberField.from("Number of BIDI message responses", NumberType.INTEGER, null, rec -> rec.lstBidiRsps().size())
                 );
         
         return lstFlds;
@@ -151,9 +151,10 @@ public class FrameProcResultStats extends TestResultStatsBase<FrameProcTestResul
      * @see com.ospreydcs.dp.jal.tools.common.score.TestResultStatsBase#assignDurationFields()
      */
     @Override
-    protected List<DurationField<FrameProcTestResult>> assignDurationFields() {
-        List<DurationField<FrameProcTestResult>>    lstFlds = List.of(
-                DurationField.from("Ingestion Frame Processing Duration", DUR_PROC_TGT, rec -> rec.durProcessed())
+    protected List<DurationField<IngestChanTestResult>> assignDurationFields() {
+        List<DurationField<IngestChanTestResult>>   lstFlds = List.of(
+                DurationField.from("Data transmission duration", DUR_XMIT_TGT, rec -> rec.durTransmit()),
+                DurationField.from("Data processing duration", DUR_XMIT_TGT, rec -> rec.durProcessed())
                 );
         
         return lstFlds;
@@ -166,16 +167,16 @@ public class FrameProcResultStats extends TestResultStatsBase<FrameProcTestResul
     
     /**
      * <p>
-     * Constructs a new <code>FrameProcResultStats</code> instance.
+     * Constructs a new <code>IngestChanResultStats</code> instance.
      * </p>
      *
-     * @param   conResults  the collection of all test results to be analyzed
+     * @param conResults    the collection of test results to be analyzed
      * 
      * @throws IllegalArgumentException the argument collection was empty
      * @throws MissingResourceException no <code>TestResult</code> fields were identified for analysis
      * @throws NoSuchElementException   no successful results were contained in the argument collection
      */
-    private FrameProcResultStats(Collection<FrameProcTestResult> conResults)
+    private IngestChanResultStats(Collection<IngestChanTestResult> conResults)
             throws IllegalArgumentException, MissingResourceException, NoSuchElementException {
         super(conResults);
     }

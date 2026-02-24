@@ -43,6 +43,16 @@ import com.ospreydcs.dp.jal.tools.common.score.ConfigScorerBase;
  * <code>IngestionFrameProcessor</code> instance used to process ingestion data frames.
  * </p>
  * <p>
+ * Configuration score are managed by the enclosed class <code>{@link ConfigScore}</code>, which accumulates all
+ * scores from collections of <code>{@link FrameProcTestResult}</code> collections and performs all the required
+ * computations.
+ * </p>
+ * <p>
+ * <h2>Creation</h2>
+ * Use <code>{@link #from(Collection)}</code> to create a new, fully configured <code>FrameProcConfigScorer</code>
+ * instance ready for output using methods <code>{@link #printOutByHits(PrintStream, String)}</code> or
+ * <code>{@link #printOutByRates(PrintStream, String)}</code>.
+ * </p> 
  * 
  *
  * @author Christopher K. Allen
@@ -84,18 +94,16 @@ public class FrameProcConfigScorer extends ConfigScorerBase<FrameProcessorConfig
     //
     
     /**
-    /**
      * <p>
-     * Class maintaining the scoring for a <code>FrameProcessorConfig</code> configuration record.
+     * Class managing the scoring for a <code>FrameProcessorConfig</code> configuration record.
      * </p>
      * <p>
-     * Class instances extract the the scoring from <code>FrameProcTestResult</code> records
-     * to maintain a score for the test conditions for the result.
+     * Class that maintains a score for the test conditions of the test results. 
+     * Scoring for <code>{@link FrameProcTestResult}</code> instances are accumulated using the 
+     * <code>{@link #addInResult(FrameProcTestResult)}</code> method where score are managed on the fly.
+     * Class instances extract the the configuration <code>{@link FrameProcessConfig}</code> configuration 
+     * from <code>FrameProcTestResult</code> records and compute the scoring for that result.
      * </p>
-     *
-     *
-     * @author Christopher K. Allen
-     * @since Feb 11, 2026
      *
      */
     public static class ConfigScore extends ConfigScoreBase<FrameProcessorConfig, FrameProcTestResult> {
@@ -295,6 +303,9 @@ public class FrameProcConfigScorer extends ConfigScorerBase<FrameProcessorConfig
             return this.cntFrmsAvg;
         }
         
+        /**
+         * @return  the payload frame count standard deviation
+         */
         public final double payloadFrameCountStd() {
             double  std = Math.sqrt(this.cntFrmsSqrd - this.cntFrmsAvg*this.cntFrmsAvg);
             
@@ -364,8 +375,20 @@ public class FrameProcConfigScorer extends ConfigScorerBase<FrameProcessorConfig
 
     
     //
-    // Constructor
+    // Constructors
     //
+    
+    /**
+     * <p>
+     * Constructs a new, empty <code>FrameProcConfigScorer</code> instance.
+     * </p>
+     * <p>
+     * This constructor is hidden and not used.
+     * </p>
+     */
+    private FrameProcConfigScorer() {
+        super();
+    }
     
     /**
      * <p>

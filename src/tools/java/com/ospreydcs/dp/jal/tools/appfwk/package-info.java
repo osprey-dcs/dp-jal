@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	package-info.java
- * Package: com.ospreydcs.dp.jal.appfwk
+ * Package: com.ospreydcs.dp.jal.tools.appfwk
  * Type: 	package-info
  *
  * Copyright 2010-2025 the original author or authors.
@@ -32,4 +32,4 @@
  * @since May 28, 2025
  *
  */
-package com.ospreydcs.dp.jal.appfwk;
+package com.ospreydcs.dp.jal.tools.appfwk;

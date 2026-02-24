@@ -35,7 +35,7 @@ import com.ospreydcs.dp.jal.tools.common.score.TestResultExtremesBase;
 
 /**
  * <p>
- * Class containing a performance summary statistics for a collection of <code>FrameProcTestResult</code> records.
+ * Class containing a summary of extreme statistics for a collection of <code>FrameProcTestResult</code> records.
  * </p>
  * <p>
  * Records should be created from <code>{@link #from(Collection)}</code> creator which computes the performance
@@ -46,7 +46,7 @@ import com.ospreydcs.dp.jal.tools.common.score.TestResultExtremesBase;
  * @since Feb 11, 2026
  *
  */
-public class FrameProcResultExtremes extends TestResultExtremesBase<FrameProcTestParam, FrameProcTestResult> {
+public class FrameProcResultExtremes extends TestResultExtremesBase<FrameProcTestParams, FrameProcTestResult> {
 
     
     //
@@ -64,6 +64,8 @@ public class FrameProcResultExtremes extends TestResultExtremesBase<FrameProcTes
      * 
      * @param conResults    collection of the test results
      * 
+     * @return  a fully configured <code>FrameProcResultExtremes</code> instance ready for <code>{@link #printOut(java.io.PrintStream, String)}</code>
+     * 
      * @throws IllegalArgumentException the argument collection was empty
      * @throws MissingResourceException no <code>TestResult</code> fields were identified for analysis
      * @throws NoSuchElementException   no successful results were contained in the argument collection
@@ -76,7 +78,7 @@ public class FrameProcResultExtremes extends TestResultExtremesBase<FrameProcTes
     
     
     //
-    // TestResultExtremesBase<FrameProcTestParam, FrameProcTestResult> Abstract Methods
+    // TestResultExtremesBase<FrameProcTestParams, FrameProcTestResult> Abstract Methods
     //
     
     /**
@@ -93,16 +95,16 @@ public class FrameProcResultExtremes extends TestResultExtremesBase<FrameProcTes
      * @see com.ospreydcs.dp.jal.tools.common.score.TestResultExtremesBase#assignNumberAssociations()
      */
     @Override
-    protected List<ParamToNumField<FrameProcTestParam, FrameProcTestResult>> assignNumberAssociations() {
-        List<ParamToNumField<FrameProcTestParam, FrameProcTestResult>>  lstAssocNum = List.of(
-                ParamToNumField.from(FrameProcTestParam.COL_SER_ENBL, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolColSerEnbl() , rec -> rec.dblRateRaw()),
-                ParamToNumField.from(FrameProcTestParam.COL_SER_ENBL, "Proc Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolColSerEnbl() , rec -> rec.dblRateProc()),
-                ParamToNumField.from(FrameProcTestParam.MTHREAD_ENABLE, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolConcEnbl(), rec -> rec.dblRateRaw()),
-                ParamToNumField.from(FrameProcTestParam.MTHREAD_COUNT, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().cntMaxThrds(), rec -> rec.dblRateRaw()),
-                ParamToNumField.from(FrameProcTestParam.MTHREAD_COUNT, "Proc Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().cntMaxThrds(), rec -> rec.dblRateProc()),
-                ParamToNumField.from(FrameProcTestParam.DCMP_ENABLE, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolConcEnbl(), rec -> rec.dblRateRaw()),
-                ParamToNumField.from(FrameProcTestParam.FRAME_DEF, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().specFrame().strLabel(), rec -> rec.dblRateRaw()),
-                ParamToNumField.from(FrameProcTestParam.FRAME_DEF, "Processed Message Count", NumberType.INTEGER, rec -> rec.recTestCase().specFrame().strLabel(), rec -> rec.cntMsgs())
+    protected List<ParamToNumField<FrameProcTestParams, FrameProcTestResult>> assignNumberAssociations() {
+        List<ParamToNumField<FrameProcTestParams, FrameProcTestResult>>  lstAssocNum = List.of(
+                ParamToNumField.from(FrameProcTestParams.COL_SER_ENBL, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolColSerEnbl() , rec -> rec.dblRateRaw()),
+                ParamToNumField.from(FrameProcTestParams.COL_SER_ENBL, "Proc Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolColSerEnbl() , rec -> rec.dblRateProc()),
+                ParamToNumField.from(FrameProcTestParams.MTHREAD_ENABLE, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolConcEnbl(), rec -> rec.dblRateRaw()),
+                ParamToNumField.from(FrameProcTestParams.MTHREAD_COUNT, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().cntMaxThrds(), rec -> rec.dblRateRaw()),
+                ParamToNumField.from(FrameProcTestParams.MTHREAD_COUNT, "Proc Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().cntMaxThrds(), rec -> rec.dblRateProc()),
+                ParamToNumField.from(FrameProcTestParams.DCMP_ENABLE, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolConcEnbl(), rec -> rec.dblRateRaw()),
+                ParamToNumField.from(FrameProcTestParams.FRAME_DEF, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().specFrame().strLabel(), rec -> rec.dblRateRaw()),
+                ParamToNumField.from(FrameProcTestParams.FRAME_DEF, "Processed Message Count", NumberType.INTEGER, rec -> rec.recTestCase().specFrame().strLabel(), rec -> rec.cntMsgs())
                 );
         
         return lstAssocNum;
@@ -112,9 +114,9 @@ public class FrameProcResultExtremes extends TestResultExtremesBase<FrameProcTes
      * @see com.ospreydcs.dp.jal.tools.common.score.TestResultExtremesBase#assignDurationAssociatios()
      */
     @Override
-    protected List<ParamToDurField<FrameProcTestParam, FrameProcTestResult>> assignDurationAssociatios() {
-        List<ParamToDurField<FrameProcTestParam, FrameProcTestResult>>  lstAssocDur = List.of(
-                ParamToDurField.from(FrameProcTestParam.FRAME_CNT, "Processing Duration", rec -> rec.cntFrames(), rec -> rec.durProcessed())
+    protected List<ParamToDurField<FrameProcTestParams, FrameProcTestResult>> assignDurationAssociatios() {
+        List<ParamToDurField<FrameProcTestParams, FrameProcTestResult>>  lstAssocDur = List.of(
+                ParamToDurField.from(FrameProcTestParams.FRAME_CNT, "Processing Duration", rec -> rec.cntFrames(), rec -> rec.durProcessed())
                 );
         
         return lstAssocDur;
@@ -138,7 +140,7 @@ public class FrameProcResultExtremes extends TestResultExtremesBase<FrameProcTes
      */
     public FrameProcResultExtremes(Collection<FrameProcTestResult> conResults)
             throws IllegalArgumentException, MissingResourceException, NoSuchElementException {
-        super(FrameProcTestParam.class, conResults);
+        super(FrameProcTestParams.class, conResults);
     }
 
 }

@@ -41,13 +41,13 @@ import javax.naming.ConfigurationException;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
-import com.ospreydcs.dp.jal.appfwk.ExitCode;
-import com.ospreydcs.dp.jal.appfwk.JalApplicationBase;
-import com.ospreydcs.dp.jal.appfwk.JalQueryAppBase;
 import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
 import com.ospreydcs.dp.jal.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.jal.query.model.assem.QueryRequestRecoverer;
 import com.ospreydcs.dp.jal.query.model.request.RequestDecompType;
+import com.ospreydcs.dp.jal.tools.appfwk.ExitCode;
+import com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase;
+import com.ospreydcs.dp.jal.tools.appfwk.JalQueryAppBase;
 import com.ospreydcs.dp.jal.tools.common.requests.TestArchiveRequest;
 import com.ospreydcs.dp.jal.tools.common.score.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -316,8 +316,8 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
             STR_APP_NAME  + " Usage: \n"
           + "\n"
           + "% " + STR_APP_NAME
-          + " [" + STR_VAR_HELP + "]"
-          + " [" + STR_VAR_VERSION + "]"
+          + " [" + STR_DVAR_HELP + "]"
+          + " [" + STR_DVAR_VERSION + "]"
           + " R1 [ ... Rn]"
           + " [" + STR_VAR_SUPPL_PVS + " PV1 ... PVn]"
           + STR_LINE_BREAK
@@ -341,8 +341,8 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
           + " [" + STR_VAR_OUTPUT +" Output] \n"
           + "\n" 
           + "  Where  \n"
-          + "    " + STR_VAR_HELP + "        = prints this message and application description.\n"
-          + "    " + STR_VAR_VERSION + "     = prints application version information and return.\n"
+          + "    " + STR_DVAR_HELP + "        = prints this message and application description.\n"
+          + "    " + STR_DVAR_VERSION + "     = prints application version information and return.\n"
           + "    R1, ..., Rn   = Test request(s) to perform - TestArchiveRequest enumeration name(s). \n"
           + "    PV1, ..., PVn = Supplemental PV names to be added to requests R1 through Rn. \n"
           + "    " + STR_VAR_DCMP_ENABLE + "        = Enable/disable time-series data request decomposition {FALSE, TRUE}. \n"
@@ -473,7 +473,7 @@ public class QueryRecoveryEvaluator extends JalQueryAppBase<QueryRecoveryEvaluat
     //
     
     /**
-     * @see com.ospreydcs.dp.jal.appfwk.JalApplicationBase#getLogger()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase#getLogger()
      */
     @Override
     protected Logger getLogger() {

@@ -44,8 +44,6 @@ import com.ospreydcs.dp.jal.common.IngestRequestUID;
 import com.ospreydcs.dp.jal.common.IngestionResult;
 import com.ospreydcs.dp.jal.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.jal.grpc.ingest.DpIngestionConnectionFactory;
-import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionChannel;
-import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer;
 import com.ospreydcs.dp.jal.ingest.test.TestIngestDataRequestGenerator;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 

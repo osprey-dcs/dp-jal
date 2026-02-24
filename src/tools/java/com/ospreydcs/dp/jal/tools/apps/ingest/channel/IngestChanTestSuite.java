@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	FrameProcTestSuite.java
- * Package: com.ospreydcs.dp.jal.tools.apps.ingest.frame
- * Type: 	FrameProcTestSuite
+ * File:	IngestChanTestSuite.java
+ * Package: com.ospreydcs.dp.jal.tools.apps.ingest.channel
+ * Type: 	IngestChanTestSuite
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,10 +20,10 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Feb 5, 2026
+ * @since Feb 20, 2026
  *
  */
-package com.ospreydcs.dp.jal.tools.apps.ingest.frame;
+package com.ospreydcs.dp.jal.tools.apps.ingest.channel;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.MalformedParametersException;
@@ -34,7 +34,7 @@ import java.util.NoSuchElementException;
 
 import javax.naming.ConfigurationException;
 
-import com.ospreydcs.dp.jal.tools.apps.ingest.common.FrameProcessorConfig;
+import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.parse.AppOptionsParser;
 import com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase;
@@ -42,11 +42,11 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
- * Class for generating test suites for application <code>FrameProcessorEvaluator</code>.
+ * Class for generating test suites for application <code>IngestionChannelEvaluator</code>.
  * </p>
  * <p>
- * Class instances create collections of <code>{@link FrameProcTestCase}</code> records which define a test
- * case situation for evaluation. Test case parameters are enumerated within <code>{@link FrameProcTestParams}</code>.
+ * Class instances create collections of <code>{@link IngestChanTestCase}</code> records which define a test
+ * case situation for evaluation. Test case parameters are enumerated within <code>{@link IngestChanTestParams}</code>.
  * </p>
  * <p>
  * <h2>Usage</h2>
@@ -64,15 +64,15 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * methods for configuring the test suite generator, confirming valid configurations, checking for missing parameter values,
  * retrieving parameter values, and obtaining the total test case count for the current configuration.
  * To support the base class operation the <code>FrameProcTestSuite</code> class supplies the abstract methods
- * <code>{@link #isValidType(FrameProcTestParams, Object)}</code> and <code>{@link #createTestCase(Map)}</code>, which
- * check that a given parameter value is of the correct type and creates a <code>{@link FrameProcTestCase}</code> from
+ * <code>{@link #isValidType(IngestChanTestParams, Object)}</code> and <code>{@link #createTestCase(Map)}</code>, which
+ * check that a given parameter value is of the correct type and creates a <code>{@link IngestChanTestCase}</code> from
  * a map of (Param, Value) pairs, respectively.  These abstract implementations are particular to the parameter
- * enumeration <code>{@link FrameProcTestParams}</code> and test case record <code>{@link FrameProcTestCase}</code>.
+ * enumeration <code>{@link IngestChanTestParams}</code> and test case record <code>{@link IngestChanTestCase}</code>.
  * </p>
  * <p>
  * <h2>NOTES:</h2>
  * <ul>
- * <li>At least one value must be assigned for each parameter in <code>{@link FrameProcTestParams}</code>, otherwise the configuration is invalid.</li>
+ * <li>At least one value must be assigned for each parameter in <code>{@link IngestChanTestParams}</code>, otherwise the configuration is invalid.</li>
  * <li>Method <code>{@link #isValidConfiguration()}</code> is available to check for valid configuration.</li>
  * <li>Test suite size grows geometrically with the number of parameter values, where total case count is the product of the number of values.</li>
  * <li>Method <code>{@link #testCaseCount()}</code> is available to check the number of test cases for the current configuration.</li>
@@ -80,10 +80,11 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * </p> 
  *
  * @author Christopher K. Allen
- * @since Feb 5, 2026
- * 
+ * @since Feb 20, 2026
+ *
+ * @see TestSuiteGeneratorBase
  */
-public class FrameProcTestSuite extends TestSuiteGeneratorBase<FrameProcTestParams, FrameProcTestCase> {
+public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestParams, IngestChanTestCase> {
 
     
     //
@@ -92,30 +93,28 @@ public class FrameProcTestSuite extends TestSuiteGeneratorBase<FrameProcTestPara
     
     /**
      * <p>
-     * Creates and returns a new, uninitialized <code>FrameProcTestSuite</code> instance.
+     * Creates and returns a new, uninitialized <code>IngestChanTestSuite</code> instance.
      * </p>
      * <p>
      * The returned test suite generator must configured with values for test parameters enumerated
-     * within <code>{@link FrameProcTestParams}</code>.
+     * within <code>{@link IngestChanTestParams}</code>.
      * Parameter values are assigned with base-class method 
-     * <code>{@link TestSuiteGeneratorBase#addParameterValue(FrameProcTestParams, Object)}</code>.
-     * </p>
-     * <p>
-     * Once fully configured (populated with test parameters and values), test suites can be generated 
-     * with method <code>{@link TestSuiteGeneratorBase#createTestSuit()}</code>.
+     * <code>{@link TestSuiteGeneratorBase#addParameterValue(IngestChanTestParams, Object)}</code>.
+     * Once populated test suites are generated with method
+     * <code>{@link TestSuiteGeneratorBase#createTestSuit()</code>.
      * </p> 
      *  
-     * @return  a new <code>FrameProcTestSuite</code> instance ready for parameter value population
+     * @return  a new <code>IngestChanTestSuite</code> ready for parameter value population
      * 
      * @see TestSuiteGeneratorBase
      */
-    public static FrameProcTestSuite   from() {
-        return new FrameProcTestSuite();
+    public static IngestChanTestSuite   from() {
+        return new IngestChanTestSuite();
     }
     
     /**
      * <p>
-     * Creates and returns a new, fully configured <code>FrameProcTestSuite</code> instance.
+     * Creates and returns a new, fully configured <code>IngestChanTestSuite</code> instance.
      * </p>
      * <p>
      * The returned test suite generator is configured according to the given application command-line arguments.
@@ -127,7 +126,7 @@ public class FrameProcTestSuite extends TestSuiteGeneratorBase<FrameProcTestPara
      * @param parser    command-line parser configured for <code>FrameProcessorEvaluator</code> options
      * @param args      the application command-line arguments
      * 
-     * @return  a new <code>FrameProcTestSuite</code> instance fully configured from the given command-line arguments
+     * @return  a new <code>IngestChanTestSuite</code> instance fully configured from the given command-line arguments
      *  
      * @param args  the application command-line arguments
      * 
@@ -147,34 +146,34 @@ public class FrameProcTestSuite extends TestSuiteGeneratorBase<FrameProcTestPara
      * 
      * @see TestSuiteGeneratorBase
      */
-    public static FrameProcTestSuite    from(AppOptionsParser parser, String...args) 
-            throws ClassCastException, DateTimeParseException, NumberFormatException, UnsupportedOperationException, 
-                   NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, 
-                   IllegalArgumentException, TypeNotPresentException, ConfigurationException, 
-                   MalformedParametersException 
+    public static IngestChanTestSuite   from(AppOptionsParser parser, String...args) 
+            throws DateTimeParseException, NumberFormatException, ClassCastException, 
+                   UnsupportedOperationException, NoSuchMethodException, SecurityException, 
+                   IllegalAccessException, InvocationTargetException, IllegalArgumentException, 
+                   TypeNotPresentException, ConfigurationException, MalformedParametersException 
     {
-        FrameProcTestSuite  suite = FrameProcTestSuite.from();
+        IngestChanTestSuite suite = IngestChanTestSuite.from();
         
-        suite.parseParameterValues(parser, args);    // throws all exceptions
+        suite.parseParameterValues(parser, args);
         
         return suite;
     }
     
-    
+
     //
-    // Constructors
+    // Constructor
     //
     
     /**
      * <p>
-     * Constructs a new <code>FrameProcTestSuite</code> instance.
+     * Constructs a new <code>IngestChanTestSuite</code> instance.
      * </p>
      * <p>
      * Required of base class to obtain the test parameters enumeration class object.
      * </p>
      */
-    private FrameProcTestSuite() {
-        super(FrameProcTestParams.class);
+    protected IngestChanTestSuite() {
+        super(IngestChanTestParams.class);
     }
 
     
@@ -186,7 +185,7 @@ public class FrameProcTestSuite extends TestSuiteGeneratorBase<FrameProcTestPara
      * @see com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#isValidType(java.lang.Enum, java.lang.Object)
      */
     @Override
-    protected boolean isValidType(FrameProcTestParams enmParam, Object objVal) {
+    protected boolean isValidType(IngestChanTestParams enmParam, Object objVal) {
         return enmParam.isInstance(objVal);
     }
 
@@ -194,8 +193,9 @@ public class FrameProcTestSuite extends TestSuiteGeneratorBase<FrameProcTestPara
      * @see com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#createTestCase(java.util.Map)
      */
     @Override
-    protected FrameProcTestCase createTestCase(Map<FrameProcTestParams, Object> mapTestVals)
+    protected IngestChanTestCase createTestCase(Map<IngestChanTestParams, Object> mapTestVals)
             throws MissingResourceException, ClassCastException, UnsupportedOperationException {
+        
         
         // Check for parameter completeness
         if (super.hasMissingParameters(mapTestVals))
@@ -214,49 +214,44 @@ public class FrameProcTestSuite extends TestSuiteGeneratorBase<FrameProcTestPara
                     );
         
         // Create space for parameter values
-        Boolean             bolColSerEnbl = null;   // column serialization enable/disable
-        Boolean             bolMThrdEnbl = null;    // multi-threaded processing enable/disable
-        Integer             cntThrdsMax = null;     // maximum allowable multi-threaded thread count
-        Boolean             bolDcmpEnbl = null;     // ingestion frame decomposition enable/disable
-        Integer             szDcmpMax = null;       // maximum composite ingestion frame size (bytes)
-        Integer             cntFrms = null;         // number of ingestion frames in evaluation payload
-        FrameFactorySpec    specFrm = null;         // ingestion frame definition (specification)
-        
+        Boolean             bolColSerEnbl = null;   // enable/disable column serialization 
+        DpGrpcStreamType    enmStrmType = null;     // the gRPC data stream type
+        Boolean             bolMStrmEnbl = null;    // enable/disable multiple, concurrent gRPC data streams
+        Integer             cntMStrmMax = null;     // maximum number of concurrent gRPC data streams
+        Integer             cntFrames = null;         // number of ingestion frames in evaluation payload
+        FrameFactorySpec    specFrame = null;         // ingestion frame definition (specification)
+
         // Assign parameter values from map entries
-        for (Map.Entry<FrameProcTestParams, Object> entry : mapTestVals.entrySet()) {
-            FrameProcTestParams      enmParam = entry.getKey();
+        for (Map.Entry<IngestChanTestParams, Object> entry : mapTestVals.entrySet()) {
+            IngestChanTestParams    enmParam = entry.getKey();
             Object                  objVal = entry.getValue();
             
             switch (enmParam) {
             case COL_SER_ENBL:
-                bolColSerEnbl = Boolean.class.cast(objVal);    // throws ClassCastException
+                bolColSerEnbl = Boolean.class.cast(objVal);     // throws ClassCastException
                 break;
-            case MTHREAD_ENABLE:
-                bolMThrdEnbl = Boolean.class.cast(objVal);      // throws ClassCastException
+            case STREAM_TYPE:
+                enmStrmType = DpGrpcStreamType.class.cast(objVal);  // throws ClassCastException
                 break;
-            case MTHREAD_COUNT:
-                cntThrdsMax = Integer.class.cast(objVal);       // throws ClassCastException
+            case MSTREAM_ENBL:
+                bolMStrmEnbl = Boolean.class.cast(objVal);          // throws ClassCastException
                 break;
-            case DCMP_ENABLE:
-                bolDcmpEnbl = Boolean.class.cast(objVal);       // throws ClassCastException
-                break;
-            case DCMP_SIZE:
-                szDcmpMax = Integer.class.cast(objVal);         // throws ClassCastException
+            case MSTREAM_CNT:
+                cntMStrmMax = Integer.class.cast(objVal);           // throws ClassCastException
                 break;
             case FRAME_CNT:
-                cntFrms = Integer.class.cast(objVal);           // throws ClassCastException
+                cntFrames = Integer.class.cast(objVal);             // throws ClassCastException
                 break;
             case FRAME_DEF:
-                specFrm = FrameFactorySpec.class.cast(objVal);  // throws ClassCastException
+                specFrame = FrameFactorySpec.class.cast(objVal);      // throws ClassCastException
                 break;
             default:
                 throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - Unrecognized parameter " + enmParam);
             }
         }
         
-        // Create the test case and return it
-        FrameProcessorConfig    recProcCfg = FrameProcessorConfig.from(bolColSerEnbl, bolDcmpEnbl, szDcmpMax, bolMThrdEnbl, cntThrdsMax);
-        FrameProcTestCase       recTestCase = FrameProcTestCase.from(cntFrms, specFrm, recProcCfg);
+        // Create the test case and return
+        IngestChanTestCase  recTestCase = IngestChanTestCase.from(bolColSerEnbl, enmStrmType, bolMStrmEnbl, cntMStrmMax, cntFrames, specFrame);
         
         return recTestCase;
     }

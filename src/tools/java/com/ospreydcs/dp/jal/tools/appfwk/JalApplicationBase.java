@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	JalApplicationBase.java
- * Package: com.ospreydcs.dp.jal.appfwk
+ * Package: com.ospreydcs.dp.jal.tools.appfwk
  * Type: 	JalApplicationBase
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,12 +23,15 @@
  * @since May 28, 2025
  *
  */
-package com.ospreydcs.dp.jal.appfwk;
+package com.ospreydcs.dp.jal.tools.appfwk;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -41,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future.State;
+import java.util.regex.Matcher;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -48,8 +52,11 @@ import java.util.concurrent.TimeUnit;
 import javax.naming.ConfigurationException;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
+import com.ospreydcs.dp.jal.tools.common.parse.AppInputFileParser;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
+import com.ospreydcs.dp.jal.util.Log4j;
 
 /**
  * <p>
@@ -102,8 +109,8 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * </p>
  * <p> 
  * The command line parsers look for command-line switches, "commands",
- * variables, and properties.  They also identify some standard special requests such as {@value #STR_VAR_HELP}
- * and {@value #STR_VAR_VERSION}.  They can be combined with main class exception report through
+ * variables, and properties.  They also identify some standard special requests such as {@value #STR_DVAR_HELP}
+ * and {@value #STR_DVAR_VERSION}.  They can be combined with main class exception report through
  * <code>{@link #terminateWithException(Class, Throwable)}</code> and/or 
  * <code>{@link #terminateWithErrorMessage(Class, String)}</code> to configure the application.
  * </p>
@@ -143,17 +150,40 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
 
     
     //
+    // Abstract Methods
+    //
+    
+    /**
+     * <p>
+     * Determine whether or not logging is active in the subclass.
+     * </p>
+     * 
+     * @return  <code>true</code> the subclass is actively logging, <code>false</code> otherwise
+     */
+    abstract protected boolean  isLogging(); 
+    
+    /**
+     * <p>
+     * Get the Log4j <code>Logger</code> instance used by the subclass.
+     * </p>
+     * 
+     * @return  class event logger
+     */
+    abstract protected Logger    getLogger();
+    
+    
+    //
     // Special Arguments and Values
     //
 
-    /** Special application argument variable for help  - see {@link #parseAppArgsHelp(String[])} */
-    public static final String      STR_VAR_HELP = "--help";
+    /** Special application argument delimited variable for help  - see {@link #parseAppArgsHelp(String[])} */
+    public static final String      STR_DVAR_HELP = "--help";
     
-    /** Special application argument variable for version - see {@link #parseAppArgsVersion(String[])} */
-    public static final String      STR_VAR_VERSION = "--version";
+    /** Special application argument delimited variable for version - see {@link #parseAppArgsVersion(String[])} */
+    public static final String      STR_DVAR_VERSION = "--version";
 
-    /** Argument variable identifying output location */
-    public static final String      STR_VAR_OUTPUT = "--output";
+    /** Argument delimited variable identifying output location */
+    public static final String      STR_DVAR_OUTPUT = "--output";
 
     /** Special application argument variable value for console output - see {@link #openOutputStream(String)} */
     public static final String      STR_ARG_VAL_STDOUT = "console";
@@ -193,21 +223,24 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     //
     
     /** The class type of the final application */
-    protected final Class<T>        clsApp;
+    protected final Class<T>            clsApp;
     
     /** The command-line arguments provided to application main() */
-    protected final String[]        arrCmdLnArgs;
+    protected final String[]            arrCmdLnArgs;
 
 
     //
     // Instance Resources
     //
+    
+    /** The buffer containing application execution logs */
+    protected ByteArrayOutputStream     bufLogging = null;
 
     /** The unique file path if one was created - see {@link #createUniqueFileName()} */
-    protected Path                  pathOutFile = null;
+    protected Path                      pathOutFile = null;
     
     /** The output stream to receive evaluation report if one was created (see {@link #openOutputStream(String)}) */
-    protected PrintStream           psOutput = null;
+    protected PrintStream               psOutput = null;
     
     
     /** The timer task executor service */
@@ -243,31 +276,13 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     protected JalApplicationBase(Class<T> clsApp, String...args) {
         this.clsApp = clsApp;
         this.arrCmdLnArgs = args;
+        
+        // Create and attach the buffer for execution logging
+        this.bufLogging = new ByteArrayOutputStream();
+        OutputStreamAppender    appAppLogs = Log4j.createOutputStreamAppender(clsApp.getSimpleName(), this.bufLogging);
+        Log4j.attachAppender(this.getLogger(), appAppLogs);
     }
 
-    
-    //
-    // Abstract Methods
-    //
-    
-    /**
-     * <p>
-     * Determine whether or not logging is active in the subclass.
-     * </p>
-     * 
-     * @return  <code>true</code> the subclass is actively logging, <code>false</code> otherwise
-     */
-    abstract protected boolean  isLogging(); 
-    
-    /**
-     * <p>
-     * Get the Log4j <code>Logger</code> instance used by the subclass.
-     * </p>
-     * 
-     * @return  class event logger
-     */
-    abstract protected Logger    getLogger();
-    
     
     //
     // State/Attribute Query
@@ -615,6 +630,21 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     
     /**
      * <p>
+     * Returns the collection of application execution log entries as a string.
+     * </p>
+     * <p>
+     * All logging entries since application construction are captured in a string buffer.
+     * The contents of this buffer are returned as a single character string (with new line escapes).
+     * </p>
+     * 
+     * @return  the collection of log entries since application construction
+     */
+    protected String    retrieveExecutionLogEntries() {
+        return this.bufLogging.toString();
+    }
+    
+    /**
+     * <p>
      * Reports a terminating exception to Standard Error and to the event logger if enabled (as error).
      * </p>
      * <p>
@@ -645,20 +675,57 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     
     /**
      * <p>
+     * Reads the given file and parses the contents to a string array compatible with that for the <code>main</code>
+     * method entry point.
+     * </p>
+     * <p>
+     * The argument is assumed to be the path for a file containing the command-line arguments of the
+     * <code>JalApplicationBase</code> child application.  The file contents are parsed according to the
+     * standard Java Virtual Machine application arguments convention.  The returned string array is
+     * then that expected when the contents of the file are used as the command-line for the application
+     * (less any comment lines).
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Nested options must be contained in single or double quotes and must appear on a single line.
+     * For further details see class documentation for <code>{@link AppInputFileParser}</code>, which
+     * is used to parse the input file.
+     * </p>
+     *    
+     * @param strFile   path of the file containing <code>FrameProcessorEvaluator</code> command-line arguments
+     *  
+     * @return  the string array of command-line arguments 
+     * 
+     * @throws InvalidPathException the argument did not represent a valid file path
+     * @throws SecurityException    Unable to access the given file 
+     * @throws IOException          error opening, reading, or closing the given file
+     * @throws IllegalStateException        no match operation (i.e., {@link Matcher#find()}) attempted for the given matcher
+     * @throws IndexOutOfBoundsException    attempted to read a pattern with index > {@link #arrRegex} length.
+     */
+    public static String[] readInputFileArguments(String strFile) throws InvalidPathException, SecurityException, IOException, IllegalStateException, IndexOutOfBoundsException {
+        AppInputFileParser  parser = AppInputFileParser.from();
+        
+        String[]            arrArgs = parser.parseFile(strFile);    // throws all exceptions
+        
+        return arrArgs;
+    }
+    
+    /**
+     * <p>
      * Parses the application argument collection for a help request.
      * </p>
      * <p>
      * A value <code>true</code> is returned if any element in the argument collection is equal to the value
-     * {@value #STR_VAR_HELP}, where case is ignored.  Otherwise a value <code>false</code> is returned.
+     * {@value #STR_DVAR_HELP}, where case is ignored.  Otherwise a value <code>false</code> is returned.
      * </p>
      * <p>
      * This method is equivalent to <code>{@link #parseAppArgsSwitch(String[], String)}</code> with the second
-     * argument value as {@value #STR_VAR_HELP}.
+     * argument value as {@value #STR_DVAR_HELP}.
      * </p>
      * 
      * @param args  the application argument collection
      *  
-     * @return  <code>true</code> if the argument collection contained the element {@value #STR_VAR_HELP} (case ignored),
+     * @return  <code>true</code> if the argument collection contained the element {@value #STR_DVAR_HELP} (case ignored),
      *          <code>false</code> otherwise
      */
     public static boolean parseAppArgsHelp(String[] args) {
@@ -668,7 +735,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
             return false;
         
         // Look for help request
-        boolean bolHelp = parseAppArgsSwitch(args, STR_VAR_HELP);
+        boolean bolHelp = parseAppArgsSwitch(args, STR_DVAR_HELP);
         
         return bolHelp;
     }
@@ -679,16 +746,16 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * </p>
      * <p>
      * A value <code>true</code> is returned if any element in the argument collection is equal to the value
-     * {@value #STR_VAR_VERSION}, where case is ignored.  Otherwise a value <code>false</code> is returned.
+     * {@value #STR_DVAR_VERSION}, where case is ignored.  Otherwise a value <code>false</code> is returned.
      * </p>
      * <p>
      * This method is equivalent to <code>{@link #parseAppArgsSwitch(String[], String)}</code> with the second
-     * argument value as {@value #STR_VAR_VERSION}.
+     * argument value as {@value #STR_DVAR_VERSION}.
      * </p>
      * 
      * @param args  the application argument collection
      *  
-     * @return  <code>true</code> if the argument collection contained the element {@value #STR_VAR_VERSION} (case ignored),
+     * @return  <code>true</code> if the argument collection contained the element {@value #STR_DVAR_VERSION} (case ignored),
      *          <code>false</code> otherwise
      */
     public static boolean    parseAppArgsVersion(String[] args) {
@@ -698,7 +765,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
             return false;
         
         // Look for version request
-        boolean bolHelp = parseAppArgsSwitch(args, STR_VAR_VERSION);
+        boolean bolHelp = parseAppArgsSwitch(args, STR_DVAR_VERSION);
         
         return bolHelp;
     }
@@ -713,8 +780,8 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * The following conditions are checked in order:
      * <ol>
      * <li>Wrong number of arguments, must be >= the specified number <code>IllegalArgumentException</code>)</li>
-     * <li>A {@value #STR_VAR_HELP} appeared in the argument list (<code>IllegalCallerException</code>).</li>
-     * <li>A {@value #STR_VAR_VERSION} appeared in the argument list (<code>IllegalCallerException</code>).</li>
+     * <li>A {@value #STR_DVAR_HELP} appeared in the argument list (<code>IllegalCallerException</code>).</li>
+     * <li>A {@value #STR_DVAR_VERSION} appeared in the argument list (<code>IllegalCallerException</code>).</li>
      * <li>An argument did not start with a valid switch/variable identified in argument (<code>UnsupportedOperationException</code>).</li>
      * </ol>
      * </p>
@@ -735,12 +802,12 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
             throw new IllegalArgumentException("The argument list " + args + " has lenth less than minimum " + cntMinArgs);
         
         // Check for help request
-        boolean bolHelp = Arrays.asList(args).stream().anyMatch(arg -> arg.strip().equalsIgnoreCase(STR_VAR_HELP));
+        boolean bolHelp = Arrays.asList(args).stream().anyMatch(arg -> arg.strip().equalsIgnoreCase(STR_DVAR_HELP));
         if (bolHelp)
             throw new IllegalCallerException("The client requested help message.");
         
         // Check for version request
-        boolean bolVersion = Arrays.asList(args).stream().anyMatch(arg -> arg.strip().equalsIgnoreCase(STR_VAR_VERSION));
+        boolean bolVersion = Arrays.asList(args).stream().anyMatch(arg -> arg.strip().equalsIgnoreCase(STR_DVAR_VERSION));
         if (bolVersion)
             throw new IllegalCallerException("The client requested version information.");
         
@@ -1034,17 +1101,17 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * </p>
      * <p>
      * The output location, as specified by the application client, is the value of variable
-     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
-     * are ignored.  Application arguments occurring after the {@value STR_VAR_OUTPUT} variable are
+     * {@value #STR_DVAR_OUTPUT}.  There is only one value for this variable and any additional values
+     * are ignored.  Application arguments occurring after the {@value STR_DVAR_OUTPUT} variable are
      * typically application target value(s) obtained from <code>{@link #parseAppArgsTarget(String[])}</code>.
      * </p>
      * <p>
-     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
+     * If the variable {@value #STR_DVAR_OUTPUT} is not present in the command line arguments, this is an
      * optional parameter, then the default value given by the second argument <code>strOutputDef</code> is returned.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * Application arguments occurring after the {@value STR_VAR_OUTPUT} variable are typically application target value(s),
+     * Application arguments occurring after the {@value STR_DVAR_OUTPUT} variable are typically application target value(s),
      * which can be obtained from <code>{@link #parseAppArgsTarget(String[])}</code>.
      * Thus, they are ignored rather than throwing an exception.
      * </p>
@@ -1060,11 +1127,11 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     public static String   parseOutputLocation(String[] args, String strOutputDef) /* throws ConfigurationException */ {
         
         // Look for the output location on the command line
-        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_VAR_OUTPUT);
+        List<String>    lstStrOutput = JalApplicationBase.parseAppArgsVariable(args, STR_DVAR_OUTPUT);
         
 //        // Check configuration
 //        if (lstStrOutput.size() > 1) 
-//            throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() + ": argument variable " + STR_VAR_OUTPUT + " contains multiple values.");
+//            throw new ConfigurationException(JavaRuntime.getQualifiedMethodNameSimple() + ": argument variable " + STR_DVAR_OUTPUT + " contains multiple values.");
     
         // If there is no user-provided output location use the default value given by the second argument
         if (lstStrOutput.isEmpty()) {

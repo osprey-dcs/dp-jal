@@ -84,12 +84,17 @@ public class IngestionMessageBuffer implements IMessageConsumer<IngestDataReques
 
     /**
      * <p>
-     * Creates a new instance of <code>IngestionMessageBuffer</code> with all default parameters.
+     * Creates and returns a new instance of <code>IngestionMessageBuffer</code> with all default parameters.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * If the default back pressure enable/disable flag is set to <code>false</code> then the default queue
+     * capacity is ignored.
      * </p>
      * 
      * @return  new <code>IngestionMessageBuffer</code> instance ready for activation
      */
-    public static IngestionMessageBuffer create() {
+    public static IngestionMessageBuffer from() {
         return new IngestionMessageBuffer();
     }
     
@@ -98,12 +103,17 @@ public class IngestionMessageBuffer implements IMessageConsumer<IngestDataReques
      * Creates a new instance of <code>IngestionMessageBuffer</code> with the given queue buffer capacity and default
      * back pressure enforcement.
      * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * If the default back pressure enable/disable flag is set to <code>false</code> then the queue
+     * capacity is ignored.
+     * </p>
      * 
      * @param szQueueCapacity     capacity of the ingestion data request message queue buffer
      * 
      * @return  new <code>IngestionMessageBuffer</code> instance ready for activation
      */
-    public static IngestionMessageBuffer create(int szQueueCapacity) {
+    public static IngestionMessageBuffer from(int szQueueCapacity) {
         return new IngestionMessageBuffer(szQueueCapacity);
     }
     
@@ -111,13 +121,19 @@ public class IngestionMessageBuffer implements IMessageConsumer<IngestDataReques
      * <p>
      * Creates a new instance of <code>IngestionMessageBuffer</code> with the given parameters.
      * </p>
+     * <p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * If the back pressure enable/disable flag is set to <code>false</code> then the queue
+     * capacity is ignored.
+     * </p>
      * 
-     * @param szQueueCapacity     capacity of the ingestion data request message queue buffer
+     * @param szQueueCapacity   capacity of the ingestion data request message queue buffer
      * @param bolBackPressure   enforce back pressure (implicit throttling) at <code>{@link #offer(List)}</code>
      * 
      * @return  new <code>IngestionMessageBuffer</code> instance ready for activation
      */
-    public static IngestionMessageBuffer create(int szQueueCapacity, boolean bolBackPressure) {
+    public static IngestionMessageBuffer from(int szQueueCapacity, boolean bolBackPressure) {
         return new IngestionMessageBuffer(szQueueCapacity, bolBackPressure);
     }
     
@@ -209,6 +225,7 @@ public class IngestionMessageBuffer implements IMessageConsumer<IngestDataReques
     private boolean bolActive = false;
     
     /** Has the supplier been shutdown */
+    @SuppressWarnings("unused")
     private boolean bolShutdown = false;
   
     

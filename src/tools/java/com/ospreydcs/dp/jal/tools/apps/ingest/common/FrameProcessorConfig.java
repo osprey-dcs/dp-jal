@@ -70,6 +70,10 @@ public record FrameProcessorConfig(
      * <p>
      * Creates and returns a new <code>FrameProcessorConfig</code> record with field values given by the arguments.
      * </p>
+     * <p>
+     * This is a convenience creator equivalent to the canonical constructor
+     * <code>{@link #FrameProcessorConfig(boolean, boolean, long, boolean, int)}</code>.
+     * </p> 
      * 
      * @param   bolColSerEnbl       Processor Configuration - enable/disable <code>DataColumn</code> serialization for transport
      * 
@@ -109,7 +113,7 @@ public record FrameProcessorConfig(
      * </p>
      * <p>
      * @apiNote
-     * The method is overriden so that the given argument can be a different object than this object.  The 
+     * The method is overridden so that the given argument can be a different object than this object.  The 
      * equality is enforced according to field values, not the record object itself.
      * </p>
      *   

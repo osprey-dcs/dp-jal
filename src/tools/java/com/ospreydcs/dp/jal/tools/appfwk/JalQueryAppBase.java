@@ -1,7 +1,7 @@
 /*
  * Project: dp-api-common
  * File:	JalQueryAppBase.java
- * Package: com.ospreydcs.dp.jal.appfwk
+ * Package: com.ospreydcs.dp.jal.tools.appfwk
  * Type: 	JalQueryAppBase
  *
  * Copyright 2010-2025 the original author or authors.
@@ -23,7 +23,7 @@
  * @since May 28, 2025
  *
  */
-package com.ospreydcs.dp.jal.appfwk;
+package com.ospreydcs.dp.jal.tools.appfwk;
 
 import java.nio.BufferUnderflowException;
 import java.util.LinkedList;
@@ -164,7 +164,7 @@ public abstract class JalQueryAppBase<T extends JalQueryAppBase<T>> extends JalA
     //
     
     /**
-     * @see com.ospreydcs.dp.jal.appfwk.JalApplicationBase#isLogging()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase#isLogging()
      */
     @Override
     protected boolean   isLogging() {

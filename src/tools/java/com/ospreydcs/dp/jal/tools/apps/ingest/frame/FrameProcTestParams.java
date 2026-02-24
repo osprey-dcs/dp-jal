@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	FrameProcTestParam.java
+ * File:	FrameProcTestParams.java
  * Package: com.ospreydcs.dp.jal.tools.apps.ingest.frame
- * Type: 	FrameProcTestParam
+ * Type: 	FrameProcTestParams
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -28,9 +28,7 @@ package com.ospreydcs.dp.jal.tools.apps.ingest.frame;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.MalformedParametersException;
-import java.lang.reflect.Method;
 import java.time.format.DateTimeParseException;
-import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -38,10 +36,8 @@ import java.util.StringTokenizer;
 
 import javax.naming.ConfigurationException;
 
-import com.ospreydcs.dp.jal.config.JalConfig;
-import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
-import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
+import com.ospreydcs.dp.jal.tools.common.score.ITestParameter;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -58,42 +54,42 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * @since Feb 5, 2026
  *
  */
-public enum FrameProcTestParam {
+public enum FrameProcTestParams implements ITestParameter<FrameProcTestParams> {
     
     /**
      * Enable/disable the use of data column serialization for <code>IngestDataRequest</code> messages.
      */
-    COL_SER_ENBL("Enable data column serialization.", FrameProcessorEvaluator.STR_PARSE_SERIAL_ENBL_DVAR, Boolean.class, DefaultCfg.VALS.serialize.enabled),
+    COL_SER_ENBL("Enable data column serialization.", FrameProcessorEvaluator.STR_PARSE_SERIAL_ENBL_DVAR, Boolean.class, DefaultCfg.API.ingest.serialize.enabled),
     
     /**
      * Enable/disable concurrency (i.e., multi-threaded processing) in ingestion frame processing.
      */
-    MTHREAD_ENABLE("Enable multi-threaded processing", FrameProcessorEvaluator.STR_PARSE_MTHRD_ENBL_DVAR, Boolean.class, DefaultCfg.VALS.concurrency.enabled),
+    MTHREAD_ENABLE("Enable multi-threaded processing", FrameProcessorEvaluator.STR_PARSE_MTHRD_ENBL_DVAR, Boolean.class, DefaultCfg.API.ingest.concurrency.enabled),
     
     /**
      * Maximum number of allowable concurrent processing thread in concurrent ingestion frame processing.
      */
-    MTHREAD_COUNT("Maximum number of concurrent processing threads", FrameProcessorEvaluator.STR_PARSE_THRD_CNT_DVAR, Integer.class, DefaultCfg.VALS.concurrency.maxThreads),
+    MTHREAD_COUNT("Maximum number of concurrent processing threads", FrameProcessorEvaluator.STR_PARSE_THRD_CNT_DVAR, Integer.class, DefaultCfg.API.ingest.concurrency.maxThreads),
     
     /**
      * Enable/disable ingestion frame decomposition (i.e., to conform to maximum gRPC message size limits). 
      */
-    DCMP_ENABLE("Enable ingestion frame decomposition", FrameProcessorEvaluator.STR_PARSE_DCMP_ENBL_DVAR, Boolean.class, DefaultCfg.VALS.decompose.enabled),
+    DCMP_ENABLE("Enable ingestion frame decomposition", FrameProcessorEvaluator.STR_PARSE_DCMP_ENBL_DVAR, Boolean.class, DefaultCfg.API.ingest.decompose.enabled),
     
     /**
      * Maximum allowable composite ingestion frame size (in bytes) when using ingestion frame decomposition. 
      */
-    DCMP_SIZE("Maximum composite ingestion frame size (bytes)", FrameProcessorEvaluator.STR_PARSE_DCMP_SZ_DVAR, Integer.class, DefaultCfg.VALS.decompose.maxSize),
-    
-    /**
-     * The test case ingestion frame specification (definition).  
-     */
-    FRAME_DEF("Ingestion data frame configuration", FrameProcessorEvaluator.STR_PARSE_FRM_SPEC_DVAR, FrameFactorySpec.class, DefaultCfg.SPEC_FRM),
+    DCMP_SIZE("Maximum composite ingestion frame size (bytes)", FrameProcessorEvaluator.STR_PARSE_DCMP_SZ_DVAR, Integer.class, DefaultCfg.API.ingest.decompose.maxSize),
     
     /**
      * Number of ingestion frames forming the test case payload. 
      */
-    FRAME_CNT("Number of ingestion data frames in payload", FrameProcessorEvaluator.STR_PARSE_FRM_CNT_DVAR, Integer.class, DefaultCfg.CNT_FRMS),
+    FRAME_CNT("Number of ingestion data frames in payload", FrameProcessorEvaluator.STR_PARSE_FRM_CNT_DVAR, Integer.class, DefaultCfg.TOOLS.datagen.frame.count),
+    
+    /**
+     * The test case ingestion frame specification (definition).  
+     */
+    FRAME_DEF("Ingestion data frame configuration", FrameProcessorEvaluator.STR_PARSE_FRM_SPEC_DVAR, FrameFactorySpec.class, DefaultCfgLoc.SPEC_FRM),
     
     ;
     
@@ -106,13 +102,7 @@ public enum FrameProcTestParam {
      * Class extracts default values from the JAL default configuration and the JAL Tools default configuration.
      * </p>
      */
-    private static final class DefaultCfg {
-    
-        /** Handle to the JAL default ingestion configuration values */
-        private static final JalIngestionConfig     VALS = JalConfig.getInstance().ingest;
-        
-        /** The default ingestion frame payload size taken from the JAL Tools default configuration */
-        private static final Integer                CNT_FRMS = JalToolsConfig.getInstance().datagen.frame.count;
+    private static final class DefaultCfgLoc {
         
         /** The default ingestion frame specification - created here to manage creation exceptions */
         private static FrameFactorySpec             SPEC_FRM;
@@ -153,15 +143,15 @@ public enum FrameProcTestParam {
     
     /**
      * <p>
-     * Constructs a new <code>FrameProcTestParam</code> instance.
+     * Constructs a new <code>FrameProcTestParams</code> instance.
      * </p>
      *
-     * @param strParamDesc       the parameter string description
+     * @param strParamDesc  the parameter string description
      * @param strDelVarNm   the delimited variable name used to identify parameter values on the command-line
      * @param clsParamType  the parameter class type
      * @param objValueDef   the parameter default value
      */
-    private FrameProcTestParam(String strDesc, String strDelVarNm, Class<?> clsParamType, Object objValueDef) {
+    private FrameProcTestParams(String strDesc, String strDelVarNm, Class<?> clsParamType, Object objValueDef) {
         this.strParamDesc = strDesc;
         this.strDelVarNm = strDelVarNm;
         this.clsParamType = clsParamType;
@@ -174,7 +164,7 @@ public enum FrameProcTestParam {
     
     /**
      * <p>
-     * Returns the <code>FrameProcTestParam</code> enumeration constant with the given name.
+     * Returns the <code>FrameProcTestParams</code> enumeration constant with the given name.
      * </p>
      * <p>
      * This is a convenience method which defers to <code>{@link Enum#valueOf(Class, String)}</code> by
@@ -185,20 +175,12 @@ public enum FrameProcTestParam {
      * 
      * @param strName   name of the enumeration constant
      * 
-     * @return  the <code>FrameProcTestParam</code> constant with the given name
+     * @return  the <code>FrameProcTestParams</code> constant with the given name
      * 
      * @throws TypeNotPresentException  the argument was <code>null</code> or an invalid enumeration constant name  
      */
-    public static FrameProcTestParam    valueFrom(String strName) throws TypeNotPresentException {
-        
-        try {
-            FrameProcTestParam  enmParam = FrameProcTestParam.valueOf(FrameProcTestParam.class, strName);
-
-            return enmParam;
-            
-        } catch (Exception e) {
-            throw new TypeNotPresentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Unrecognized enumeration constant: " + strName, e);
-        }
+    public static FrameProcTestParams    valueFrom(String strName) throws TypeNotPresentException {
+        return ITestParameter.valueFrom(FrameProcTestParams.class, strName);
     }
     
     /**
@@ -217,43 +199,37 @@ public enum FrameProcTestParam {
      * @throws NoSuchElementException   a maximum value could not be found for the constant name, delimited variable name, or class type name
      */
     public static void  printOut(PrintStream ps, String strPad) throws NoSuchElementException {
-        EnumSet<FrameProcTestParam> setParams = EnumSet.allOf(FrameProcTestParam.class);
-        
-        // Compute maximum field sizes
-        int     szNmMax = setParams.stream().<String>map(Enum::name).mapToInt(String::length).max().getAsInt();
-        int     szOptMax = setParams.stream().<String>map(FrameProcTestParam::getDelimitedVariableName).mapToInt(String::length).max().getAsInt();
-        int     szTypeMax = setParams.stream().<Class<?>>map(FrameProcTestParam::getParameterType).<String>map(Class::getSimpleName).mapToInt(String::length).max().getAsInt();
-        
-        // Create the format string for each output line
-        String  strFmt = "%s%-" +  szNmMax + "s : "
-                        + "Command-line variable = %" + szOptMax + "s, " 
-                        + "Type = %" + szTypeMax + "s, " 
-                        + "Description = %s.";
-        
-        // Print out line-by-line text description of each constant
-        setParams.forEach(p -> ps.println(
-                String.format(strFmt, 
-                        strPad, 
-                        p.name(), 
-                        p.getDelimitedVariableName(), 
-                        p.getParameterType().getSimpleName(), 
-                        p.getParameterDescription()
-                        )
-                ));
+        ITestParameter.printOut(FrameProcTestParams.class, ps, strPad);
     }
     
     
     //
-    // Constant Operations
+    // ITestParameter Interface
     //
     
+    /**
+     * <p>
+     * Returns the <code>TestParams</code> enumeration constant exposing this interface.
+     * </p>
+     * 
+     * @return  the <code>TestParams</code> enumeration constant
+     * 
+     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterConstant()
+     */
+    @Override
+    public FrameProcTestParams   getParameterConstant() {
+        return this;
+    }
     /**
      * <p>
      * Returns the string description of the test parameter associated with this enumeration constant.
      * </p>
      * 
      * @return  a string description of this parameter
+     * 
+     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterDescription()
      */
+    @Override
     public String   getParameterDescription() {
         return this.strParamDesc;
     }
@@ -264,7 +240,10 @@ public enum FrameProcTestParam {
      * </p>
      * 
      * @return  the Java class type of the associated parameter
+     * 
+     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterType()
      */
+    @Override
     public Class<?> getParameterType() { 
         return this.clsParamType; 
     };
@@ -275,8 +254,11 @@ public enum FrameProcTestParam {
      * </p>
      * 
      * @return  delimited variable name identifying parameter values on the application command line
+     * 
+     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterDelimOption()
      */
-    public String   getDelimitedVariableName()  { 
+    @Override
+    public String   getParameterDelimOption()  { 
         return this.strDelVarNm;
     }
     
@@ -286,39 +268,18 @@ public enum FrameProcTestParam {
      * </p>
      * <p>
      * Default values are taken from the JAL default configuration and the JAL Tools default
-     * configuration available in enclosed class <code>{@link DefaultCfg}</code>.
+     * configuration available in enclosed class <code>{@link DefaultCfgLoc}</code>.
      * </p>
      *  
      * @return  the default parameter value assigned at constant construction
+     * 
+     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getDefaultValue()
      */
+    @Override
     public Object   getDefaultValue() {
         return this.objValueDef;
     }
     
-    /**
-     * <p>
-     * Determines whether or not this parameter type is compatible with the given class (i.e. via assignment).
-     * </p>
-     * 
-     * @return <code>true</code> if the associated parameter value is assignable from the given class type,
-     *         <code>false</code> otherwise
-     */
-    public boolean  isAssignable(Class<?> clsVal) { 
-        return this.clsParamType.isAssignableFrom(clsVal); 
-    };
-    
-    /**
-     * <p>
-     * Determines whether or not the given object is a valid parameter value.
-     * </p>
-     * 
-     * @return  <code>true</code> if the associated parameter can be assigned to the given object value,
-     *          <code>false</code> otherwise
-     */
-    public boolean  isInstance(Object objVal) { 
-        return this.clsParamType.isInstance(objVal); 
-    };
-
     /**
      * <p>
      * Parse the string argument and convert it to an object of the proper type for the constant.
@@ -347,6 +308,7 @@ public enum FrameProcTestParam {
      * @throws MalformedParametersException  an enumeration constant within the argument set was not recognized (IMAGE)
      * @throws NoSuchElementException   the column data type was unrecognized (i.e., 'DTYPE' was not supported)
      */
+    @Override
     public Object   parseValue(String strValue) 
             throws UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException, 
                    InvocationTargetException, DateTimeParseException, NumberFormatException, IllegalArgumentException, 
@@ -366,12 +328,9 @@ public enum FrameProcTestParam {
             
             return specFrm;
         }
-        
-        // Parse the string using the 'valueOf(String)' method for each numeric class
-        Method mthValue = this.clsParamType.getMethod("valueOf", String.class);  // throws NoSuchMethodException, SecurityException
-        Object objValue = mthValue.invoke(null, strValue);                      // throws IllegalAccessException, InvocationTargetException
 
-        return objValue;
+        // Otherwise defer to the default implementation
+        return ITestParameter.super.parseValue(strValue);
     }
 
 }

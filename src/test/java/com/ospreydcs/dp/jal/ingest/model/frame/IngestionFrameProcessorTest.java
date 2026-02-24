@@ -223,7 +223,7 @@ public class IngestionFrameProcessorTest {
     @Test
     public final void testEnableSerialization() {
         
-        IngestionFrameProcessor processor = IngestionFrameProcessor.create(REC_PRV_UID);
+        IngestionFrameProcessor processor = IngestionFrameProcessor.from(REC_PRV_UID);
         
         Assert.assertNotEquals(null, processor);
         Assert.assertEquals(REC_PRV_UID, processor.getProviderUid());

@@ -1145,7 +1145,7 @@ public class AppArgumentsParser {
      * <p>
      * The output location, as specified by the application client, is the value of variable
      * {@value #STR_OUTPUT_DVAR}.  There is only one value for this variable and any additional values
-     * are ignored.  Application arguments occurring after the {@value STR_VAR_OUTPUT} variable are
+     * are ignored.  Application arguments occurring after the {@value STR_DVAR_OUTPUT} variable are
      * typically application target value(s) obtained from <code>{@link #parseAppArgsTarget(String[])}</code>.
      * </p>
      * <p>

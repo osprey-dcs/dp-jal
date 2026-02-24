@@ -107,6 +107,8 @@ public final class DpIngestionConnectionFactoryStatic{
      * <p>
      * See {@link DpGrpcConnectionFactory#connect(String, int)} for details.
      * </p>
+     * 
+     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
      *
      * @see com.ospreydcs.dp.jal.grpc.model.DpGrpcConnectionFactory#connect(java.lang.String, int)
      */
@@ -121,6 +123,8 @@ public final class DpIngestionConnectionFactoryStatic{
      * <p>
      * See {@link DpGrpcConnectionFactory#connect(String, int, boolean)} for details.
      * </p>
+     * 
+     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
      *
      * @see com.ospreydcs.dp.jal.grpc.model.DpGrpcConnectionFactory#connect(java.lang.String, int, boolean)
      */
@@ -162,6 +166,8 @@ public final class DpIngestionConnectionFactoryStatic{
      * <p>
      * No default parameters are used.
      * </p>
+     * 
+     * @throws DpGrpcException general gRPC resource creation exception (see message and cause)  
      * 
      * @see DpGrpcConnectionFactory#connect(String, int, boolean, boolean, int, boolean, boolean, long, TimeUnit)
      */

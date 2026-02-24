@@ -272,7 +272,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      *    
      * @return  new <code>IngestionFrameProcessor</code> instance ready for activation
      */
-    public static IngestionFrameProcessor   create() {
+    public static IngestionFrameProcessor   from() {
         return new IngestionFrameProcessor();
     }
     
@@ -317,7 +317,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * 
      * @return  new <code>IngestionFrameProcessor</code> instance ready for activation
      */
-    public static IngestionFrameProcessor   create(ProviderUID recProviderUid) {
+    public static IngestionFrameProcessor   from(ProviderUID recProviderUid) {
         return new IngestionFrameProcessor(recProviderUid);
     }
     

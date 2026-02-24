@@ -47,7 +47,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
-import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer;
 import com.ospreydcs.dp.jal.ingest.test.TestIngestDataRequestGenerator;
 import com.ospreydcs.dp.jal.model.IMessageSupplier;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
@@ -151,19 +150,19 @@ public class IngestionMessageBufferTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer#create()}.
+     * Test method for {@link com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer#from()}.
      */
     @Test
     public final void testCreate() {
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create();
+        IngestionMessageBuffer  buffer = IngestionMessageBuffer.from();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer#create(int)}.
+     * Test method for {@link com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer#from(int)}.
      */
     @Test
     public final void testCreateInt() {
@@ -171,7 +170,7 @@ public class IngestionMessageBufferTest {
         // Parameters
         final   int     szCapacity = 101;     
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create(szCapacity);
+        IngestionMessageBuffer  buffer = IngestionMessageBuffer.from(szCapacity);
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertEquals(szCapacity, buffer.getQueueCapacity());
@@ -179,7 +178,7 @@ public class IngestionMessageBufferTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer#create(int, boolean)}.
+     * Test method for {@link com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer#from(int, boolean)}.
      */
     @Test
     public final void testCreateIntBoolean() {
@@ -188,7 +187,7 @@ public class IngestionMessageBufferTest {
         final int       szCapacity = 101;
         final boolean   bolBackPressure = false;
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create(szCapacity, bolBackPressure);
+        IngestionMessageBuffer  buffer = IngestionMessageBuffer.from(szCapacity, bolBackPressure);
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertEquals(szCapacity, buffer.getQueueCapacity());
@@ -251,7 +250,7 @@ public class IngestionMessageBufferTest {
         // Parameters
         final int       szCapacity = 42;
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create();
+        IngestionMessageBuffer  buffer = IngestionMessageBuffer.from();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
@@ -267,7 +266,7 @@ public class IngestionMessageBufferTest {
     @Test
     public final void testEnableBackPressure() {
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create();
+        IngestionMessageBuffer  buffer = IngestionMessageBuffer.from();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());
@@ -285,7 +284,7 @@ public class IngestionMessageBufferTest {
     @Test
     public final void testDisableBackPressure() {
         
-        IngestionMessageBuffer  buffer = IngestionMessageBuffer.create();
+        IngestionMessageBuffer  buffer = IngestionMessageBuffer.from();
         
         Assert.assertNotEquals(null, buffer);
         Assert.assertFalse(buffer.isSupplying());

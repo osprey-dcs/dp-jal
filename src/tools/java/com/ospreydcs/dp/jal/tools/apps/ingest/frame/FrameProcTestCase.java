@@ -38,6 +38,7 @@ import com.ospreydcs.dp.jal.common.ResultStatus;
 import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.jal.tools.apps.ingest.common.FrameProcessorConfig;
+import com.ospreydcs.dp.jal.tools.apps.ingest.common.MessageConsumer;
 import com.ospreydcs.dp.jal.tools.common.datagen.IFrameFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
@@ -97,7 +98,7 @@ public record FrameProcTestCase(
 
     
     //
-    // Record Resources
+    // Record Variables
     //
     
     /** Running index of test case - incremented upon creation/construction */
@@ -175,11 +176,11 @@ public record FrameProcTestCase(
      * Evaluates the given <code>IngestionFrameProcessor</code> instance according to the parameters of this test case.
      * </p>
      * 
-     * @param supplier the ingestion frame supplier under evaluation
+     * @param procTest  ingestion frame processor required for ingestion channel evaluation
      * 
      * @return  a record containing the results of the evaluations
      */
-    public FrameProcTestResult    evaluate(IngestionFrameProcessor processor) /* throws IllegalArgumentException, IllegalStateException, DateTimeException, ArithmeticException, UnsupportedOperationException, InterruptedException */ {
+    public FrameProcTestResult    evaluate(IngestionFrameProcessor procTest) /* throws IllegalArgumentException, IllegalStateException, DateTimeException, ArithmeticException, UnsupportedOperationException, InterruptedException */ {
         
         // Create the processor payload a priori
         List<IngestionFrame>    lstFrames;
@@ -194,23 +195,23 @@ public record FrameProcTestCase(
         long    szAllocRaw = lstFrames.stream().mapToLong(frm -> frm.allocationSizeFrame()).sum();
         
         // Configure processor and message consumer task
-        this.recPrcrCfg.configure(processor);
-        MessageConsumer thrdMsgSnk = MessageConsumer.from(processor);
+        this.recPrcrCfg.configure(procTest);
+        MessageConsumer thrdMsgSnk = MessageConsumer.from(procTest);
         
         // Initialize the processor and consumer task 
         try {
-            processor.activate();       // throws RejectedExecutionException
+            procTest.activate();       // throws RejectedExecutionException
             thrdMsgSnk.start();          // throws IllegalThreadStateException
         
         } catch (RejectedExecutionException e) {
-            processor.shutdownNow();
+            procTest.shutdownNow();
             
             ResultStatus    recFail = ResultStatus.newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " - Process activation failed.", e);
             
             return FrameProcTestResult.from(recFail, this);
             
         } catch (IllegalThreadStateException e) {
-            processor.shutdownNow();
+            procTest.shutdownNow();
             thrdMsgSnk.terminate();
 
             ResultStatus    recFail = ResultStatus.newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " - Message consumer task already started.", e);
@@ -221,8 +222,8 @@ public record FrameProcTestCase(
         // Perform the processor evaluations
         try {
             Instant     insStart = Instant.now();
-            processor.submit(lstFrames);                // throws IllegalStateException
-            processor.shutdown();                       // throws InterruptedException
+            procTest.submit(lstFrames);                // throws IllegalStateException
+            procTest.shutdown();                       // throws InterruptedException
             thrdMsgSnk.join();                          // throws InterruptedException
             Instant     insFinish = Instant.now();
             
@@ -239,7 +240,7 @@ public record FrameProcTestCase(
             return recResult;
 
         } catch (Exception e) {
-            processor.shutdownNow();
+            procTest.shutdownNow();
             thrdMsgSnk.terminate();
 
             ResultStatus    recFail = ResultStatus.newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " - Processor evaluation failure during execution.", e);

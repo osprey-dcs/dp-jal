@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	FrameProcessorEvaluator.java
- * Package: com.ospreydcs.dp.jal.tools.apps.ingest.frame
- * Type: 	FrameProcessorEvaluator
+ * File:	IngestionChannelEvaluator.java
+ * Package: com.ospreydcs.dp.jal.tools.apps.ingest.channel
+ * Type: 	IngestionChannelEvaluator
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,10 +20,10 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Sep 13, 2025
+ * @since Feb 17, 2026
  *
  */
-package com.ospreydcs.dp.jal.tools.apps.ingest.frame;
+package com.ospreydcs.dp.jal.tools.apps.ingest.channel;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -33,14 +33,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.TreeSet;
-import java.util.UUID;
 
 import org.apache.logging.log4j.Logger;
 
-import com.ospreydcs.dp.jal.common.ProviderUID;
 import com.ospreydcs.dp.jal.config.JalConfig;
+import com.ospreydcs.dp.jal.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
-import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
+import com.ospreydcs.dp.jal.grpc.ingest.DpIngestionConnection;
+import com.ospreydcs.dp.jal.grpc.ingest.DpIngestionConnectionFactoryStatic;
+import com.ospreydcs.dp.jal.grpc.model.DpGrpcException;
+import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionChannel;
+import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer;
 import com.ospreydcs.dp.jal.tools.appfwk.ExitCode;
 import com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase;
 import com.ospreydcs.dp.jal.tools.common.parse.AppOptionsParser;
@@ -51,26 +54,16 @@ import com.ospreydcs.dp.jal.util.Log4j;
 
 /**
  * <p>
- * Application for evaluating the <code>IngestionFrameProcessor</code> class under various test conditions.
- * </p>
- * <p>
- * The objective of this application is perform evaluations of the <code>{@link IngestionFrameProcessor}</code>
- * component of the JAL Ingestion API.  See the application description in <code>{@link #STR_APP_USAGE}</code>
- * for details or type 
- * <pre>
- *  java FrameProcessorEvaluator --help
- * </pre>
- * at the command line.
+ * Application for evaluating the operation and performance of component <code>IngestionChannel</code>.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Sep 13, 2025
+ * @since Feb 17, 2026
  *
- * @see #IngestionFrameProcessor
  */
-public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEvaluator> {
+public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChannelEvaluator> {
 
-    
+
     //
     // Application Entry 
     //
@@ -109,33 +102,35 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         }
 
         // Check for input file declaration
-        if (PARSER.hasVariable(STR_PARSE_INPUT_DVAR, args)) {
-            String  strInputFile = PARSER.parseVariable(STR_PARSE_INPUT_DVAR, args).get(0);
+        if (PARSER.hasVariable(STR_DVAR_INPUT, args)) {
+            String  strInputFile = PARSER.parseVariable(STR_DVAR_INPUT, args).get(0);
             
             try {
-                args = FrameProcessorEvaluator.readInputFileArguments(strInputFile);
+                args = JalApplicationBase.readInputFileArguments(strInputFile);
                 
             } catch (Exception e) {
-                JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
+                JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
                 return;
                 
             }
         }
+
         
         //
         // ------- Application Initialization -------
         //
         
-        // Get the output location
-        String      strOutputLoc = PARSER.parseOutputLocation(STR_OUT_PATH_DEF, args);
-        
-        // Create the test suite from the command-line arguments
-        FrameProcTestSuite  suiteTests;
+        // Get the application constructor arguments
+        Address             addrHost;
+        IngestChanTestSuite suiteCases;
+        String              strOutputLoc;
         try {
-            suiteTests = FrameProcTestSuite.from(PARSER, args);
+            addrHost = IngestionChannelEvaluator.parseHostAddress(args);
+            suiteCases = IngestChanTestSuite.from(PARSER, args);
+            strOutputLoc = PARSER.parseOutputLocation(STR_OUT_PATH_DEF, args);
             
         } catch (Exception e) {
-            JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
+            JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
             return;
             
         }
@@ -146,96 +141,85 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         
         // Create the evaluator, run it while catching and reporting any exceptions
         try {
-            FrameProcessorEvaluator   evaluator = new FrameProcessorEvaluator(suiteTests, strOutputLoc, args);
+            IngestionChannelEvaluator   evaluator = new IngestionChannelEvaluator(addrHost, suiteCases, strOutputLoc, args);
             
             evaluator.run();
             evaluator.writeReport();
-            evaluator.close();
+            evaluator.shutdown();
             
             System.out.println(STR_APP_NAME + " Execution completed in " + evaluator.getRunDuration());
             System.out.println("  Results stored at " + evaluator.getOutputFilePath().toAbsolutePath());
             System.exit(ExitCode.SUCCESS.getCode());
             
-        } catch (IllegalStateException | MissingResourceException | ClassCastException | UnsupportedOperationException | IndexOutOfBoundsException | FileNotFoundException e) {
-
+        } catch (DpGrpcException e) {
+            
             // Creation exception
-            JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.INITIALIZATION_EXCEPTION);
+            JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.GRPC_CONN_FAILURE);
             return;
             
-        } catch (SecurityException e) {
+        } catch (IllegalStateException | MissingResourceException | ClassCastException | UnsupportedOperationException | IndexOutOfBoundsException e) {
+
+            // Creation exception
+            JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.INITIALIZATION_EXCEPTION);
+            return;
+            
+        } catch (FileNotFoundException | SecurityException e) {
+
+            // Output exception
+            JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.OUTPUT_FAILURE);
+            return;
+            
+        } catch (InterruptedException e) {
 
             // Shutdown exception
-            JalApplicationBase.terminateWithException(FrameProcessorEvaluator.class, e, ExitCode.SHUTDOWN_EXCEPTION);
+            JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.SHUTDOWN_EXCEPTION);
             return;
+            
         }
     }
-
+        
     
     //
-    // Library Resources
+    // JAL Library Resources
     //
     
-    /** Default configuration parameters for the Ingestion Service tools */
+    /** Default configuration parameters for the Ingestion Service configuration */
+    private static final DpGrpcConnectionConfig CFG_CONN = JalConfig.getInstance().connections.ingestion;
+            
+    /** Default configuration parameters for the Ingestion Service API */
     private static final JalIngestionConfig     CFG_INGEST = JalConfig.getInstance().ingest;
     
     /** Default configuration parameters for the JAL Tools */
     private static final JalToolsConfig         CFG_TOOLS = JalToolsConfig.getInstance();
 
     
-    
     //
-    // Application Constants - Command-Line Arguments and Messages
+    // Application Constants
     //
     
     /** Minimum number of application arguments - argument name and at least one data request */
     public static final int         CNT_APP_MIN_ARGS = 1;
     
+    
+    /** Default connection host URL */
+    public static final String      STR_HOST_URL_DEF = CFG_CONN.channel.host.url;
+    
+    /** Default connection host port */
+    public static final int         INT_HOST_PORT_DEF = CFG_CONN.channel.host.port;
+    
     /** Default output path location */
     public static final String      STR_OUT_PATH_DEF = CFG_TOOLS.output.path + "/ingest/frame";
     
     
-    /** Argument delimited variable for data columns serialization enable/disable flags */
-    public static final String      STR_PARSE_SERIAL_ENBL_DVAR = "--serial";
-    
-    /** Argument delimited variable for concurrent processing enable/disable flags */
-    public static final String      STR_PARSE_MTHRD_ENBL_DVAR = "--mthrd";
-    
-    /** Argument delimited variable for frame decomposition enable/disable flags */
-    public static final String      STR_PARSE_DCMP_ENBL_DVAR = "--dcmp";
-  
     
     /** Argument delimited variable containing the input file location */
-    public static final String      STR_PARSE_INPUT_DVAR = "--input";
+    public static final String      STR_DVAR_INPUT = "--input";
     
-    /** Argument delimited variable containing maximum thread count value(s) */
-    public static final String      STR_PARSE_THRD_CNT_DVAR = "--threads";
+    /** Argument delimited variable containing the Ingestion Service host URL */
+    public static final String      STR_DVAR_HOST_URL = "--host";
     
-    /** Argument delimited variable containing maximum composite ingestion frame size(s) */
-    public static final String      STR_PARSE_DCMP_SZ_DVAR = "--szfrm";
-
-    
-    /** Argument delimited variable defining an ingestion frame */
-    public static final String      STR_PARSE_FRM_SPEC_DVAR = "--frame";
-    
-    /** Argument delimited variable containing ingestion frame count */
-    public static final String      STR_PARSE_FRM_CNT_DVAR = "--nfrms";
-    
-    
-    /** Argument delimited variable containing output location */
-    public static final String      STR_PARSE_OUTPUT_DVAR = "--output";
-
-    /** List of all the valid delimited argument options */
-    public static final List<String>    LST_STR_DELOPTS = List.of(
-            STR_PARSE_SERIAL_ENBL_DVAR,
-            STR_PARSE_MTHRD_ENBL_DVAR,
-            STR_PARSE_DCMP_ENBL_DVAR,
-            STR_PARSE_INPUT_DVAR,
-            STR_PARSE_THRD_CNT_DVAR, 
-            STR_PARSE_DCMP_SZ_DVAR, 
-            STR_PARSE_FRM_SPEC_DVAR,
-            STR_PARSE_FRM_CNT_DVAR,
-            STR_PARSE_OUTPUT_DVAR
-            );
+    /** Argument delimited variable containing the Ingestion Service port number */
+    public static final String      STR_DVAR_HOST_PORT = "--port"; 
     
     
     //
@@ -247,6 +231,13 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     
     /** The targeted processing duration - used in {@link #writeReport(PrintStream)} */
     public static final Duration    DUR_PROC_TARGET = Duration.ofMillis(10);
+
+    
+    /** The data message queue buffer back pressure enable/disable flag */
+    public static final boolean     BOL_QUEUE_BACKPRES_ENBL = false;
+    
+    /** The capacity of the queue buffer containing ingest data request messages before transmission - ignored if back pressure is off */
+    public static final int         SZ_QUEUE_INGEST = 100000;
     
     
     //
@@ -254,17 +245,26 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     //
     
     /** Application name */
-    public static final String      STR_APP_NAME = FrameProcessorEvaluator.class.getSimpleName();
+    public static final String      STR_APP_NAME = IngestionChannelEvaluator.class.getSimpleName();
+    
+    
+    /** The "version" message for client version requests */
+    public static final String      STR_APP_VERSION = 
+            STR_APP_NAME
+          + " version 1.0: compatible with Java Application Library version 1.10.0 or greater.";
     
     /** A laconic description of the application function */
     public static final String      STR_APP_DESCR = 
             STR_APP_NAME + " Description \n"
-          + "- Application evaluates the performance and operation of the IngestionFrameProcessor component class \n"
-          + "    for converting a stream of IngestionFrame objects into a stream of IngestDataRequest messages. \n"
+          + "- Application evaluates the performance and operation of the IngestionChannel component class \n"
+          + "    for transmitting a stream of IngestDataRequest messages to the Data Platform Ingestion Service. \n"
           + "- A payload of IngestionFrame objects is first created according to the command-line arguments. \n"
-          + "    The payload is fed to an IngestionFrameProcessor instance as fast as accepted. The processed \n "
-          + "    messages are recovered and the performance is recorded.\n"
-          + "- No further processing is performed; that is, the messages are not sent to the Ingestion Service. \n";
+          + "    The payload is converted into IngestDataRequest message by an IngestionFrameProcessor instance. \n"
+          + "    The IngestionFrameProcessor uses all default configuration except for column serialization, an option. \n"
+          + "    The ingestion frame processing is recorded and available in the results. \n "
+          + "- The processed IngestDataRequest Protocol Buffers messages are then all offered to the IngestionChannel \n"
+          + "    instance via a message queue buffer, the IngestionChannel is allows to send messages as fast as possible. \n"
+          + "    The performance of the IngestionChannel is recorded and written to the output results. \n";
     
     
     /** The "usage" message for client help requests or invalid application arguments */
@@ -274,26 +274,27 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
           + "% " + STR_APP_NAME
           + AppOptionsParser.displayCommandLineHelpOptions()
           + AppOptionsParser.displayCommandLineVersionOptions()
-          + " [" + STR_PARSE_INPUT_DVAR + " input]"
+          + " [" + STR_DVAR_INPUT + " input]"
           + "\n"
           + " "
-          + " [" + STR_PARSE_SERIAL_ENBL_DVAR + " FALSE ... TRUE]"
+          + " [" + STR_DVAR_HOST_URL + " URL]"
+          + " [" + STR_DVAR_HOST_PORT + " port]"
           + "\n"
           + " "
-          + " [" + STR_PARSE_MTHRD_ENBL_DVAR + " FALSE ... TRUE]"
-          + " [" + STR_PARSE_THRD_CNT_DVAR + " T1 ... Tn]"
+          + " [" + IngestChanTestParams.COL_SER_ENBL.getParameterDelimOption() + " FALSE TRUE]"
           + "\n"
           + " "
-          + " [" + STR_PARSE_DCMP_ENBL_DVAR + " FALSE ... TRUE]"
-          + " [" + STR_PARSE_DCMP_SZ_DVAR + " M1 ... Mn]"
-          + "\n"
-          + "  "
-          + "[" + STR_PARSE_FRM_CNT_DVAR + " N1 ... Nn]" 
+          + " [" + IngestChanTestParams.STREAM_TYPE.getParameterDelimOption() + " FORWARD BIDIRECTIONAL]"
+          + " [" + IngestChanTestParams.MSTREAM_ENBL.getParameterDelimOption() + " FALSE TRUE]"
+          + " [" + IngestChanTestParams.MSTREAM_CNT.getParameterDelimOption() + " S1 ... Sn]"
           + "\n"
           + " "
-          + " [" + STR_PARSE_FRM_SPEC_DVAR + " 'frame_1 parameters'"
-          + " " + STR_PARSE_FRM_SPEC_DVAR + " 'frame_2 parameters'" 
-          + " ... " + STR_PARSE_FRM_SPEC_DVAR + " 'frame_n parameters']"
+          + " [" + IngestChanTestParams.FRAME_CNT.getParameterDelimOption() + " N1 ... Nn]" 
+          + "\n"
+          + " "
+          + " [" + IngestChanTestParams.FRAME_DEF.getParameterDelimOption() + " 'frame_1 parameters'"
+          + " " + IngestChanTestParams.FRAME_DEF.getParameterDelimOption() + " 'frame_2 parameters'" 
+          + " ... " + IngestChanTestParams.FRAME_DEF.getParameterDelimOption() + " 'frame_n parameters']"
           + "\n"
           + " " + AppOptionsParser.displayComandLineOutputLocationOption()
           + "\n\n" 
@@ -301,30 +302,28 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
           + "   " + AppOptionsParser.displayCommandLineHelpOptions() + "    = print this message and return. \n"
           + "   " + AppOptionsParser.displayCommandLineVersionOptions() + " = prints application version information and return. \n"
           + "    input            = Optional input file location - if present all the following arguments are contained there. \n"
-          + "    " + STR_PARSE_SERIAL_ENBL_DVAR + "         = Enable/disable data column serialization in processed messages. \n"
-          + "    " + STR_PARSE_MTHRD_ENBL_DVAR + "          = Enable/disable multi-threaded processing of ingestion frames (with given maximum thread count(s). \n"
-          + "    T1, ..., Tn      = Maximum allowable number(s) of concurrent processing threads - Integer value(s). \n"
-          + "    " + STR_PARSE_DCMP_ENBL_DVAR + "           = Enable/disable ingestion frame decomposition (with given maximum size(s)). \n"
-          + "    M1, ..., Mn      = Maximum allowable composite frame size (bytes) after decomposition - Integer value(s). \n"
-          + "    " + STR_PARSE_FRM_SPEC_DVAR + "          = Delimits the ingestion frame definition(s) within quotes ' ' (i.e., frame_1, ..., frame_n parameters). \n"
-          + "    N1, ..., Nn      = Number of frames to process for each ingestion frame (i.e., frame_1, ..., frame_n). \n"
+          + "    URL              = Ingestion Service location. \n"
+          + "    port             = Ingestion Service server port to connect. \n"
+          + "    " + IngestChanTestParams.COL_SER_ENBL.getParameterDelimOption() + "         = Enable/disable data column serialization in processed messages {FALSE TRUE}. \n"
+          + "    " + IngestChanTestParams.STREAM_TYPE.getParameterDelimOption() + "         = gRPC data stream type {FORWARD BIDIRECTIONAL}. \n"
+          + "    " + IngestChanTestParams.MSTREAM_ENBL.getParameterDelimOption() + "         = Enable/disable multiple, concurrent gRPC data streams {TRUE FALSE}. \n"
+          + "    S1 ... Sn        = Maximum number of concurrent gRPC data streams - Integer value(s). \n"
+          + "    N1, ..., Nn      = Number of payload frames for each frame type (i.e., frame_1, ..., frame_n). \n"
           + "    frame parameters = Collection of parameters defining ingestion frame (see below). \n"
           + "    output           = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
           + "\n"
           + "  GERNAL NOTES: \n"
           + "  - All bracketed quantities [...] are optional. \n"
-          + "  - The " + STR_PARSE_INPUT_DVAR + " option is available for evaluations with large number of command-line parameters. \n"
-          + "  - If the " + STR_PARSE_INPUT_DVAR + " option is present all other command-line parameter are ignored. \n"
-          + "  - <--Boolean valued variables (e.g., " + STR_PARSE_SERIAL_ENBL_DVAR + ", " + STR_PARSE_MTHRD_ENBL_DVAR + ", etc.) default to FALSE if not present. --> \n"
+          + "  - All optional quantities not provided default to those in the JAL API configuration or JAL Tools configuration. \n"
+          + "  - The " + STR_DVAR_INPUT + " option is available for evaluations with large number of command-line parameters. \n"
+          + "  - If the " + STR_DVAR_INPUT + " option is present all other command-line parameter are ignored. \n"
           + "  - Ingestion frame definition(s) (i.e., frame_1, ..., frame_n parameters) REQUIRE single quote ' ' for containment. \n"
-          + "  - <-- At least one ingestion frame must be defined; specifically, " + STR_PARSE_FRM_SPEC_DVAR + " must appear at least once on the command line. --> \n"
-          + "  - If " + STR_PARSE_FRM_CNT_DVAR + " is present the values define the payload size each frame definition provided. \n"
-          + "  - If any value(s) are not provided for " + STR_PARSE_THRD_CNT_DVAR + " and/or " + STR_PARSE_DCMP_SZ_DVAR + ", default values are provided. \n"
-          + "  - Default 'output' value is " + STR_OUT_PATH_DEF + ".\n"
+          + "  - The N1 ... Nn values define the payload size each frame definition provided. \n"
+          + "  - Default 'output' value is '" + STR_OUT_PATH_DEF + "'.\n"
           + "  - All other default values are taken from the JAL Ingestion default configuration and the JAL Tools ingestion frame default configuration. \n"
           + "\n"
           + " INGESTION FRAME DEFINITION: \n"
-          + "  Ingestion frames are defined with the 'frame parameters' section after the " + STR_PARSE_FRM_SPEC_DVAR + " delimiter. \n"
+          + "  Ingestion frames are defined with the 'frame parameters' section after the " + IngestChanTestParams.FRAME_DEF.getParameterDelimOption() + " delimiter. \n"
           + "  For full description of these parameters see the class documentation for record FrameFactorySpec. \n"
           + "  Briefly, we have the following format for the ingestion frame definition: \n" 
           + "\n"
@@ -384,20 +383,26 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
           + "    then the datum factory is configured according to the default configuration in the JAL Tools configuration. \n"
           + "  - Typically, the default datum factory configuration is sufficient for most IngestionFrameProcessor evaluations. \n"
           ;
-
-    /** The "version" message for client version requests */
-    public static final String      STR_APP_VERSION = 
-            STR_APP_NAME
-          + " version 1.0: compatible with Java Application Library version 1.10.0 or greater.";
-    
+   
     
     
     //
     // Application Resources
     //
     
-    // Create an arguments PARSER
-    private static final AppOptionsParser     PARSER = AppOptionsParser.from(LST_STR_DELOPTS);
+    /** Record containing the Ingestion Service location */
+    public static record Address(String url, int port) {
+        public void printOut(PrintStream ps, String strPad) {
+            ps.println(strPad + "URL  : " + this.url);
+            ps.println(strPad + "Port : " + this.port);
+        }
+    };
+    
+    /** List of all the valid delimited argument options */
+    public static final List<String>        LST_STR_DELOPTS = IngestChanTestParams.validDelimOptions();
+    
+    /** The application arguments parser */
+    private static final AppOptionsParser   PARSER = AppOptionsParser.from(LST_STR_DELOPTS);
     
     
 
@@ -409,36 +414,42 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     private static boolean          BOL_LOGGING = CFG_INGEST.logging.enabled;
     
     /** Class event logger */
-    private static final Logger     LOGGER = Log4j.getLogger(FrameProcessorEvaluator.class, CFG_INGEST.logging.level);
+    private static final Logger     LOGGER = Log4j.getLogger(IngestionChannelEvaluator.class, CFG_INGEST.logging.level);
 
     
     //
     // Defining Attributes
     //
     
+    /** The Ingestion Service address */
+    private final Address                   addrHost;
+    
     /** The test suite configuration to run */
-    private final FrameProcTestSuite        suiteCases;
+    private final IngestChanTestSuite       suiteCases;
     
     
-    // 
+    //
     // Instance Resources
     //
     
+    /** The gRPC connection to the Data Platform Ingestion Service */
+    private final DpIngestionConnection     connIngest;
+    
+    /** The ingestion data message buffer attached to the the ingestion channel */
+    private final IngestionMessageBuffer    bufChanMsgs;
+    
+    /** The gRPC streaming channel between processor and the Data Platform Ingestion Service */
+    private final IngestionChannel          chanIngest;
+
+    
     /** The collection of test cases to run, i.e., the test case suite */
-    private final Collection<FrameProcTestCase>     conCases;
+    private final Collection<IngestChanTestCase>    conCases;
     
     /** The collection of test case results */
-    private final Collection<FrameProcTestResult>   conResults;
+    private final Collection<IngestChanTestResult>  conResults;
     
     /** The collections of test case failures */
-    private final Collection<FrameProcTestResult>   conFailures;
-    
-    
-    /** The data provider UID used in the ingestion frame processor */
-    private final ProviderUID                       uidProvider = ProviderUID.from(UUID.randomUUID().toString(), STR_APP_NAME, false);
-    
-    /** The ingestion frame processor under evaluation */
-    private final IngestionFrameProcessor           processor;
+    private final Collection<IngestChanTestResult>  conFailures;
     
     
     //
@@ -450,7 +461,7 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     
     
     //
-    // JalApplicationBase Abstract Methods
+    // JalApplicationBase<IngestionChannelEvaluator> Abstract Methods
     //
     
     /**
@@ -468,59 +479,77 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
     protected Logger getLogger() {
         return LOGGER;
     }
-
+    
     
     //
-    // Application Constructor
+    // Constructor
     //
     
     /**
      * <p>
-     * Constructs a new <code>FrameProcessorEvaluator</code> instance.
+     * Constructs a new, initialized <code>IngestionChannelEvaluator</code> application.
+     * </p>
+     * <p>
+     * All application initialization is performed.
+     * <ul>
+     * <li>Connection to Ingestion Service is performed.</li>
+     * <li>An <code>IngestionChannel</code> object is create - used for all evaluations.</li> 
+     * <li>Test case test suite is generated.</li>
+     * <li>Output file is created and opened.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * After construction the application test suite can be evaluated using <code>{@link #run()}</code>.
+     * Once evaluations are completed the results can be written to the output file using 
+     * <code>{@link #writeReport()}</code>. 
+     * Finally, the application should be shut down using 
+     * <code>{@link #shutdown()}</code> or <code>{@link #shutdownNow()}</code> to release all resources
+     * used in the evaluations and output.
      * </p>
      *
-     * @param suiteCases    the test suite configuration to run
-     * @param strOutputLoc  the file/path location to store the test results
+     * @param addrHost      host address of the Data Platform Ingestion Service in which to connect
+     * @param suiteCases    the test suite configuration obtained from the application command line
+     * @param strOutputLoc  the path to the output evaluation results 
      * @param args          the application command-line arguments
      * 
+     * @throws DpGrpcException          general gRPC exception connecting to Ingestion Service (see message and cause)  
      * @throws IllegalStateException    invalid test suite configuration (missing at least one parameter value)
      * @throws MissingResourceException attempted to make a <code>TestCase</code> with missing parameter and/or parameter value
      * @throws ClassCastException       test case parameter value had invalid type  
-     * @throws UnsupportedOperationException an unknown parameter was encountered
+     * @throws UnsupportedOperationException an unknown parameter was encountered in test case creation
      * @throws IndexOutOfBoundsException     internal error - attempted to compute test case greater than the number of cases
+     * @throws UnsupportedOperationException either unknown parameter encountered, or output file path is not associated with default file system
      * @throws FileNotFoundException    unable to create output file (see message and cause)
      * @throws SecurityException        unable to write to output file
      */
-    public FrameProcessorEvaluator(FrameProcTestSuite suiteCases, String strOutputLoc, String... args)
-        throws IllegalStateException, MissingResourceException, ClassCastException, UnsupportedOperationException, IndexOutOfBoundsException, FileNotFoundException, SecurityException
+    public IngestionChannelEvaluator(Address addrHost, IngestChanTestSuite suiteCases, String strOutputLoc, String... args) 
+            throws DpGrpcException,
+                   IllegalStateException, MissingResourceException, ClassCastException, IndexOutOfBoundsException,
+                   UnsupportedOperationException, FileNotFoundException, SecurityException 
     {
-        super(FrameProcessorEvaluator.class, args);
+        super(IngestionChannelEvaluator.class, args);
         
+        // Save the arguments
+        this.addrHost = addrHost;
         this.suiteCases = suiteCases;
         
-        // Create the ingestion frame processor under evaluation
-        this.processor = IngestionFrameProcessor.from(uidProvider);
+        // Create the components for evaluation
+        this.connIngest = DpIngestionConnectionFactoryStatic.connect(addrHost.url, addrHost.port); // throws DpGrpcException
+        this.bufChanMsgs = IngestionMessageBuffer.from(SZ_QUEUE_INGEST, BOL_QUEUE_BACKPRES_ENBL);
+        this.chanIngest = IngestionChannel.from(this.bufChanMsgs, this.connIngest);
         
         // Create the collection of test cases and container for results
         this.conCases = this.suiteCases.createTestSuit();   // throws IllegalStateException, MissingResourceException, ClassCastException, UnsupportedOperationException, IndexOutOfBoundsException
-        this.conResults = new TreeSet<>(FrameProcTestResult.descendingProcessedRateOrdering());
-        this.conFailures = new TreeSet<>(FrameProcTestResult.caseIndexOrdering());
+        this.conResults = new TreeSet<>(IngestChanTestResult.descendingTransmissionRateOrdering());
+        this.conFailures = new TreeSet<>(IngestChanTestResult.caseIndexOrdering());
         
         // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
-        
-//        OutputStreamAppender    appAppErrs = Log4j.createOutputStreamAppender(STR_APP_NAME, super.psOutput);
-//        Log4j.attachAppender(LOGGER, appAppErrs);
     }
-    
-    
-    //
-    // Operations
-    //
     
     /**
      * <p>
-     * Runs all test cases within the test suite configuration on the <code>IngestionFrameProcessor</code> object under evaluation.
+     * Runs all test cases within the test suite configuration on the <code>IngestionChannel</code> object under evaluation.
      * </p>
      * <p>
      * Runs all test cases in resource <code>{@link #conCases}</code> (i.e., specified in the test suite configuration) 
@@ -537,8 +566,7 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
      * 
      * @throws IllegalStateException    the <code>{@link #run()}</code> method has already been called
      */
-    public void run() throws IllegalStateException {
-        
+    public void run() {
         // Check state
         if (super.bolRun) 
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Evaluations have already been run.");
@@ -547,21 +575,21 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         final int     CNT_CASES = this.conCases.size();
         this.bolRun = true;
         
-        // Run all test cases on  IngestionFrameProcessor subject
+        // Run all test cases on  IngestionChannel subject
         int indCase = 1;
        
         LOGGER.info("Running {} test cases for test suite...", CNT_CASES);
         Instant insStart = Instant.now();
-        for (FrameProcTestCase recCase : this.conCases) {
+        for (IngestChanTestCase recCase : this.conCases) {
             LOGGER.info("Running test case #{} of {} (with index {}) ...", indCase, CNT_CASES, recCase.indCase());
             
-            FrameProcTestResult recResult = recCase.evaluate(this.processor); 
+            IngestChanTestResult recResult = recCase.evaluate(this.bufChanMsgs, this.chanIngest); 
             
             this.conResults.add(recResult);
             indCase++;
         }
         Instant insFinish = Instant.now();
-        
+
         // Collect any test failures
         this.conFailures.addAll( this.conResults.stream().filter(rec -> rec.recTestStatus().isFailure()).toList() );
 
@@ -571,6 +599,61 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
 
         LOGGER.info("Evaluations complete. Time to completion {}.", this.durEval);
         LOGGER.info("Results stored at " + super.getOutputFilePath().toAbsolutePath());
+    }
+    
+    /**
+     * <p>
+     * Performs a soft shutdown of the application.
+     * </p>
+     * <p>
+     * Either this method or <code>{@link #shutdownNow()}</code> must be called after the 
+     * application is no longer need, whether the <code>{@link #run()}</code> method was
+     * invoked or not.  Several resources are created during construction which must be
+     * released before garbage collection.
+     * </p>
+     * <p>
+     * All application resources are shut down normally.  If all test evaluations were executed correctly
+     * (with either success or failure) the resources should shut down quickly.
+     * This is a blocking operation and does not return until all resources are released.
+     * </p>
+     * 
+     * @return  <code>true</code> if the shutdown operation completed normally,
+     *          <code>false</code> if there was an error in the operation
+     *          
+     * @throws InterruptedException process interrupted while waiting for completion
+     */
+    public boolean shutdown() throws InterruptedException {
+
+        boolean     bolResult = true;
+        bolResult = bolResult && this.chanIngest.shutdown();        // throws InterruptedException
+        bolResult = bolResult && this.bufChanMsgs.shutdown();       // throws InterruptedException
+        bolResult = bolResult && this.connIngest.shutdownSoft();    // throws InterruptedException
+        
+        bolResult = bolResult && this.connIngest.awaitTermination();
+        
+        super.close();
+        
+        return bolResult;
+    }
+    
+    /**
+     * <p>
+     * Performs a hard shutdown of the application.
+     * </p>
+     * <p>
+     * Either this method or <code>{@link #shutdownNow()}</code> must be called after the 
+     * application is no longer need, whether the <code>{@link #run()}</code> method was
+     * invoked or not.  Several resources are created during construction which must be
+     * released before garbage collection.
+     * </p>
+     * 
+     */
+    public void shutdownNow() {
+        this.chanIngest.shutdownNow();
+        this.bufChanMsgs.shutdownNow();
+        this.connIngest.shutdownNow();
+        
+        super.close();
     }
     
     /**
@@ -612,6 +695,7 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         LOGGER.info("Evaluation report stored at location {}.", super.getOutputFilePath());
     }
     
+    
     /**
      * <p>
      * Creates a text report of the test suite evaluations and prints it to the given output stream.
@@ -642,21 +726,25 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         
         // Print out command line
         String  strCmdLn = super.createCommandLine();
-        ps.println("Execution");
+        ps.println("Application Execution");
         ps.println(strCmdLn);
+        ps.println();
+        
+        // Print out Ingestion Service host address
+        ps.println("Ingestion Service Host Address");
+        this.addrHost.printOut(ps, strPad);
         ps.println();
         
         // Print out definitions
         ps.println(this.getClass().getSimpleName() +  " Definitions");
-        ps.println(strPad + "Processed Data Rate     - Total data message allocation divided by payload processing time.");
-        ps.println(strPad + "Raw Data Rate           - Total payload allocation divided by payload processing time.");
-        ps.println(strPad + "Payload allocation      - Total memory allocation size of all ingestion frames to be processed.");
+        ps.println(strPad + "Transmission Rate       - Total processed message allocation divided by transmission time.");
+        ps.println(strPad + "Processed Data Rate     - Total processed data message allocation divided by payload processing time.");
         ps.println(strPad + "Data message allocation - Total memory allocation size of all (processed) data messages.");
         ps.println();
         
         // Print out test parameter descriptions
         ps.println("Test Parameter Descriptions");
-        FrameProcTestParams.printOut(ps, strPad);
+        IngestChanTestParams.printOut(ps, strPad);
         ps.println();
         
         // Print out evaluation summary
@@ -675,50 +763,49 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         ps.println();
         
         
-        
         // Print out the test suite configuration
         ps.println("Test Suite Configuration");
         this.suiteCases.printOut(ps, strPad);
         ps.println();
         
         // Print out test case data rates
-        ps.println("Test Case Processed Data Rates (MBps Descending)");
-        DataRateLister<FrameProcTestResult>  lstrProcRates = DataRateLister.from(
+        ps.println("Test Case Data Transmission Rates (MBps Descending)");
+        DataRateLister<IngestChanTestResult>  lstrProcRates = DataRateLister.from(
                 rec -> rec.recTestCase().indCase(), 
                 rec -> rec.recTestCase().specFrame().strLabel(), 
-                rec -> rec.szProcessed(), 
-                rec -> rec.dblRateProc()
+                rec -> rec.szAllocXmit(), 
+                rec -> rec.dblRateXmit()
                 );
         lstrProcRates.printOut(ps, strPad, this.conResults);
         ps.println();
         
-        ps.println("Test Case Raw Data Rates (MBps Descending)");
-        DataRateLister<FrameProcTestResult>  lstrRawRates = DataRateLister.from(
+        ps.println("Test Case Payload Processing Rates (MBps Descending)");
+        DataRateLister<IngestChanTestResult>  lstrRawRates = DataRateLister.from(
                 rec -> rec.recTestCase().indCase(), 
                 rec -> rec.recTestCase().specFrame().strLabel(), 
                 rec -> rec.szPayload(), 
-                rec -> rec.dblRateRaw()
+                rec -> rec.dblRateProc()
                 );
         lstrRawRates.printOut(ps, strPad, this.conResults);
         ps.println();
         
-        // Print out results statistics summary
+        // Print out statistical results summary
         ps.println("Test Results Statistics");
-        FrameProcResultStats.assignTargetDataRate(DBL_RATE_TARGET);
-        FrameProcResultStats.assignTargetProcessingDuration(DUR_PROC_TARGET);
-        FrameProcResultStats  statsSummary = FrameProcResultStats.from(this.conResults);
-        statsSummary.printOut(ps, strPad);
+        IngestChanResultStats.assignTargetTransmissionRate(DBL_RATE_TARGET);
+        IngestChanResultStats.assignTargetProcessingDuration(DUR_PROC_TARGET);
+        IngestChanResultStats  statSummary = IngestChanResultStats.from(this.conResults);
+        statSummary.printOut(ps, strPad);
         ps.println();
         
         // Print out results extremes
         ps.println("Test Results Extremes");
-        FrameProcResultExtremes  recExtremes = FrameProcResultExtremes.from(this.conResults);
+        IngestChanResultExtremes  recExtremes = IngestChanResultExtremes.from(this.conResults);
         recExtremes.printOut(ps, null);
         ps.println();
         
         // Print out channel configuration scoring
         ps.println("Frame Processor Configuration Scoring");
-        FrameProcConfigScorer scrChan = FrameProcConfigScorer.from(this.conResults);
+        IngestChanConfigScorer scrChan = IngestChanConfigScorer.from(this.conResults);
         scrChan.printOutByRates(ps, strPad);
         ps.println();
         
@@ -729,121 +816,56 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
             ps.println();
             
         } else {
-            for (FrameProcTestResult recFail : this.conFailures) {
+            for (IngestChanTestResult recFail : this.conFailures) {
                 recFail.printOut(ps, strPad);
                 ps.println();
             }
         }
         
         // Print out each test result
-        ps.println("Individual Case Results (MBps Descending Procesed Rates)");
-        for (FrameProcTestResult recResult : this.conResults) {
+        ps.println("Individual Case Results (MBps Descending Transmission Rates)");
+        for (IngestChanTestResult recResult : this.conResults) {
             recResult.printOut(ps, strPad);
             ps.println();
         }
     }
-    
+
     
     //
     // Support Methods
     //
-    
-//    /**
-//     * <p>
-//     * Reads the given file and parses the contents to a string array compatible with that for the <code>main</code>
-//     * method entry point.
-//     * </p>
-//     * <p>
-//     * The argument is assumed to be the path for a file containing the command-line arguments of the
-//     * <code>FrameProcessorEvaluator</code> application.  The file contents are parsed according to the
-//     * standard Java Virtual Machine application arguments convention.  The returned string array is
-//     * then that expected when the contents of the file are used as the command-line for the application
-//     * (less any comment lines).
-//     * </p>
-//     *    
-//     * @param strFile   path of the file containing <code>FrameProcessorEvaluator</code> command-line arguments
-//     *  
-//     * @return  the string array of command-line arguments 
-//     * 
-//     * @throws InvalidPathException the argument did not represent a valid file path
-//     * @throws SecurityException    Unable to access the given file 
-//     * @throws IOException          error opening, reading, or closing the given file
-//     * @throws IllegalStateException        no match operation (i.e., {@link Matcher#find()}) attempted for the given matcher
-//     * @throws IndexOutOfBoundsException    attempted to read a pattern with index > {@link #arrRegex} length.
-//     */
-//    private static String[] readInputFileArguments(String strFile) throws InvalidPathException, SecurityException, IOException, IllegalStateException, IndexOutOfBoundsException {
-//        AppInputFileParser  parser = AppInputFileParser.from();
-//        
-//        String[]            arrArgs = parser.parseFile(strFile);    // throws all exceptions
-//        
-//        return arrArgs;
-//    }
-    
-//    /**
-//     * <p>
-//     * Parses the application command-line arguments for the test suite configuration and returns it.
-//     * </p>
-//     * <p>
-//     * The method iterates through the test suite parameters as enumerated in <code>{@link FrameProcTestParams}</code>.
-//     * The values for each parameter are extracted from the command line parameters and added to the returned
-//     * test suite configuration.  If the command line does not provide values for a parameter the default value
-//     * is assigned as given by <code>{@link FrameProcTestParams#getDefaultValue()}</code>.
-//     * </p>
-//     * <p>
-//     * <h2>NOTES:</h2>
-//     * The string values within the command line are converted to <code>Object</code> values of the appropriate
-//     * type using <code>{@link FrameProcTestParams#parseValue(String)}</code>.  This method is the source of all
-//     * exceptions thrown.
-//     * </p>
-//     * 
-//     * @param args  the application command-line arguments
-//     * 
-//     * @return  the test suite configuration according to the command-line arguments
-//     * 
-//     * @throws IllegalArgumentException general error (typically bad argument type, bad argument count, enumeration constant not recognized)
-//     * @throws NoSuchMethodException    the Java class <code>{@link #getJavaType()}</code> does not contain method <code>valueOf(String)</code>
-//     * @throws SecurityException        the class loader denied access to method <code>valueOf(String)</code> (e.g., typically package access)
-//     * @throws IllegalAccessException   the method <code>valueOf(String)</code> is not accessible
-//     * @throws InvocationTargetException    the <code>valueOf(String)</code> method threw an exception (e.g., NumberFormatException)
-//     * @throws DateTimeParseException   invalid ISO-8605 date/time/duration format for 'period', 'start', or 'delay' 
-//     * @throws TypeNotPresentException  invalid enumeration constant (e.g., the 1st argument was not a <code>JalComplexType</code>)
-//     * @throws NumberFormatException    invalid numeric expression (typically for 'lngSeed' value)
-//     * @throws ConfigurationException   the argument contained the wrong number of arguments for the <code>JalComplexType</code>
-//     * @throws UnsupportedOperationException invalid field value format (typically 'numIncr' was invalid)
-//     * @throws MalformedParametersException  an enumeration constant within the argument set was not recognized (IMAGE)
-//     * @throws NoSuchElementException   the column data type was unrecognized (i.e., 'DTYPE' was not supported)
-//     */
-//    private static FrameProcTestSuite   parseTestSuite(String...args) 
-//            throws UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException, 
-//            InvocationTargetException, DateTimeParseException, NumberFormatException, IllegalArgumentException, 
-//            TypeNotPresentException, ConfigurationException, MalformedParametersException 
-//    {
-//        
-//        // Create the empty test suite 
-//        FrameProcTestSuite      suite = FrameProcTestSuite.from();
-//        
-//        // For each parameter
-//        for (FrameProcTestParams enmParam : FrameProcTestParams.values()) {
-//        
-//            // Parse the command line for parameter values
-//            List<String>    lstStrVals = PARSER.parseVariable(enmParam.getParameterDelimOption(), args);
-//            
-//            // If empty use default parameter value
-//            if (lstStrVals.isEmpty()) {
-//                suite.addParameterValue(enmParam, enmParam.getDefaultValue());  // throws IllegalArgumentException
-//                
-//                continue;
-//            }
-//            
-//            // Otherwise convert parameter value strings to value objects and add to test suite
-//            for (String strVal : lstStrVals) {
-//                Object  objVal = enmParam.parseValue(strVal);   // throws all exceptions
-//                
-//                suite.addParameterValue(enmParam, objVal);
-//            }
-//        }
-//        
-//        return suite;
-//    }
 
+    /**
+     * <p>
+     * Parse the Ingestion Service host location from the application command line.
+     * </p>
+     * 
+     * @param args  application command-line arguments
+     * 
+     * @return  the Ingestion Service host location
+     * 
+     * @throws NumberFormatException    the host port address had an invalid format (non-integer)
+     */
+    private static Address    parseHostAddress(String...args) throws NumberFormatException {
+        
+        String  strUrl;
+        int     intPort;
+        
+        // Retrieve the host URL
+        List<String>    lstUrl = PARSER.parseVariable(STR_DVAR_HOST_URL, args);
+        if (lstUrl.isEmpty())
+            strUrl = STR_HOST_URL_DEF;
+        else
+            strUrl = lstUrl.getFirst();
+        
+        // Retrieve the host port
+        List<String>    lstPort = PARSER.parseVariable(STR_DVAR_HOST_PORT, args);
+        if (lstPort.isEmpty())
+            intPort = INT_HOST_PORT_DEF;
+        else
+            intPort = Integer.valueOf( lstPort.getFirst() ); // throws NumberFormatException
+        
+        return new Address(strUrl, intPort);
+    }
+    
 }

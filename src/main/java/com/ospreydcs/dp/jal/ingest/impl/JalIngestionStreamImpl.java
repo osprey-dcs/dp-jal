@@ -484,7 +484,7 @@ public class JalIngestionStreamImpl extends DpServiceApiBase<JalIngestionStreamI
     JalIngestionStreamImpl(DpIngestionConnection connIngest) {
         super(connIngest);
         
-        this.prcrFrames = IngestionFrameProcessor.create();
+        this.prcrFrames = IngestionFrameProcessor.from();
         this.buffStaging = IngestionMemoryBuffer.create();
         this.chanIngest = IngestionChannel.from(this.buffStaging, super.grpcConn);
         

@@ -26,6 +26,9 @@
 package com.ospreydcs.dp.jal.tools.common.score;
 
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.MalformedParametersException;
+import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -33,9 +36,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.naming.ConfigurationException;
+
+import com.ospreydcs.dp.jal.tools.common.parse.AppOptionsParser;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -43,11 +50,34 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * Base class for classes generating test suites of test cases for evaluation and scoring.
  * </p>
  * <p>
- * Child classes must implement the operation <code>{@link #createTestCase(Map)}</code> that creates a
- * <code>{@link TestCase}</code> record from a map of (Parameter, Value) pairs.
- * Each <code>TestCase</code> record contains a test case configuration.  The assumption
- * is that of an application performing a set of evaluations on a (software) component and/or system.
+ * The assumption is that each <code>TestCase</code> record contains a test case configuration for an
+ * application performing performing a set of evaluations on a (software) component and/or system.
+ * </p> 
+ * <p>
+ * <h2>Requirements</h2>
+ * Child classes must implement the abstract operation <code>{@link #createTestCase(Map)}</code> that creates a
+ * <code>{@link TestCase}</code> record from a map of (Parameter, Value) pairs.  This is the primary
+ * requirement of the base class.
+ * Child classes must also implement the abstract operation <code>{@link #isValidType(Enum, Object)}</code>
+ * which verifies that a test parameter value is of the correct data type.
+ * The former method is used in <code>{@link #addParameterValue(Enum, Object)}</code> and the latter is
+ * used in <code>{@link #createTestSuit()}</code>.
  * </p>
+ * <p>
+ * <h2>Child Class Creation</h2>
+ * The method <code>{@link #parseParameterValues(AppOptionsParser, String...)}</code> is available for
+ * initializing child-class creators.  The method is capable of configuring the entire test suite instance
+ * directly from the command-line arguments of a Java application.  It requires the following:
+ * <ul>
+ * <li>A <code>{@link AppOptionsParser}</code> configured to the command-line options for the application,</li>
+ * <li>The string array of application command-line tokens.</li> 
+ * <li>That the <code>Param</code> enumeration expose the <code>{@link ITestParameter}</code> interface.</li>
+ * </ul>
+ * If the above conditions are met then a child class creator, say <code>from(AppOptionsParser, String...args)</code>
+ * can instantiate a new object of itself, populate the object using 
+ * <code>{@link #parseParameterValues(AppOptionsParser, String...)}</code>, then return the fully configured
+ * test suite (assuming the command-line is valid).
+ * </p>  
  * <p>
  * <h2>Configuration</h2>
  * It is assumed that child classes have a well-defined configuration state.  Typically, they support
@@ -62,7 +92,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * Each parameter must be assigned at least one value for the <code>TestSuiteGeneratorBase</code>
  * to be correctly configured.  
  * Specifically, if <code>{@link #isValidConfiguration()}</code> returns <code>true</code> this condition
- * is established.  Use method <code>{@link #missingValues()}</code> to obtain a collection of 
+ * is established.  Use method <code>{@link #unassignedParameters()}</code> to obtain a collection of 
  * parameters that have yet to be assigned test values.
  * <p>
  * <h2>Test Suite Generation</h2>
@@ -96,106 +126,6 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
 public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase extends Record> {
 
     
-    //
-    // Utility Methods
-    //
-    
-    /**
-     * <p>
-     * Checks the given map of assumed (Parameter, Value) pairs for any missing <code>Param</code> entries and returned them.
-     * </p>
-     * <p>
-     * This method is available for child-class implementations of <code>{@link #createTestCase(Map)}</code> for
-     * creating <code>TestCase</code> records from mappings of (Parameter, Value) pairs).
-     * </p>
-     * <p> 
-     * The <code>Param</code> enumeration is assumed to be that of the class generic parameter <code>Param</code>.
-     * The given map of (<code>Param</code>, <code>Object</code>) pairs is checked for completeness of all
-     * possible <code>Param</code> constants within the enumeration.  Any enumeration constants that are missing
-     * are identified in the returned set.
-     * </p>
-     * 
-     * @param <Param>       Enumeration of test case parameters
-     * 
-     * @param clsParam      class type of <code>Param</code> enumeration
-     * @param mapTestVals   mapping of (Parameter, Value) pairs for <code>TestCase</code> record creating
-     *  
-     * @return  the set of any <code>Param</code> constants missing from the given map
-     */
-    public static <Param extends Enum<Param>> Set<Param>    missingParameters(Class<Param> clsParam, Map<Param, Object> mapTestVals) {
-        EnumSet<Param>      setParams = EnumSet.allOf(clsParam);
-        
-        setParams.removeAll( mapTestVals.keySet() );
-        
-        return setParams;
-    }
-    
-    /**
-     * <p>
-     * Checks the given map of assumed (Parameter, Value) pairs for any null <code>Value</code> entries and parameter.
-     * </p>
-     * <p>
-     * This method is available for child-class implementations of <code>{@link #createTestCase(Map)}</code> for
-     * creating <code>TestCase</code> records from mappings of (Parameter, Value) pairs).
-     * </p>
-     * <p> 
-     * The <code>Param</code> enumeration is assumed to be that of the class generic parameter <code>Param</code>.
-     * The given map of (<code>Param</code>, <code>Object</code>) pairs is checked for any <code>null</code> values
-     * within the map value set.   
-     * All enumeration constant map keys that corresponds to a <code>null</code> value are identified in the returned set.
-     * </p>
-     * <p>
-     * <h2>NOTES:</h2>
-     * <ul>
-     * <li>This method does <b>not</b> check for completeness of the map key set.</li>
-     * <li>With regard to the above, use method <code>{@link #missingParameters(Class, Map)}</code> first.</li>
-     * </ul>
-     * </p>
-     * 
-     * @param <Param>       Enumeration of test case parameters
-     * 
-     * @param clsParam      class type of <code>Param</code> enumeration
-     * @param mapTestVals   mapping of (Parameter, Value) pairs for <code>TestCase</code> record creating
-     *  
-     * @return
-     */
-    public static <Param extends Enum<Param>> Set<Param>    missingValues(Class<Param> clsParam, Map<Param, Object> mapTestVals) {
-        EnumSet<Param>      setParams = EnumSet.allOf(clsParam);
-        
-        Set<Param>          setMissing = setParams
-                .stream()
-                .filter(enmParam -> mapTestVals.get(enmParam)==null)
-                .collect(Collectors.toSet());
-        
-        return setMissing;
-    }
-
-    
-    //
-    // Class Constants
-    //
-    
-    /** Minimum padding between parameter name and values list when none can be determined */
-    public static final int STR_PAD_NM_PARAM = 10;
-
-    
-    //
-    // Instance Resources
-    //
-    
-    /** The enumeration class type of the parameter set enumeration */
-    protected final Class<Param>              clsParams;
-    
-    /** The collection of all parameter enumeration constants (obtained from clsParams) */
-    protected final EnumSet<Param>            setParams;
-    
-    /** The (immutable) reverse-ordered collection of all parameter enumeration constants (used for case map generation) */
-    protected final List<Param>               lstParamsRev;
-    
-    /** Map of parameter to collection of parameter test values */
-    protected final Map<Param, List<Object>>  mapParamToVals;
-    
-
     //
     // Abstract Methods
     //
@@ -250,6 +180,31 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
     
 
     //
+    // Class Constants
+    //
+    
+    /** Minimum padding between parameter name and values list when none can be determined */
+    public static final int                     STR_PAD_NM_PARAM = 10;
+
+    
+    //
+    // Instance Resources
+    //
+    
+    /** The enumeration class type of the parameter set enumeration */
+    protected final Class<Param>              clsParams;
+    
+    /** The collection of all parameter enumeration constants (obtained from clsParams) */
+    protected final EnumSet<Param>            setParams;
+    
+    /** The (immutable) reverse-ordered collection of all parameter enumeration constants (used for case map generation) */
+    protected final List<Param>               lstParamsRev;
+    
+    /** Map of parameter to collection of parameter test values */
+    protected final Map<Param, List<Object>>  mapParamToVals;
+    
+
+    //
     // Constructors
     //
     
@@ -271,6 +226,131 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
 
     
     //
+    // Utility Methods
+    //
+    
+    /**
+     * <p>
+     * Determines whether or not the given map of assumed (Parameter, Value) pairs has any missing <code>Param</code> entries.
+     * </p>
+     * <p>
+     * This method is available for child-class implementations of <code>{@link #createTestCase(Map)}</code> when
+     * creating <code>TestCase</code> records from mappings of (Parameter, Value) pairs).
+     * It is available for exception checking before assembling the test case record.
+     * </p>
+     * <p>
+     * This method defers to <code>{@link #missingParameters(Map)}</code> invoking <code>!{@link Set#isEmpty()}</code>
+     * on the returned results of the operation.
+     * To get the full set of missing parameter entries for the given map use <code>{@link #missingParameters(Map)}</code>.
+     * </p>
+     * 
+     * @param mapTestVals   mapping of (Parameter, Value) pairs for <code>TestCase</code> record creating
+     * 
+     * @return  <code>true</code> if the map contains missing parameter key entries,
+     *          <code>false</code> if the map is complete
+     *          
+     * @see #missingParameters(Map)
+     */
+    public boolean  hasMissingParameters(Map<Param, Object> mapTestVals) {
+        return !this.missingParameters(mapTestVals).isEmpty();
+    }
+    
+    /**
+     * <p>
+     * Determines whether or not the given map of assumed (Parameter, Value) pairs has any null <code>Value</code> entries.
+     * </p>
+     * <p>
+     * This method is available for child-class implementations of <code>{@link #createTestCase(Map)}</code> when
+     * creating <code>TestCase</code> records from mappings of (Parameter, Value) pairs).
+     * The given map of (<code>Param</code>, <code>Object</code>) pairs is checked for any <code>null</code> values
+     * within the map value set.   
+     * </p>
+     * <p>
+     * This method defers to <code>{@link #missingValues(Map)}</code> invoking <code>!{@link Set#isEmpty()}</code>
+     * on the returned results of the operation.
+     * To get a set of parameters with unassigned values for the given map use <code>{@link #missingValues(Map)}</code>.
+     * </p>
+     * 
+     * @param mapTestVals   mapping of (Parameter, Value) pairs for <code>TestCase</code> record creating
+     * 
+     * @return  <code>true</code> if the map contains missing parameter value entries,
+     *          <code>false</code> if the map is complete
+     *          
+     * @see #missingValues(Map)
+     */
+    public boolean  hasMissingValues(Map<Param, Object> mapTestVals) {
+        return !this.missingValues(mapTestVals).isEmpty();
+    }
+    
+    /**
+     * <p>
+     * Checks the given map of assumed (Parameter, Value) pairs for any missing <code>Param</code> entries and returned them.
+     * </p>
+     * <p>
+     * This method is available for child-class implementations of <code>{@link #createTestCase(Map)}</code> when
+     * creating <code>TestCase</code> records from mappings of (Parameter, Value) pairs).
+     * It is available for exception checking before assembling the test case record.
+     * </p>
+     * <p> 
+     * The <code>Param</code> enumeration is assumed to contain all test parameters.
+     * The given map of (<code>Param</code>, <code>Object</code>) pairs is checked for completeness of all
+     * possible <code>Param</code> constants within the enumeration.  Any enumeration constants that are missing
+     * are identified in the returned set.
+     * </p>
+     * 
+     * @param mapTestVals   mapping of (Parameter, Value) pairs for <code>TestCase</code> record creating
+     *  
+     * @return  the set of any <code>Param</code> constants missing from the given map
+     */
+    public Set<Param>    missingParameters(Map<Param, Object> mapTestVals) {
+//    public static <Param extends Enum<Param>> Set<Param>    missingParameters(Class<Param> clsParam, Map<Param, Object> mapTestVals) {
+        EnumSet<Param>      setParams = EnumSet.allOf(this.clsParams);
+        
+        setParams.removeAll( mapTestVals.keySet() );
+        
+        return setParams;
+    }
+    
+    /**
+     * <p>
+     * Checks the given map of assumed (Parameter, Value) pairs for any null <code>Value</code> entries and parameter.
+     * </p>
+     * <p>
+     * This method is available for child-class implementations of <code>{@link #createTestCase(Map)}</code> when
+     * creating <code>TestCase</code> records from mappings of (Parameter, Value) pairs).
+     * </p>
+     * <p> 
+     * The <code>Param</code> enumeration is assumed to contain all test parameters.
+     * The given map of (<code>Param</code>, <code>Object</code>) pairs is checked for any <code>null</code> values
+     * within the map value set.   
+     * All enumeration constant map keys that corresponds to a <code>null</code> value are identified in the returned set.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <ul>
+     * <li>This method does <b>not</b> check for completeness of the map key set.</li>
+     * <li>With regard to the above, use method <code>{@link #missingParameters(Class, Map)}</code> first.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param mapTestVals   mapping of (Parameter, Value) pairs for <code>TestCase</code> record creating
+     *  
+     * @return  the set of parameters that have no value assignments
+     */
+    public Set<Param>    missingValues(Map<Param, Object> mapTestVals) {
+//    public static <Param extends Enum<Param>> Set<Param>    missingValues(Class<Param> clsParam, Map<Param, Object> mapTestVals) {
+        EnumSet<Param>      setParams = EnumSet.allOf(this.clsParams);
+        
+        Set<Param>          setMissing = setParams
+                .stream()
+                .filter(enmParam -> mapTestVals.get(enmParam)==null)
+                .collect(Collectors.toSet());
+        
+        return setMissing;
+    }
+
+    
+    //
     // State Inquiry
     //
     
@@ -282,13 +362,20 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
      * A returned value of <code>true</code> indicates that all parameter in the test suite have at least
      * one test value and that the method <code>{@link #createTestSuit()}</code> can be successfully invoked.
      * </p>
+     * <p>
+     * This method defers to <code>{@link #unassignedParameters()}</code> invoking <code>{@link Set#isEmpty()}</code>
+     * on the result.  To obtain a set of parameters with unassigned values for the current configuration 
+     * use <code>{@link #unassignedParameters()}</code>.
+     * </p>
      * 
      * @return  <code>true</code> if the test suite is capable of generation, <code>false</code> otherwise
+     * 
+     * @see #unassignedParameters()
      */
     public boolean isValidConfiguration() {
         
         // Check that all parameters have at least one value (i.e., the set of missing parameter values is empty)
-        boolean bolResult = this.missingValues().isEmpty();
+        boolean bolResult = this.unassignedParameters().isEmpty();
         
         return bolResult;
     }
@@ -304,7 +391,7 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
      * <p>
      * <h2>NOTES:</h2>
      * If the current test suite contains missing parameter values (i.e., no all parameters have been assigned values)
-     * then the method returns 0.  Check this condition with <code>{@link #missingValues()}</code>.
+     * then the method returns 0.  Check this condition with <code>{@link #unassignedParameters()}</code>.
      * </p>
      * 
      * @return  total number of test cases within the current test suite, 0 if any missing parameter values 
@@ -338,7 +425,7 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
      *  
      * @return  set of <code>Param</code> constants indicating any parameters that have not been assigned test values
      */
-    public Set<Param> missingValues() {
+    public Set<Param> unassignedParameters() {
         
         Set<Param>      setMissing = this.setParams
                 .stream()
@@ -481,6 +568,93 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
     
     /**
      * <p>
+     * Parses the application command-line arguments for the test suite configuration.
+     * </p>
+     * <p>
+     * This method can be used only if the <code>Param</code> enumeration implements the <code>{@link ITestParameter}</code>
+     * interface or an exception is thrown.
+     * The method is intended for specialized creators use in child classes.
+     * </p>
+     * <p>
+     * The method iterates through the test suite parameters as enumerated in <code>Param</code>.
+     * All <code>{@link ITestParameter#getParameterDelimOption()}</code> variables are identified in the
+     * command-line arguments, their values extracted, then used for parameter values in the test suite
+     * configuration using <code>{@link #addParameterValue(Enum, Object)}</code>. 
+     * </p>
+     * <p>
+     * The values for each parameter are extracted from the given <code>String[]</code> argument,
+     * assumed to be the collection of command-line arguments for a Java application <code>main(String[])</code> method. 
+     * The application test parameters values are extracted from the command-line arguments using the given
+     * <code>{@link AppOptionsParser}</code> and added to the current test suite configuration.  
+     * If the command line does not provide values for a parameter the default value
+     * is assigned as given by <code>{@link ITestParameter#getDefaultValue()}</code>.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * This method is the source of all
+     * exceptions thrown except the <code>ClassCastException</code>, which is thrown if the <code>Param</code>
+     * enumeration does not implement the <code>{@link ITestParameter}</code> interface.
+     * <ul>
+     * <li>The <code>AppOptionsParser</code> instance is assumed to be configured for the application command-line arguments.</li>
+     * <li>All parameter values are extracted using the <code>{@link AppOptionsParser#parseVariable(String, String...)}</code>
+     *     operation.</li>
+     * <li>The string tokens within the command line are converted to <code>Object</code> values of the appropriate
+     *     type using <code>{@link ITestParameter#parseValue(String)}</code>.</li>
+     * <li>The above operation is the source of all exceptions thrown except the <code>ClassCastException</code>.</li>
+     * <li>The <code>ClassCastException</code> is thrown if the <code>Param</code> enumeration does not implement the 
+     *     <code>{@link ITestParameter}</code> interface.</li>
+     * </p>
+     * 
+     * @param args  the application command-line arguments
+     * 
+     * @throws ClassCastException       the <code>Param</code> enumeration does not implement <code>ITestParameter</code>
+     * @throws IllegalArgumentException general error (typically bad argument type, bad argument count, enumeration constant not recognized)
+     * @throws NoSuchMethodException    the Java class <code>{@link #getJavaType()}</code> does not contain method <code>valueOf(String)</code>
+     * @throws SecurityException        the class loader denied access to method <code>valueOf(String)</code> (e.g., typically package access)
+     * @throws IllegalAccessException   the method <code>valueOf(String)</code> is not accessible
+     * @throws InvocationTargetException    the <code>valueOf(String)</code> method threw an exception (e.g., NumberFormatException)
+     * @throws DateTimeParseException   invalid ISO-8605 date/time/duration format for 'period', 'start', or 'delay' 
+     * @throws TypeNotPresentException  invalid enumeration constant (e.g., the 1st argument was not a <code>JalComplexType</code>)
+     * @throws NumberFormatException    invalid numeric expression (typically for 'lngSeed' value)
+     * @throws ConfigurationException   the argument contained the wrong number of arguments for the <code>JalComplexType</code>
+     * @throws UnsupportedOperationException invalid field value format (typically 'numIncr' was invalid)
+     * @throws MalformedParametersException  an enumeration constant within the argument set was not recognized (IMAGE)
+     * @throws NoSuchElementException   the column data type was unrecognized (i.e., 'DTYPE' was not supported)
+     */
+    synchronized
+    public void parseParameterValues(AppOptionsParser parser, String...args) 
+            throws ClassCastException, UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException, 
+            InvocationTargetException, DateTimeParseException, NumberFormatException, IllegalArgumentException, 
+            TypeNotPresentException, ConfigurationException, MalformedParametersException 
+    {
+        // Convert parameter set to ITestParameter
+        @SuppressWarnings("unchecked")
+        Set<ITestParameter<Param>>  setIParams = this.setParams.stream().map(p -> (ITestParameter<Param>)p).collect(Collectors.toSet());
+        
+        // For each parameter
+        for (ITestParameter<Param> ifcParam : setIParams) {
+        
+            // Parse the command line for parameter values
+            List<String>    lstStrVals = parser.parseVariable(ifcParam.getParameterDelimOption(), args);
+            
+            // If empty use default parameter value
+            if (lstStrVals.isEmpty()) {
+                this.addParameterValue(ifcParam.getParameterConstant(), ifcParam.getDefaultValue());  // throws IllegalArgumentException
+                
+                continue;
+            }
+            
+            // Otherwise convert parameter value strings to value objects and add to test suite
+            for (String strVal : lstStrVals) {
+                Object  objVal = ifcParam.parseValue(strVal);   // throws all exceptions
+                
+                this.addParameterValue(ifcParam.getParameterConstant(), objVal);
+            }
+        }
+    }
+    
+    /**
+     * <p>
      * Creates and returns a test suite collection of <code>TestCase</code> records according to the current configuration.
      * </p>
      * <p>
@@ -517,34 +691,11 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
     public Collection<TestCase> createTestSuit() throws IllegalStateException, MissingResourceException, ClassCastException, UnsupportedOperationException, IndexOutOfBoundsException {
 
         // Check for valid configuration
-        Set<Param>  setMissing = this.missingValues();
-        if (!setMissing.isEmpty())
-            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - missing value(s) for parameter(s) : " + setMissing);
+        if (!this.isValidConfiguration())
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - missing value(s) for parameter(s) : " + this.unassignedParameters());
 
         // Create the returned container of test cases
         Collection<TestCase>    conTestCases = new LinkedList<>();
-        
-//        // Create the map of initial (Param, Index) pairs used to iterated through all parameter values
-//        //  Note that this map is modified by createCaseMap() - indices are incremented bottom up
-//        Map<Param, Integer> mapIndices = this.setParams
-//                .stream()
-//                .collect(Collectors.toMap(enmParam -> enmParam, enmParam -> Integer.valueOf(0)) 
-//                 );
-//                
-//        // Initialize the test case creation loop
-//        boolean     bolComplete = false;    // Test case completion flag
-//        while (!bolComplete) {              // Create test cases until createCaseMap() signals exhaustion
-//            
-//            try {
-//                Map<Param, Object>  mapTestCase = this.createCaseMap(mapIndices);   // throws NoSuchElementException
-//                TestCase            recTestCase = this.createTestCase(mapTestCase); // throws MissingResourceException, ClassCastException, UnsupportedOperationException
-//                
-//                conTestCases.add(recTestCase);
-//                
-//            } catch (NoSuchElementException e) {
-//                bolComplete = true;
-//            }
-//        }
         
         for (int iCase=0; iCase<this.testCaseCount(); iCase++) {
             
@@ -556,6 +707,7 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
         
         return conTestCases;
     }
+    
 
     /**
      * <p>
@@ -589,7 +741,6 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
             ps.println(strLine);
         }
     }
-
     
     
     //

@@ -270,21 +270,19 @@ public class TestSuiteGeneratorBaseTest {
         protected TestCase createTestCase(Map<Param, Object> mapTestVals) throws ClassCastException, MissingResourceException, UnsupportedOperationException {
             
             // Check for parameter completeness
-            Set<Param>  setMissingParam = TestSuiteGeneratorBase.missingParameters(Param.class, mapTestVals);
-            if (!setMissingParam.isEmpty())
+            if (super.hasMissingParameters(mapTestVals))
                 throw new MissingResourceException(
                             JavaRuntime.getQualifiedMethodNameSimple() + " - (Param, Value) map is missing parameter(s).",
                             Map.class.getName(), 
-                            setMissingParam.toString()
+                            this.missingParameters(mapTestVals).toString()
                             );
             
             // Check for value completeness
-            Set<Param>  setMissingVals = TestSuiteGeneratorBase.missingValues(Param.class, mapTestVals);
-            if (!setMissingVals.isEmpty())
+            if (super.hasMissingValues(mapTestVals))
                 throw new MissingResourceException(
                         JavaRuntime.getQualifiedMethodNameSimple() + " - (Param, Value) map is missing parameter value(s).",
                         Map.class.getName(), 
-                        setMissingVals.toString()
+                        super.missingValues(mapTestVals).toString()
                         );
             
             // Make room for the TestCase field values
@@ -567,7 +565,7 @@ public class TestSuiteGeneratorBaseTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#missingValues()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#unassignedParameters()}.
      */
     @Test
     public final void testMissingValues() {
@@ -588,7 +586,7 @@ public class TestSuiteGeneratorBaseTest {
         
         Set<Param>  setMissing = setParamsAll;
         Assert.assertFalse(genTest.isValidConfiguration());
-        Assert.assertEquals(setMissing, genTest.missingValues());
+        Assert.assertEquals(setMissing, genTest.unassignedParameters());
         Assert.assertEquals(0, genTest.testCaseCount());
         
         // Frame count
@@ -596,7 +594,7 @@ public class TestSuiteGeneratorBaseTest {
 
         setMissing.remove(Param.FRAME_COUNT);
         Assert.assertFalse(genTest.isValidConfiguration());
-        Assert.assertEquals(setMissing, genTest.missingValues());
+        Assert.assertEquals(setMissing, genTest.unassignedParameters());
         Assert.assertEquals(0, genTest.testCaseCount());
         
         // Sample count
@@ -604,7 +602,7 @@ public class TestSuiteGeneratorBaseTest {
         
         setMissing.remove(Param.SAMPLE_COUNT);
         Assert.assertFalse(genTest.isValidConfiguration());
-        Assert.assertEquals(setMissing, genTest.missingValues());
+        Assert.assertEquals(setMissing, genTest.unassignedParameters());
         Assert.assertEquals(0, genTest.testCaseCount());
         
         // Sample period
@@ -612,7 +610,7 @@ public class TestSuiteGeneratorBaseTest {
         
         setMissing.remove(Param.SAMPLE_PERIOD);
         Assert.assertFalse(genTest.isValidConfiguration());
-        Assert.assertEquals(setMissing, genTest.missingValues());
+        Assert.assertEquals(setMissing, genTest.unassignedParameters());
         Assert.assertEquals(0, genTest.testCaseCount());
 
         // Timestamp case
@@ -620,7 +618,7 @@ public class TestSuiteGeneratorBaseTest {
         
         setMissing.remove(Param.TIMESTAMP_CASE);
         Assert.assertFalse(genTest.isValidConfiguration());
-        Assert.assertEquals(setMissing, genTest.missingValues());
+        Assert.assertEquals(setMissing, genTest.unassignedParameters());
         Assert.assertEquals(0, genTest.testCaseCount());
         
         // Column Count
@@ -628,7 +626,7 @@ public class TestSuiteGeneratorBaseTest {
         
         setMissing.remove(Param.COLUMN_COUNT);
         Assert.assertFalse(genTest.isValidConfiguration());
-        Assert.assertEquals(setMissing, genTest.missingValues());
+        Assert.assertEquals(setMissing, genTest.unassignedParameters());
         Assert.assertEquals(0, genTest.testCaseCount());
         
         // Column name
@@ -636,7 +634,7 @@ public class TestSuiteGeneratorBaseTest {
         
         setMissing.remove(Param.COLUMN_NAME);
         Assert.assertFalse(genTest.isValidConfiguration());
-        Assert.assertEquals(setMissing, genTest.missingValues());
+        Assert.assertEquals(setMissing, genTest.unassignedParameters());
         Assert.assertEquals(0, genTest.testCaseCount());
         
         // Column data type
@@ -644,7 +642,7 @@ public class TestSuiteGeneratorBaseTest {
         
         setMissing.remove(Param.COLUMN_TYPE);
         Assert.assertTrue(genTest.isValidConfiguration());
-        Assert.assertEquals(setMissing, genTest.missingValues());
+        Assert.assertEquals(setMissing, genTest.unassignedParameters());
         Assert.assertEquals(1, genTest.testCaseCount());
     }
 

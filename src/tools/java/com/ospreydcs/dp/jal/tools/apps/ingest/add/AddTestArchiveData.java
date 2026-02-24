@@ -43,8 +43,6 @@ import javax.naming.ConfigurationException;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 
-import com.ospreydcs.dp.jal.appfwk.ExitCode;
-import com.ospreydcs.dp.jal.appfwk.JalApplicationBase;
 import com.ospreydcs.dp.jal.common.DpTimestampCase;
 import com.ospreydcs.dp.jal.common.IngestRequestUID;
 import com.ospreydcs.dp.jal.common.IngestionResult;
@@ -57,6 +55,8 @@ import com.ospreydcs.dp.jal.ingest.IIngestionService;
 import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.ingest.JalIngestionApiFactory;
 import com.ospreydcs.dp.jal.ingest.JalIngestionException;
+import com.ospreydcs.dp.jal.tools.appfwk.ExitCode;
+import com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase;
 import com.ospreydcs.dp.jal.tools.apps.query.correl.DataCorrelationEvaluator;
 import com.ospreydcs.dp.jal.tools.common.datagen.IFrameFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.JalScalarType;
@@ -92,10 +92,10 @@ import com.sun.jdi.request.InvalidRequestStateException;
  * <p>
  * The application usage is described in the class constant {@link #STR_APP_USAGE}, which contains detailed
  * information on command line arguments.  This description can be displayed from the command line with
- * the single argument {@value JalApplicationBase#STR_VAR_HELP}, or specifically
+ * the single argument {@value JalApplicationBase#STR_DVAR_HELP}, or specifically
  * <pre>
  * <code>
- *   % {@value AddTestArchiveData#STR_APP_NAME} {@value JalApplicationBase#STR_VAR_HELP}
+ *   % {@value AddTestArchiveData#STR_APP_NAME} {@value JalApplicationBase#STR_DVAR_HELP}
  * </code>
  * </pre>
  * </p>
@@ -318,8 +318,8 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
             STR_APP_NAME  + " Usage: \n"
           + "\n"
           + "> " + STR_APP_NAME
-          + " [" + STR_VAR_HELP + "]"
-          + " [" + STR_VAR_VERSION + "]"
+          + " [" + STR_DVAR_HELP + "]"
+          + " [" + STR_DVAR_VERSION + "]"
           + " " + STR_VAR_PVS + " PV1 [... PVn]"
           + " " + STR_VAR_TYPE + " TYPE"
           + " " + STR_VAR_SMPLS + " N"
@@ -331,8 +331,8 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
           + " [" + STR_VAR_OUTPUT + " Output]"
           + "\n\n" 
           + "  Where  \n"
-          + "    " + STR_VAR_HELP + "          = print this message and return.\n"
-          + "    " + STR_VAR_VERSION + "       = prints application version information and return.\n"
+          + "    " + STR_DVAR_HELP + "          = print this message and return.\n"
+          + "    " + STR_DVAR_VERSION + "       = prints application version information and return.\n"
           + "    PV1, [..., PVn] = Name(s) of the process variables to add (e.g., 'jalTools_1', 'jatTools_2', etc.). \n"
           + "    TYPE            = Data type of all process variables - 'JalScalarType' enumeration (e.g. 'INTEGER', 'DOUBLE', etc.). \n"
           + "    N               = The number of samples for each process variable (note total duration is T*N).\n"
@@ -483,7 +483,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     //
     
     /**
-     * @see com.ospreydcs.dp.jal.appfwk.JalApplicationBase#isLogging()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase#isLogging()
      */
     @Override
     protected boolean isLogging() {
@@ -491,7 +491,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
     }
 
     /**
-     * @see com.ospreydcs.dp.jal.appfwk.JalApplicationBase#getLogger()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase#getLogger()
      */
     @Override
     protected Logger getLogger() {
@@ -1116,11 +1116,11 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
      * </p>
      * <p>
      * The output location, as specified by the application client, is the value of variable
-     * {@value #STR_VAR_OUTPUT}.  There is only one value for this variable and any additional values
+     * {@value #STR_DVAR_OUTPUT}.  There is only one value for this variable and any additional values
      * are will throw an exception.
      * </p>
      * <p>
-     * If the variable {@value #STR_VAR_OUTPUT} is not present in the command line arguments, this is an
+     * If the variable {@value #STR_DVAR_OUTPUT} is not present in the command line arguments, this is an
      * optional parameter, then a <code>null</code> values is returned.
      * </p>
      * 
