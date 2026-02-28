@@ -28,6 +28,7 @@ package com.ospreydcs.dp.jal.tools.apps.ingest.channel;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.MalformedParametersException;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
@@ -146,7 +147,7 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
      * 
      * @see TestSuiteGeneratorBase
      */
-    public static IngestChanTestSuite   from(AppOptionsParser parser, String...args) 
+    public static IngestChanTestSuite   parse(String...args) 
             throws DateTimeParseException, NumberFormatException, ClassCastException, 
                    UnsupportedOperationException, NoSuchMethodException, SecurityException, 
                    IllegalAccessException, InvocationTargetException, IllegalArgumentException, 
@@ -154,12 +155,23 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
     {
         IngestChanTestSuite suite = IngestChanTestSuite.from();
         
-        suite.parseParameterValues(parser, args);
+        suite.parseParameterValues(PARSER, args);
         
         return suite;
     }
     
-
+    
+    //
+    // Class Resources
+    //
+    
+    /** List of all the valid delimited argument options */
+    public static final List<String>        LST_STR_DELOPTS = IngestChanTestParams.validDelimOptions();
+    
+    /** The application arguments parser */
+    private static final AppOptionsParser   PARSER = AppOptionsParser.from(LST_STR_DELOPTS);
+    
+    
     //
     // Constructor
     //

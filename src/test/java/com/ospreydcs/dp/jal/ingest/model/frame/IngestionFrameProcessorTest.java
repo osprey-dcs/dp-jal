@@ -218,7 +218,7 @@ public class IngestionFrameProcessorTest {
     }
     
     /**
-     * Test method for {@link IngestionFrameProcessor#enableSerialization(boolean)}.
+     * Test method for {@link IngestionFrameProcessor#enableDataColumnSerialization(boolean)}.
      */
     @Test
     public final void testEnableSerialization() {
@@ -230,10 +230,10 @@ public class IngestionFrameProcessorTest {
         
         final boolean   bolSerialize = processor.hasSerialization();
         
-        processor.enableSerialization(!bolSerialize);
+        processor.enableDataColumnSerialization(!bolSerialize);
         Assert.assertNotEquals(bolSerialize, processor.hasSerialization());
         
-        processor.enableSerialization(bolSerialize);
+        processor.enableDataColumnSerialization(bolSerialize);
         Assert.assertEquals(bolSerialize, processor.hasSerialization());
     }
 

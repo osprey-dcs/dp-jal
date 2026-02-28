@@ -363,8 +363,10 @@ public record IngestChanTestResult(
             ps.println(strPad + "  FAILURE - " + this.recTestStatus.message());
             if (this.recTestStatus.hasCause()) {
                 Throwable   e = this.recTestStatus.cause();
-                ps.println("  Cause: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+                ps.println(strPad + "  Cause: " + e.getClass().getSimpleName() + " - " + e.getMessage());
             }
+            ps.println(strPadd + "Test Case Parameters");
+            this.recTestCase.printOut(ps, strPadd);
             
             return;
         }
@@ -372,12 +374,12 @@ public record IngestChanTestResult(
         ps.println(strPad + "Test Case #" + this.recTestCase.indCase());
         ps.println(strPadd + "Payload ingestion frame count     : " + this.cntFrames);
         ps.println(strPadd + "Payload allocation size (bytes)   : " + this.szPayload);
+        ps.println(strPadd + "Processing duration               : " + this.durProcessed);
         ps.println(strPadd + "Payload processing rate (MBps)    : " + this.dblRateProc);
         ps.println(strPadd + "Processed message count           : " + this.cntMsgsXmit);
         ps.println(strPadd + "Processed allocation size (bytes) : " + this.szAllocXmit);
-        ps.println(strPadd + "Processing duration               : " + this.durProcessed);
-        ps.println(strPadd + "Tranmission rate  (MBps)          : " + this.dblRateProc);
         ps.println(strPadd + "Transmission duration             : " + this.durTransmit);
+        ps.println(strPadd + "Tranmission rate  (MBps)          : " + this.dblRateXmit);
         if (this.lstUniRsps!=null && !this.lstUniRsps.isEmpty())
             ps.println(strPad + "Unidirectional stream responses    : " + this.lstUniRsps.size());
         if (this.lstBidiRsps!=null && !this.lstBidiRsps.isEmpty())

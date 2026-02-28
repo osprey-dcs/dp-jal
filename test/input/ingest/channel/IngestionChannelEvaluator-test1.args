@@ -1,0 +1,13 @@
+# Data Column Serialization
+--colser FALSE TRUE 
+
+# gRPC Stream Type, Multiple Data Stream Enable, Maximum Data Stream Counts
+--strtype FORWARD BIDIRECTIONAL
+--mstrm TRUE
+--strmcnt 1 2 3 4
+
+# Payload Ingestion Frame Count
+--frmcnt 1 5 10
+
+# Payload Frame Definitions
+--frame '--label Frm1: --tms 1000 PT0.001S SAMPLING_CLOCK --cols 4000 Frm1Pv: SCALAR DOUBLE' 

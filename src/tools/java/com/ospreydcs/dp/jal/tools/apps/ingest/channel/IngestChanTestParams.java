@@ -26,8 +26,15 @@
 package com.ospreydcs.dp.jal.tools.apps.ingest.channel;
 
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.MalformedParametersException;
+import java.time.format.DateTimeParseException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
+
+import javax.naming.ConfigurationException;
 
 import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
@@ -53,7 +60,7 @@ public enum IngestChanTestParams implements ITestParameter<IngestChanTestParams>
     /**
      * The gRPC data stream type used for ingest channel transmission {FORWARD, BIDIRECTIONAL} 
      */
-    STREAM_TYPE("gRPC stream type {FORWARD, BIDIRECTIONAL.", "--strmtype", DpGrpcStreamType.class, DefaultCfg.API.ingest.stream.type),
+    STREAM_TYPE("gRPC stream type {FORWARD, BIDIRECTIONAL}.", "--strmtype", DpGrpcStreamType.class, DefaultCfg.API.ingest.stream.type),
     
     /**
      * Enable/disable multiple, concurrent gRPC data streams in ingestion channel transmission.
@@ -68,13 +75,12 @@ public enum IngestChanTestParams implements ITestParameter<IngestChanTestParams>
     /**
      * Number of ingestion frames forming the test case payload. 
      */
-    FRAME_CNT("Number of ingestion data frames in payload", "--frmcnt", Integer.class, DefaultCfg.TOOLS.datagen.frame.count),
+    FRAME_CNT("Number of ingestion data frames in payload.", "--frmcnt", Integer.class, DefaultCfg.TOOLS.datagen.frame.count),
     
     /**
      * The test case ingestion frame specification (definition).  
      */
-    FRAME_DEF("Ingestion data frame configuration", "--frame", FrameFactorySpec.class, DefaultCfgLoc.FRM_DEF),
-    
+    FRAME_DEF("Ingestion data frame configuration.", "--frame", FrameFactorySpec.class, DefaultCfgLoc.FRM_DEF),
     ;
 
     /**
@@ -252,4 +258,57 @@ public enum IngestChanTestParams implements ITestParameter<IngestChanTestParams>
         return this.objValueDef;
     }
     
+    /**
+     * <p>
+     * Parse the string argument and convert it to an object of the proper type for the constant.
+     * </p>
+     * <p>
+     * If the constant represents a numeric type (i.e., any constant exception <code>{@link #STRING}</code>)
+     * it is converted to the appropriate Java numeric type using the <code>valueOf(String)</code> method 
+     * using reflection.  If the constant is of type <code>{@link #STRING}</code> the argument simply passes
+     * through.
+     * </p>
+     * 
+     * @param strValue  typically a string representation of a numeric type, or any string if <code>this</code> is <code>{@link #STRING}</code>
+     * 
+     * @return  the Java numeric type after parsing and conversion, or the argument itself if <code>this</code> is <code>{@link #STRING}</code>
+     * 
+     * @throws NoSuchMethodException    the Java class <code>{@link #getJavaType()}</code> does not contain method <code>valueOf(String)</code>
+     * @throws SecurityException        the class loader denied access to method <code>valueOf(String)</code> (e.g., typically package access)
+     * @throws IllegalAccessException   the method <code>valueOf(String)</code> is not accessible
+     * @throws InvocationTargetException    the <code>valueOf(String)</code> method threw an exception (e.g., NumberFormatException)
+     * @throws IllegalArgumentException general error (typically bad argument count or enumeration constant not recognized)
+     * @throws DateTimeParseException   invalid ISO-8605 date/time/duration format for 'period', 'start', or 'delay' 
+     * @throws TypeNotPresentException  invalid enumeration constant (e.g., the 1st argument was not a <code>JalComplexType</code>)
+     * @throws NumberFormatException    invalid numeric expression (typically for 'lngSeed' value)
+     * @throws ConfigurationException   the argument contained the wrong number of arguments for the <code>JalComplexType</code>
+     * @throws UnsupportedOperationException invalid field value format (typically 'numIncr' was invalid)
+     * @throws MalformedParametersException  an enumeration constant within the argument set was not recognized (IMAGE)
+     * @throws NoSuchElementException   the column data type was unrecognized (i.e., 'DTYPE' was not supported)
+     */
+    @Override
+    public Object   parseValue(String strValue) 
+            throws UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException, 
+                   InvocationTargetException, DateTimeParseException, NumberFormatException, IllegalArgumentException, 
+                   TypeNotPresentException, ConfigurationException, MalformedParametersException 
+    {
+        // Special case for FRAME_DEF - must parse arguments within 'frame parameters'
+        if (this == FRAME_DEF) {
+            StringTokenizer     tokenizer = new StringTokenizer(strValue, " '");
+            List<String>        lstTokens = new LinkedList<>();
+            while (tokenizer.hasMoreTokens()) {
+                String  strToken = tokenizer.nextToken().strip();
+                
+                lstTokens.add(strToken);
+            }
+            String[]            arrArgs = lstTokens.toArray(new String[lstTokens.size()]);
+            FrameFactorySpec    specFrm = FrameFactorySpec.parse(arrArgs); // throws IllegalArgumentException, DateTimeParseException, TypeNotPresentException, NumberFormatException, ConfigurationException, UnsupportedOperationException, MalformedParametersException
+            
+            return specFrm;
+        }
+
+        // Otherwise defer to the default implementation
+        return ITestParameter.super.parseValue(strValue);
+    }
+
 }

@@ -135,13 +135,14 @@ public class IngestChanResultStats extends TestResultStatsBase<IngestChanTestRes
     @Override
     protected List<NumberField<IngestChanTestResult>> assignNumericFields() {
         List<NumberField<IngestChanTestResult>>     lstFlds = List.of(
-                NumberField.from("Raw data transmission rate (MBps)", NumberType.DOUBLE, DBL_RATE_TGT, rec -> rec.dblRateXmit()),
+                NumberField.from("Data transmission rate (MBps)", NumberType.DOUBLE, DBL_RATE_TGT, rec -> rec.dblRateXmit()),
                 NumberField.from("Number of data messages transmitted", NumberType.INTEGER, null, rec -> rec.cntMsgsXmit()),
                 NumberField.from("Allocation size (bytes) transmitted", NumberType.LONG, null, rec -> rec.szAllocXmit()),
-                NumberField.from("Payload ingestion frame count", NumberType.INTEGER, null, rec -> rec.cntFrames()),
-                NumberField.from("Payload allocation size (bytes)", NumberType.LONG, null, rec -> rec.szPayload()),
-                NumberField.from("Number of UNI message responses", NumberType.INTEGER, null, rec -> rec.lstUniRsps().size()),
-                NumberField.from("Number of BIDI message responses", NumberType.INTEGER, null, rec -> rec.lstBidiRsps().size())
+                NumberField.from("Payload processing rate (MBps)", NumberType.DOUBLE, DBL_RATE_TGT, rec -> rec.dblRateProc())
+//                NumberField.from("Payload ingestion frame count", NumberType.INTEGER, null, rec -> rec.cntFrames()),
+//                NumberField.from("Payload allocation size (bytes)", NumberType.LONG, null, rec -> rec.szPayload()),
+//                NumberField.from("Number of UNI message responses", NumberType.INTEGER, null, rec -> rec.lstUniRsps().size()),
+//                NumberField.from("Number of BIDI message responses", NumberType.INTEGER, null, rec -> rec.lstBidiRsps().size())
                 );
         
         return lstFlds;

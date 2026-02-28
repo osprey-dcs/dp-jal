@@ -335,8 +335,10 @@ public record FrameProcTestResult(
             ps.println(strPad + "  FAILURE - " + this.recTestStatus.message());
             if (this.recTestStatus.hasCause()) {
                 Throwable   e = this.recTestStatus.cause();
-                ps.println("  Cause: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+                ps.println(strPad + "  Cause: " + e.getClass().getSimpleName() + " - " + e.getMessage());
             }
+            ps.println(strPadd + "Test Case Parameters");
+            this.recTestCase.printOut(ps, strPadd);
             
             return;
         }

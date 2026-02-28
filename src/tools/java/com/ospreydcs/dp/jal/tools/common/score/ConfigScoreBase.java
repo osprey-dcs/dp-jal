@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.ospreydcs.dp.jal.query.DpDataRequest;
 import com.ospreydcs.dp.jal.tools.apps.query.assem.AggrAssemblyTestConfig;
 import com.ospreydcs.dp.jal.tools.apps.query.assem.QueryAssemblyTestResult;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
@@ -192,7 +191,7 @@ public abstract class ConfigScoreBase<Config extends Record, Result extends Reco
     // Defining Attributes
     //
 
-    /** AggAssemblyTestConfig record for the score (back pointer) - the score is for this record configuration */
+    /** Config record for the score (back pointer) - the score is for this record configuration */
     private final Config       recCfg;
 
 

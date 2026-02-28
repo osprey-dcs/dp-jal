@@ -499,6 +499,38 @@ public class JalIngestionStreamImpl extends DpServiceApiBase<JalIngestionStreamI
     
     /**
      * <p>
+     * Enables the use of serialization for creating data columns within an <code>IngestionDataFrame</code>.
+     * </p>
+     * <p>
+     * Instances of <code>IngestionFrame</code> accepted by the <code>{@link #ingest(IngestionFrame)}</code> and
+     * <code>{@link #ingest(List)}</code> methods are converted to <code>IngestDataRequest</code> Protocol Buffers
+     * data messages.These request messages contain the ingestion data in the form of <code>IngestionDataFrame</code>
+     * Protocol Buffers messages contained within the request.  Invoking this method effects the ingestion data 
+     * encapsulation within the <code>IngestionDataFrame</code> messages.
+     * </p>
+     * <p>
+     * The <code>IngestionDataFrame</code> Protocol Buffers message sent to the Data Platform Ingestion Service
+     * can contain sampling vectors as either a <code>DataColumn</code> message or a <code>SerializedDataColumn</code>
+     * message.  Employing <code>SerializedDataColumn</code> can significantly enhance performance, especially for
+     * sampling vectors requiring large memory allocation.  Using <code>SerializedDataColumn</code> messages avoids 
+     * repeated serialization/de-serialization operations for data transport and archiving.  Specifically, it is
+     * explicitly serialized only once, before transport, then transported to the Ingestion Service where it 
+     * is archived in its serialized form.  Conversely, the <code>DataColumn</code> is serialized for transport,
+     * transported, de-serialized by Protocol Buffers after transport, then re-serializezd for archiving by the
+     * Ingestion Service. 
+     * </p>
+     *
+     * @see #disableDataColumnSerialization()
+     */
+    public void enableDataColumnSerialization() {
+        if (this.bolStreamOpen)
+            throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Cannot change concurency once stream opened.");
+        
+        this.prcrFrames.enableDataColumnSerialization(true);
+    }
+    
+    /**
+     * <p>
      * Enables the use of concurrent multi-threading and sets the number of threads.
      * </p>
      * <p>
@@ -531,7 +563,7 @@ public class JalIngestionStreamImpl extends DpServiceApiBase<JalIngestionStreamI
      * 
      * @param cntThreads    the number of independent processing threads each concurrent operation
      * 
-     * @throws IllegalStateException    method called while processor is enabled
+     * @throws IllegalStateException    method called while processor is enabled (stream open)
      */
     public void setFrameProcessingConcurrency(int cntThreads) throws IllegalStateException {
         
@@ -591,6 +623,35 @@ public class JalIngestionStreamImpl extends DpServiceApiBase<JalIngestionStreamI
 //        this.szDecompFrameMax = szMaxFrmAlloc;
         
         this.prcrFrames.setFrameDecomposition(szMaxFrmAlloc);
+    }
+    
+    /**
+     * <p>
+     * Disables the use of serialization for creating data columns within an <code>IngestionDataFrame</code>.
+     * </p>
+     * <p>
+     * Instances of <code>IngestionFrame</code> accepted by the <code>{@link #ingest(IngestionFrame)}</code> and
+     * <code>{@link #ingest(List)}</code> methods are converted to <code>IngestDataRequest</code> Protocol Buffers
+     * data messages.These request messages contain the ingestion data in the form of <code>IngestionDataFrame</code>
+     * Protocol Buffers messages contained within the request.  Invoking this method effects the ingestion data 
+     * encapsulation within the <code>IngestionDataFrame</code> messages.
+     * </p>
+     * <p>
+     * The <code>IngestionDataFrame</code> Protocol Buffers message sent to the Data Platform Ingestion Service
+     * can contain sampling vectors as either a <code>DataColumn</code> message or a <code>SerializedDataColumn</code>
+     * message.  Employing <code>SerializedDataColumn</code> can significantly enhance performance, especially for
+     * sampling vectors requiring large memory allocation.  Using <code>SerializedDataColumn</code> messages avoids 
+     * repeated serialization/de-serialization operations for data transport and archiving.  Specifically, it is
+     * explicitly serialized only once, before transport, then transported to the Ingestion Service where it 
+     * is archived in its serialized form.  Conversely, the <code>DataColumn</code> is serialized for transport,
+     * transported, de-serialized by Protocol Buffers after transport, then re-serializezd for archiving by the
+     * Ingestion Service. 
+     * </p>
+     * 
+     * @see #enableDataColumnSerialization()
+     */
+    public void disableDataColumnSerialization() {
+        this.prcrFrames.enableDataColumnSerialization(false);
     }
 
     /**
@@ -1220,8 +1281,8 @@ public class JalIngestionStreamImpl extends DpServiceApiBase<JalIngestionStreamI
 
     /**
      *
-     * @throws InterruptedException 
-     * @see @see com.ospreydcs.dp.jal.ingest.IIngestionStream#ingest(java.util.List)
+     * @throws InterruptedException operation interruted while waiting for queue ready (back pressure enabled)
+     * @see com.ospreydcs.dp.jal.ingest.IIngestionStream#ingest(java.util.List)
      */
     @Override
     public void ingest(List<IngestionFrame> lstFrames) throws IllegalStateException, InterruptedException, JalIngestionException {

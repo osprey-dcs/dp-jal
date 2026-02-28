@@ -826,7 +826,7 @@ public class AddTestArchiveData extends JalApplicationBase<AddTestArchiveData> {
         // Create the ingestion frame configuration record and return it
 //        SampleBlockConfigDep   specFrmFac = SampleBlockConfigDep.from(setPvNms, enmType, enmTmsCase, cntSmpls, durPeriod, durDelay);
         
-        FrameTimestampsSpec         specTms = FrameTimestampsSpec.from(cntSmpls, durPeriod, insStart, enmTmsCase, durDelay);
+        FrameTimestampsSpec         specTms = FrameTimestampsSpec.from(cntSmpls, durPeriod, enmTmsCase, insStart, durDelay);
         ScalarFactorySpec           specFac = ScalarFactorySpec.from(enmType);
         FrameColumnsSpec<Record>    specCols = FrameColumnsSpec.from(setPvNms, specFac);
         

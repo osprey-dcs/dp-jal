@@ -37,15 +37,18 @@ import java.util.TreeSet;
 import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.jal.config.JalConfig;
-import com.ospreydcs.dp.jal.config.grpc.DpGrpcConnectionConfig;
 import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
 import com.ospreydcs.dp.jal.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.jal.grpc.ingest.DpIngestionConnectionFactoryStatic;
+import com.ospreydcs.dp.jal.grpc.model.DpGrpcConnectionFactoryBase;
 import com.ospreydcs.dp.jal.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionChannel;
 import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer;
+import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionStream;
 import com.ospreydcs.dp.jal.tools.appfwk.ExitCode;
 import com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase;
+import com.ospreydcs.dp.jal.tools.appfwk.DpServiceAddress;
+import com.ospreydcs.dp.jal.tools.appfwk.DpServiceAddress.DpService;
 import com.ospreydcs.dp.jal.tools.common.parse.AppOptionsParser;
 import com.ospreydcs.dp.jal.tools.common.score.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -121,12 +124,12 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         //
         
         // Get the application constructor arguments
-        Address             addrHost;
+        DpServiceAddress      addrHost;
         IngestChanTestSuite suiteCases;
         String              strOutputLoc;
         try {
-            addrHost = IngestionChannelEvaluator.parseHostAddress(args);
-            suiteCases = IngestChanTestSuite.from(PARSER, args);
+            addrHost = DpServiceAddress.parse(DpService.INGESTION, args);
+            suiteCases = IngestChanTestSuite.parse(args);
             strOutputLoc = PARSER.parseOutputLocation(STR_OUT_PATH_DEF, args);
             
         } catch (Exception e) {
@@ -183,9 +186,6 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     // JAL Library Resources
     //
     
-    /** Default configuration parameters for the Ingestion Service configuration */
-    private static final DpGrpcConnectionConfig CFG_CONN = JalConfig.getInstance().connections.ingestion;
-            
     /** Default configuration parameters for the Ingestion Service API */
     private static final JalIngestionConfig     CFG_INGEST = JalConfig.getInstance().ingest;
     
@@ -201,25 +201,13 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     public static final int         CNT_APP_MIN_ARGS = 1;
     
     
-    /** Default connection host URL */
-    public static final String      STR_HOST_URL_DEF = CFG_CONN.channel.host.url;
-    
-    /** Default connection host port */
-    public static final int         INT_HOST_PORT_DEF = CFG_CONN.channel.host.port;
-    
     /** Default output path location */
-    public static final String      STR_OUT_PATH_DEF = CFG_TOOLS.output.path + "/ingest/frame";
+    public static final String      STR_OUT_PATH_DEF = CFG_TOOLS.output.path + "/ingest/channel";
     
     
     
     /** Argument delimited variable containing the input file location */
     public static final String      STR_DVAR_INPUT = "--input";
-    
-    /** Argument delimited variable containing the Ingestion Service host URL */
-    public static final String      STR_DVAR_HOST_URL = "--host";
-    
-    /** Argument delimited variable containing the Ingestion Service port number */
-    public static final String      STR_DVAR_HOST_PORT = "--port"; 
     
     
     //
@@ -276,9 +264,8 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
           + AppOptionsParser.displayCommandLineVersionOptions()
           + " [" + STR_DVAR_INPUT + " input]"
           + "\n"
-          + " "
-          + " [" + STR_DVAR_HOST_URL + " URL]"
-          + " [" + STR_DVAR_HOST_PORT + " port]"
+          + "  "
+          + DpServiceAddress.displayCommandLineOptions()
           + "\n"
           + " "
           + " [" + IngestChanTestParams.COL_SER_ENBL.getParameterDelimOption() + " FALSE TRUE]"
@@ -330,7 +317,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
           + "  'frame parameters' = \n"
           + "    [-tagsDef] [-tagsCls] [-attrsDef] [-attrsCls] \n" 
           + "    [--label prefix] [--tags tag1 ... tagN] [-Anm1=val1 ... -AnmN=valN] \n" 
-          + "    [--tms [samples [period [start [CASE [delay]]]]] ] \n" 
+          + "    [--tms [samples [period [TCASE [start [delay]]]]] ] \n" 
           + "    [--cols [cnt [prefix [DTYPE [parameter(s)]]]] ] \n" 
           + "    [   ...                                       ] \n" 
           + "    [--cols [cnt [prefix [DTYPE [parameter(s)]]]] ] \n"
@@ -350,7 +337,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
           + "    samples     = Number of sample values within each ingestion frame data column. \n"
           + "    period      = The sampling period in ISO-8601 duration format - 'PnYnMnDTnHnMn.nS'. \n"
           + "    start       = The sampling start time instant in ISO-8601 date/time format - 'Y-M-DTH:M:S.SZ' \n"
-          + "    CASE        = The timestamp case - DpTimestampCase enumeration constant {SAMPLING_CLOCK, TIMESTAMP_LIST}. \n"
+          + "    TCASE       = The timestamp case - DpTimestampCase enumeration constant {SAMPLING_CLOCK, TIMESTAMP_LIST}. \n"
           + "    delay       = Sampling start time delay in ISO-8601 duration format - 'PnYnMnDTnHnMn.nS'. \n"
           + "    cnt         = Number of columns in the column factory specification - Integer format. \n"
           + "    prefix      = Column name prefix given to each data column in specification (full name is suffixed with column index). \n"
@@ -390,14 +377,6 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     // Application Resources
     //
     
-    /** Record containing the Ingestion Service location */
-    public static record Address(String url, int port) {
-        public void printOut(PrintStream ps, String strPad) {
-            ps.println(strPad + "URL  : " + this.url);
-            ps.println(strPad + "Port : " + this.port);
-        }
-    };
-    
     /** List of all the valid delimited argument options */
     public static final List<String>        LST_STR_DELOPTS = IngestChanTestParams.validDelimOptions();
     
@@ -422,7 +401,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     //
     
     /** The Ingestion Service address */
-    private final Address                   addrHost;
+    private final DpServiceAddress            addrHost;
     
     /** The test suite configuration to run */
     private final IngestChanTestSuite       suiteCases;
@@ -522,7 +501,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
      * @throws FileNotFoundException    unable to create output file (see message and cause)
      * @throws SecurityException        unable to write to output file
      */
-    public IngestionChannelEvaluator(Address addrHost, IngestChanTestSuite suiteCases, String strOutputLoc, String... args) 
+    public IngestionChannelEvaluator(DpServiceAddress addrHost, IngestChanTestSuite suiteCases, String strOutputLoc, String... args) 
             throws DpGrpcException,
                    IllegalStateException, MissingResourceException, ClassCastException, IndexOutOfBoundsException,
                    UnsupportedOperationException, FileNotFoundException, SecurityException 
@@ -534,7 +513,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         this.suiteCases = suiteCases;
         
         // Create the components for evaluation
-        this.connIngest = DpIngestionConnectionFactoryStatic.connect(addrHost.url, addrHost.port); // throws DpGrpcException
+        this.connIngest = DpIngestionConnectionFactoryStatic.connect(addrHost.strUrl(), addrHost.intPort()); // throws DpGrpcException
         this.bufChanMsgs = IngestionMessageBuffer.from(SZ_QUEUE_INGEST, BOL_QUEUE_BACKPRES_ENBL);
         this.chanIngest = IngestionChannel.from(this.bufChanMsgs, this.connIngest);
         
@@ -545,6 +524,11 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         
         // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
+        
+        // Attach the class loggers of application components
+        super.appendLoggingFor(DpGrpcConnectionFactoryBase.class);
+        super.appendLoggingFor(IngestionMessageBuffer.class);
+        super.appendLoggingFor(IngestionStream.class);
     }
     
     /**
@@ -720,7 +704,6 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         
         // Print out header
         String  strHdr = super.createReportHeader();
-        ps.println();
         ps.println(strHdr);
         ps.println();
         
@@ -731,15 +714,16 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         ps.println();
         
         // Print out Ingestion Service host address
-        ps.println("Ingestion Service Host Address");
+        ps.println("Ingestion Service Host DpServiceAddress");
         this.addrHost.printOut(ps, strPad);
         ps.println();
         
         // Print out definitions
         ps.println(this.getClass().getSimpleName() +  " Definitions");
-        ps.println(strPad + "Transmission Rate       - Total processed message allocation divided by transmission time.");
-        ps.println(strPad + "Processed Data Rate     - Total processed data message allocation divided by payload processing time.");
-        ps.println(strPad + "Data message allocation - Total memory allocation size of all (processed) data messages.");
+        ps.println(strPad + "Transmission Rate       - Total transmitted data allocation (bytes) divided by transmission time.");
+        ps.println(strPad + "Processed Data Rate     - Total processed data message allocation divided by PAYLOAD processing time.");
+        ps.println(strPad + "Data message allocation - Total memory allocation size of all (transmitted) data messages.");
+        ps.println(strPad + "NOTE: Payload are processed into data messages independently of and prior to data transmission.");
         ps.println();
         
         // Print out test parameter descriptions
@@ -780,13 +764,15 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         ps.println();
         
         ps.println("Test Case Payload Processing Rates (MBps Descending)");
+        Collection<IngestChanTestResult>    conResultsProc = new TreeSet<>(IngestChanTestResult.descendingProcessedRateOrdering());
+        conResultsProc.addAll(this.conResults);     // order results by frame processing rate
         DataRateLister<IngestChanTestResult>  lstrRawRates = DataRateLister.from(
                 rec -> rec.recTestCase().indCase(), 
                 rec -> rec.recTestCase().specFrame().strLabel(), 
                 rec -> rec.szPayload(), 
                 rec -> rec.dblRateProc()
                 );
-        lstrRawRates.printOut(ps, strPad, this.conResults);
+        lstrRawRates.printOut(ps, strPad, conResultsProc);
         ps.println();
         
         // Print out statistical results summary
@@ -830,42 +816,4 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         }
     }
 
-    
-    //
-    // Support Methods
-    //
-
-    /**
-     * <p>
-     * Parse the Ingestion Service host location from the application command line.
-     * </p>
-     * 
-     * @param args  application command-line arguments
-     * 
-     * @return  the Ingestion Service host location
-     * 
-     * @throws NumberFormatException    the host port address had an invalid format (non-integer)
-     */
-    private static Address    parseHostAddress(String...args) throws NumberFormatException {
-        
-        String  strUrl;
-        int     intPort;
-        
-        // Retrieve the host URL
-        List<String>    lstUrl = PARSER.parseVariable(STR_DVAR_HOST_URL, args);
-        if (lstUrl.isEmpty())
-            strUrl = STR_HOST_URL_DEF;
-        else
-            strUrl = lstUrl.getFirst();
-        
-        // Retrieve the host port
-        List<String>    lstPort = PARSER.parseVariable(STR_DVAR_HOST_PORT, args);
-        if (lstPort.isEmpty())
-            intPort = INT_HOST_PORT_DEF;
-        else
-            intPort = Integer.valueOf( lstPort.getFirst() ); // throws NumberFormatException
-        
-        return new Address(strUrl, intPort);
-    }
-    
 }

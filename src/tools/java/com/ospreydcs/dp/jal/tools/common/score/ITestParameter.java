@@ -180,7 +180,7 @@ public interface ITestParameter<TestParams extends Enum<TestParams>> {
         String  strFmt = "%s%-" +  szNmMax + "s : "
                         + "Command-line variable = %" + szOptMax + "s, " 
                         + "Type = %" + szTypeMax + "s, " 
-                        + "Description = %s.";
+                        + "Description = %s";
         
         // Print out line-by-line text description of each constant
         setParams.forEach(p -> ps.println(

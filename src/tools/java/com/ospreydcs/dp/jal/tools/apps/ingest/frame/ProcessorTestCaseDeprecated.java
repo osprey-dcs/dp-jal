@@ -258,7 +258,7 @@ public record ProcessorTestCaseDeprecated(
         else
             processor.disableConcurrency();
 
-        processor.enableSerialization(this.bolSerial);
+        processor.enableDataColumnSerialization(this.bolSerial);
     }
     
 

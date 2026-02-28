@@ -172,7 +172,7 @@ public record FrameProcessorConfig(
     public void    configure(IngestionFrameProcessor processor) {
         
         // Configure the processor
-        processor.enableSerialization(this.bolColSerEnbl);
+        processor.enableDataColumnSerialization(this.bolColSerEnbl);
         
         if (this.bolDcmpEnbl) 
             processor.setFrameDecomposition(this.szFrmMax);

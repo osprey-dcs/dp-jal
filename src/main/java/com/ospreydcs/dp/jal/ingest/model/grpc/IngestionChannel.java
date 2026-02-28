@@ -39,16 +39,14 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataStreamResponse;
 import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
 import com.ospreydcs.dp.jal.common.IngestRequestUID;
+import com.ospreydcs.dp.jal.common.IngestionResponse;
 import com.ospreydcs.dp.jal.common.IngestionResult;
 import com.ospreydcs.dp.jal.common.ProviderUID;
 import com.ospreydcs.dp.jal.config.JalConfig;
@@ -57,6 +55,7 @@ import com.ospreydcs.dp.jal.grpc.ingest.DpIngestionConnection;
 import com.ospreydcs.dp.jal.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.jal.model.IMessageSupplier;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
+import com.ospreydcs.dp.jal.util.Log4j;
 
 /**
  * <h1>Representation of an ingestion channel to the Ingestion Service</h1>
@@ -231,17 +230,17 @@ public class IngestionChannel {
     
     /** Class event logger instance */
     @SuppressWarnings("unused")
-    private static final Logger     LOGGER = LogManager.getLogger();
+    private static final Logger     LOGGER = Log4j.getLogger(IngestionChannel.class, STR_LOGGING_LEVEL); //;= LogManager.getLogger();
     
     
-    /**
-     * <p>
-     * Class Initialization - Initializes the event logger, sets logging level.
-     * </p>
-     */
-    static {
-        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
-    }
+//    /**
+//     * <p>
+//     * Class Initialization - Initializes the event logger, sets logging level.
+//     * </p>
+//     */
+//    static {
+//        Configurator.setLevel(LOGGER, Level.toLevel(STR_LOGGING_LEVEL, LOGGER.getLevel()));
+//    }
     
     
     //

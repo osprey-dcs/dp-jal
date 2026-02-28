@@ -197,6 +197,31 @@ public class IngestChanConfigScorer extends
             ps.println(strPad + "Transmitted data allocation (bytes) : " + this.szAllocXmit);
         }
         
+
+        //
+        // Record Overrides
+        //
+
+        /**
+         * <p>
+         * Provides equivalence of <code>TestConfig</code> record ignore field <code>{@link #szAllocXmit}</code>.
+         * </p>
+         * 
+         * @see java.lang.Record#equals(java.lang.Object)
+         */
+        @Override
+        public boolean  equals(Object obj) {
+            if (obj instanceof TestConfig rec) {
+                boolean bolResult = (this.bolColSerEnbl == rec.bolColSerEnbl)
+                                 && (this.enmStrmType == rec.enmStrmType)
+                                 && (this.bolMStrmEnbl == rec.bolMStrmEnbl)
+                                 && (this.cntMStrmMax == rec.cntMStrmMax);
+                
+                return bolResult;
+            }
+            
+            return false;
+        }
     }
     
     /**
@@ -329,10 +354,10 @@ public class IngestChanConfigScorer extends
             
             super.printOut(ps, strPad);
             ps.println(strPad + "Test Results Properties");
-            ps.println(strPadd + "Maximum concurrent data streams avg.        : " + this.getMaximDataStreamsAvg());
-            ps.println(strPadd + "Maximum concurrent data streams std.        : " + this.maximumDataStreamsStd());
-            ps.println(strPadd + "Transmitted memory allocation avg. (MBytes) : " + this.getTransmittedAllocationAvg());
-            ps.println(strPadd + "Transmitted memory allocation std. (MBytes) : " + this.transmittedAllocationStd());
+            ps.println(strPadd + "Maximum concurrent data streams avg.      : " + this.getMaximDataStreamsAvg());
+            ps.println(strPadd + "Maximum concurrent data streams std.      : " + this.maximumDataStreamsStd());
+            ps.println(strPadd + "Transmitted data allocation avg. (MBytes) : " + this.getTransmittedAllocationAvg());
+            ps.println(strPadd + "Transmitted data allocation std. (MBytes) : " + this.transmittedAllocationStd());
         }
         
         

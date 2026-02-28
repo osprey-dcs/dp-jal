@@ -163,6 +163,29 @@ public class FrameTimestampsFactory implements IFrameTimestampsFactory {
      * This creator uses default values for some configuration parameters.  Default values are taken from the
      * JAL Tools default configuration and assigned as class constants.  We have the following:
      * <ul>
+     * <li><code>insStart = {@link #INS_START_DEF}</code>.</li>
+     * <li><code>durDelay = {@link #DUR_DELAY_DEF}</code>.</li>
+     * </ul>
+     * </p>
+     * 
+     * @param cntSmpls  number of samples (timestamps) per ingestion frame
+     * @param durPeriod the (uniform) sampling period
+     * @param enmCase   the preferred timestamp case
+     * 
+     * @return  a new <code>FrameTimestampsFactory</code> instance ready for ingestion frame timestamp generation
+     */
+    public static FrameTimestampsFactory     from(int cnSamples, Duration durPeriod, DpTimestampCase enmType) {
+        return FrameTimestampsFactory.from(cnSamples, durPeriod, INS_START_DEF, enmType);
+    }
+    
+    /**
+     * <p>
+     * Creates and returns a new <code>FrameTimestampsFactory</code> instance configured with the given arguments.
+     * </p>
+     * <p>
+     * This creator uses default values for some configuration parameters.  Default values are taken from the
+     * JAL Tools default configuration and assigned as class constants.  We have the following:
+     * <ul>
      * <li><code>enmTmsCase = {@link #ENM_TMS_CASE_DEF}</code>.</li>
      * <li><code>durDelay = {@link #DUR_DELAY_DEF}</code>.</li>
      * </ul>
@@ -234,7 +257,7 @@ public class FrameTimestampsFactory implements IFrameTimestampsFactory {
      * Assuming as such, the format of the argument array elements is as follows:
      * <code>
      * <pre>
-     * > java application --tms [samples [period [start [type [delay]]]]] ... 
+     * > java application --tms [samples [period [TCASE [start [delay]]]]] ... 
      * </pre>
      * </code>
      * where '<code>application</code> is the example application name and the brackets indicate optional
@@ -243,8 +266,8 @@ public class FrameTimestampsFactory implements IFrameTimestampsFactory {
      * <ol>
      * <li>'samples' &rarr; <code>{@link #cntSamples()}</code> [default <code>{@link #CNT_SMPLS_DEF}</code>],
      * <li>'period' &rarr; <code>{@link #durPeriod()}</code> [default <code>{@link #DUR_PERIOD_DEF}</code>],
+     * <li>'TCASE' &rarr; <code>{@link #enmCase()}</code> [default <code>{@link #ENM_TMS_CASE_DEF}</code>],
      * <li>'start' &rarr; <code>{@link #insStart()}</code> [default <code>{@link #INS_START_DEF}</code>],
-     * <li>'type' &rarr; <code>{@link #enmCase()}</code> [default <code>{@link #ENM_TMS_CASE_DEF}</code>],
      * <li>'delay' &rarr; <code>{@link #durDelay()}</code> [default <code>{@link #DUR_DELAY_DEF}</code>],
      * </ol>
      * </p>
@@ -291,15 +314,15 @@ public class FrameTimestampsFactory implements IFrameTimestampsFactory {
         if (args.length < (indArg+1))
             return FrameTimestampsFactory.from(cntSamples, durPeriod);
         
-        // Get the start instant from the argument list
-        String      strStart = args[indArg++];
-        Instant     insStart = Instant.parse(strStart);     // throws DateTimeParseException
-        if (args.length < (indArg+1))
-            return FrameTimestampsFactory.from(cntSamples, durPeriod, insStart);
-        
         // Get the timestamp type within the arguments list
         String  strTmsType = args[indArg++];
         DpTimestampCase enmType = DpTimestampCase.valueFrom(strTmsType);  // throws TypeNotPresentException
+        if (args.length < (indArg+1))
+            return FrameTimestampsFactory.from(cntSamples, durPeriod, enmType);
+        
+        // Get the start instant from the argument list
+        String      strStart = args[indArg++];
+        Instant     insStart = Instant.parse(strStart);     // throws DateTimeParseException
         if (args.length < (indArg+1))
             return FrameTimestampsFactory.from(cntSamples, durPeriod, insStart, enmType);
         

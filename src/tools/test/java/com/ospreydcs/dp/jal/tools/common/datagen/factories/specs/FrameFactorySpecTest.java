@@ -138,21 +138,21 @@ public class FrameFactorySpecTest {
     
     /** Parsing creator argument collection */
     public static final String[]        ARR_ARGS_PARSE_2 = { "--tags", "tag1", "tag2", "-Anm1=val1", "-Anm2=val2", 
-                                                             "--tms", "100", "PT0.001S", "2026-01-12T17:48:00Z", "TIMESTAMP_LIST", "PT0.003S",
+                                                             "--tms", "100", "PT0.001S", "TIMESTAMP_LIST", "2026-01-12T17:48:00Z", "PT0.003S",
                                                              "--cols", "2", "Cols1:", "IMAGE",
                                                              "--tags", "tag3"
                                                              };
 
     /** Parsing creator argument collection */
     public static final String[]        ARR_ARGS_PARSE_3 = { "-tagsDef", "-attrsDef",  
-                                                             "--tms", "100", "PT0.001S", "2026-01-12T17:48:00Z", "TIMESTAMP_LIST", "PT0.003S",
+                                                             "--tms", "100", "PT0.001S", "TIMESTAMP_LIST", "2026-01-12T17:48:00Z", "PT0.003S",
                                                              "--cols", "2", "Cols1:", "IMAGE",
                                                              "--cols", "100", "Cols2:", "SCALAR", "DOUBLE",
                                                              "--tags", "tag3"
                                                              };
     /** Parsing creator argument collection */
     public static final String[]        ARR_ARGS_PARSE_4 = { "-tagsCls", "-tagsDef", "-attrsDef",   
-                                                             "--tms", "100", "PT0.001S", "2026-01-12T17:48:00Z", "TIMESTAMP_LIST", "PT0.003S",
+                                                             "--tms", "100", "PT0.001S", "TIMESTAMP_LIST", "2026-01-12T17:48:00Z", "PT0.003S",
                                                              "--cols", "2", "Cols1:", "IMAGE",
                                                              "--cols", "1", "Cols2:", "STRUCTURE", "4", "2", "true", "INTEGER", "false", "0", "2",
                                                              "--cols", "100", "Cols3:", "SCALAR", "DOUBLE",
@@ -161,7 +161,7 @@ public class FrameFactorySpecTest {
 
     /** Parsing creator argument collection */
     public static final String[]        ARR_ARGS_PARSE_5 = { "--tags", "tag1", "tag2", "-Anm1=val1", "-Anm2=val2", 
-                                                             "--tms", "100", "PT0.001S", "2026-01-12T17:48:00Z", "TIMESTAMP_LIST", "PT0.003S",
+                                                             "--tms", "100", "PT0.001S", "TIMESTAMP_LIST", "2026-01-12T17:48:00Z", "PT0.003S",
                                                              "--cols", "PV1", "PV2", "PV3", "IMAGE",
                                                              "--tags", "tag3"
                                                              };
@@ -247,7 +247,7 @@ public class FrameFactorySpecTest {
         // Test Parameters
         final Set<String>           setTags = Set.of();
         final Map<String, String>   mapAttrs = Map.of();
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         
         final List<FrameColumnsSpec<Record>>    lstColsSpecs = FrameColumnsSpec.defaultFrame(); // throws exceptions
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = new TreeSet<>(lstColsSpecs); 
@@ -294,7 +294,7 @@ public class FrameFactorySpecTest {
         // Test Parameters
         final Set<String>           setTags = Set.of();
         final Map<String, String>   mapAttrs = Map.of();
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
@@ -321,7 +321,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = SET_TAGS_FRM_DEF;
         final Map<String, String>   mapAttrs = MAP_ATTRS_FRM_DEF;
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 
@@ -347,7 +347,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = SET_TAGS_FRM_CLS;
         final Map<String, String>   mapAttrs = MAP_ATTRS_FRM_CLS;
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 
@@ -373,7 +373,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = FrameFactorySpecTest.createDefaultFrameTags();
         final Map<String, String>   mapAttrs = FrameFactorySpecTest.createDefaultFrameAttributes();
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 
@@ -399,7 +399,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = SET_TAGS_FRM_DEF;
         final Map<String, String>   mapAttrs = Map.of();
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 
@@ -425,7 +425,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = SET_TAGS_FRM_CLS;
         final Map<String, String>   mapAttrs = Map.of();
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 
@@ -451,7 +451,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = Set.of();
         final Map<String, String>   mapAttrs = MAP_ATTRS_FRM_DEF;
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 
@@ -477,7 +477,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = Set.of();
         final Map<String, String>   mapAttrs = MAP_ATTRS_FRM_CLS;
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 
@@ -503,7 +503,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = FrameFactorySpecTest.createDefaultFrameTags();
         final Map<String, String>   mapAttrs = Map.of();
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 
@@ -529,7 +529,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = Set.of();
         final Map<String, String>   mapAttrs = FrameFactorySpecTest.createDefaultFrameAttributes();
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 
@@ -553,7 +553,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = Set.of("Big", "Beautiful", "Trail");
         final Map<String, String>   mapAttrs = Map.of("Adjective", "Big", "Genetive", "Beautiful", "Nomitive", "Trail");
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), Instant.now(), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(43, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.now(), Duration.ofMillis(3));
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from()); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 
@@ -612,7 +612,7 @@ public class FrameFactorySpecTest {
         final String[]              arrArgs = ARR_ARGS_PARSE_2;
         final Set<String>           setTags = Set.of("tag1", "tag2", "tag3");
         final Map<String, String>   mapAttrs = Map.of("nm1", "val1", "nm2", "val2");
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(100, Duration.ofMillis(1), Instant.parse("2026-01-12T17:48:00Z"), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(100, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.parse("2026-01-12T17:48:00Z"), Duration.ofMillis(3));
         
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(2, "Cols1:", ImageFactorySpec.from());
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1); 
@@ -642,7 +642,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = FrameFactorySpecTest.SET_TAGS_FRM_DEF.stream().collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
         setTags.add("tag3");
         final Map<String, String>   mapAttrs = FrameFactorySpecTest.MAP_ATTRS_FRM_DEF;
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(100, Duration.ofMillis(1), Instant.parse("2026-01-12T17:48:00Z"), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(100, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.parse("2026-01-12T17:48:00Z"), Duration.ofMillis(3));
         
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(2, "Cols1:", ImageFactorySpec.from());
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from(JalScalarType.DOUBLE));
@@ -675,7 +675,7 @@ public class FrameFactorySpecTest {
         final Map<String, String>   mapAttrs = FrameFactorySpecTest.MAP_ATTRS_FRM_DEF.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
         mapAttrs.put("nm1", "val1");
         mapAttrs.put("nm2", "val2");
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(100, Duration.ofMillis(1), Instant.parse("2026-01-12T17:48:00Z"), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(100, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.parse("2026-01-12T17:48:00Z"), Duration.ofMillis(3));
         
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(2, "Cols1:", ImageFactorySpec.from());
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(1, "Cols2:", StructureFactorySpec.from(4, 2, true, ScalarFactorySpec.from(JalScalarType.INTEGER, false, 0, 2)));
@@ -707,7 +707,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setColNms = Set.of("PV1", "PV2", "PV3");
         final Set<String>           setTags = Set.of("tag1", "tag2", "tag3");
         final Map<String, String>   mapAttrs = Map.of("nm1", "val1", "nm2", "val2");
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(100, Duration.ofMillis(1), Instant.parse("2026-01-12T17:48:00Z"), DpTimestampCase.TIMESTAMP_LIST, Duration.ofMillis(3));
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(100, Duration.ofMillis(1), DpTimestampCase.TIMESTAMP_LIST, Instant.parse("2026-01-12T17:48:00Z"), Duration.ofMillis(3));
         
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(setColNms, ImageFactorySpec.from());
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1); 
@@ -781,7 +781,7 @@ public class FrameFactorySpecTest {
         final Set<String>           setTags = Set.of("Big", "Beautiful", "Trail");
         final Map<String, String>   mapAttrs = Map.of("Adjective", "Big", "Genetive", "Beautiful", "Nomitive", "Trail");
         
-        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(cntSamples, durPeriod, insStart, enmTmsCase, durDelay);
+        final FrameTimestampsSpec   specTms = FrameTimestampsSpec.from(cntSamples, durPeriod, enmTmsCase, insStart, durDelay);
         final FrameColumnsSpec<Record>          specCols1 = FrameColumnsSpec.from(1, "Cols1:", JalComplexType.IMAGE);
         final FrameColumnsSpec<Record>          specCols2 = FrameColumnsSpec.from(100, "Cols2:", ScalarFactorySpec.from(JalScalarType.DOUBLE, false, 0, 0.1)); 
         final Set<FrameColumnsSpec<Record>>     setColsSpecs = Set.of(specCols1, specCols2); 

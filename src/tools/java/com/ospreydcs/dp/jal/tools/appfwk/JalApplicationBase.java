@@ -233,9 +233,13 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     // Instance Resources
     //
     
+    /** The Log4j output stream appender attached to the logging buffer */
+    protected OutputStreamAppender      osaAppLogs = null;
+    
     /** The buffer containing application execution logs */
-    protected ByteArrayOutputStream     bufLogging = null;
+    protected ByteArrayOutputStream     bufAppLogs = null;
 
+    
     /** The unique file path if one was created - see {@link #createUniqueFileName()} */
     protected Path                      pathOutFile = null;
     
@@ -277,10 +281,10 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
         this.clsApp = clsApp;
         this.arrCmdLnArgs = args;
         
-        // Create and attach the buffer for execution logging
-        this.bufLogging = new ByteArrayOutputStream();
-        OutputStreamAppender    appAppLogs = Log4j.createOutputStreamAppender(clsApp.getSimpleName(), this.bufLogging);
-        Log4j.attachAppender(this.getLogger(), appAppLogs);
+        // Create and attach the buffer for application execution logging
+        this.bufAppLogs = new ByteArrayOutputStream();
+        this.osaAppLogs = Log4j.createOutputStreamAppender(clsApp.getSimpleName(), this.bufAppLogs);
+        Log4j.attachAppender(this.getLogger(), this.osaAppLogs);
     }
 
     
@@ -403,6 +407,28 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
     
     /**
      * <p>
+     * Attaches the logger for the given class to the application logging buffer.
+     * </p>
+     * <p>
+     * If the given class type has an associated Log4j <code>Logger</code> object that is active
+     * (i.e., a logger object exists that is named by that class), the output of that <code>Logger</code>
+     * object is attached to the application logging buffer. 
+     * Thus, all log entries produced by the given class append to the application logging buffer and
+     * will appear in the log entries retrieved by <code>{@link #retrieveExecutionLogEntries()}</code>.
+     * 
+     * @param clsComponent  class type of object with active logger
+     *  
+     * @return  <code>true</code> if class logger was successfully attached to the log entry buffer,
+     *          <code>false</code> otherwise
+     */
+    protected boolean appendLoggingFor(Class<?> clsComponent) {
+        Logger      lgrComponent = Log4j.getLogger(clsComponent);
+        
+        return Log4j.attachAppender(lgrComponent, this.osaAppLogs);
+    }
+
+    /**
+     * <p>
      * Creates a text string representing the command-line invocation for the application.
      * </p>
      * <p>
@@ -496,7 +522,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
         this.execTimer.shutdown();
         return true;
     }
-
+    
     /**
      * <p>
      * Opens the output stream connected to a new output file at the given path location.
@@ -640,7 +666,7 @@ public abstract class JalApplicationBase<T extends JalApplicationBase<T>> {
      * @return  the collection of log entries since application construction
      */
     protected String    retrieveExecutionLogEntries() {
-        return this.bufLogging.toString();
+        return this.bufAppLogs.toString();
     }
     
     /**

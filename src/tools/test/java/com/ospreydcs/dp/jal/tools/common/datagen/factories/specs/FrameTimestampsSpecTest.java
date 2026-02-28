@@ -113,13 +113,13 @@ public class FrameTimestampsSpecTest {
     public static final String[]        ARR_ARGS_PARSE_2 = { "23" };
     
     /** Arguments collection for parsing creator test */
-    public static final String[]        ARR_ARGS_PARSE_3 = { "23", "PT0.001S", "2026-01-10T10:15:00.000Z" };
+    public static final String[]        ARR_ARGS_PARSE_3 = { "23", "PT0.001S", "SAMPLING_CLOCK" };
     
     /** Arguments collection for parsing creator test */
-    public static final String[]        ARR_ARGS_PARSE_4 = { "23", "PT0.001S", "2026-01-10T10:15:02.000+00:00", "TIMESTAMP_LIST" };
+    public static final String[]        ARR_ARGS_PARSE_4 = { "23", "PT0.001S", "TIMESTAMP_LIST", "2026-01-10T10:15:02.000+00:00" };
     
     /** Arguments collection for parsing creator test */
-    public static final String[]        ARR_ARGS_PARSE_5 = { "23", "PT0.001S", "2026-01-10T10:15:02.000Z", "TIMESTAMP_LIST", "PT0.003S" };
+    public static final String[]        ARR_ARGS_PARSE_5 = { "23", "PT0.001S", "TIMESTAMP_LIST", "2026-01-10T10:15:02.000Z", "PT0.003S" };
     
     
     
@@ -266,7 +266,7 @@ public class FrameTimestampsSpecTest {
         final Duration            durDelay = DUR_DELAY_DEF;
         
         // Create frame timestamps specification and check configuration
-        FrameTimestampsSpec     specTest = FrameTimestampsSpec.from(cntSamples, durPeriod, insStart, enmType);
+        FrameTimestampsSpec     specTest = FrameTimestampsSpec.from(cntSamples, durPeriod, enmType, insStart);
         
         Assert.assertEquals(cntSamples, specTest.cntSamples());
         Assert.assertEquals(durPeriod, specTest.durPeriod());
@@ -289,7 +289,7 @@ public class FrameTimestampsSpecTest {
         final Duration            durDelay = Duration.ofMillis(3);
         
         // Create frame timestamps specification and check configuration
-        FrameTimestampsSpec     specTest = FrameTimestampsSpec.from(cntSamples, durPeriod, insStart, enmType, durDelay);
+        FrameTimestampsSpec     specTest = FrameTimestampsSpec.from(cntSamples, durPeriod, enmType, insStart, durDelay);
         
         Assert.assertEquals(cntSamples, specTest.cntSamples());
         Assert.assertEquals(durPeriod, specTest.durPeriod());
@@ -369,8 +369,8 @@ public class FrameTimestampsSpecTest {
         
         final int                 cntSamples = 23;
         final Duration            durPeriod = DUR_PERIOD_345;
-        final Instant             insStart = INS_START_3;
-        final DpTimestampCase     enmType = ENM_CASE_DEF;
+        final DpTimestampCase     enmType = DpTimestampCase.SAMPLING_CLOCK;
+        final Instant             insStart = INS_START_DEF;
         final Duration            durDelay = DUR_DELAY_DEF;
         
         // Create frame timestamps specification via parsing and check configuration

@@ -164,7 +164,7 @@ import com.ospreydcs.dp.jal.util.Log4j;
  * The <code>IngestionDataFrame</code> Protocol Buffers message sent to the Data Platform Ingestion Service
  * can contain sampling vectors as either a <code>DataColumn</code> message or a <code>SerializedDataColumn</code>
  * message.  The use of <code>SerializedDataColumn</code> messages can be enabled with configuration method
- * <code>{@link #enableSerialization(boolean)}</code>.  The default setting for serialized data column use
+ * <code>{@link #enableDataColumnSerialization(boolean)}</code>.  The default setting for serialized data column use
  * is given by the value of class constant <code>{@link #BOL_SERIALIZE_DEF}</code> whose value it taken
  * from the JAL configuration file.  
  * </p>
@@ -555,7 +555,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
     
     /**
      * <p>
-     * Enables/disables the use of serialization for creating data columns within an <code>IngestionFrame</code>.
+     * Enables/disables the use of serialization for creating data columns within an <code>IngestionDataFrame</code>.
      * </p>
      * <p>
      * The <code>IngestionDataFrame</code> Protocol Buffers message sent to the Data Platform Ingestion Service
@@ -573,7 +573,7 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      *                      <code>false</code> if creating <code>DataColumn</code> messages
      */
     synchronized
-    public void enableSerialization(boolean bolSerialize) {
+    public void enableDataColumnSerialization(boolean bolSerialize) {
         this.bolSerialize = bolSerialize;
     }
     
@@ -820,14 +820,14 @@ public class IngestionFrameProcessor implements IMessageSupplier<IngestDataReque
      * Determines whether or not <code>DataColumn<code> serialization is enabled.
      * </p>
      * <p>
-     * See <code>{@link #enableSerialization(boolean)}</code> for a description of the serialization parameter
+     * See <code>{@link #enableDataColumnSerialization(boolean)}</code> for a description of the serialization parameter
      * and values.
      * </p>
      * 
      * @return  <code>true</code> if creating <code>SerializedDataColumn</code> messages,
      *          <code>false</code> if creating <code>DataColumn</code> messages
      *          
-     * @see #enableSerialization(boolean)
+     * @see #enableDataColumnSerialization(boolean)
      */
     public boolean hasSerialization() {
         return this.bolSerialize;
