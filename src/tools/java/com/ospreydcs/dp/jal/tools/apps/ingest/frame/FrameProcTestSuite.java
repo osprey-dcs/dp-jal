@@ -34,10 +34,10 @@ import java.util.NoSuchElementException;
 
 import javax.naming.ConfigurationException;
 
+import com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase;
 import com.ospreydcs.dp.jal.tools.apps.ingest.common.FrameProcessorConfig;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
 import com.ospreydcs.dp.jal.tools.common.parse.AppOptionsParser;
-import com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -183,7 +183,7 @@ public class FrameProcTestSuite extends TestSuiteGeneratorBase<FrameProcTestPara
     //
     
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#isValidType(java.lang.Enum, java.lang.Object)
+     * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#isValidType(java.lang.Enum, java.lang.Object)
      */
     @Override
     protected boolean isValidType(FrameProcTestParams enmParam, Object objVal) {
@@ -191,7 +191,7 @@ public class FrameProcTestSuite extends TestSuiteGeneratorBase<FrameProcTestPara
     }
 
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#createTestCase(java.util.Map)
+     * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#createTestCase(java.util.Map)
      */
     @Override
     protected FrameProcTestCase createTestCase(Map<FrameProcTestParams, Object> mapTestVals)

@@ -356,6 +356,7 @@ public class TestArchiveRequestCreator {
             throws IllegalArgumentException {
         
         return switch (enmType) {
+        case EMPTY -> createRequest(cntPvs, indPvOffset, durRequest, durOffset);
         case GENERAL -> createRequest(cntPvs, indPvOffset, durRequest, durOffset);
         case CLOCKED -> TestArchiveRequestCreator.createClockedRequest(cntPvs, indPvOffset, durRequest, durOffset);
         case TMS_LIST -> TestArchiveRequestCreator.createTmsListRequest(cntPvs, indPvOffset, durRequest, durOffset);

@@ -2,7 +2,7 @@
 
 echo
 echo '================================================================'
-echo 'run-QueryChannelEvaluator'
+echo 'run QueryChannelEvaluator'
 echo '================================================================'
 echo
 

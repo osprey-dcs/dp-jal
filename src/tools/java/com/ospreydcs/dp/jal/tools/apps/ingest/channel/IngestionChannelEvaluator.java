@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.Logger;
 
@@ -124,7 +125,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         //
         
         // Get the application constructor arguments
-        DpServiceAddress      addrHost;
+        DpServiceAddress    addrHost;
         IngestChanTestSuite suiteCases;
         String              strOutputLoc;
         try {
@@ -378,7 +379,10 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     //
     
     /** List of all the valid delimited argument options */
-    public static final List<String>        LST_STR_DELOPTS = IngestChanTestParams.validDelimOptions();
+    public static final List<String>        LST_STR_DELOPTS = Stream.concat(
+                                                    IngestChanTestParams.validDelimOptions().stream(), 
+                                                    AppOptionsParser.getPredefinedOptions().stream()
+                                                ).toList();
     
     /** The application arguments parser */
     private static final AppOptionsParser   PARSER = AppOptionsParser.from(LST_STR_DELOPTS);
@@ -530,6 +534,11 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         super.appendLoggingFor(IngestionMessageBuffer.class);
         super.appendLoggingFor(IngestionStream.class);
     }
+    
+    
+    //
+    //  Operations
+    //
     
     /**
      * <p>

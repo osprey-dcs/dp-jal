@@ -23,7 +23,7 @@
  * @since Jan 16, 2026
  *
  */
-package com.ospreydcs.dp.jal.tools.common.score;
+package com.ospreydcs.dp.jal.tools.appfwk;
 
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;

@@ -25,6 +25,8 @@
  */
 package com.ospreydcs.dp.jal.tools.common.requests;
 
+import com.ospreydcs.dp.jal.util.JavaRuntime;
+
 /**
  * <p>
  * Enumeration of all time-series data request types available from the utility class 
@@ -34,22 +36,97 @@ package com.ospreydcs.dp.jal.tools.common.requests;
 public enum TestRequestType {
     
     /**
+     * Empty time-series data request (requests no data).
+     */
+    EMPTY("Emtpy time-series data request."),
+    
+    /**
      * General time-series data request for data sources using sampling clock and/or explicit timestamp list.
      */
-    GENERAL,
+    GENERAL("General time-series data request; sample clock or timestamp list not explicitely specified."),
     
     /**
      * Time-series data request for data sources using a uniform sampling clock only. 
      */
-    CLOCKED,
+    CLOCKED("Time-series data request with timestamps specified by a sampling clock."),
     
     /**
      * Time-series data request for data sources using an explicit timestamp list only. 
      */
-    TMS_LIST,
+    TMS_LIST("Time-series data request with timestamps specified by an eplicit list."),
     
     /**
      * The request contains data sources with both uniform sampling clocks <em>and</em> explicit timestamp lists.
      */
-    BOTH;
+    BOTH("Time-series data request containing timestamps specified by both sampling clock(s) and timestamp lists(s)."),
+    ;
+    
+    
+    //
+    // Constant Attributes
+    //
+    
+    /** String description of the constant */
+    private final String        strDesc;
+    
+    
+    //
+    // Constructor
+    //
+    
+    /**
+     * <p>
+     * Constructs a new <code>TestRequestType</code> constant.
+     * </p>
+     *
+     * @param strDesc   text description of the constant
+     */
+    private TestRequestType(String strDesc) {
+        this.strDesc = strDesc;
+    }
+    
+    
+    //
+    // Operations
+    //
+    
+    /**
+     * <p>
+     * Returns the <code>TestRequestType</code> enumeration constant with the given name.
+     * </p>
+     * <p>
+     * This is a convenience method which defers to <code>{@link Enum#valueOf(Class, String)}</code> by
+     * supplying the first argument with the class type of this enumeration.  Any exception is caught
+     * and returned as a <code>{@link TypeNotPresentException}</code> which includes the originating 
+     * exception as the cause.
+     * </p>
+     * 
+     * @param strName   name of the enumeration constant
+     * 
+     * @return  the <code>FrameProcTestParams</code> constant with the given name
+     * 
+     * @throws TypeNotPresentException  the argument was <code>null</code> or an invalid enumeration constant name  
+     */
+    public TestRequestType  valueFrom(String strName) throws TypeNotPresentException {
+     
+        try {
+            TestRequestType enmType = TestRequestType.valueOf(TestRequestType.class, strName);
+            
+            return enmType;
+            
+        } catch (Exception e) {
+            throw new TypeNotPresentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Invalid constant name: " + strName, e);
+        }
+    }
+    
+    /**
+     * <p>
+     * Returns the string describing the context for this enumeration constant.
+     * </p>
+     * 
+     * @return  the text description for this enumeration constant
+     */
+    public String   getDescription() {
+        return this.strDesc;
+    }
 }

@@ -37,8 +37,8 @@ import java.util.StringTokenizer;
 import javax.naming.ConfigurationException;
 
 import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
+import com.ospreydcs.dp.jal.tools.appfwk.ITestParameter;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.score.ITestParameter;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -158,8 +158,8 @@ public enum IngestChanTestParams implements ITestParameter<IngestChanTestParams>
      * Returns the <code>IngestChanTestParams</code> enumeration constant with the given name.
      * </p>
      * <p>
-     * Defers to <code>{@link ITestParameter#valueFrom(Class, String)}</code> with the <code>IngestChanTestParams</code>
-     * class object and given name.
+     * Convenience method deferring to <code>{@link ITestParameter#valueFrom(Class, String)}</code> with 
+     * the <code>IngestChanTestParams</code> class object and given name.
      * </p>
      * 
      * @param strName   name of the enumeration constant
@@ -219,7 +219,7 @@ public enum IngestChanTestParams implements ITestParameter<IngestChanTestParams>
     //
 
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterConstant()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.ITestParameter#getParameterConstant()
      */
     @Override
     public IngestChanTestParams getParameterConstant() {
@@ -227,7 +227,7 @@ public enum IngestChanTestParams implements ITestParameter<IngestChanTestParams>
     }
     
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterDescription()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.ITestParameter#getParameterDescription()
      */
     @Override
     public String getParameterDescription() {
@@ -235,7 +235,7 @@ public enum IngestChanTestParams implements ITestParameter<IngestChanTestParams>
     }
 
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterType()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.ITestParameter#getParameterType()
      */
     @Override
     public Class<?> getParameterType() {
@@ -243,7 +243,7 @@ public enum IngestChanTestParams implements ITestParameter<IngestChanTestParams>
     }
 
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterDelimOption()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.ITestParameter#getParameterDelimOption()
      */
     @Override
     public String getParameterDelimOption() {
@@ -251,7 +251,7 @@ public enum IngestChanTestParams implements ITestParameter<IngestChanTestParams>
     }
 
     /**
-     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getDefaultValue()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.ITestParameter#getDefaultValue()
      */
     @Override
     public Object getDefaultValue() {
@@ -290,7 +290,7 @@ public enum IngestChanTestParams implements ITestParameter<IngestChanTestParams>
     public Object   parseValue(String strValue) 
             throws UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException, 
                    InvocationTargetException, DateTimeParseException, NumberFormatException, IllegalArgumentException, 
-                   TypeNotPresentException, ConfigurationException, MalformedParametersException 
+                   NoSuchElementException, ConfigurationException, TypeNotPresentException, ConfigurationException, MalformedParametersException 
     {
         // Special case for FRAME_DEF - must parse arguments within 'frame parameters'
         if (this == FRAME_DEF) {

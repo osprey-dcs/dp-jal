@@ -10,4 +10,5 @@
 --frmcnt 1 5 10
 
 # Payload Frame Definitions
---frame '--label Frm1: --tms 1000 PT0.001S SAMPLING_CLOCK --cols 4000 Frm1Pv: SCALAR DOUBLE' 
+--frame '--label Frm1: --tms 1000 PT0.001S SAMPLING_CLOCK --cols 4000 Frm1Pv: SCALAR DOUBLE'
+--frame '--label Frm2: --tms 100 PT0.010S SAMPLING_CLOCK --cols 1000 Frm2Pv: TENSOR 2 3 5 DOUBLE' 

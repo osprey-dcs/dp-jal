@@ -43,6 +43,7 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.DpTimestampCase;
+import com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase;
 import com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBaseTest.TestCase.Param;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
@@ -255,7 +256,7 @@ public class TestSuiteGeneratorBaseTest {
         //
         
         /**
-         * @see com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#isValidType(java.lang.Enum, java.lang.Object)
+         * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#isValidType(java.lang.Enum, java.lang.Object)
          */
         @Override
         protected boolean isValidType(Param enmParam, Object objVal) {
@@ -264,7 +265,7 @@ public class TestSuiteGeneratorBaseTest {
         }
 
         /**
-         * @see com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#createTestCase(java.util.Map)
+         * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#createTestCase(java.util.Map)
          */
         @Override
         protected TestCase createTestCase(Map<Param, Object> mapTestVals) throws ClassCastException, MissingResourceException, UnsupportedOperationException {
@@ -474,7 +475,7 @@ public class TestSuiteGeneratorBaseTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#TestSuiteGeneratorBase(java.lang.Class)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#TestSuiteGeneratorBase(java.lang.Class)}.
      */
     @Test
     public final void testTestSuiteGeneratorBase() {
@@ -487,7 +488,7 @@ public class TestSuiteGeneratorBaseTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#isValidType(java.lang.Enum, java.lang.Object)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#isValidType(java.lang.Enum, java.lang.Object)}.
      */
     @Test
     public final void testIsValidType() {
@@ -520,7 +521,7 @@ public class TestSuiteGeneratorBaseTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#createTestCase(java.util.Map)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#createTestCase(java.util.Map)}.
      */
     @Test
     public final void testCreateTestCase() {
@@ -565,7 +566,7 @@ public class TestSuiteGeneratorBaseTest {
 //    }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#unassignedParameters()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#unassignedParameters()}.
      */
     @Test
     public final void testMissingValues() {
@@ -647,7 +648,7 @@ public class TestSuiteGeneratorBaseTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#addParameterValue(java.lang.Enum, java.lang.Object)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#addParameterValue(java.lang.Enum, java.lang.Object)}.
      */
     @Test
     public final void testAddParameterValue() {
@@ -680,7 +681,7 @@ public class TestSuiteGeneratorBaseTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#createTestSuit()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#createTestSuit()}.
      */
     @Test
     public final void testCreateTestSuit1() {
@@ -738,7 +739,7 @@ public class TestSuiteGeneratorBaseTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#createTestSuit()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#createTestSuit()}.
      */
     @Test
     public final void testCreateTestSuit2() {
@@ -812,7 +813,7 @@ public class TestSuiteGeneratorBaseTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#createTestSuit()}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#createTestSuit()}.
      */
     @Test
     public final void testCreateTestSuit3() {
@@ -886,7 +887,7 @@ public class TestSuiteGeneratorBaseTest {
     }
 
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBase#equals(java.lang.Object)}.
+     * Test method for {@link com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#equals(java.lang.Object)}.
      */
     @Test
     public final void testEqualsObject() {

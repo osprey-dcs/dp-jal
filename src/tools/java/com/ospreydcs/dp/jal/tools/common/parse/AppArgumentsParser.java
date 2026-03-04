@@ -222,7 +222,7 @@ public class AppArgumentsParser {
      * </p>
      * <p>
      * Predefined options include both switches and variable names such as
-     * {@value #STR_HELP_SWTCH}, {@value #STR_HELP_DVAR}, {@value #STR_VERSION_SWTCH}, etc.
+     * {@value #STR_SWTCH_HELP}, {@value #STR_DVAR_HELP}, {@value #STR_SWTCH_VERSION}, etc.
      * These are the options that <code>{@link AppArgumentsParser}</code> treats as special cases. 
      * The set of predefined command-line options is contained in class constant
      * <code>{@link #SET_OPTS_PREDEF}</code>, which is returned. Do not modify the returned collection.
@@ -245,7 +245,7 @@ public class AppArgumentsParser {
      * @return  string containing the (optional) help request options
      */
     public static final String  displayCommandLineHelpOptions() {
-        return " [" + AppArgumentsParser.STR_HELP_SWTCH + "] [" + AppArgumentsParser.STR_HELP_DVAR + "]"; 
+        return " [" + AppArgumentsParser.STR_SWTCH_HELP + "] [" + AppArgumentsParser.STR_DVAR_HELP + "]"; 
     }
     
     /**
@@ -261,7 +261,7 @@ public class AppArgumentsParser {
      * @see #hasVersionRequest(String[])
      */
     public static final String  displayCommandLineVersionOptions() {
-        return " [" + AppArgumentsParser.STR_VERSION_SWTCH + "] [" + AppArgumentsParser.STR_VERSION_DVAR + "]";
+        return " [" + AppArgumentsParser.STR_SWTCH_VERSION + "] [" + AppArgumentsParser.STR_DVAR_VERSION + "]";
     }
     
     /**
@@ -275,7 +275,7 @@ public class AppArgumentsParser {
      * @return  string containing the (optional) output location (directory path and/or file path)
      */
     public static final String  displayComandLineOutputLocationOption() {
-        return " [" + AppArgumentsParser.STR_OUTPUT_DVAR + " output]";
+        return " [" + AppArgumentsParser.STR_DVAR_OUTPUT + " output]";
     }
     
     
@@ -296,21 +296,21 @@ public class AppArgumentsParser {
     //
     
     /** Special application argument switch for help - see {@link #hasHelpRequest(String[])} */
-    public static final String      STR_HELP_SWTCH = "-h";
+    public static final String      STR_SWTCH_HELP = "-h";
 
     /** Special application argument variable for help  - see {@link #hasHelpRequest(String[])} */
-    public static final String      STR_HELP_DVAR = "--help";
+    public static final String      STR_DVAR_HELP = "--help";
     
     
     /** Special application argument variable for version - see {@link #parseAppArgsVersion(String[])} */
-    public static final String      STR_VERSION_SWTCH = "-v";
+    public static final String      STR_SWTCH_VERSION = "-v";
 
     /** Special application argument variable for version - see {@link #parseAppArgsVersion(String[])} */
-    public static final String      STR_VERSION_DVAR = "--version";
+    public static final String      STR_DVAR_VERSION = "--version";
 
     
     /** Argument variable identifying output location */
-    public static final String      STR_OUTPUT_DVAR = "--output";
+    public static final String      STR_DVAR_OUTPUT = "--output";
     
 
     /** Special application argument variable value for console output - see {@link #openOutputStream(String)} */
@@ -323,15 +323,15 @@ public class AppArgumentsParser {
     
     /** The collection of predefined command-line delimited switches */
     public static final Set<String>     SET_SWITCH_PREDEF = Set.of(
-                                                            STR_HELP_SWTCH,
-                                                            STR_VERSION_SWTCH
+                                                            STR_SWTCH_HELP,
+                                                            STR_SWTCH_VERSION
                                                             );
     
     /** The collection of predefined command-line delimited variable name */
     public static final Set<String>     SET_DVARS_PREDEF = Set.of(
-                                                            STR_HELP_DVAR,
-                                                            STR_VERSION_DVAR,
-                                                            STR_OUTPUT_DVAR
+                                                            STR_DVAR_HELP,
+                                                            STR_DVAR_VERSION,
+                                                            STR_DVAR_OUTPUT
                                                             );
     
     /** The collection of ALL predefined command-line options */
@@ -426,17 +426,17 @@ public class AppArgumentsParser {
      * </p>
      * <p>
      * A value <code>true</code> is returned if any element in the argument collection is equal to the value 
-     * {@value #STR_HELP_SWTCH} or {@value #STR_HELP_DVAR}, where case is ignored.  
+     * {@value #STR_SWTCH_HELP} or {@value #STR_DVAR_HELP}, where case is ignored.  
      * Otherwise a value <code>false</code> is returned.
      * </p>
      * <p>
      * This method is equivalent to <code>{@link #hasSwitch(String, String[])}</code> with the <code>String</code>
-     * argument value as {@value #STR_HELP_SWTCH} or {@value #STR_HELP_DVAR}.
+     * argument value as {@value #STR_SWTCH_HELP} or {@value #STR_DVAR_HELP}.
      * </p>
      * 
      * @param args  the application argument collection
      *  
-     * @return  <code>true</code> if the argument collection contained the elements {@link #STR_HELP_SWTCH} and/or {@value #STR_HELP_DVAR} (case ignored),
+     * @return  <code>true</code> if the argument collection contained the elements {@link #STR_SWTCH_HELP} and/or {@value #STR_DVAR_HELP} (case ignored),
      *          <code>false</code> otherwise
      */
     public boolean hasHelpRequest(String...args) {
@@ -446,8 +446,8 @@ public class AppArgumentsParser {
             return false;
         
         // Look for help request
-        boolean bolHelp = this.hasSwitch(STR_HELP_SWTCH, args) 
-                       || this.hasVariable(STR_HELP_DVAR, args);
+        boolean bolHelp = this.hasSwitch(STR_SWTCH_HELP, args) 
+                       || this.hasVariable(STR_DVAR_HELP, args);
         
         return bolHelp;
     }
@@ -458,17 +458,17 @@ public class AppArgumentsParser {
      * </p>
      * <p>
      * A value <code>true</code> is returned if any element in the argument collection is equal to the value 
-     * {@value #STR_VERSION_SWTCH} and/or {@value #STR_VERSION_DVAR}, where case is ignored.  
+     * {@value #STR_SWTCH_VERSION} and/or {@value #STR_DVAR_VERSION}, where case is ignored.  
      * Otherwise a value <code>false</code> is returned.
      * </p>
      * <p>
      * This method is equivalent to <code>{@link #hasSwitch(String, String[])}</code> with the <code>String</code>
-     * argument value as {@value #STR_VERSION_SWTCH} and/or  {@value #STR_VERSION_DVAR}.
+     * argument value as {@value #STR_SWTCH_VERSION} and/or  {@value #STR_DVAR_VERSION}.
      * </p>
      * 
      * @param args  the application argument collection
      *  
-     * @return  <code>true</code> if the argument collection contained the element {@value #STR_VERSION_SWTCH} and/or {@value #STR_VERSION_DVAR} (case ignored),
+     * @return  <code>true</code> if the argument collection contained the element {@value #STR_SWTCH_VERSION} and/or {@value #STR_DVAR_VERSION} (case ignored),
      *          <code>false</code> otherwise
      */
     public boolean    hasVersionRequest(String...args) {
@@ -478,8 +478,8 @@ public class AppArgumentsParser {
             return false;
         
         // Look for version request
-        boolean bolHelp = this.hasSwitch(STR_VERSION_SWTCH, args)  
-                       || this.hasVariable(STR_VERSION_DVAR, args);
+        boolean bolHelp = this.hasSwitch(STR_SWTCH_VERSION, args)  
+                       || this.hasVariable(STR_DVAR_VERSION, args);
         
         return bolHelp;
     }
@@ -494,8 +494,8 @@ public class AppArgumentsParser {
      * The following conditions are checked in order:
      * <ol>
      * <li>Wrong number of arguments, must be >= the specified number <code>IllegalArgumentException</code>)</li>
-     * <li>A {@value #STR_HELP_DVAR} appeared in the argument list (<code>IllegalCallerException</code>).</li>
-     * <li>A {@value #STR_VERSION_DVAR} appeared in the argument list (<code>IllegalCallerException</code>).</li>
+     * <li>A {@value #STR_DVAR_HELP} appeared in the argument list (<code>IllegalCallerException</code>).</li>
+     * <li>A {@value #STR_DVAR_VERSION} appeared in the argument list (<code>IllegalCallerException</code>).</li>
      * <li>An argument did not start with a valid switch/variable identified in argument (<code>UnsupportedOperationException</code>).</li>
      * </ol>
      * </p>
@@ -1144,17 +1144,17 @@ public class AppArgumentsParser {
      * </p>
      * <p>
      * The output location, as specified by the application client, is the value of variable
-     * {@value #STR_OUTPUT_DVAR}.  There is only one value for this variable and any additional values
+     * {@value #STR_DVAR_OUTPUT}.  There is only one value for this variable and any additional values
      * are ignored.  Application arguments occurring after the {@value STR_DVAR_OUTPUT} variable are
      * typically application target value(s) obtained from <code>{@link #parseAppArgsTarget(String[])}</code>.
      * </p>
      * <p>
-     * If the variable {@value #STR_OUTPUT_DVAR} is not present in the command line arguments, this is an
+     * If the variable {@value #STR_DVAR_OUTPUT} is not present in the command line arguments, this is an
      * optional parameter, then the default value given by the second argument <code>strOutputDef</code> is returned.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
-     * Application arguments occurring after the {@value STR_OUTPUT_DVAR} variable are typically application target value(s),
+     * Application arguments occurring after the {@value STR_DVAR_OUTPUT} variable are typically application target value(s),
      * which can be obtained from <code>{@link #parseTarget(String[])}</code>.
      * Thus, they are ignored rather than throwing an exception.
      * </p>
@@ -1170,7 +1170,7 @@ public class AppArgumentsParser {
     public String   parseOutputLocation(String strOutputDef, String...args) {
         
         // Look for the output location on the command line
-        List<String>    lstStrOutput = this.parseVariable(STR_OUTPUT_DVAR, args);
+        List<String>    lstStrOutput = this.parseVariable(STR_DVAR_OUTPUT, args);
         
         // If there is no user-provided output location use the default value given by the second argument
         if (lstStrOutput.isEmpty()) {

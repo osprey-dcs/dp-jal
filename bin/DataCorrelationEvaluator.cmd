@@ -2,7 +2,7 @@
 
 echo
 echo '================================================================'
-echo 'run-DataCorrelationEvaluator'
+echo 'run DataCorrelationEvaluator'
 echo '================================================================'
 echo
 

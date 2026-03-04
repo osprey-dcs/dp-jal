@@ -23,7 +23,7 @@
  * @since Feb 18, 2026
  *
  */
-package com.ospreydcs.dp.jal.tools.common.score;
+package com.ospreydcs.dp.jal.tools.appfwk;
 
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
@@ -126,9 +126,9 @@ public interface ITestParameter<TestParams extends Enum<TestParams>> {
      * 
      * @return  the <code>TestParams</code> enumeration constant with the given name
      * 
-     * @throws TypeNotPresentException  the argument was <code>null</code> or an invalid enumeration constant name  
+     * @throws NoSuchElementException  the argument was <code>null</code> or an invalid enumeration constant name  
      */
-    public static <TestParams extends Enum<TestParams>> TestParams valueFrom(Class<TestParams> clsEnum, String strName) throws TypeNotPresentException {
+    public static <TestParams extends Enum<TestParams>> TestParams valueFrom(Class<TestParams> clsEnum, String strName) throws NoSuchElementException {
         
         try {
             TestParams  enmParam = Enum.valueOf(clsEnum, strName);
@@ -136,7 +136,7 @@ public interface ITestParameter<TestParams extends Enum<TestParams>> {
             return enmParam;
             
         } catch (Exception e) {
-            throw new TypeNotPresentException(JavaRuntime.getQualifiedMethodNameSimple() 
+            throw new NoSuchElementException(JavaRuntime.getQualifiedMethodNameSimple() 
                     + " - Unrecognized enumeration constant for : " + clsEnum.getSimpleName() 
                     + ": " + strName, e);
         }
@@ -371,17 +371,16 @@ public interface ITestParameter<TestParams extends Enum<TestParams>> {
      * @throws InvocationTargetException    the <code>valueOf(String)</code> method threw an exception (e.g., NumberFormatException)
      * @throws IllegalArgumentException general error (typically bad argument count or enumeration constant not recognized)
      * @throws DateTimeParseException   invalid ISO-8605 date/time/duration format for 'period', 'start', or 'delay' 
-     * @throws TypeNotPresentException  invalid enumeration constant (e.g., the 1st argument was not a <code>JalComplexType</code>)
+     * @throws NoSuchElementException   invalid enumeration constant or column data type unrecognized 
      * @throws NumberFormatException    invalid numeric expression (typically for 'lngSeed' value)
      * @throws ConfigurationException   the argument contained the wrong number of arguments for the <code>JalComplexType</code>
      * @throws UnsupportedOperationException invalid field value format (typically 'numIncr' was invalid)
      * @throws MalformedParametersException  an enumeration constant within the argument set was not recognized (IMAGE)
-     * @throws NoSuchElementException   the column data type was unrecognized (i.e., 'DTYPE' was not supported)
      */
     default public Object   parseValue(String strValue) 
             throws UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException, 
                    InvocationTargetException, DateTimeParseException, NumberFormatException, IllegalArgumentException, 
-                   TypeNotPresentException, ConfigurationException, MalformedParametersException 
+                   NoSuchElementException, ConfigurationException, MalformedParametersException 
     {
         // Special case for type == String.class
         if (this.getParameterType() == String.class)

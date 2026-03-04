@@ -36,8 +36,8 @@ import java.util.StringTokenizer;
 
 import javax.naming.ConfigurationException;
 
+import com.ospreydcs.dp.jal.tools.appfwk.ITestParameter;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.score.ITestParameter;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
@@ -177,9 +177,9 @@ public enum FrameProcTestParams implements ITestParameter<FrameProcTestParams> {
      * 
      * @return  the <code>FrameProcTestParams</code> constant with the given name
      * 
-     * @throws TypeNotPresentException  the argument was <code>null</code> or an invalid enumeration constant name  
+     * @throws NoSuchElementException  the argument was <code>null</code> or an invalid enumeration constant name  
      */
-    public static FrameProcTestParams    valueFrom(String strName) throws TypeNotPresentException {
+    public static FrameProcTestParams    valueFrom(String strName) throws NoSuchElementException {
         return ITestParameter.valueFrom(FrameProcTestParams.class, strName);
     }
     
@@ -214,7 +214,7 @@ public enum FrameProcTestParams implements ITestParameter<FrameProcTestParams> {
      * 
      * @return  the <code>TestParams</code> enumeration constant
      * 
-     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterConstant()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.ITestParameter#getParameterConstant()
      */
     @Override
     public FrameProcTestParams   getParameterConstant() {
@@ -227,7 +227,7 @@ public enum FrameProcTestParams implements ITestParameter<FrameProcTestParams> {
      * 
      * @return  a string description of this parameter
      * 
-     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterDescription()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.ITestParameter#getParameterDescription()
      */
     @Override
     public String   getParameterDescription() {
@@ -241,7 +241,7 @@ public enum FrameProcTestParams implements ITestParameter<FrameProcTestParams> {
      * 
      * @return  the Java class type of the associated parameter
      * 
-     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterType()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.ITestParameter#getParameterType()
      */
     @Override
     public Class<?> getParameterType() { 
@@ -255,7 +255,7 @@ public enum FrameProcTestParams implements ITestParameter<FrameProcTestParams> {
      * 
      * @return  delimited variable name identifying parameter values on the application command line
      * 
-     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getParameterDelimOption()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.ITestParameter#getParameterDelimOption()
      */
     @Override
     public String   getParameterDelimOption()  { 
@@ -273,7 +273,7 @@ public enum FrameProcTestParams implements ITestParameter<FrameProcTestParams> {
      *  
      * @return  the default parameter value assigned at constant construction
      * 
-     * @see com.ospreydcs.dp.jal.tools.common.score.ITestParameter#getDefaultValue()
+     * @see com.ospreydcs.dp.jal.tools.appfwk.ITestParameter#getDefaultValue()
      */
     @Override
     public Object   getDefaultValue() {

@@ -37,7 +37,7 @@ import java.util.Collection;
  * the following properties from the <code>Result</code> record:
  * <ul>
  * <li><code>{@link Index}</code> - extracts test case index from <code>Result</code> records. </li>
- * <li><code>{@link RequestId}</code> - extracts time-series data request ID from <code>Result</code> record. </li>
+ * <li><code>{@link SourceId}</code> - extracts time-series data request ID from <code>Result</code> record. </li>
  * <li><code>{@link Allocation}</code> - extracts memory allocation size (bytes) from <code>Result</code> records. </li>
  * <li><code>{@link DataRate}</code> - extracts data rate (MBps) from <code>Result</code> records. </li>
  * </ul>
@@ -78,14 +78,14 @@ public class DataRateLister<Result extends Record> {
      * @param <Result>  test result record containing data rate, test case index, and memory allocation
      * 
      * @param fncIndex  lambda function extracting test case index from <code>Result</code> records
-     * @param fncRqstId lambda function extracting test case request ID from <code>Result</code> records
+     * @param fncSrcId  lambda function extracting test case source ID from <code>Result</code> records
      * @param fncAlloc  lambda function extracting memory allocation (bytes) from <code>Result</code> records
      * @param fncRate   lambda function extracting data rate (MBps) from <code>Result</code> records
      * 
      * @return  a new <code>DataRateLister</code> object ready for data listing of <code>Result</code> records.
      */
-    public static <Result extends Record> DataRateLister<Result>    from(Index<Result> fncIndex, RequestId<Result> fncRqstId, Allocation<Result> fncAlloc, DataRate<Result> fncRate) {
-        return new DataRateLister<Result>(fncIndex, fncRqstId, fncAlloc, fncRate);
+    public static <Result extends Record> DataRateLister<Result>    from(Index<Result> fncIndex, SourceId<Result> fncSrcId, Allocation<Result> fncAlloc, DataRate<Result> fncRate) {
+        return new DataRateLister<Result>(fncIndex, fncSrcId, fncAlloc, fncRate);
     }
     
     //
@@ -96,7 +96,7 @@ public class DataRateLister<Result extends Record> {
     public static interface Index<Result extends Record>        { public int  extract(Result recResult);  };
     
     /** Interface definition for lambda function that extracts test case request ID from <code>Result</code> records */
-    public static interface RequestId<Result extends Record>    { public String extract(Result recResult); };
+    public static interface SourceId<Result extends Record>     { public String extract(Result recResult); };
     
     /** Interface definition for lambda function that extracts memory allocation (bytes) from <code>Result</code> records */   
     public static interface Allocation<Result extends Record>   { public long extract(Result recResult); };
@@ -110,7 +110,7 @@ public class DataRateLister<Result extends Record> {
     //
     
     /** The format string used for creating output lines within the data rate listing */ 
-    public static final String      STR_LINE_FMTR = "  %7.3f MBps for Case #%d with %7.3f MBytes allocation from request %s";
+    public static final String      STR_LINE_FMTR = "  %7.3f MBps for Case #%d with %7.3f MBytes allocation from source %s";
     
     
     //
@@ -121,7 +121,7 @@ public class DataRateLister<Result extends Record> {
     private final Index<Result>         fncTestIndex;
     
     /** Function that extracts the test case time-series data request ID */
-    private final RequestId<Result>     fncRequestId;
+    private final SourceId<Result>      fncSourceId;
     
     /** Function that extracts the memory allocation size (bytes) from the result record */
     private final Allocation<Result>    fncAllocSize;
@@ -145,13 +145,13 @@ public class DataRateLister<Result extends Record> {
      * </p>
      *
      * @param fncIndex  lambda function extracting test case index from <code>Result</code> records
-     * @param fncRqstId lambda function extracting test case request ID from <code>Result</code> records
+     * @param fncSrcId  lambda function extracting test case source ID from <code>Result</code> records
      * @param fncAlloc  lambda function extracting memory allocation (bytes) from <code>Result</code> records
      * @param fncRate   lambda function extracting data rate (MBps) from <code>Result</code> records
      */
-    public DataRateLister(Index<Result> fncTestIndex, RequestId<Result> fncRqstId, Allocation<Result> fncAlloc, DataRate<Result> fncRate) {
+    public DataRateLister(Index<Result> fncTestIndex, SourceId<Result> fncSrcId, Allocation<Result> fncAlloc, DataRate<Result> fncRate) {
         this.fncTestIndex = fncTestIndex;
-        this.fncRequestId = fncRqstId;
+        this.fncSourceId = fncSrcId;
         this.fncAllocSize = fncAlloc;
         this.fncDataRate = fncRate;
     }
@@ -207,7 +207,7 @@ public class DataRateLister<Result extends Record> {
     private String  createLine(Result recResult) {
         
         int     intIndex = this.fncTestIndex.extract(recResult);
-        String  strRqstId = this.fncRequestId.extract(recResult);
+        String  strRqstId = this.fncSourceId.extract(recResult);
         double  dblAlloc = ((double)this.fncAllocSize.extract(recResult))/1.0e6;
         double  dblRate = this.fncDataRate.extract(recResult);
         

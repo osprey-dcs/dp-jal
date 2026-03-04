@@ -27,8 +27,10 @@ package com.ospreydcs.dp.jal.tools.common.requests;
 
 import java.io.PrintStream;
 import java.time.Duration;
+import java.util.NoSuchElementException;
 
 import com.ospreydcs.dp.jal.query.DpDataRequest;
+import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
@@ -75,12 +77,22 @@ import com.ospreydcs.dp.jal.query.DpDataRequest;
  */
 public enum TestArchiveRequest {
     
-    EMPTY_REQUEST(TestRequestType.GENERAL, 0, 0, Duration.ZERO, Duration.ZERO),
+    /**
+     * <p>
+     * Specifies the empty request.
+     * <ul>
+     * <li>Data Source (PV) Count = 0</li>
+     * <li>Data Source 1st Index = 0</li>
+     * <li>Request Duration = 0 second(s)</li>
+     * <li>Request Start Time = 0 second(s)</li>
+     * </ul>
+     */
+    EMPTY_REQUEST(TestRequestType.EMPTY, 0, 0, Duration.ZERO, Duration.ZERO),
     
     /**
      * Specifies a clocked-source time-series data request with the following properties:
      * <ul>
-     * <li>Request Type = <code>{@link TestRequestType#CLOCKED}</code></li>
+     * <li>Request Type = <code>{@link TestRequestType#EMPTY}</code></li>
      * <li>Data Source (PV) Count = 1</li>
      * <li>Data Source 1st Index = 0</li>
      * <li>Request Duration = 1 second(s)</li>
@@ -1028,6 +1040,36 @@ public enum TestArchiveRequest {
         this.durStartTime = durStartTime;
     }
     
+    //
+    // Enumeration Operations
+    //
+    
+    /**
+     * <p>
+     * Returns the <code>TestArchiveRequest</code> enumeration constant with the given name.
+     * </p>
+     * <p>
+     * Convenience method deferring to <code>{@link Enum#valueFrom(Class, String)}</code> with 
+     * the <code>TestArchiveRequest</code> class object and given name.
+     * </p>
+     * 
+     * @param strName   name of a <code>TestArchiveRequest</code> enumeration name
+     * 
+     * @return  the <code>TestArchiveRequest</code> constant with the given name.
+     * 
+     * @throws NoSuchElementException   the argument was not a valid <code>TestArchiveRequest</code> constant name
+     */
+    public static TestArchiveRequest    valueFrom(String strName) throws NoSuchElementException {
+        
+        try { 
+            TestArchiveRequest  enmRqst = TestArchiveRequest.valueOf(TestArchiveRequest.class, strName);
+            
+            return enmRqst;
+            
+        } catch (Exception e) {
+            throw new NoSuchElementException(JavaRuntime.getQualifiedMethodNameSimple() + " - Invalid constant name : " + strName, e);
+        }
+    }
     
     //
     // Field Getters
