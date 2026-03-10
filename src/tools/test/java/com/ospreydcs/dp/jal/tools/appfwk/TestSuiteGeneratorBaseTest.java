@@ -23,7 +23,7 @@
  * @since Jan 17, 2026
  *
  */
-package com.ospreydcs.dp.jal.tools.common.score;
+package com.ospreydcs.dp.jal.tools.appfwk;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -44,7 +44,7 @@ import org.junit.Test;
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.DpTimestampCase;
 import com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase;
-import com.ospreydcs.dp.jal.tools.common.score.TestSuiteGeneratorBaseTest.TestCase.Param;
+import com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBaseTest.TestCase.Param;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**

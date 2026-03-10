@@ -72,7 +72,7 @@ public final record ProviderUID(String uid, String name, boolean isNew) implemen
      * 
      * @return new <code>ProviderUID</code> record populated with the given arguments
      */
-    public static ProviderUID   from (String uid, String name, boolean isNew) {
+    public static ProviderUID   from(String uid, String name, boolean isNew) {
         return new ProviderUID(uid, name, isNew);
     }
     

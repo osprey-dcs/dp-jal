@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	IngestionChannelEvaluator.java
- * Package: com.ospreydcs.dp.jal.tools.apps.ingest.channel
- * Type: 	IngestionChannelEvaluator
+ * File:	IngestionApiEvaluator.java
+ * Package: com.ospreydcs.dp.jal.tools.apps.ingest.api
+ * Type: 	IngestionApiEvaluator
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,10 +20,10 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Feb 17, 2026
+ * @since Mar 6, 2026
  *
  */
-package com.ospreydcs.dp.jal.tools.apps.ingest.channel;
+package com.ospreydcs.dp.jal.tools.apps.ingest.api;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -38,17 +38,19 @@ import org.apache.logging.log4j.Logger;
 
 import com.ospreydcs.dp.jal.config.JalConfig;
 import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
-import com.ospreydcs.dp.jal.grpc.ingest.DpIngestionConnection;
-import com.ospreydcs.dp.jal.grpc.ingest.DpIngestionConnectionFactoryStatic;
 import com.ospreydcs.dp.jal.grpc.model.DpGrpcConnectionFactoryBase;
 import com.ospreydcs.dp.jal.grpc.model.DpGrpcException;
-import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionChannel;
+import com.ospreydcs.dp.jal.ingest.IIngestionService;
+import com.ospreydcs.dp.jal.ingest.IIngestionStream;
+import com.ospreydcs.dp.jal.ingest.JalIngestionApiFactory;
 import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer;
 import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionStream;
 import com.ospreydcs.dp.jal.tools.appfwk.DpServiceAddress;
-import com.ospreydcs.dp.jal.tools.appfwk.DpServiceAddress.DpService;
 import com.ospreydcs.dp.jal.tools.appfwk.ExitCode;
 import com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase;
+import com.ospreydcs.dp.jal.tools.appfwk.DpServiceAddress.DpService;
+import com.ospreydcs.dp.jal.tools.apps.ingest.channel.IngestChanTestSuite;
+import com.ospreydcs.dp.jal.tools.apps.ingest.channel.IngestionChannelEvaluator;
 import com.ospreydcs.dp.jal.tools.common.parse.AppOptionsParser;
 import com.ospreydcs.dp.jal.tools.common.score.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -57,18 +59,18 @@ import com.ospreydcs.dp.jal.util.Log4j;
 
 /**
  * <p>
- * Application for evaluating the operation and performance of component <code>IngestionChannel</code>.
+ * Application for evaluating the performance of the JAL Ingestion Service APIs.
  * </p>
  *
  * @author Christopher K. Allen
- * @since Feb 17, 2026
+ * @since Mar 6, 2026
  *
  */
-public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChannelEvaluator> {
+public class IngestionApiEvaluator extends JalApplicationBase<IngestionApiEvaluator> {
 
-
+    
     //
-    // Application Entry 
+    // Application Entry Point
     //
     
     /**
@@ -112,7 +114,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
                 args = JalApplicationBase.readInputFileArguments(strInputFile);
                 
             } catch (Exception e) {
-                JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
+                JalApplicationBase.terminateWithException(IngestionApiEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
                 return;
                 
             }
@@ -125,15 +127,15 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         
         // Get the application constructor arguments
         DpServiceAddress    addrHost;
-        IngestChanTestSuite suiteCases;
+        IngestApiTestSuite  suiteCases;
         String              strOutputLoc;
         try {
             addrHost = DpServiceAddress.parse(DpService.INGESTION, args);
-            suiteCases = IngestChanTestSuite.parse(args);
+            suiteCases = IngestApiTestSuite.parse(args);
             strOutputLoc = PARSER.parseOutputLocation(STR_OUT_PATH_DEF, args);
             
         } catch (Exception e) {
-            JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
+            JalApplicationBase.terminateWithException(IngestionApiEvaluator.class, e, ExitCode.INTPUT_ARG_INVALID);
             return;
             
         }
@@ -144,7 +146,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         
         // Create the evaluator, run it while catching and reporting any exceptions
         try {
-            IngestionChannelEvaluator   evaluator = new IngestionChannelEvaluator(addrHost, suiteCases, strOutputLoc, args);
+            IngestionApiEvaluator   evaluator = new IngestionApiEvaluator(addrHost, suiteCases, strOutputLoc, args);
             
             evaluator.run();
             evaluator.writeReport();
@@ -157,31 +159,32 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         } catch (DpGrpcException e) {
             
             // Creation exception
-            JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.GRPC_CONN_FAILURE);
+            JalApplicationBase.terminateWithException(IngestionApiEvaluator.class, e, ExitCode.GRPC_CONN_FAILURE);
             return;
             
         } catch (IllegalStateException | MissingResourceException | ClassCastException | UnsupportedOperationException | IndexOutOfBoundsException e) {
 
             // Creation exception
-            JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.INITIALIZATION_EXCEPTION);
+            JalApplicationBase.terminateWithException(IngestionApiEvaluator.class, e, ExitCode.INITIALIZATION_EXCEPTION);
             return;
             
         } catch (FileNotFoundException | SecurityException e) {
 
             // Output exception
-            JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.OUTPUT_FAILURE);
+            JalApplicationBase.terminateWithException(IngestionApiEvaluator.class, e, ExitCode.OUTPUT_FAILURE);
             return;
             
         } catch (InterruptedException e) {
 
             // Shutdown exception
-            JalApplicationBase.terminateWithException(IngestionChannelEvaluator.class, e, ExitCode.SHUTDOWN_EXCEPTION);
+            JalApplicationBase.terminateWithException(IngestionApiEvaluator.class, e, ExitCode.SHUTDOWN_EXCEPTION);
             return;
             
         }
-    }
         
-    
+    }
+
+
     //
     // JAL Library Resources
     //
@@ -202,7 +205,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     
     
     /** Default output path location */
-    public static final String      STR_OUT_PATH_DEF = CFG_TOOLS.output.path + "/ingest/channel";
+    public static final String      STR_OUT_PATH_DEF = CFG_TOOLS.output.path + "/ingest/api";
     
     
     
@@ -221,19 +224,12 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     public static final Duration    DUR_PROC_TARGET = Duration.ofMillis(10);
 
     
-    /** The data message queue buffer back pressure enable/disable flag */
-    public static final boolean     BOL_QUEUE_BACKPRES_ENBL = false;
-    
-    /** The capacity of the queue buffer containing ingest data request messages before transmission - ignored if back pressure is off */
-    public static final int         SZ_QUEUE_INGEST = 100000;
-    
-    
     //
     // Application Constants - Client Messages
     //
     
     /** Application name */
-    public static final String      STR_APP_NAME = IngestionChannelEvaluator.class.getSimpleName();
+    public static final String      STR_APP_NAME = IngestionApiEvaluator.class.getSimpleName();
     
     
     /** The "version" message for client version requests */
@@ -244,8 +240,8 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     /** A laconic description of the application function */
     public static final String      STR_APP_DESCR = 
             STR_APP_NAME + " Description \n"
-          + "- Application evaluates the performance and operation of the IngestionChannel component class \n"
-          + "    for transmitting a stream of IngestDataRequest messages to the Data Platform Ingestion Service. \n"
+          + "- Application evaluates the performance and operation of the JAL Ingestion Service APIs \n"
+          + "    for transmitting a payload of IngestionFrame instances to the Data Platform Ingestion Service. \n"
           + "- A payload of IngestionFrame objects is first created according to the command-line arguments. \n"
           + "    The payload is converted into IngestDataRequest message by an IngestionFrameProcessor instance. \n"
           + "    The IngestionFrameProcessor uses all default configuration except for column serialization, an option. \n"
@@ -268,20 +264,29 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
           + DpServiceAddress.displayCommandLineOptions()
           + "\n"
           + " "
-          + " [" + IngestChanTestParams.COL_SER_ENBL.getParameterDelimOption() + " FALSE TRUE]"
+          + " [" + IngestApiTestParams.INGEST_API.getParameterDelimOption() + " UNARY STREAM]"
           + "\n"
           + " "
-          + " [" + IngestChanTestParams.STREAM_TYPE.getParameterDelimOption() + " FORWARD BIDIRECTIONAL]"
-          + " [" + IngestChanTestParams.MSTREAM_ENBL.getParameterDelimOption() + " FALSE TRUE]"
-          + " [" + IngestChanTestParams.MSTREAM_CNT.getParameterDelimOption() + " S1 ... Sn]"
+          + " [" + IngestApiTestParams.COL_SER_ENBL.getParameterDelimOption() + " FALSE TRUE]"
           + "\n"
           + " "
-          + " [" + IngestChanTestParams.FRAME_CNT.getParameterDelimOption() + " N1 ... Nn]" 
+          + " [" + IngestApiTestParams.DCMP_ENABLE.getParameterDelimOption() + " FALSE TRUE]"
+          + " [" + IngestApiTestParams.DCMP_SIZE.getParameterDelimOption() + " D1 ... Dn]"
+          + " [" + IngestApiTestParams.MTHREAD_ENABLE.getParameterDelimOption() + " FALSE TRUE]"
+          + " [" + IngestApiTestParams.MTHREAD_COUNT.getParameterDelimOption() + " T1 ... Tn]"
           + "\n"
           + " "
-          + " [" + IngestChanTestParams.FRAME_DEF.getParameterDelimOption() + " 'frame_1 parameters'"
-          + " " + IngestChanTestParams.FRAME_DEF.getParameterDelimOption() + " 'frame_2 parameters'" 
-          + " ... " + IngestChanTestParams.FRAME_DEF.getParameterDelimOption() + " 'frame_n parameters']"
+          + " [" + IngestApiTestParams.STREAM_TYPE.getParameterDelimOption() + " FORWARD BIDIRECTIONAL]"
+          + " [" + IngestApiTestParams.MSTREAM_ENBL.getParameterDelimOption() + " FALSE TRUE]"
+          + " [" + IngestApiTestParams.MSTREAM_CNT.getParameterDelimOption() + " S1 ... Sn]"
+          + "\n"
+          + " "
+          + " [" + IngestApiTestParams.FRAME_CNT.getParameterDelimOption() + " N1 ... Nn]" 
+          + "\n"
+          + " "
+          + " [" + IngestApiTestParams.FRAME_DEF.getParameterDelimOption() + " 'frame_1 parameters'"
+          + " " + IngestApiTestParams.FRAME_DEF.getParameterDelimOption() + " 'frame_2 parameters'" 
+          + " ... " + IngestApiTestParams.FRAME_DEF.getParameterDelimOption() + " 'frame_n parameters']"
           + "\n"
           + " " + AppOptionsParser.displayComandLineOutputLocationOption()
           + "\n\n" 
@@ -291,9 +296,12 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
           + "    input            = Optional input file location - if present all the following arguments are contained there. \n"
           + "    URL              = Ingestion Service location. \n"
           + "    port             = Ingestion Service server port to connect. \n"
-          + "    " + IngestChanTestParams.COL_SER_ENBL.getParameterDelimOption() + "         = Enable/disable data column serialization in processed messages {FALSE TRUE}. \n"
-          + "    " + IngestChanTestParams.STREAM_TYPE.getParameterDelimOption() + "         = gRPC data stream type {FORWARD BIDIRECTIONAL}. \n"
-          + "    " + IngestChanTestParams.MSTREAM_ENBL.getParameterDelimOption() + "         = Enable/disable multiple, concurrent gRPC data streams {TRUE FALSE}. \n"
+          + "    " + IngestApiTestParams.COL_SER_ENBL.getParameterDelimOption() + "         = Enable/disable data column serialization in processed messages {FALSE TRUE}. \n"
+          + "    D1 ... Dn        = Maximum composite ingestion frame size (bytes). \n"
+          + "    " + IngestApiTestParams.MTHREAD_ENABLE.getParameterDelimOption() + "       = Enable/disable multi-threaded ingestion frame processing. \n"
+          + "    T1 ... Tn        = Maximum number of concurrent ingestion frame processing threads - Integer value(s). \n"
+          + "    " + IngestApiTestParams.STREAM_TYPE.getParameterDelimOption() + "         = gRPC data stream type {FORWARD BIDIRECTIONAL}. \n"
+          + "    " + IngestApiTestParams.MSTREAM_ENBL.getParameterDelimOption() + "         = Enable/disable multiple, concurrent gRPC data streams {TRUE FALSE}. \n"
           + "    S1 ... Sn        = Maximum number of concurrent gRPC data streams - Integer value(s). \n"
           + "    N1, ..., Nn      = Number of payload frames for each frame type (i.e., frame_1, ..., frame_n). \n"
           + "    frame parameters = Collection of parameters defining ingestion frame (see below). \n"
@@ -310,7 +318,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
           + "  - All other default values are taken from the JAL Ingestion default configuration and the JAL Tools ingestion frame default configuration. \n"
           + "\n"
           + " INGESTION FRAME DEFINITION: \n"
-          + "  Ingestion frames are defined with the 'frame parameters' section after the " + IngestChanTestParams.FRAME_DEF.getParameterDelimOption() + " delimiter. \n"
+          + "  Ingestion frames are defined with the 'frame parameters' section after the " + IngestApiTestParams.FRAME_DEF.getParameterDelimOption() + " delimiter. \n"
           + "  For full description of these parameters see the class documentation for record FrameFactorySpec. \n"
           + "  Briefly, we have the following format for the ingestion frame definition: \n" 
           + "\n"
@@ -347,8 +355,8 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
           + "\n"
           + "  FRAME DEFINITION NOTES: \n"
           + "  - Most parameters are optional and when not provided are supplied by the JAL Tools default ingestion frame definition. \n"
-          + "  - Note that, along with metadata, ingestion frame definitions include both a timestamps definition using the \n"
-          + "    --tms option and data columns collections definitions using the --cols option. \n"
+          + "  - Note that, along with metadata, ingestion frame definitions include both a timestamps definition using the --tms \n"
+          + "    option and data columns collections definitions using the --cols option. \n"
           + "  - If the --tms option is not present the frame timestamps specification is taken from the default JAL Tools configuraiton. \n"
           + "  - Column counts and names can be specified either with the count and prefix option, or with explicit names (the number determine count). \n"
           + "\n"
@@ -370,7 +378,6 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
           + "    then the datum factory is configured according to the default configuration in the JAL Tools configuration. \n"
           + "  - Typically, the default datum factory configuration is sufficient for most IngestionFrameProcessor evaluations. \n"
           ;
-   
     
     
     //
@@ -378,7 +385,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     //
     
     /** List of all the valid delimited argument options */
-    public static final List<String>        LST_STR_DELOPTS = IngestChanTestParams.validDelimOptions();
+    public static final List<String>        LST_STR_DELOPTS = IngestApiTestParams.validDelimOptions();
     
     /** The application arguments parser - note that all predefined command-line options are also added */
     private static final AppOptionsParser   PARSER = AppOptionsParser.from(LST_STR_DELOPTS);
@@ -392,7 +399,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     private static final boolean    BOL_LOGGING = CFG_INGEST.logging.enabled;
     
     /** Class event logger */
-    private static final Logger     LOGGER = Log4j.getLogger(IngestionChannelEvaluator.class, CFG_INGEST.logging.level);
+    private static final Logger     LOGGER = Log4j.getLogger(IngestionApiEvaluator.class, CFG_INGEST.logging.level);
 
     
     //
@@ -403,31 +410,28 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     private final DpServiceAddress          addrHost;
     
     /** The test suite configuration to run */
-    private final IngestChanTestSuite       suiteCases;
+    private final IngestApiTestSuite        suiteCases;
     
     
     //
     // Instance Resources
     //
     
-    /** The gRPC connection to the Data Platform Ingestion Service */
-    private final DpIngestionConnection     connIngest;
+    /** The unary Ingestion Service API */
+    private final IIngestionService         apiService;
     
-    /** The ingestion data message buffer attached to the the ingestion channel */
-    private final IngestionMessageBuffer    bufChanMsgs;
+    /** The streaming Ingestion Service API */
+    private final IIngestionStream          apiStream;
     
-    /** The gRPC streaming channel between processor and the Data Platform Ingestion Service */
-    private final IngestionChannel          chanIngest;
-
     
     /** The collection of test cases to run, i.e., the test case suite */
-    private final Collection<IngestChanTestCase>    conCases;
+    private final Collection<IngestApiTestCase>    conCases;
     
     /** The collection of test case results */
-    private final Collection<IngestChanTestResult>  conResults;
+    private final Collection<IngestApiTestResult>  conResults;
     
     /** The collections of test case failures */
-    private final Collection<IngestChanTestResult>  conFailures;
+    private final Collection<IngestApiTestResult>  conFailures;
     
     
     //
@@ -458,20 +462,19 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         return LOGGER;
     }
     
-    
+
     //
     // Constructor
     //
     
     /**
      * <p>
-     * Constructs a new, initialized <code>IngestionChannelEvaluator</code> application.
+     * Constructs a new <code>IngestionApiEvaluator</code> instance.
      * </p>
      * <p>
      * All application initialization is performed.
      * <ul>
-     * <li>Connection to Ingestion Service is performed.</li>
-     * <li>An <code>IngestionChannel</code> object is create - used for all evaluations.</li> 
+     * <li>Interfaces to Ingestion Service APIs are created - used for all evaluations.</li>
      * <li>Test case test suite is generated.</li>
      * <li>Output file is created and opened.</li>
      * </ul>
@@ -485,41 +488,37 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
      * used in the evaluations and output.
      * </p>
      *
-     * @param addrHost      host address of the Data Platform Ingestion Service in which to connect
-     * @param suiteCases    the test suite configuration obtained from the application command line
-     * @param strOutputLoc  the path to the output evaluation results 
+     * @param addrHost      the Ingestion Service host address
+     * @param suiteCases    the test suite configuration
      * @param args          the application command-line arguments
      * 
-     * @throws DpGrpcException          general gRPC exception connecting to Ingestion Service (see message and cause)  
+     * @throws DpGrpcException general gRPC resource or connection exception
      * @throws IllegalStateException    invalid test suite configuration (missing at least one parameter value)
      * @throws MissingResourceException attempted to make a <code>TestCase</code> with missing parameter and/or parameter value
      * @throws ClassCastException       test case parameter value had invalid type  
-     * @throws UnsupportedOperationException an unknown parameter was encountered in test case creation
      * @throws IndexOutOfBoundsException     internal error - attempted to compute test case greater than the number of cases
      * @throws UnsupportedOperationException either unknown parameter encountered, or output file path is not associated with default file system
      * @throws FileNotFoundException    unable to create output file (see message and cause)
      * @throws SecurityException        unable to write to output file
      */
-    public IngestionChannelEvaluator(DpServiceAddress addrHost, IngestChanTestSuite suiteCases, String strOutputLoc, String... args) 
+    public IngestionApiEvaluator(DpServiceAddress addrHost, IngestApiTestSuite suiteCases, String strOutputLoc, String... args) 
             throws DpGrpcException,
-                   IllegalStateException, MissingResourceException, ClassCastException, IndexOutOfBoundsException,
-                   UnsupportedOperationException, FileNotFoundException, SecurityException 
-    {
-        super(IngestionChannelEvaluator.class, args);
+                    IllegalStateException, MissingResourceException, ClassCastException,
+                    IndexOutOfBoundsException, UnsupportedOperationException, 
+                    FileNotFoundException, SecurityException {
+        super(IngestionApiEvaluator.class, args);
         
-        // Save the arguments
         this.addrHost = addrHost;
         this.suiteCases = suiteCases;
         
-        // Create the components for evaluation
-        this.connIngest = DpIngestionConnectionFactoryStatic.connect(addrHost.strUrl(), addrHost.intPort()); // throws DpGrpcException
-        this.bufChanMsgs = IngestionMessageBuffer.from(SZ_QUEUE_INGEST, BOL_QUEUE_BACKPRES_ENBL);
-        this.chanIngest = IngestionChannel.from(this.bufChanMsgs, this.connIngest);
+        // Create the Ingestion Service APIs
+        this.apiService = JalIngestionApiFactory.connectService(addrHost.strUrl(), addrHost.intPort());
+        this.apiStream = JalIngestionApiFactory.connectStream(addrHost.strUrl(), addrHost.intPort());
         
         // Create the collection of test cases and container for results
         this.conCases = this.suiteCases.createTestSuit();   // throws IllegalStateException, MissingResourceException, ClassCastException, UnsupportedOperationException, IndexOutOfBoundsException
-        this.conResults = new TreeSet<>(IngestChanTestResult.descendingTransmissionRateOrdering());
-        this.conFailures = new TreeSet<>(IngestChanTestResult.caseIndexOrdering());
+        this.conResults = new TreeSet<>(IngestApiTestResult.descendingTransmissionRateOrdering());
+        this.conFailures = new TreeSet<>(IngestApiTestResult.caseIndexOrdering());
         
         // Create the output stream and attach Logger to it - records fatal errors to output file
         super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
@@ -529,15 +528,15 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         super.appendLoggingFor(IngestionMessageBuffer.class);
         super.appendLoggingFor(IngestionStream.class);
     }
-    
-    
+
+
     //
     //  Operations
     //
     
     /**
      * <p>
-     * Runs all test cases within the test suite configuration on the <code>IngestionChannel</code> object under evaluation.
+     * Runs all test cases within the test suite configuration on the JAL Ingestion Service API objects under evaluation.
      * </p>
      * <p>
      * Runs all test cases in resource <code>{@link #conCases}</code> (i.e., specified in the test suite configuration) 
@@ -555,6 +554,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
      * @throws IllegalStateException    the <code>{@link #run()}</code> method has already been called
      */
     public void run() {
+        
         // Check state
         if (super.bolRun) 
             throw new IllegalStateException(JavaRuntime.getQualifiedMethodNameSimple() + " - Evaluations have already been run.");
@@ -568,10 +568,10 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
        
         LOGGER.info("Running {} test cases for test suite...", CNT_CASES);
         Instant insStart = Instant.now();
-        for (IngestChanTestCase recCase : this.conCases) {
+        for (IngestApiTestCase recCase : this.conCases) {
             LOGGER.info("Running test case #{} of {} (with index {}) ...", indCase, CNT_CASES, recCase.indCase());
             
-            IngestChanTestResult recResult = recCase.evaluate(this.bufChanMsgs, this.chanIngest); 
+            IngestApiTestResult recResult = recCase.evaluate(this.apiService, this.apiStream); 
             
             this.conResults.add(recResult);
             indCase++;
@@ -613,11 +613,11 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
     public boolean shutdown() throws InterruptedException {
 
         boolean     bolResult = true;
-        bolResult = bolResult && this.chanIngest.shutdown();        // throws InterruptedException
-        bolResult = bolResult && this.bufChanMsgs.shutdown();       // throws InterruptedException
-        bolResult = bolResult && this.connIngest.shutdownSoft();    // throws InterruptedException
+        bolResult = bolResult && this.apiService.shutdown();        // throws InterruptedException
+        bolResult = bolResult && this.apiStream.shutdown();         // throws InterruptedException
         
-        bolResult = bolResult && this.connIngest.awaitTermination();
+        bolResult = bolResult && this.apiService.awaitTermination();// throws InterruptedException
+        bolResult = bolResult && this.apiStream.awaitTermination(); // throws InterruptedException
         
         super.close();
         
@@ -637,9 +637,8 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
      * 
      */
     public void shutdownNow() {
-        this.chanIngest.shutdownNow();
-        this.bufChanMsgs.shutdownNow();
-        this.connIngest.shutdownNow();
+        this.apiService.shutdownNow();
+        this.apiStream.shutdownNow();
         
         super.close();
     }
@@ -683,6 +682,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         LOGGER.info("Evaluation report stored at location {}.", super.getOutputFilePath());
     }
     
+    
     /**
      * <p>
      * Creates a text report of the test suite evaluations and prints it to the given output stream.
@@ -723,15 +723,29 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         
         // Print out definitions
         ps.println(this.getClass().getSimpleName() +  " Definitions");
-        ps.println(strPad + "Transmission Rate       - Total transmitted data allocation (bytes) divided by transmission time.");
-        ps.println(strPad + "Processed Data Rate     - Total processed data message allocation divided by PAYLOAD processing time.");
-        ps.println(strPad + "Data message allocation - Total memory allocation size of all (transmitted) data messages.");
-        ps.println(strPad + "NOTE: Payload are processed into data messages independently of and prior to data transmission.");
+        ps.println(strPad + "Data Rate              - Total payload data allocation (bytes) divided by processing/transmission time.");
+        ps.println(strPad + "Payload allocation     - Total memory allocation (bytes) of the IngestionFrame payload (may differ from message allocation).");
+        ps.println(strPad + "  NOTE: Payload are processed into data messages concurrent with data transmission.");
+        ps.println();
+        ps.println(strPad + "Payload frame count    - Number of IngestionFrame objects comprising payload.");
+        ps.println(strPad + "Transmitted messages   - Number of IngestDataRequest messages processed and transmitted to Ingestion Service.");
+        ps.println();
+        ps.println(strPad + "Ingestion Service API  - The API used for data transmission {UNARY, STREAM}.");
+        ps.println(strPad + "Data column serialize  - Enable/disable the a priori serialization of IngestDataRequest DataColumn messages.");
+        ps.println();
+        ps.println(strPad + "Enable frame decomposition - Enable/disable decomposition of IngestionFrame object to meet gRPC size limits.");
+        ps.println(strPad + "Max composite frame size   - Maximum composite IngestionFrame size (in bytes).");
+        ps.println(strPad + "Enable multi-thread processing - Enable/disable multi-threaded processing of IngestionFrame objects to IngestDataRequest messages.");
+        ps.println(strPad + "Max processing threads         - Maximum number of IngestionFrame concurrent processing threads.");
+        ps.println();
+        ps.println(strPad + "gRPC data stream type   - gRPC data stream type used for data transmission {FORWARD, BIDIRECTIONAL}.");
+        ps.println(strPad + "Enable multiple streams - Enable/disable use of multiple, concurrent gRPC data streams for transmission.");
+        ps.println(strPad + "Max gRPC data streams   - Maximum number of concurrent gRPC data streams used for transmission.");
         ps.println();
         
         // Print out test parameter descriptions
         ps.println("Test Parameter Descriptions");
-        IngestChanTestParams.printOut(ps, strPad);
+        IngestApiTestParams.printOut(ps, strPad);
         ps.println();
         
         // Print out evaluation summary
@@ -757,44 +771,32 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         
         // Print out test case data rates
         ps.println("Test Case Data Transmission Rates (MBps Descending)");
-        DataRateLister<IngestChanTestResult>  lstrXmitRates = DataRateLister.from(
-                rec -> rec.recTestCase().indCase(), 
-                rec -> rec.recTestCase().specFrame().strLabel(), 
-                rec -> rec.szAllocXmit(), 
-                rec -> rec.dblRateXmit()
-                );
-        lstrXmitRates.printOut(ps, strPad, this.conResults);
-        ps.println();
-        
-        ps.println("Test Case Payload Processing Rates (MBps Descending)");
-        Collection<IngestChanTestResult>    conResultsProc = new TreeSet<>(IngestChanTestResult.descendingProcessedRateOrdering());
-        conResultsProc.addAll(this.conResults);     // order results by frame processing rate
-        DataRateLister<IngestChanTestResult>  lstrProcRates = DataRateLister.from(
+        DataRateLister<IngestApiTestResult>  lstrRates = DataRateLister.from(
                 rec -> rec.recTestCase().indCase(), 
                 rec -> rec.recTestCase().specFrame().strLabel(), 
                 rec -> rec.szPayload(), 
-                rec -> rec.dblRateProc()
+                rec -> rec.dblRateXmit()
                 );
-        lstrProcRates.printOut(ps, strPad, conResultsProc);
+        lstrRates.printOut(ps, strPad, this.conResults);
         ps.println();
         
         // Print out statistical results summary
         ps.println("Test Results Statistics");
-        IngestChanResultStats.assignTargetTransmissionRate(DBL_RATE_TARGET);
-        IngestChanResultStats.assignTargetProcessingDuration(DUR_PROC_TARGET);
-        IngestChanResultStats  statSummary = IngestChanResultStats.from(this.conResults);
+        IngestApiResultStats.assignTargetTransmissionRate(DBL_RATE_TARGET);
+        IngestApiResultStats.assignTargetProcessingDuration(DUR_PROC_TARGET);
+        IngestApiResultStats  statSummary = IngestApiResultStats.from(this.conResults);
         statSummary.printOut(ps, strPad);
         ps.println();
         
         // Print out results extremes
         ps.println("Test Results Extremes");
-        IngestChanResultExtremes  recExtremes = IngestChanResultExtremes.from(this.conResults);
+        IngestApiResultExtremes  recExtremes = IngestApiResultExtremes.from(this.conResults);
         recExtremes.printOut(ps, null);
         ps.println();
         
         // Print out channel configuration scoring
-        ps.println("Frame Processor Configuration Scoring");
-        IngestChanConfigScorer scrChan = IngestChanConfigScorer.from(this.conResults);
+        ps.println("Ingestion Service API Configuration Scoring");
+        IngestApiConfigScorer scrChan = IngestApiConfigScorer.from(this.conResults);
         scrChan.printOutByRates(ps, strPad);
         ps.println();
         
@@ -805,7 +807,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
             ps.println();
             
         } else {
-            for (IngestChanTestResult recFail : this.conFailures) {
+            for (IngestApiTestResult recFail : this.conFailures) {
                 recFail.printOut(ps, strPad);
                 ps.println();
             }
@@ -813,7 +815,7 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         
         // Print out each test result
         ps.println("Individual Case Results (MBps Descending Transmission Rates)");
-        for (IngestChanTestResult recResult : this.conResults) {
+        for (IngestApiTestResult recResult : this.conResults) {
             recResult.printOut(ps, strPad);
             ps.println();
         }

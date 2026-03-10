@@ -105,15 +105,19 @@ public class AppOptionsParser extends AppArgumentsParser {
      * <p>
      * The returned <code>AppOptionsParser</code> instance is initialized with the given collection of delimited
      * command-line options.  The options include delimited switches, variable names, and property names.
+     * The predefined command-line options in <code>{@link AppArgumentsParser#getPredefinedOptions()}</code> will 
+     * also be appended to the given collection of delimited command-line options.
      * All other command-line options will be ignored.
      * </p> 
      * <p>
      * The returned <code>AppOptionsParser</code> instance is initialized with the default delimiters contained
-     * in base class constant <code>{@link AppArgumentsParser#SET_DELS_DEF}</code>.
+     * in base class constant <code>{@link AppArgumentsParser#getPredefinedOptions()}</code>.
      * </p>
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
+     * <li>Also adds all predefined options in <code>{@link AppArgumentsParser#SET_OPTS_PREDEF}</code>
+     *     </li>into the collection of valid, delimited command-line options.
      * <li>Additional command-line options can be added with methods
      *      <code>{@link #addDelimitedOption(String)}</code> and <code>{@link #addDelimitedOptions(Collection)}</code>.</li>
      *      </li>
@@ -142,6 +146,8 @@ public class AppOptionsParser extends AppArgumentsParser {
      * <p>
      * The returned <code>AppOptionsParser</code> instance is initialized with the given collection of delimited
      * command-line options.  The options include delimited switches, variable names, and property names.
+     * The predefined command-line options in <code>{@link AppArgumentsParser#SET_DVARS_PREDEF}</code> will 
+     * also be appended to the given collection of delimited command-line options.
      * All other command-line options will be ignored.
      * </p> 
      * <p>
@@ -151,6 +157,8 @@ public class AppOptionsParser extends AppArgumentsParser {
      * <p>
      * <h2>NOTES:</h2>
      * <ul>
+     * <li>Also adds all predefined options in <code>{@link AppArgumentsParser#SET_OPTS_PREDEF}</code>
+     *     </li>into the collection of valid, delimited command-line options.
      * <li>Additional command-line options can be added with methods
      *      <code>{@link #addDelimitedOption(String)}</code> and <code>{@link #addDelimitedOptions(Collection)}</code>.</li>
      *      </li>
@@ -187,6 +195,11 @@ public class AppOptionsParser extends AppArgumentsParser {
     /**
      * <p>
      * Constructs a new <code>AppOptionsParser</code> instance initialized with the given arguments.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * Also adds all predefined options in <code>{@link AppArgumentsParser#SET_OPTS_PREDEF}</code>
+     * into the collection of valid, delimited command-line options.
      * </p>
      *
      * @param conDelOpts    the collection of parser delimiter characters and strings

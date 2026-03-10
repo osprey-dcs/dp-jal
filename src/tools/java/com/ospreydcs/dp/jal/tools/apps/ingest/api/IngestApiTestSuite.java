@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	IngestChanTestSuite.java
- * Package: com.ospreydcs.dp.jal.tools.apps.ingest.channel
- * Type: 	IngestChanTestSuite
+ * File:	IngestApiTestSuite.java
+ * Package: com.ospreydcs.dp.jal.tools.apps.ingest.api
+ * Type: 	IngestApiTestSuite
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,15 +20,14 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Feb 20, 2026
+ * @since Mar 9, 2026
  *
  */
-package com.ospreydcs.dp.jal.tools.apps.ingest.channel;
+package com.ospreydcs.dp.jal.tools.apps.ingest.api;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.MalformedParametersException;
 import java.time.format.DateTimeParseException;
-import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
@@ -37,16 +36,17 @@ import javax.naming.ConfigurationException;
 
 import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
 import com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase;
+import com.ospreydcs.dp.jal.tools.apps.ingest.channel.IngestChanTestParams;
+import com.ospreydcs.dp.jal.tools.apps.ingest.common.JalIngestionApiType;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
-import com.ospreydcs.dp.jal.tools.common.parse.AppOptionsParser;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 /**
  * <p>
- * Class for generating test suites for application <code>IngestionChannelEvaluator</code>.
+ * Class for generating test suites for application <code>IngestionApiEvaluator</code>.
  * </p>
  * <p>
- * Class instances create collections of <code>{@link IngestChanTestCase}</code> records which define a test
+ * Class instances create collections of <code>{@link IngestApiTestCase}</code> records which define a test
  * case situation for evaluation. Test case parameters are enumerated within <code>{@link IngestChanTestParams}</code>.
  * </p>
  * <p>
@@ -65,15 +65,15 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * methods for configuring the test suite generator, confirming valid configurations, checking for missing parameter values,
  * retrieving parameter values, and obtaining the total test case count for the current configuration.
  * To support the base class operation the <code>FrameProcTestSuite</code> class supplies the abstract methods
- * <code>{@link #isValidType(IngestChanTestParams, Object)}</code> and <code>{@link #createTestCase(Map)}</code>, which
- * check that a given parameter value is of the correct type and creates a <code>{@link IngestChanTestCase}</code> from
+ * <code>{@link #isValidType(IngestApiTestParams, Object)}</code> and <code>{@link #createTestCase(Map)}</code>, which
+ * check that a given parameter value is of the correct type and creates a <code>{@link IngestApiTestCase}</code> from
  * a map of (Param, Value) pairs, respectively.  These abstract implementations are particular to the parameter
- * enumeration <code>{@link IngestChanTestParams}</code> and test case record <code>{@link IngestChanTestCase}</code>.
+ * enumeration <code>{@link IngestChanTestParams}</code> and test case record <code>{@link IngestApiTestCase}</code>.
  * </p>
  * <p>
  * <h2>NOTES:</h2>
  * <ul>
- * <li>At least one value must be assigned for each parameter in <code>{@link IngestChanTestParams}</code>, otherwise the configuration is invalid.</li>
+ * <li>At least one value must be assigned for each parameter in <code>{@link IngestApiTestParams}</code>, otherwise the configuration is invalid.</li>
  * <li>Method <code>{@link #isValidConfiguration()}</code> is available to check for valid configuration.</li>
  * <li>Test suite size grows geometrically with the number of parameter values, where total case count is the product of the number of values.</li>
  * <li>Method <code>{@link #testCaseCount()}</code> is available to check the number of test cases for the current configuration.</li>
@@ -81,11 +81,10 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * </p> 
  *
  * @author Christopher K. Allen
- * @since Feb 20, 2026
+ * @since Mar 9, 2026
  *
- * @see TestSuiteGeneratorBase
  */
-public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestParams, IngestChanTestCase> {
+public class IngestApiTestSuite extends TestSuiteGeneratorBase<IngestApiTestParams, IngestApiTestCase> {
 
     
     //
@@ -94,40 +93,40 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
     
     /**
      * <p>
-     * Creates and returns a new, uninitialized <code>IngestChanTestSuite</code> instance.
+     * Creates and returns a new, uninitialized <code>IngestApiTestSuite</code> instance.
      * </p>
      * <p>
      * The returned test suite generator must configured with values for test parameters enumerated
-     * within <code>{@link IngestChanTestParams}</code>.
+     * within <code>{@link IngestApiTestParams}</code>.
      * Parameter values are assigned with base-class method 
-     * <code>{@link TestSuiteGeneratorBase#addParameterValue(IngestChanTestParams, Object)}</code>.
+     * <code>{@link TestSuiteGeneratorBase#addParameterValue(IngestApiTestParams, Object)}</code>.
      * Once populated test suites are generated with method
      * <code>{@link TestSuiteGeneratorBase#createTestSuit()</code>.
      * </p> 
      *  
-     * @return  a new <code>IngestChanTestSuite</code> ready for parameter value population
+     * @return  a new <code>IngestApiTestSuite</code> ready for parameter value population
      * 
      * @see TestSuiteGeneratorBase
      */
-    public static IngestChanTestSuite   from() {
-        return new IngestChanTestSuite();
+    public static IngestApiTestSuite    from() {
+        return new IngestApiTestSuite();
     }
     
     /**
      * <p>
-     * Creates and returns a new, fully configured <code>IngestChanTestSuite</code> instance.
+     * Creates and returns a new, fully configured <code>IngestApiTestSuite</code> instance.
      * </p>
      * <p>
      * The returned test suite generator is configured according to the given application command-line arguments.
      * So long as the command-line arguments were valid and correctly formatted the test suite generator is 
      * ready for test suite generation.
-     * Test suites can be created with method <code>{@link TestSuiteGeneratorBase#createTestSuit()}</code>.
+     * The fully configured test suites is created with method 
+     * <code>{@link TestSuiteGeneratorBase#parseParameterValues(String...)}</code>.
      * </p>
      * 
-     * @param parser    command-line parser configured for <code>FrameProcessorEvaluator</code> options
      * @param args      the application command-line arguments
      * 
-     * @return  a new <code>IngestChanTestSuite</code> instance fully configured from the given command-line arguments
+     * @return  a new <code>IngestApiTestSuite</code> instance fully configured from the given command-line arguments
      *  
      * @param args  the application command-line arguments
      * 
@@ -147,29 +146,19 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
      * 
      * @see TestSuiteGeneratorBase
      */
-    public static IngestChanTestSuite   parse(String...args) 
+    public static IngestApiTestSuite   parse(String...args) 
             throws DateTimeParseException, NumberFormatException, ClassCastException, 
                    UnsupportedOperationException, NoSuchMethodException, SecurityException, 
                    IllegalAccessException, InvocationTargetException, IllegalArgumentException, 
-                   TypeNotPresentException, ConfigurationException, MalformedParametersException 
+                   TypeNotPresentException, ConfigurationException, MalformedParametersException,
+                   NoSuchElementException
     {
-        IngestChanTestSuite suite = IngestChanTestSuite.from();
+        IngestApiTestSuite suite = IngestApiTestSuite.from();
         
-        suite.parseParameterValues(PARSER, args);
+        suite.parseParameterValues(args);
         
         return suite;
     }
-    
-    
-    //
-    // Class Resources
-    //
-    
-    /** List of all the valid delimited argument options */
-    public static final List<String>        LST_STR_DELOPTS = IngestChanTestParams.validDelimOptions();
-    
-    /** The application arguments parser */
-    private static final AppOptionsParser   PARSER = AppOptionsParser.from(LST_STR_DELOPTS);
     
     
     //
@@ -180,18 +169,14 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
      * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#isValidType(java.lang.Enum, java.lang.Object)
      */
     @Override
-    protected boolean isValidType(IngestChanTestParams enmParam, Object objVal) {
+    protected boolean isValidType(IngestApiTestParams enmParam, Object objVal) {
         return enmParam.isInstance(objVal);
     }
 
-    /**
-     * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#createTestCase(java.util.Map)
-     */
     @Override
-    protected IngestChanTestCase createTestCase(Map<IngestChanTestParams, Object> mapTestVals)
+    protected IngestApiTestCase createTestCase(Map<IngestApiTestParams, Object> mapTestVals)
             throws MissingResourceException, ClassCastException, UnsupportedOperationException {
-        
-        
+
         // Check for parameter completeness
         if (super.hasMissingParameters(mapTestVals))
             throw new MissingResourceException(
@@ -209,7 +194,12 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
                     );
         
         // Create space for parameter values
-        Boolean             bolColSerEnbl = null;   // enable/disable column serialization 
+        JalIngestionApiType enmApiType = null;      // the Ingestion Service API type (unary or streaming)
+        Boolean             bolColSerEnbl = null;   // enable/disable column serialization
+        Boolean             bolDcmpEnbl = null;     // enable/disable ingestion frame decomposition
+        Integer             szDcmpMax = null;       // maximum composite frame size (bytes)
+        Boolean             bolMThrdEnbl = null;    // enable/disable concurrent, multi-threaded frame processing
+        Integer             cntMThrdMax = null;     // maximum number of concurrent frame processing threads
         DpGrpcStreamType    enmStrmType = null;     // the gRPC data stream type
         Boolean             bolMStrmEnbl = null;    // enable/disable multiple, concurrent gRPC data streams
         Integer             cntMStrmMax = null;     // maximum number of concurrent gRPC data streams
@@ -217,28 +207,43 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
         FrameFactorySpec    specFrame = null;       // ingestion frame definition (specification)
 
         // Assign parameter values from map entries
-        for (Map.Entry<IngestChanTestParams, Object> entry : mapTestVals.entrySet()) {
-            IngestChanTestParams    enmParam = entry.getKey();
+        for (Map.Entry<IngestApiTestParams, Object> entry : mapTestVals.entrySet()) {
+            IngestApiTestParams     enmParam = entry.getKey();
             Object                  objVal = entry.getValue();
             
             switch (enmParam) {
+            case INGEST_API:
+                enmApiType = JalIngestionApiType.class.cast(objVal);    // throws ClassCastException
+                break;
             case COL_SER_ENBL:
-                bolColSerEnbl = Boolean.class.cast(objVal);     // throws ClassCastException
+                bolColSerEnbl = Boolean.class.cast(objVal);             // throws ClassCastException
+                break;
+            case DCMP_ENABLE:
+                bolDcmpEnbl = Boolean.class.cast(objVal);               // throws ClassCastException
+                break;
+            case DCMP_SIZE:
+                szDcmpMax = Integer.class.cast(objVal);                // throws ClassCastException
+                break;
+            case MTHREAD_ENABLE:
+                bolMThrdEnbl = Boolean.class.cast(objVal);              // throws ClassCastException
+                break;
+            case MTHREAD_COUNT:
+                cntMThrdMax = Integer.class.cast(objVal);               // throws ClassCastException
                 break;
             case STREAM_TYPE:
-                enmStrmType = DpGrpcStreamType.class.cast(objVal);  // throws ClassCastException
+                enmStrmType = DpGrpcStreamType.class.cast(objVal);      // throws ClassCastException
                 break;
             case MSTREAM_ENBL:
-                bolMStrmEnbl = Boolean.class.cast(objVal);          // throws ClassCastException
+                bolMStrmEnbl = Boolean.class.cast(objVal);              // throws ClassCastException
                 break;
             case MSTREAM_CNT:
-                cntMStrmMax = Integer.class.cast(objVal);           // throws ClassCastException
+                cntMStrmMax = Integer.class.cast(objVal);               // throws ClassCastException
                 break;
             case FRAME_CNT:
-                cntFrames = Integer.class.cast(objVal);             // throws ClassCastException
+                cntFrames = Integer.class.cast(objVal);                 // throws ClassCastException
                 break;
             case FRAME_DEF:
-                specFrame = FrameFactorySpec.class.cast(objVal);      // throws ClassCastException
+                specFrame = FrameFactorySpec.class.cast(objVal);        // throws ClassCastException
                 break;
             default:
                 throw new UnsupportedOperationException(JavaRuntime.getQualifiedMethodNameSimple() + " - Unrecognized parameter " + enmParam);
@@ -246,9 +251,9 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
         }
         
         // Create the test case and return
-        IngestChanTestCase  recTestCase = IngestChanTestCase.from(bolColSerEnbl, enmStrmType, bolMStrmEnbl, cntMStrmMax, cntFrames, specFrame);
+        IngestApiTestCase   recCase = IngestApiTestCase.from(enmApiType, bolColSerEnbl, bolDcmpEnbl, szDcmpMax, bolMThrdEnbl, cntMThrdMax, enmStrmType, bolMStrmEnbl, cntMStrmMax, cntFrames, specFrame);
         
-        return recTestCase;
+        return recCase;
     }
 
     
@@ -258,14 +263,14 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
     
     /**
      * <p>
-     * Constructs a new <code>IngestChanTestSuite</code> instance.
+     * Constructs a new <code>IngestApiTestSuite</code> instance.
      * </p>
      * <p>
      * Required of base class to obtain the test parameters enumeration class object.
      * </p>
      */
-    private IngestChanTestSuite() {
-        super(IngestChanTestParams.class);
+    private IngestApiTestSuite() {
+        super(IngestApiTestParams.class);
     }
-    
+
 }

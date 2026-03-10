@@ -99,10 +99,10 @@ public class FrameProcResultExtremes extends TestResultExtremesBase<FrameProcTes
         List<ParamToNumField<FrameProcTestParams, FrameProcTestResult>>  lstAssocNum = List.of(
                 ParamToNumField.from(FrameProcTestParams.COL_SER_ENBL, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolColSerEnbl() , rec -> rec.dblRateRaw()),
                 ParamToNumField.from(FrameProcTestParams.COL_SER_ENBL, "Proc Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolColSerEnbl() , rec -> rec.dblRateProc()),
-                ParamToNumField.from(FrameProcTestParams.MTHREAD_ENABLE, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolConcEnbl(), rec -> rec.dblRateRaw()),
-                ParamToNumField.from(FrameProcTestParams.MTHREAD_COUNT, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().cntMaxThrds(), rec -> rec.dblRateRaw()),
-                ParamToNumField.from(FrameProcTestParams.MTHREAD_COUNT, "Proc Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().cntMaxThrds(), rec -> rec.dblRateProc()),
-                ParamToNumField.from(FrameProcTestParams.DCMP_ENABLE, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolConcEnbl(), rec -> rec.dblRateRaw()),
+                ParamToNumField.from(FrameProcTestParams.MTHREAD_ENABLE, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolMThrdEnbl(), rec -> rec.dblRateRaw()),
+                ParamToNumField.from(FrameProcTestParams.MTHREAD_COUNT, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().cntMThrdMax(), rec -> rec.dblRateRaw()),
+                ParamToNumField.from(FrameProcTestParams.MTHREAD_COUNT, "Proc Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().cntMThrdMax(), rec -> rec.dblRateProc()),
+                ParamToNumField.from(FrameProcTestParams.DCMP_ENABLE, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().recPrcrCfg().bolMThrdEnbl(), rec -> rec.dblRateRaw()),
                 ParamToNumField.from(FrameProcTestParams.FRAME_DEF, "Raw Data Rate (MBps)", NumberType.DOUBLE, rec -> rec.recTestCase().specFrame().strLabel(), rec -> rec.dblRateRaw()),
                 ParamToNumField.from(FrameProcTestParams.FRAME_DEF, "Processed Message Count", NumberType.INTEGER, rec -> rec.recTestCase().specFrame().strLabel(), rec -> rec.cntMsgs())
                 );

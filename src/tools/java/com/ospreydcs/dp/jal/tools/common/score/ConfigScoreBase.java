@@ -95,14 +95,19 @@ public abstract class ConfigScoreBase<Config extends Record, Result extends Reco
 
     /**
      * <p>
-     * Extracts the originating <code>DpDataRequest</code> for the test case from the given result record.
+     * Extracts the originating data source ID for the test case from the given result record.
      * </p>
+     * <p>
+     * For example, if the test case concerns a time-series data request then the data source ID
+     * is typically the <code>DpDataRequest</code> ID originating the request.  If the test case
+     * concerns an ingestion operation then the data source ID is the <code>IngestionFrame</code>
+     * label.
      * 
-     * @param recResult a <code>Result</code> test result record containing the time-series data request used
+     * @param recResult a <code>Result</code> test result record containing the data source used
      * 
-     * @return  the time-series data request used for the test case
+     * @return  the ID for the data source originating the test case
      */
-    protected abstract String    extractDataRequest(Result recResult);
+    protected abstract String    extractDataSourceId(Result recResult);
 
     /**
      * <p>
@@ -385,7 +390,7 @@ public abstract class ConfigScoreBase<Config extends Record, Result extends Reco
 
         // Get the data request and update the hit count for that request
 //        DpDataRequest   rqst = this.extractDataRequest(recResult);
-        String          rqst = this.extractDataRequest(recResult);
+        String          rqst = this.extractDataSourceId(recResult);
 
         if (this.mapRqstToHits.containsKey(rqst)) {
             Integer     intCnt = this.mapRqstToHits.get(rqst);

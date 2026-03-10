@@ -168,10 +168,10 @@ public final class RequestDecompConfigScorer extends ConfigScorerBase<
 //        }
 
         /**
-         * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRequest(java.lang.Record)
+         * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataSourceId(java.lang.Record)
          */
         @Override
-        protected String extractDataRequest(QueryRecoveryTestResult recResult) {
+        protected String extractDataSourceId(QueryRecoveryTestResult recResult) {
             String  rqst = recResult.rqstOrg().getRequestId();
             
             return rqst;

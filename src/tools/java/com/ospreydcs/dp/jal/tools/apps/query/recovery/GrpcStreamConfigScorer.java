@@ -167,10 +167,10 @@ public class GrpcStreamConfigScorer extends
 //        }
 
         /**
-         * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRequest(java.lang.Record)
+         * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataSourceId(java.lang.Record)
          */
         @Override
-        protected String extractDataRequest(QueryRecoveryTestResult recResult) {
+        protected String extractDataSourceId(QueryRecoveryTestResult recResult) {
             return recResult.rqstOrg().getRequestId();
         }
         

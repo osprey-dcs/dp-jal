@@ -46,19 +46,19 @@ import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
  * @param   bolColSerEnbl Processor Configuration - enable/disable <code>DataColumn</code> serialization for transport
  * 
  * @param   bolDcmpEnbl Processor Configuration - enable/disable ingestion frame decomposition
- * @param   szFrmMax    Processor Configuration - maximum allocation size (bytes) when frame decomposition enabled
+ * @param   szDcmpMax   Processor Configuration - maximum allocation size (bytes) when frame decomposition enabled
  * 
- * @param   bolConcEnbl Processor Configuration - enable/disable (multi-threaded) concurrency
- * @param   cntMaxThrds Processor Configuration - maximum number of processing threads when concurrency is enabled
+ * @param   bolMThrdEnbl Processor Configuration - enable/disable (multi-threaded) concurrency
+ * @param   cntMThrdMax  Processor Configuration - maximum number of processing threads when concurrency is enabled
  */
 public record FrameProcessorConfig(
         boolean bolColSerEnbl,
         
         boolean bolDcmpEnbl,
-        long    szFrmMax,
+        long    szDcmpMax,
         
-        boolean bolConcEnbl,
-        int     cntMaxThrds
+        boolean bolMThrdEnbl,
+        int     cntMThrdMax
         ) 
 {
     
@@ -78,24 +78,24 @@ public record FrameProcessorConfig(
      * @param   bolColSerEnbl       Processor Configuration - enable/disable <code>DataColumn</code> serialization for transport
      * 
      * @param   bolDcmpEnbl      Processor Configuration - enable/disable ingestion frame decomposition
-     * @param   szFrmMax    Processor Configuration - maximum allocation size (bytes) when frame decomposition enabled
+     * @param   szDcmpMax    Processor Configuration - maximum allocation size (bytes) when frame decomposition enabled
      * 
-     * @param   bolConcEnbl      Processor Configuration - enable/disable (multi-threaded) concurrency)
-     * @param   cntMaxThrds Processor Configuration - maximum number of processing threads when concurrency is enabled
+     * @param   bolMThrdEnbl      Processor Configuration - enable/disable (multi-threaded) concurrency)
+     * @param   cntMThrdMax Processor Configuration - maximum number of processing threads when concurrency is enabled
      * 
      * @return  a new <code>FrameProcessorConfig</code> record populated with the given arguments.
      */
     public static FrameProcessorConfig  from(
-            boolean bolSerial,
+            boolean bolColSerEnbl,
             
-            boolean bolDcmpFrm,
-            long    szDcmpFrmMax,
+            boolean bolDcmpEnbl,
+            long    szDcmpMax,
             
-            boolean bolConcEnb,
-            int     cntConcMaxThrds
+            boolean bolMThrdEnb,
+            int     cntMThrdMax
             ) 
     {
-        return new FrameProcessorConfig(bolSerial, bolDcmpFrm, szDcmpFrmMax, bolConcEnb, cntConcMaxThrds);
+        return new FrameProcessorConfig(bolColSerEnbl, bolDcmpEnbl, szDcmpMax, bolMThrdEnb, cntMThrdMax);
     }
 
     
@@ -123,9 +123,9 @@ public record FrameProcessorConfig(
     public boolean equals(Object obj) {
         if (obj instanceof FrameProcessorConfig rec) {
             boolean bolResult = this.bolDcmpEnbl == rec.bolDcmpEnbl
-                    && this.szFrmMax == rec.szFrmMax
-                    && this.bolConcEnbl == rec.bolConcEnbl
-                    && this.cntMaxThrds == rec.cntMaxThrds
+                    && this.szDcmpMax == rec.szDcmpMax
+                    && this.bolMThrdEnbl == rec.bolMThrdEnbl
+                    && this.cntMThrdMax == rec.cntMThrdMax
                     && this.bolColSerEnbl == rec.bolColSerEnbl;
                     
             return bolResult;
@@ -157,9 +157,9 @@ public record FrameProcessorConfig(
         
         ps.println(strPad + "Enable data column serialization     : " + this.bolColSerEnbl);
         ps.println(strPad + "Enable ingestion frame decomposition : " + this.bolDcmpEnbl);
-        ps.println(strPad + "Maximum composite frame size (bytes) : " + this.szFrmMax);
-        ps.println(strPad + "Enable concurrent processing         : " + this.bolConcEnbl);
-        ps.println(strPad + "Concurrency maximum thread count     : " + this.cntMaxThrds);
+        ps.println(strPad + "Maximum composite frame size (bytes) : " + this.szDcmpMax);
+        ps.println(strPad + "Enable concurrent processing         : " + this.bolMThrdEnbl);
+        ps.println(strPad + "Concurrency maximum thread count     : " + this.cntMThrdMax);
     }
     
     /**
@@ -175,12 +175,12 @@ public record FrameProcessorConfig(
         processor.enableDataColumnSerialization(this.bolColSerEnbl);
         
         if (this.bolDcmpEnbl) 
-            processor.setFrameDecomposition(this.szFrmMax);
+            processor.setFrameDecomposition(this.szDcmpMax);
         else
             processor.disableFrameDecomposition();
         
-        if (this.bolConcEnbl)
-            processor.setConcurrency(this.cntMaxThrds);
+        if (this.bolMThrdEnbl)
+            processor.setConcurrency(this.cntMThrdMax);
         else
             processor.disableConcurrency();
     }

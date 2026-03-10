@@ -40,12 +40,12 @@ import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionChannel;
  *
  * @param enmStrmType   the gRPC data stream type used ({@link DpGrpcStreamType#FORWARD} or {@link DpGrpcStreamType#BIDIRECTIONAL})
  * @param bolMStrmEnbl  enable/disable the use of concurrent gRPC data stream for transmission
- * @param cntMaxStrms   maximum number of concurrent gRPC data streams allowed
+ * @param cntMStrmMax   maximum number of concurrent gRPC data streams allowed
  */
 public record IngestionChannelConfig(
         DpGrpcStreamType    enmStrmType,
         boolean             bolMStrmEnbl,
-        int                 cntMaxStrms
+        int                 cntMStrmMax
         ) 
 {
     
@@ -64,17 +64,17 @@ public record IngestionChannelConfig(
      * 
      * @param enmStrmType   the gRPC data stream type used ({@link DpGrpcStreamType#FORWARD} or {@link DpGrpcStreamType#BIDIRECTIONAL})
      * @param bolMStrmEnbl  enable/disable the use of concurrent gRPC data stream for transmission
-     * @param cntMaxStrms   maximum number of concurrent gRPC data streams allowed
+     * @param cntMStrmMax   maximum number of concurrent gRPC data streams allowed
      * 
      * @return  a new <code>IngestionChannelConfig</code> record populated with the given arguments.
      */
     public static IngestionChannelConfig    from(
             DpGrpcStreamType    enmStrmType,
             boolean             bolMStrmEnbl,
-            int                 cntMaxStrms
+            int                 cntMStrmMax
             ) 
     {
-        return new IngestionChannelConfig(enmStrmType, bolMStrmEnbl, cntMaxStrms);
+        return new IngestionChannelConfig(enmStrmType, bolMStrmEnbl, cntMStrmMax);
     }
 
     
@@ -103,7 +103,7 @@ public record IngestionChannelConfig(
         if (obj instanceof IngestionChannelConfig rec) {
             boolean bolResult = (this.enmStrmType == rec.enmStrmType)
                              && (this.bolMStrmEnbl == rec.bolMStrmEnbl)
-                             && (this.cntMaxStrms == rec.cntMaxStrms);
+                             && (this.cntMStrmMax == rec.cntMStrmMax);
             
             return bolResult;
         }
@@ -135,7 +135,7 @@ public record IngestionChannelConfig(
         
         ps.println(strPad + "gRPC stream type             : " + this.enmStrmType);
         ps.println(strPad + "Enable multiple data streams : " + this.bolMStrmEnbl);
-        ps.println(strPad + "Maximum data stream count    : " + this.cntMaxStrms);
+        ps.println(strPad + "Maximum data stream count    : " + this.cntMStrmMax);
     }
     
     /**
@@ -149,7 +149,7 @@ public record IngestionChannelConfig(
         chanIngest.setStreamType(this.enmStrmType);
         
         if (this.bolMStrmEnbl)
-            chanIngest.setMultipleStreams(this.cntMaxStrms);
+            chanIngest.setMultipleStreams(this.cntMStrmMax);
         else
             chanIngest.disableMultipleStreams();
             

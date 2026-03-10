@@ -100,8 +100,8 @@ public record IngestChanTestCase(
      * @param enmStrmType   the gRPC data stream type used for transmission {FORWARD, BIDIRECTIONAL}
      * @param bolMStrmEnbl  enable/disable multiple, concurrent gRPC data streams for data transmission
      * @param cntMStrmMax   the maximum number of concurrent gRPC data streams used in data transmission
-     * @param   cntFrames   number of <code>IngestionFrame</code> instances composing test payload
-     * @param   specFrame   specification record for <code>IngestionFrame</code> factory used to create evaluation payload
+     * @param cntFrames     number of <code>IngestionFrame</code> instances composing test payload
+     * @param specFrame     specification record for <code>IngestionFrame</code> factory used to create evaluation payload
      * 
      * @return  a new <code>IngestChanTestCase</code> instance ready for evaluation
      */
@@ -174,9 +174,9 @@ public record IngestChanTestCase(
      * @param lstFrames the order list of payload ingestion frames
      */
     public static record PayloadCreateResult(
-            ResultStatus    recStatus,
-            int             cntFrames,
-            long            szPayload,
+            ResultStatus            recStatus,
+            int                     cntFrames,
+            long                    szPayload,
             List<IngestionFrame>    lstFrames
             )
     {
@@ -335,7 +335,6 @@ public record IngestChanTestCase(
     //
     
     /** Running index of test case - incremented upon creation/construction */
-    @SuppressWarnings("unused")
     private static int  IND_CASE = 1;
 
     
@@ -388,6 +387,7 @@ public record IngestChanTestCase(
         if (obj instanceof IngestChanTestCase rec) {
             boolean bolResult = (this.indCase == rec.indCase)
                              && (this.cntFrames == rec.cntFrames)
+                             && (this.specFrame.equals(rec.specFrame))
                              && (this.recProcCfg.equals(rec.recProcCfg))
                              && (this.recChanCfg.equals(rec.recChanCfg));
             

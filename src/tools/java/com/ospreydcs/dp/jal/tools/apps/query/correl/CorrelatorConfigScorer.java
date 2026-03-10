@@ -172,10 +172,10 @@ public class CorrelatorConfigScorer extends
 //        }
 
         /**
-         * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRequest(java.lang.Record)
+         * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataSourceId(java.lang.Record)
          */
         @Override
-        protected String    extractDataRequest(CorrelatorTestResult recResult) {
+        protected String    extractDataSourceId(CorrelatorTestResult recResult) {
             return recResult.recTestCase().rqstOrg().getRequestId();
         }
         

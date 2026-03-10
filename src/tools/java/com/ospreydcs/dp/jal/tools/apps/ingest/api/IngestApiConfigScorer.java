@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	IngestChanConfigScorer.java
- * Package: com.ospreydcs.dp.jal.tools.apps.ingest.channel
- * Type: 	IngestChanConfigScorer
+ * File:	IngestApiConfigScorer.java
+ * Package: com.ospreydcs.dp.jal.tools.apps.ingest.api
+ * Type: 	IngestApiConfigScorer
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,33 +20,36 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Feb 23, 2026
+ * @since Mar 9, 2026
  *
  */
-package com.ospreydcs.dp.jal.tools.apps.ingest.channel;
+package com.ospreydcs.dp.jal.tools.apps.ingest.api;
 
 import java.io.PrintStream;
 import java.util.Collection;
 
 import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
+import com.ospreydcs.dp.jal.tools.apps.ingest.common.FrameProcessorConfig;
+import com.ospreydcs.dp.jal.tools.apps.ingest.common.IngestionChannelConfig;
+import com.ospreydcs.dp.jal.tools.apps.ingest.common.JalIngestionApiType;
 import com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase;
 import com.ospreydcs.dp.jal.tools.common.score.ConfigScorerBase;
 
 /**
  * <p>
- * Configuration scorer class for <code>IngestChanTestResult</code> records.
+ * Configuration scorer class for <code>IngestApiTestResult</code> records.
  * </p>
  * <p>
- * Scores are based upon <code>IngestChanTestCase</code> test conditions specifically identified
+ * Scores are based upon <code>IngestAiTestCase</code> test conditions specifically identified
  * in the enclosed record <code>{@link TestConfig}</code>, whose field contain the configuration
  * parameters being scored. 
  * The <code>TestConfig</code> record contains the configuration parameters for a 
  * <code>IngestionChannel</code> instance used to transmit ingestion data, and some properties of the
- * <code>IngestChanTestResult</code> (specifically <code>{@link TestConfig#szAllocXmit()}</code>.
+ * <code>IngestAiTestResult</code> (specifically <code>{@link TestConfig#szAllocXmit()}</code>.
  * </p>
  * <p>
  * Configuration score are managed by the enclosed class <code>{@link ConfigScore}</code>, which accumulates all
- * scores from collections of <code>{@link IngestChanTestResult}</code> collections and performs all the required
+ * scores from collections of <code>{@link IngestAiTestResult}</code> collections and performs all the required
  * computations.
  * </p>
  * <p>
@@ -57,44 +60,44 @@ import com.ospreydcs.dp.jal.tools.common.score.ConfigScorerBase;
  * </p> 
  *
  * @author Christopher K. Allen
- * @since Feb 23, 2026
+ * @since Mar 9, 2026
  *
  */
-public class IngestChanConfigScorer extends 
-        ConfigScorerBase<com.ospreydcs.dp.jal.tools.apps.ingest.channel.IngestChanConfigScorer.TestConfig, 
-                         IngestChanTestResult, 
-                         com.ospreydcs.dp.jal.tools.apps.ingest.channel.IngestChanConfigScorer.ConfigScore> 
+public class IngestApiConfigScorer extends ConfigScorerBase<
+                com.ospreydcs.dp.jal.tools.apps.ingest.api.IngestApiConfigScorer.TestConfig, 
+                IngestApiTestResult, 
+                com.ospreydcs.dp.jal.tools.apps.ingest.api.IngestApiConfigScorer.ConfigScore> 
 {
     
+    
     //
-    // Creator
+    // Constructors
     //
     
     /**
      * <p>
-     * Creates a new, populated <code>IngestChanConfigScorer</code> instance.
+     * Creates a new, populated <code>IngestApiConfigScorer</code> instance.
      * </p>
      * <p>
      * This creator returns a fully scored <code>IngestChanConfigScorer</code> instance for the given
-     * collection of <code>IngestChanTestResult</code> test results.
+     * collection of <code>IngestApiTestResult</code> test results.
      * That is, the returned object contains all the scoring information for the given argument collection.
      * </p>
      * <p>
      * Note that additional test results can be added to the score using the base class methods
-     * <code>{@link #score(IngestChanTestResult)}</code> and <code>{@link #score(Collection)}</code>.
+     * <code>{@link #score(IngestApiTestResult)}</code> and <code>{@link #score(Collection)}</code>.
      * </p>
      * 
      * @param conResults    the collection of test results to be scored
      * 
-     * @return  a new <code>IngestChanConfigScorer</code> instance which scores the given argument collection
+     * @return  a new <code>IngestApiConfigScorer</code> instance which scores the given argument collection
      */
-    public static IngestChanConfigScorer    from(Collection<IngestChanTestResult> conResults) {
-        return new IngestChanConfigScorer(conResults);
+    public static IngestApiConfigScorer from(Collection<IngestApiTestResult> conResults) {
+        return new IngestApiConfigScorer(conResults);
     }
-
     
     //
-    // Internal Types
+    // Internal Type
     //
     
     /**
@@ -102,23 +105,19 @@ public class IngestChanConfigScorer extends
      * Configuration record for the <code>ConfigScore</code> class.
      * </p>
      * <p>
-     * This record contains the subset of test parameters within <code>{@link IngestChanTestCase}</code>
+     * This record contains the subset of test parameters within <code>{@link IngestApiTestCase}</code>
      * that are evaluated in the scoring.  The fields of this record are used in the scoring
      * within <code>{@link ConfigScore}</code>.
      * </p>
      *
-     * @param bolColSerEnbl enable/disable data column serialization before transmission
-     * @param enmStrmType   the gRPC stream type used for transmission (FORWARD, BIDIRECTIONAL)
-     * @param bolMStrmEnbl  enable/disable use of multiple, concurrent gRPC data streams for transmission
-     * @param cntMStrmMax   maximum number of concurrent gRPC data streams used for transmission
-     * @param szAllocXmit   the memory allocation size (bytes) of transmitted data
+     * @param enmApiType    the JAL Ingestion Service API type
+     * @param recProcCfg    the ingetion frame processor configuration
+     * @param recChanCfg    the ingestion channel configuration
      */
     public static record TestConfig(
-            boolean             bolColSerEnbl,
-            DpGrpcStreamType    enmStrmType,
-            boolean             bolMStrmEnbl,
-            int                 cntMStrmMax,
-            long                szAllocXmit
+            JalIngestionApiType     enmApiType,
+            FrameProcessorConfig    recProcCfg,
+            IngestionChannelConfig  recChanCfg
             ) 
     {
         
@@ -128,47 +127,85 @@ public class IngestChanConfigScorer extends
         
         /**
          * <p>
-         * Creates and returns a new <code>TestConfig</code> instance populated from fields of the given argument.
+         * Creates and returns a new <code>TestConfig</code> instance with fields populated from the given arguments.
          * </p>
          * <p>
-         * Extracts the test case configuration fields of the given <code>{@link IngestChanTestCase}</code> argument
-         * that are relevant to <code>{@link TestConfig}</code> and uses them to populated the returned record.
+         * The internal configuration field records <code>{@link #recProcCfg()}</code> and <code>{@link #recChanCfg()}</code>
+         * are created from the explicit argument values then used in creator 
+         * <code>{@link #from(JalIngestionApiType, FrameProcessorConfig, IngestionChannelConfig)}</code>.
          * </p>
-         *  
-         * @param recResult   the test case result record containing the configuration parameters
          * 
-         * @return  a new <code>TestConfig</code> record populated from the given test case
+         * @param enmApiType    the JAL Ingestion Service API type
+         * @param bolColSerEnbl enable/disable data column serialization in frame processing
+         * @param bolDcmpEnbl   enable/disable frame decomposition in frame processing
+         * @param szDcmpMax     maximum composite frame size in frame processing
+         * @param bolMThrdEnbl  enable/disable multi-threading in frame processing
+         * @param cntMThrdMax   maximum number of concurrent processing threads in frame processing
+         * @param enmStrmType   the gRPC data stream type used in data transmission {FORWARD, BIDIRECTIONAL} 
+         * @param bolMStrmEnbl  enable/disable multiple, concurrent gRPC data streams
+         * @param cntMStrmMax   maximum number of concurrent gRPC data streams
+         * 
+         * @return  a new <code>TestConfig</code> instance with fields populated from the given argument values
          */
-        public static TestConfig    from(IngestChanTestResult recResult) {
-            boolean             bolColSerEnbl = recResult.recTestCase().recProcCfg().bolColSerEnbl();
-            DpGrpcStreamType    enmStrmType = recResult.recTestCase().recChanCfg().enmStrmType();
-            boolean             bolMStrmEnbl = recResult.recTestCase().recChanCfg().bolMStrmEnbl();
-            int                 cntMStrmMax = recResult.recTestCase().recChanCfg().cntMStrmMax();
-            long                szAllocXmit = recResult.szAllocXmit();
+        public static TestConfig    from(
+                JalIngestionApiType     enmApiType,
+                
+                boolean                 bolColSerEnbl,
+                boolean                 bolDcmpEnbl,
+                long                    szDcmpMax,
+                boolean                 bolMThrdEnbl,
+                int                     cntMThrdMax,
+                
+                DpGrpcStreamType        enmStrmType,
+                boolean                 bolMStrmEnbl,
+                int                     cntMStrmMax
+                )
+        {
+            // Create internal records
+            FrameProcessorConfig        recProcCfg = FrameProcessorConfig.from(bolColSerEnbl, bolDcmpEnbl, szDcmpMax, bolMThrdEnbl, cntMThrdMax);
+            IngestionChannelConfig      recChanCfg = IngestionChannelConfig.from(enmStrmType, bolMStrmEnbl, cntMStrmMax);
             
-            return TestConfig.from(bolColSerEnbl, enmStrmType, bolMStrmEnbl, cntMStrmMax, szAllocXmit);
+            // Create test configuration and return
+            TestConfig      recCfg = TestConfig.from(enmApiType, recProcCfg, recChanCfg);
+            
+            return recCfg;
         }
         
         /**
          * <p>
-         * Creates and returns a new <code>TestConfig</code> instance populated with the argument values.
+         * Creates and returns a new <code>TestConfig</code> instance with field populated from the given test case.
+         * </p>
+         * <p>
+         * This is the primary constructor used by 
+         * <code>{@link IngestApiConfigScorer#extractConfiguration(IngestApiTestResult)}</code>.
+         * </p>
+         * 
+         * @param recTestCase   the test case from which the configuration is derived
+         * 
+         * @return  the configuration extracted from the given test case
+         */
+        public static TestConfig    from(IngestApiTestCase recTestCase) {
+            return TestConfig.from(recTestCase.enmApiType(), recTestCase.recProcCfg(), recTestCase.recChanCfg());
+        }
+        
+        /**
+         * <p>
+         * Creates and returns a new <code>TestConfig</code> instance populated with the given argument values.
          * </p>
          * <p>
          * This creator is equivalent to the canonical constructor.
          * </p>
          * 
-         * @param bolColSerEnbl enable/disable data column serialization before transmission
-         * @param enmStrmType   the gRPC stream type used for transmission (FORWARD, BIDIRECTIONAL)
-         * @param bolMStrmEnbl  enable/disable use of multiple, concurrent gRPC data streams for transmission
-         * @param cntMStrmMax   maximum number of concurrent gRPC data streams used for transmission
-         * @param szAllocXmit   the memory allocation size (bytes) of transmitted data
+         * @param enmApiType    the JAL Ingestion Service API type
+         * @param recProcCfg    the ingetion frame processor configuration
+         * @param recChanCfg    the ingestion channel configuration
          * 
-         * @return  a new <code>TestConfig</code> instance populated with the given arguments
+         * @return  a new <code>TestConfig</code> instance with fields populated from the given arguments
          */
-        public static TestConfig    from(boolean bolColSerEnbl, DpGrpcStreamType enmStrmType, boolean bolMStrmEnbl, int cntMStrmMax, long szAllocXmit) {
-            return new TestConfig(bolColSerEnbl, enmStrmType, bolMStrmEnbl, cntMStrmMax, szAllocXmit);
+        public static TestConfig    from(JalIngestionApiType enmApiType, FrameProcessorConfig recProcCfg, IngestionChannelConfig recChanCfg) {
+            return new TestConfig(enmApiType, recProcCfg, recChanCfg);
         }
-
+        
         
         //
         //  Operations 
@@ -190,12 +227,13 @@ public class IngestChanConfigScorer extends
         public void printOut(PrintStream ps, String strPad) {
             if (strPad == null)
                 strPad = "";
+            String  strPadd = strPad + "  ";
             
-            ps.println(strPad + "Data column serialization enabled   : " + this.bolColSerEnbl);
-            ps.println(strPad + "gRPC data stream type               : " + this.enmStrmType);
-            ps.println(strPad + "Concurrent data streams enabled     : " + this.bolMStrmEnbl);
-            ps.println(strPad + "Maximum concurrent data streams     : " + this.cntMStrmMax);
-            ps.println(strPad + "Transmitted data allocation (bytes) : " + this.szAllocXmit);
+            ps.println(strPad + "JAL Ingestion Service API : " + this.enmApiType);
+            ps.println(strPad + "IngestionFrameProcessor Configuration");
+            this.recProcCfg.printOut(ps, strPadd);
+            ps.println(strPad + "IngestionChannel Configuration");
+            this.recChanCfg.printOut(ps, strPadd);
         }
         
 
@@ -213,10 +251,9 @@ public class IngestChanConfigScorer extends
         @Override
         public boolean  equals(Object obj) {
             if (obj instanceof TestConfig rec) {
-                boolean bolResult = (this.bolColSerEnbl == rec.bolColSerEnbl)
-                                 && (this.enmStrmType == rec.enmStrmType)
-                                 && (this.bolMStrmEnbl == rec.bolMStrmEnbl)
-                                 && (this.cntMStrmMax == rec.cntMStrmMax);
+                boolean bolResult = (this.enmApiType == rec.enmApiType)
+                                 && (this.recProcCfg.equals(rec.recProcCfg))
+                                 && (this.recChanCfg.equals(rec.recChanCfg));
                 
                 return bolResult;
             }
@@ -225,20 +262,21 @@ public class IngestChanConfigScorer extends
         }
     }
     
+    
     /**
      * <p>
      * Class managing the scoring for a <code>TestConfig</code> configuration record.
      * </p>
      * <p>
      * Class that maintains a score for the test conditions of the test results. 
-     * Scoring for <code>{@link IngestChanTestResult}</code> instances are accumulated using the 
-     * <code>{@link #addInResult(IngestChanTestResult)}</code> method where score are managed on the fly.
+     * Scoring for <code>{@link IngestApiTestResult}</code> instances are accumulated using the 
+     * <code>{@link #addInResult(IngestApiTestResult)}</code> method where score are managed on the fly.
      * Class instances extract the the configuration <code>{@link TestConfig}</code> configuration 
-     * from <code>IngestChanTestResult</code> records and compute the scoring for that result.
+     * from <code>IngestApiTestResult</code> records and compute the scoring for that result.
      * </p>
      *
      */
-    public static class ConfigScore extends ConfigScoreBase<TestConfig, IngestChanTestResult> {
+    public static class ConfigScore extends ConfigScoreBase<TestConfig, IngestApiTestResult> {
 
         
         //
@@ -254,10 +292,10 @@ public class IngestChanConfigScorer extends
          * 
          * @return  a new <code>ConfigScore</code> instance for the given configuration
          */
-        public static ConfigScore from(TestConfig recCfg) {
+        public static ConfigScore   from(TestConfig recCfg) {
             return new ConfigScore(recCfg);
         }
-
+        
         
         //
         // ConfigScoreBase Abstract Methods
@@ -267,15 +305,18 @@ public class IngestChanConfigScorer extends
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractConfiguration(java.lang.Record)
          */
         @Override
-        protected TestConfig extractConfiguration(IngestChanTestResult recResult) {
-            return TestConfig.from(recResult);
+        protected TestConfig extractConfiguration(IngestApiTestResult recResult) {
+            IngestApiTestCase   recCase = recResult.recTestCase();
+            TestConfig          recCfg = TestConfig.from(recCase.enmApiType(), recCase.recProcCfg(), recCase.recChanCfg());
+            
+            return recCfg;
         }
 
         /**
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#isSuccess(java.lang.Record)
          */
         @Override
-        protected boolean isSuccess(IngestChanTestResult recResult) {
+        protected boolean isSuccess(IngestApiTestResult recResult) {
             return recResult.recTestStatus().isSuccess();
         }
 
@@ -283,7 +324,7 @@ public class IngestChanConfigScorer extends
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataSourceId(java.lang.Record)
          */
         @Override
-        protected String extractDataSourceId(IngestChanTestResult recResult) {
+        protected String extractDataSourceId(IngestApiTestResult recResult) {
             return recResult.recTestCase().specFrame().strLabel();
         }
 
@@ -291,7 +332,7 @@ public class IngestChanConfigScorer extends
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#extractDataRate(java.lang.Record)
          */
         @Override
-        protected double extractDataRate(IngestChanTestResult recResult) {
+        protected double extractDataRate(IngestApiTestResult recResult) {
             return recResult.dblRateXmit();
         }
 
@@ -303,8 +344,8 @@ public class IngestChanConfigScorer extends
 
             recConfig.printOut(ps, strPad);
         }
-
         
+
         //
         // ConfigScoreBase Overrides
         //
@@ -313,7 +354,7 @@ public class IngestChanConfigScorer extends
          * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScoreBase#addInResult(java.lang.Record)
          */
         @Override
-        public double addInResult(IngestChanTestResult recResult) throws IllegalArgumentException {
+        public double addInResult(IngestApiTestResult recResult) throws IllegalArgumentException {
 
             // Process the super class state variables
             double  dblDataRate = super.addInResult(recResult);    // throws IllegalArgumentException
@@ -322,25 +363,25 @@ public class IngestChanConfigScorer extends
             int     N = super.getHitCount() - 1;
             
             if (N > 0) {
+                this.szPayloadAvg *= N;
+                this.szPayloadSqrd *= N;
                 this.cntMStrmsAvg *= N;
                 this.cntMStrmsSqrd *= N;
-                this.szAllocXmitAvg *= N;
-                this.szAllocXmitSqrd *= N;
             }
             
             // Add in the appropriate test result values
+            this.szPayloadAvg += recResult.szPayload();
+            this.szPayloadSqrd += recResult.szPayload() * recResult.szPayload();
             this.cntMStrmsAvg += recResult.recTestCase().recChanCfg().cntMStrmMax();
             this.cntMStrmsSqrd += recResult.recTestCase().recChanCfg().cntMStrmMax() * recResult.recTestCase().recChanCfg().cntMStrmMax();
-            this.szAllocXmitAvg += recResult.szAllocXmit();
-            this.szAllocXmitSqrd += recResult.szAllocXmit() * recResult.szAllocXmit();
             
             // Re-normalize the average values
             N = N + 1;
 
+            this.szPayloadAvg /= N;
+            this.szPayloadSqrd /= N;
             this.cntMStrmsAvg /= N;
             this.cntMStrmsSqrd /= N;
-            this.szAllocXmitAvg /= N;
-            this.szAllocXmitSqrd /= N;
             
             return dblDataRate;
         }
@@ -355,10 +396,10 @@ public class IngestChanConfigScorer extends
             
             super.printOut(ps, strPad);
             ps.println(strPad + "Test Results Properties");
-            ps.println(strPadd + "Maximum concurrent data streams avg.      : " + this.getMaximDataStreamsAvg());
-            ps.println(strPadd + "Maximum concurrent data streams std.      : " + this.maximumDataStreamsStd());
-            ps.println(strPadd + "Transmitted data allocation avg. (MBytes) : " + this.getTransmittedAllocationAvg());
-            ps.println(strPadd + "Transmitted data allocation std. (MBytes) : " + this.transmittedAllocationStd());
+            ps.println(strPadd + "Payload data allocation avg. (MBytes) : " + this.getPayloadAllocationAvg());
+            ps.println(strPadd + "Payload data allocation std. (MBytes) : " + this.payloadAllocationStd());
+            ps.println(strPadd + "Maximum concurrent data streams avg.  : " + this.getMaximDataStreamsAvg());
+            ps.println(strPadd + "Maximum concurrent data streams std.  : " + this.maximumDataStreamsStd());
         }
         
         
@@ -366,35 +407,35 @@ public class IngestChanConfigScorer extends
         // State Variables
         //
         
+        /** The processed data set allocation size average (bytes) */
+        private double  szPayloadAvg = 0.0;
+        
+        /** The processed data set allocation size squared average (bytes^2) (for standard deviation calculation) */
+        private double  szPayloadSqrd = 0.0;
+
         /** The processed data message count average */
         private double  cntMStrmsAvg = 0.0;
         
         /** The processed data message count squared average (for standard deviation calculation) */
         private double  cntMStrmsSqrd = 0.0;
         
-        /** The processed data set allocation size average (bytes) */
-        private double  szAllocXmitAvg = 0.0;
         
-        /** The processed data set allocation size squared average (bytes^2) (for standard deviation calculation) */
-        private double  szAllocXmitSqrd = 0.0;
-        
-            
         //
         // Constructor
         //
         
         /**
          * <p>
-         * Constructs a new <code>ConfigScore</code> instance for the given configuration.
+         * Constructs a new <code>ConfigScore</code> instance.
          * </p>
          *
-         * @param recCfg    configuration associated with this score
+         * @param recCfg    the test configuration associated with this score
          */
         protected ConfigScore(TestConfig recCfg) {
             super(recCfg);
         }
-
         
+
         //
         // State Inquiry
         //
@@ -420,39 +461,42 @@ public class IngestChanConfigScorer extends
         }
 
         /**
-         * @return the transmitted memory allocation size average (MBytes) 
+         * @return the payload memory allocation size average (MBytes) 
          */
-        public final double getTransmittedAllocationAvg() {
-            return this.szAllocXmitAvg/1.0e6;
+        public final double getPayloadAllocationAvg() {
+            return this.szPayloadAvg/1.0e6;
         }
         
         /**
          * <p>
-         * Computes and returns the standard deviation of the transmitted memory allocation size.
+         * Computes and returns the standard deviation of the payload memory allocation size.
          * </p>
          * 
          * @return  the transmitted memory allocation size standard deviation (MBytes)
          */
-        public final double transmittedAllocationStd() {
-            double  std = Math.sqrt(this.szAllocXmitSqrd - this.szAllocXmitAvg*this.szAllocXmitAvg);
+        public final double payloadAllocationStd() {
+            double  std = Math.sqrt(this.szPayloadSqrd - this.szPayloadAvg*this.szPayloadAvg);
             
             return std/1.0e6;
         }
         
     }
-    
+
     
     //
-    // ConfigScorerBase Abstract Methods 
+    // ConfigScorerBase Abstract Methods
     //
-    
+
     /**
      * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScorerBase#extractConfiguration(java.lang.Record)
      */
     @Override
-    protected TestConfig extractConfiguration(IngestChanTestResult recResult) {
-        return TestConfig.from(recResult);
+    protected TestConfig extractConfiguration(IngestApiTestResult recResult) {
+        IngestApiTestCase       recCase = recResult.recTestCase();
+        
+        return TestConfig.from(recCase);
     }
+
 
     /**
      * @see com.ospreydcs.dp.jal.tools.common.score.ConfigScorerBase#newScore(java.lang.Record)
@@ -461,27 +505,27 @@ public class IngestChanConfigScorer extends
     protected ConfigScore newScore(TestConfig recConfig) {
         return ConfigScore.from(recConfig);
     }
-    
+
     
     //
-    // IngestChanConfigScorer Constructors
+    // IngestApiConfigScorer Constructors
     //
     
     /**
      * <p>
-     * Constructs a new, empty <code>IngestChanConfigScorer</code> instance.
+     * Constructs a new, empty <code>IngestApiConfigScorer</code> instance.
      * </p>
      * <p>
      * This constructor is hidden and not available.
      * </p>
      */
-    private IngestChanConfigScorer() {
+    private IngestApiConfigScorer() {
         super();
     }
     
     /**
      * <p>
-     * Constructs a new, fully initialized <code>IngestChanConfigScorer</code> instance.
+     * Constructs a new, fully initialized <code>IngestApiConfigScorer</code> instance.
      * </p>
      * <p>
      * This constructor is available for public creator <code>{@link #from(Collection)}</code>.
@@ -489,7 +533,7 @@ public class IngestChanConfigScorer extends
      *
      * @param conResults    the collection of test results whose configurations are to be scored
      */
-    private IngestChanConfigScorer(Collection<IngestChanTestResult> conResults) {
+    private IngestApiConfigScorer(Collection<IngestApiTestResult> conResults) {
         super(conResults);
     }
 

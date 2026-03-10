@@ -241,7 +241,7 @@ public final class JalIngestionServiceImpl extends
     //
     
     /** The ingestion frame decomposition tool - only created if used */
-    private IngestionFrameDecomposer            prcrFrmDecomp = null;
+    private IngestionFrameDecomposer        prcrFrmDecomp = null;
     
     /** The ingestion frame to Protobuf message converter tool */
     private final IngestionFrameConverter   prcrFrmCnvrtr = IngestionFrameConverter.create();
@@ -296,6 +296,36 @@ public final class JalIngestionServiceImpl extends
     //
     // Configuration
     //
+    
+    /**
+     * <p>
+     * Enables the use of serialization for creating data columns within <code>IngestionDataFrame</code> messages.
+     * </p>
+     * <p>
+     * Instances of <code>IngestionFrame</code> accepted by the <code>{@link #ingest(IngestionFrame)}</code> and
+     * <code>{@link #ingest(List)}</code> methods are converted to <code>IngestDataRequest</code> Protocol Buffers
+     * data messages.These request messages contain the ingestion data in the form of <code>IngestionDataFrame</code>
+     * Protocol Buffers messages contained within the request.  Invoking this method effects the ingestion data 
+     * encapsulation within the <code>IngestionDataFrame</code> messages.
+     * </p>
+     * <p>
+     * The <code>IngestionDataFrame</code> Protocol Buffers message sent to the Data Platform Ingestion Service
+     * can contain sampling vectors as either a <code>DataColumn</code> message or a <code>SerializedDataColumn</code>
+     * message.  Employing <code>SerializedDataColumn</code> can significantly enhance performance, especially for
+     * sampling vectors requiring large memory allocation.  Using <code>SerializedDataColumn</code> messages avoids 
+     * repeated serialization/de-serialization operations for data transport and archiving.  Specifically, it is
+     * explicitly serialized only once, before transport, then transported to the Ingestion Service where it 
+     * is archived in its serialized form.  Conversely, the <code>DataColumn</code> is serialized for transport,
+     * transported, de-serialized by Protocol Buffers after transport, then re-serializezd for archiving by the
+     * Ingestion Service. 
+     * </p>
+     * 
+     * @param bolEnable <code>true</code> enables data column serialization, <code>false</code> disables data column serialization
+     */
+    synchronized
+    public void enableDataColumnSerialization(boolean bolEnable) {
+        this.prcrFrmCnvrtr.enableSerialization(bolEnable);
+    }
     
     /**
      * <p>

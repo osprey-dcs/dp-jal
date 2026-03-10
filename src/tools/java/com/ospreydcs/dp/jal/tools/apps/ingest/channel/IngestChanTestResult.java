@@ -44,6 +44,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * Instances of this record are created from the 
  * <code>{@link IngestChanTestCase#evaluate(com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer, com.ospreydcs.dp.jal.ingest.model.grpc.IngestionChannel)}</code>
  * operation.
+ * </p>
  *
  * @author Christopher K. Allen
  * @since Feb 18, 2026
@@ -381,9 +382,9 @@ public record IngestChanTestResult(
         ps.println(strPadd + "Transmission duration             : " + this.durTransmit);
         ps.println(strPadd + "Tranmission rate  (MBps)          : " + this.dblRateXmit);
         if (this.lstUniRsps!=null && !this.lstUniRsps.isEmpty())
-            ps.println(strPad + "Unidirectional stream responses    : " + this.lstUniRsps.size());
+            ps.println(strPadd + "Unidirectional stream responses    : " + this.lstUniRsps.size());
         if (this.lstBidiRsps!=null && !this.lstBidiRsps.isEmpty())
-            ps.println(strPad + "Bidirectional stream responses     : " + this.lstUniRsps.size());
+            ps.println(strPadd + "Bidirectional stream responses     : " + this.lstUniRsps.size());
         ps.println(strPadd + "Test Case Parameters");
         this.recTestCase.printOut(ps, strPadd);
     }

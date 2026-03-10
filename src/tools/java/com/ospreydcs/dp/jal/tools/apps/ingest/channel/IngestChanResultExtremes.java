@@ -113,7 +113,7 @@ public class IngestChanResultExtremes extends TestResultExtremesBase<IngestChanT
                 ParamToNumField.from(IngestChanTestParams.COL_SER_ENBL, STR_RATE_XMIT, NumberType.DOUBLE, rec -> rec.recTestCase().recProcCfg().bolColSerEnbl(), rec -> rec.dblRateXmit()),
                 ParamToNumField.from(IngestChanTestParams.STREAM_TYPE, STR_RATE_XMIT, NumberType.DOUBLE, rec -> rec.recTestCase().recChanCfg().enmStrmType(), rec -> rec.dblRateXmit()),
                 ParamToNumField.from(IngestChanTestParams.MSTREAM_ENBL, STR_RATE_XMIT, NumberType.DOUBLE, rec -> rec.recTestCase().recChanCfg().bolMStrmEnbl(), rec -> rec.dblRateXmit()),
-                ParamToNumField.from(IngestChanTestParams.MSTREAM_CNT, STR_RATE_XMIT, NumberType.DOUBLE, rec -> rec.recTestCase().recChanCfg().cntMaxStrms(), rec -> rec.dblRateXmit()),
+                ParamToNumField.from(IngestChanTestParams.MSTREAM_CNT, STR_RATE_XMIT, NumberType.DOUBLE, rec -> rec.recTestCase().recChanCfg().cntMStrmMax(), rec -> rec.dblRateXmit()),
                 ParamToNumField.from(IngestChanTestParams.FRAME_CNT, STR_RATE_XMIT, NumberType.DOUBLE, rec -> rec.recTestCase().cntFrames(), rec -> rec.dblRateXmit()),
                 ParamToNumField.from(IngestChanTestParams.FRAME_DEF, STR_RATE_XMIT, NumberType.DOUBLE, rec -> rec.recTestCase().specFrame().strLabel(), rec -> rec.dblRateXmit())
                 );
@@ -130,7 +130,7 @@ public class IngestChanResultExtremes extends TestResultExtremesBase<IngestChanT
                 ParamToDurField.from(IngestChanTestParams.COL_SER_ENBL, STR_DUR_XMIT, rec -> rec.recTestCase().recProcCfg().bolColSerEnbl(), rec -> rec.durTransmit()),
                 ParamToDurField.from(IngestChanTestParams.STREAM_TYPE, STR_DUR_XMIT, rec -> rec.recTestCase().recChanCfg().enmStrmType(), rec -> rec.durTransmit()),
                 ParamToDurField.from(IngestChanTestParams.MSTREAM_ENBL, STR_DUR_XMIT, rec -> rec.recTestCase().recChanCfg().bolMStrmEnbl(), rec -> rec.durTransmit()),
-                ParamToDurField.from(IngestChanTestParams.MSTREAM_CNT, STR_DUR_XMIT, rec -> rec.recTestCase().recChanCfg().cntMaxStrms(), rec -> rec.durTransmit()),
+                ParamToDurField.from(IngestChanTestParams.MSTREAM_CNT, STR_DUR_XMIT, rec -> rec.recTestCase().recChanCfg().cntMStrmMax(), rec -> rec.durTransmit()),
                 ParamToDurField.from(IngestChanTestParams.FRAME_DEF, STR_DUR_XMIT, rec -> rec.recTestCase().specFrame().strLabel(), rec -> rec.durTransmit())
                 );
         

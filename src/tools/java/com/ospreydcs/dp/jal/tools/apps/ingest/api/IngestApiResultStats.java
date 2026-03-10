@@ -1,8 +1,8 @@
 /*
  * Project: dp-jal
- * File:	IngestChanResultStats.java
- * Package: com.ospreydcs.dp.jal.tools.apps.ingest.channel
- * Type: 	IngestChanResultStats
+ * File:	IngestApiResultStats.java
+ * Package: com.ospreydcs.dp.jal.tools.apps.ingest.api
+ * Type: 	IngestApiResultStats
  *
  * Copyright 2010-2025 the original author or authors.
  *
@@ -20,10 +20,10 @@
 
  * @author Christopher K. Allen
  * @org    OspreyDCS
- * @since Feb 23, 2026
+ * @since Mar 6, 2026
  *
  */
-package com.ospreydcs.dp.jal.tools.apps.ingest.channel;
+package com.ospreydcs.dp.jal.tools.apps.ingest.api;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -32,11 +32,12 @@ import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 
+import com.ospreydcs.dp.jal.tools.apps.ingest.channel.IngestChanResultStats;
 import com.ospreydcs.dp.jal.tools.common.score.TestResultStatsBase;
 
 /**
  * <p>
- * Class containing a performance summary statistics for a collection of <code>IngestChanTestResult</code> records.
+ * Class containing a performance summary statistics for a collection of <code>IngestApiTestResult</code> records.
  * </p>
  * <p>
  * Records should be created from <code>{@link #from(Collection)}</code> creator which computes the performance
@@ -44,10 +45,10 @@ import com.ospreydcs.dp.jal.tools.common.score.TestResultStatsBase;
  * </p>
  *
  * @author Christopher K. Allen
- * @since Feb 23, 2026
+ * @since Mar 6, 2026
  *
  */
-public class IngestChanResultStats extends TestResultStatsBase<IngestChanTestResult> {
+public class IngestApiResultStats extends TestResultStatsBase<IngestApiTestResult> {
 
     
     //
@@ -56,7 +57,7 @@ public class IngestChanResultStats extends TestResultStatsBase<IngestChanTestRes
     
     /**
      * <p>
-     * Creates and returns a new <code>IngestChanResultStats</code> instance from the given results collection.
+     * Creates and returns a new <code>IngestApiResultStats</code> instance from the given results collection.
      * </p>
      * <p>
      * The returned test result summary is fully analyzed and ready for print out with method
@@ -65,16 +66,15 @@ public class IngestChanResultStats extends TestResultStatsBase<IngestChanTestRes
      * 
      * @param conResults    the collection of test results to be analyzed
      * 
-     * @return  a new <code>IngestChanResultStats</code> containing the statistical summaries of the given collection
+     * @return  a new <code>IngestApiResultStats</code> containing the statistical summaries of the given collection
      * 
      * @throws IllegalArgumentException the argument collection was empty
      * @throws MissingResourceException no <code>TestResult</code> fields were identified for analysis
      * @throws NoSuchElementException   no successful results were contained in the argument collection
      */
-    public static IngestChanResultStats from(Collection<IngestChanTestResult> conResults) 
-            throws IllegalArgumentException, MissingResourceException, NoSuchElementException
-    {
-        return new IngestChanResultStats(conResults);
+    public static IngestApiResultStats  from(Collection<IngestApiTestResult> conResults)
+            throws IllegalArgumentException, MissingResourceException, NoSuchElementException {
+        return new IngestApiResultStats(conResults);
     }
     
     
@@ -124,26 +124,20 @@ public class IngestChanResultStats extends TestResultStatsBase<IngestChanTestRes
      * @see com.ospreydcs.dp.jal.tools.common.score.TestResultStatsBase#assignFailedResult()
      */
     @Override
-    protected Function<IngestChanTestResult, Boolean> assignFailedResult() {
-        Function<IngestChanTestResult, Boolean>  fnc = rec -> rec.recTestStatus().isFailure();
-        
-        return fnc;
+    protected Function<IngestApiTestResult, Boolean> assignFailedResult() {
+        return rec -> rec.recTestStatus().isFailure();
     }
 
     /**
      * @see com.ospreydcs.dp.jal.tools.common.score.TestResultStatsBase#assignNumericFields()
      */
     @Override
-    protected List<NumberField<IngestChanTestResult>> assignNumericFields() {
-        List<NumberField<IngestChanTestResult>>     lstFlds = List.of(
-                NumberField.from("Data transmission rate (MBps)", NumberType.DOUBLE, DBL_RATE_TGT, rec -> rec.dblRateXmit()),
-                NumberField.from("Number of data messages transmitted", NumberType.INTEGER, null, rec -> rec.cntMsgsXmit()),
-                NumberField.from("Allocation size (bytes) transmitted", NumberType.LONG, null, rec -> rec.szAllocXmit()),
-                NumberField.from("Payload processing rate (MBps)", NumberType.DOUBLE, DBL_RATE_TGT, rec -> rec.dblRateProc())
-//                NumberField.from("Payload ingestion frame count", NumberType.INTEGER, null, rec -> rec.cntFrames()),
-//                NumberField.from("Payload allocation size (bytes)", NumberType.LONG, null, rec -> rec.szPayload()),
-//                NumberField.from("Number of UNI message responses", NumberType.INTEGER, null, rec -> rec.lstUniRsps().size()),
-//                NumberField.from("Number of BIDI message responses", NumberType.INTEGER, null, rec -> rec.lstBidiRsps().size())
+    protected List<NumberField<IngestApiTestResult>> assignNumericFields() {
+        List<NumberField<IngestApiTestResult>>  lstFlds = List.of(
+                NumberField.from("Data Rate (MBps)", NumberType.DOUBLE, DBL_RATE_TGT, rec -> rec.dblRateXmit()),
+                NumberField.from("Payload allocation (bytes)", NumberType.LONG, null, rec -> rec.szPayload()),
+                NumberField.from("Payload frame count", NumberType.INTEGER, null, rec -> rec.cntFrames()),
+                NumberField.from("Messages transmitted", NumberType.INTEGER, null, rec -> rec.cntMsgsXmit())
                 );
         
         return lstFlds;
@@ -153,23 +147,22 @@ public class IngestChanResultStats extends TestResultStatsBase<IngestChanTestRes
      * @see com.ospreydcs.dp.jal.tools.common.score.TestResultStatsBase#assignDurationFields()
      */
     @Override
-    protected List<DurationField<IngestChanTestResult>> assignDurationFields() {
-        List<DurationField<IngestChanTestResult>>   lstFlds = List.of(
-                DurationField.from("Data transmission duration", DUR_XMIT_TGT, rec -> rec.durTransmit()),
-                DurationField.from("Data processing duration", DUR_XMIT_TGT, rec -> rec.durProcessed())
+    protected List<DurationField<IngestApiTestResult>> assignDurationFields() {
+        List<DurationField<IngestApiTestResult>>    lstFlds = List.of(
+                DurationField.from("Data processing/transmission duration", DUR_XMIT_TGT, rec -> rec.durTransmit())
                 );
         
         return lstFlds;
     }
 
-    
+
     //
     // Constructor
     //
     
     /**
      * <p>
-     * Constructs a new <code>IngestChanResultStats</code> instance.
+     * Constructs a new <code>IngestApiResultStats</code> instance.
      * </p>
      *
      * @param conResults    the collection of test results to be analyzed
@@ -178,9 +171,10 @@ public class IngestChanResultStats extends TestResultStatsBase<IngestChanTestRes
      * @throws MissingResourceException no <code>TestResult</code> fields were identified for analysis
      * @throws NoSuchElementException   no successful results were contained in the argument collection
      */
-    private IngestChanResultStats(Collection<IngestChanTestResult> conResults)
+    private IngestApiResultStats(Collection<IngestApiTestResult> conResults)
             throws IllegalArgumentException, MissingResourceException, NoSuchElementException {
         super(conResults);
     }
 
+    
 }

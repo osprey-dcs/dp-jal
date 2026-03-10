@@ -125,7 +125,6 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  */
 public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase extends Record> {
 
-    
     //
     // Abstract Methods
     //
@@ -186,13 +185,19 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
     /** Minimum padding between parameter name and values list when none can be determined */
     public static final int                     STR_PAD_NM_PARAM = 10;
 
-    
+
     //
-    // Instance Resources
+    // Defining Attributes
     //
     
     /** The enumeration class type of the parameter set enumeration */
     protected final Class<Param>              clsParams;
+    
+    
+
+    //
+    // Instance Resources
+    //
     
     /** The collection of all parameter enumeration constants (obtained from clsParams) */
     protected final EnumSet<Param>            setParams;
@@ -202,6 +207,14 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
     
     /** Map of parameter to collection of parameter test values */
     protected final Map<Param, List<Object>>  mapParamToVals;
+    
+
+    /** List of all the valid delimited argument options */
+    public final List<String>                 lstDelOptions;
+    
+    /** The application arguments parser */
+    private final AppOptionsParser            parser;
+    
     
 
     //
@@ -217,11 +230,15 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
      */
     protected TestSuiteGeneratorBase(Class<Param> clsParams) {
         this.clsParams = clsParams;
+        
         this.setParams = EnumSet.allOf(this.clsParams);
         this.lstParamsRev = this.setParams.stream().toList().reversed();
         this.mapParamToVals = new HashMap<>();
         
         this.setParams.forEach(enmParam -> this.mapParamToVals.put(enmParam, new LinkedList<>()));
+        
+        this.lstDelOptions = ITestParameter.validDelimOptions(this.clsParams);
+        this.parser = AppOptionsParser.from(this.lstDelOptions);
     }
 
     
@@ -568,7 +585,51 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
     
     /**
      * <p>
-     * Parses the application command-line arguments for the test suite configuration.
+     * Parses the application command-line arguments for the test suite configuration using the internal parser.
+     * </p>
+     * <p>
+     * This method can be used only if the <code>Param</code> enumeration implements the <code>{@link ITestParameter}</code>
+     * interface or an exception is thrown.
+     * The method is intended for specialized creators use in child classes.
+     * </p>
+     * <p>
+     * This method defers to <code>{@link #parseParameterValues(AppOptionsParser, String...)}</code> using the internal
+     * command-line parser configured with <code>{@link AppOptionsParser#from(Collection)}</code> where the valid
+     * command-line options are taken from <code>{@link ITestParameter#validDelimOptions(Class)}</code>.
+     * See the method documentation for <code>{@link #parseParameterValues(AppOptionsParser, String...)}</code> for 
+     * details of the parsing operation.
+     * </p> 
+     * 
+     * @param args      the application command-line arguments
+     * 
+     * @throws ClassCastException       the <code>Param</code> enumeration does not implement <code>ITestParameter</code>
+     * @throws IllegalArgumentException general error (typically bad argument type, bad argument count, enumeration constant not recognized)
+     * @throws NoSuchMethodException    the Java class <code>{@link #getJavaType()}</code> does not contain method <code>valueOf(String)</code>
+     * @throws SecurityException        the class loader denied access to method <code>valueOf(String)</code> (e.g., typically package access)
+     * @throws IllegalAccessException   the method <code>valueOf(String)</code> is not accessible
+     * @throws InvocationTargetException    the <code>valueOf(String)</code> method threw an exception (e.g., NumberFormatException)
+     * @throws DateTimeParseException   invalid ISO-8605 date/time/duration format for 'period', 'start', or 'delay' 
+     * @throws TypeNotPresentException  invalid enumeration constant (e.g., the 1st argument was not a <code>JalComplexType</code>)
+     * @throws NumberFormatException    invalid numeric expression (typically for 'lngSeed' value)
+     * @throws ConfigurationException   the argument contained the wrong number of arguments for the <code>JalComplexType</code>
+     * @throws UnsupportedOperationException invalid field value format (typically 'numIncr' was invalid)
+     * @throws MalformedParametersException  an enumeration constant within the argument set was not recognized (IMAGE)
+     * @throws NoSuchElementException   the column data type was unrecognized (i.e., 'DTYPE' was not supported)
+     */
+    synchronized
+    public void     parseParameterValues(String...args) 
+            throws ClassCastException, IllegalArgumentException, NoSuchMethodException,
+                    SecurityException, IllegalAccessException, InvocationTargetException, 
+                    DateTimeParseException, TypeNotPresentException, NumberFormatException,
+                    ConfigurationException, UnsupportedOperationException, MalformedParametersException,
+                    NoSuchElementException 
+                   {
+        this.parseParameterValues(this.parser, args);
+    }
+    
+    /**
+     * <p>
+     * Parses the application command-line arguments for the test suite configuration using the given custom parser.
      * </p>
      * <p>
      * This method can be used only if the <code>Param</code> enumeration implements the <code>{@link ITestParameter}</code>
@@ -604,8 +665,9 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
      * <li>The <code>ClassCastException</code> is thrown if the <code>Param</code> enumeration does not implement the 
      *     <code>{@link ITestParameter}</code> interface.</li>
      * </p>
-     * 
-     * @param args  the application command-line arguments
+
+     * @param parser    the custom application command-line options parser 
+     * @param args      the application command-line arguments
      * 
      * @throws ClassCastException       the <code>Param</code> enumeration does not implement <code>ITestParameter</code>
      * @throws IllegalArgumentException general error (typically bad argument type, bad argument count, enumeration constant not recognized)
@@ -625,7 +687,8 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
     public void parseParameterValues(AppOptionsParser parser, String...args) 
             throws ClassCastException, UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException, 
             InvocationTargetException, DateTimeParseException, NumberFormatException, IllegalArgumentException, 
-            TypeNotPresentException, ConfigurationException, MalformedParametersException 
+            TypeNotPresentException, ConfigurationException, MalformedParametersException,
+            NoSuchElementException
     {
         // Convert parameter set to ITestParameter
         @SuppressWarnings("unchecked")

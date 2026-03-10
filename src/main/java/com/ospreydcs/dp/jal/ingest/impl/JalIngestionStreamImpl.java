@@ -396,7 +396,7 @@ public class JalIngestionStreamImpl extends DpServiceApiBase<JalIngestionStreamI
     private final IngestionFrameProcessor   prcrFrames; // = new IngestionFrameProcessor();
     
     /** Intermediate staging buffer for processed messages awaiting transmission (accommodates ingestion throttling) */
-    private final IngestionMemoryBuffer       buffStaging; // = new IngestionMemoryBuffer();
+    private final IngestionMemoryBuffer     buffStaging; // = new IngestionMemoryBuffer();
     
     /** Autonomous data channel to DP Ingestion Service */
     private final IngestionChannel          chanIngest; // = IngestionChannel.from(this.buffStaging, super.grpcConn);
@@ -499,7 +499,7 @@ public class JalIngestionStreamImpl extends DpServiceApiBase<JalIngestionStreamI
     
     /**
      * <p>
-     * Enables the use of serialization for creating data columns within an <code>IngestionDataFrame</code>.
+     * Enables the use of serialization for creating data columns within <code>IngestionDataFrame</code> messages.
      * </p>
      * <p>
      * Instances of <code>IngestionFrame</code> accepted by the <code>{@link #ingest(IngestionFrame)}</code> and
