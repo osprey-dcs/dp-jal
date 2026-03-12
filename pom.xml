@@ -212,7 +212,7 @@ NOTES:
             </plugin>
             
             <!-- Maven "Add Source" Plugin -->
-            <!-- CKA: We need to add the source and resources directories for the Java API Library Tools -->
+            <!-- CKA: We need to add the source and resources directories for the JAL Tools Library -->
             <plugin>
     	        <groupId>org.codehaus.mojo</groupId>
     	        <artifactId>build-helper-maven-plugin</artifactId>
@@ -226,7 +226,7 @@ NOTES:
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}/src/tools/java</source>
+                                <source>${project.basedir}/src/tools/main/java</source>
                                 <source>${project.basedir}/src/tools/test/java</source>
                             </sources>
                         </configuration>
@@ -240,7 +240,7 @@ NOTES:
                         <configuration>
                             <resources>
                                 <resource>
-                            		<directory>${project.basedir}/src/tools/resources</directory>
+                            		<directory>${project.basedir}/src/tools/main/resources</directory>
                             		<targetPath>.</targetPath>
                             	</resource>
                             </resources>

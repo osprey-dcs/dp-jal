@@ -1,15 +1,19 @@
 # JAL Ingestion Stream APIs
 --api UNARY STREAM 
 
-# IngestionFrameProcessor Configuration: Column Serialization, Multi-Thread Processing Enable, Maximum Thread Counts
+# IngestionFrameProcessor Configuration: 
+#    - Column Serialization 
+#    - Ingestion Frame Decomposition Enable/Maximum Composite Frame Size
+#    - Multi-Thread Processing Enable/Maximum Thread Counts
 --colser FALSE TRUE 
 --dcmp FALSE TRUE --dcmpsz 2000000 4000000
 --mthrd FALSE TRUE --mthrdcnt 2 3 4 
 
-# IngestionChannel Configuration: gRPC Stream Type, Multiple Data Stream Enable, Maximum Data Stream Counts
+# IngestionChannel Configuration: 
+#    - gRPC Stream Type 
+#    - Multiple Data Stream Enable/Maximum Data Stream Counts
 --strmtype FORWARD BIDIRECTIONAL 
---mstrm FALSE TRUE 
---mstrmcnt 2 3 4 
+--mstrm FALSE TRUE --mstrmcnt 2 3 4 
 
 # Payload Ingestion Frame Count
 --frmcnt 1 10 20

@@ -3,7 +3,8 @@
 
 # IngestionFrameProcessor Configuration: Column Serialization, Multi-Thread Processing Enable, Maximum Thread Counts
 --colser FALSE TRUE 
---mthrd TRUE --mthrdcnt 2 3 4 
+--mthrd TRUE 
+--mthrdcnt 2 3 4 
 
 # IngestionChannel Configuration: gRPC Stream Type, Multiple Data Stream Enable, Maximum Data Stream Counts
 --strmtype FORWARD BIDIRECTIONAL 
