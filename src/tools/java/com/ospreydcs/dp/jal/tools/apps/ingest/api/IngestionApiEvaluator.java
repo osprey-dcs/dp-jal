@@ -43,14 +43,10 @@ import com.ospreydcs.dp.jal.grpc.model.DpGrpcException;
 import com.ospreydcs.dp.jal.ingest.IIngestionService;
 import com.ospreydcs.dp.jal.ingest.IIngestionStream;
 import com.ospreydcs.dp.jal.ingest.JalIngestionApiFactory;
-import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer;
-import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionStream;
 import com.ospreydcs.dp.jal.tools.appfwk.DpServiceAddress;
+import com.ospreydcs.dp.jal.tools.appfwk.DpServiceAddress.DpService;
 import com.ospreydcs.dp.jal.tools.appfwk.ExitCode;
 import com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase;
-import com.ospreydcs.dp.jal.tools.appfwk.DpServiceAddress.DpService;
-import com.ospreydcs.dp.jal.tools.apps.ingest.channel.IngestChanTestSuite;
-import com.ospreydcs.dp.jal.tools.apps.ingest.channel.IngestionChannelEvaluator;
 import com.ospreydcs.dp.jal.tools.common.parse.AppOptionsParser;
 import com.ospreydcs.dp.jal.tools.common.score.DataRateLister;
 import com.ospreydcs.dp.jal.tools.config.JalToolsConfig;
@@ -511,6 +507,15 @@ public class IngestionApiEvaluator extends JalApplicationBase<IngestionApiEvalua
         this.addrHost = addrHost;
         this.suiteCases = suiteCases;
         
+        // Create the output stream and attach Logger to it - records fatal errors to output file
+        super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
+        
+        // Attach the class loggers of application components
+        super.appendLoggingFor(DpGrpcConnectionFactoryBase.class);
+//        super.appendLoggingFor(IngestionMemoryBuffer.class);
+//        super.appendLoggingFor(IngestionMessageBuffer.class);
+//        super.appendLoggingFor(IngestionStream.class);
+        
         // Create the Ingestion Service APIs
         this.apiService = JalIngestionApiFactory.connectService(addrHost.strUrl(), addrHost.intPort());
         this.apiStream = JalIngestionApiFactory.connectStream(addrHost.strUrl(), addrHost.intPort());
@@ -519,14 +524,6 @@ public class IngestionApiEvaluator extends JalApplicationBase<IngestionApiEvalua
         this.conCases = this.suiteCases.createTestSuit();   // throws IllegalStateException, MissingResourceException, ClassCastException, UnsupportedOperationException, IndexOutOfBoundsException
         this.conResults = new TreeSet<>(IngestApiTestResult.descendingTransmissionRateOrdering());
         this.conFailures = new TreeSet<>(IngestApiTestResult.caseIndexOrdering());
-        
-        // Create the output stream and attach Logger to it - records fatal errors to output file
-        super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
-        
-        // Attach the class loggers of application components
-        super.appendLoggingFor(DpGrpcConnectionFactoryBase.class);
-        super.appendLoggingFor(IngestionMessageBuffer.class);
-        super.appendLoggingFor(IngestionStream.class);
     }
 
 
@@ -750,19 +747,13 @@ public class IngestionApiEvaluator extends JalApplicationBase<IngestionApiEvalua
         
         // Print out evaluation summary
         ps.println("Evaluation Summary");
-        ps.println(strPad + "Test cases specified : " + this.conCases.size());
-        ps.println(strPad + "Test cases run       : " + this.conResults.size());
-        ps.println(strPad + "Test case failures   : " + this.conFailures.size());
-        ps.println(strPad + "Evaluation duration  : " + this.durEval);
-        ps.println(strPad + "Evaluation completed : " + this.bolCompleted);
+        ps.println(strPad + "Test parameter combinations   : " + this.suiteCases.testCaseCount());
+        ps.println(strPad + "Test cases specified (unique) : " + this.conCases.size());
+        ps.println(strPad + "Test cases run                : " + this.conResults.size());
+        ps.println(strPad + "Test case failures            : " + this.conFailures.size());
+        ps.println(strPad + "Evaluation duration           : " + this.durEval);
+        ps.println(strPad + "Evaluation completed          : " + this.bolCompleted);
         ps.println();
-        
-        // Print out the execution log entries
-        String  strLogging = super.retrieveExecutionLogEntries();
-        ps.println("Execution Log Entries");
-        ps.println(strLogging);
-        ps.println();
-        
         
         // Print out the test suite configuration
         ps.println("Test Suite Configuration");
@@ -770,7 +761,7 @@ public class IngestionApiEvaluator extends JalApplicationBase<IngestionApiEvalua
         ps.println();
         
         // Print out test case data rates
-        ps.println("Test Case Data Transmission Rates (MBps Descending)");
+        ps.println("Test Case Data Rates (MBps Descending)");
         DataRateLister<IngestApiTestResult>  lstrRates = DataRateLister.from(
                 rec -> rec.recTestCase().indCase(), 
                 rec -> rec.recTestCase().specFrame().strLabel(), 
@@ -819,6 +810,13 @@ public class IngestionApiEvaluator extends JalApplicationBase<IngestionApiEvalua
             recResult.printOut(ps, strPad);
             ps.println();
         }
+        
+        // Print out the execution log entries
+        String  strLogging = super.retrieveExecutionLogEntries();
+        ps.println("Execution Log Entries");
+        ps.println(strLogging);
+        ps.println();
+        
     }
 
 }

@@ -28,6 +28,8 @@ package com.ospreydcs.dp.jal.tools.apps.ingest.frame;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.MalformedParametersException;
 import java.time.format.DateTimeParseException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
@@ -259,6 +261,45 @@ public class FrameProcTestSuite extends TestSuiteGeneratorBase<FrameProcTestPara
         FrameProcTestCase       recTestCase = FrameProcTestCase.from(cntFrms, specFrm, recProcCfg);
         
         return recTestCase;
+    }
+
+    /**
+     * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#cullRedundantCases(java.util.Collection)
+     */
+    @Override
+    protected Collection<FrameProcTestCase> cullRedundantCases(Collection<FrameProcTestCase> conCases) {
+        
+        // Create list of Frame-Decomposition disabled redundant test cases
+        List<FrameProcTestCase>  lstDcmpCull;
+        try {
+            List<FrameProcTestCase> lstDcmpFalse = conCases.stream().filter(rec -> rec.recPrcrCfg().bolDcmpEnbl() == false).toList();
+            FrameProcTestCase       recCase1st = lstDcmpFalse.getFirst();   // throws NoSuchElementException
+            long                    szDcmpMax = recCase1st.recPrcrCfg().szDcmpMax();
+            
+            lstDcmpCull = lstDcmpFalse.stream().filter(rec -> rec.recPrcrCfg().szDcmpMax() != szDcmpMax).toList();
+            
+        } catch (Exception e) {
+            lstDcmpCull = List.of();
+        }
+        
+        // Create list of Multi-Threaded Processing disabled redundant test cases
+        List<FrameProcTestCase> lstMThrdCull;
+        try {
+            List<FrameProcTestCase> lstMThrdFalse = conCases.stream().filter(rec -> rec.recPrcrCfg().bolMThrdEnbl() == false).toList();
+            FrameProcTestCase       recCase1st = lstMThrdFalse.getFirst();  // throws NoSuchElementException
+            int                     cntMThrdMax = recCase1st.recPrcrCfg().cntMThrdMax();
+            
+            lstMThrdCull = lstMThrdFalse.stream().filter(rec -> rec.recPrcrCfg().cntMThrdMax() != cntMThrdMax).toList();
+            
+        } catch (Exception e) {
+            lstMThrdCull = List.of();
+        }
+        
+        // Cull the redundant test cases and return
+        conCases.removeAll(lstDcmpCull);
+        conCases.removeAll(lstMThrdCull);
+        
+        return conCases;
     }
 
 }

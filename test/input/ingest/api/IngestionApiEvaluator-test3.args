@@ -1,0 +1,19 @@
+# JAL Ingestion Stream APIs
+--api UNARY STREAM 
+
+# IngestionFrameProcessor Configuration: Column Serialization, Multi-Thread Processing Enable, Maximum Thread Counts
+--colser FALSE TRUE 
+--dcmp FALSE TRUE --dcmpsz 2000000 4000000
+--mthrd FALSE TRUE --mthrdcnt 2 3 4 
+
+# IngestionChannel Configuration: gRPC Stream Type, Multiple Data Stream Enable, Maximum Data Stream Counts
+--strmtype FORWARD BIDIRECTIONAL 
+--mstrm FALSE TRUE 
+--mstrmcnt 2 3 4 
+
+# Payload Ingestion Frame Count
+--frmcnt 1 10 20
+
+# Payload Frame Definitions
+--frmdef '--label Frm1: --tms 1000 PT0.001S SAMPLING_CLOCK --cols 4000 Frm1Pv: SCALAR DOUBLE'
+--frmdef '--label Frm2: --tms 100 PT0.010S SAMPLING_CLOCK --cols 1000 Frm2Pv: TENSOR 2 3 5 DOUBLE' 

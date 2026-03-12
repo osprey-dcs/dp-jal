@@ -28,6 +28,8 @@ package com.ospreydcs.dp.jal.tools.apps.ingest.api;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.MalformedParametersException;
 import java.time.format.DateTimeParseException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.NoSuchElementException;
@@ -36,7 +38,7 @@ import javax.naming.ConfigurationException;
 
 import com.ospreydcs.dp.jal.common.DpGrpcStreamType;
 import com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase;
-import com.ospreydcs.dp.jal.tools.apps.ingest.channel.IngestChanTestParams;
+import com.ospreydcs.dp.jal.tools.apps.ingest.common.IngestionChannelConfig;
 import com.ospreydcs.dp.jal.tools.apps.ingest.common.JalIngestionApiType;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
@@ -47,7 +49,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * </p>
  * <p>
  * Class instances create collections of <code>{@link IngestApiTestCase}</code> records which define a test
- * case situation for evaluation. Test case parameters are enumerated within <code>{@link IngestChanTestParams}</code>.
+ * case situation for evaluation. Test case parameters are enumerated within <code>{@link IngestApiTestParams}</code>.
  * </p>
  * <p>
  * <h2>Usage</h2>
@@ -68,7 +70,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * <code>{@link #isValidType(IngestApiTestParams, Object)}</code> and <code>{@link #createTestCase(Map)}</code>, which
  * check that a given parameter value is of the correct type and creates a <code>{@link IngestApiTestCase}</code> from
  * a map of (Param, Value) pairs, respectively.  These abstract implementations are particular to the parameter
- * enumeration <code>{@link IngestChanTestParams}</code> and test case record <code>{@link IngestApiTestCase}</code>.
+ * enumeration <code>{@link IngestApiTestParams}</code> and test case record <code>{@link IngestApiTestCase}</code>.
  * </p>
  * <p>
  * <h2>NOTES:</h2>
@@ -173,6 +175,9 @@ public class IngestApiTestSuite extends TestSuiteGeneratorBase<IngestApiTestPara
         return enmParam.isInstance(objVal);
     }
 
+    /**
+     * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#createTestCase(java.util.Map)
+     */
     @Override
     protected IngestApiTestCase createTestCase(Map<IngestApiTestParams, Object> mapTestVals)
             throws MissingResourceException, ClassCastException, UnsupportedOperationException {
@@ -256,6 +261,72 @@ public class IngestApiTestSuite extends TestSuiteGeneratorBase<IngestApiTestPara
         return recCase;
     }
 
+    /**
+     * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#cullRedundantCases(java.util.Collection)
+     */
+    @Override
+    protected Collection<IngestApiTestCase> cullRedundantCases(Collection<IngestApiTestCase> conCases) {
+        
+        // Cull the UNARY configurations with IngestStream parameter variations
+        List<IngestApiTestCase>   lstUnaryCull;
+        try {
+            List<IngestApiTestCase> lstUnary = conCases.stream().filter(rec -> rec.enmApiType() == JalIngestionApiType.UNARY).toList();
+            IngestionChannelConfig  recChanCfg = lstUnary.getFirst().recChanCfg();   // throws NoSuchElementException
+            
+            lstUnaryCull = lstUnary.stream().filter(rec -> !rec.recChanCfg().equals(recChanCfg)).toList();
+            
+        } catch (Exception e) {
+            lstUnaryCull = List.of();
+        }
+        
+        // Cull the Streaming configurations with multi-stream turned off
+        List<IngestApiTestCase>     lstMStrmCull;
+        try {
+            List<IngestApiTestCase> lstMStrmFalse = conCases.stream().filter(rec -> rec.recChanCfg().bolMStrmEnbl() == false).toList();    
+            IngestApiTestCase       recCase1st = lstMStrmFalse.getFirst();  // throws NoSuchElementException
+            int                     cntMStrmMax = recCase1st.recChanCfg().cntMStrmMax();
+            
+            lstMStrmCull = lstMStrmFalse.stream().filter(rec -> rec.recChanCfg().cntMStrmMax() != cntMStrmMax).toList();
+            
+        } catch (Exception e) {
+            lstMStrmCull = List.of();
+        }
+        
+        // Cull the Frame Processing configurations with frame decomposition turned off
+        List<IngestApiTestCase>     lstDcmpCull;
+        try {
+            List<IngestApiTestCase> lstDcmpFalse = conCases.stream().filter(rec -> rec.recProcCfg().bolDcmpEnbl() == false).toList();
+            IngestApiTestCase       recCase1st = lstDcmpFalse.getFirst(); // throws NoSuchElementException
+            long                    szDcmpMax = recCase1st.recProcCfg().szDcmpMax();
+            
+            lstDcmpCull = lstDcmpFalse.stream().filter(rec -> rec.recProcCfg().szDcmpMax() != szDcmpMax).toList();
+            
+        } catch (Exception e) {
+            lstDcmpCull = List.of();
+        }
+        
+        // Cull the Frame Processing configurations with multi-threading turned off
+        List<IngestApiTestCase>     lstMThrdCull;
+        try {
+            List<IngestApiTestCase> lstMThrdFalse = conCases.stream().filter(rec -> rec.recProcCfg().bolMThrdEnbl() == false).toList();
+            IngestApiTestCase       recCase1st = lstMThrdFalse.getFirst();  // throws NoSuchElementException
+            int                     cntMThrdMax = recCase1st.recProcCfg().cntMThrdMax();
+            
+            lstMThrdCull  = lstMThrdFalse.stream().filter(rec -> rec.recProcCfg().cntMThrdMax() != cntMThrdMax).toList();
+            
+        } catch (Exception e) {
+            lstMThrdCull = List.of();
+        }
+        
+        // Cull the redundant cases from the full test suite
+        conCases.removeAll(lstUnaryCull);
+        conCases.removeAll(lstMStrmCull);
+        conCases.removeAll(lstDcmpCull);
+        conCases.removeAll(lstMThrdCull);
+        
+        return conCases;
+    }
+    
     
     //
     // Constructor

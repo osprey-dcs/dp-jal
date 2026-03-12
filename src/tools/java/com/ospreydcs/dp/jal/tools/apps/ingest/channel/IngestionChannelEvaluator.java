@@ -511,6 +511,14 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         this.addrHost = addrHost;
         this.suiteCases = suiteCases;
         
+        // Create the output stream and attach Logger to it - records fatal errors to output file
+        super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
+        
+        // Attach the class loggers of application components
+        super.appendLoggingFor(DpGrpcConnectionFactoryBase.class);
+        super.appendLoggingFor(IngestionMessageBuffer.class);
+        super.appendLoggingFor(IngestionStream.class);
+        
         // Create the components for evaluation
         this.connIngest = DpIngestionConnectionFactoryStatic.connect(addrHost.strUrl(), addrHost.intPort()); // throws DpGrpcException
         this.bufChanMsgs = IngestionMessageBuffer.from(SZ_QUEUE_INGEST, BOL_QUEUE_BACKPRES_ENBL);
@@ -520,14 +528,6 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         this.conCases = this.suiteCases.createTestSuit();   // throws IllegalStateException, MissingResourceException, ClassCastException, UnsupportedOperationException, IndexOutOfBoundsException
         this.conResults = new TreeSet<>(IngestChanTestResult.descendingTransmissionRateOrdering());
         this.conFailures = new TreeSet<>(IngestChanTestResult.caseIndexOrdering());
-        
-        // Create the output stream and attach Logger to it - records fatal errors to output file
-        super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
-        
-        // Attach the class loggers of application components
-        super.appendLoggingFor(DpGrpcConnectionFactoryBase.class);
-        super.appendLoggingFor(IngestionMessageBuffer.class);
-        super.appendLoggingFor(IngestionStream.class);
     }
     
     
@@ -736,19 +736,13 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
         
         // Print out evaluation summary
         ps.println("Evaluation Summary");
-        ps.println(strPad + "Test cases specified : " + this.conCases.size());
-        ps.println(strPad + "Test cases run       : " + this.conResults.size());
-        ps.println(strPad + "Test case failures   : " + this.conFailures.size());
-        ps.println(strPad + "Evaluation duration  : " + this.durEval);
-        ps.println(strPad + "Evaluation completed : " + this.bolCompleted);
+        ps.println(strPad + "Test cases - all combos : " + this.suiteCases.testCaseCount());
+        ps.println(strPad + "Test cases - unique     : " + this.conCases.size());
+        ps.println(strPad + "Test cases run          : " + this.conResults.size());
+        ps.println(strPad + "Test case failures      : " + this.conFailures.size());
+        ps.println(strPad + "Evaluation duration     : " + this.durEval);
+        ps.println(strPad + "Evaluation completed    : " + this.bolCompleted);
         ps.println();
-        
-        // Print out the execution log entries
-        String  strLogging = super.retrieveExecutionLogEntries();
-        ps.println("Execution Log Entries");
-        ps.println(strLogging);
-        ps.println();
-        
         
         // Print out the test suite configuration
         ps.println("Test Suite Configuration");
@@ -817,6 +811,12 @@ public class IngestionChannelEvaluator extends JalApplicationBase<IngestionChann
             recResult.printOut(ps, strPad);
             ps.println();
         }
+        
+        // Print out the execution log entries
+        String  strLogging = super.retrieveExecutionLogEntries();
+        ps.println("Execution Log Entries");
+        ps.println(strLogging);
+        ps.println();
     }
 
 }

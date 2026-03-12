@@ -540,7 +540,7 @@ public record IngestApiTestCase(
         long        szPayload = recPayload.szPayload;
         Duration    durTransmit = Duration.between(insStart, insFinish);
         int         cntMsgsXmit = lstResults.stream().mapToInt(rec -> rec.transmitRequestCount()).sum();
-        double      dblRateXmit = ((double)szPayload*1_000)/durTransmit.toNanos();
+        double      dblRateXmit = ((double)(szPayload * 1_000))/durTransmit.toNanos();
         
         return IngestApiTestResult.from(ResultStatus.SUCCESS, cntFrames, szPayload, durTransmit, cntMsgsXmit, dblRateXmit, recProvUid, lstResults, this);
     }
@@ -598,39 +598,42 @@ public record IngestApiTestCase(
         }
         
         // Perform payload transmission and measure
-        Instant     insStart;
-        Instant     insFinish;
+        // - closeStream() blocks until transmission complete
+        Instant         insStart;
+        Instant         insFinish;
+        IngestionResult recIngResult; 
         try {
             insStart = Instant.now();
-            apiStream.ingest(recPayload.lstFrames);
-            apiStream.awaitQueueEmpty();
+            apiStream.ingest(recPayload.lstFrames); // throws IllegalStateException, InterruptedException, JalIngestionException
+            recIngResult = apiStream.closeStream(); // throws IllegalStateException, InterruptedException, CompletionException, MissingResourceException
             insFinish = Instant.now();
             
         } catch (Exception e) {
+            apiStream.closeStreamNow();
+            
             ResultStatus    recStatus = ResultStatus.newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " - Streaming data ingestion failure.", e);
 
             return IngestApiTestResult.from(recStatus, this);
         }
         
-        // Close stream and collect results
-        IngestionResult     recResult; 
-        try {
-            recResult = apiStream.closeStream();
-            
-        } catch (Exception e) {
-            ResultStatus    recStatus = ResultStatus.newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " - Streaming API closure failed.", e);
-
-            return IngestApiTestResult.from(recStatus, this);
-        }
+//        // Close stream and collect results
+//        try {
+//            recIngResult = apiStream.closeStream();
+//            
+//        } catch (Exception e) {
+//            ResultStatus    recStatus = ResultStatus.newFailure(JavaRuntime.getQualifiedMethodNameSimple() + " - Streaming API closure failed.", e);
+//
+//            return IngestApiTestResult.from(recStatus, this);
+//        }
         
         // Collect results and return
         int         cntFrames = recPayload.cntFrames;
         long        szPayload = recPayload.szPayload;
         Duration    durTransmit = Duration.between(insStart, insFinish);
-        int         cntMsgsXmit = recResult.transmitRequestCount();
-        double      dblRateXmit = ((double)szPayload*1_000)/durTransmit.toNanos();
+        int         cntMsgsXmit = recIngResult.transmitRequestCount();
+        double      dblRateXmit = ((double)(szPayload * 1_000))/durTransmit.toNanos();
         
-        return IngestApiTestResult.from(ResultStatus.SUCCESS, cntFrames, szPayload, durTransmit, cntMsgsXmit, dblRateXmit, recProvUid, List.of(recResult), this);
+        return IngestApiTestResult.from(ResultStatus.SUCCESS, cntFrames, szPayload, durTransmit, cntMsgsXmit, dblRateXmit, recProvUid, List.of(recIngResult), this);
     }
     
     /**

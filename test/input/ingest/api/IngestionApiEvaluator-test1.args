@@ -1,0 +1,7 @@
+--api STREAM 
+--colser FALSE TRUE 
+--mthrd TRUE --mthrdcnt 2 3 4 
+--strmtype FORWARD BIDIRECTIONAL 
+--mstrm TRUE 
+--mstrmcnt 2 3 4 
+--frmcnt 1 10 20

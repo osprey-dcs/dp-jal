@@ -176,8 +176,52 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
      * @throws UnsupportedOperationException an unknown parameter was encountered
      */
     abstract protected  TestCase    createTestCase(Map<Param, Object> mapTestVals) throws MissingResourceException, ClassCastException, UnsupportedOperationException;
-    
 
+    /**
+     * <p>
+     * Allows sub-classes to cull redundant test cases from the full test case suite.
+     * </p>
+     * <p>
+     * This method is called within method <code>{@link #createTestSuit()}</code> to cull redundant
+     * test cases from the full test case suite, as determined by the child class.  This operation
+     * can be ignored by simply returning the argument collection.
+     * </p>
+     * <p>
+     * In many scenarios certain combinations of parameter values lead to the same test case
+     * configuration.  This situation is common when a parameter has a <code>Boolean</code> value that can
+     * turned off the effects of other parameters in the configuration.  For economy of test case evaluations
+     * is it beneficial to eliminate the redundant cases from the test suite.  This method is provided
+     * as a hook for sub-class to perform this culling.
+     * </p>
+     * <p>
+     * For example, consider the following case of a command-line variable combination specifying various
+     * combinations for use of multi-threaded processing in a targeted test component:
+     * <pre> 
+     * --mthrd FALSE TRUE --mthrdcnt 2 3 4
+     * </pre>
+     * where
+     * <ul> 
+     * <li><code>--mthrd</code> &rarr; enables/disable multi-threaded processing,</li>
+     * <li><code>--mthrdcnt</code> &rarr; indicates the maximum number of concurrent processing threads.</li>
+     * </ul>
+     * There are 6 total test cases generated from the above statement, however, only 4 are unique.
+     * The combinations {--mthrd FALSE --mthrdcnt 2, --mthrd FALSE --mthrdcnt 3, --mthrd FALSE --mthrdcnt 4}
+     * are all equivalent.  Thus, for economy of evaluations only 1 of the above cases should be
+     * included in the test suite.
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * The argument passed to this method is a <em>mutable</em> collection and can be directly modified
+     * to obtained the returned collection.
+     * </p>
+     * 
+     * @param conCases  collection test cases for all combinations of parameter values
+     * 
+     * @return  collection of test cases with redundant parameter combinations culled (as determined by child class)
+     */
+    abstract protected  Collection<TestCase>    cullRedundantCases(Collection<TestCase> conCases);
+
+    
     //
     // Class Constants
     //
@@ -768,6 +812,9 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
             conTestCases.add(recTestCase);
         }
         
+        // Cull redundant test cases according to child class specifications
+        conTestCases = this.cullRedundantCases(conTestCases);
+        
         return conTestCases;
     }
     
@@ -790,11 +837,12 @@ public abstract class TestSuiteGeneratorBase<Param extends Enum<Param>, TestCase
         String  strPadd = strPad + "  ";
         int     intPadNm = this.setParams.stream().map(enm -> enm.name()).mapToInt(nm -> nm.length()).max().orElse(STR_PAD_NM_PARAM);
 
-        // Print out test case parameters
-        ps.println(strPad + "Parameter set : " + this.setParams);
+        // Print out test case parameters and count
+        ps.println(strPad + "Parameter Set      : " + this.setParams);
+        ps.println(strPad + "Value Combinations : " + this.testCaseCount());
         
         // Print out test case parameter values
-        ps.println(strPad + "Parameter Values ");
+        ps.println(strPad + "Configuration Values ");
         for (Map.Entry<Param, List<Object>> entry : this.mapParamToVals.entrySet()) {
             Param           enmParam = entry.getKey();
             String          strName = enmParam.name();

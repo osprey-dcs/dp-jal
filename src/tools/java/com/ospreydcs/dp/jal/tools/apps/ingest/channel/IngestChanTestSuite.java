@@ -28,6 +28,7 @@ package com.ospreydcs.dp.jal.tools.apps.ingest.channel;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.MalformedParametersException;
 import java.time.format.DateTimeParseException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -251,6 +252,30 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
         return recTestCase;
     }
 
+    /**
+     * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#cullRedundantCases(java.util.Collection)
+     */
+    @Override
+    protected Collection<IngestChanTestCase> cullRedundantCases(Collection<IngestChanTestCase> conCases) {
+        
+        // Cull the Multi-stream enable false redundant cases
+        List<IngestChanTestCase>    lstMStrmCull;
+        try {
+            List<IngestChanTestCase>    lstMStrmFalse = conCases.stream().filter(rec -> rec.recChanCfg().bolMStrmEnbl() == false).toList();
+            IngestChanTestCase          recCase1st = lstMStrmFalse.getFirst();  // throws NoSuchElementException
+            int                         cntMStrmMax = recCase1st.recChanCfg().cntMStrmMax();
+            
+            lstMStrmCull = lstMStrmFalse.stream().filter(rec -> rec.recChanCfg().cntMStrmMax() != cntMStrmMax).toList();
+            
+        } catch (Exception e) {
+            lstMStrmCull = List.of();
+        }
+        
+        conCases.removeAll(lstMStrmCull);
+        
+        return null;
+    }
+    
     
     //
     // Constructor
@@ -267,5 +292,5 @@ public class IngestChanTestSuite extends TestSuiteGeneratorBase<IngestChanTestPa
     private IngestChanTestSuite() {
         super(IngestChanTestParams.class);
     }
-    
+
 }

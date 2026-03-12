@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 import com.ospreydcs.dp.jal.common.ProviderUID;
 import com.ospreydcs.dp.jal.config.JalConfig;
 import com.ospreydcs.dp.jal.config.ingest.JalIngestionConfig;
+import com.ospreydcs.dp.jal.grpc.model.DpGrpcConnectionFactoryBase;
 import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.jal.tools.appfwk.ExitCode;
 import com.ospreydcs.dp.jal.tools.appfwk.JalApplicationBase;
@@ -498,6 +499,13 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         
         this.suiteCases = suiteCases;
         
+        // Create the output stream and attach Logger to it - records fatal errors to output file
+        super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
+        
+        // Attach the class loggers of application components
+        super.appendLoggingFor(DpGrpcConnectionFactoryBase.class);
+        super.appendLoggingFor(IngestionFrameProcessor.class);
+        
         // Create the ingestion frame processor under evaluation
         this.processor = IngestionFrameProcessor.from(uidProvider);
         
@@ -505,9 +513,6 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         this.conCases = this.suiteCases.createTestSuit();   // throws IllegalStateException, MissingResourceException, ClassCastException, UnsupportedOperationException, IndexOutOfBoundsException
         this.conResults = new TreeSet<>(FrameProcTestResult.descendingProcessedRateOrdering());
         this.conFailures = new TreeSet<>(FrameProcTestResult.caseIndexOrdering());
-        
-        // Create the output stream and attach Logger to it - records fatal errors to output file
-        super.openOutputStream(strOutputLoc); // throws SecurityException, FileNotFoundException, UnsupportedOperationException
         
 //        OutputStreamAppender    appAppErrs = Log4j.createOutputStreamAppender(STR_APP_NAME, super.psOutput);
 //        Log4j.attachAppender(LOGGER, appAppErrs);
@@ -661,20 +666,13 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
         
         // Print out evaluation summary
         ps.println("Evaluation Summary");
-        ps.println(strPad + "Test cases specified : " + this.conCases.size());
-        ps.println(strPad + "Test cases run       : " + this.conResults.size());
-        ps.println(strPad + "Test case failures   : " + this.conFailures.size());
-        ps.println(strPad + "Evaluation duration  : " + this.durEval);
-        ps.println(strPad + "Evaluation completed : " + this.bolCompleted);
+        ps.println(strPad + "Test cases - all combos : " + this.suiteCases.testCaseCount());
+        ps.println(strPad + "Test cases - unique     : " + this.conCases.size());
+        ps.println(strPad + "Test cases run          : " + this.conResults.size());
+        ps.println(strPad + "Test case failures      : " + this.conFailures.size());
+        ps.println(strPad + "Evaluation duration     : " + this.durEval);
+        ps.println(strPad + "Evaluation completed    : " + this.bolCompleted);
         ps.println();
-        
-        // Print out the execution log entries
-        String  strLogging = super.retrieveExecutionLogEntries();
-        ps.println("Execution Log Entries");
-        ps.println(strLogging);
-        ps.println();
-        
-        
         
         // Print out the test suite configuration
         ps.println("Test Suite Configuration");
@@ -741,6 +739,13 @@ public class FrameProcessorEvaluator extends JalApplicationBase<FrameProcessorEv
             recResult.printOut(ps, strPad);
             ps.println();
         }
+        
+        // Print out the execution log entries
+        String  strLogging = super.retrieveExecutionLogEntries();
+        ps.println("Execution Log Entries");
+        ps.println(strLogging);
+        ps.println();
+        
     }
     
     

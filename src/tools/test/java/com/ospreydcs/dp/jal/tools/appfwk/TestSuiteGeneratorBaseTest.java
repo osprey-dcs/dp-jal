@@ -43,7 +43,6 @@ import org.junit.Test;
 
 import com.ospreydcs.dp.jal.common.DpSupportedType;
 import com.ospreydcs.dp.jal.common.DpTimestampCase;
-import com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase;
 import com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBaseTest.TestCase.Param;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
@@ -330,6 +329,14 @@ public class TestSuiteGeneratorBaseTest {
             TestCase    recCase = TestCase.from(cntFrames, cntSmpls, durPeriod, enmTmsCase, cntCols, strNmPref, enmColType);
             
             return recCase;
+        }
+
+        /**
+         * @see com.ospreydcs.dp.jal.tools.appfwk.TestSuiteGeneratorBase#cullRedundantCases(java.util.Collection)
+         */
+        @Override
+        protected Collection<TestCase> cullRedundantCases(Collection<TestCase> conCases) {
+            return conCases;
         }
     }
     
