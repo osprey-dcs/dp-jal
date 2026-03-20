@@ -38,7 +38,7 @@ import com.ospreydcs.dp.jal.common.ResultStatus;
 import com.ospreydcs.dp.jal.ingest.IngestionFrame;
 import com.ospreydcs.dp.jal.ingest.model.frame.IngestionFrameProcessor;
 import com.ospreydcs.dp.jal.tools.apps.ingest.common.FrameProcessorConfig;
-import com.ospreydcs.dp.jal.tools.apps.ingest.common.MessageConsumer;
+import com.ospreydcs.dp.jal.tools.apps.ingest.common.MessageConsumerTask;
 import com.ospreydcs.dp.jal.tools.common.datagen.IFrameFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
@@ -196,7 +196,7 @@ public record FrameProcTestCase(
         
         // Configure processor and message consumer task
         this.recPrcrCfg.configure(procTest);
-        MessageConsumer thrdMsgSnk = MessageConsumer.from(procTest);
+        MessageConsumerTask thrdMsgSnk = MessageConsumerTask.from(procTest);
         
         // Initialize the processor and consumer task 
         try {

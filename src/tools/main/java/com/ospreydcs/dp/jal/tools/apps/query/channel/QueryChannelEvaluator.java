@@ -301,7 +301,7 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
           + " [" + STR_VAR_RQST_DCMP + " D1 ... Dj]"
           + " [" + STR_VAR_STRM_TYPE + " S1 ... Sk]"
           + " [" + STR_VAR_STRM_CNT + " N1 ... Nm]"
-          + " [" + STR_VAR_OUTPUT +" Output]"
+          + " [" + STR_VAR_OUTPUT + " Output]"
           + "\n" 
           + "  Where  \n"
           + "    " + STR_DVAR_HELP + "        = print this message and return.\n"
@@ -311,12 +311,12 @@ public class QueryChannelEvaluator extends JalQueryAppBase<QueryChannelEvaluator
           + "    D1, ..., Dj   = Request decomposition type(s) - RequestDecompType enumeration name(s). \n"
           + "    S1, ..., Sk   = gRPC stream type(s) - DpGrpcStreamType enumeration name(s). \n"
           + "    N1, ..., Nm   = gRPC stream count(s) peforming request recovery - Integer value(s). \n"
-          + "    " + STR_VAR_OUTPUT + "    = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
+          + "    " + STR_VAR_OUTPUT + "      = output directory w/wout file path, or '" + STR_ARG_VAL_STDOUT + "'. \n"
           + "\n"
           + "  NOTES: \n"
           + "  - All bracketed quantities [...] are optional. \n"
           + "  - PV1, ..., PVj values are strictly optional. \n"
-          + "  - If values are not provided for " + STR_VAR_STRM_TYPE + " and/or " + STR_VAR_STRM_CNT + ", default values are provided. \n "
+          + "  - If values are not provided for " + STR_VAR_STRM_TYPE + " and/or " + STR_VAR_STRM_CNT + ", default values are provided. \n"
           + "  - Default " + STR_VAR_OUTPUT + " value is " + STR_OUTPUT_DEF + ".\n";
 
     

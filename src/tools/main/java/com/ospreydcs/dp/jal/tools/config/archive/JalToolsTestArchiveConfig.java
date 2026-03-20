@@ -25,6 +25,8 @@
  */
 package com.ospreydcs.dp.jal.tools.config.archive;
 
+import java.time.DateTimeException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 
@@ -125,6 +127,32 @@ public class JalToolsTestArchiveConfig extends CfgStructure<JalToolsTestArchiveC
             Instant insEnd = Instant.parse(this.end);    // throws DateTimeParseException
             
             return insEnd;
+        }
+        
+        /**
+         * <p>
+         * Parses the values of <code>{@link #start}</code> and <code>{@link #end}</code> returning the difference between them.
+         * </p>
+         * <p>
+         * The time range of the Data Platform Test Archive is computed from the <code>{@link #start}</code> and 
+         * <code>{@link #end}</code> attributes and returned as a Java <code>{@link Duration}</code> object.
+         * The returned value represents the entire time range over which the Test Archive has sample values.
+         * </p> 
+         * <p>
+         * Both the <code>{@link #start}</code> and <code>{@link #end}</code> attributes must be a valid ISO-8601 date/time
+         * format string or an exception is thrown.
+         * See <code>{@link Instant#parse(CharSequence)}</code> for more information on parsing ISO-8605 format strings.
+         * </p>
+         * @return the time difference between <code>{@link #start}</code> and <code>{@link #end}</code> as a <code>Duration</code>
+         * 
+         * @throws DateTimeParseException   invalid or empty <code>{@link #start}</code> and/or <code>{@link #end}</code> attribute
+         * @throws DateTimeException        the difference between <code>{@link #start}</code> and <code>{@link #end}</code> cannot be obtained
+         * @throws ArithmeticException      the difference between <code>start</code> and <code>end</code> exceeds <code>Duration</code> capacity
+         */
+        public Duration rangeDuration() throws DateTimeParseException, DateTimeException, ArithmeticException {
+            Duration    durRange = Duration.between(this.startInstant(), this.endInstant());
+            
+            return durRange;
         }
     }
 }

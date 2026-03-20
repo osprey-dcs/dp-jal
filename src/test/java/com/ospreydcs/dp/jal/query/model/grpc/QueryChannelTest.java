@@ -105,7 +105,7 @@ public class QueryChannelTest {
     public static record    TestCase(DpDataRequest rqstOrg, RequestDecompType enmDcmpType, DpGrpcStreamType enmStrmType, int cntStrms, List<DpDataRequest> lstCmpRqsts) {
         
         /** Request decomposer used in non-canonical construction/creation */
-        private static final    DataRequestDecomposer   PRCR_DECOMP = DataRequestDecomposer.create();
+        private static final    DataRequestDecomposer   PRCR_DECOMP = DataRequestDecomposer.from();
         
         
         //

@@ -301,7 +301,7 @@ public class TestQueryServiceTest {
         final DpGrpcStreamType enmType = DpGrpcStreamType.BACKWARD;
         
         // Create request and configure
-        DpDataRequest   rqst = DpDataRequest.create();
+        DpDataRequest   rqst = DpDataRequest.from();
         
         rqst.selectSource(strSrcNm);
         rqst.rangeAfter(insBegin);

@@ -1,6 +1,5 @@
 package com.ospreydcs.dp.jal.tools.apps.ingest.common;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -26,22 +25,25 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * <p>
  * <h2>Operation</h2>
  * Class instances are attached to a single <code>IMessageSupplier</code> object at creation/construction.
- * Upon the invocation of <code>{@link Thread#start()}</code> the <code>MessageConsumer</code> instance will
+ * Upon the invocation of <code>{@link Thread#start()}</code> the <code>MessageConsumerTask</code> instance will
  * begin requesting <code>IngestDataRequest</code> messages using the <code>{@link IMessageSupplier#take()}</code>.
  * The thread terminates when the <code>{@link IMessageSupplier#isSupplying()}</code> returns <code>false</code>
  * or the thread is terminated by the external client with a <code>{@link #terminate()}</code> invocation.
  * </p>
  * <p>
  * <h2>Usage</h2>
- * Before starting a <code>MessageConsumer</code> thread it is imperative that the attached message supplier be 
+ * Before starting a <code>MessageConsumerTask</code> thread it is imperative that the attached message supplier be 
  * activated.  Specifically, the <code>{@link IMessageSupplier#isSupplying()}</code> method must return <code>true</code>.
  * Otherwise the consumer loop will simply pass through and no messages will be consumed.
  * </p>
  * <p>
  * <h2>Message Storage</h2>
+ * Normally data messages are discarded as they are recovered.  However, a <code>MessageConsumerTask</code> instance
+ * can be configured (at creation) to store the data messages for later inspection using 
+ * <code>{@link #getRecoveredMessages()}</code>.
  * </p>
  */
-public class MessageConsumer extends Thread {
+public class MessageConsumerTask extends Thread {
 
     //
     // Creators
@@ -49,17 +51,17 @@ public class MessageConsumer extends Thread {
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>MessageConsumer</code> task ready for execution.
+     * Creates and returns a new instance of <code>MessageConsumerTask</code> task ready for execution.
      * </p>
      * <p>
-     * Creates a new <code>MessageConsumer</code> task that does not store the <code>IngestDataRequest</code>
+     * Creates a new <code>MessageConsumerTask</code> task that does not store the <code>IngestDataRequest</code>
      * message obtained from the given supplier.  The size of any acquired message is added into the
      * total allocation size accumulator then discarded (i.e., left to the JVM garbage collection).
      * This process relieves stress on Java heap storage for large collections of processed messages.
      * </p>
      * <p>
      * <h2>Usage</h2>
-     * Before starting a <code>MessageConsumer</code> thread it is imperative that the given message supplier be 
+     * Before starting a <code>MessageConsumerTask</code> thread it is imperative that the given message supplier be 
      * activated.  Specifically, the <code>{@link IMessageSupplier#isSupplying()}</code> method must return 
      * <code>true</code>.
      * Otherwise the consumer loop will simply pass through and no messages will be consumed.
@@ -67,18 +69,18 @@ public class MessageConsumer extends Thread {
      * 
      * @param supplier the <code>IMessageSupplier</code> interface supplying <code>IngestDataRequest</code> messages
      * 
-     * @return  a new <code>MessageConsumer</code> instance attached to the given mesasge supplier
+     * @return  a new <code>MessageConsumerTask</code> instance attached to the given mesasge supplier
      */
-    public static MessageConsumer   from(IMessageSupplier<IngestDataRequest> supplier) {
-        return MessageConsumer.from(supplier, false);
+    public static MessageConsumerTask   from(IMessageSupplier<IngestDataRequest> supplier) {
+        return MessageConsumerTask.from(supplier, false);
     }
     
     /**
      * <p>
-     * Creates and returns a new instance of <code>MessageConsumer</code> task ready for execution.
+     * Creates and returns a new instance of <code>MessageConsumerTask</code> task ready for execution.
      * </p>
      * <p>
-     * Creates a new <code>MessageConsumer</code> task that potentially stores the <code>IngestDataRequest</code>
+     * Creates a new <code>MessageConsumerTask</code> task that potentially stores the <code>IngestDataRequest</code>
      * message obtained from the given supplier.  The size of any acquired message is added into the
      * total allocation size accumulator stored into the local message buffer if the argument
      * storage enable/disable flag is <code>true</code>, or simply discarded (i.e., left to JVM garbage
@@ -86,7 +88,7 @@ public class MessageConsumer extends Thread {
      * </p>
      * <p>
      * <h2>Usage</h2>
-     * Before starting a <code>MessageConsumer</code> thread it is imperative that the given message supplier be 
+     * Before starting a <code>MessageConsumerTask</code> thread it is imperative that the given message supplier be 
      * activated.  Specifically, the <code>{@link IMessageSupplier#isSupplying()}</code> method must return 
      * <code>true</code>.
      * Otherwise the consumer loop will simply pass through and no messages will be consumed.
@@ -100,10 +102,10 @@ public class MessageConsumer extends Thread {
      * @param supplier the <code>IMessageSupplier</code> interface supplying <code>IngestDataRequest</code> messages
      * @param bolStore enable/disable <code>IngestDataRequest</code> message storage for later processing
      * 
-     * @return  a new <code>MessageConsumer</code> instance attached to the given mesasge supplier
+     * @return  a new <code>MessageConsumerTask</code> instance attached to the given mesasge supplier
      */
-    public static MessageConsumer   from(IMessageSupplier<IngestDataRequest> supplier, boolean bolStore) {
-        return new MessageConsumer(supplier, bolStore);
+    public static MessageConsumerTask   from(IMessageSupplier<IngestDataRequest> supplier, boolean bolStore) {
+        return new MessageConsumerTask(supplier, bolStore);
     }
     
     
@@ -170,13 +172,13 @@ public class MessageConsumer extends Thread {
     
     /**
      * <p>
-     * Constructs a new <code>MessageConsumer</code> instance attached to the given ingestion frame supplier.
+     * Constructs a new <code>MessageConsumerTask</code> instance attached to the given ingestion frame supplier.
      * </p>
      *
      * @param supplier ingestion frame supplier producing <code>IngestDataRequest</code> messages
      * @param bolStore message storage enable/disable flag
      */
-    protected MessageConsumer(IMessageSupplier<IngestDataRequest> processor, boolean bolStore) {
+    protected MessageConsumerTask(IMessageSupplier<IngestDataRequest> processor, boolean bolStore) {
         this.supplier = processor;
         this.bolStore = bolStore;
         

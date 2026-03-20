@@ -356,8 +356,8 @@ public class TestArchiveRequestCreator {
             throws IllegalArgumentException {
         
         return switch (enmType) {
-        case EMPTY -> createRequest(cntPvs, indPvOffset, durRequest, durOffset);
-        case GENERAL -> createRequest(cntPvs, indPvOffset, durRequest, durOffset);
+        case EMPTY -> /* DpDataRequest.from(); */ TestArchiveRequestCreator.createRequest(cntPvs, indPvOffset, durRequest, durOffset);
+        case GENERAL -> TestArchiveRequestCreator.createRequest(cntPvs, indPvOffset, durRequest, durOffset);
         case CLOCKED -> TestArchiveRequestCreator.createClockedRequest(cntPvs, indPvOffset, durRequest, durOffset);
         case TMS_LIST -> TestArchiveRequestCreator.createTmsListRequest(cntPvs, indPvOffset, durRequest, durOffset);
         case BOTH -> TestArchiveRequestCreator.createBothPvsRequest(cntPvs, indPvOffset, durRequest, durOffset);
@@ -657,7 +657,7 @@ public class TestArchiveRequestCreator {
         }
         
         // Create request and return it
-        DpDataRequest   rqst = DpDataRequest.create();
+        DpDataRequest   rqst = DpDataRequest.from();
         
         List<String>    lstNames = LST_PV_NAMES_TOTAL.subList(indPvFirst, indPvLast);
         
@@ -924,7 +924,7 @@ public class TestArchiveRequestCreator {
         }
         
         // Create request and return it
-        DpDataRequest   rqst = DpDataRequest.create();
+        DpDataRequest   rqst = DpDataRequest.from();
         
         List<String>    lstNames = LST_PV_NAMES_CLOCKED.subList(indPvFirst, indPvLast);
         
@@ -1196,7 +1196,7 @@ public class TestArchiveRequestCreator {
         }
         
         // Create request and return it
-        DpDataRequest   rqst = DpDataRequest.create();
+        DpDataRequest   rqst = DpDataRequest.from();
         
         List<String>    lstNames = LST_PV_NAMES_TMS_LIST.subList(indPvFirst, indPvLast);
         
@@ -1392,7 +1392,7 @@ public class TestArchiveRequestCreator {
         }
         
         // Create request and return it
-        DpDataRequest   rqst = DpDataRequest.create();
+        DpDataRequest   rqst = DpDataRequest.from();
         
         List<String>    lstNames = LST_PV_NAMES_TOTAL.subList(indPvFirst, indPvLast);
         

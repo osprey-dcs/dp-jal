@@ -431,7 +431,7 @@ public class QueryRequestRecoverer {
         this.connQuery = connQuery;
         
         this.queMsgBuffer = QueryMessageBuffer.create();
-        this.prcrDecomposer = DataRequestDecomposer.create();
+        this.prcrDecomposer = DataRequestDecomposer.from();
         this.prcrCorrelator = RawDataCorrelator.create();
 
         this.chanQuery = QueryChannel.from(this.connQuery, this.queMsgBuffer);

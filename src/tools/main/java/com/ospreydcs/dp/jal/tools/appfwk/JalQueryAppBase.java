@@ -40,6 +40,7 @@ import com.ospreydcs.dp.jal.query.DpDataRequest;
 import com.ospreydcs.dp.jal.query.DpQueryException;
 import com.ospreydcs.dp.jal.query.model.grpc.QueryChannel;
 import com.ospreydcs.dp.jal.query.model.grpc.QueryMessageBuffer;
+import com.ospreydcs.dp.jal.tools.appfwk.DpServiceAddress.DpService;
 
 /**
  * <p>
@@ -134,7 +135,7 @@ public abstract class JalQueryAppBase<T extends JalQueryAppBase<T>> extends JalA
     
     /**
      * <p>
-     * Constructs a new <code>JalQueryAppBase</code> instance.
+     * Constructs a new <code>JalQueryAppBase</code> instance connected to the default Query Service.
      * </p>
      *
      * @param clsApp    the class instance of the final application
@@ -143,19 +144,32 @@ public abstract class JalQueryAppBase<T extends JalQueryAppBase<T>> extends JalA
      * @throws DpGrpcException unable to establish connection to the Query Service (see message and cause)
      */
     protected JalQueryAppBase(Class<T> clsApp, String...args) throws DpGrpcException {
+        this(clsApp, DpServiceAddress.from(DpService.QUERY), args);
+    }
+    
+    /**
+     * <p>
+     * Constructs a new <code>JalQueryAppBase</code> instance connected to the given Query Service network address.
+     * </p>
+     *
+     * @param clsApp    the class instance for the final application
+     * @param addrHost  the network address of the Query Service
+     * @param args      the application command-line arguments
+     * 
+     * @throws DpGrpcException unable to establish connection to the Query Service (see message and cause)
+     */
+    protected JalQueryAppBase(Class<T> clsApp, DpServiceAddress addrHost, String...args) throws DpGrpcException {
         super(clsApp, args);
         
         // Create the channel resources and channel
         this.bufDataMsgs = QueryMessageBuffer.create();
-        this.connQuery = DpQueryConnectionFactoryStatic.connect();  // throws DpGrpcException
+        this.connQuery = DpQueryConnectionFactoryStatic.connect(addrHost.strUrl(), addrHost.intPort());  // throws DpGrpcException
         this.chanQuery = QueryChannel.from(this.connQuery, this.bufDataMsgs);
         
         // Set timeout for channel operation and for request operation
         this.connQuery.setTimeoutLimit(LNG_TIMEOUT, TU_TIMEOUT);
         this.chanQuery.setTimeoutLimit(LNG_TIMEOUT, TU_TIMEOUT);
         
-//        // Create the raw request data correlator
-//        this.prcrRawData = RawDataCorrelator.create();
     }
 
     

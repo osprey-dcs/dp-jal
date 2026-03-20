@@ -329,7 +329,7 @@ public record QueryRecoveryTestCase(
     
     
     /** Time-series data request decomposer */
-    private static final DataRequestDecomposer  PRCR_RQST_DCMP = DataRequestDecomposer.create();
+    private static final DataRequestDecomposer  PRCR_RQST_DCMP = DataRequestDecomposer.from();
     
     
     //
@@ -539,7 +539,7 @@ public record QueryRecoveryTestCase(
      * <p>
      * Performs the following steps to create the originating data request:
      * <ol>
-     * <li>Creates a <code>{@link DpDataRequest}</code> instance from <code>{@link TestArchiveRequest#create()}</code>.</li>
+     * <li>Creates a <code>{@link DpDataRequest}</code> instance from <code>{@link TestArchiveRequest#createRequest()}</code>.</li>
      *   <ul>
      *   <li>Adds all supplemental PVs to <code>DpDataRequest</code> from <code>{@link #setSupplPvs}</code>. </li>
      *   <li>Sets the gRPC stream type for the request from <code>{@link #enmStrmType}</code>. </li> 
@@ -552,7 +552,7 @@ public record QueryRecoveryTestCase(
     private DpDataRequest   createRequestOriginal() {
         
         // Create the original request and add any supplemental PVs
-        DpDataRequest   rqst = this.enmRqst.create();
+        DpDataRequest   rqst = this.enmRqst.createRequest();
         rqst.setStreamType(this.enmStrmType);
         rqst.selectSources(this.setSupplPvs);
         

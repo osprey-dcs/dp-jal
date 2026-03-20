@@ -28,6 +28,8 @@
 package com.ospreydcs.dp.jal.config;
 
 import java.io.FileNotFoundException;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -197,6 +199,30 @@ public final class JalConfig extends CfgStructure<JalConfig> {
         @ACfgOverride.Field(name="INCEPTION")
         public String   inception;
 
+        
+        //
+        // Operations
+        //
+        
+        /**
+         * <p>
+         * Parses the <code>{@link #inception}</code> attribute and returns the value as a Java <code>{@link Instant}</code> object.
+         * </p>
+         * <p>
+         * The <code>{@link #inception}</code> attribute must be an ISO-8601 date/time format string or an exception is thrown.
+         * The general format is 'YEAR-MONTH-DAY<em>T</em>HOUR:MINUTE:SECOND.FRACTION' with resolution up to 1 nanosecond.
+         * See <code>{@link Instant#parse(CharSequence)}</code> for more information on parsing ISO-8605 format strings.
+         * </p>
+         *   
+         * @return  a new Java <code>Instant</code> parsed from the <code>{@link #inception}</code> attribute
+         * 
+         * @throws DateTimeParseException   invalid or empty <code>{@link #inception}</code> attribute
+         */
+        public Instant  inceptionInstant() throws DateTimeParseException {
+            Instant insStart = Instant.parse(this.inception);    // throws DateTimeParseException
+            
+            return insStart;
+        }
     }
 
     

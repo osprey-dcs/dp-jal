@@ -124,7 +124,7 @@ public record QueryChannelTestCase(
                                             int cntStrms) 
             throws UnsupportedOperationException {
         
-        DpDataRequest   rqstOrg = enmRqstOrg.create();
+        DpDataRequest   rqstOrg = enmRqstOrg.createRequest();
     
         List<DpDataRequest> lstRqsts = PRCR_DECOMP.buildCompositeRequest(rqstOrg, enmRqstDcmp, cntStrms);   // throws exception
         
@@ -163,7 +163,7 @@ public record QueryChannelTestCase(
             throws UnsupportedOperationException {
     
         // Create the time-series data request
-        DpDataRequest       rqst = enmRqstOrg.create();
+        DpDataRequest       rqst = enmRqstOrg.createRequest();
         String              strId = enmRqstOrg.name();
 
         if (!setSupplPvs.isEmpty())
@@ -186,7 +186,7 @@ public record QueryChannelTestCase(
     //
     
     /** Request decomposer used in non-canonical construction/creation */
-    private static final    DataRequestDecomposer   PRCR_DECOMP = DataRequestDecomposer.create();
+    private static final    DataRequestDecomposer   PRCR_DECOMP = DataRequestDecomposer.from();
     
     /** Internal test case index (counter) */
     private static          int IND_CASE = 1;

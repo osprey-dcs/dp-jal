@@ -57,7 +57,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * <h2>NOTES:</h2>
  * <ul>
  * <li>
- * Example request instances created by enumeration constants with method <code>{@link #create()}</code> defer 
+ * Example request instances created by enumeration constants with method <code>{@link #createRequest()}</code> defer 
  * to the <code>DpTestArchiveRquestCreator</code> utility.
  * </li>
  * <li>
@@ -1155,7 +1155,7 @@ public enum TestArchiveRequest {
      * @see #getRequestDuration()
      * @see #getStartTimeOffset()
      */
-    public DpDataRequest    create() {
+    public DpDataRequest    createRequest() {
         DpDataRequest rqst = TestArchiveRequestCreator.createRequest(
                 this.enmType, 
                 this.cntPvs, 

@@ -27,6 +27,7 @@
  */
 package com.ospreydcs.dp.jal.grpc.util;
 
+import java.io.UncheckedIOException;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -45,6 +46,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.ospreydcs.dp.grpc.v1.annotation.DataBlock;
 import com.ospreydcs.dp.grpc.v1.common.Array;
 import com.ospreydcs.dp.grpc.v1.common.Attribute;
+import com.ospreydcs.dp.grpc.v1.common.DataBucket;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
@@ -1469,27 +1471,75 @@ public final class ProtoMsg {
     
     /**
      * <p>
+     * Extracts the <code>DataColumn</code> message from the argument.
+     * </p>
+     * <p>
+     * The argument can contain an expanded (raw) <code>DataColumn</code> message or a compressed
+     * <code>SerializedDataColumn</code> message depending upon the originate request.  This method
+     * extracts the data column and unpacks it if necessary using <code>{@link #convertTo(SerializedDataColumn)}</code>.
+     * </p>
+     * 
+     * @param msgBucket a data bucket containing either an expanded or serialized data column 
+     * 
+     * @return  the <code>DataColumn</code> message contained in the argument
+     * 
+     * @throws UncheckedIOException     argument contained a serialized data column that was corrupted
+     * @throws MissingResourceException the argument contained no data column
+     * 
+     * @see #convertTo(SerializedDataColumn)
+     */
+    public static DataColumn    extractDataColumn(DataBucket msgBucket) throws UncheckedIOException, MissingResourceException {
+        
+        if (msgBucket.hasDataColumn())
+            return msgBucket.getDataColumn();
+        
+        if (msgBucket.hasSerializedDataColumn()) {
+            SerializedDataColumn    msgSerCol = msgBucket.getSerializedDataColumn();
+            DataColumn              msgDatCol = ProtoMsg.convertTo(msgSerCol);  // throws UncheckedIOException
+            
+            return msgDatCol;
+        }
+        
+        throw new MissingResourceException(JavaRuntime.getQualifiedCallerName() + " - DataBucket contained no data column.", DataBucket.class.getName(), "DataColumn");
+    }
+    
+    /**
+     * <p>
      * Creates a new Data Platform <code>DataColumn</code> Protocol Buffer message from the given argument.
      * </p>
      * <p>
      * Extracts the data values byte string from the given argument which is then used to create a new 
-     * <code>DataColumn</code> message from the <code>{@link DataColumn#parseFrom(ByteString)</code> method.
+     * <code>DataColumn</code> message from the <code>{@link DataColumn#parseFrom(ByteString)}</code> method.
      * A new <code>DataColumn</code> is then created with a builder. The data values of the above are used 
      * within the builder along with the name field of the argument. 
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * A <code>SerializedDataColumn</code> message is unpacked with 
+     * <code>{@link DataColumn#parseFrom(ByteString)}</code> which throws a <code>InvalidProtocolBufferException</code>.
+     * The <code>{@link InvalidProtocolBufferException}</code> inherits from <code>{@link IOException}</code> and, thus,
+     * is not a runtime exception and must be explicitly caught.  This method catches the hard exception and packages
+     * it into the runtime exception <code>{@link UncheckedIOException}</code>.
      * </p>
      *  
      * @param msgColSer source data for the returned message
      *  
      * @return  a new <code>DataColumn</code> message created from the argument data
      * 
-     * @throws InvalidProtocolBufferException   the argument is invalid in some way: malformed, corrupt, or bad length
+     * @throws UncheckedIOException   the argument is invalid in some way: malformed, corrupt, or bad length
      */
-    public static DataColumn    convertTo(SerializedDataColumn msgColSer) throws InvalidProtocolBufferException {
-//        String      strName = msgColSer.getName();
-        ByteString  vecBytes = msgColSer.getDataColumnBytes();
-        DataColumn  msgCol = DataColumn.parseFrom(vecBytes);        // throws InvalidProtocolBufferException
+    public static DataColumn    convertTo(SerializedDataColumn msgColSer) throws UncheckedIOException {
+        
+        try {
+//          String      strName = msgColSer.getName();
+            ByteString  vecBytes = msgColSer.getDataColumnBytes();
+            DataColumn  msgCol = DataColumn.parseFrom(vecBytes);        // throws InvalidProtocolBufferException
 
-        return msgCol;
+            return msgCol;
+
+        } catch (InvalidProtocolBufferException e) {
+            throw new UncheckedIOException(JavaRuntime.getQualifiedMethodNameSimple() + " - SerializedDataColumn corrupt, could not be unpacked.", e);
+        }
     }
     
     /**

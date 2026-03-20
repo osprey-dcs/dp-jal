@@ -99,7 +99,7 @@ public class DataRequestDecomposer {
      *  
      * @return  new <code>DataRequestDecomposer</code> instance configured to default parameters
      */
-    public static DataRequestDecomposer create() {
+    public static DataRequestDecomposer from() {
         return new DataRequestDecomposer();
     }
 
@@ -572,11 +572,13 @@ public class DataRequestDecomposer {
      * 
      * @return              an equivalent decompose query request where query domain is 
      *                      decomposed by argument parameters
-     *                      
+     *
+     * @throws  UnsupportedOperationException   an unexpected <code>RequestDecompType</code> enumeration was encountered
+     *     
      * @see #buildCompositeRequest(RequestDecompType, int)
      * @see #buildCompositeRequestGrid(int, int)                      
      */
-    public List<DpDataRequest> buildCompositeRequest(DpDataRequest rqst, RequestDecompParams recDomains) {
+    public List<DpDataRequest> buildCompositeRequest(DpDataRequest rqst, RequestDecompParams recDomains) throws UnsupportedOperationException {
         
         // Check if decomposition is enabled
         if (!this.bolEnabled)
@@ -587,7 +589,7 @@ public class DataRequestDecomposer {
         case HORIZONTAL -> this.buildCompositeRequest(rqst, recDomains.type(), recDomains.cntHorizontal());
         case VERTICAL -> this.buildCompositeRequest(rqst, recDomains.type(), recDomains.cntVertical());
         case GRID -> this.buildCompositeRequestGrid(rqst, recDomains.cntHorizontal(), recDomains.cntVertical());
-        default -> throw new IllegalArgumentException("Unexpected value: " + recDomains.type());
+        default -> throw new UnsupportedOperationException("Unexpected value: " + recDomains.type());
         };
     }
     
@@ -611,7 +613,7 @@ public class DataRequestDecomposer {
      * <h2>NOTES:</h2>
      * <ul>
      * <li>If the argument is odd for a grid domain, the remainder is allocated to the cntVer axis.</li>
-     * <li>The current <code>DpDataRequest</code> instance is left unchanged.</li>
+     * <li>The given <code>DpDataRequest</code> instance is left unchanged.</li>
      * <li>All returned <code>DpDataRequest</code> are new, independent request objects.</li>
      * </ul>
      * </p> 

@@ -45,7 +45,7 @@ public record    TestCase(
 {
 
     /** Request decomposer used in non-canonical construction/creation */
-    private static final    DataRequestDecomposer   PRCR_DECOMP = DataRequestDecomposer.create();
+    private static final    DataRequestDecomposer   PRCR_DECOMP = DataRequestDecomposer.from();
 
 
     //

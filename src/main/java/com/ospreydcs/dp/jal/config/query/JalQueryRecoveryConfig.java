@@ -20,7 +20,7 @@ public class JalQueryRecoveryConfig extends CfgStructure<JalQueryRecoveryConfig>
     
     /** Default parameters for Query Service data recovery serialization use */
     @ACfgOverride.Struct(pathelem="SERIALIZE")
-    public JalColSerializeConfig       serialize;
+    public JalColSerializeConfig     serialize;
     
     /** Default parameters for Query Service time-series data request queries */
     @ACfgOverride.Struct(pathelem="REQUEST")

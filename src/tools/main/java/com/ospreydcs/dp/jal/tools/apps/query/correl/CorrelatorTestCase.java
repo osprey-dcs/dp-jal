@@ -108,7 +108,7 @@ public record CorrelatorTestCase(
             int                 szConcPivot
             )
     {
-        return new CorrelatorTestCase(IND_CASE, enmRqst, Set.of(), enmRqst.create(), bolConcOpt, cntMaxThrds, szConcPivot); 
+        return new CorrelatorTestCase(IND_CASE, enmRqst, Set.of(), enmRqst.createRequest(), bolConcOpt, cntMaxThrds, szConcPivot); 
     }
     
     /**

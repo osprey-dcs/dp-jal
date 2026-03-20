@@ -49,7 +49,7 @@ import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionChannel;
 import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMessageBuffer;
 import com.ospreydcs.dp.jal.tools.apps.ingest.common.FrameProcessorConfig;
 import com.ospreydcs.dp.jal.tools.apps.ingest.common.IngestionChannelConfig;
-import com.ospreydcs.dp.jal.tools.apps.ingest.common.MessageConsumer;
+import com.ospreydcs.dp.jal.tools.apps.ingest.common.MessageConsumerTask;
 import com.ospreydcs.dp.jal.tools.common.datagen.IFrameFactory;
 import com.ospreydcs.dp.jal.tools.common.datagen.factories.specs.FrameFactorySpec;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
@@ -646,7 +646,7 @@ public record IngestChanTestCase(
         
         // Configure processor and message consumer task
         this.recProcCfg.configure(PROC_FRAMES);
-        MessageConsumer thrdMsgSnk = MessageConsumer.from(PROC_FRAMES, true);
+        MessageConsumerTask thrdMsgSnk = MessageConsumerTask.from(PROC_FRAMES, true);
         
         // Initialize the processor and consumer task 
         try {

@@ -129,21 +129,29 @@ public class RawClockedData extends RawCorrelatedData {
      */
     @Override
     synchronized
-    public boolean insertBucketData(DataBucket msgBucket) {
+    public boolean insertBucketData(DataBucket msgBucket) /* throws InvalidProtocolBufferException, MissingResourceException */ {
         
         // Check argument for sampling clock
         if (!msgBucket.getDataTimestamps().hasSamplingClock())
             return false;
             
-        SamplingClock   msgBckClk = msgBucket.getDataTimestamps().getSamplingClock();
-        DataColumn      msgBckCol = msgBucket.getDataColumn();
-        String          strSrcNm  = msgBckCol.getName();
-        
         // Check if list addition is possible 
         // - must have same sampling clock
+        SamplingClock   msgBckClk = msgBucket.getDataTimestamps().getSamplingClock();
         if (!ProtoTime.equals(this.msgClock, msgBckClk)) 
             return false;
 
+        // Extract the data column
+        DataColumn      msgBckCol;
+        String          strSrcNm;
+        try {
+            msgBckCol = ProtoMsg.extractDataColumn(msgBucket);
+            strSrcNm = msgBckCol.getName();
+            
+        } catch (Exception e) {
+            return false;
+        }
+        
         // - data source must not already be present
         if (super.setSrcNms.contains(strSrcNm))
             return false;

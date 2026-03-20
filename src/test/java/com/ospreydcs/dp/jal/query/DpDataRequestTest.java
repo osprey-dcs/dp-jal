@@ -117,7 +117,7 @@ public class DpDataRequestTest {
     
     
     /** A common request object that can be used for comparison */ 
-    private static final DpDataRequest   DPRQST_EMPTY = DpDataRequest.create();
+    private static final DpDataRequest   DPRQST_EMPTY = DpDataRequest.from();
     
 
     //
@@ -150,7 +150,7 @@ public class DpDataRequestTest {
      */
     @Before
     public void setUp() throws Exception {
-        this.rqstTest = DpDataRequest.create();
+        this.rqstTest = DpDataRequest.from();
     
         this.rqstTest.selectSources(LST_SOURCE_NAMES);
         this.rqstTest.rangeBetween(INS_ARC_START, INS_ARC_STOP);
@@ -169,11 +169,11 @@ public class DpDataRequestTest {
     //
     
     /**
-     * Test method for {@link com.ospreydcs.dp.jal.query.DpDataRequest#create()}.
+     * Test method for {@link com.ospreydcs.dp.jal.query.DpDataRequest#from()}.
      */
     @Test
     public final void testNewRequest() {
-        DpDataRequest dpRqst = DpDataRequest.create();
+        DpDataRequest dpRqst = DpDataRequest.from();
         
         QueryDataRequest msgRqst = dpRqst.buildQueryRequest();
         QuerySpec        msgQry = msgRqst.getQuerySpec();
@@ -213,7 +213,7 @@ public class DpDataRequestTest {
     public final void testBuildCompositeRequestCompositeTypeIntHorizontal() {
         RequestDecompType   ENM_TYPE = RequestDecompType.HORIZONTAL;
         final int               CNT_QUERIES = 6;
-        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
+        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.from();
         
         List<DpDataRequest> lstSubRqsts = rqstDecomp.buildCompositeRequest(this.rqstTest, ENM_TYPE, CNT_QUERIES);
         
@@ -256,7 +256,7 @@ public class DpDataRequestTest {
     public final void testBuildCompositeRequestCompositeTypeIntVertical() {
         RequestDecompType   ENM_TYPE = RequestDecompType.VERTICAL;
         final int               CNT_QUERIES = 4;
-        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
+        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.from();
         
         List<DpDataRequest> lstSubRqsts = rqstDecomp.buildCompositeRequest(this.rqstTest, ENM_TYPE, CNT_QUERIES);
         
@@ -315,7 +315,7 @@ public class DpDataRequestTest {
     public final void testBuildCompositeRequestCompositeTypeIntGrid() {
         RequestDecompType   ENM_TYPE = RequestDecompType.GRID;
         final int               CNT_QUERIES = 5;
-        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.create();
+        DataRequestDecomposer   rqstDecomp = DataRequestDecomposer.from();
         
         List<DpDataRequest> lstSubRqsts = rqstDecomp.buildCompositeRequest(this.rqstTest, ENM_TYPE, CNT_QUERIES);
         
@@ -376,7 +376,7 @@ public class DpDataRequestTest {
      */
     @Test
     public final void testBuildQueryRequest() {
-        DpDataRequest   rqst = DpDataRequest.create();
+        DpDataRequest   rqst = DpDataRequest.from();
         
         Assert.assertEquals(DPRQST_EMPTY, rqst);
     }
@@ -440,7 +440,7 @@ public class DpDataRequestTest {
     public final void testRangeBetween() {
 
         // Set the request range
-        DpDataRequest rqst = DpDataRequest.create();
+        DpDataRequest rqst = DpDataRequest.from();
         rqst.rangeBetween(INS_ARC_START, INS_ARC_STOP);
 
         // Extract the target timestamp(s) and compare
@@ -467,7 +467,7 @@ public class DpDataRequestTest {
     public final void testRangeDuration() {
 
         // Set the request range
-        DpDataRequest rqst = DpDataRequest.create();
+        DpDataRequest rqst = DpDataRequest.from();
         rqst.rangeDuration(INS_ARC_START, LNG_ARC_DURATION, TM_ARC_DURATION);
 
         // Extract the target timestamp(s) and compare

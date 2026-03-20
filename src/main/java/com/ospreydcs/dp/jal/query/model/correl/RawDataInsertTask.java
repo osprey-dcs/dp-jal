@@ -274,7 +274,7 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
     @Override
     public void run() {
         
-        // Attempt bucket insertion for each <code>CorrelatedQueryDataOld</code> instance and get result
+        // Attempt bucket insertion for each <code>RawCorrelatedData</code> instance and get result
         this.bolSuccess = this.setTarget
                 .stream()
                 .anyMatch(blk -> blk.insertBucketData(this.msgSubject));
@@ -284,7 +284,11 @@ public class RawDataInsertTask implements Runnable, Callable<Boolean> {
         // TODO - Remove
         if (!this.bolSuccess) {
             
-            String strColName = this.msgSubject.getDataColumn().getName(); 
+            String strColName;
+            if (msgSubject.hasDataColumn())
+                strColName = this.msgSubject.getDataColumn().getName();
+            else 
+                strColName = this.msgSubject.getSerializedDataColumn().getName();
             
             if (BOL_LOGGING)
                 LOGGER.debug("{} - A data bucket insertion task FAILED for source {}.", JavaRuntime.getQualifiedMethodNameSimple(), strColName);

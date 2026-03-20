@@ -208,7 +208,7 @@ public interface IQueryService extends IConnection {
      * @see DpDataRequest
      */
     public default DpDataRequest        newDataRequest() {
-        return DpDataRequest.create();
+        return DpDataRequest.from();
     }
 
     

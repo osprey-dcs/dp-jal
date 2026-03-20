@@ -8,7 +8,7 @@ package com.ospreydcs.dp.jal.query.model.request;
  * Query domain decompositions are used for <em>decompose query</em> construction.
  * </p>
  * 
- * @param type              the type of decompose query 
+ * @param type              the type of decompose query (<code>RequestDecompType</code>)
  * @param cntHorizontal     number of sub-division for the data sources axis
  * @param cntVertical       number of sub-divisions for the time range axis.
  * 

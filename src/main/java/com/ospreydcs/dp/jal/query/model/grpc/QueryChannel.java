@@ -246,6 +246,7 @@ public class QueryChannel {
     //
     
     /** Activated flag - no longer needed, now all blocking operations */
+    @SuppressWarnings("unused")
     private boolean     bolActivated = false;
     
     /** Activation lock */ 

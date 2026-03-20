@@ -30,12 +30,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Logger;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.ospreydcs.dp.grpc.v1.common.DataBucket;
 import com.ospreydcs.dp.grpc.v1.common.DataColumn;
 import com.ospreydcs.dp.grpc.v1.common.SamplingClock;
@@ -47,6 +49,7 @@ import com.ospreydcs.dp.jal.common.ResultStatus;
 import com.ospreydcs.dp.jal.common.TimeInterval;
 import com.ospreydcs.dp.jal.config.JalConfig;
 import com.ospreydcs.dp.jal.config.query.JalQueryConfig;
+import com.ospreydcs.dp.jal.grpc.util.ProtoMsg;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 import com.ospreydcs.dp.jal.util.Log4j;
 
@@ -384,7 +387,7 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
         this.tvlRange = tvlRange;
         
         // Extract the process data and store
-        DataColumn  msgDataCol = msgBucket.getDataColumn();
+        DataColumn  msgDataCol = ProtoMsg.extractDataColumn(msgBucket); // throws UncheckedIOException, MissingResourceException
         
         this.setSrcNms.add(msgDataCol.getName());
         this.lstMsgCols.add(msgDataCol);
@@ -502,8 +505,11 @@ public abstract class RawCorrelatedData implements Comparable<RawCorrelatedData>
      * 
      * @return      <code>true</code> only if argument data was successfully added to this reference,
      *              <code>false</code> otherwise (nothing done)
+     *              
+     * @throws InvalidProtocolBufferException   the argument is invalid in some way: malformed, corrupt, or bad length
+     * @throws MissingResourceException         the argument contained no data column
      */
-    public abstract boolean insertBucketData(DataBucket msgBucket);
+    public abstract boolean insertBucketData(DataBucket msgBucket) /*throws InvalidProtocolBufferException, MissingResourceException */;
     
 
     //

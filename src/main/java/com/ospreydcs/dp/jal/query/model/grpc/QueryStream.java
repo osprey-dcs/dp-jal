@@ -210,9 +210,9 @@ public abstract class QueryStream implements Runnable, Callable<Boolean>, Stream
      * @see QueryBidiStream
      */
     public static QueryStream  from(
-            DpDataRequest dpRequest,
-            DpQueryServiceStub  stubAsync,
-            Consumer<QueryDataResponse.QueryData> fncDataSink) throws IllegalArgumentException   
+            DpDataRequest                           dpRequest,
+            DpQueryServiceStub                      stubAsync,
+            Consumer<QueryDataResponse.QueryData>   fncDataSink) throws IllegalArgumentException   
     {
         // Extract the preferred stream type and the Protobuf query result message
         DpGrpcStreamType    enmType = dpRequest.getStreamType();
@@ -220,11 +220,6 @@ public abstract class QueryStream implements Runnable, Callable<Boolean>, Stream
         
 
         return QueryStream.from(enmType, msgRqst, stubAsync, fncDataSink);
-//        return switch (enmType) {
-//        case BACKWARD -> QueryUniStream.newUniTask(msgRqst, stubAsync, ifcDataSink);
-//        case BIDIRECTIONAL -> QueryBidiStream.newBidiTask(msgRqst, stubAsync, ifcDataSink);
-//        default -> throw new IllegalArgumentException("Illegal stream type: " + enmType);
-//        };
     }
     
     /**
@@ -266,7 +261,7 @@ public abstract class QueryStream implements Runnable, Callable<Boolean>, Stream
      * @see QueryBidiStream
      */
     public static QueryStream  from(
-            DpGrpcStreamType   enmStreamType,
+            DpGrpcStreamType    enmStreamType,
             QueryDataRequest    msgRequest,
             DpQueryServiceStub  stubAsync,
             Consumer<QueryDataResponse.QueryData> fncDataSink) throws IllegalArgumentException

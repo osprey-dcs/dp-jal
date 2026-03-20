@@ -35,6 +35,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.ospreydcs.dp.grpc.v1.common.DataValue;
@@ -48,7 +49,6 @@ import com.ospreydcs.dp.jal.ingest.IIngestionService;
 import com.ospreydcs.dp.jal.ingest.IIngestionStream;
 import com.ospreydcs.dp.jal.model.AAdvancedApi;
 import com.ospreydcs.dp.jal.model.AUnavailable;
-import com.ospreydcs.dp.jal.model.AUnavailable.STATUS;
 import com.ospreydcs.dp.jal.util.JavaRuntime;
 
 
@@ -115,7 +115,7 @@ import com.ospreydcs.dp.jal.util.JavaRuntime;
  * <h2>NOTES:</h2>
  * <ul>
  * <li> 
- * Call the {@link #create()} method to return a <em>Query Service</em> data 
+ * Call the {@link #from()} method to return a <em>Query Service</em> data 
  * request initialized to the "empty request" query.
  * </li>
  * <li> 
@@ -193,43 +193,26 @@ public final class DpDataRequest {
     
     /**
      * <p>
-     * Creates a new <code>DpDataRequest</code> instance for creating time-series
-     * data requests from the <em>Query Service</em>.
+     * Creates a new, empty <code>DpDataRequest</code> instance for building time-series data requests for the <em>Query Service</em>.
      * </p>
      * <p>
-     * Note that the returned data request will create the 
-     * "open query", which requests all time-series data currently within the 
-     * <em>Data Platform</em> data archive since its inception.
-     * Use the "selection" and "restrictor" methods to narrow the data request
-     * results based upon specific PV names, timestamps ranges, and other 
-     * data filters.
-     * </p>
-     * <h3>The following are not currently applicable:</h3>
-     * <p>
-     * Use the <code>{@link #setPageSize(Integer)}</code> to performance tweak
-     * the size of the data pages in the <em>Query Service</em> data stream when
-     * using paged data tables (in particular, for asynchronous data requests).
-     * The default page size is given in the <i>application.yml</i> file.
+     * Note that the returned data request represents the "empty query", which requests no time-series data 
+     * currently within the <em>Data Platform</em> data archive since its inception.
+     * Use the "select" and "range" methods to open the data request results based upon specific PV names, 
+     * timestamps ranges, and other data filters as they become available.
      * </p>
      * <p>
-     * Use the <code>{@link #setPageStartIndex(Integer)}</code> tell the 
-     * <em>Query Service</em> to send the specific page index for the given
-     * query.  For asynchronously streamed data (<code>QueryRequest</code>) 
-     * this instructs the <em>Query Service</em> to send data pages from the given 
-     * index on to the last page index.
-     * <br/> <br/>
-     * &nbsp; &nbsp; <i>setting this value </i>> 1<i> sends only the tail of the data request.</i> 
-     * of the full request.
-     * <br/><br/>
-     * Thus, <b>use at your own risk</b>.
-     * </p> 
+     * <h2>NOTES:</h2>
+     * See method <code>{@link #reset()}</code> for the default attribute values
+     * of the returned instance.
+     * </p>
      * 
-     * @return  a new "open query" <code>DpDataRequest</code> instance
+     * @return  a new "empty query" <code>DpDataRequest</code> instance
      */
-    public static DpDataRequest create() {
-        DpDataRequest bldr = new DpDataRequest();
+    public static DpDataRequest from() {
+        DpDataRequest rqst = new DpDataRequest();
         
-        return bldr;
+        return rqst;
     }
     
     /**
@@ -242,6 +225,54 @@ public final class DpDataRequest {
      * The returned request can be further modified using the "selection" and "restrictor" methods to narrow 
      * the returned data request based upon specific PV names, timestamps ranges, and other data filters.
      * </p>
+     * <p>
+     * <h2>Default Parameters</h2>
+     * This creator uses the following default parameters from the JAL default configuration:
+     * <ul>
+     * <li><code>{@link #BOL_COL_SER_ENBL}</code> = {@value #BOL_COL_SER_ENBL}</li>.
+     * <li><code>{@link #ENM_STREAM_DEF}</code> = {@value #ENM_STREAM_DEF}</li>.
+     * </ul>
+     * </p>
+     * <p>
+     * <h2>NOTES:</h2>
+     * <p>
+     * Invocation of this method for time-series data request creation assumes familiarity with the internal
+     * structure and operation of the <code>DpDataRequest</code> class.
+     * Thus, <b>use at your own risk</b>.
+     * </p>
+     *  
+     * @param strId         the request identifier used by Java API Library
+     * @param insStart      the start time of the data request
+     * @param insEnd        the final time of the data request
+     * @param lstPvNames    the data source names (i.e., process variable names) of the data request
+     * 
+     * @return  a new Query Service data request initialized with the given arguments
+     * 
+     * @throws  IllegalArgumentException    the given stream type is out of context
+     */
+    public static DpDataRequest from(String strId, Instant insStart, Instant insEnd, List<String> lstPvNames) 
+            throws IllegalArgumentException {
+        
+        return new DpDataRequest(strId, BOL_COL_SER_ENBL, ENM_STREAM_DEF, insStart, insEnd, lstPvNames);
+    }
+    
+    /**
+     * <p>
+     * Creates a new, initialized <code>DpDataRequest</code> instance defining a time-series data requests 
+     * from the <em>Query Service</em>.
+     * </p>
+     * <p>
+     * Note that the returned data request is defined by the given parameters. 
+     * The returned request can be further modified using the "selection" and "restrictor" methods to narrow 
+     * the returned data request based upon specific PV names, timestamps ranges, and other data filters.
+     * </p>
+     * <p>
+     * <h2>Default Parameters</h2>
+     * This creator uses the following default parameters from the JAL default configuration:
+     * <ul>
+     * <li><code>{@link #BOL_COL_SER_ENBL}</code> = {@value #BOL_COL_SER_ENBL}</li>.
+     * </ul>
+     * <p>
      * <h2>NOTES:</h2>
      * <p>
      * Invocation of this method for time-series data request creation assumes familiarity with the internal
@@ -262,7 +293,7 @@ public final class DpDataRequest {
     public static DpDataRequest from(String strId, DpGrpcStreamType enmStreamType, Instant insStart, Instant insEnd, List<String> lstPvNames) 
             throws IllegalArgumentException {
         
-        return new DpDataRequest(strId, enmStreamType, insStart, insEnd, lstPvNames);
+        return new DpDataRequest(strId, BOL_COL_SER_ENBL, enmStreamType, insStart, insEnd, lstPvNames);
     }
     
     /**
@@ -275,6 +306,7 @@ public final class DpDataRequest {
      * The returned request can be further modified using the "selection" and "restrictor" methods to narrow 
      * the returned data request based upon specific PV names, timestamps ranges, and other data filters.
      * </p>
+     * <p>
      * <h2>NOTES:</h2>
      * <p>
      * <ul>
@@ -290,7 +322,9 @@ public final class DpDataRequest {
      * </ul>
      * </p>
      *  
-     * @param enmStreamType the preferred gRPC stream type for the  
+     * @param strRqstId     the request identifier
+     * @param bolColSerEnbl enable/disable data column serialization in request recovery
+     * @param enmStreamType the preferred gRPC stream type for the request recovery
      * @param insStart      the start time of the data request
      * @param insEnd        the final time of the data request
      * @param lstPvNames    the data source names (i.e., process variable names) of the data request
@@ -299,10 +333,10 @@ public final class DpDataRequest {
      * 
      * @throws  IllegalArgumentException    the given stream type is out of context
      */
-    public static DpDataRequest from(DpGrpcStreamType enmStreamType, Instant insStart, Instant insEnd, List<String> lstPvNames) 
+    public static DpDataRequest from(String strRqstId, boolean bolColSerEnbl, DpGrpcStreamType enmStreamType, Instant insStart, Instant insEnd, List<String> lstPvNames) 
             throws IllegalArgumentException {
         
-        return new DpDataRequest(null, enmStreamType, insStart, insEnd, lstPvNames);
+        return new DpDataRequest(strRqstId, bolColSerEnbl, enmStreamType, insStart, insEnd, lstPvNames);
     }
     
 
@@ -315,28 +349,25 @@ public final class DpDataRequest {
     
     
     //
-    // Class Types
-    //
-    
-    
-    //
     // Class Constants
     //
     
-//    /** The default page size to use when creating gRPC paginated queries */
-//    @Deprecated
-//    private static final Integer                SZ_PAGES = CFG_DEFAULT.query.pageSize;
+    /** Prefix given to random request ID string when no explicit request ID is given */
+    private static final String                 STR_RQST_ID_PRFX = "JAL-";
     
+    
+    /** Use serialized data column for recovery */
+    private static final boolean                BOL_COL_SER_ENBL = CFG_DEFAULT.query.data.serialize.enabled;
     
     /** gRPC stream type default preference */
-    private static final DpGrpcStreamType       ENM_STREAM_PREF = CFG_DEFAULT.query.data.recovery.stream.preferred;
+    private static final DpGrpcStreamType       ENM_STREAM_DEF = CFG_DEFAULT.query.data.recovery.stream.preferred;
     
     
     /** The start of this time epoch (Jan 1, 1970) */
     private static final Instant                INS_EPOCH = Instant.EPOCH;
     
     /** Inception instant of the Data Platform archive */
-    private static final Instant                INS_INCEPT = Instant.parse( CFG_DEFAULT.archive.inception );
+    private static final Instant                INS_INCEPT = CFG_DEFAULT.archive.inceptionInstant();
     
     
 //    /** Use decompose queries feature */
@@ -362,36 +393,28 @@ public final class DpDataRequest {
     // Instance Attributes
     //
     
-    
-//    /** The size of a data page, that is, the number of data rows per page */
-//    @Deprecated
-//    @SuppressWarnings("unused")
-//    private int szPage = SZ_PAGES;
-    
-    /** The initial index of first page to return, that is, the starting page number */
-    @Deprecated
-    @SuppressWarnings("unused")
-    private int indStartPage = 0;
-    
     /** Optional request identifier or name */
     private String              strRqstId = null;
+    
+    /** Optional data column serialization enable/disable flag */
+    private boolean             bolColSerEnbl = BOL_COL_SER_ENBL;
 
     /** Optional gRPC stream type */
-    private DpGrpcStreamType    enmStrmType = ENM_STREAM_PREF;
+    private DpGrpcStreamType    enmStrmType = ENM_STREAM_DEF;
     
     /** The time range start instant */
     private Instant             insStart = INS_INCEPT;
     
     /** The time range stop instant */
-    private Instant             insStop = Instant.now();
+    private Instant             insStop = INS_INCEPT;
     
 
     //
     // Instance Resources
     //
     
-    /** "SELECT" component of the query - identifies data source names and attributes */
-    private final LinkedList<String>  lstSelCmps = new LinkedList<String>();
+    /** Data source (PV) names in request - i.e., the "SELECT" component of the query */
+    private final LinkedList<String>  lstPvNames = new LinkedList<String>();
     
     /** "WHERE" components of the query - data filters to restrict time interval  */
     private final LinkedList<String>  lstWhrCmps = new LinkedList<String>();
@@ -575,24 +598,23 @@ public final class DpDataRequest {
      * </p>
      * <p>
      * <ul>
-     * <li>Sets preferred gRPC stream type back to default preference.</li>
-     * <li>Sets the start time to {@link #INS_INCEPT}
-     * <li>Clears all previous calls to selectors, range, and restrictors.</li>
-     * <li>Sets the page size to the application default (in properties).</li>
-     * <li>Sets the start page index to 0 (send all data pages).</li>
+     * <li>Sets the request ID to random UUID string prefixed with <code>{@link #STR_RQST_ID_PRFX}</code> = {@value #STR_RQST_ID_PRFX}</code>.</li>
+     * <li>Sets the data columns serialization back to default <code>{@link #BOL_COL_SER_ENBL}</code> = {@value #BOL_COL_SER_ENBL}.</li>
+     * <li>Sets preferred gRPC stream type back to default preference <code>{@link #ENM_STREAM_DEF}</code> = {@value #ENM_STREAM_DEF}.</li>
+     * <li>Sets the start time to <code>{@link #INS_INCEPT}</code> = {@value #INS_INCEPT}.</li>
+     * <li>Sets the stop time to <code>{@link #INS_INCEPT}</code> = {@value #INS_INCEPT}.</li>
+     * <li>Clears PV name selections.</li>
      * </ul>
      */
     public void reset() {
-//        this.bolCursor = false;
-        this.indStartPage = 0;
-//        this.szPage = SZ_PAGES;
-
-        this.strRqstId = null;
-        this.enmStrmType = ENM_STREAM_PREF;
+        UUID uuid = UUID.randomUUID();
+        this.strRqstId = STR_RQST_ID_PRFX + uuid.toString();
+        this.bolColSerEnbl = BOL_COL_SER_ENBL;
+        this.enmStrmType = ENM_STREAM_DEF;
         this.insStart = INS_INCEPT;
         this.insStop = INS_INCEPT;
-//        this.insStop = Instant.now();
-        this.lstSelCmps.clear();
+        
+        this.lstPvNames.clear();
         
         this.lstWhrCmps.clear();
     }
@@ -607,7 +629,7 @@ public final class DpDataRequest {
      * @see java.lang.Object#clone()
      */
     public DpDataRequest    clone() {
-        return new DpDataRequest(this.strRqstId, this.enmStrmType, this.insStart, this.insStop, new LinkedList<String>(this.lstSelCmps));
+        return new DpDataRequest(this.strRqstId, this.bolColSerEnbl, this.enmStrmType, this.insStart, this.insStop, new LinkedList<String>(this.lstPvNames));
     }
     
     /**
@@ -642,15 +664,16 @@ public final class DpDataRequest {
     public QueryDataRequest buildQueryRequest() {
         
         // Create the query specification (the request object)
-        QuerySpec.Builder bldrQry = QuerySpec.newBuilder();
-        bldrQry.setBeginTime( ProtoMsg.from(this.insStart) );
-        bldrQry.setEndTime( ProtoMsg.from( this.insStop) );
-        bldrQry.addAllPvNames(this.lstSelCmps);
-        QuerySpec msgQry = bldrQry.build();
+        QuerySpec.Builder bldrSpec = QuerySpec.newBuilder();
+        bldrSpec.setUseSerializedDataColumns(this.bolColSerEnbl);
+        bldrSpec.setBeginTime( ProtoMsg.from(this.insStart) );
+        bldrSpec.setEndTime( ProtoMsg.from(this.insStop) );
+        bldrSpec.addAllPvNames( this.lstPvNames );
+        QuerySpec msgSpec = bldrSpec.build();
         
         // Create a query request from the query specification
         QueryDataRequest.Builder bldrRqst = QueryDataRequest.newBuilder();
-        bldrRqst.setQuerySpec(msgQry);
+        bldrRqst.setQuerySpec(msgSpec);
         
         QueryDataRequest msgRqst = bldrRqst.build();
         
@@ -758,7 +781,7 @@ public final class DpDataRequest {
      * @return  number of data source names within the current query configuration
      */
     public int  getSourceCount() {
-        return this.lstSelCmps.size();
+        return this.lstPvNames.size();
     }
     
     /**
@@ -778,7 +801,7 @@ public final class DpDataRequest {
      * @return  (unordered) list of all data source names in the current data request configuration
      */
     public final List<String>   getSourceNames() {
-        return this.lstSelCmps;
+        return this.lstPvNames;
     }
     
     /**
@@ -1146,6 +1169,26 @@ public final class DpDataRequest {
     
     /**
      * <p>
+     * Enables/disables data column serialization in time-series data request recovery.
+     * </p>
+     * <p>
+     * Setting the data column serialization to <code>true</code> requests that the Query Service
+     * return data columns in their serialized form.  The data transmission process is typically faster
+     * and more efficient when data columns are managed in their serialized form (both by gRPC and 
+     * Protocol Buffers).  However, data columns must be explicitly unpacked at the client side which
+     * may require additional performance costs.  Generally, the effect is an overall increase in
+     * data transport and reconstruction performance.
+     * </p>
+     * 
+     * @param bolColSerEnbl <code>true</code> request data column serialization from Query Service,
+     *                      <code>false</code> transport data columns in their expanded format
+     */
+    public void enableDataColumnSerialization(boolean bolColSerEnbl) {
+        this.bolColSerEnbl = bolColSerEnbl;
+    }
+    
+    /**
+     * <p>
      * Sets the gRPC data stream type to use when recovering query results set.
      * </p>
      * <p>
@@ -1171,10 +1214,10 @@ public final class DpDataRequest {
      * performance considerations.  The default value is current given by
      * <code>
      * <pre>
-     *   {@link #ENM_STREAM_PREF} = {@value #ENM_STREAM_PREF}
+     *   {@link #ENM_STREAM_DEF} = {@value #ENM_STREAM_DEF}
      * </pre>
      * </code> 
-     * The value for class constant <code>{@link #ENM_STREAM_PREF}</code> is taken from the Query Service
+     * The value for class constant <code>{@link #ENM_STREAM_DEF}</code> is taken from the Query Service
      * API configuration in <code>{@link JalConfig}</code>.
      * </li>
      * </ul>
@@ -1221,32 +1264,32 @@ public final class DpDataRequest {
 //    public void setPageSize(Integer szPage) {
 //        this.szPage = szPage;
 //    }
-    
-    /**
-     * <p>
-     * Sets the page index of the data request.
-     * We assume that a previous request has already been sent to the
-     * <em>Query Service</em> to initiate a data stream.
-     * Thus, the resultant query built by the <code>DpDataRequest</code>
-     * contains only a request for this page under the assumption that
-     * it applies to a previous snapshot data request.
-     * </p>
-     * <p> 
-     * Defaults to index 0 which indicates that the 
-     * <em>Query Service</em> should send all pages of the resultant query
-     * (i.e., initiate a data stream).
-     * </p>
-     * <p>
-     * <b>Use at your own risk</b> as calling this method changes the very
-     * nature of the resultant data query request.
-     * </p>  
-     * 
-     * @param indStartPage start page index of the streamed data
-     */
-    @AUnavailable(status=STATUS.UNDER_REVIEW)
-    public void setPageStartIndex(Integer indStartPage) {
-        this.indStartPage = indStartPage;
-    }
+//    
+//    /**
+//     * <p>
+//     * Sets the page index of the data request.
+//     * We assume that a previous request has already been sent to the
+//     * <em>Query Service</em> to initiate a data stream.
+//     * Thus, the resultant query built by the <code>DpDataRequest</code>
+//     * contains only a request for this page under the assumption that
+//     * it applies to a previous snapshot data request.
+//     * </p>
+//     * <p> 
+//     * Defaults to index 0 which indicates that the 
+//     * <em>Query Service</em> should send all pages of the resultant query
+//     * (i.e., initiate a data stream).
+//     * </p>
+//     * <p>
+//     * <b>Use at your own risk</b> as calling this method changes the very
+//     * nature of the resultant data query request.
+//     * </p>  
+//     * 
+//     * @param indStartPage start page index of the streamed data
+//     */
+//    @AUnavailable(status=STATUS.UNDER_REVIEW)
+//    public void setPageStartIndex(Integer indStartPage) {
+//        this.indStartPage = indStartPage;
+//    }
     
     
     //
@@ -1400,7 +1443,7 @@ public final class DpDataRequest {
      * @param strName    data source name
      */
     public void selectSource(String strName) {
-        this.lstSelCmps.add(strName);
+        this.lstPvNames.add(strName);
     }
     
     /**
@@ -1434,7 +1477,7 @@ public final class DpDataRequest {
      */
     public void selectSources(Collection<String> lstNames) {
         
-        this.lstSelCmps.addAll(lstNames);
+        this.lstPvNames.addAll(lstNames);
     }
     
     /**
@@ -1522,7 +1565,7 @@ public final class DpDataRequest {
         for (String strPvNmRegex : lstPvNmRegex) {
             String strSelQry = "`" + strPvNmRegex + ":" + strAttrNm + "`";
             
-            this.lstSelCmps.add(strSelQry);
+            this.lstPvNames.add(strSelQry);
         }
     }
     
@@ -1544,7 +1587,7 @@ public final class DpDataRequest {
         for (String strPvNmRegex : lstPvNmRegex) {
             String strSelQry = "`" + strPvNmRegex + ":alarm-status`";
             
-            this.lstSelCmps.add(strSelQry);
+            this.lstPvNames.add(strSelQry);
         }
     }
     
@@ -1566,7 +1609,7 @@ public final class DpDataRequest {
         for (String strPvNmRegex : lstPvNmRegex) {
             String strSelQry = "`" + strPvNmRegex + ":alarm-severity`";
             
-            this.lstSelCmps.add(strSelQry);
+            this.lstPvNames.add(strSelQry);
         }
     }
     
@@ -1588,7 +1631,7 @@ public final class DpDataRequest {
         for (String strPvNmRegex : lstPvNmRegex) {
             String strSelQry = "`" + strPvNmRegex + ":alarm-message`";
             
-            this.lstSelCmps.add(strSelQry);
+            this.lstPvNames.add(strSelQry);
         }
     }
     
@@ -1891,28 +1934,26 @@ public final class DpDataRequest {
      * </p>
      *
      * @param strId         the request identifier
-     * @param enmType       the preferred gRPC data stream type
+     * @param enmStrmType       the preferred gRPC data stream type
      * @param insStart      starting instant of time range
      * @param insStop       final instant of time range
      * @param lstSources    list of all data source names for the new request
      * 
      * @throws  IllegalArgumentException    the given stream type is out of context
      */
-    private DpDataRequest(String strId, DpGrpcStreamType enmType, Instant insStart, Instant insStop, List<String> lstSources) throws IllegalArgumentException {
+    private DpDataRequest(String strId, boolean bolColSerEnbl, DpGrpcStreamType enmStrmType, Instant insStart, Instant insStop, List<String> lstSources) throws IllegalArgumentException {
         
         // Check stream type
-        if (enmType == DpGrpcStreamType.FORWARD)
-            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Illegal stream type: " + enmType);
-        
-        this.indStartPage = 0;
-//        this.szPage = SZ_PAGES;
+        if (enmStrmType == DpGrpcStreamType.FORWARD)
+            throw new IllegalArgumentException(JavaRuntime.getQualifiedMethodNameSimple() + " - Illegal stream type: " + enmStrmType);
 
         this.strRqstId = strId;
-        this.enmStrmType = enmType;
+        this.bolColSerEnbl = bolColSerEnbl;
+        this.enmStrmType = enmStrmType;
         this.insStart = insStart;
         this.insStop = insStop;
         
-        this.lstSelCmps.addAll(lstSources);
+        this.lstPvNames.addAll(lstSources);
     }
     
 //    /**
@@ -2396,7 +2437,7 @@ public final class DpDataRequest {
     //
     
     /**
-     * Compares the class type and {<code>{@link #lstSelCmps}, {@link #insStart}, {@link #insStop}</code>} 
+     * Compares the class type and {<code>{@link #lstPvNames}, {@link #insStart}, {@link #insStop}</code>} 
      * attributes for equivalence. 
      *
      * @see @see java.lang.Object#equals(java.lang.Object)
@@ -2404,7 +2445,8 @@ public final class DpDataRequest {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof DpDataRequest rqst) {
-            return this.lstSelCmps.equals(rqst.lstSelCmps) &&
+            return this.lstPvNames.equals(rqst.lstPvNames) &&
+                    (this.bolColSerEnbl == rqst.bolColSerEnbl) &&
                     (this.enmStrmType == rqst.enmStrmType) &&
                     this.insStart.equals(rqst.insStart)  &&
                     this.insStop.equals(rqst.insStop);
@@ -2414,7 +2456,7 @@ public final class DpDataRequest {
     }
 
     /**
-     * Writes out the class type and {<code>{@link #lstSelCmps}, {@link #insStart}, {@link #insStop}</code>} 
+     * Writes out the class type and {<code>{@link #lstPvNames}, {@link #insStart}, {@link #insStop}</code>} 
      * attributes values. 
      *
      * @see @see java.lang.Object#toString()
@@ -2424,11 +2466,12 @@ public final class DpDataRequest {
         StringBuffer    buf = new StringBuffer(JavaRuntime.getMethodClassName());
         
         buf.append(" contents:\n");
-        buf.append("  request UD = " + this.strRqstId + "\n");
-        buf.append("  source name(s) = " + this.lstSelCmps + "\n");
+        buf.append("  request ID = " + this.strRqstId + "\n");
+        buf.append("  preferred stream type =" + this.enmStrmType + "\n");
+        buf.append("  column serialization = " + this.bolColSerEnbl + "\n");
+        buf.append("  source name(s) = " + this.lstPvNames + "\n");
         buf.append("  start time = " + this.insStart + "\n");
         buf.append("  stop time = " + this.insStop + "\n");
-        buf.append("  preferred stream = " + this.enmStrmType + "\n");
 
         return buf.toString();
     }

@@ -135,7 +135,7 @@ public class RawTmsListData extends RawCorrelatedData {
             return false;
             
         TimestampList   msgBckTms = msgBucket.getDataTimestamps().getTimestampList();
-        DataColumn      msgBckCol = msgBucket.getDataColumn();
+        DataColumn      msgBckCol = ProtoMsg.extractDataColumn(msgBucket);
         String          strSrcNm  = msgBckCol.getName();
         
         // Check if list addition is possible 

@@ -47,7 +47,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataRequest;
-import com.ospreydcs.dp.jal.ingest.model.grpc.IngestionMemoryBuffer;
 import com.ospreydcs.dp.jal.ingest.test.TestIngestDataRequestGenerator;
 import com.ospreydcs.dp.jal.model.IMessageConsumer;
 import com.ospreydcs.dp.jal.model.IMessageSupplier;

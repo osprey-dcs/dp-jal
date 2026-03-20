@@ -348,7 +348,7 @@ public class CorrelatorTestSuiteCreator {
         for (TestArchiveRequest enmRqst : this.setTestRqsts) {
             
             // Create the data request
-            DpDataRequest   rqst = enmRqst.create();
+            DpDataRequest   rqst = enmRqst.createRequest();
             rqst.selectSources(this.setSupplPvs);
             
             // Create the data request name

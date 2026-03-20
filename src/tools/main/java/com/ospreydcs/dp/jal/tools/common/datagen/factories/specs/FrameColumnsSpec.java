@@ -840,7 +840,14 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * <li>'parameters' are the set of configuration parameters for the datum factory <code>parse(String...)</code> operation,</li>
      * <li>... are any additional application command-line parameters.</li>
      * </ul>
-     * There is another supported format where the column names are given explicitly, see below for more information.
+     * There is another supported format where the column names are given explicitly as follows:
+     * <code>
+     * <pre>
+     * > java application --cols PV1 PV2 PV3 ... PVn DTYPE [parameters] [...]
+     * </pre>
+     * </code>
+     * where <code>{PV1, PV2, ..., PVn}</code> are the column names and 'cnt' = <code>n</code> in this case.
+     * See below for more information on both formats.
      * </p>
      * <p>
      * <h2>Caveat</h2>
@@ -887,8 +894,8 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      *      [colNm1 colNm2 ... colNmN [DTYPE [datum factory parameter(s)]]]
      * </pre>
      * </code>
-     * <ul>
      * where the brackets indicate optional parameters and the parameter values are given as follows:
+     * <ul>
      * <li>'colNm1 ... colNmN' are the explicit names of the data columns (arbitrary number), </li>
      * <li>'DTYPE' is a <code>JalComplexType</code> enumeration constant specifying column type,</li>
      * <li>'datum factory parameter(s)' are the configuration parameters for the datum factory <code>parse(String...)</code> operation.</li>
@@ -943,7 +950,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * @throws MalformedParametersException  an enumeration constant within the argument set was not recognized (IMAGE)
      * @throws NoSuchElementException   the column data type was unrecognized (i.e., 'DTYPE' was not supported)
      */
-    public static FrameColumnsSpec<Record> parse(String...args) throws TypeNotPresentException, NumberFormatException, ConfigurationException, UnsupportedOperationException, MalformedParametersException {
+    public static FrameColumnsSpec<Record> parse(String...args) throws TypeNotPresentException, NumberFormatException, ConfigurationException, UnsupportedOperationException, MalformedParametersException, NoSuchElementException {
         if (args.length < 1) 
             return FrameColumnsSpec.from();
         
@@ -1482,6 +1489,7 @@ public record FrameColumnsSpec<FactorySpec extends Record>(
      * 
      * @return  the given description string with all lines padded on the left-hand side
      */
+    @SuppressWarnings("unused")
     private static String   insertPadding(String strDescr, String strPad) {
         if (strPad == null) 
             strPad = "";
